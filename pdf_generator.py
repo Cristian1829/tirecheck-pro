@@ -1,0 +1,1041 @@
+import html
+import io
+from datetime import datetime
+from zoneinfo import ZoneInfo
+import pandas as pd
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether, PageBreak, HRFlowable
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.graphics.shapes import Drawing, Rect, Circle, Line, String, Polygon
+import database
+from fotos_informe import seccion_fotos
+import diagrama_chasis_pdf as dg
+
+BOGOTA_TZ = ZoneInfo("America/Bogota")
+
+def ahora_bogota():
+    return datetime.now(BOGOTA_TZ)
+
+def formatear_fecha_ddmmyyyy(f_str):
+    if not f_str:
+        return ""
+    try:
+        partes = str(f_str).split("T")[0].split("-")
+        if len(partes) == 3 and len(partes[0]) == 4:
+            return f"{partes[2]}/{partes[1]}/{partes[0]}"
+    except Exception:
+        pass
+    return str(f_str)
+
+def format_num_es(val, decimals=1):
+    if val is None:
+        return '—'
+    try:
+        return f"{float(val):.{decimals}f}".replace('.', ',')
+    except (ValueError, TypeError):
+        return str(val)
+
+def normalizar_rol_pdf(rol):
+    return dg._rol(rol)
+
+def dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=3.0, width=540):
+    try:
+        esquema = database.obtener_esquema_tipologia(tipologia)
+    except Exception:
+        esquema = None
+    if not esquema:
+        return Spacer(1, 5)
+    return dg.dibujar_diagrama_chasis(esquema, filas, limite_retiro, width)
+
+class NumberedCanvas(canvas.Canvas):
+    _num_informe = ""
+    _fecha_emision = ""
+
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self._saved = []
+
+    def showPage(self):
+        self._saved.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        n = len(self._saved)
+        for st in self._saved:
+            self.__dict__.update(st)
+            self._draw_header()
+            self._draw_footer(n)
+            super().showPage()
+        super().save()
+
+    def _draw_header(self):
+        self.saveState()
+        self.setFillColor(colors.HexColor('#0B192C'))
+        self.roundRect(36, 746, 540, 28, 3, fill=1, stroke=0)
+
+        # Isotipo T azul
+        self.setFillColor(colors.HexColor('#2563EB'))
+        self.roundRect(42, 750, 20, 20, 3, fill=1, stroke=0)
+        self.setFillColor(colors.white)
+        self.setFont("Helvetica-Bold", 12)
+        self.drawCentredString(52, 755.5, "T")
+
+        # Texto TireCheck Pro
+        self.setFont("Helvetica-Bold", 10.5)
+        self.drawString(68, 761, "TireCheck Pro")
+        self.setFont("Helvetica", 6.5)
+        self.setFillColor(colors.HexColor('#94A3B8'))
+        self.drawString(68, 751, "Informe de inspección de vehículo")
+
+        # Datos del informe a la derecha
+        num_inf = getattr(self, '_num_informe', '')
+        fec_em = getattr(self, '_fecha_emision', '')
+        self.setFont("Helvetica-Bold", 7.5)
+        self.setFillColor(colors.white)
+        if num_inf:
+            self.drawRightString(568, 761, f"Informe N.º {num_inf}")
+        self.setFont("Helvetica", 7.0)
+        self.setFillColor(colors.HexColor('#94A3B8'))
+        if fec_em:
+            self.drawRightString(568, 751, f"Emitido: {fec_em}")
+        self.restoreState()
+
+    def _draw_footer(self, n):
+        self.saveState()
+        self.setStrokeColor(colors.HexColor('#E2E8F0'))
+        self.setLineWidth(0.5)
+        self.line(36, 26, 576, 26)
+
+        self.setFont("Helvetica", 6.5)
+        self.setFillColor(colors.HexColor('#94A3B8'))
+        self.drawString(36, 14, "TireCheck Pro · Sistema de Inspección y Gestión Técnica de Flotas")
+
+        self.setFillColor(colors.HexColor('#64748B'))
+        self.drawRightString(576, 14, f"Página {self._pageNumber} de {n}")
+        self.restoreState()
+
+def obtener_canvas_reporte_vehiculo(num_informe, fecha_emision):
+    class ReporteNumberedCanvas(NumberedCanvas):
+        _num_informe = num_informe
+        _fecha_emision = fecha_emision
+    return ReporteNumberedCanvas
+
+def crear_banner_superior_reporte(num_informe, fecha_emision, width=540):
+    logo_drawing = Drawing(26, 26)
+    logo_drawing.add(Rect(0, 0, 26, 26, rx=4, ry=4, fillColor=colors.HexColor('#2563EB'), strokeColor=None))
+    logo_drawing.add(String(13, 7.5, "T", fontName="Helvetica-Bold", fontSize=15, fillColor=colors.white, textAnchor="middle"))
+
+    styles = getSampleStyleSheet()
+    style_tit = ParagraphStyle('BannTit', fontName='Helvetica-Bold', fontSize=12, leading=14, textColor=colors.white)
+    style_sub = ParagraphStyle('BannSub', fontName='Helvetica', fontSize=7.5, leading=9, textColor=colors.HexColor('#94A3B8'))
+    style_inf_num = ParagraphStyle('BannNum', fontName='Helvetica-Bold', fontSize=8.0, leading=10, textColor=colors.white, alignment=2)
+    style_inf_fec = ParagraphStyle('BannFec', fontName='Helvetica', fontSize=7.5, leading=9.5, textColor=colors.HexColor('#94A3B8'), alignment=2)
+
+    col_izq = Table([
+        [
+            logo_drawing,
+            [
+                Paragraph("<b>TireCheck Pro</b>", style_tit),
+                Paragraph("Informe de inspección de vehículo", style_sub)
+            ]
+        ]
+    ], colWidths=[32, 280])
+    col_izq.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+
+    col_der = [
+        Paragraph(f"<b>Informe N.º {num_informe}</b>", style_inf_num),
+        Paragraph(f"Emitido: {fecha_emision}", style_inf_fec)
+    ]
+
+    banner = Table([
+        [col_izq, col_der]
+    ], colWidths=[320, 220])
+    banner.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#0B192C')),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('RIGHTPADDING', (0,0), (-1,-1), 10),
+    ]))
+    return banner
+
+def resolver_fecha_informe(placa, fecha=None):
+    if fecha and str(fecha).strip():
+        return str(fecha).strip()
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT MAX(fecha) FROM inspecciones WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?))", (placa,))
+        row = cursor.fetchone()
+        if row and row[0]:
+            return str(row[0])
+    return None
+
+def construir_datos_informe(placa, fecha=None) -> dict:
+    placa_limpia = str(placa or '').strip().upper()
+    fecha_resuelta = resolver_fecha_informe(placa_limpia, fecha)
+    filas = database.obtener_datos_inspeccion_vehiculo(placa_limpia, fecha_resuelta)
+    if not filas and fecha:
+        # Intento sin fecha de rescate
+        filas = database.obtener_datos_inspeccion_vehiculo(placa_limpia, None)
+    if not filas:
+        raise ValueError(f"No se encontraron registros de inspección para el vehículo con placa {placa_limpia}")
+
+    primera = filas[0]
+    cliente = primera.get('cliente', 'No Especificado')
+    subcliente = primera.get('subcliente', 'General')
+    operacion = primera.get('tipo_operacion', 'General')
+    tipologia = primera.get('tipologia', 'Vehículo')
+    km_actual = float(primera.get('kilometraje') or 0)
+    fecha_insp = primera.get('fecha', ahora_bogota().strftime('%Y-%m-%d'))
+    fecha_insp_fmt = formatear_fecha_ddmmyyyy(fecha_insp)
+
+    if km_actual <= 0 or pd.isna(km_actual):
+        km_str = "No registrado"
+    else:
+        km_str = f"{km_actual:,.0f} km".replace(',', '.')
+
+    inspector_usr = str(primera.get('usuario_registro') or 'admin').strip()
+    try:
+        usr_info = database.obtener_usuario_por_username(inspector_usr)
+        inspector_nombre = usr_info.get('nombre_completo') if (usr_info and usr_info.get('nombre_completo')) else inspector_usr
+    except Exception:
+        inspector_nombre = inspector_usr
+
+    limite_retiro = database.obtener_limite_retiro_cliente(cliente) or 3.0
+
+    # Usar dg.profundidad_minima como ÚNICA definición de profundidad mínima
+    for f in filas:
+        f['p_min'] = dg.profundidad_minima(f)
+
+    df_insp = pd.DataFrame(filas)
+    df_analisis = database.analizar_inspecciones_df(df_insp)
+
+    try:
+        esquema = database.obtener_esquema_tipologia(tipologia) or []
+    except Exception:
+        esquema = []
+
+    posiciones_esquema = []
+    for e in esquema:
+        for p in e.get('posiciones', []):
+            posiciones_esquema.append(p.get('pos'))
+    total_posiciones = len(posiciones_esquema) if posiciones_esquema else len(filas)
+    total_auditadas = len(filas)
+
+    valid_pmins = [f['p_min'] for f in filas if f.get('p_min') is not None]
+    if valid_pmins:
+        p_min_global = min(valid_pmins)
+        pos_min_global = next(f.get('posicion') for f in filas if f.get('p_min') == p_min_global)
+        p_prom_global = sum(valid_pmins) / len(valid_pmins)
+    else:
+        p_min_global = None
+        pos_min_global = '-'
+        p_prom_global = None
+
+    # Alertas completas (sin limitar a [:4])
+    alertas_lista = []
+
+    # 1. Alertas de Cambio (Profundidad <= Límite de Retiro)
+    for f in filas:
+        p = int(f.get('posicion', 0))
+        p_m = f.get('p_min')
+        if p_m is not None and p_m <= limite_retiro:
+            alertas_lista.append({
+                'tipo': 'Cambio',
+                'tipo_color': '#DC2626',
+                'posicion': str(p),
+                'detalle': f"Retirar llanta en posición {p} (remanente {format_num_es(p_m)} mm <= {format_num_es(limite_retiro)} mm de límite).",
+                'accion': 'Retirar la llanta y programar su cambio.'
+            })
+
+    # 2. Alineación y duales
+    if not df_analisis.empty:
+        r_an = df_analisis.iloc[0]
+        if r_an.get('Plan_Alineacion') == 'SÍ':
+            alertas_lista.append({
+                'tipo': 'Alineación',
+                'tipo_color': '#D97706',
+                'posicion': '1 y 2',
+                'detalle': str(r_an.get('Detalle_Alineacion', 'Diferencia excesiva entre directores.')),
+                'accion': 'Alinear y balancear.'
+            })
+        if r_an.get('Plan_Dual_Mal_Apareado') == 'SÍ':
+            alertas_lista.append({
+                'tipo': 'Dual mal apareado',
+                'tipo_color': '#D97706',
+                'posicion': 'Duales',
+                'detalle': str(r_an.get('Detalle_Dual', 'Diferencia en conjunto dual mayor al umbral permitido.')),
+                'accion': 'Rotar y aparear.'
+            })
+
+    # 3. Novedades mecánicas registradas
+    for f in filas:
+        nov = str(f.get('novedades') or '').strip()
+        if nov:
+            alertas_lista.append({
+                'tipo': 'Novedad mecánica',
+                'tipo_color': '#D97706',
+                'posicion': str(f.get('posicion')),
+                'detalle': nov,
+                'accion': 'Revisar componente y corregir condición.'
+            })
+
+    n_cambios = sum(1 for a in alertas_lista if a['tipo'] == 'Cambio')
+    n_ali = sum(1 for a in alertas_lista if a['tipo'] == 'Alineación')
+    n_duales = sum(1 for a in alertas_lista if a['tipo'] == 'Dual mal apareado')
+    n_nov = sum(1 for a in alertas_lista if a['tipo'] == 'Novedad mecánica')
+    total_alertas = n_cambios + n_ali + n_duales + n_nov
+
+    return {
+        'placa': placa_limpia,
+        'fecha_insp': fecha_insp,
+        'fecha_insp_fmt': fecha_insp_fmt,
+        'cliente': cliente,
+        'subcliente': subcliente,
+        'operacion': operacion,
+        'tipologia': tipologia,
+        'km_str': km_str,
+        'inspector_nombre': inspector_nombre,
+        'limite_retiro': limite_retiro,
+        'esquema': esquema,
+        'filas': filas,
+        'total_auditadas': total_auditadas,
+        'total_posiciones': total_posiciones,
+        'p_min_global': p_min_global,
+        'pos_min_global': pos_min_global,
+        'p_prom_global': p_prom_global,
+        'alertas_lista': alertas_lista,
+        'n_cambios': n_cambios,
+        'n_ali': n_ali,
+        'n_duales': n_duales,
+        'n_nov': n_nov,
+        'total_alertas': total_alertas,
+        'df_analisis': df_analisis
+    }
+
+def renderizar_informe(datos) -> bytes:
+    placa = datos['placa']
+    tipologia = datos['tipologia']
+    fecha_insp_fmt = datos['fecha_insp_fmt']
+    cliente = datos['cliente']
+    subcliente = datos['subcliente']
+    operacion = datos['operacion']
+    km_str = datos['km_str']
+    inspector_nombre = datos['inspector_nombre']
+    limite_retiro = datos['limite_retiro']
+    total_auditadas = datos['total_auditadas']
+    total_posiciones = datos['total_posiciones']
+    p_min_global = datos['p_min_global']
+    pos_min_global = datos['pos_min_global']
+    p_prom_global = datos['p_prom_global']
+    alertas_lista = datos['alertas_lista']
+    n_cambios = datos['n_cambios']
+    n_ali = datos['n_ali']
+    n_duales = datos['n_duales']
+    n_nov = datos['n_nov']
+    total_alertas = datos['total_alertas']
+    filas = datos['filas']
+    esquema = datos['esquema']
+
+    fecha_emision = ahora_bogota().strftime('%d/%m/%Y')
+    num_informe = f"INF-{placa}-{ahora_bogota().strftime('%Y%m%d')}"
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=52,
+        bottomMargin=34
+    )
+
+    styles = getSampleStyleSheet()
+    style_tit_doc = ParagraphStyle('DocTit', fontName='Helvetica-Bold', fontSize=16, leading=19, textColor=colors.HexColor('#0F172A'), spaceBefore=4, spaceAfter=2)
+    style_sub_doc = ParagraphStyle('DocSub', fontName='Helvetica', fontSize=8.5, leading=11, textColor=colors.HexColor('#64748B'), spaceAfter=8)
+    style_sec_tit = ParagraphStyle('SecTit', fontName='Helvetica-Bold', fontSize=10.0, leading=13, textColor=colors.HexColor('#0F172A'), spaceBefore=8, spaceAfter=4)
+    style_kpi_num = ParagraphStyle('KpiNum', fontName='Helvetica-Bold', fontSize=13, leading=15, alignment=1)
+    style_kpi_lbl = ParagraphStyle('KpiLbl', fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#64748B'), alignment=1)
+    style_cell_head = ParagraphStyle('CellH', fontName='Helvetica-Bold', fontSize=6.5, leading=8.5, textColor=colors.white, alignment=0)
+    style_cell_body = ParagraphStyle('CellB', fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#1E293B'), alignment=0)
+
+    elements = []
+
+    # =========================================================================
+    # SECCIÓN 1: ENCABEZADO Y FICHA TÉCNICA
+    # =========================================================================
+    elements.append(Paragraph("Informe de inspección de vehículo", style_tit_doc))
+    elements.append(Paragraph(f"Placa {html.escape(placa)} · {html.escape(tipologia)} · Inspección del {fecha_insp_fmt}", style_sub_doc))
+
+    style_lbl_meta = ParagraphStyle('MetaLbl', fontName='Helvetica-Bold', fontSize=5.5, leading=7, textColor=colors.HexColor('#64748B'))
+    style_val_meta = ParagraphStyle('MetaVal', fontName='Helvetica-Bold', fontSize=8.0, leading=10, textColor=colors.HexColor('#0F172A'))
+
+    def celda_meta(lbl, val):
+        return [
+            Paragraph(lbl.upper(), style_lbl_meta),
+            Spacer(1, 1),
+            Paragraph(html.escape(str(val)), style_val_meta)
+        ]
+
+    data_meta = [
+        [celda_meta("CLIENTE", cliente), celda_meta("SEDE", subcliente), celda_meta("OPERACIÓN", operacion)],
+        [celda_meta("PLACA", placa), celda_meta("TIPOLOGÍA", tipologia), celda_meta("KILOMETRAJE", km_str)],
+        [celda_meta("FECHA DE INSPECCIÓN", fecha_insp_fmt), celda_meta("INSPECTOR", inspector_nombre), celda_meta("LÍMITE DE RETIRO DEL CLIENTE", f"{format_num_es(limite_retiro)} mm")]
+    ]
+    t_meta = Table(data_meta, colWidths=[180, 180, 180])
+    t_meta.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#E2E8F0')),
+        ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(t_meta)
+    elements.append(Spacer(1, 4))
+
+    # =========================================================================
+    # SECCIÓN 2: TARJETAS KPI (DESGLOSE CONSISTENTE)
+    # =========================================================================
+    col_kpi_alerta = '#DC2626' if total_alertas > 0 else '#16A34A'
+    col_kpi_min = '#DC2626' if (p_min_global is not None and p_min_global <= limite_retiro) else '#0F172A'
+
+    txt_pmin_glo = f"{format_num_es(p_min_global)} mm" if p_min_global is not None else "—"
+    txt_prom_glo = f"{format_num_es(p_prom_global)} mm" if p_prom_global is not None else "—"
+    desglose_alertas_txt = f"Alertas: {n_cambios} cambio, {n_ali} alineación, {n_duales} duales, {n_nov} novedades"
+
+    data_kpi = [
+        [
+            Paragraph(f"<font color='#0F172A'><b>{total_auditadas} de {total_posiciones}</b></font>", style_kpi_num),
+            Paragraph(f"<font color='{col_kpi_min}'><b>{txt_pmin_glo}</b></font>", style_kpi_num),
+            Paragraph(f"<font color='#0F172A'><b>{txt_prom_glo}</b></font>", style_kpi_num),
+            Paragraph(f"<font color='{col_kpi_alerta}'><b>{total_alertas}</b></font>", style_kpi_num),
+        ],
+        [
+            Paragraph("Posiciones inspeccionadas", style_kpi_lbl),
+            Paragraph(f"Profundidad mínima (posición {pos_min_global})", style_kpi_lbl),
+            Paragraph("Promedio de profundidades mínimas", style_kpi_lbl),
+            Paragraph(desglose_alertas_txt, style_kpi_lbl),
+        ]
+    ]
+    t_kpi = Table(data_kpi, colWidths=[135, 135, 135, 135])
+    t_kpi.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#E2E8F0')),
+        ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#E2E8F0')),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    ]))
+    elements.append(t_kpi)
+    elements.append(Spacer(1, 4))
+
+    # =========================================================================
+    # SECCIÓN 3: DIAGNÓSTICO Y ACCIONES RECOMENDADAS (TODAS LAS ALERTAS)
+    # =========================================================================
+    elements.append(Paragraph("Diagnóstico y acciones recomendadas", style_sec_tit))
+    data_diag = [
+        [
+            Paragraph("<b>TIPO</b>", style_cell_head),
+            Paragraph("<b>POSICIÓN</b>", style_cell_head),
+            Paragraph("<b>DETALLE</b>", style_cell_head),
+            Paragraph("<b>ACCIÓN</b>", style_cell_head)
+        ]
+    ]
+
+    if alertas_lista:
+        for a in alertas_lista:
+            style_tipo = ParagraphStyle('TipoAlerta', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor(a['tipo_color']))
+            data_diag.append([
+                Paragraph(html.escape(a['tipo']), style_tipo),
+                Paragraph(html.escape(a['posicion']), style_cell_body),
+                Paragraph(html.escape(a['detalle']), style_cell_body),
+                Paragraph(html.escape(a['accion']), style_cell_body)
+            ])
+    else:
+        style_ok = ParagraphStyle('TipoOk', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor('#16A34A'))
+        data_diag.append([
+            Paragraph("Sin alertas", style_ok),
+            Paragraph("Todas", style_cell_body),
+            Paragraph(f"Todas las llantas están sobre el límite de retiro ({format_num_es(limite_retiro)} mm) y sin alertas configuradas.", style_cell_body),
+            Paragraph("Operación normal y próxima inspección periódica.", style_cell_body)
+        ])
+
+    t_diag = Table(data_diag, colWidths=[95, 45, 250, 150], repeatRows=1)
+    t_diag.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#E2E8F0')),
+        ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#F1F5F9')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_diag)
+    elements.append(Spacer(1, 4))
+
+    # =========================================================================
+    # SECCIÓN 4: DISTRIBUCIÓN POR EJES (DIAGRAMA CHASIS VECTORIAL)
+    # =========================================================================
+    elements.append(Paragraph("Distribución por ejes", style_sec_tit))
+    drawing_chasis = dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=limite_retiro, width=540)
+    elements.append(drawing_chasis)
+    elements.append(Spacer(1, 6))
+
+    # =========================================================================
+    # SECCIÓN 5: DETALLE POR LLANTA
+    # =========================================================================
+    elements.append(Paragraph("Detalle por llanta", style_sec_tit))
+
+    data_llantas = [
+        [
+            Paragraph("<b>POS.</b>", style_cell_head),
+            Paragraph("<b>EJE / ROL</b>", style_cell_head),
+            Paragraph("<b>MARCA / DISEÑO</b>", style_cell_head),
+            Paragraph("<b>DIM.</b>", style_cell_head),
+            Paragraph("<b>N.º INT.</b>", style_cell_head),
+            Paragraph("<b>VIDA</b>", style_cell_head),
+            Paragraph("<b>EXT</b>", style_cell_head),
+            Paragraph("<b>CENT</b>", style_cell_head),
+            Paragraph("<b>INT</b>", style_cell_head),
+            Paragraph("<b>MÍN</b>", style_cell_head),
+            Paragraph("<b>PSI</b>", style_cell_head),
+            Paragraph("<b>ESTADO</b>", style_cell_head)
+        ]
+    ]
+
+    pos_to_eje = {}
+    pos_to_rol_desc = {}
+    pos_to_info_esq = {}
+    if esquema:
+        for e in esquema:
+            e_num = e.get('eje', 1)
+            t_raw = str(e.get('tipo', '')).lower()
+            if e_num == 99 or 'rep' in t_raw:
+                t_lbl = 'Repuesto'
+            elif 'dir' in t_raw:
+                t_lbl = f"Eje {e_num} · Direccional"
+            elif 'trac' in t_raw:
+                t_lbl = f"Eje {e_num} · Tracción"
+            elif 'rem' in t_raw or 'trailer' in t_raw:
+                t_lbl = f"Eje {e_num} · Remolque"
+            else:
+                t_lbl = f"Eje {e_num} · {str(e.get('tipo', '')).capitalize()}"
+
+            for p in e.get('posiciones', []):
+                p_n = p.get('pos')
+                pos_to_eje[p_n] = t_lbl
+                lado = 'Izq.' if p.get('lado') == 'izq' else 'Der.' if p.get('lado') == 'der' else ''
+                rol_str = normalizar_rol_pdf(p.get('rol'))
+                pos_to_rol_desc[p_n] = f"{lado} · {rol_str}".strip(' ·')
+                pos_to_info_esq[p_n] = {
+                    'eje': e_num,
+                    'lado': p.get('lado', ''),
+                    'rol': p.get('rol', '')
+                }
+
+    ejes_orden = []
+    for f in filas:
+        p_num = int(f.get('posicion', 0))
+        eje_lbl = pos_to_eje.get(p_num, 'Eje Principal')
+        if eje_lbl not in ejes_orden:
+            ejes_orden.append(eje_lbl)
+
+    style_eje_subhead = ParagraphStyle('EjeSub', fontName='Helvetica-Bold', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#0F172A'))
+
+    for eje_lbl in ejes_orden:
+        data_llantas.append([
+            Paragraph(f"<b>{html.escape(eje_lbl)}</b>", style_eje_subhead),
+            "", "", "", "", "", "", "", "", "", "", ""
+        ])
+        filas_eje = [f for f in filas if pos_to_eje.get(int(f.get('posicion', 0)), 'Eje Principal') == eje_lbl]
+        for f in filas_eje:
+            p_n = int(f.get('posicion', 0))
+            p_min = f.get('p_min')
+            p_ext = f.get('prof_ext')
+            p_cen = f.get('prof_cent')
+            p_int = f.get('prof_int')
+
+            es_cambio = (p_min is not None and p_min <= limite_retiro)
+            novedad_texto = str(f.get('novedades') or '').strip()
+
+            if es_cambio:
+                estado_txt = "Cambio sugerido"
+                col_est = '#DC2626'
+            elif novedad_texto:
+                estado_txt = "Con novedad"
+                col_est = '#D97706'
+            elif p_min is not None:
+                estado_txt = "Registrada"
+                col_est = '#16A34A'
+            else:
+                estado_txt = "Pendiente"
+                col_est = '#94A3B8'
+
+            st_pmin = ParagraphStyle('PMinCell', parent=style_cell_body, fontName='Helvetica-Bold',
+                                     textColor=colors.HexColor('#DC2626' if es_cambio else ('#64748B' if p_min is None else '#0F172A')))
+            st_estado = ParagraphStyle('EstCell', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor(col_est))
+
+            marca_dis = f"{f.get('marca', '')} {f.get('diseno', '')}".strip() or '-'
+            rol_lbl = pos_to_rol_desc.get(p_n, normalizar_rol_pdf(f.get('rol', '')))
+
+            try:
+                ext_val = float(p_ext) if p_ext is not None else None
+            except (ValueError, TypeError):
+                ext_val = None
+            try:
+                cen_val = float(p_cen) if p_cen is not None else None
+            except (ValueError, TypeError):
+                cen_val = None
+            try:
+                int_val = float(p_int) if p_int is not None else None
+            except (ValueError, TypeError):
+                int_val = None
+
+            txt_ext = format_num_es(ext_val) if (ext_val is not None and ext_val > 0) else "—"
+            txt_cen = format_num_es(cen_val) if (cen_val is not None and cen_val > 0) else "—"
+            txt_int = format_num_es(int_val) if (int_val is not None and int_val > 0) else "—"
+            txt_min = format_num_es(p_min)
+
+            try:
+                psi_val = f"{float(f.get('psi') or 0):.0f}" if f.get('psi') is not None else "—"
+            except Exception:
+                psi_val = "—"
+
+            data_llantas.append([
+                Paragraph(f"<b>{p_n}</b>", style_cell_body),
+                Paragraph(html.escape(rol_lbl), style_cell_body),
+                Paragraph(html.escape(marca_dis), style_cell_body),
+                Paragraph(html.escape(str(f.get('dimension') or '-')), style_cell_body),
+                Paragraph(html.escape(str(f.get('numero_interno') or '-')), style_cell_body),
+                Paragraph(html.escape(str(f.get('vida') or 'Orig')), style_cell_body),
+                Paragraph(txt_ext, style_cell_body),
+                Paragraph(txt_cen, style_cell_body),
+                Paragraph(txt_int, style_cell_body),
+                Paragraph(txt_min, st_pmin),
+                Paragraph(psi_val, style_cell_body),
+                Paragraph(estado_txt, st_estado)
+            ])
+
+    t_llantas = Table(data_llantas, colWidths=[22, 55, 115, 68, 42, 45, 26, 26, 26, 28, 25, 62], repeatRows=1)
+    tstyle = [
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0,0), (-1,-1), 2.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
+        ('LEFTPADDING', (0,0), (-1,-1), 3),
+        ('RIGHTPADDING', (0,0), (-1,-1), 3),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]
+    row_idx = 0
+    for row in data_llantas:
+        if row[1] == "" and row[2] == "":
+            tstyle.append(('SPAN', (0, row_idx), (-1, row_idx)))
+            tstyle.append(('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#F1F5F9')))
+            tstyle.append(('TOPPADDING', (0, row_idx), (-1, row_idx), 2.5))
+            tstyle.append(('BOTTOMPADDING', (0, row_idx), (-1, row_idx), 2.5))
+        row_idx += 1
+
+    t_llantas.setStyle(TableStyle(tstyle))
+    elements.append(t_llantas)
+
+    style_subnota = ParagraphStyle('SubNota', fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#64748B'), spaceBefore=3, spaceAfter=4)
+    elements.append(Paragraph("Profundidades en mm. PSI: presión registrada. — indica sin lectura o lectura cero.", style_subnota))
+
+    # =========================================================================
+    # SECCIÓN 6: NOVEDADES REGISTRADAS
+    # =========================================================================
+    elements.append(Paragraph("Novedades registradas", style_sec_tit))
+    filas_con_nov = [f for f in filas if str(f.get('novedades') or '').strip()]
+    data_nov = [
+        [
+            Paragraph("<b>POS.</b>", style_cell_head),
+            Paragraph("<b>NOVEDAD REGISTRADA</b>", style_cell_head)
+        ]
+    ]
+    if filas_con_nov:
+        for f in filas_con_nov:
+            data_nov.append([
+                Paragraph(str(f.get('posicion')), style_cell_body),
+                Paragraph(html.escape(str(f.get('novedades')).strip()), style_cell_body)
+            ])
+    else:
+        data_nov.append([
+            Paragraph("-", style_cell_body),
+            Paragraph("No se registraron novedades o anomalías mecánicas en las llantas inspeccionadas.", style_cell_body)
+        ])
+
+    t_nov = Table(data_nov, colWidths=[40, 500], repeatRows=1)
+    t_nov.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(t_nov)
+    elements.append(Spacer(1, 4))
+
+    # =========================================================================
+    # SECCIÓN 7: EVIDENCIA FOTOGRÁFICA
+    # =========================================================================
+    llantas_enriquecidas = []
+    for f in filas:
+        p_n = int(f.get('posicion', 0))
+        info_e = pos_to_info_esq.get(p_n, {})
+        llantas_enriquecidas.append({
+            'pos': p_n,
+            'eje': info_e.get('eje', 1),
+            'lado': info_e.get('lado', ''),
+            'rol': info_e.get('rol', f.get('rol', '')),
+            'novedad': str(f.get('novedades') or '').strip(),
+            'foto_novedad': f.get('foto_novedad', '')
+        })
+
+    fotos_elementos = seccion_fotos(llantas_enriquecidas)
+    if fotos_elementos:
+        elements.extend(fotos_elementos)
+
+    # =========================================================================
+    # SECCIÓN 8: OBSERVACIONES DEL INSPECTOR
+    # =========================================================================
+    elements.append(Paragraph("Observaciones del inspector", style_sec_tit))
+    obs_lines = []
+    if n_cambios > 0:
+        pos_cambios = [str(a['posicion']) for a in alertas_lista if a['tipo'] == 'Cambio']
+        obs_lines.append(f"Se recomienda programar el retiro de la(s) llanta(s) en posición {', '.join(pos_cambios)} por encontrarse en o por debajo del límite de retiro ({format_num_es(limite_retiro)} mm).")
+    if n_ali > 0:
+        obs_lines.append("En el eje direccional se observa una diferencia de desgaste entre directores; se sugiere revisar alineación y balanceo preventivo.")
+    if n_duales > 0:
+        obs_lines.append("En los conjuntos duales se recomienda rotar o aparear llantas para evitar fatiga prematura por diferencia de radio rodante.")
+    if n_nov > 0:
+        obs_lines.append("Se identificaron novedades mecánicas reportadas; verificar componentes mecánicos asociados.")
+    if not obs_lines:
+        obs_lines.append("No se detectaron alertas de diagnóstico con las reglas configuradas.")
+
+    style_par_obs = ParagraphStyle('ObsPar', fontName='Helvetica', fontSize=7.0, leading=9.5, textColor=colors.HexColor('#1E293B'))
+    elements.append(Paragraph(" ".join(obs_lines), style_par_obs))
+    elements.append(Spacer(1, 4))
+
+    # =========================================================================
+    # SECCIÓN 9: CRITERIOS DE DIAGNÓSTICO APLICADOS
+    # =========================================================================
+    elements.append(Paragraph("Criterios de diagnóstico aplicados", style_sec_tit))
+    criterios_html = f"""
+    <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({format_num_es(limite_retiro)} mm).<br/>
+    <b>Alineación:</b> diferencia de 2,0 mm o más entre la profundidad mínima de las llantas direccionales izquierda y derecha.<br/>
+    <b>Dual mal apareado:</b> diferencia de 2,0 mm o más entre la profundidad mínima de la llanta interior y la exterior del mismo lado.<br/>
+    La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
+    """
+    style_crit = ParagraphStyle('CritPar', fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#475569'))
+    elements.append(Paragraph(criterios_html, style_crit))
+    elements.append(Spacer(1, 10))
+
+    # =========================================================================
+    # SECCIÓN 10: FIRMAS
+    # =========================================================================
+    style_sub_firma = ParagraphStyle('FirmSub', fontName='Helvetica', fontSize=7.0, leading=9.0, textColor=colors.HexColor('#0F172A'), alignment=1)
+    firma_data = [
+        [
+            Paragraph(f"__________________________________________<br/><b>Inspector · {html.escape(inspector_nombre)}</b>", style_sub_firma),
+            Paragraph("__________________________________________<br/><b>Responsable del cliente · Nombre y firma</b>", style_sub_firma)
+        ]
+    ]
+    t_firmas = Table(firma_data, colWidths=[270, 270])
+    t_firmas.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(KeepTogether(t_firmas))
+
+    # Construcción final con canvasmaker para paginación dinámica continua
+    canvas_maker = obtener_canvas_reporte_vehiculo(num_informe, fecha_emision)
+    doc.build(elements, canvasmaker=canvas_maker)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+def generar_pdf_plan_mantenimiento(placa, fecha=None):
+    """
+    Genera el archivo PDF oficial de Plan de Mantenimiento e Informe de Inspección
+    de Vehículo unificando la consulta, límites, alertas y renderizado sin duplicación.
+    """
+    return renderizar_informe(construir_datos_informe(placa, fecha))
+
+def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
+    """
+    Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
+    estado de flota por eje y dimensión, y tabla de placas a intervenir.
+    """
+    df_insp = database.obtener_todas_inspecciones()
+    if df_insp.empty:
+        raise ValueError("No existen inspecciones registradas en el sistema.")
+
+    if cliente and cliente != 'Todos':
+        df_insp = df_insp[df_insp['cliente'].astype(str).str.upper().str.strip() == str(cliente).upper().strip()]
+    if subcliente and subcliente != 'Todos':
+        df_insp = df_insp[df_insp['subcliente'].astype(str).str.upper().str.strip() == str(subcliente).upper().strip()]
+    if fecha:
+        df_insp = df_insp[df_insp['fecha'].astype(str) == str(fecha)]
+
+    if df_insp.empty:
+        raise ValueError("No se encontraron inspecciones con los filtros seleccionados.")
+
+    df_analisis = database.analizar_inspecciones_df(df_insp)
+
+    # Métricas Globales
+    total_vehiculos = df_analisis['Vehículo/Placa'].nunique() if not df_analisis.empty else 0
+    total_llantas = len(df_insp)
+
+    limite_def = database.obtener_limite_retiro_cliente(cliente if cliente else '') or 3.0
+    
+    # Cálculos llanta a llanta con dg.profundidad_minima
+    df_insp['p_min'] = df_insp.apply(lambda r: dg.profundidad_minima(r.to_dict()), axis=1)
+    llantas_retiro = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] <= limite_def)])
+    llantas_proximo = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] > limite_def) & (df_insp['p_min'] <= limite_def + 2.0)])
+    llantas_optimas = total_llantas - llantas_retiro - llantas_proximo
+
+    pct_retiro = (llantas_retiro / total_llantas * 100) if total_llantas > 0 else 0
+    pct_proximo = (llantas_proximo / total_llantas * 100) if total_llantas > 0 else 0
+    pct_optimas = (llantas_optimas / total_llantas * 100) if total_llantas > 0 else 0
+
+    veh_cambio = len(df_analisis[df_analisis['Plan_Cambio_Llanta'] == 'SÍ']) if not df_analisis.empty else 0
+    veh_ali = len(df_analisis[df_analisis['Plan_Alineacion'] == 'SÍ']) if not df_analisis.empty else 0
+    veh_dual = len(df_analisis[df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ']) if not df_analisis.empty else 0
+    veh_rot_irr = len(df_analisis[df_analisis.get('Plan_Rotacion_Irregular', 'NO') == 'SÍ']) if not df_analisis.empty else 0
+    veh_rot_esc = len(df_analisis[df_analisis.get('Plan_Rotacion_Escalonado', 'NO') == 'SÍ']) if not df_analisis.empty else 0
+    veh_psi = len(df_analisis[df_analisis.get('Plan_Calibracion_PSI', 'NO') == 'SÍ']) if not df_analisis.empty else 0
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+
+    style_titulo = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=18, leading=22, textColor=colors.HexColor('#0f172a'))
+    style_subtitulo = ParagraphStyle('DocSub', parent=styles['Normal'], fontName='Helvetica', fontSize=9, leading=13, textColor=colors.HexColor('#475569'))
+    style_seccion = ParagraphStyle('SecTitle', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=11, leading=15, textColor=colors.HexColor('#1e3a8a'), spaceBefore=8, spaceAfter=4)
+    style_cell_header = ParagraphStyle('CellHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7.5, leading=10, textColor=colors.white, alignment=1)
+    style_cell_body = ParagraphStyle('CellBody', parent=styles['Normal'], fontName='Helvetica', fontSize=7, leading=9, textColor=colors.HexColor('#1e293b'))
+    style_cell_alert = ParagraphStyle('CellAlert', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, leading=9, textColor=colors.HexColor('#b91c1c'))
+
+    elements = []
+
+    # Cabecera
+    head_tbl = Table([
+        [
+            Paragraph("<b>TIRECHECK PRO</b><br/><font size=8.5 color='#64748b'>Informe Ejecutivo & Diagnóstico Consolidado de Flota</font>", style_titulo),
+            Paragraph(f"<b>CONSOLIDADO DE INSPECCIÓN</b><br/>Fecha: {fecha or 'Histórico Completo'}<br/>Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ParagraphStyle('RH', parent=style_subtitulo, alignment=2))
+        ]
+    ], colWidths=[330, 210])
+    head_tbl.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('BOTTOMPADDING', (0,0), (-1,-1), 4)]))
+    elements.append(head_tbl)
+    elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#2563eb'), spaceAfter=8, spaceBefore=2))
+
+    # Tarjetas Resumen de Flota
+    cliente_txt = cliente if cliente and cliente != 'Todos' else 'Consolidado General'
+    sub_txt = subcliente if subcliente and subcliente != 'Todos' else 'Todas las Sedes'
+
+    res_box = [
+        [
+            Paragraph(f"<b>Cliente / Flota:</b> {cliente_txt}", style_subtitulo),
+            Paragraph(f"<b>Sede / Operación:</b> {sub_txt}", style_subtitulo),
+            Paragraph(f"<b>Límite Retiro Aplicado:</b> {limite_def:.1f} mm", style_subtitulo)
+        ],
+        [
+            Paragraph(f"<b>Vehículos Inspeccionados:</b> <font color='#2563eb' size=10><b>{total_vehiculos}</b></font>", style_subtitulo),
+            Paragraph(f"<b>Total Llantas Medidas:</b> <font color='#2563eb' size=10><b>{total_llantas}</b></font>", style_subtitulo),
+            Paragraph(f"<b>Vehículos con Alerta:</b> <font color='#b91c1c' size=10><b>{veh_cambio + veh_ali + veh_dual}</b></font>", style_subtitulo)
+        ]
+    ]
+    t_res = Table(res_box, colWidths=[180, 180, 180])
+    t_res.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(t_res)
+    elements.append(Spacer(1, 8))
+
+    # 1. ESTADO GLOBAL DE LAS LLANTAS (SEMÁFORO DE FLOTA)
+    elements.append(Paragraph("1. Semáforo Global de Estado de Llantas", style_seccion))
+    semaforo_data = [
+        [
+            Paragraph("<b>CONDICIÓN DE LA LLANTA</b>", style_cell_header),
+            Paragraph("<b>CANTIDAD</b>", style_cell_header),
+            Paragraph("<b>% FLOTA</b>", style_cell_header),
+            Paragraph("<b>ACCIÓN TÉCNICA RECOMENDADA</b>", style_cell_header)
+        ],
+        [
+            Paragraph("🔴 <b>Retiro Urgente (<= Límite)</b>", style_cell_alert),
+            Paragraph(f"<b>{llantas_retiro}</b>", style_cell_alert),
+            Paragraph(f"<b>{pct_retiro:.1f}%</b>", style_cell_alert),
+            Paragraph("Programar desmontaje inmediato para evitar daños de carcasa o incidentes viales.", style_cell_body)
+        ],
+        [
+            Paragraph("🟡 <b>Próximo a Cambio (+2.0 mm)</b>", style_cell_body),
+            Paragraph(f"<b>{llantas_proximo}</b>", style_cell_body),
+            Paragraph(f"<b>{pct_proximo:.1f}%</b>", style_cell_body),
+            Paragraph("Monitorear en 15 a 30 días y alistar stock de reemplazo o reencauche.", style_cell_body)
+        ],
+        [
+            Paragraph("🟢 <b>Condición Normal / Óptima</b>", style_cell_body),
+            Paragraph(f"<b>{llantas_optimas}</b>", style_cell_body),
+            Paragraph(f"<b>{pct_optimas:.1f}%</b>", style_cell_body),
+            Paragraph("Mantener presiones recomendadas y rotación preventiva según kilometraje.", style_cell_body)
+        ]
+    ]
+    t_sem = Table(semaforo_data, colWidths=[150, 60, 60, 270])
+    t_sem.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor('#fee2e2')),
+        ('BACKGROUND', (0,2), (-1,2), colors.HexColor('#fef3c7')),
+        ('BACKGROUND', (0,3), (-1,3), colors.HexColor('#f0fdf4')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_sem)
+    elements.append(Spacer(1, 8))
+
+    # 2. PLANES DE ACCIÓN REQUERIDOS EN LA FLOTA
+    elements.append(Paragraph("2. Resumen Consolidado de Planes de Acción y Novedades", style_seccion))
+    planes_data = [
+        [
+            Paragraph("<b>PLAN DE ACCIÓN TÉCNICO</b>", style_cell_header),
+            Paragraph("<b>VEHÍCULOS AFECTADOS</b>", style_cell_header),
+            Paragraph("<b>DETALLE Y ALCANCE OPERATIVO</b>", style_cell_header)
+        ],
+        [
+            Paragraph("<b>Sugerencia Retiro / Cambio</b>", style_cell_body),
+            Paragraph(f"<b>{veh_cambio}</b>", style_cell_alert if veh_cambio > 0 else style_cell_body),
+            Paragraph(f"Vehículos con al menos una llanta en o por debajo de {limite_def:.1f} mm.", style_cell_body)
+        ],
+        [
+            Paragraph("<b>Alineación y Geometría Direccional</b>", style_cell_body),
+            Paragraph(f"<b>{veh_ali}</b>", style_cell_alert if veh_ali > 0 else style_cell_body),
+            Paragraph("Vehículos con diferencia entre exterior e interior >= 2.0 mm en llantas direccionales.", style_cell_body)
+        ],
+        [
+            Paragraph("<b>Emparejamiento / Dual Mal Apareado</b>", style_cell_body),
+            Paragraph(f"<b>{veh_dual}</b>", style_cell_alert if veh_dual > 0 else style_cell_body),
+            Paragraph("Vehículos con duales que superan 2.0 mm de diferencia o dimensiones heterogéneas.", style_cell_body)
+        ],
+        [
+            Paragraph("<b>Rotación por Desgaste Irregular</b>", style_cell_body),
+            Paragraph(f"<b>{veh_rot_irr}</b>", style_cell_alert if veh_rot_irr > 0 else style_cell_body),
+            Paragraph("Llantas en tracción o eje libre con desgaste irregular o disparejo.", style_cell_body)
+        ],
+        [
+            Paragraph("<b>Rotación por Desgaste Escalonado</b>", style_cell_body),
+            Paragraph(f"<b>{veh_rot_esc}</b>", style_cell_alert if veh_rot_esc > 0 else style_cell_body),
+            Paragraph("Llantas con diente de sierra / desgaste escalonado en eje de tracción.", style_cell_body)
+        ],
+        [
+            Paragraph("<b>Calibración de Presión de Aire</b>", style_cell_body),
+            Paragraph(f"<b>{veh_psi}</b>", style_cell_alert if veh_psi > 0 else style_cell_body),
+            Paragraph("Posiciones con baja presión (< 90 PSI o novedad reportada).", style_cell_body)
+        ]
+    ]
+    t_planes = Table(planes_data, colWidths=[180, 80, 280])
+    t_planes.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e3a8a')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_planes)
+    elements.append(Spacer(1, 8))
+
+    # 3. LISTADO DETALLADO DE PLACAS A INTERVENIR
+    elements.append(Paragraph(f"3. Matriz de Vehículos Inspeccionados y Placas a Intervenir ({total_vehiculos} Vehículos)", style_seccion))
+    matriz_data = [
+        [
+            Paragraph("Vehículo", style_cell_header),
+            Paragraph("Operación", style_cell_header),
+            Paragraph("Llantas", style_cell_header),
+            Paragraph("Cambio", style_cell_header),
+            Paragraph("Alinear", style_cell_header),
+            Paragraph("Dual", style_cell_header),
+            Paragraph("Rotación", style_cell_header),
+            Paragraph("Detalle de Alerta Principal", style_cell_header)
+        ]
+    ]
+
+    for _, r in df_analisis.iterrows():
+        p_cambio = r.get('Plan_Cambio_Llanta', 'NO')
+        p_ali = r.get('Plan_Alineacion', 'NO')
+        p_du = r.get('Plan_Dual_Mal_Apareado', 'NO')
+        p_rot = "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO"
+
+        alertas_txt = []
+        if p_cambio == 'SÍ': alertas_txt.append(f"Cambio: {r.get('Detalle_Cambio', '')}")
+        if p_ali == 'SÍ': alertas_txt.append(f"Alinear: {r.get('Detalle_Alineacion', '')}")
+        if p_du == 'SÍ': alertas_txt.append(f"Dual: {r.get('Detalle_Dual', '')}")
+        if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
+            alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
+
+        matriz_data.append([
+            Paragraph(f"<b>{r.get('Vehículo/Placa', '')}</b>", style_cell_body),
+            Paragraph(str(r.get('Operación', '') or '-'), style_cell_body),
+            Paragraph(str(r.get('Llantas Inspeccionadas', '')), style_cell_body),
+            Paragraph(f"<b>{p_cambio}</b>", style_cell_alert if p_cambio == 'SÍ' else style_cell_body),
+            Paragraph(f"<b>{p_ali}</b>", style_cell_alert if p_ali == 'SÍ' else style_cell_body),
+            Paragraph(f"<b>{p_du}</b>", style_cell_alert if p_du == 'SÍ' else style_cell_body),
+            Paragraph(f"<b>{p_rot}</b>", style_cell_alert if p_rot == 'SÍ' else style_cell_body),
+            Paragraph("; ".join(alertas_txt) if alertas_txt else "Sin novedades críticas", style_cell_alert if alertas_txt else style_cell_body)
+        ])
+
+    t_matriz = Table(matriz_data, colWidths=[55, 65, 38, 42, 42, 38, 45, 215])
+    t_matriz.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_matriz)
+    elements.append(Spacer(1, 14))
+
+    # Firmas
+    firma_data = [
+        [
+            Paragraph("__________________________________________<br/><b>Director / Ingeniero de Gestión de Llantas</b>", style_subtitulo),
+            Paragraph("__________________________________________<br/><b>Recibido por Jefe de Flota y Operaciones</b>", style_subtitulo)
+        ]
+    ]
+    t_f = Table(firma_data, colWidths=[270, 270])
+    t_f.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('TOPPADDING', (0,0), (-1,-1), 10)]))
+    elements.append(KeepTogether(t_f))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()

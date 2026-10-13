@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista Previa: Inspección de Patio — Chasis y Mediciones</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .touch-target { min-height: 44px; }
+
+    /* Ruedas Interactivas SVG */
+    .tire-interactive-node {
+      cursor: pointer;
+      outline: none;
+      user-select: none;
+    }
+    .tire-interactive-node:hover .tire-rubber-body {
+      filter: brightness(1.18);
+    }
+    .tire-interactive-node:focus-visible .tire-selection-ring {
+      stroke: #2563EB !important;
+      stroke-width: 3px !important;
+    }
+
+    /* Placeholders con alto contraste (mínimo 4.5:1 contra fondo blanco) */
+    input::placeholder, textarea::placeholder {
+      color: #475569 !important;
+      opacity: 1 !important;
+    }
+
+    /* Scrollbars suaves */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F1F5F9;
+      border-radius: 3px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+
+    /* Selector de posición activo en chips */
+    .pos-btn.active {
+      background-color: #2563EB !important;
+      color: #FFFFFF !important;
+      border-color: #1D4ED8 !important;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.35);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-16">
+
+  <!-- ============================================================== -->
+  <!-- BARRA DE HERRAMIENTAS DE PRUEBA Y AUDITORÍA DE LA VISTA PREVIA -->
+  <!-- ============================================================== -->
+  <header class="sticky top-0 z-50 bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <span class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm">
+          <i class="fa-solid fa-eye"></i>
+        </span>
+        <div>
+          <h1 class="text-sm font-black tracking-tight flex items-center space-x-2">
+            <span>VISTA PREVIA: INSPECCIÓN DE PATIO</span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950 uppercase">Pre-Integración</span>
+          </h1>
+          <p class="text-xs text-slate-400">Verificación de Chasis, Mediciones y Columna Derecha Sticky</p>
+        </div>
+      </div>
+
+      <!-- Controles de Simulación de Escenarios -->
+      <div class="flex items-center flex-wrap gap-2 text-xs">
+        <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
+          <label for="selTipologiaPrueba" class="font-bold text-slate-300">Tipología:</label>
+          <select id="selTipologiaPrueba" onchange="cambiarTipologiaPrueba(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            <option value="Cabezote (6x4)" selected>Cabezote (6x4) - 10 llantas</option>
+            <option value="Camión Sencillo (4x2)">Camión Sencillo (4x2) - 6 llantas</option>
+            <option value="Volqueta Dobletroque (6x4)">Volqueta Dobletroque (6x4)</option>
+            <option value="Trailer (2 Ejes - 8 Llantas + Repuesto)">Trailer (2 Ejes + Repuesto)</option>
+            <option value="Cabezote (Cuatro Manos / 8x4)">Cuatro Manos (8x4)</option>
+            <option value="Liviano / Camioneta (4x2)">Liviano (4x2) - 4 llantas</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+          <button type="button" onclick="aplicarEscenario(0)" id="btnEsc0" class="px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white hover:bg-slate-600" title="0 llantas registradas">0 Registradas</button>
+          <button type="button" onclick="aplicarEscenario(1)" id="btnEsc1" class="px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700" title="Algunas llantas registradas y 1 con novedad">Algunas (con novedad)</button>
+          <button type="button" onclick="aplicarEscenario(2)" id="btnEsc2" class="px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700" title="Todas las llantas registradas">Todas Registradas</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- CONTENEDOR PRINCIPAL DE INSPECCIÓN DE PATIO                     -->
+  <!-- ============================================================== -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
+
+    <!-- MODULO CLIENTE, OPERACIÓN & VEHÍCULO (Encabezado General) -->
+    <div id="moduloCliente" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+          <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-building"></i>
+          </div>
+          <span class="text-xs sm:text-sm">Datos del Cliente, Operación & Vehículo</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200 flex items-center space-x-1">
+            <i class="fa-solid fa-lock text-[10px] mr-1"></i>Fijado
+          </span>
+        </div>
+      </div>
+
+      <!-- Fila 1: Cliente, Sede, Operación -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa</label>
+          <input type="text" id="cliente" value="Transportes Andes S.A.S" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Sede / Subcliente</label>
+          <input type="text" id="subcliente" value="Patio Principal - Bogotá" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Operación</label>
+          <input type="text" id="tipo_operacion" value="Carga Seca" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+        </div>
+      </div>
+
+      <!-- Fila 2: Placa, Tipología, Odómetro, Fecha -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo *</label>
+          <input type="text" id="placa" value="XYZ789" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Tipología</label>
+          <input type="text" id="lblTipologiaNombre" value="Cabezote (6x4)" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+          <input type="number" id="kilometraje" value="128500" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Inspección</label>
+          <input type="text" id="fecha" value="2026-10-12" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CUADRÍCULA PRINCIPAL: CHASIS (IZQ) & COLUMNA DERECHA STICKY  -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+      <!-- ========================================================== -->
+      <!-- COLUMNA IZQUIERDA: DIAGRAMA DE CHASIS INTERACTIVO (lg: 7 cols) -->
+      <!-- ========================================================== -->
+      <div id="moduloChasis" class="lg:col-span-7 bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/90 space-y-4">
+
+        <!-- CABECERA DEL CHASIS -->
+        <div class="space-y-1.5 pb-2 border-b border-slate-100">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-truck"></i>
+              </div>
+              <!-- Sin numeración '3.' -->
+              <span class="text-sm font-extrabold text-slate-900">Diagrama de Chasis Interactivo</span>
+            </div>
+            <span id="badgeContadorProgreso" class="px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200/60 font-mono">
+              0 de 10
+            </span>
+          </div>
+
+          <div class="flex items-baseline justify-between pt-1">
+            <h3 id="lblTituloConfiguracion" class="text-base font-black text-slate-900 tracking-tight">
+              Cabezote (6x4)
+            </h3>
+            <div class="flex items-center space-x-1.5">
+              <button type="button" onclick="irPosicionAnterior()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center text-xs border border-slate-200 transition-all" title="Llanta Anterior">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <span class="text-xs font-bold text-slate-600 font-mono px-1">Pos: <b id="lblPosPill" class="text-blue-600 font-black text-sm">1</b></span>
+              <button type="button" onclick="irPosicionSiguiente()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center text-xs border border-slate-200 transition-all" title="Siguiente Llanta">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra de Progreso Fina -->
+          <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
+            <div id="barraProgresoChasis" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- SELECTOR RÁPIDO DE CHIPS: EN MÓVIL SE CONSERVA EL CARRUSEL TÁCTIL; EN ESCRITORIO SE OCULTA -->
+        <div class="lg:hidden pt-1 pb-2">
+          <div class="flex items-center justify-between pb-1.5 text-xs text-slate-500 font-bold">
+            <span>Selector Rápido de Ruedas:</span>
+            <span id="badgeEstadoPosPillMobile" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Pendiente</span>
+          </div>
+          <div id="carruselLlantasMobile" class="flex space-x-2 overflow-x-auto pb-1 scrollbar-none custom-scroll scroll-smooth"></div>
+        </div>
+
+        <!-- FILA DE ORIENTACIÓN ESPACIAL: JUSTO SOBRE EL PRIMER EJE -->
+        <div class="flex items-center justify-between px-4 py-2 bg-slate-100/70 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 border border-slate-200/80">
+          <span class="flex items-center space-x-1">
+            <i class="fa-solid fa-arrow-left text-[11px] text-slate-400"></i>
+            <span>IZQUIERDA</span>
+          </span>
+          <span class="flex items-center space-x-1.5 text-slate-700 font-black">
+            <i class="fa-solid fa-arrow-up text-blue-600"></i>
+            <span>FRENTE</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <span>DERECHA</span>
+            <i class="fa-solid fa-arrow-right text-[11px] text-slate-400"></i>
+          </span>
+        </div>
+
+        <!-- CONTENEDOR DINÁMICO DE FILAS DE EJES -->
+        <div id="contenedorChasisEjes" class="space-y-4 pt-1"></div>
+
+        <!-- SECCIÓN DE REPUESTO INDEPENDIENTE (Si aplica) -->
+        <div id="seccionRepuestoChasis" class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div class="space-y-0.5">
+            <h4 class="text-xs font-black text-slate-800">Repuesto</h4>
+            <p class="text-xs text-slate-400 font-medium">Posición independiente</p>
+          </div>
+          <div id="contenedorCajaRepuestoChasis" class="flex items-center space-x-3"></div>
+        </div>
+
+        <!-- LEYENDA TÉCNICA CLARA Y ACCESIBLE (Mínimo 12px) -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-center flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-slate-600">
+          <!-- Pendiente -->
+          <span class="flex items-center space-x-2">
+            <span class="w-3.5 h-3.5 rounded-full border border-slate-400 bg-white"></span>
+            <span>Pendiente</span>
+          </span>
+
+          <!-- Registrada (Insignia check verde y texto 'Registrada') -->
+          <span class="flex items-center space-x-2">
+            <span class="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black">
+              <i class="fa-solid fa-check"></i>
+            </span>
+            <span class="text-emerald-800">Registrada</span>
+          </span>
+
+          <!-- Con Novedad (Insignia ! ámbar y texto 'Con Novedad') -->
+          <span class="flex items-center space-x-2">
+            <span class="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black">
+              !
+            </span>
+            <span class="text-amber-800">Con Novedad</span>
+          </span>
+
+          <!-- Seleccionada (Contorno azul de 2.5px y fondo tenue) -->
+          <span class="flex items-center space-x-2">
+            <span class="w-3.5 h-5 rounded-md border-[2.5px] border-blue-600 bg-blue-50"></span>
+            <span class="text-blue-700">Seleccionada</span>
+          </span>
+        </div>
+
+        <!-- SELECTOR ALTERNATIVO PLEGABLE EN ESCRITORIO -->
+        <div class="hidden lg:block pt-2 border-t border-slate-100">
+          <details class="group bg-slate-50/70 border border-slate-200 rounded-xl overflow-hidden text-xs">
+            <summary class="px-3 py-2 cursor-pointer font-bold text-slate-600 hover:text-slate-900 flex items-center justify-between select-none">
+              <span class="flex items-center space-x-2">
+                <i class="fa-solid fa-layer-group text-slate-400"></i>
+                <span>Selector alternativo</span>
+              </span>
+              <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <div id="gridBotonesEscritorioPlegable" class="p-3 pt-1 border-t border-slate-200/70 space-y-2"></div>
+          </details>
+        </div>
+
+        <!-- BOTÓN DE AUSENCIA DE REPUESTO -->
+        <div id="boxBtnSinRepuesto" class="pt-1 border-t border-slate-100 flex items-center justify-center">
+          <button type="button" id="btnSinRepuesto" onclick="toggleSinRepuesto()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl border border-slate-200 transition-all flex items-center space-x-1.5">
+            <i class="fa-solid fa-ban text-slate-400"></i>
+            <span id="txtBtnSinRepuesto">Marcar: Vehículo sin llanta de repuesto</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ========================================================== -->
+      <!-- COLUMNA DERECHA: RESUMEN + ESPECIFICACIONES + MEDICIONES    -->
+      <!-- Comportamiento: STICKY EN PANTALLAS GRANDES (lg:sticky lg:top-16) -->
+      <!-- ========================================================== -->
+      <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-16 lg:self-start">
+
+        <!-- 1. RESUMEN DE LA POSICIÓN SELECCIONADA (Subido a Columna Derecha) -->
+        <div id="panelResumenPosicion" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 transition-all">
+          <!-- Renderizado dinámicamente -->
+        </div>
+
+        <!-- 2. ESPECIFICACIONES DE LA LLANTA (Subido a Columna Derecha) -->
+        <!-- Sin numeración '2.' -->
+        <div id="moduloEspecificaciones" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+              <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-ring"></i>
+              </div>
+              <span class="text-xs sm:text-sm font-extrabold">Especificaciones de la Llanta</span>
+            </div>
+            <span id="badgeHistorialPrevia" class="text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+              <i class="fa-solid fa-clock-rotate-left mr-1"></i>Catálogo Activo
+            </span>
+          </div>
+
+          <!-- Campos de Especificaciones Compactos y Prácticos -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Marca</label>
+              <input type="text" id="marca" value="MICHELIN" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Diseño</label>
+              <input type="text" id="diseno" value="X MULTI D" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
+              <select id="dimension" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="295/80R22.5" selected>295/80R22.5</option>
+                <option value="11R22.5">11R22.5</option>
+                <option value="12R22.5">12R22.5</option>
+                <option value="315/80R22.5">315/80R22.5</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Vida / Condición</label>
+              <select id="vida" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="Original" selected>Original</option>
+                <option value="Reencauche 1">Reencauche 1</option>
+                <option value="Reencauche 2">Reencauche 2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. MEDICIONES DE LA LLANTA -->
+        <!-- Sin numeración '4.' -->
+        <div id="moduloMediciones" class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+              <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-gauge-high"></i>
+              </div>
+              <span class="text-xs sm:text-sm font-extrabold">Mediciones de la Llanta</span>
+            </div>
+            <input type="hidden" id="posicion" value="1">
+            <span id="badgeLimiteRetiro" class="text-xs bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full border border-slate-200">
+              Límite Retiro: <b id="lblMmRetiroCliente">3.0</b> mm
+            </span>
+          </div>
+
+          <!-- FILA 1 DE MEDICIONES: EXT, CENT, INT EN UNA FILA DE TRES CON SUFIJO 'mm' INTERNO -->
+          <div class="space-y-1.5">
+            <span class="block text-xs font-bold text-slate-600">Profundidades de Labrado (mm):</span>
+            
+            <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+              <!-- Prof. Ext -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Ext *</label>
+                <div class="relative flex items-center">
+                  <input type="number" id="prof_ext" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal"
+                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                    oninput="evaluarSugerenciaCambio();">
+                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
+                </div>
+              </div>
+
+              <!-- Prof. Cent -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Cent *</label>
+                <div class="relative flex items-center">
+                  <input type="number" id="prof_cent" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal"
+                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                    oninput="evaluarSugerenciaCambio();">
+                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
+                </div>
+              </div>
+
+              <!-- Prof. Int -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Int *</label>
+                <div class="relative flex items-center">
+                  <input type="number" id="prof_int" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal"
+                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                    oninput="evaluarSugerenciaCambio();">
+                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FILA 2 DE MEDICIONES: PRESIÓN (PSI) EN FILA APARTE CON SUFIJO 'PSI' INTERNO -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-100">
+            <label class="block text-xs font-bold text-slate-700">Presión Calibrada (PSI) *</label>
+            <div class="flex items-center space-x-3">
+              <div class="relative flex-1 sm:max-w-xs flex items-center">
+                <input type="number" id="psi" step="1" min="0" max="160" value="100" placeholder="100" inputmode="numeric"
+                  class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
+                <span class="absolute right-3 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">PSI</span>
+              </div>
+
+              <div class="text-xs text-slate-500 font-medium hidden sm:block">
+                Presión estándar recomendada
+              </div>
+            </div>
+
+            <!-- CHIPS DE PSI EN ESTILO NEUTRO (Mínimo 12px) -->
+            <div class="pt-2 flex items-center flex-wrap gap-1.5">
+              <span class="text-xs font-bold text-slate-500 mr-1 flex items-center space-x-1">
+                <i class="fa-solid fa-gauge text-slate-400 text-xs"></i>
+                <span>Presets PSI:</span>
+              </span>
+              <button type="button" onclick="setPsiRapido(90)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">90</button>
+              <button type="button" onclick="setPsiRapido(100)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">100</button>
+              <button type="button" onclick="setPsiRapido(105)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">105</button>
+              <button type="button" onclick="setPsiRapido(110)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">110</button>
+              <button type="button" onclick="setPsiRapido(115)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">115</button>
+              <button type="button" onclick="setPsiRapido(120)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">120</button>
+            </div>
+          </div>
+
+          <!-- Alerta Reactiva de Sugerencia de Retiro -->
+          <div id="alertaRetiroInmediato" class="hidden p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs font-bold flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+            <span>¡ALERTA TÉCNICA: Esta llanta alcanzó el límite de retiro (<span id="lblMmAlerta">3.0</span> mm). Requiere cambio programado.</span>
+          </div>
+
+          <!-- NOVEDADES / OBSERVACIÓN CON CHIPS RÁPIDOS NEUTROS & LIMPIAR SIN ROJO INTENSO -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <label class="block text-xs font-semibold text-slate-700">Novedades / Daños / Observaciones</label>
+            <input type="text" id="novedades" placeholder="ej. Desgaste irregular, corte en banda, baja presión, filtración..."
+              class="w-full touch-target px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              oninput="evaluarHabilitarFotoNovedad()">
+
+            <!-- CHIPS RÁPIDOS EN ESTILO NEUTRO SUAVE (Mínimo 12px) -->
+            <div class="flex items-center flex-wrap gap-1.5 pt-0.5">
+              <span class="text-xs text-slate-500 font-bold mr-1">Rápidos:</span>
+              <button type="button" onclick="agregarNovedadRapida('Desgaste irregular')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Desgaste irregular</button>
+              <button type="button" onclick="agregarNovedadRapida('Desgaste escalonado')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Desgaste escalonado</button>
+              <button type="button" onclick="agregarNovedadRapida('Corte en costado')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Corte en costado</button>
+              <button type="button" onclick="agregarNovedadRapida('Corte en banda')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Corte en banda</button>
+              <button type="button" onclick="agregarNovedadRapida('Baja presión')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Baja presión</button>
+              <button type="button" onclick="agregarNovedadRapida('Filtración')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Filtración</button>
+              <button type="button" onclick="agregarNovedadRapida('Daño en pestaña')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Daño en pestaña</button>
+              <!-- Botón Limpiar: Neutro suave sin rojo intenso -->
+              <button type="button" onclick="limpiarNovedades()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 transition-all" title="Borrar observación">
+                <i class="fa-solid fa-eraser mr-1"></i>Limpiar
+              </button>
+            </div>
+
+            <!-- MÓDULO REACTIVO DE EVIDENCIAS FOTOGRÁFICAS -->
+            <div id="boxAdjuntarFotoNovedad" class="hidden pt-2 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-600">
+                <span class="flex items-center space-x-1.5 text-blue-700">
+                  <i class="fa-solid fa-camera"></i>
+                  <span>Evidencias Fotográficas:</span>
+                </span>
+                <span class="text-xs text-slate-400 font-normal">1 o varias fotos</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="simularAdjuntarFoto()" class="flex-1 py-2.5 px-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs rounded-xl border border-blue-200/90 flex items-center justify-center space-x-2 transition-all">
+                  <i class="fa-solid fa-camera-retro text-sm"></i>
+                  <span id="txtBtnCamaraNovedad">Tomar Foto o Subir Evidencia</span>
+                </button>
+              </div>
+
+              <!-- Miniaturas de Fotos -->
+              <div id="previewFotoNovedadBox" class="hidden rounded-xl border border-blue-200 bg-blue-50/40 p-2.5 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span id="lblConteoFotosAdjuntas" class="font-bold text-slate-800">1 imagen adjunta</span>
+                  <span class="text-xs text-emerald-700 font-bold flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-check text-xs"></i>
+                    <span>Lista para guardar</span>
+                  </span>
+                </div>
+                <div id="gridPreviewFotosNovedad" class="flex flex-wrap gap-2 pt-1"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BOTONES DE ACCIÓN (Guardar & Siguiente Llanta) -->
+          <div class="flex items-center space-x-3 pt-2">
+            <button type="button" onclick="guardarPosicionSimulada()" class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
+              <i class="fa-solid fa-circle-check text-base"></i>
+              <span>Guardar & Siguiente Llanta</span>
+            </button>
+            <button type="button" onclick="limpiarCamposMediciones()" class="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-200 transition-all" title="Limpiar mediciones">
+              <i class="fa-solid fa-eraser"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- LÓGICA JAVASCRIPT DE VISTA PREVIA Y SIMULACIÓN                 -->
+  <!-- ============================================================== -->
+  <script>
+    // Estado en memoria de la simulación
+    let posicionActiva = 1;
+    let tipologiaActual = 'Cabezote (6x4)';
+    let posicionesInspeccionadas = new Set();
+    let posicionesConNovedad = new Map(); // pos -> textoNovedad
+    let fotosNovedad = new Map(); // pos -> array de fotos
+    let sinRepuesto = false;
+
+    // Diccionario de normalización de roles (EXT, INT, DIR, REP, SEN)
+    function normalizarRolRueda(rol) {
+      if (!rol) return '';
+      const r = String(rol).trim().toUpperCase();
+      if (r.includes('DIR')) return 'DIR';
+      if (r.includes('EXT')) return 'EXT';
+      if (r.includes('INT')) return 'INT';
+      if (r.includes('REP')) return 'REP';
+      if (r.includes('SEN') || r.includes('LIB')) return 'SEN';
+      return r;
+    }
+
+    // Diccionario de etiquetas visibles normalizado con tildes
+    function normalizarEtiquetaTipo(tipo) {
+      if (!tipo) return 'Rodante';
+      const t = String(tipo).trim().toLowerCase();
+      if (t === 'traccion' || t === 'tracción') return 'Tracción';
+      if (t === 'direccional') return 'Direccional';
+      if (t === 'libre') return 'Libre';
+      if (t === 'repuesto') return 'Repuesto';
+      if (t === 'sencilla') return 'Sencilla';
+      return tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    }
+
+    function obtenerTextoRolLargo(rol) {
+      const r = normalizarRolRueda(rol);
+      if (r === 'EXT') return 'Exterior (EXT)';
+      if (r === 'INT') return 'Interior (INT)';
+      if (r === 'DIR') return 'Direccional (DIR)';
+      if (r === 'REP') return 'Repuesto (REP)';
+      if (r === 'SEN') return 'Sencilla (SEN)';
+      return rol || 'Estándar';
+    }
+
+    // Catálogo base de esquemas para simulación independiente
+    const esquemasPorTipologia = {
+      'Cabezote (6x4)': {
+        total: 10,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] },
+          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 7, lado: 'izq', rol: 'ext' }, { pos: 8, lado: 'izq', rol: 'int' }, { pos: 9, lado: 'der', rol: 'int' }, { pos: 10, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Camión Sencillo (4x2)': {
+        total: 6,
+        posiciones: [1, 2, 3, 4, 5, 6],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Volqueta Dobletroque (6x4)': {
+        total: 10,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] },
+          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 7, lado: 'izq', rol: 'ext' }, { pos: 8, lado: 'izq', rol: 'int' }, { pos: 9, lado: 'der', rol: 'int' }, { pos: 10, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Trailer (2 Ejes - 8 Llantas + Repuesto)': {
+        total: 9,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 99],
+        esquema: [
+          { eje: 1, tipo: 'libre', posiciones: [{ pos: 1, lado: 'izq', rol: 'ext' }, { pos: 2, lado: 'izq', rol: 'int' }, { pos: 3, lado: 'der', rol: 'int' }, { pos: 4, lado: 'der', rol: 'ext' }] },
+          { eje: 2, tipo: 'libre', posiciones: [{ pos: 5, lado: 'izq', rol: 'ext' }, { pos: 6, lado: 'izq', rol: 'int' }, { pos: 7, lado: 'der', rol: 'int' }, { pos: 8, lado: 'der', rol: 'ext' }] },
+          { eje: 99, tipo: 'repuesto', posiciones: [{ pos: 99, lado: 'centro', rol: 'rep' }] }
+        ]
+      },
+      'Cabezote (Cuatro Manos / 8x4)': {
+        total: 12,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'direccional', posiciones: [{ pos: 3, lado: 'izq', rol: 'direccional' }, { pos: 4, lado: 'der', rol: 'direccional' }] },
+          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 5, lado: 'izq', rol: 'ext' }, { pos: 6, lado: 'izq', rol: 'int' }, { pos: 7, lado: 'der', rol: 'int' }, { pos: 8, lado: 'der', rol: 'ext' }] },
+          { eje: 4, tipo: 'traccion', posiciones: [{ pos: 9, lado: 'izq', rol: 'ext' }, { pos: 10, lado: 'izq', rol: 'int' }, { pos: 11, lado: 'der', rol: 'int' }, { pos: 12, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Liviano / Camioneta (4x2)': {
+        total: 4,
+        posiciones: [1, 2, 3, 4],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'sencilla' }, { pos: 4, lado: 'der', rol: 'sencilla' }] }
+        ]
+      }
+    };
+
+    function obtenerConfigActual() {
+      return esquemasPorTipologia[tipologiaActual] || esquemasPorTipologia['Cabezote (6x4)'];
+    }
+
+    // Coordenadas SVG
+    function distribuirEjeReferencia(eje) {
+      const posiciones = eje.posiciones || [];
+      const izquierda = posiciones.filter(p => p.lado === 'izq');
+      const derecha = posiciones.filter(p => p.lado === 'der');
+
+      if (izquierda.length === 1 && derecha.length === 1) {
+        return [
+          { posicion: izquierda[0], x: 112, y: 12 },
+          { posicion: derecha[0], x: 408, y: 12 }
+        ];
+      }
+
+      if (izquierda.length === 2 && derecha.length === 2) {
+        function obtenerUnica(lado, rol) {
+          const match = lado.filter(p => String(p.rol).toUpperCase().includes(rol));
+          if (match.length === 1) return match[0];
+          return (rol === 'EXT') ? lado[0] : lado[1];
+        }
+        return [
+          { posicion: obtenerUnica(izquierda, 'EXT'), x: 96, y: 12 },
+          { posicion: obtenerUnica(izquierda, 'INT'), x: 150, y: 12 },
+          { posicion: obtenerUnica(derecha, 'INT'), x: 370, y: 12 },
+          { posicion: obtenerUnica(derecha, 'EXT'), x: 424, y: 12 }
+        ];
+      }
+
+      const res = [];
+      izquierda.forEach((p, idx) => {
+        const x = (izquierda.length === 1) ? 112 : (96 + idx * 54);
+        res.push({ posicion: p, x, y: 12 });
+      });
+      derecha.forEach((p, idx) => {
+        const x = (derecha.length === 1) ? 408 : (370 + idx * 54);
+        res.push({ posicion: p, x, y: 12 });
+      });
+      return res;
+    }
+
+    // ==============================================================
+    // GENERACIÓN DE SVG DE EJES (Fiel a los nuevos requerimientos)
+    // 1. Neumáticos SIEMPRE en grafito (sin relleno verde/naranja y sin halo)
+    // 2. Insignia check verde para registrada, '!' ámbar para novedad
+    // 3. Medallón numérico exterior con el color del estado
+    // 4. Selección: contorno azul 2.5px más fondo azul muy tenue #EFF6FF
+    // 5. Roles en mayúsculas (EXT, INT, DIR), 10.5px, sans-serif
+    // ==============================================================
+    function generarSvgFilaEje(eje, posActual) {
+      const items = distribuirEjeReferencia(eje);
+      const ejeId = eje.eje;
+
+      let svg = `
+        <svg viewBox="0 0 560 158" width="100%" height="auto" class="max-w-[560px] overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Gradiente de Caucho Grafito Neutro Fijo (Siempre usado para todas las llantas) -->
+            <linearGradient id="gradRubber_eje_${ejeId}" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="15%" stop-color="#334155"/>
+              <stop offset="50%" stop-color="#1E293B"/>
+              <stop offset="85%" stop-color="#334155"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+
+            <!-- Gradiente Cilíndrico Metálico del Eje Central -->
+            <linearGradient id="gradAxleTube_eje_${ejeId}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#94A3B8"/>
+              <stop offset="25%" stop-color="#E2E8F0"/>
+              <stop offset="55%" stop-color="#CBD5E1"/>
+              <stop offset="85%" stop-color="#94A3B8"/>
+              <stop offset="100%" stop-color="#64748B"/>
+            </linearGradient>
+
+            <linearGradient id="gradAcopleCenter_eje_${ejeId}" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F1F5F9"/>
+              <stop offset="50%" stop-color="#CBD5E1"/>
+              <stop offset="100%" stop-color="#94A3B8"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Tubo Metálico Horizontal de Chasis -->
+          <g id="eje_metalico_${ejeId}">
+            <line x1="120" y1="58.5" x2="440" y2="58.5" stroke="#CBD5E1" stroke-width="2" opacity="0.6"/>
+            <rect x="120" y="52.5" width="320" height="6.5" rx="1.5" fill="url(#gradAxleTube_eje_${ejeId})" stroke="#94A3B8" stroke-width="0.75"/>
+            <rect x="162" y="50" width="3.5" height="11.5" rx="1" fill="#E2E8F0" stroke="#64748B" stroke-width="0.75"/>
+            <rect x="394" y="50" width="3.5" height="11.5" rx="1" fill="#E2E8F0" stroke="#64748B" stroke-width="0.75"/>
+            <rect x="267" y="47.5" width="26" height="16.5" rx="3.5" fill="url(#gradAcopleCenter_eje_${ejeId})" stroke="#64748B" stroke-width="1.2"/>
+            <circle cx="280" cy="55.75" r="7.5" fill="#E2E8F0" stroke="#475569" stroke-width="1.2"/>
+            <circle cx="280" cy="55.75" r="2.5" fill="#334155"/>
+            <circle cx="270" cy="50.5" r="1.2" fill="#475569"/>
+            <circle cx="290" cy="50.5" r="1.2" fill="#475569"/>
+            <circle cx="270" cy="61" r="1.2" fill="#475569"/>
+            <circle cx="290" cy="61" r="1.2" fill="#475569"/>
+          </g>
+      `;
+
+      items.forEach(item => {
+        const p = item.posicion;
+        const x = item.x;
+        const y = item.y; // 12
+        const esSeleccionada = (p.pos === posActual);
+        const tieneNovedad = posicionesConNovedad.has(p.pos);
+        const esRegistrada = posicionesInspeccionadas.has(p.pos);
+        const textoNovedad = tieneNovedad ? posicionesConNovedad.get(p.pos) : '';
+
+        // Caucho SIEMPRE en grafito, sin halos ni tintes de color
+        const fillCaucho = `url(#gradRubber_eje_${ejeId})`;
+        const strokeCaucho = '#0F172A';
+        const strokeWidthCaucho = '1.25';
+        const colorSurcos = '#0F172A';
+
+        let ariaTitle = `Llanta posición ${p.pos}, rol ${normalizarRolRueda(p.rol)}`;
+        if (tieneNovedad) ariaTitle += ` - Con Novedad: ${textoNovedad}`;
+        else if (esRegistrada) ariaTitle += ` - Registrada`;
+
+        svg += `
+          <g id="neumatico_node_${p.pos}" class="tire-interactive-node" onclick="seleccionarPosicion(${p.pos})" role="button" tabindex="0" aria-label="${ariaTitle}">
+            <title>${ariaTitle}</title>
+
+            <!-- A. Anillo y Fondo de Selección Activa: Contorno azul 2.5px más fondo azul muy tenue (#EFF6FF) -->
+            ${esSeleccionada ? `
+              <rect x="${x - 5}" y="${y - 5}" width="50" height="102" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="2.5" class="tire-selection-ring"/>
+            ` : ''}
+
+            <!-- B. Sombra suave bajo el neumático -->
+            <ellipse cx="${x + 20}" cy="${y + 93}" rx="17" ry="3.5" fill="#000000" opacity="0.18"/>
+
+            <!-- C. Silueta Principal del Neumático (SIEMPRE GRAFITO) -->
+            <rect x="${x}" y="${y}" width="40" height="92" rx="8" fill="${fillCaucho}" stroke="${strokeCaucho}" stroke-width="${strokeWidthCaucho}" class="tire-rubber-body"/>
+
+            <!-- D. Surcos Longitudinales -->
+            <line x1="${x + 13}" y1="${y + 5}" x2="${x + 13}" y2="${y + 87}" stroke="${colorSurcos}" stroke-width="2" stroke-linecap="round"/>
+            <line x1="${x + 27}" y1="${y + 5}" x2="${x + 27}" y2="${y + 87}" stroke="${colorSurcos}" stroke-width="2" stroke-linecap="round"/>
+        `;
+
+        // Ranuras en hombros
+        for (let cutY = y + 10; cutY <= y + 82; cutY += 9) {
+          svg += `
+            <line x1="${x + 2}" y1="${cutY}" x2="${x + 10}" y2="${cutY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.85"/>
+            <line x1="${x + 30}" y1="${cutY}" x2="${x + 38}" y2="${cutY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.85"/>
+          `;
+        }
+
+        // Tacos centrales
+        for (let tY = y + 14; tY <= y + 78; tY += 14) {
+          svg += `
+            <line x1="${x + 16}" y1="${tY}" x2="${x + 24}" y2="${tY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.6"/>
+          `;
+        }
+
+        // ============================================================
+        // INSIGNIAS SUPERIORES DE ESTADO (Check verde o '!' ámbar)
+        // ============================================================
+        if (tieneNovedad) {
+          svg += `
+            <!-- Insignia: '!' Ámbar para Con Novedad -->
+            <g id="badge_warn_${p.pos}">
+              <circle cx="${x + 32}" cy="${y + 8.5}" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.6"/>
+              <line x1="${x + 32}" y1="${y + 4.8}" x2="${x + 32}" y2="${y + 9}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="${x + 32}" cy="${y + 11.8}" r="1" fill="#FFFFFF"/>
+            </g>
+          `;
+        } else if (esRegistrada) {
+          svg += `
+            <!-- Insignia: Check Verde para Registrada -->
+            <g id="badge_ok_${p.pos}">
+              <circle cx="${x + 32}" cy="${y + 8.5}" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.6"/>
+              <path d="M ${x + 29.5} ${y + 8.5} L ${x + 31.5} ${y + 10.5} L ${x + 34.5} ${y + 6.8}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          `;
+        }
+
+        // ============================================================
+        // MEDALLÓN NUMÉRICO EXTERIOR CON EL COLOR DEL ESTADO
+        // Registrada: #ECFDF5 / #10B981
+        // Con Novedad: #FFFBEB / #F59E0B
+        // Pendiente: #F8FAFC / #E2E8F0
+        // Selección: Anillo exterior azul de 2.5px si está seleccionada
+        // ============================================================
+        const cxNum = x + 20;
+        const cyNum = 125;
+        let fillCirculo = '#F8FAFC';
+        let strokeCirculo = '#CBD5E1';
+        let strokeWidthNum = '1.2';
+        let fillTexto = '#1E293B';
+
+        if (tieneNovedad) {
+          fillCirculo = '#FFFBEB';
+          strokeCirculo = '#F59E0B';
+          strokeWidthNum = '2';
+          fillTexto = '#B45309';
+        } else if (esRegistrada) {
+          fillCirculo = '#ECFDF5';
+          strokeCirculo = '#10B981';
+          strokeWidthNum = '2';
+          fillTexto = '#047857';
+        }
+
+        // Selección resalta con anillo azul prominente de 2.5px visible en cualquier estado
+        let ringSeleccionNum = '';
+        if (esSeleccionada) {
+          ringSeleccionNum = `
+            <circle cx="${cxNum}" cy="${cyNum}" r="15" fill="none" stroke="#2563EB" stroke-width="2.5" opacity="0.95"/>
+          `;
+        }
+
+        svg += `
+          <!-- Medallón Numérico Exterior -->
+          ${ringSeleccionNum}
+          <circle cx="${cxNum}" cy="${cyNum}" r="12" fill="${fillCirculo}" stroke="${strokeCirculo}" stroke-width="${strokeWidthNum}"/>
+          <text x="${cxNum}" y="${cyNum + 0.5}" font-size="11.5" font-weight="800" fill="${fillTexto}" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="central">
+            ${p.pos}
+          </text>
+
+          <!-- ROLES BAJO LA RUEDA: EXT, INT, DIR en mayúsculas, 10.5px, sans-serif -->
+          <text x="${cxNum}" y="148" font-size="10.5" font-weight="700" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" letter-spacing="0.5">
+            ${normalizarRolRueda(p.rol)}
+          </text>
+
+        </g>
+        `;
+      });
+
+      svg += `</svg>`;
+      return svg;
+    }
+
+    // SVG Repuesto Fiel
+    function generarCajaRepuestoHtml(pos, rol, posActual) {
+      const esSeleccionada = (pos === posActual);
+      const tieneNovedad = posicionesConNovedad.has(pos);
+      const esRegistrada = posicionesInspeccionadas.has(pos);
+
+      const div = document.createElement('div');
+      div.className = `tire-repuesto-card p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center ${
+        esSeleccionada ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-500 shadow-sm' : 'bg-[#F8FAFC] border-slate-200 hover:bg-slate-100'
+      } ${sinRepuesto ? 'opacity-30 line-through' : ''}`;
+      div.onclick = () => seleccionarPosicion(pos);
+
+      div.innerHTML = `
+        <svg viewBox="0 0 40 92" width="28" height="64" class="overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gradRubberRep_${pos}" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="20%" stop-color="#334155"/>
+              <stop offset="50%" stop-color="#1E293B"/>
+              <stop offset="80%" stop-color="#334155"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="40" height="92" rx="8" fill="url(#gradRubberRep_${pos})" stroke="#0F172A" stroke-width="1.25"/>
+          <line x1="13" y1="5" x2="13" y2="87" stroke="#0F172A" stroke-width="2"/>
+          <line x1="27" y1="5" x2="27" y2="87" stroke="#0F172A" stroke-width="2"/>
+          ${tieneNovedad ? `
+            <circle cx="32" cy="8.5" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5"/>
+            <line x1="32" y1="5" x2="32" y2="9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="32" cy="11.5" r="0.9" fill="#FFFFFF"/>
+          ` : esRegistrada ? `
+            <circle cx="32" cy="8.5" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5"/>
+            <path d="M 29.5 8.5 L 31.5 10.5 L 34.5 6.8" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          ` : ''}
+        </svg>
+
+        <span class="mt-1.5 font-sans text-xs font-black flex items-center space-x-1 ${
+          tieneNovedad ? 'text-amber-700' : esRegistrada ? 'text-emerald-700' : 'text-slate-800'
+        }">
+          <span>${pos}</span>
+          ${tieneNovedad ? '<span class="text-[10px]">!</span>' : esRegistrada ? '<span class="text-[10px]">✓</span>' : ''}
+        </span>
+        <span class="text-[10px] font-bold text-slate-500 uppercase">REP</span>
+      `;
+
+      return div;
+    }
+
+    // ==============================================================
+    // RENDERIZADO DEL RESUMEN EN COLUMNA DERECHA
+    // Muestra: 'Eje 2 · Lado derecho · Exterior'
+    // Muestra 'Registrada' UNA SOLA VEZ
+    // ==============================================================
+    function renderizarResumenPosicion(posActual) {
+      const panel = document.getElementById('panelResumenPosicion');
+      if (!panel) return;
+
+      const cfg = obtenerConfigActual();
+      let posData = null;
+      let ejeData = null;
+
+      for (const e of cfg.esquema) {
+        for (const p of (e.posiciones || [])) {
+          if (p.pos === posActual) {
+            posData = p;
+            ejeData = e;
+            break;
+          }
+        }
+        if (posData) break;
+      }
+
+      if (!posData || !ejeData) {
+        panel.innerHTML = `
+          <div class="flex items-center space-x-2 text-slate-500 font-bold text-xs">
+            <span>Posición ${posActual} activa</span>
+          </div>
+        `;
+        return;
+      }
+
+      const esRep = (ejeData.eje === 99 || (ejeData.tipo || '').toLowerCase() === 'repuesto');
+      const tipoNormalizado = normalizarEtiquetaTipo(ejeData.tipo);
+      const nombreEje = esRep ? 'Soporte de Repuesto' : `Eje ${ejeData.eje} · ${tipoNormalizado}`;
+      const ladoTexto = posData.lado === 'izq' ? 'Lado Izquierdo' : posData.lado === 'der' ? 'Lado Derecho' : 'Soporte Central';
+      const rolTexto = obtenerTextoRolLargo(posData.rol);
+
+      const tieneNovedad = posicionesConNovedad.has(posActual);
+      const esRegistrada = posicionesInspeccionadas.has(posActual);
+      const textoNovedad = tieneNovedad ? posicionesConNovedad.get(posActual) : '';
+
+      // Badge de estado único en el resumen
+      let badgeEstadoHtml = '';
+      if (tieneNovedad) {
+        badgeEstadoHtml = `
+          <span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center space-x-1.5 shadow-xs">
+            <span class="w-3.5 h-3.5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">!</span>
+            <span>Con Novedad</span>
+          </span>
+        `;
+      } else if (esRegistrada) {
+        badgeEstadoHtml = `
+          <span class="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center space-x-1.5 shadow-xs">
+            <i class="fa-solid fa-check text-emerald-600 text-xs"></i>
+            <span>Registrada</span>
+          </span>
+        `;
+      } else {
+        badgeEstadoHtml = `
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center space-x-1">
+            <i class="fa-solid fa-clock text-slate-400 text-[10px]"></i>
+            <span>Pendiente</span>
+          </span>
+        `;
+      }
+
+      panel.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-base font-mono shadow-md shadow-blue-500/20">
+              ${posActual}
+            </span>
+            <div>
+              <div class="font-extrabold text-slate-900 text-xs sm:text-sm">
+                ${nombreEje} · ${ladoTexto}
+              </div>
+              <div class="text-xs text-slate-500 font-medium">
+                Posición: <b class="text-slate-800">${rolTexto}</b>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            ${badgeEstadoHtml}
+          </div>
+        </div>
+
+        ${tieneNovedad ? `
+          <div class="mt-2.5 text-xs text-amber-900 font-bold bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xs"></i>
+            <span>Novedad: ${textoNovedad}</span>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // ==============================================================
+    // RENDERIZADO DEL DIAGRAMA COMPLETO DE EJES
+    // ==============================================================
+    function renderizarChasis() {
+      const contenedor = document.getElementById('contenedorChasisEjes');
+      if (!contenedor) return;
+      contenedor.innerHTML = '';
+
+      const cfg = obtenerConfigActual();
+      const posActual = posicionActiva;
+
+      // Actualizar contador y progreso
+      const totalPos = cfg.posiciones.length;
+      const regCount = cfg.posiciones.filter(p => posicionesInspeccionadas.has(p)).length;
+      document.getElementById('badgeContadorProgreso').textContent = `${regCount} de ${totalPos}`;
+      document.getElementById('barraProgresoChasis').style.width = `${(regCount / totalPos) * 100}%`;
+      document.getElementById('lblPosPill').textContent = posActual;
+
+      const ejesRodantes = cfg.esquema.filter(e => e.eje !== 99 && (e.tipo || '').toLowerCase() !== 'repuesto');
+      const ejeRepuesto = cfg.esquema.find(e => e.eje === 99 || (e.tipo || '').toLowerCase() === 'repuesto');
+
+      ejesRodantes.forEach((eje, idx) => {
+        const filaDiv = document.createElement('div');
+        filaDiv.className = `space-y-1.5 pb-3 ${idx < ejesRodantes.length - 1 ? 'border-b border-slate-100' : ''}`;
+
+        // Encabezado del eje: Diccionario de etiquetas visibles corregido (Tracción, Direccional, Libre)
+        const headerFila = document.createElement('div');
+        headerFila.className = 'flex items-center space-x-2 text-xs text-slate-500 pl-1';
+        const tipoNormalizado = normalizarEtiquetaTipo(eje.tipo);
+
+        headerFila.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span class="font-black text-slate-800">Eje ${eje.eje}</span>
+          <span class="text-slate-300">•</span>
+          <span class="font-bold text-slate-600">${tipoNormalizado}</span>
+        `;
+        filaDiv.appendChild(headerFila);
+
+        // SVG del eje
+        const svgBox = document.createElement('div');
+        svgBox.className = 'w-full flex justify-center';
+        svgBox.innerHTML = generarSvgFilaEje(eje, posActual);
+        filaDiv.appendChild(svgBox);
+
+        contenedor.appendChild(filaDiv);
+      });
+
+      // Repuesto
+      const secRepuesto = document.getElementById('seccionRepuestoChasis');
+      const cajaRepuesto = document.getElementById('contenedorCajaRepuestoChasis');
+      const boxBtnSinRep = document.getElementById('boxBtnSinRepuesto');
+
+      if (ejeRepuesto && ejeRepuesto.posiciones && ejeRepuesto.posiciones.length > 0) {
+        secRepuesto.classList.remove('hidden');
+        boxBtnSinRep.classList.remove('hidden');
+        cajaRepuesto.innerHTML = '';
+        ejeRepuesto.posiciones.forEach(p => {
+          cajaRepuesto.appendChild(generarCajaRepuestoHtml(p.pos, p.rol || 'REP', posActual));
+        });
+      } else {
+        secRepuesto.classList.add('hidden');
+        boxBtnSinRep.classList.add('hidden');
+      }
+
+      // Renderizar resumen de la posición seleccionada
+      renderizarResumenPosicion(posActual);
+
+      // Renderizar carrusel móvil y selector alternativo escritorio
+      renderizarSelectoresAuxiliares();
+    }
+
+    function renderizarSelectoresAuxiliares() {
+      const cfg = obtenerConfigActual();
+      const posActual = posicionActiva;
+
+      // 1. Móvil
+      const mobCont = document.getElementById('carruselLlantasMobile');
+      if (mobCont) {
+        mobCont.innerHTML = '';
+        cfg.posiciones.forEach(p => {
+          const esSel = (p === posActual);
+          const tieneNov = posicionesConNovedad.has(p);
+          const esReg = posicionesInspeccionadas.has(p);
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `flex-shrink-0 w-11 h-12 rounded-xl border flex flex-col items-center justify-center font-bold text-xs transition-all ${
+            esSel ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300' :
+            tieneNov ? 'bg-amber-50 text-amber-900 border-amber-300' :
+            esReg ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+            'bg-white text-slate-700 border-slate-200'
+          }`;
+          btn.onclick = () => seleccionarPosicion(p);
+          btn.innerHTML = `
+            <span>${p}</span>
+            <span class="text-[10px] opacity-80">${tieneNov ? '!' : esReg ? '✓' : '•'}</span>
+          `;
+          mobCont.appendChild(btn);
+        });
+      }
+
+      // 2. Escritorio dentro de bloque plegable
+      const dskCont = document.getElementById('gridBotonesEscritorioPlegable');
+      if (dskCont) {
+        dskCont.innerHTML = '';
+        const flexBox = document.createElement('div');
+        flexBox.className = 'flex flex-wrap gap-1.5';
+        cfg.posiciones.forEach(p => {
+          const esSel = (p === posActual);
+          const tieneNov = posicionesConNovedad.has(p);
+          const esReg = posicionesInspeccionadas.has(p);
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+            esSel ? 'bg-blue-600 text-white border-blue-600' :
+            tieneNov ? 'bg-amber-50 text-amber-900 border-amber-300' :
+            esReg ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+            'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+          }`;
+          btn.onclick = () => seleccionarPosicion(p);
+          btn.innerHTML = `Llanta ${p} ${tieneNov ? '(!)' : esReg ? '(✓)' : ''}`;
+          flexBox.appendChild(btn);
+        });
+        dskCont.appendChild(flexBox);
+      }
+    }
+
+    // ==============================================================
+    // INTERACCIÓN Y NAVEGACIÓN
+    // ==============================================================
+    function seleccionarPosicion(p) {
+      posicionActiva = p;
+      document.getElementById('posicion').value = p;
+
+      // Cargar valores simulados o limpiar
+      if (posicionesInspeccionadas.has(p)) {
+        document.getElementById('prof_ext').value = '11.5';
+        document.getElementById('prof_cent').value = '11.2';
+        document.getElementById('prof_int').value = '11.0';
+        document.getElementById('psi').value = '105';
+      } else {
+        document.getElementById('prof_ext').value = '';
+        document.getElementById('prof_cent').value = '';
+        document.getElementById('prof_int').value = '';
+        document.getElementById('psi').value = '100';
+      }
+
+      const nov = posicionesConNovedad.get(p) || '';
+      document.getElementById('novedades').value = nov;
+      evaluarHabilitarFotoNovedad();
+
+      renderizarChasis();
+    }
+
+    function irPosicionAnterior() {
+      const cfg = obtenerConfigActual();
+      const idx = cfg.posiciones.indexOf(posicionActiva);
+      if (idx > 0) seleccionarPosicion(cfg.posiciones[idx - 1]);
+      else seleccionarPosicion(cfg.posiciones[cfg.posiciones.length - 1]);
+    }
+
+    function irPosicionSiguiente() {
+      const cfg = obtenerConfigActual();
+      const idx = cfg.posiciones.indexOf(posicionActiva);
+      if (idx !== -1 && idx + 1 < cfg.posiciones.length) seleccionarPosicion(cfg.posiciones[idx + 1]);
+      else seleccionarPosicion(cfg.posiciones[0]);
+    }
+
+    function setPsiRapido(val) {
+      document.getElementById('psi').value = val;
+    }
+
+    function agregarNovedadRapida(texto) {
+      const input = document.getElementById('novedades');
+      const val = input.value.trim();
+      if (!val) input.value = texto;
+      else if (!val.includes(texto)) input.value = `${val}, ${texto}`;
+      evaluarHabilitarFotoNovedad();
+    }
+
+    function limpiarNovedades() {
+      document.getElementById('novedades').value = '';
+      evaluarHabilitarFotoNovedad();
+    }
+
+    function evaluarHabilitarFotoNovedad() {
+      const val = document.getElementById('novedades').value.trim();
+      const box = document.getElementById('boxAdjuntarFotoNovedad');
+      if (val.length > 0) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    }
+
+    function simularAdjuntarFoto() {
+      const p = posicionActiva;
+      const list = fotosNovedad.get(p) || [];
+      list.push('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="%232563EB"><rect width="60" height="60" rx="8" fill="%23DBEAFE"/><text x="30" y="35" font-size="10" text-anchor="middle" fill="%231E40AF">FOTO</text></svg>');
+      fotosNovedad.set(p, list);
+      actualizarMiniaturasFotos(p);
+    }
+
+    function actualizarMiniaturasFotos(p) {
+      const list = fotosNovedad.get(p) || [];
+      const box = document.getElementById('previewFotoNovedadBox');
+      const grid = document.getElementById('gridPreviewFotosNovedad');
+      const lbl = document.getElementById('lblConteoFotosAdjuntas');
+
+      if (list.length > 0) {
+        box.classList.remove('hidden');
+        lbl.textContent = `${list.length} imagen(es) adjunta(s)`;
+        grid.innerHTML = '';
+        list.forEach((img, i) => {
+          const thumb = document.createElement('div');
+          thumb.className = 'w-12 h-12 rounded-lg bg-blue-100 border border-blue-300 flex items-center justify-center text-[10px] font-bold text-blue-800';
+          thumb.textContent = `IMG ${i + 1}`;
+          grid.appendChild(thumb);
+        });
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    function guardarPosicionSimulada() {
+      const p = posicionActiva;
+      posicionesInspeccionadas.add(p);
+      const nov = document.getElementById('novedades').value.trim();
+      if (nov) posicionesConNovedad.set(p, nov);
+      else posicionesConNovedad.delete(p);
+
+      irPosicionSiguiente();
+    }
+
+    function limpiarCamposMediciones() {
+      document.getElementById('prof_ext').value = '';
+      document.getElementById('prof_cent').value = '';
+      document.getElementById('prof_int').value = '';
+      document.getElementById('psi').value = '100';
+      document.getElementById('novedades').value = '';
+      evaluarHabilitarFotoNovedad();
+    }
+
+    function toggleSinRepuesto() {
+      sinRepuesto = !sinRepuesto;
+      const btnTxt = document.getElementById('txtBtnSinRepuesto');
+      if (sinRepuesto) btnTxt.textContent = 'Repuesto deshabilitado (Vehículo sin repuesto)';
+      else btnTxt.textContent = 'Marcar: Vehículo sin llanta de repuesto';
+      renderizarChasis();
+    }
+
+    function evaluarSugerenciaCambio() {
+      const ext = parseFloat(document.getElementById('prof_ext').value) || 0;
+      const cent = parseFloat(document.getElementById('prof_cent').value) || 0;
+      const int = parseFloat(document.getElementById('prof_int').value) || 0;
+      const alerta = document.getElementById('alertaRetiroInmediato');
+      if ((ext > 0 && ext <= 3.0) || (cent > 0 && cent <= 3.0) || (int > 0 && int <= 3.0)) {
+        alerta.classList.remove('hidden');
+      } else {
+        alerta.classList.add('hidden');
+      }
+    }
+
+    // ==============================================================
+    // CONTROLADORES DE PRUEBAS DE AUDITORÍA (Escenarios 0, 1, 2)
+    // ==============================================================
+    function cambiarTipologiaPrueba(tip) {
+      tipologiaActual = tip;
+      document.getElementById('lblTipologiaNombre').value = tip;
+      document.getElementById('lblTituloConfiguracion').textContent = tip;
+      const cfg = obtenerConfigActual();
+      posicionActiva = cfg.posiciones[0];
+      posicionesInspeccionadas.clear();
+      posicionesConNovedad.clear();
+      fotosNovedad.clear();
+      renderizarChasis();
+    }
+
+    function aplicarEscenario(esc) {
+      const cfg = obtenerConfigActual();
+      posicionesInspeccionadas.clear();
+      posicionesConNovedad.clear();
+      fotosNovedad.clear();
+
+      ['btnEsc0', 'btnEsc1', 'btnEsc2'].forEach(id => {
+        const b = document.getElementById(id);
+        b.className = 'px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700';
+      });
+
+      if (esc === 0) {
+        // 0 Llantas registradas
+        document.getElementById('btnEsc0').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
+        posicionActiva = cfg.posiciones[0];
+      } else if (esc === 1) {
+        // Algunas registradas y con novedad
+        document.getElementById('btnEsc1').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
+        // Registramos primeras 2
+        if (cfg.posiciones.length >= 1) posicionesInspeccionadas.add(cfg.posiciones[0]);
+        if (cfg.posiciones.length >= 2) posicionesInspeccionadas.add(cfg.posiciones[1]);
+        // Posición 3 con novedad
+        if (cfg.posiciones.length >= 3) {
+          posicionesInspeccionadas.add(cfg.posiciones[2]);
+          posicionesConNovedad.set(cfg.posiciones[2], 'Corte superficial en banda');
+        }
+        // Seleccionamos posición 4 (o la última)
+        posicionActiva = cfg.posiciones[Math.min(3, cfg.posiciones.length - 1)];
+      } else if (esc === 2) {
+        // Todas registradas
+        document.getElementById('btnEsc2').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
+        cfg.posiciones.forEach((p, idx) => {
+          posicionesInspeccionadas.add(p);
+          if (idx === 1) posicionesConNovedad.set(p, 'Desgaste irregular hombro');
+        });
+        // Posición 1 activa seleccionada
+        posicionActiva = cfg.posiciones[0];
+      }
+
+      seleccionarPosicion(posicionActiva);
+    }
+
+    // Inicializar al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      aplicarEscenario(1); // Iniciar con escenario ilustrativo 'Algunas (con novedad)'
+    });
+  </script>
+</body>
+</html>

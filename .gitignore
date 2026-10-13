@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite temporal WAL & SHM files (la base principal data/inspecciones.db si se versiona)
+*.db-wal
+*.db-shm
+
+# Pytest & Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de prueba temporales en la raíz
+/*.png
+/test_*.pdf
+tirecheck.db

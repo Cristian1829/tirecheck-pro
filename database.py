@@ -1,0 +1,1572 @@
+import sqlite3
+import pandas as pd
+import unicodedata
+import os
+import re
+from datetime import datetime
+
+_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+_DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
+_DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
+DB_PATH = _DB_DATA if os.path.exists(_DB_DATA) else _DB_ROOT
+
+def normalizar_texto(texto):
+    if not isinstance(texto, str):
+        return str(texto)
+    nfkd = unicodedata.normalize('NFKD', texto)
+    sin_tildes = ''.join([c for c in nfkd if not unicodedata.combining(c)])
+    limpio = re.sub(r'[\._\-]+', ' ', sin_tildes)
+    limpio = re.sub(r'\s+', ' ', limpio)
+    return limpio.strip().lower()
+
+def clasificar_vehiculo(v):
+    v_str = str(v).strip()
+    if len(v_str) > 0 and v_str[0].isalpha():
+        letters = sum(1 for c in v_str if c.isalpha())
+        if letters == 3:
+            return 'Cabezote'
+        elif letters == 1:
+            return 'Trailer'
+    return 'Desconocido'
+
+def to_float(val, default=0.0):
+    try:
+        if pd.isna(val) or val is None or str(val).strip() == '':
+            return default
+        return float(str(val).replace(',', '.'))
+    except (ValueError, TypeError):
+        return default
+
+def to_int(val, default=0):
+    try:
+        if pd.isna(val) or val is None or str(val).strip() == '':
+            return default
+        return int(float(str(val).replace(',', '.')))
+    except (ValueError, TypeError):
+        return default
+
+def get_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode = WAL")
+    return conn
+
+def inicializar_bd():
+    with get_connection() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS inspecciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT,
+                cliente TEXT,
+                subcliente TEXT,
+                tipo_operacion TEXT,
+                placa TEXT NOT NULL,
+                posicion INTEGER NOT NULL,
+                kilometraje REAL,
+                tipologia TEXT,
+                marca TEXT,
+                diseno TEXT,
+                dimension TEXT,
+                vida TEXT,
+                banda_reen TEXT,
+                prof_ext REAL,
+                prof_cent REAL,
+                prof_int REAL,
+                psi REAL,
+                novedades TEXT,
+                precio REAL,
+                prof_inicial REAL,
+                km_montaje REAL,
+                foto_novedad TEXT,
+                fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Migración automática en caso de que la tabla ya exista sin los nuevos campos
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(inspecciones)")
+        cols_existentes = [row[1] for row in cursor.fetchall()]
+        
+        nuevas_columnas = [
+            ("cliente", "TEXT"),
+            ("subcliente", "TEXT"),
+            ("tipo_operacion", "TEXT"),
+            ("numero_interno", "TEXT"),
+            ("usuario_registro", "TEXT"),
+            ("foto_novedad", "TEXT")
+        ]
+        for col, tipo in nuevas_columnas:
+            if col not in cols_existentes:
+                cursor.execute(f"ALTER TABLE inspecciones ADD COLUMN {col} {tipo}")
+
+        # Tabla de Usuarios con roles y clientes asignados
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                nombre_completo TEXT NOT NULL,
+                rol TEXT NOT NULL DEFAULT 'inspector', -- 'admin', 'inspector'
+                cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo o vacío para todos
+                activo INTEGER DEFAULT 1,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Insertar usuarios por defecto si no existen
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
+                VALUES ('admin', 'admin123', 'Administrador General', 'admin', '')
+            """)
+            cursor.execute("""
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
+                VALUES ('inspector1', '1234', 'Juan Pérez (Inspector)', 'inspector', '')
+            """)
+
+        # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS configuracion_clientes (
+                cliente TEXT PRIMARY KEY,
+                limite_retiro_mm REAL DEFAULT 3.0,
+                observaciones TEXT,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Tabla de Catálogo de Llantas Nuevas y Reencauches (con profundidad inicial de fábrica)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_modelos_llantas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo_llanta TEXT NOT NULL, /* Nueva / Reencauche */
+                marca TEXT NOT NULL,
+                diseno TEXT NOT NULL,
+                dimension TEXT NOT NULL,
+                prof_inicial REAL NOT NULL,
+                descripcion TEXT,
+                UNIQUE(tipo_llanta, marca, diseno, dimension)
+            )
+        """)
+        
+        # Poblar modelos estándar si está vacía
+        cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas")
+        if cursor.fetchone()[0] == 0:
+            modelos_seed = [
+                # Llantas Nuevas Originales
+                ('Nueva', 'Michelin', 'X Multi D', '295/80R22.5', 21.5, 'Tracción Regional'),
+                ('Nueva', 'Michelin', 'X Multi Z', '295/80R22.5', 16.5, 'Toda Posición / Direccional'),
+                ('Nueva', 'Bridgestone', 'M726 EL', '295/80R22.5', 24.5, 'Tracción Larga Distancia'),
+                ('Nueva', 'Bridgestone', 'R268 Ecopia', '295/80R22.5', 16.0, 'Direccional / Toda Posición'),
+                ('Nueva', 'Goodyear', 'KMax D', '295/80R22.5', 22.0, 'Tracción Carretera'),
+                ('Nueva', 'Goodyear', 'KMax S', '295/80R22.5', 16.0, 'Direccional Autopista'),
+                ('Nueva', 'Pirelli', 'TG01', '295/80R22.5', 22.5, 'Tracción Mixta'),
+                ('Nueva', 'Pirelli', 'FG01', '295/80R22.5', 16.5, 'Direccional Mixta'),
+                ('Nueva', 'Hankook', 'DH35', '295/80R22.5', 20.5, 'Tracción Regional'),
+                ('Nueva', 'Hankook', 'AH35', '295/80R22.5', 15.5, 'Direccional'),
+                ('Nueva', 'Double Coin', 'RLB450', '11R22.5', 22.0, 'Tracción'),
+                ('Nueva', 'Double Coin', 'RR9', '11R22.5', 15.0, 'Direccional'),
+                # Reencauches / Bandas
+                ('Reencauche', 'Bandag', 'BDM', '295/80R22.5', 21.0, 'Banda Tracción Alta Adherencia'),
+                ('Reencauche', 'Bandag', 'B710', '295/80R22.5', 20.0, 'Banda Tracción Carretera'),
+                ('Reencauche', 'Bandag', 'ECL Drive', '295/80R22.5', 22.0, 'Tracción Severa'),
+                ('Reencauche', 'Bandag', 'B197 Trailer', '295/80R22.5', 14.5, 'Banda Trailer / Arrastre'),
+                ('Reencauche', 'Marangoni', 'Ringtread RD-G', '295/80R22.5', 21.5, 'Anillo Tracción'),
+                ('Reencauche', 'Marangoni', 'RTL Energeia', '295/80R22.5', 14.0, 'Anillo Remolque/Trailer'),
+                ('Reencauche', 'Vipal', 'VT100', '295/80R22.5', 19.5, 'Tracción Urbana y Regional'),
+                ('Reencauche', 'Vipal', 'VL110', '295/80R22.5', 14.0, 'Arrastre Liviano y Pesado')
+            ]
+            cursor.executemany("""
+                INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, modelos_seed)
+
+        conn.commit()
+
+def obtener_posiciones_por_tipologia(tipologia):
+    """
+    Retorna el listado de números de posición correspondientes a la tipología seleccionada,
+    consultando dinámicamente su esquema configurado.
+    """
+    import json
+    t_nom = str(tipologia or '').strip().lower()
+    if t_nom:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT nombre, cant_llantas, esquema_json FROM catalogo_tipologias')
+            filas = cursor.fetchall()
+            
+            # 1. Coincidencia exacta primero
+            for r in filas:
+                if r[0].strip().lower() == t_nom:
+                    if r[2]:
+                        try:
+                            esq = json.loads(r[2])
+                            pos_set = []
+                            for eje in esq:
+                                for p in eje.get('posiciones', []):
+                                    pos_set.append(int(p['pos']))
+                            if pos_set:
+                                return sorted(list(set(pos_set)))
+                        except Exception:
+                            pass
+                    if r[1]:
+                        return list(range(1, int(r[1]) + 1))
+            
+            # 2. Coincidencia parcial si no hay exacta
+            for r in filas:
+                if t_nom in r[0].strip().lower():
+                    if r[2]:
+                        try:
+                            esq = json.loads(r[2])
+                            pos_set = []
+                            for eje in esq:
+                                for p in eje.get('posiciones', []):
+                                    pos_set.append(int(p['pos']))
+                            if pos_set:
+                                return sorted(list(set(pos_set)))
+                        except Exception:
+                            pass
+                    if r[1]:
+                        return list(range(1, int(r[1]) + 1))
+
+    # Reglas heurísticas de respaldo
+    if "cuatro manos" in t_nom or "4 manos" in t_nom or "8x4" in t_nom or "biarticulado" in t_nom:
+        return list(range(1, 15)) if "biarticulado" in t_nom else list(range(1, 13))
+    elif "trailer" in t_nom or "remolque" in t_nom:
+        return list(range(1, 13))
+    elif "camioneta" in t_nom or "liviano" in t_nom or "4x2" in t_nom:
+        return [1, 2, 3, 4]
+    elif "volqueta" in t_nom or "camilero" in t_nom or "articulado" in t_nom:
+        return list(range(1, 11))
+    elif "camion sencillo" in t_nom or "sencillo" in t_nom or "turbo" in t_nom:
+        return [1, 2, 3, 4, 5, 6]
+    else:
+        return list(range(1, 11))
+
+def validar_inspeccion_candados(datos, excluir_id=None):
+    """
+    Evalúa los candados de seguridad de inspección:
+    1. Máximo 27 mm en llantas R22.5 o de carga pesada.
+    2. Las profundidades (ext, cent, int) NO pueden ser mayores a la Profundidad Inicial (prof_inicial).
+    3. Candado de No Duplicidad de Número Interno por Cliente / Subcliente.
+    4. No inspeccionar la misma placa más de una vez en el mismo mes calendario (YYYY-MM).
+    5. Kilometraje actual no puede ser menor al de la inspección anterior de la placa.
+    6. La profundidad no puede subir entre inspecciones (desgaste negativo), con tolerancia máx 1 mm.
+    """
+    placa = str(datos.get('placa', '')).strip().upper()
+    if not placa:
+        return {'valido': False, 'mensaje': 'Por favor ingresa la Placa del vehículo.'}
+
+    fecha_str = str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))).strip()
+    km_actual = to_float(datos.get('kilometraje', 0))
+    posicion = to_int(datos.get('posicion', 1))
+    dimension = str(datos.get('dimension', '')).strip().upper()
+    prof_inicial = to_float(datos.get('prof_inicial', 0))
+
+    p_ext = to_float(datos.get('prof_ext', 0))
+    p_cent = to_float(datos.get('prof_cent', 0))
+    p_int = to_float(datos.get('prof_int', 0))
+    profs = [p_ext, p_cent, p_int]
+
+    # Candado 1: Límite de profundidad (27 mm para llantas R22.5 o generales)
+    if '22.5' in dimension or 'R22.5' in dimension:
+        if any(p > 27.0 for p in profs):
+            return {
+                'valido': False,
+                'mensaje': f'⛔ CANDADO DE SEGURIDAD: En dimensión {dimension}, ninguna profundidad puede superar los 27.0 mm (Valores ingresados: {profs}).'
+            }
+    else:
+        # Límite general razonable (máx 32mm para minería/offroad)
+        if any(p > 32.0 for p in profs):
+            return {
+                'valido': False,
+                'mensaje': f'⛔ CANDADO DE SEGURIDAD: La profundidad ingresada supera el límite físico de 32 mm.'
+            }
+
+    # Candado 1.2: Ninguna profundidad puede superar la Profundidad Inicial de la llanta
+    if prof_inicial > 0:
+        if any(p > prof_inicial for p in profs):
+            return {
+                'valido': False,
+                'mensaje': f'⛔ CANDADO DE SEGURIDAD: Ninguna de las 3 profundidades ({profs}) puede ser mayor a la Profundidad Inicial ({prof_inicial} mm) de la llanta.'
+            }
+
+    # Consultar historial previo de esta placa
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        
+        # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente
+        num_interno = str(datos.get('numero_interno', '')).strip().upper()
+        cliente_val = str(datos.get('cliente', '')).strip()
+        subcliente_val = str(datos.get('subcliente', '')).strip()
+        if num_interno:
+            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente
+            sql_dup = '''
+                SELECT placa, posicion, cliente, subcliente, fecha, id FROM inspecciones
+                WHERE UPPER(TRIM(numero_interno)) = ?
+                  AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+                  AND (UPPER(TRIM(placa)) != ? OR posicion != ?)
+            '''
+            params_dup = [num_interno, cliente_val, placa, posicion]
+            if excluir_id is not None:
+                sql_dup += ' AND id != ?'
+                params_dup.append(to_int(excluir_id))
+            sql_dup += ' ORDER BY fecha DESC, id DESC LIMIT 1'
+
+            cursor.execute(sql_dup, tuple(params_dup))
+            dup_row = cursor.fetchone()
+            if dup_row:
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} (Fecha: {dup_row[4]}). No se permiten números de llanta duplicados por cliente/subcliente.'
+                }
+
+        # Candado 2: Solo una inspección por placa al mes (mismo YYYY-MM)
+        # Si la fecha de registro o inspección contiene el mismo año-mes
+        mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
+        sql_mes = """
+            SELECT id, fecha, posicion FROM inspecciones 
+            WHERE placa = ? AND strftime('%Y-%m', fecha) = ? AND posicion = ?
+        """
+        params_mes = [placa, mes_inspeccion, posicion]
+        if excluir_id is not None:
+            sql_mes += " AND id != ?"
+            params_mes.append(to_int(excluir_id))
+        sql_mes += " LIMIT 1"
+
+        cursor.execute(sql_mes, tuple(params_mes))
+        ya_inspeccionada_misma_pos = cursor.fetchone()
+        if ya_inspeccionada_misma_pos:
+            return {
+                'valido': False,
+                'alerta_mes': True,
+                'mensaje': f'⚠️ CANDADO DE SEGURIDAD: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} en el mes {mes_inspeccion} (Fecha: {ya_inspeccionada_misma_pos[1]}).'
+            }
+
+        # Candado 3: Kilometraje actual no puede ser menor al de la última inspección
+        sql_km = """
+            SELECT kilometraje, fecha FROM inspecciones 
+            WHERE placa = ? AND kilometraje > 0
+        """
+        params_km = [placa]
+        if excluir_id is not None:
+            sql_km += " AND id != ?"
+            params_km.append(to_int(excluir_id))
+        sql_km += " ORDER BY fecha DESC, id DESC LIMIT 1"
+
+        cursor.execute(sql_km, tuple(params_km))
+        prev_km_row = cursor.fetchone()
+        if prev_km_row:
+            prev_km = prev_km_row[0]
+            if km_actual > 0 and km_actual < prev_km:
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE KILOMETRAJE: El kilometraje ({km_actual:,.0f} km) no puede ser menor al de la inspección anterior ({prev_km:,.0f} km el {prev_km_row[1]}).'
+                }
+
+        # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm)
+        sql_prof = """
+            SELECT prof_ext, prof_cent, prof_int, fecha FROM inspecciones 
+            WHERE placa = ? AND posicion = ?
+        """
+        params_prof = [placa, posicion]
+        if excluir_id is not None:
+            sql_prof += " AND id != ?"
+            params_prof.append(to_int(excluir_id))
+        sql_prof += " ORDER BY fecha DESC, id DESC LIMIT 1"
+
+        cursor.execute(sql_prof, tuple(params_prof))
+        prev_prof_row = cursor.fetchone()
+        if prev_prof_row:
+            prev_ext, prev_cent, prev_int, f_prev = prev_prof_row
+            max_subida_permitida = 1.0
+            
+            # Comparar el promedio o puntos si eran mayores a 0
+            if prev_ext > 0 and (p_ext - prev_ext) > max_subida_permitida:
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Exterior subió de {prev_ext} mm a {p_ext} mm (Supera la tolerancia de 1.0 mm).'
+                }
+            if prev_cent > 0 and (p_cent - prev_cent) > max_subida_permitida:
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Central subió de {prev_cent} mm a {p_cent} mm (Supera la tolerancia de 1.0 mm).'
+                }
+            if prev_int > 0 and (p_int - prev_int) > max_subida_permitida:
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Interior subió de {prev_int} mm a {p_int} mm (Supera la tolerancia de 1.0 mm).'
+                }
+
+    return {'valido': True, 'mensaje': 'Validaciones de seguridad aprobadas.'}
+
+def insertar_inspeccion(datos):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO inspecciones (
+                fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
+                tipologia, marca, diseno, dimension, vida, banda_reen,
+                prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))),
+            str(datos.get('cliente', '')).strip(),
+            str(datos.get('subcliente', '')).strip(),
+            str(datos.get('tipo_operacion', '')).strip(),
+            str(datos.get('placa', '')).strip().upper(),
+            to_int(datos.get('posicion', 1)),
+            to_float(datos.get('kilometraje', 0)),
+            str(datos.get('tipologia', '')),
+            str(datos.get('marca', '')),
+            str(datos.get('diseno', '')),
+            str(datos.get('dimension', '')),
+            str(datos.get('vida', 'Original')),
+            str(datos.get('banda_reen', '')) if str(datos.get('vida', '')).strip().lower() == 'reencauche' else '',
+            to_float(datos.get('prof_ext', 0)),
+            to_float(datos.get('prof_cent', 0)),
+            to_float(datos.get('prof_int', 0)),
+            to_float(datos.get('psi', 0)),
+            str(datos.get('novedades', '')),
+            to_float(datos.get('precio', 0)),
+            to_float(datos.get('prof_inicial', 0)),
+            to_float(datos.get('km_montaje', 0)),
+            str(datos.get('numero_interno', '')).strip().upper(),
+            str(datos.get('usuario_registro', '')).strip(),
+            str(datos.get('foto_novedad', '')).strip()
+        ))
+        conn.commit()
+        return cursor.lastrowid
+
+def obtener_todas_inspecciones(usuario=None):
+    with get_connection() as conn:
+        query = """
+            SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
+                   tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro
+            FROM inspecciones
+        """
+        params = []
+        if usuario:
+            usr_info = obtener_usuario_por_username(usuario)
+            if usr_info and usr_info.get('rol') != 'admin':
+                # Si tiene cliente asignado o filtra por sus registros
+                cli_asig = usr_info.get('cliente_asignado')
+                if cli_asig:
+                    query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+                    params.append(cli_asig)
+                else:
+                    query += " WHERE usuario_registro = ?"
+                    params.append(usuario)
+        query += " ORDER BY id DESC"
+        return pd.read_sql_query(query, conn, params=params)
+
+def actualizar_inspeccion(inspeccion_id, datos):
+    """
+    Actualiza la información de una llanta o inspección específica por su ID.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE inspecciones SET
+                fecha = ?, cliente = ?, subcliente = ?, tipo_operacion = ?, placa = ?,
+                posicion = ?, kilometraje = ?, tipologia = ?, marca = ?, diseno = ?,
+                dimension = ?, vida = ?, banda_reen = ?, prof_ext = ?, prof_cent = ?,
+                prof_int = ?, psi = ?, novedades = ?, precio = ?, prof_inicial = ?,
+                km_montaje = ?, numero_interno = ?, foto_novedad = ?
+            WHERE id = ?
+        """, (
+            str(datos.get('fecha', '')),
+            str(datos.get('cliente', '')).strip(),
+            str(datos.get('subcliente', '')).strip(),
+            str(datos.get('tipo_operacion', '')).strip(),
+            str(datos.get('placa', '')).strip().upper(),
+            to_int(datos.get('posicion', 1)),
+            to_float(datos.get('kilometraje', 0)),
+            str(datos.get('tipologia', '')),
+            str(datos.get('marca', '')),
+            str(datos.get('diseno', '')),
+            str(datos.get('dimension', '')),
+            str(datos.get('vida', 'Original')),
+            str(datos.get('banda_reen', '')) if str(datos.get('vida', '')).strip().lower() == 'reencauche' else '',
+            to_float(datos.get('prof_ext', 0)),
+            to_float(datos.get('prof_cent', 0)),
+            to_float(datos.get('prof_int', 0)),
+            to_float(datos.get('psi', 0)),
+            str(datos.get('novedades', '')),
+            to_float(datos.get('precio', 0)),
+            to_float(datos.get('prof_inicial', 0)),
+            to_float(datos.get('km_montaje', 0)),
+            str(datos.get('numero_interno', '')).strip().upper(),
+            str(datos.get('foto_novedad', '')).strip(),
+            inspeccion_id
+        ))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def eliminar_inspeccion(inspeccion_id):
+    with get_connection() as conn:
+        conn.execute("DELETE FROM inspecciones WHERE id = ?", (inspeccion_id,))
+        conn.commit()
+
+def vaciar_inspecciones():
+    with get_connection() as conn:
+        conn.execute("DELETE FROM inspecciones")
+        conn.commit()
+
+def cargar_excel_a_bd(file_path):
+    df = pd.read_excel(file_path, sheet_name=0)
+    cols_norm_map = {normalizar_texto(c): c for c in df.columns}
+    
+    alias_map = {
+        'fecha': ['fecha', 'fec', 'fecha inspeccion'],
+        'cliente': ['cliente', 'empresa', 'cuenta'],
+        'subcliente': ['subcliente', 'sede', 'proyecto', 'subcuenta'],
+        'tipo_operacion': ['tipo operacion', 'operacion', 'tipo de operacion', 'servicio'],
+        'placa': ['placa', 'vehiculo', 'vehículo', 'equipo'],
+        'posicion': ['posicion', 'posición', 'posicion montaje', 'posición montaje', 'pos'],
+        'kilometraje': ['kilometraje', 'km', 'km actual', 'odometro'],
+        'tipologia': ['tipologia', 'tipología', 'tipo', 'tipo vehiculo'],
+        'marca': ['marca', 'marca llanta'],
+        'diseno': ['diseno', 'diseño', 'dibujo', 'modelo'],
+        'dimension': ['dimension', 'dimensión', 'medida', 'dim'],
+        'vida': ['vida', 'estado vida', 'condicion'],
+        'banda_reen': ['banda reen', 'banda reencauche', 'banda', 'marca banda'],
+        'prof_ext': ['prof ext', 'prof. exterior', 'ult. prof exterior', 'prof exterior', 'exterior'],
+        'prof_cent': ['prof cent', 'prof centro', 'prof. central', 'prof central', 'centro', 'central'],
+        'prof_int': ['prof int', 'prof. interior', 'ult. prof interior', 'prof interior', 'interior'],
+        'psi': ['psi', 'presion', 'presión'],
+        'novedades': ['novedades', 'observaciones', 'novedad', 'detalle'],
+        'precio': ['precio', 'costo', 'valor'],
+        'prof_inicial': ['prof inicial', 'prof. inicial', 'profundidad original'],
+        'km_montaje': ['km montaje', 'km. montaje', 'kilometraje montaje'],
+        'numero_interno': ['numero interno', 'número interno', 'no. interno', 'no interno', 'id llanta', 'id_llanta', 'codigo llanta', 'código llanta']
+    }
+    
+    col_encontradas = {}
+    for canonico, lista in alias_map.items():
+        for item in lista:
+            norm = normalizar_texto(item)
+            if norm in cols_norm_map:
+                col_encontradas[canonico] = cols_norm_map[norm]
+                break
+
+    registros_insertados = 0
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        for _, row in df.iterrows():
+            placa = str(row[col_encontradas['placa']]).strip().upper() if 'placa' in col_encontradas else ''
+            if not placa or placa == 'NAN':
+                continue
+            
+            pos = to_int(row[col_encontradas['posicion']]) if 'posicion' in col_encontradas else 1
+            fecha = str(row[col_encontradas['fecha']]) if 'fecha' in col_encontradas and not pd.isna(row[col_encontradas['fecha']]) else datetime.now().strftime('%Y-%m-%d')
+            if ' ' in fecha:
+                fecha = fecha.split(' ')[0]
+
+            vida = str(row[col_encontradas['vida']]).strip() if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else 'Original'
+            banda = str(row[col_encontradas['banda_reen']]).strip() if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
+            if vida.lower() != 'reencauche':
+                banda = ''
+
+            cursor.execute("""
+                INSERT INTO inspecciones (
+                    fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
+                    tipologia, marca, diseno, dimension, vida, banda_reen,
+                    prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                fecha,
+                str(row[col_encontradas['cliente']]) if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) else '',
+                str(row[col_encontradas['subcliente']]) if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) else '',
+                str(row[col_encontradas['tipo_operacion']]) if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) else '',
+                placa,
+                pos,
+                to_float(row[col_encontradas['kilometraje']]) if 'kilometraje' in col_encontradas else 0.0,
+                str(row[col_encontradas['tipologia']]) if 'tipologia' in col_encontradas and not pd.isna(row[col_encontradas['tipologia']]) else '',
+                str(row[col_encontradas['marca']]) if 'marca' in col_encontradas and not pd.isna(row[col_encontradas['marca']]) else '',
+                str(row[col_encontradas['diseno']]) if 'diseno' in col_encontradas and not pd.isna(row[col_encontradas['diseno']]) else '',
+                str(row[col_encontradas['dimension']]) if 'dimension' in col_encontradas and not pd.isna(row[col_encontradas['dimension']]) else '',
+                vida,
+                banda,
+                to_float(row[col_encontradas['prof_ext']]) if 'prof_ext' in col_encontradas else 0.0,
+                to_float(row[col_encontradas['prof_cent']]) if 'prof_cent' in col_encontradas else 0.0,
+                to_float(row[col_encontradas['prof_int']]) if 'prof_int' in col_encontradas else 0.0,
+                to_float(row[col_encontradas['psi']]) if 'psi' in col_encontradas else 0.0,
+                str(row[col_encontradas['novedades']]) if 'novedades' in col_encontradas and not pd.isna(row[col_encontradas['novedades']]) else '',
+                to_float(row[col_encontradas['precio']]) if 'precio' in col_encontradas else 0.0,
+                to_float(row[col_encontradas['prof_inicial']]) if 'prof_inicial' in col_encontradas else 0.0,
+                to_float(row[col_encontradas['km_montaje']]) if 'km_montaje' in col_encontradas else 0.0,
+                str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''
+            ))
+            registros_insertados += 1
+        conn.commit()
+    return registros_insertados
+
+def analizar_inspecciones_df(df_inspecciones):
+    if df_inspecciones.empty:
+        return pd.DataFrame()
+
+    df = df_inspecciones.copy()
+    
+    df['posicion'] = pd.to_numeric(df['posicion'], errors='coerce').fillna(0).astype(int)
+    def calc_prof_min(row):
+        vals = [to_float(row[c]) for c in ['prof_ext', 'prof_cent', 'prof_int']]
+        positivos = [v for v in vals if v > 0]
+        if positivos:
+            return min(positivos)
+        return min(vals) if vals else 0.0
+
+    df['prof_min'] = df.apply(calc_prof_min, axis=1)
+
+    def resolver_tipo(row):
+        t = str(row.get('tipologia', '')).strip()
+        if t and t.lower() != 'nan':
+            return t
+        return clasificar_vehiculo(row['placa'])
+
+    df['tipo_calc'] = df.apply(resolver_tipo, axis=1)
+
+    resultados = []
+    
+    for placa, group in df.groupby('placa'):
+        t_veh = group['tipo_calc'].iloc[0]
+        cliente = group['cliente'].iloc[0] if 'cliente' in group and group['cliente'].iloc[0] else ''
+        subcliente = group['subcliente'].iloc[0] if 'subcliente' in group and group['subcliente'].iloc[0] else ''
+        operacion = group['tipo_operacion'].iloc[0] if 'tipo_operacion' in group and group['tipo_operacion'].iloc[0] else ''
+        
+        max_pos = group['posicion'].max()
+        es_cuatro_manos = ('cuatro manos' in t_veh.lower() or max_pos >= 12 and 'cabezote' in t_veh.lower())
+        
+        # 1. Alineación Direccional
+        plan_alineacion = False
+        detalles_alineacion = []
+
+        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower():
+            pos_dir = [1, 2, 3, 4] if es_cuatro_manos else [1, 2]
+            for p in pos_dir:
+                r = group[group['posicion'] == p]
+                if not r.empty:
+                    diff = abs(r['prof_int'].values[0] - r['prof_ext'].values[0])
+                    if diff >= 2:
+                        plan_alineacion = True
+                        detalles_alineacion.append(f"Pos {p} (dif {diff:.1f}mm)")
+        elif 'trailer' in t_veh.lower():
+            for _, r in group.iterrows():
+                diff = r['prof_int'] - r['prof_ext']
+                if diff >= 2:
+                    plan_alineacion = True
+                    detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f}mm)")
+                    
+        # Obtener límite de cambio/retiro programado para este cliente (o 3.0 mm por defecto)
+        limite_cambio_cliente = obtener_limite_retiro_cliente(cliente)
+
+        # 2. Dual Mal Apareado y Recomendación Inteligente de Emparejamiento
+        plan_dual = False
+        detalles_dual = []
+        recomendaciones_dual = []
+
+        pairs = [(3,4), (5,6), (7,8), (9,10)] if ('cabezote' in t_veh.lower() and not es_cuatro_manos) else \
+                [(5,6), (7,8), (9,10), (11,12)] if ('cabezote' in t_veh.lower() and es_cuatro_manos) else \
+                [(1,2), (3,4), (5,6), (7,8), (9,10), (11,12)]
+                
+        for p_a, p_b in pairs:
+            t_a = group[group['posicion'] == p_a]
+            t_b = group[group['posicion'] == p_b]
+            if not t_a.empty and not t_b.empty:
+                pb_a = to_float(t_a['prof_min'].values[0])
+                pb_b = to_float(t_b['prof_min'].values[0])
+                dim_a = str(t_a['dimension'].values[0]).strip()
+                dim_b = str(t_b['dimension'].values[0]).strip()
+                
+                diff_pb = abs(pb_a - pb_b)
+                razones = []
+                if diff_pb >= 2:
+                    razones.append(f"desgaste dif {diff_pb:.1f}mm ({pb_a:.1f} vs {pb_b:.1f})")
+                if dim_a and dim_b and dim_a != dim_b:
+                    razones.append(f"dims distintas ({dim_a} vs {dim_b})")
+                
+                if razones:
+                    plan_dual = True
+                    detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
+
+                # Recomendación de emparejamiento cuando una llanta va a cambio y la otra tiene buen remanente
+                a_para_cambio = (pb_a > 0 and pb_a <= limite_cambio_cliente)
+                b_para_cambio = (pb_b > 0 and pb_b <= limite_cambio_cliente)
+
+                if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0):
+                    r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
+                    r_max = pb_b + 1.0
+                    recomendaciones_dual.append(
+                        f"Pos {p_a} en retiro ({pb_a:.1f}mm) vs Pos {p_b} ({pb_b:.1f}mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
+                    )
+                elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0):
+                    r_min = max(limite_cambio_cliente + 1.0, pb_a - 1.0)
+                    r_max = pb_a + 1.0
+                    recomendaciones_dual.append(
+                        f"Pos {p_b} en retiro ({pb_b:.1f}mm) vs Pos {p_a} ({pb_a:.1f}mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
+                    )
+                    
+        desc_tipo = f"{t_veh}{' (Cuatro Manos)' if es_cuatro_manos else ''}"
+        
+        # 3. Sugerencia de Cambio de Llanta (por profundidad crítica <= límite del cliente o 3.0 mm)
+        plan_cambio = False
+        detalles_cambio = []
+        for _, r in group.iterrows():
+            pos_r = int(r['posicion'])
+            pb_r = to_float(r['prof_min'])
+            if pb_r > 0 and pb_r <= limite_cambio_cliente:
+                plan_cambio = True
+                detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
+
+        # 4. Alertas Adicionales: Rotación por Desgaste Irregular / Escalonado y Calibración de Presión
+        plan_rotacion_irregular = False
+        detalles_rot_irregular = []
+
+        plan_rotacion_escalonado = False
+        detalles_rot_escalonado = []
+
+        plan_calibracion_psi = False
+        detalles_calibracion = []
+
+        # Determinar posiciones direccionales para excluir de tracción/libre
+        pos_direccionales = [1, 2, 3, 4] if es_cuatro_manos else [1, 2] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()) else []
+
+        for _, r in group.iterrows():
+            pos_i = int(r['posicion'])
+            nov_i = str(r.get('novedades', '') or '').lower()
+            psi_i = to_float(r.get('psi', 100))
+            p_ext = to_float(r.get('prof_ext', 0))
+            p_int = to_float(r.get('prof_int', 0))
+            diff_ext_int = abs(p_ext - p_int)
+
+            # a. Desgaste Irregular en Tracción / Eje Libre
+            es_no_direccional = (pos_i not in pos_direccionales)
+            if es_no_direccional:
+                tiene_obs_irregular = ('desgaste irregular' in nov_i or 'desgaste disparejo' in nov_i or 'irregular' in nov_i)
+                if diff_ext_int >= 2.0 or tiene_obs_irregular:
+                    plan_rotacion_irregular = True
+                    motivo = f"dif ext/int {diff_ext_int:.1f}mm" if diff_ext_int >= 2.0 else "observación 'desgaste irregular'"
+                    detalles_rot_irregular.append(f"Pos {pos_i} ({motivo})")
+
+            # b. Desgaste Escalonado en Eje de Tracción (o arrastre)
+            if 'escalonado' in nov_i or 'diente de sierra' in nov_i:
+                plan_rotacion_escalonado = True
+                detalles_rot_escalonado.append(f"Pos {pos_i} (desgaste escalonado)")
+
+            # c. Calibración de Presión
+            if 'baja presion' in nov_i or 'baja presión' in nov_i or (psi_i > 0 and psi_i < 90):
+                plan_calibracion_psi = True
+                detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI)")
+
+        resultados.append({
+            'Vehículo/Placa': placa,
+            'Fecha': group['fecha'].max() if 'fecha' in group and not group['fecha'].dropna().empty else '',
+            'Cliente': cliente,
+            'Subcliente': subcliente,
+            'Operación': operacion,
+            'Tipo': desc_tipo,
+            'Km': group['kilometraje'].max() if 'kilometraje' in group else 0,
+            'Llantas Inspeccionadas': len(group),
+            'Limite_Retiro_mm': limite_cambio_cliente,
+            'Plan_Alineacion': "SÍ" if plan_alineacion else "NO",
+            'Plan_Dual_Mal_Apareado': "SÍ" if plan_dual else "NO",
+            'Plan_Cambio_Llanta': "SÍ" if plan_cambio else "NO",
+            'Plan_Rotacion_Irregular': "SÍ" if plan_rotacion_irregular else "NO",
+            'Plan_Rotacion_Escalonado': "SÍ" if plan_rotacion_escalonado else "NO",
+            'Plan_Calibracion_PSI': "SÍ" if plan_calibracion_psi else "NO",
+            'Detalle_Alineacion': "; ".join(detalles_alineacion) if detalles_alineacion else "OK",
+            'Detalle_Dual': "; ".join(detalles_dual) if detalles_dual else "OK",
+            'Detalle_Cambio': "; ".join(detalles_cambio) if detalles_cambio else "OK",
+            'Detalle_Rotacion_Irregular': "; ".join(detalles_rot_irregular) if detalles_rot_irregular else "OK",
+            'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
+            'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",
+            'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK"
+        })
+        
+    return pd.DataFrame(resultados)
+
+inicializar_bd()
+
+
+
+
+def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca=''):
+    validos = ['cliente', 'subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'banda_reen', 'vida']
+    if campo not in validos:
+        return []
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        query = f"SELECT DISTINCT {campo} FROM inspecciones WHERE {campo} IS NOT NULL AND TRIM({campo}) != ''"
+        params = []
+        if filtro_cliente and campo == 'subcliente':
+            query += " AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            params.append(str(filtro_cliente).strip())
+        if filtro_marca and campo == 'diseno':
+            query += " AND UPPER(TRIM(marca)) = UPPER(TRIM(?))"
+            params.append(str(filtro_marca).strip())
+        query += f" ORDER BY {campo} ASC"
+        cursor.execute(query, params)
+        valores_insp = [r[0] for r in cursor.fetchall()]
+
+        # Complementar con catálogos si aplica
+        if campo == 'tipo_operacion':
+            cursor.execute("SELECT nombre FROM catalogo_operaciones")
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+        elif campo == 'diseno' and filtro_marca:
+            cursor.execute("SELECT DISTINCT diseno FROM catalogo_modelos_llantas WHERE UPPER(TRIM(marca)) = UPPER(TRIM(?)) AND diseno IS NOT NULL AND TRIM(diseno) != ''", (str(filtro_marca).strip(),))
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+        elif campo in ('marca', 'diseno', 'dimension'):
+            cursor.execute(f"SELECT DISTINCT {campo} FROM catalogo_modelos_llantas WHERE {campo} IS NOT NULL AND TRIM({campo}) != ''")
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+        elif campo == 'banda_reen':
+            cursor.execute("SELECT DISTINCT diseno FROM catalogo_modelos_llantas WHERE tipo_llanta = 'Reencauche'")
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+        elif campo == 'cliente':
+            cursor.execute("SELECT cliente FROM configuracion_clientes")
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+
+        return [v for v in valores_insp if v and str(v).strip()]
+
+def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
+    """
+    Retorna información detallada de las posiciones inspeccionadas para una placa:
+    - lista de posiciones inspeccionadas
+    - lista de posiciones que tienen novedad / daño registrado
+    - mapa de novedades por posición
+    """
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return {"posiciones": [], "posiciones_con_novedad": [], "novedades": {}}
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if fecha:
+            f_str = str(fecha).strip()[:10]
+            cursor.execute('''
+                SELECT posicion, novedades
+                FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND substr(fecha, 1, 10) = ?
+                ORDER BY id ASC
+            ''', (pl, f_str))
+        else:
+            mes_actual = datetime.now().strftime('%Y-%m')
+            cursor.execute('''
+                SELECT posicion, novedades
+                FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND substr(fecha, 1, 7) = ?
+                ORDER BY id ASC
+            ''', (pl, mes_actual))
+        
+        posiciones = []
+        posiciones_con_novedad = []
+        novedades_map = {}
+        for r in cursor.fetchall():
+            if r[0] is not None:
+                p = int(r[0])
+                if p not in posiciones:
+                    posiciones.append(p)
+                nov = str(r[1] or '').strip()
+                if nov and nov.lower() not in ['sin novedad', 'ninguna', 'ok', 'normal']:
+                    if p not in posiciones_con_novedad:
+                        posiciones_con_novedad.append(p)
+                    novedades_map[p] = nov
+
+        posiciones.sort()
+        posiciones_con_novedad.sort()
+        return {
+            "posiciones": posiciones,
+            "posiciones_con_novedad": posiciones_con_novedad,
+            "novedades": novedades_map
+        }
+
+def obtener_posiciones_inspeccionadas_actuales(placa, fecha=None):
+    """
+    Retorna la lista de posiciones que ya han sido inspeccionadas para una placa dada
+    en una fecha específica (o en el mes actual si no se proporciona fecha).
+    """
+    det = obtener_posiciones_inspeccionadas_detalle(placa, fecha)
+    return det.get("posiciones", [])
+
+def obtener_ultima_inspeccion_posicion(placa, posicion):
+    pl = str(placa or '').strip().upper()
+    pos = to_int(posicion, 1)
+    if not pl:
+        return None
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion,
+                   kilometraje, tipologia, marca, diseno, dimension, vida, banda_reen,
+                   prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial,
+                   km_montaje, numero_interno
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ? AND posicion = ?
+            ORDER BY fecha DESC, id DESC LIMIT 1
+        ''', (pl, pos))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        cols = [
+            'id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion',
+            'kilometraje', 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen',
+            'prof_ext', 'prof_cent', 'prof_int', 'psi', 'novedades', 'precio', 'prof_inicial',
+            'km_montaje', 'numero_interno'
+        ]
+        return dict(zip(cols, row))
+
+def buscar_modelos_llantas_filtro(termino=''):
+    t = f"%{str(termino or '').strip().lower()}%"
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion
+            FROM catalogo_modelos_llantas
+            WHERE LOWER(marca) LIKE ? OR LOWER(diseno) LIKE ? OR LOWER(dimension) LIKE ? OR LOWER(tipo_llanta) LIKE ?
+            ORDER BY marca ASC, diseno ASC LIMIT 25
+        ''', (t, t, t, t))
+        cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
+        return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+# --- CONFIGURACIÓN DE LÍMITES POR CLIENTE ---
+def obtener_limite_retiro_cliente(cliente=''):
+    c = (cliente or '').strip()
+    if not c:
+        return 3.0
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT limite_retiro_mm FROM configuracion_clientes WHERE LOWER(cliente) = LOWER(?)', (c,))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            return to_float(row[0], 3.0)
+    return 3.0
+
+def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones=''):
+    c = (cliente or '').strip()
+    if not c:
+        return False
+    lim = to_float(limite_retiro_mm, 3.0)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                limite_retiro_mm = excluded.limite_retiro_mm,
+                observaciones = excluded.observaciones,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        ''', (c, lim, str(observaciones or '').strip()))
+        conn.commit()
+    return True
+
+def obtener_todas_configuraciones_clientes():
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT cliente, limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes ORDER BY cliente ASC')
+        cols = ['cliente', 'limite_retiro_mm', 'observaciones', 'fecha_actualizacion']
+        return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def obtener_lista_clientes_unicos():
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT DISTINCT cliente FROM (
+                SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_clientes
+            ) ORDER BY cliente ASC
+        ''')
+        return [r[0] for r in cursor.fetchall()]
+
+# --- CATALOGOS DINAMICOS ---
+def obtener_todas_operaciones():
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT nombre FROM catalogo_operaciones ORDER BY nombre ASC')
+        return [r[0] for r in cursor.fetchall()]
+
+def guardar_operacion(nombre):
+    nom = (nombre or '').strip()
+    if not nom:
+        return None
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('INSERT OR IGNORE INTO catalogo_operaciones (nombre) VALUES (?)', (nom,))
+        conn.commit()
+        return nom
+
+def obtener_todas_tipologias():
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT nombre, descripcion, cant_llantas, esquema_json FROM catalogo_tipologias ORDER BY nombre ASC')
+        res = []
+        for r in cursor.fetchall():
+            import json
+            res.append({'nombre': r[0], 'descripcion': r[1], 'cant_llantas': r[2], 'esquema': json.loads(r[3]) if r[3] else []})
+        return res
+
+def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=None):
+    nom = (nombre or '').strip()
+    if not nom:
+        return None
+    import json
+    cant = int(cant_llantas or 10)
+
+    # Si se pasa un esquema personalizado válido
+    if esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
+        esquema = esquema_custom
+    else:
+        # Generar esquema inteligente según tipología conocida
+        nom_l = nom.lower()
+        if 'biarticulado' in nom_l:
+            # 1er eje dir (2), 2do eje tracción (4 dual), 3er eje libre (4 dual), 4to eje libre (4 dual) -> 14 llantas
+            cant = 14
+            esquema = [
+                {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]},
+                {'eje': 2, 'nombre': 'Eje 2 (Tracción)', 'tipo': 'traccion', 'posiciones': [{'pos': 3, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 4}, {'pos': 4, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 3}, {'pos': 5, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 6}, {'pos': 6, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 5}]},
+                {'eje': 3, 'nombre': 'Eje 3 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 7, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 8}, {'pos': 8, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 7}, {'pos': 9, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 10}, {'pos': 10, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 9}]},
+                {'eje': 4, 'nombre': 'Eje 4 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 11, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 12}, {'pos': 12, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 11}, {'pos': 13, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 14}, {'pos': 14, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 13}]}
+            ]
+        elif 'articulado' in nom_l and 'bi' not in nom_l:
+            # 1er eje dir (2), 2do eje tracción (4 dual), 3er eje libre (4 dual) -> 10 llantas
+            cant = 10
+            esquema = [
+                {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]},
+                {'eje': 2, 'nombre': 'Eje 2 (Tracción)', 'tipo': 'traccion', 'posiciones': [{'pos': 3, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 4}, {'pos': 4, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 3}, {'pos': 5, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 6}, {'pos': 6, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 5}]},
+                {'eje': 3, 'nombre': 'Eje 3 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 7, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 8}, {'pos': 8, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 7}, {'pos': 9, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 10}, {'pos': 10, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 9}]}
+            ]
+        else:
+            # Generar esquema automático estándar
+            esquema = [
+                {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]}
+            ]
+            resto = cant - 2
+            pos_actual = 3
+            eje_num = 2
+            while resto > 0:
+                if resto >= 4:
+                    esquema.append({
+                        'eje': eje_num,
+                        'nombre': f'Eje {eje_num} (Dual)',
+                        'tipo': 'traccion',
+                        'posiciones': [
+                            {'pos': pos_actual, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_actual+1},
+                            {'pos': pos_actual+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_actual},
+                            {'pos': pos_actual+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_actual+3},
+                            {'pos': pos_actual+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_actual+2}
+                        ]
+                    })
+                    pos_actual += 4
+                    resto -= 4
+                else:
+                    esquema.append({
+                        'eje': eje_num,
+                        'nombre': f'Eje {eje_num}',
+                        'tipo': 'traccion',
+                        'posiciones': [
+                            {'pos': pos_actual, 'lado': 'izq', 'rol': 'sencillo', 'dual': False},
+                            {'pos': pos_actual+1, 'lado': 'der', 'rol': 'sencillo', 'dual': False}
+                        ]
+                    })
+                    pos_actual += 2
+                    resto -= 2
+                eje_num += 1
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
+                       (nom, descripcion, cant, json.dumps(esquema)))
+        conn.commit()
+    return nom
+
+def obtener_esquema_tipologia(tipologia_nombre):
+    import json
+    t_norm = (tipologia_nombre or '').strip().lower()
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT nombre, cant_llantas, esquema_json FROM catalogo_tipologias')
+            filas = cursor.fetchall()
+            # 1. Coincidencia exacta primero
+            for r in filas:
+                if r[0].strip().lower() == t_norm:
+                    return json.loads(r[2]) if r[2] else []
+            # 2. Coincidencia parcial si no hay exacta
+            for r in filas:
+                if t_norm in r[0].strip().lower():
+                    return json.loads(r[2]) if r[2] else []
+            # 3. Retornar primer registro si hay filas
+            if filas and filas[0][2]:
+                return json.loads(filas[0][2])
+    except Exception:
+        pass
+
+    # 4. Esquema heurístico estándar de respaldo para entornos de prueba o tipologías nuevas
+    if "cuatro manos" in t_norm or "8x4" in t_norm or "biarticulado" in t_norm:
+        return [
+            {'eje': 1, 'nombre': 'Eje 1', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'dir'}, {'pos': 2, 'lado': 'der', 'rol': 'dir'}]},
+            {'eje': 2, 'nombre': 'Eje 2', 'tipo': 'direccional', 'posiciones': [{'pos': 3, 'lado': 'izq', 'rol': 'dir'}, {'pos': 4, 'lado': 'der', 'rol': 'dir'}]},
+            {'eje': 3, 'nombre': 'Eje 3', 'tipo': 'traccion', 'posiciones': [{'pos': 5, 'lado': 'izq', 'rol': 'ext'}, {'pos': 6, 'lado': 'izq', 'rol': 'int'}, {'pos': 7, 'lado': 'der', 'rol': 'int'}, {'pos': 8, 'lado': 'der', 'rol': 'ext'}]},
+            {'eje': 4, 'nombre': 'Eje 4', 'tipo': 'traccion', 'posiciones': [{'pos': 9, 'lado': 'izq', 'rol': 'ext'}, {'pos': 10, 'lado': 'izq', 'rol': 'int'}, {'pos': 11, 'lado': 'der', 'rol': 'int'}, {'pos': 12, 'lado': 'der', 'rol': 'ext'}]}
+        ]
+    elif "articulado" in t_norm or "dobletroque" in t_norm or "6x4" in t_norm or "10" in t_norm:
+        return [
+            {'eje': 1, 'nombre': 'Eje 1', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'dir'}, {'pos': 2, 'lado': 'der', 'rol': 'dir'}]},
+            {'eje': 2, 'nombre': 'Eje 2', 'tipo': 'traccion', 'posiciones': [{'pos': 3, 'lado': 'izq', 'rol': 'ext'}, {'pos': 4, 'lado': 'izq', 'rol': 'int'}, {'pos': 5, 'lado': 'der', 'rol': 'int'}, {'pos': 6, 'lado': 'der', 'rol': 'ext'}]},
+            {'eje': 3, 'nombre': 'Eje 3', 'tipo': 'traccion', 'posiciones': [{'pos': 7, 'lado': 'izq', 'rol': 'ext'}, {'pos': 8, 'lado': 'izq', 'rol': 'int'}, {'pos': 9, 'lado': 'der', 'rol': 'int'}, {'pos': 10, 'lado': 'der', 'rol': 'ext'}]}
+        ]
+    elif "repuesto" in t_norm:
+        return [
+            {'eje': 1, 'nombre': 'Eje 1', 'tipo': 'remolque', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'ext'}, {'pos': 2, 'lado': 'izq', 'rol': 'int'}, {'pos': 3, 'lado': 'der', 'rol': 'int'}, {'pos': 4, 'lado': 'der', 'rol': 'ext'}]},
+            {'eje': 2, 'nombre': 'Eje 2', 'tipo': 'remolque', 'posiciones': [{'pos': 5, 'lado': 'izq', 'rol': 'ext'}, {'pos': 6, 'lado': 'izq', 'rol': 'int'}, {'pos': 7, 'lado': 'der', 'rol': 'int'}, {'pos': 8, 'lado': 'der', 'rol': 'ext'}]},
+            {'eje': 99, 'nombre': 'Repuesto', 'tipo': 'repuesto', 'posiciones': [{'pos': 9, 'lado': 'izq', 'rol': 'rep'}]}
+        ]
+    else: # 2 ejes (C2, Camion Sencillo 4x2, etc.)
+        return [
+            {'eje': 1, 'nombre': 'Eje 1', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'dir'}, {'pos': 2, 'lado': 'der', 'rol': 'dir'}]},
+            {'eje': 2, 'nombre': 'Eje 2', 'tipo': 'traccion', 'posiciones': [{'pos': 3, 'lado': 'izq', 'rol': 'ext'}, {'pos': 4, 'lado': 'izq', 'rol': 'int'}, {'pos': 5, 'lado': 'der', 'rol': 'int'}, {'pos': 6, 'lado': 'der', 'rol': 'ext'}]}
+        ]
+
+def actualizar_operacion(nombre_antiguo, nombre_nuevo):
+    nom_a = (nombre_antiguo or '').strip()
+    nom_n = (nombre_nuevo or '').strip()
+    if not nom_a or not nom_n:
+        return False
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('UPDATE catalogo_operaciones SET nombre = ? WHERE nombre = ?', (nom_n, nom_a))
+        cursor.execute('UPDATE inspecciones SET tipo_operacion = ? WHERE tipo_operacion = ?', (nom_n, nom_a))
+        conn.commit()
+    return True
+
+def eliminar_operacion(nombre):
+    nom = (nombre or '').strip()
+    if not nom:
+        return False
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM catalogo_operaciones WHERE nombre = ?', (nom,))
+        conn.commit()
+    return True
+
+def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llantas=10, config_ejes=None):
+    nom_a = (nombre_antiguo or '').strip()
+    nom_n = (nombre_nuevo or '').strip()
+    if not nom_a or not nom_n:
+        return False
+    cant = int(cant_llantas or 10)
+    
+    # Si especificó config_ejes, armar esquema
+    esquema_nuevo = None
+    if config_ejes:
+        codigos = [c.strip().lower() for c in config_ejes.split(',') if c.strip()]
+        if codigos:
+            esquema_nuevo = []
+            pos_act = 1
+            for idx, c in enumerate(codigos):
+                eje_num = idx + 1
+                if c in ('dir', 'direccional', 'delantero'):
+                    esquema_nuevo.append({
+                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Direccional)', 'tipo': 'direccional',
+                        'posiciones': [{'pos': pos_act, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': pos_act+1, 'lado': 'der', 'rol': 'direccional', 'dual': False}]
+                    })
+                    pos_act += 2
+                elif c in ('trac', 'traccion', 'tracción', 'dual'):
+                    esquema_nuevo.append({
+                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Tracción)', 'tipo': 'traccion',
+                        'posiciones': [
+                            {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                            {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                            {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                            {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+                        ]
+                    })
+                    pos_act += 4
+                elif c in ('libre', 'arrastre', 'loco'):
+                    esquema_nuevo.append({
+                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Libre / Arrastre)', 'tipo': 'libre',
+                        'posiciones': [
+                            {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                            {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                            {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                            {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+                        ]
+                    })
+                    pos_act += 4
+                elif c in ('remolque', 'trailer'):
+                    esquema_nuevo.append({
+                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Trailer / Remolque)', 'tipo': 'remolque',
+                        'posiciones': [
+                            {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                            {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                            {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                            {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+                        ]
+                    })
+                    pos_act += 4
+                else:
+                    esquema_nuevo.append({
+                        'eje': eje_num, 'nombre': f'Eje {eje_num}', 'tipo': 'traccion',
+                        'posiciones': [{'pos': pos_act, 'lado': 'izq', 'rol': 'sencillo', 'dual': False}, {'pos': pos_act+1, 'lado': 'der', 'rol': 'sencillo', 'dual': False}]
+                    })
+                    pos_act += 2
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT esquema_json FROM catalogo_tipologias WHERE nombre = ?', (nom_a,))
+        row = cursor.fetchone()
+        esquema_json = row[0] if row and row[0] else None
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE nombre = ?', (nom_a,))
+        conn.commit()
+
+    if esquema_nuevo:
+        return guardar_tipologia(nom_n, descripcion, cant, esquema_custom=esquema_nuevo)
+    elif esquema_json and nom_a == nom_n:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
+                           (nom_n, descripcion, cant, esquema_json))
+            conn.commit()
+        return True
+    else:
+        return guardar_tipologia(nom_n, descripcion, cant)
+
+def eliminar_tipologia(nombre):
+    nom = (nombre or '').strip()
+    if not nom:
+        return False
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE nombre = ?', (nom,))
+        conn.commit()
+    return True
+
+def obtener_catalogo_modelos():
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, marca ASC, diseno ASC')
+        cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
+        return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original'):
+    m = (marca or '').strip().lower()
+    d = (diseno or '').strip().lower()
+    dim = (dimension or '').strip().lower()
+    tipo = 'Reencauche' if str(vida).strip().lower() == 'reencauche' else 'Nueva'
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND LOWER(dimension) = LOWER(?) LIMIT 1', (tipo, m, d, dim))
+        r = cursor.fetchone()
+        if r:
+            return r[0]
+        cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (tipo, m, d))
+        r = cursor.fetchone()
+        if r:
+            return r[0]
+        cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (tipo, d))
+        r = cursor.fetchone()
+        if r:
+            return r[0]
+    return 0.0
+
+def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion=''):
+    tipo = str(tipo_llanta or 'Nueva').strip()
+    m = str(marca or '').strip()
+    d = str(diseno or '').strip()
+    dim = str(dimension or '').strip()
+    prof = to_float(prof_inicial, 0.0)
+    desc = str(descripcion or '').strip()
+    if not m or not d:
+        return False
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('INSERT OR REPLACE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion) VALUES (?, ?, ?, ?, ?, ?)', (tipo, m, d, dim, prof, desc))
+        conn.commit()
+    return True
+
+def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
+    """
+    Calcula trazabilidad e indicadores clave de desempeno (KPIs) por llanta:
+    - CPK (Costo Por Kilometro): Precio / Km Rodados
+    - Desgaste Total (mm): prof_inicial - min(prof_ext, prof_cent, prof_int)
+    - Km Rodados: km_actual - km_montaje (o delta entre inspecciones)
+    - Rendimiento (Km/mm): Km Rodados / Desgaste
+    - Proyeccion Total Km: Rendimiento * mm_utiles
+    - % Desgaste y CPK Proyectado
+    Permite filtrar por cliente, subcliente, tipo_operacion, marca, diseno, dimension, vida, banda_reen.
+    """
+    filtros = filtros or {}
+    with get_connection() as conn:
+        query = """
+            SELECT id, fecha, placa, posicion, kilometraje, numero_interno,
+                   marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
+                   prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion
+            FROM inspecciones
+            WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
+        """
+        params = []
+        if numero_interno and str(numero_interno).strip():
+            query += " AND UPPER(TRIM(numero_interno)) LIKE UPPER(TRIM(?))"
+            params.append(f"%{str(numero_interno).strip()}%")
+        
+        for k_campo in ['cliente', 'subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
+            v_val = filtros.get(k_campo)
+            if v_val and str(v_val).strip() and str(v_val).strip() != 'Todos':
+                query += f" AND UPPER(TRIM({k_campo})) = UPPER(TRIM(?))"
+                params.append(str(v_val).strip())
+
+        query += " ORDER BY numero_interno ASC, fecha ASC, id ASC"
+        df = pd.read_sql_query(query, conn, params=params)
+
+    if df.empty:
+        return []
+
+    resultados = []
+    for num, group in df.groupby('numero_interno'):
+        group = group.sort_values(by=['fecha', 'id'])
+        primera = group.iloc[0]
+        ultima = group.iloc[-1]
+
+        prof_ini = to_float(ultima['prof_inicial'])
+        if prof_ini <= 0:
+            prof_ini = to_float(primera['prof_inicial'])
+
+        km_mont = to_float(ultima['km_montaje'])
+        if km_mont <= 0:
+            km_mont = to_float(primera['km_montaje'])
+
+        km_ult = to_float(ultima['kilometraje'])
+        km_pri = to_float(primera['kilometraje'])
+
+        if km_mont > 0 and km_ult >= km_mont:
+            km_rodados = km_ult - km_mont
+        elif km_ult > km_pri:
+            km_rodados = km_ult - km_pri
+        else:
+            km_rodados = 0.0
+
+        p_ext = to_float(ultima['prof_ext'])
+        p_cen = to_float(ultima['prof_cent'])
+        p_int = to_float(ultima['prof_int'])
+        profs_validas = [p for p in (p_ext, p_cen, p_int) if p > 0]
+        prof_actual_min = min(profs_validas) if profs_validas else 0.0
+
+        desgaste_mm = max(0.0, prof_ini - prof_actual_min) if (prof_ini > 0 and prof_actual_min > 0) else 0.0
+        km_por_mm = (km_rodados / desgaste_mm) if (desgaste_mm > 0.05 and km_rodados > 0) else 0.0
+
+        precio = to_float(ultima['precio'])
+        if precio <= 0:
+            precio = to_float(primera['precio'])
+        cpk = (precio / km_rodados) if (km_rodados > 0 and precio > 0) else 0.0
+
+        cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
+        limite_cambio = obtener_limite_retiro_cliente(cliente_nom)
+
+        # Proyección útil de vida calculada hasta el límite de cambio programado por cliente (por defecto 3.0 mm)
+        mm_utiles = max(0.0, prof_ini - limite_cambio) if prof_ini > limite_cambio else 0.0
+        proyeccion_total_km = (km_por_mm * mm_utiles) if km_por_mm > 0 else 0.0
+        km_restantes = max(0.0, proyeccion_total_km - km_rodados) if proyeccion_total_km > 0 else 0.0
+        
+        # Porcentaje de desgaste respecto a la profundidad útil de la llanta
+        if mm_utiles > 0 and desgaste_mm >= 0:
+            pct_desgaste = min(100.0, (desgaste_mm / mm_utiles) * 100.0)
+        else:
+            pct_desgaste = 0.0
+
+        # CPK Proyectado = Precio / Proyección Total Km (si hay proyección estimada)
+        cpk_proyectado = (precio / proyeccion_total_km) if (precio > 0 and proyeccion_total_km > 0) else 0.0
+
+        # Sugerencia de cambio si la profundidad actual más baja ya alcanzó o superó el límite de cambio
+        requiere_cambio = (prof_actual_min > 0 and prof_actual_min <= limite_cambio)
+
+        resultados.append({
+            'numero_interno': num,
+            'placa': ultima['placa'],
+            'posicion': ultima['posicion'],
+            'marca': ultima['marca'],
+            'diseno': ultima['diseno'],
+            'dimension': ultima['dimension'],
+            'vida': ultima['vida'],
+            'banda_reen': ultima.get('banda_reen', ''),
+            'cliente': ultima.get('cliente', ''),
+            'subcliente': ultima.get('subcliente', ''),
+            'tipo_operacion': ultima.get('tipo_operacion', ''),
+            'fecha_ult_insp': ultima['fecha'],
+            'total_inspecciones': len(group),
+            'prof_inicial': round(prof_ini, 1),
+            'prof_actual_min': round(prof_actual_min, 1),
+            'desgaste_mm': round(desgaste_mm, 1),
+            'porcentaje_desgaste': round(pct_desgaste, 1),
+            'km_montaje': round(km_mont, 0),
+            'km_actual': round(km_ult, 0),
+            'km_rodados': round(km_rodados, 0),
+            'km_por_mm': round(km_por_mm, 1),
+            'precio': round(precio, 2),
+            'cpk': round(cpk, 4),
+            'cpk_proyectado': round(cpk_proyectado, 4),
+            'limite_retiro_mm': round(limite_cambio, 1),
+            'proyeccion_total_km': round(proyeccion_total_km, 0),
+            'km_restantes': round(km_restantes, 0),
+            'requiere_cambio': 'SÍ' if requiere_cambio else 'NO',
+            'usuario_registro': ultima.get('usuario_registro', '')
+        })
+
+    # Filtrar por usuario si es inspector y no es admin
+    usuario_filtro = filtros.get('usuario')
+    if usuario_filtro:
+        usr_info = obtener_usuario_por_username(usuario_filtro)
+        if usr_info and usr_info.get('rol') != 'admin':
+            cli_asig = usr_info.get('cliente_asignado')
+            if cli_asig:
+                resultados = [r for r in resultados if r.get('cliente', '').strip().lower() == cli_asig.strip().lower()]
+            else:
+                resultados = [r for r in resultados if r.get('usuario_registro', '').strip().lower() == usuario_filtro.strip().lower()]
+
+    return resultados
+
+# ==========================================
+# GESTIÓN Y AUTENTICACIÓN DE USUARIOS
+# ==========================================
+
+def autenticar_usuario(username, password):
+    u = (username or '').strip()
+    p = (password or '').strip()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo
+            FROM usuarios
+            WHERE LOWER(username) = LOWER(?) AND password = ? AND activo = 1
+        """, (u, p))
+        row = cursor.fetchone()
+        if row:
+            return {
+                'id': row[0],
+                'username': row[1],
+                'nombre_completo': row[2],
+                'rol': row[3],
+                'cliente_asignado': row[4] or '',
+                'activo': bool(row[5])
+            }
+    return None
+
+def obtener_usuario_por_username(username):
+    u = (username or '').strip()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo
+            FROM usuarios
+            WHERE LOWER(username) = LOWER(?)
+        """, (u,))
+        row = cursor.fetchone()
+        if row:
+            return {
+                'id': row[0],
+                'username': row[1],
+                'nombre_completo': row[2],
+                'rol': row[3],
+                'cliente_asignado': row[4] or '',
+                'activo': bool(row[5])
+            }
+    return None
+
+def listar_usuarios():
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion
+            FROM usuarios
+            ORDER BY id ASC
+        """)
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion']
+        return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado=''):
+    u = (username or '').strip().lower()
+    p = (password or '').strip()
+    nom = (nombre_completo or '').strip()
+    r = (rol or 'inspector').strip().lower()
+    cli = (cliente_asignado or '').strip()
+    if not u or not p or not nom:
+        return False
+    with get_connection() as conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
+                VALUES (?, ?, ?, ?, ?)
+            """, (u, p, nom, r, cli))
+            conn.commit()
+            return True
+        except Exception:
+            return False
+
+def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None):
+    u = (username or '').strip().lower()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        updates = []
+        params = []
+        if nombre_completo is not None:
+            updates.append("nombre_completo = ?")
+            params.append(nombre_completo)
+        if password is not None and str(password).strip():
+            updates.append("password = ?")
+            params.append(str(password).strip())
+        if rol is not None:
+            updates.append("rol = ?")
+            params.append(rol)
+        if cliente_asignado is not None:
+            updates.append("cliente_asignado = ?")
+            params.append(cliente_asignado)
+        if activo is not None:
+            updates.append("activo = ?")
+            params.append(1 if activo else 0)
+        if not updates:
+            return False
+        params.append(u)
+        cursor.execute(f"UPDATE usuarios SET {', '.join(updates)} WHERE LOWER(username) = LOWER(?)", params)
+        conn.commit()
+        return True
+
+def eliminar_usuario(username):
+    u = (username or '').strip().lower()
+    if u == 'admin':
+        return False # No eliminar el superadmin
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,))
+        conn.commit()
+        return True
+
+def obtener_datos_inspeccion_vehiculo(placa, fecha=None):
+    """
+    Obtiene todos los datos y mediciones de la inspección de un vehículo específico para generar el informe PDF.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if fecha:
+            cursor.execute("""
+                SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
+                       tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
+                       psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
+                FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) AND fecha = ?
+                ORDER BY posicion ASC
+            """, (placa, fecha))
+        else:
+            cursor.execute("""
+                SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
+                       tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
+                       psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
+                FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?))
+                ORDER BY fecha DESC, posicion ASC
+            """, (placa,))
+        
+        cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
+                'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'prof_ext', 'prof_cent', 'prof_int',
+                'psi', 'novedades', 'precio', 'prof_inicial', 'km_montaje', 'numero_interno', 'usuario_registro', 'foto_novedad']
+        rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
+        return rows
+
