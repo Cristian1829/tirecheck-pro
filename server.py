@@ -16,7 +16,6 @@ from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import qrcode
 
 import database
 import pdf_generator
@@ -26,20 +25,6 @@ app = FastAPI(title="TireCheck Pro - Sistema Integral Web & Móvil")
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Control en memoria del túnel ngrok
-_ngrok_tunnel = None
-
-def obtener_ip_local():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    except Exception:
-        ip = '127.0.0.1'
-    finally:
-        s.close()
-    return ip
 
 # ==========================================
 # MODELOS PYDANTIC
@@ -136,62 +121,13 @@ def preview_chasis():
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
-@app.get("/qr")
-def generar_qr():
-    global _ngrok_tunnel
-    ip = obtener_ip_local()
-    url = _ngrok_tunnel.public_url if _ngrok_tunnel else f"http://{ip}:8000"
-    qr = qrcode.QRCode(version=1, box_size=8, border=2)
-    qr.add_data(url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="#0f172a", back_color="white")
-    
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    return StreamingResponse(buf, media_type="image/png")
-
 @app.get("/api/servidor/info")
 def api_info_servidor():
-    global _ngrok_tunnel
-    ip = obtener_ip_local()
     return {
-        "ip_local": ip,
-        "puerto": 8000,
-        "url_local": f"http://{ip}:8000",
-        "ngrok_activo": bool(_ngrok_tunnel),
-        "ngrok_url": _ngrok_tunnel.public_url if _ngrok_tunnel else None
+        "app": "TireCheck Pro",
+        "status": "online",
+        "version": "2.0"
     }
-
-@app.get("/api/ngrok/estado")
-def api_ngrok_estado():
-    global _ngrok_tunnel
-    return {
-        "activo": bool(_ngrok_tunnel),
-        "url": _ngrok_tunnel.public_url if _ngrok_tunnel else None
-    }
-
-@app.post("/api/ngrok/toggle")
-def api_ngrok_toggle():
-    global _ngrok_tunnel
-    try:
-        from pyngrok import ngrok
-        if _ngrok_tunnel:
-            try:
-                ngrok.disconnect(_ngrok_tunnel.public_url)
-            except Exception:
-                pass
-            _ngrok_tunnel = None
-            return {"activo": False, "url": None, "message": "Túnel público cerrado."}
-        else:
-            tunnel = ngrok.connect(8000, "http")
-            _ngrok_tunnel = tunnel
-            return {"activo": True, "url": tunnel.public_url, "message": "Túnel público activado con éxito."}
-    except Exception as e:
-        err = str(e)
-        if "authtoken" in err.lower():
-            err += "\n\nTip: Para usar ngrok gratis por primera vez, crea una cuenta en ngrok.com y ejecuta: ngrok config add-authtoken TU_TOKEN"
-        raise HTTPException(status_code=500, detail=f"Error al alternar túnel ngrok: {err}")
 
 # ==========================================
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)

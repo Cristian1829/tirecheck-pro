@@ -10,9 +10,8 @@ def test_api_info_servidor():
     res = client.get("/api/servidor/info")
     assert res.status_code == 200
     data = res.json()
-    assert "ip_local" in data
-    assert data["puerto"] == 8000
-    assert "url_local" in data
+    assert data["status"] == "online"
+    assert data["app"] == "TireCheck Pro"
 
 def test_api_crud_inspeccion(test_db):
     # 1. Crear inspección
@@ -129,13 +128,13 @@ def test_index_page_loads_all_views():
     res = client.get("/")
     assert res.status_code == 200
     html = res.text
-    # Verificar que el HTML contiene las 6 vistas principales integradas
+    # Verificar que el HTML contiene las 5 vistas principales integradas
     assert "vista-patio" in html
     assert "vista-basedatos" in html
     assert "vista-diagnostico" in html
     assert "vista-kpis" in html
     assert "vista-catalogos" in html
-    assert "vista-remoto" in html
+    assert "vista-remoto" not in html
     # Verificar modales esenciales
     assert "modalEditarInspeccion" in html
     assert "modalImportarExcel" in html

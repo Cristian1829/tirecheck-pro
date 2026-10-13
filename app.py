@@ -86,10 +86,6 @@ class AppInspeccionLlantas(tk.Tk):
         self.notebook.add(self.tab_form, text='Nueva Inspeccion (PC)')
         self.crear_tab_formulario(self.tab_form)
 
-        self.tab_movil = ttk.Frame(self.notebook, padding=15)
-        self.notebook.add(self.tab_movil, text='Conectar Celular (QR)')
-        self.crear_tab_movil(self.tab_movil)
-
         self.tab_analisis = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_analisis, text='Planes de Accion & Diagnostico')
         self.crear_tab_analisis(self.tab_analisis)

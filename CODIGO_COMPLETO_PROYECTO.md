@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireCheck Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-13 16:24:25`
+- **Fecha de Generación:** `2026-10-13 17:12:34`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,007` líneas
-- **Tamaño Total de Código Fuente:** `1160.2 KB` (`1,188,015` bytes)
+- **Líneas Totales de Código:** `17,662` líneas
+- **Tamaño Total de Código Fuente:** `1144.3 KB` (`1,171,811` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -157,8 +157,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [requirements.txt](#archivo-requirementstxt) | `text` | 12 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.) |
-| [.gitignore](#archivo-gitignore) | `gitignore` | 25 | 0.3 KB | Reglas de exclusión de Git |
+| [requirements.txt](#archivo-requirementstxt) | `text` | 11 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.) |
+| [.gitignore](#archivo-gitignore) | `gitignore` | 30 | 0.4 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
 | [Dockerfile](#archivo-dockerfile) | `dockerfile` | 26 | 0.7 KB | Definición estandarizada del contenedor Docker para producción/cloud |
 | [render.yaml](#archivo-renderyaml) | `yaml` | 11 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
@@ -170,7 +170,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [README.md](#archivo-readmemd) | `markdown` | 128 | 7.4 KB | Documento general del repositorio, resumen de arquitectura y guía de inicio |
-| [docs/GUIA_DESPLIEGUE_RENDER.md](#archivo-docsguia-despliegue-rendermd) | `markdown` | 72 | 3.0 KB | Guía paso a paso para desplegar TireCheck Pro en Render.com de forma 100% gratuita |
+| [docs/GUIA_DESPLIEGUE_RENDER.md](#archivo-docsguia-despliegue-rendermd) | `markdown` | 65 | 2.9 KB | Guía paso a paso para desplegar TireCheck Pro en Render.com de forma 100% gratuita |
 | [docs/AGENTS.md](#archivo-docsagentsmd) | `markdown` | 125 | 8.6 KB | Guía especializada para Agentes de IA: invariantes del sistema, reglas críticas y no regresión |
 | [docs/ARCHITECTURE.md](#archivo-docsarchitecturemd) | `markdown` | 226 | 9.5 KB | Arquitectura en capas, diagrama C4, flujos de inspección y persistencia de datos |
 | [docs/API_REFERENCE.md](#archivo-docsapi-referencemd) | `markdown` | 243 | 8.5 KB | Especificación técnica de los endpoints RESTful de FastAPI |
@@ -183,18 +183,18 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 623 | 23.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 559 | 20.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1572 | 78.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
-| [app.py](#archivo-apppy) | `python` | 2129 | 115.6 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
+| [app.py](#archivo-apppy) | `python` | 2125 | 115.4 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
 ### 4. Frontend Web SPA & Plantillas
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5818 | 573.2 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5545 | 559.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1334 | 69.7 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -202,7 +202,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 31 | 0.8 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 176 | 5.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 175 | 5.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 170 | 5.1 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
@@ -238,7 +238,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 - **Ruta:** `requirements.txt`
 - **Descripción:** Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.)
-- **Métricas:** 12 líneas | 195 bytes (0.2 KB)
+- **Métricas:** 11 líneas | 167 bytes (0.2 KB)
 - **Lenguaje:** `text`
 
 ```text
@@ -248,9 +248,7 @@ pydantic>=2.0.0
 pandas>=2.0.0
 openpyxl>=3.1.0
 Pillow>=10.0.0
-qrcode>=7.4.2
 reportlab>=4.0.0
-pyngrok>=7.0.0
 jinja2>=3.1.0
 python-multipart>=0.0.9
 requests>=2.31.0
@@ -262,7 +260,7 @@ requests>=2.31.0
 
 - **Ruta:** `.gitignore`
 - **Descripción:** Reglas de exclusión de Git
-- **Métricas:** 25 líneas | 336 bytes (0.3 KB)
+- **Métricas:** 30 líneas | 413 bytes (0.4 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -291,6 +289,11 @@ ENV/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Archivos de prueba temporales en la raíz
+/*.png
+/test_*.pdf
+tirecheck.db
 ```
 
 ---
@@ -584,7 +587,7 @@ python -m pytest tests/ -v
 
 - **Ruta:** `docs/GUIA_DESPLIEGUE_RENDER.md`
 - **Descripción:** Guía paso a paso para desplegar TireCheck Pro en Render.com de forma 100% gratuita
-- **Métricas:** 72 líneas | 3,079 bytes (3.0 KB)
+- **Métricas:** 65 líneas | 2,947 bytes (2.9 KB)
 - **Lenguaje:** `markdown`
 
 ````markdown
@@ -603,18 +606,11 @@ Esta guía te explica cómo publicar **TireCheck Pro** en internet de forma **10
 
 ## 🚀 Método Recomendado: Despliegue en 3 Pasos
 
-### Paso 1: Subir el Proyecto a tu GitHub
+### Paso 1: Subir el Proyecto a tu GitHub (✅ ¡COMPLETADO!)
 
-1. En tu cuenta de GitHub, crea un nuevo repositorio (por ejemplo, `tirecheck-pro`). Puedes elegir si es **Público** o **Privado**.
-2. En tu terminal o consola en la carpeta de TireCheck Pro, sube tu código:
-   ```bash
-   git init
-   git add .
-   git commit -m "TireCheck Pro: Versión Demo para Despliegue en Render"
-   git branch -M main
-   git remote add origin https://github.com/TU_USUARIO/tirecheck-pro.git
-   git push -u origin main
-   ```
+El proyecto completo ya se encuentra subido y sincronizado en tu repositorio:
+- **URL del Repositorio:** [https://github.com/Cristian1829/tirecheck-pro](https://github.com/Cristian1829/tirecheck-pro)
+- **Rama principal:** `main` (69 archivos, base de datos precargada y configuración de Render).
 
 ---
 
@@ -1998,7 +1994,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 623 líneas | 23,505 bytes (23.0 KB)
+- **Métricas:** 559 líneas | 21,399 bytes (20.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2020,7 +2016,6 @@ from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import qrcode
 
 import database
 import pdf_generator
@@ -2030,20 +2025,6 @@ app = FastAPI(title="TireCheck Pro - Sistema Integral Web & Móvil")
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Control en memoria del túnel ngrok
-_ngrok_tunnel = None
-
-def obtener_ip_local():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    except Exception:
-        ip = '127.0.0.1'
-    finally:
-        s.close()
-    return ip
 
 # ==========================================
 # MODELOS PYDANTIC
@@ -2140,62 +2121,13 @@ def preview_chasis():
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
-@app.get("/qr")
-def generar_qr():
-    global _ngrok_tunnel
-    ip = obtener_ip_local()
-    url = _ngrok_tunnel.public_url if _ngrok_tunnel else f"http://{ip}:8000"
-    qr = qrcode.QRCode(version=1, box_size=8, border=2)
-    qr.add_data(url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="#0f172a", back_color="white")
-    
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    return StreamingResponse(buf, media_type="image/png")
-
 @app.get("/api/servidor/info")
 def api_info_servidor():
-    global _ngrok_tunnel
-    ip = obtener_ip_local()
     return {
-        "ip_local": ip,
-        "puerto": 8000,
-        "url_local": f"http://{ip}:8000",
-        "ngrok_activo": bool(_ngrok_tunnel),
-        "ngrok_url": _ngrok_tunnel.public_url if _ngrok_tunnel else None
+        "app": "TireCheck Pro",
+        "status": "online",
+        "version": "2.0"
     }
-
-@app.get("/api/ngrok/estado")
-def api_ngrok_estado():
-    global _ngrok_tunnel
-    return {
-        "activo": bool(_ngrok_tunnel),
-        "url": _ngrok_tunnel.public_url if _ngrok_tunnel else None
-    }
-
-@app.post("/api/ngrok/toggle")
-def api_ngrok_toggle():
-    global _ngrok_tunnel
-    try:
-        from pyngrok import ngrok
-        if _ngrok_tunnel:
-            try:
-                ngrok.disconnect(_ngrok_tunnel.public_url)
-            except Exception:
-                pass
-            _ngrok_tunnel = None
-            return {"activo": False, "url": None, "message": "Túnel público cerrado."}
-        else:
-            tunnel = ngrok.connect(8000, "http")
-            _ngrok_tunnel = tunnel
-            return {"activo": True, "url": tunnel.public_url, "message": "Túnel público activado con éxito."}
-    except Exception as e:
-        err = str(e)
-        if "authtoken" in err.lower():
-            err += "\n\nTip: Para usar ngrok gratis por primera vez, crea una cuenta en ngrok.com y ejecuta: ngrok config add-authtoken TU_TOKEN"
-        raise HTTPException(status_code=500, detail=f"Error al alternar túnel ngrok: {err}")
 
 # ==========================================
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)
@@ -5771,7 +5703,7 @@ def seccion_fotos(llantas: List[Dict[str, Any]]) -> List[Any]:
 
 - **Ruta:** `app.py`
 - **Descripción:** Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario
-- **Métricas:** 2129 líneas | 118,395 bytes (115.6 KB)
+- **Métricas:** 2125 líneas | 118,211 bytes (115.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5862,10 +5794,6 @@ class AppInspeccionLlantas(tk.Tk):
         self.tab_form = ttk.Frame(self.notebook, padding=12)
         self.notebook.add(self.tab_form, text='Nueva Inspeccion (PC)')
         self.crear_tab_formulario(self.tab_form)
-
-        self.tab_movil = ttk.Frame(self.notebook, padding=15)
-        self.notebook.add(self.tab_movil, text='Conectar Celular (QR)')
-        self.crear_tab_movil(self.tab_movil)
 
         self.tab_analisis = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_analisis, text='Planes de Accion & Diagnostico')
@@ -7914,7 +7842,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5818 líneas | 586,979 bytes (573.2 KB)
+- **Métricas:** 5545 líneas | 573,159 bytes (559.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8072,10 +8000,6 @@ if __name__ == '__main__':
     .app-hd__btn{display:inline-flex;align-items:center;gap:7px;min-height:36px;border-radius:999px;padding:0 14px;font-size:12px;font-weight:700;color:#fff;border:1px solid transparent;cursor:pointer;transition:all .15s ease;text-decoration:none}
     .app-hd__btn:hover{filter:brightness(1.1)}
     .app-hd__btn--azul{background:#1d63e0}
-    .app-hd__btn--ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.5);color:#34d399}
-    .app-hd__btn--ok i{width:7px;height:7px;border-radius:50%;background:#34d399;display:block}
-    .app-hd__btn--offline{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.5);color:#f87171}
-    .app-hd__btn--offline i{width:7px;height:7px;border-radius:50%;background:#ef4444;display:block}
     .app-hd__btn--gris{background:#1b2740;border-color:#2a3a5c;color:#cbd5e1;font-weight:600}
     /* ===== BANDA: logos izquierda y derecha ===== */
     .app-hd__banda{position:relative;border-top:1px solid rgba(120,170,255,.12);border-bottom:1px solid rgba(120,170,255,.12);
@@ -8184,16 +8108,6 @@ if __name__ == '__main__':
             <span>Consolidado Flota</span>
           </button>
           
-          <button id="btnSincronizarOffline" type="button" onclick="sincronizarColaOffline()" title="Sincronizar Pendientes" class="hidden app-hd__btn bg-amber-500 text-slate-950 font-black animate-pulse">
-            <i class="fa-solid fa-cloud-arrow-up mr-1 text-xs"></i>
-            <span id="lblPendientesCount">0</span>
-          </button>
-          
-          <span id="badgeEstadoRed" class="app-hd__btn app-hd__btn--ok" role="status">
-            <i aria-hidden="true"></i>
-            <span>Online</span>
-          </span>
-          
           <button type="button" onclick="cerrarSesionUsuario()" title="Cerrar Sesión" class="app-hd__btn app-hd__btn--gris">
             <i class="fa-solid fa-right-from-bracket mr-1 text-xs sm:inline hidden"></i>
             <span>Salir</span>
@@ -8239,10 +8153,6 @@ if __name__ == '__main__':
         <button type="button" onclick="navegarTab('catalogos')" id="nav-btn-catalogos" class="nav-tab-btn">
           <i style="--c:#22d3ee"></i>
           <span>Catálogos &amp; Ajustes</span>
-        </button>
-        <button type="button" onclick="navegarTab('remoto')" id="nav-btn-remoto" class="nav-tab-btn">
-          <i style="--c:#f472b6"></i>
-          <span>Conectar Celular / QR</span>
         </button>
       </nav>
     </div>
@@ -9368,75 +9278,7 @@ if __name__ == '__main__':
     </div>
   </section>
 
-  <!-- ============================================================== -->
-  <!-- VISTA 6: CONECTAR CELULAR / ACCESO REMOTO (QR & NGROK)          -->
-  <!-- ============================================================== -->
-  <section id="vista-remoto" class="hidden max-w-7xl mx-auto px-4 py-4 space-y-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      
-      <!-- Tarjeta 1: Conexión Local en Wi-Fi con QR -->
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-4 text-center">
-        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-xl">
-          <i class="fa-solid fa-wifi"></i>
-        </div>
-        <h3 class="text-base font-black text-slate-900">Conectar Celulares en Red Local (Wi-Fi)</h3>
-        <p class="text-xs text-slate-500">Escanea este código QR con la cámara del celular conectado al mismo Wi-Fi del patio:</p>
 
-        <div class="p-4 bg-slate-50 border border-slate-200 rounded-3xl inline-block shadow-inner mx-auto">
-          <img id="imgCodigoQR" src="/qr" alt="Código QR TireCheck" class="w-56 h-56 mx-auto rounded-xl">
-        </div>
-
-        <div class="space-y-2">
-          <span class="block text-xs font-bold text-slate-600">Dirección Web de Acceso:</span>
-          <div class="flex items-center justify-center space-x-2">
-            <span id="lblUrlLocal" class="font-mono text-sm font-black text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200">http://localhost:8000</span>
-            <button type="button" onclick="copiarEnlaceServidor()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1">
-              <i class="fa-solid fa-copy"></i>
-              <span>Copiar</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tarjeta 2: Enlace Público por Internet (ngrok) -->
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-4">
-        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-xl">
-          <i class="fa-solid fa-globe"></i>
-        </div>
-        <h3 class="text-base font-black text-slate-900">Enlace Público de Internet (Túnel ngrok)</h3>
-        <p class="text-xs text-slate-500">Útil cuando los inspectores están en patios remotos o usan datos móviles (4G/5G):</p>
-
-        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-600">Estado del Túnel:</span>
-            <span id="badgeNgrokEstado" class="text-xs font-black px-2.5 py-1 rounded-full bg-slate-200 text-slate-700">Desconectado</span>
-          </div>
-          <div id="boxUrlNgrok" class="hidden space-y-1">
-            <span class="text-[11px] font-bold text-slate-500">URL Pública Segura (HTTPS):</span>
-            <div class="flex items-center space-x-2">
-              <input type="text" id="txtUrlNgrok" readonly class="flex-1 p-2 bg-white border border-slate-200 rounded-xl text-xs font-mono text-emerald-700 font-bold">
-              <button type="button" onclick="copiarUrlNgrok()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">Copiar</button>
-            </div>
-          </div>
-          <button type="button" id="btnToggleNgrok" onclick="alternarNgrokWeb()" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-lg shadow-purple-500/20 flex items-center justify-center space-x-2 transition-all">
-            <i class="fa-solid fa-bolt"></i>
-            <span>Activar Enlace Público de Internet</span>
-          </button>
-        </div>
-
-        <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs space-y-2 text-amber-900">
-          <span class="font-bold flex items-center space-x-1.5">
-            <i class="fa-solid fa-cloud-arrow-down text-amber-600"></i>
-            <span>Modo Offline Automático en Patio</span>
-          </span>
-          <p class="text-[11px] leading-relaxed">
-            Si en el sótano o bodega se pierde la señal celular, la aplicación continuará guardando las inspecciones en la memoria del teléfono automáticamente. Al recuperar señal, se sincronizarán solas con el servidor central.
-          </p>
-        </div>
-      </div>
-
-    </div>
-  </section>
 
   <!-- ============================================================== -->
   <!-- MODALES DE OPERACIÓN (EDITAR, IMPORTAR EXCEL, NUEVO MODELO, ETC)-->
@@ -9952,7 +9794,7 @@ if __name__ == '__main__':
     // NAVEGACIÓN ENTRE PESTAÑAS (SPA)
     // ==========================================
     function navegarTab(tabId) {
-      const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos', 'remoto'];
+      const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
       tabs.forEach(t => {
         const elVista = document.getElementById(`vista-${t}`);
         const elBtn = document.getElementById(`nav-btn-${t}`);
@@ -9976,7 +9818,6 @@ if __name__ == '__main__':
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
       else if (tabId === 'catalogos') cargarGestionCatalogos();
-      else if (tabId === 'remoto') cargarInfoServidor();
     }
 
     // ==========================================
@@ -11207,79 +11048,6 @@ if __name__ == '__main__':
       }
     }
 
-    // ==========================================
-    // VISTA 6: CONECTAR CELULAR / REMOTO (QR & NGROK)
-    // ==========================================
-    async function cargarInfoServidor() {
-      try {
-        const res = await fetch('/api/servidor/info');
-        if (res.ok) {
-          const d = await res.json();
-          document.getElementById('lblUrlLocal').textContent = d.url_local;
-          document.getElementById('imgCodigoQR').src = `/qr?t=${Date.now()}`;
-          actualizarEstadoNgrokUI(d.ngrok_activo, d.ngrok_url);
-        }
-      } catch (e) {}
-    }
-
-    function actualizarEstadoNgrokUI(activo, url) {
-      const badge = document.getElementById('badgeNgrokEstado');
-      const box = document.getElementById('boxUrlNgrok');
-      const txt = document.getElementById('txtUrlNgrok');
-      const btn = document.getElementById('btnToggleNgrok');
-
-      if (activo && url) {
-        badge.className = 'text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-        badge.textContent = 'En Línea por Internet';
-        box.classList.remove('hidden');
-        txt.value = url;
-        btn.innerHTML = '<i class="fa-solid fa-power-off mr-1"></i> Desactivar Enlace Público';
-        btn.className = 'w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow transition-all';
-      } else {
-        badge.className = 'text-xs font-black px-2.5 py-1 rounded-full bg-slate-200 text-slate-700';
-        badge.textContent = 'Desconectado';
-        box.classList.add('hidden');
-        txt.value = '';
-        btn.innerHTML = '<i class="fa-solid fa-bolt mr-1"></i> Activar Enlace Público de Internet (ngrok)';
-        btn.className = 'w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow transition-all';
-      }
-    }
-
-    async function alternarNgrokWeb() {
-      const btn = document.getElementById('btnToggleNgrok');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Comunicando con túnel...';
-
-      try {
-        const res = await fetch('/api/ngrok/toggle', { method: 'POST' });
-        const d = await res.json();
-        if (res.ok) {
-          actualizarEstadoNgrokUI(d.activo, d.url);
-          document.getElementById('imgCodigoQR').src = `/qr?t=${Date.now()}`;
-          mostrarToast(d.message);
-        } else {
-          mostrarToast(d.detail || 'Error al alternar ngrok', true);
-        }
-      } catch (e) {
-        mostrarToast('Error de conexión al activar el túnel', true);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    function copiarEnlaceServidor() {
-      const url = document.getElementById('lblUrlLocal').textContent;
-      navigator.clipboard.writeText(url).then(() => {
-        mostrarToast(`📋 Enlace copiado al portapapeles: ${url}`);
-      });
-    }
-
-    function copiarUrlNgrok() {
-      const url = document.getElementById('txtUrlNgrok').value;
-      navigator.clipboard.writeText(url).then(() => {
-        mostrarToast(`📋 Enlace HTTPS público copiado: ${url}`);
-      });
-    }
 
     // ==========================================
     // FUNCIONES DEL MOTOR DE PATIO Y CAPTURA
@@ -13409,76 +13177,6 @@ if __name__ == '__main__':
       window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
     }
 
-    // Cola Offline
-    function obtenerColaOffline() {
-      try { return JSON.parse(localStorage.getItem('tirecheck_offline_queue') || '[]'); } catch(e) { return []; }
-    }
-    function guardarColaOffline(cola) {
-      localStorage.setItem('tirecheck_offline_queue', JSON.stringify(cola));
-      actualizarBadgeRed();
-    }
-    function encolarInspeccionOffline(payload) {
-      const cola = obtenerColaOffline();
-      cola.push({ payload, timestamp: Date.now() });
-      guardarColaOffline(cola);
-    }
-    function actualizarBadgeRed() {
-      const online = navigator.onLine;
-      const bRed = document.getElementById('badgeEstadoRed');
-      const bSync = document.getElementById('btnSincronizarOffline');
-      const lblCount = document.getElementById('lblPendientesCount');
-      const cola = typeof obtenerColaOffline === 'function' ? obtenerColaOffline() : [];
-
-      if (bRed) {
-        bRed.className = `app-hd__btn ${online ? 'app-hd__btn--ok' : 'app-hd__btn--offline'}`;
-        bRed.innerHTML = `<i aria-hidden="true"></i><span>${online ? 'Online' : 'Offline'}</span>`;
-      }
-
-      if (bSync) {
-        if (cola.length > 0) {
-          bSync.classList.remove('hidden');
-          if (lblCount) lblCount.textContent = cola.length;
-        } else {
-          bSync.classList.add('hidden');
-        }
-      }
-    }
-    async function sincronizarColaOffline() {
-      const cola = obtenerColaOffline();
-      if (cola.length === 0 || !navigator.onLine || sincronizandoCola) return;
-
-      sincronizandoCola = true;
-      mostrarToast(`☁️ Sincronizando ${cola.length} inspección(es) guardadas offline...`);
-      const restantes = [];
-      let exitosos = 0;
-
-      for (const item of cola) {
-        try {
-          const res = await fetch('/api/inspecciones', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(item.payload)
-          });
-          if (res.ok) exitosos++;
-          else {
-            const err = await res.json().catch(() => ({}));
-            if (res.status === 400 && (err.detail || '').includes('ya fue inspeccionado')) exitosos++;
-            else restantes.push(item);
-          }
-        } catch(e) {
-          restantes.push(item);
-        }
-      }
-
-      guardarColaOffline(restantes);
-      sincronizandoCola = false;
-      if (exitosos > 0) mostrarToast(`🎉 ¡${exitosos} inspección(es) sincronizadas con éxito!`);
-      if (restantes.length > 0) mostrarToast(`Quedaron ${restantes.length} pendientes`, true);
-    }
-
-    // Eventos de red
-    window.addEventListener('online', () => { actualizarBadgeRed(); sincronizarColaOffline(); });
-    window.addEventListener('offline', () => { actualizarBadgeRed(); mostrarToast('Modo Offline activo', true); });
 
     // Envío del Formulario de Inspección de Patio
     document.getElementById('inspectionForm').addEventListener('submit', async (e) => {
@@ -13588,25 +13286,6 @@ if __name__ == '__main__':
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...';
       }
 
-      if (!navigator.onLine) {
-        encolarInspeccionOffline(payload);
-        posicionesInspeccionadasPlaca.add(pos);
-        if (payload.novedades && payload.novedades.trim().length > 0) {
-          posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
-        } else {
-          posicionesConNovedadPlaca.delete(pos);
-        }
-        actualizarBarraPosicionMobile(pos);
-        mostrarToast(`💾 Guardado en MODO OFFLINE (Posición ${payload.posicion} de ${placa}).`);
-        avanzarSiguientePosicion(pos);
-        limpiarMediciones();
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-circle-check text-base"></i><span>Guardar & Siguiente Llanta</span>';
-        }
-        return;
-      }
-
       try {
         const res = await fetch('/api/inspecciones', {
           method: 'POST',
@@ -13641,29 +13320,7 @@ if __name__ == '__main__':
           mostrarToast(result.detail || result.message || 'Error al guardar', true);
         }
       } catch (err) {
-        encolarInspeccionOffline(payload);
-        posicionesInspeccionadasPlaca.add(pos);
-        if (payload.novedades && payload.novedades.trim().length > 0) {
-          posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
-        } else {
-          posicionesConNovedadPlaca.delete(pos);
-        }
-        actualizarBarraPosicionMobile(pos);
-        mostrarToast(`⚠️ Sin señal: guardado en MODO OFFLINE.`);
-        const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
-        if (pendientes.length === 0) {
-          mostrarToast(`🎉 ¡Vehículo ${placa} COMPLETADO (Offline)!`);
-          const fechaInspActual = (document.getElementById('fecha')?.value || '').trim();
-          const cliActual = document.getElementById('cliente')?.value.trim() || 'Flota';
-          const tipActual = document.getElementById('tipologia')?.value || 'Tipología';
-          setTimeout(() => {
-            abrirModalInformePdf(placa, fechaInspActual, cliActual, tipActual);
-            limpiarTodoParaNuevaInspeccion();
-          }, 600);
-        } else {
-          avanzarSiguientePosicion(pos);
-          limpiarMediciones();
-        }
+        mostrarToast('Error de red o comunicación con el servidor al guardar la inspección.', true);
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -13725,12 +13382,10 @@ if __name__ == '__main__':
     window.addEventListener('DOMContentLoaded', () => {
       sincronizarSlotEspecificaciones();
       document.getElementById('fecha').value = fechaLocalISO();
-      actualizarBadgeRed();
       const logueado = verificarSesionUsuario();
       if (logueado) {
         cargarCatalogos();
         validarVida();
-        if (navigator.onLine) sincronizarColaOffline();
       }
     });
   </script>
@@ -15135,7 +14790,7 @@ def test_db():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 176 líneas | 5,669 bytes (5.5 KB)
+- **Métricas:** 175 líneas | 5,658 bytes (5.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -15151,9 +14806,8 @@ def test_api_info_servidor():
     res = client.get("/api/servidor/info")
     assert res.status_code == 200
     data = res.json()
-    assert "ip_local" in data
-    assert data["puerto"] == 8000
-    assert "url_local" in data
+    assert data["status"] == "online"
+    assert data["app"] == "TireCheck Pro"
 
 def test_api_crud_inspeccion(test_db):
     # 1. Crear inspección
@@ -15270,13 +14924,13 @@ def test_index_page_loads_all_views():
     res = client.get("/")
     assert res.status_code == 200
     html = res.text
-    # Verificar que el HTML contiene las 6 vistas principales integradas
+    # Verificar que el HTML contiene las 5 vistas principales integradas
     assert "vista-patio" in html
     assert "vista-basedatos" in html
     assert "vista-diagnostico" in html
     assert "vista-kpis" in html
     assert "vista-catalogos" in html
-    assert "vista-remoto" in html
+    assert "vista-remoto" not in html
     # Verificar modales esenciales
     assert "modalEditarInspeccion" in html
     assert "modalImportarExcel" in html
