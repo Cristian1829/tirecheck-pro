@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 12:24:30`
+- **Fecha de Generación:** `2026-10-14 12:56:59`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `19,910` líneas
-- **Tamaño Total de Código Fuente:** `1246.0 KB` (`1,275,954` bytes)
+- **Líneas Totales de Código:** `19,959` líneas
+- **Tamaño Total de Código Fuente:** `1248.5 KB` (`1,278,506` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -196,10 +196,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 841 | 34.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 846 | 35.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1983 | 97.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1105 | 49.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1112 | 50.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2175 | 118.5 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
@@ -207,7 +207,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6261 | 595.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6298 | 597.4 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2018,7 +2018,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 841 líneas | 35,726 bytes (34.9 KB)
+- **Métricas:** 846 líneas | 35,919 bytes (35.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2573,11 +2573,16 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.get("/api/informe-pdf-consolidado")
-def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", operacion: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
         cliente = usuario_actual["cliente_asignado"]
     try:
-        pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente, subcliente, fecha if fecha else None)
+        pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(
+            cliente=cliente if cliente else None,
+            subcliente=subcliente if subcliente else None,
+            fecha=fecha if fecha else None,
+            operacion=operacion if operacion else None
+        )
         c_tag = cliente.replace(" ", "_") if cliente else "General"
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
         filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
@@ -5021,7 +5026,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1105 líneas | 50,959 bytes (49.8 KB)
+- **Métricas:** 1112 líneas | 51,358 bytes (50.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5877,7 +5882,7 @@ def generar_pdf_plan_mantenimiento(placa, fecha=None):
     """
     return renderizar_informe(construir_datos_informe(placa, fecha))
 
-def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
+def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None):
     """
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
@@ -5890,6 +5895,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
         df_insp = df_insp[df_insp['cliente'].astype(str).str.upper().str.strip() == str(cliente).upper().strip()]
     if subcliente and subcliente != 'Todos':
         df_insp = df_insp[df_insp['subcliente'].astype(str).str.upper().str.strip() == str(subcliente).upper().strip()]
+    if operacion and operacion != 'Todos':
+        df_insp = df_insp[df_insp['tipo_operacion'].astype(str).str.upper().str.strip() == str(operacion).upper().strip()]
     if fecha:
         df_insp = df_insp[df_insp['fecha'].astype(str) == str(fecha)]
 
@@ -5945,7 +5952,12 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
 
     # Tarjetas Resumen de Flota
     cliente_txt = cliente if cliente and cliente != 'Todos' else 'Consolidado General'
-    sub_txt = subcliente if subcliente and subcliente != 'Todos' else 'Todas las Sedes'
+    partes_sede = []
+    if subcliente and subcliente != 'Todos':
+        partes_sede.append(f"Sede: {subcliente}")
+    if operacion and operacion != 'Todos':
+        partes_sede.append(f"Operación: {operacion}")
+    sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las Sedes y Operaciones"
 
     res_box = [
         [
@@ -8673,7 +8685,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6261 líneas | 609,787 bytes (595.5 KB)
+- **Métricas:** 6298 líneas | 611,747 bytes (597.4 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9806,9 +9818,9 @@ if __name__ == '__main__':
             <i class="fa-solid fa-file-excel"></i>
             <span>Exportar Diagnóstico</span>
           </button>
-          <button type="button" onclick="descargarConsolidadoFlota()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
+          <button id="btnConsolidadoDiag" type="button" onclick="descargarConsolidadoDesdeDiagnostico()" title="Generar consolidado de flota para el cliente filtrado" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all">
             <i class="fa-solid fa-file-pdf"></i>
-            <span>Consolidado Flota PDF</span>
+            <span id="lblConsolidadoDiag">Consolidado Flota PDF</span>
           </button>
         </div>
       </div>
@@ -11676,6 +11688,19 @@ if __name__ == '__main__':
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
       const alerta = document.getElementById('filtroDiagAlerta')?.value || 'Todos';
       const placa = (document.getElementById('filtroDiagPlaca')?.value || '').trim().toLowerCase();
+
+      // Actualizar botón de Consolidado Flota según el cliente filtrado
+      const btnCons = document.getElementById('btnConsolidadoDiag');
+      const lblCons = document.getElementById('lblConsolidadoDiag');
+      if (lblCons) {
+        if (cli && cli !== 'Todos') {
+          lblCons.textContent = `Consolidado Flota (${cli})`;
+          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}`;
+        } else {
+          lblCons.textContent = 'Consolidado Flota PDF';
+          if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
+        }
+      }
 
       let tot = 0, cambio = 0, alin = 0, dual = 0, ok = 0;
 
@@ -14718,6 +14743,30 @@ if __name__ == '__main__':
       const cli = document.getElementById('cliente').value.trim();
       const sub = document.getElementById('subcliente').value.trim();
       let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) url += `&token=${encodeURIComponent(tok)}`;
+      window.open(url, '_blank');
+    }
+    function descargarConsolidadoDesdeDiagnostico() {
+      const selectCliente = document.getElementById('filtroDiagCliente');
+      const cli = (selectCliente ? selectCliente.value : '').trim();
+      if (!cli || cli === 'Todos') {
+        mostrarToast('Por favor selecciona un Cliente en el filtro de diagnóstico para generar su informe consolidado.', true);
+        if (selectCliente) {
+          selectCliente.focus();
+          selectCliente.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+          setTimeout(() => {
+            selectCliente.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+          }, 2000);
+        }
+        return;
+      }
+
+      const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (op && op !== 'Todos') {
+        url += `&operacion=${encodeURIComponent(op)}`;
+      }
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');

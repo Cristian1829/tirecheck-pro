@@ -850,7 +850,7 @@ def generar_pdf_plan_mantenimiento(placa, fecha=None):
     """
     return renderizar_informe(construir_datos_informe(placa, fecha))
 
-def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
+def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None):
     """
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
@@ -863,6 +863,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
         df_insp = df_insp[df_insp['cliente'].astype(str).str.upper().str.strip() == str(cliente).upper().strip()]
     if subcliente and subcliente != 'Todos':
         df_insp = df_insp[df_insp['subcliente'].astype(str).str.upper().str.strip() == str(subcliente).upper().strip()]
+    if operacion and operacion != 'Todos':
+        df_insp = df_insp[df_insp['tipo_operacion'].astype(str).str.upper().str.strip() == str(operacion).upper().strip()]
     if fecha:
         df_insp = df_insp[df_insp['fecha'].astype(str) == str(fecha)]
 
@@ -918,7 +920,12 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
 
     # Tarjetas Resumen de Flota
     cliente_txt = cliente if cliente and cliente != 'Todos' else 'Consolidado General'
-    sub_txt = subcliente if subcliente and subcliente != 'Todos' else 'Todas las Sedes'
+    partes_sede = []
+    if subcliente and subcliente != 'Todos':
+        partes_sede.append(f"Sede: {subcliente}")
+    if operacion and operacion != 'Todos':
+        partes_sede.append(f"Operación: {operacion}")
+    sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las Sedes y Operaciones"
 
     res_box = [
         [

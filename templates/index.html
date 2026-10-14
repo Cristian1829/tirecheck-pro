@@ -1127,9 +1127,9 @@
             <i class="fa-solid fa-file-excel"></i>
             <span>Exportar Diagnóstico</span>
           </button>
-          <button type="button" onclick="descargarConsolidadoFlota()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
+          <button id="btnConsolidadoDiag" type="button" onclick="descargarConsolidadoDesdeDiagnostico()" title="Generar consolidado de flota para el cliente filtrado" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all">
             <i class="fa-solid fa-file-pdf"></i>
-            <span>Consolidado Flota PDF</span>
+            <span id="lblConsolidadoDiag">Consolidado Flota PDF</span>
           </button>
         </div>
       </div>
@@ -2997,6 +2997,19 @@
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
       const alerta = document.getElementById('filtroDiagAlerta')?.value || 'Todos';
       const placa = (document.getElementById('filtroDiagPlaca')?.value || '').trim().toLowerCase();
+
+      // Actualizar botón de Consolidado Flota según el cliente filtrado
+      const btnCons = document.getElementById('btnConsolidadoDiag');
+      const lblCons = document.getElementById('lblConsolidadoDiag');
+      if (lblCons) {
+        if (cli && cli !== 'Todos') {
+          lblCons.textContent = `Consolidado Flota (${cli})`;
+          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}`;
+        } else {
+          lblCons.textContent = 'Consolidado Flota PDF';
+          if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
+        }
+      }
 
       let tot = 0, cambio = 0, alin = 0, dual = 0, ok = 0;
 
@@ -6039,6 +6052,30 @@
       const cli = document.getElementById('cliente').value.trim();
       const sub = document.getElementById('subcliente').value.trim();
       let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) url += `&token=${encodeURIComponent(tok)}`;
+      window.open(url, '_blank');
+    }
+    function descargarConsolidadoDesdeDiagnostico() {
+      const selectCliente = document.getElementById('filtroDiagCliente');
+      const cli = (selectCliente ? selectCliente.value : '').trim();
+      if (!cli || cli === 'Todos') {
+        mostrarToast('Por favor selecciona un Cliente en el filtro de diagnóstico para generar su informe consolidado.', true);
+        if (selectCliente) {
+          selectCliente.focus();
+          selectCliente.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+          setTimeout(() => {
+            selectCliente.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+          }, 2000);
+        }
+        return;
+      }
+
+      const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (op && op !== 'Todos') {
+        url += `&operacion=${encodeURIComponent(op)}`;
+      }
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');

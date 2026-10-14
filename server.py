@@ -549,11 +549,16 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.get("/api/informe-pdf-consolidado")
-def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", operacion: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
         cliente = usuario_actual["cliente_asignado"]
     try:
-        pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente, subcliente, fecha if fecha else None)
+        pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(
+            cliente=cliente if cliente else None,
+            subcliente=subcliente if subcliente else None,
+            fecha=fecha if fecha else None,
+            operacion=operacion if operacion else None
+        )
         c_tag = cliente.replace(" ", "_") if cliente else "General"
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
         filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
