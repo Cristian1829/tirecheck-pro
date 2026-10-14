@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 10:28:55`
+- **Fecha de Generación:** `2026-10-14 10:42:06`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,512` líneas
-- **Tamaño Total de Código Fuente:** `1186.0 KB` (`1,214,461` bytes)
+- **Líneas Totales de Código:** `18,514` líneas
+- **Tamaño Total de Código Fuente:** `1186.0 KB` (`1,214,482` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -183,7 +183,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 794 | 32.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 796 | 32.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1713 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -2003,7 +2003,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 794 líneas | 33,662 bytes (32.9 KB)
+- **Métricas:** 796 líneas | 33,683 bytes (32.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2221,6 +2221,17 @@ def api_info_servidor():
         "version": "2.0"
     }
 
+def sanitizar_nativos(obj):
+    if isinstance(obj, list):
+        return [sanitizar_nativos(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: sanitizar_nativos(v) for k, v in obj.items()}
+    elif hasattr(obj, "item"):
+        return obj.item()
+    elif pd.isna(obj):
+        return None
+    return obj
+
 # ==========================================
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)
 # ==========================================
@@ -2232,7 +2243,8 @@ def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(o
     else:
         filtro_u = usuario if usuario else None
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
-    return df.to_dict(orient="records")
+    return sanitizar_nativos(df.to_dict(orient="records"))
+
 
 @app.get("/api/inspecciones/plantilla-excel")
 def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -2399,18 +2411,8 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
     database.eliminar_inspeccion(inspeccion_id)
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
 
-def sanitizar_nativos(obj):
-    if isinstance(obj, list):
-        return [sanitizar_nativos(i) for i in obj]
-    elif isinstance(obj, dict):
-        return {k: sanitizar_nativos(v) for k, v in obj.items()}
-    elif hasattr(obj, "item"):
-        return obj.item()
-    elif pd.isna(obj):
-        return None
-    return obj
-
 # ==========================================
+
 # RUTAS DE DIAGNÓSTICO Y PLANES DE ACCIÓN
 # ==========================================
 

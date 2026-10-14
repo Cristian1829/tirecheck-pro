@@ -212,6 +212,17 @@ def api_info_servidor():
         "version": "2.0"
     }
 
+def sanitizar_nativos(obj):
+    if isinstance(obj, list):
+        return [sanitizar_nativos(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: sanitizar_nativos(v) for k, v in obj.items()}
+    elif hasattr(obj, "item"):
+        return obj.item()
+    elif pd.isna(obj):
+        return None
+    return obj
+
 # ==========================================
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)
 # ==========================================
@@ -223,7 +234,8 @@ def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(o
     else:
         filtro_u = usuario if usuario else None
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
-    return df.to_dict(orient="records")
+    return sanitizar_nativos(df.to_dict(orient="records"))
+
 
 @app.get("/api/inspecciones/plantilla-excel")
 def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -390,18 +402,8 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
     database.eliminar_inspeccion(inspeccion_id)
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
 
-def sanitizar_nativos(obj):
-    if isinstance(obj, list):
-        return [sanitizar_nativos(i) for i in obj]
-    elif isinstance(obj, dict):
-        return {k: sanitizar_nativos(v) for k, v in obj.items()}
-    elif hasattr(obj, "item"):
-        return obj.item()
-    elif pd.isna(obj):
-        return None
-    return obj
-
 # ==========================================
+
 # RUTAS DE DIAGNÓSTICO Y PLANES DE ACCIÓN
 # ==========================================
 
