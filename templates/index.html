@@ -353,20 +353,6 @@
               <i class="fa-solid fa-building"></i>
             </div>
             <span>1. Cliente, Operación & Vehículo</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span id="badgeClienteGuardado" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-              <i class="fa-solid fa-lock text-[8px] mr-1"></i>Fijado
-            </span>
-            <button type="button" onclick="abrirModalOperacion()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Gestionar Operaciones">
-              <i class="fa-solid fa-plus-circle text-xs"></i>
-              <span>Operación</span>
-            </button>
-            <button type="button" onclick="abrirModalTipologia()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Gestionar Tipologías">
-              <i class="fa-solid fa-plus-circle text-xs"></i>
-              <span>Tipología</span>
-            </button>
-          </div>
         </div>
 
         <!-- Campos de Cliente & Operación -->
@@ -2048,7 +2034,8 @@
         if (inpCli) {
           inpCli.value = usuarioActual.cliente_asignado;
           inpCli.readOnly = true;
-          document.getElementById('badgeClienteGuardado').textContent = 'Asignado a Flota';
+          const bCli = document.getElementById('badgeClienteGuardado');
+          if (bCli) bCli.textContent = 'Asignado a Flota';
         }
       }
     }

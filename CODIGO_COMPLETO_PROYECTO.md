@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireCheck Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-13 17:12:34`
+- **Fecha de Generación:** `2026-10-13 23:47:49`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `17,662` líneas
-- **Tamaño Total de Código Fuente:** `1144.3 KB` (`1,171,811` bytes)
+- **Líneas Totales de Código:** `17,644` líneas
+- **Tamaño Total de Código Fuente:** `1143.2 KB` (`1,170,586` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -194,8 +194,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5545 | 559.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
-| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1334 | 69.7 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5532 | 558.8 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
@@ -7842,7 +7842,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5545 líneas | 573,159 bytes (559.7 KB)
+- **Métricas:** 5532 líneas | 572,238 bytes (558.8 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8201,20 +8201,6 @@ if __name__ == '__main__':
               <i class="fa-solid fa-building"></i>
             </div>
             <span>1. Cliente, Operación & Vehículo</span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span id="badgeClienteGuardado" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-              <i class="fa-solid fa-lock text-[8px] mr-1"></i>Fijado
-            </span>
-            <button type="button" onclick="abrirModalOperacion()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Gestionar Operaciones">
-              <i class="fa-solid fa-plus-circle text-xs"></i>
-              <span>Operación</span>
-            </button>
-            <button type="button" onclick="abrirModalTipologia()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Gestionar Tipologías">
-              <i class="fa-solid fa-plus-circle text-xs"></i>
-              <span>Tipología</span>
-            </button>
-          </div>
         </div>
 
         <!-- Campos de Cliente & Operación -->
@@ -9896,7 +9882,8 @@ if __name__ == '__main__':
         if (inpCli) {
           inpCli.value = usuarioActual.cliente_asignado;
           inpCli.readOnly = true;
-          document.getElementById('badgeClienteGuardado').textContent = 'Asignado a Flota';
+          const bCli = document.getElementById('badgeClienteGuardado');
+          if (bCli) bCli.textContent = 'Asignado a Flota';
         }
       }
     }
@@ -13399,7 +13386,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/preview_chasis.html`
 - **Descripción:** Visor interactivo y banco de pruebas de renderizado de tipologías de chasis
-- **Métricas:** 1334 líneas | 71,393 bytes (69.7 KB)
+- **Métricas:** 1329 líneas | 71,089 bytes (69.4 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -13524,11 +13511,6 @@ if __name__ == '__main__':
             <i class="fa-solid fa-building"></i>
           </div>
           <span class="text-xs sm:text-sm">Datos del Cliente, Operación & Vehículo</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200 flex items-center space-x-1">
-            <i class="fa-solid fa-lock text-[10px] mr-1"></i>Fijado
-          </span>
         </div>
       </div>
 
