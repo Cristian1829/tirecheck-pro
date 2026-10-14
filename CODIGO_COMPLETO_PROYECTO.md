@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 08:26:14`
+- **Fecha de Generación:** `2026-10-14 08:50:23`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,402` líneas
-- **Tamaño Total de Código Fuente:** `1180.2 KB` (`1,208,533` bytes)
+- **Líneas Totales de Código:** `18,387` líneas
+- **Tamaño Total de Código Fuente:** `1179.5 KB` (`1,207,757` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -183,7 +183,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 745 | 30.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 748 | 31.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1669 | 82.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -194,7 +194,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5905 | 576.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5887 | 575.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -1994,7 +1994,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 745 líneas | 31,660 bytes (30.9 KB)
+- **Métricas:** 748 líneas | 31,849 bytes (31.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2186,7 +2186,10 @@ def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> di
 # ==========================================
 
 @app.get("/", response_class=HTMLResponse)
-def index():
+def index(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
@@ -8125,7 +8128,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5905 líneas | 590,373 bytes (576.5 KB)
+- **Métricas:** 5887 líneas | 589,408 bytes (575.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8542,12 +8545,6 @@ if __name__ == '__main__':
       </div>
 
       <!-- ============================================================ -->
-      <!-- SLOT MÓVIL: ESPECIFICACIONES DE LA LLANTA                   -->
-      <!-- Ubicación Móvil: Abajo de sección de Cliente y Arriba de Chasis -->
-      <!-- ============================================================ -->
-      <div id="slotMobileEspecificaciones" class="block lg:hidden mb-5"></div>
-
-      <!-- ============================================================ -->
       <!-- CUADRÍCULA PRINCIPAL: CHASIS (IZQ) & COLUMNA DERECHA STICKY  -->
       <!-- ============================================================ -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -8705,10 +8702,8 @@ if __name__ == '__main__':
           <!-- 1. RESUMEN EXTERIOR DE POSICIÓN SELECCIONADA -->
           <div id="panelResumenPosicion" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 transition-all"></div>
 
-          <!-- SLOT ESCRITORIO: ESPECIFICACIONES DE LA LLANTA -->
-          <div id="slotDesktopEspecificaciones">
-            <!-- 2. ESPECIFICACIONES DE LA LLANTA -->
-            <div id="moduloEspecificaciones" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+          <!-- 2. ESPECIFICACIONES DE LA LLANTA -->
+          <div id="moduloEspecificaciones" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
               <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
                   <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
@@ -8789,7 +8784,6 @@ if __name__ == '__main__':
                 <div id="listaSugerenciasCatalogo" class="space-y-1"></div>
               </div>
             </div>
-          </div>
 
           <!-- 3. MEDICIONES DE LA LLANTA (Sin numeración '4.') -->
           <div id="moduloMediciones" class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
@@ -14009,17 +14003,8 @@ if __name__ == '__main__':
     }
 
     function sincronizarSlotEspecificaciones() {
-      const el = document.getElementById('moduloEspecificaciones');
-      const slotMob = document.getElementById('slotMobileEspecificaciones');
-      const slotDesk = document.getElementById('slotDesktopEspecificaciones');
-      if (!el || !slotMob || !slotDesk) return;
-      const esMobile = window.innerWidth < 1024;
-      const destino = esMobile ? slotMob : slotDesk;
-      if (el.parentElement !== destino) {
-        destino.appendChild(el);
-      }
+      // Orden de patio: 1. Cliente -> 2. Diagrama Chasis -> 3. Especificaciones de Llanta -> 4. Mediciones
     }
-    window.addEventListener('resize', sincronizarSlotEspecificaciones);
 
     // Inicialización al cargar DOM
     window.addEventListener('DOMContentLoaded', () => {
