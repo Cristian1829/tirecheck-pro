@@ -1,6 +1,6 @@
-# Reglas de Negocio, Algoritmos y Fórmulas Técnicas - TireCheck Pro
+# Reglas de Negocio, Algoritmos y Fórmulas Técnicas - TireAnalyze Pro
 
-Este documento especifica formalmente los fundamentos técnicos, los algoritmos predictivos y las fórmulas matemáticas que rigen la operación de **TireCheck Pro**.
+Este documento especifica formalmente los fundamentos técnicos, los algoritmos predictivos y las fórmulas matemáticas que rigen la operación de **TireAnalyze Pro**.
 
 ---
 

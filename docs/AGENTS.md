@@ -1,4 +1,4 @@
-# AI & Agent Context - TireCheck Pro
+# AI & Agent Context - TireAnalyze Pro
 
 > **Nota para Agentes Autónomos e Inteligencias Artificiales:**  
 > Este documento resume el contexto técnico, las invariantes arquitectónicas, los contratos de datos y las reglas críticas del repositorio para permitir lecturas, análisis y modificaciones seguras, rápidas y eficientes sin degradar la funcionalidad existente.
@@ -6,7 +6,7 @@
 ---
 
 ## 1. Resumen Ejecutivo del Proyecto
-- **Nombre:** TireCheck Pro
+- **Nombre:** TireAnalyze Pro
 - **Propósito:** Suite web integral para inspección técnica de neumáticos en patio, control de flotas, diagnóstico predictivo (alineación, duales, retiro), trazabilidad histórica de llantas y cálculo de costos por kilómetro (CPK).
 - **Tipo de Aplicación:** Single Page Application (SPA) responsiva servida por un backend RESTful asíncrono en Python.
 - **Estado Actual:** 100% web, con modo offline en patio (`localStorage`) y soporte de escritorio para administración.
@@ -29,7 +29,7 @@
 ## 3. Mapa del Repositorio y Ubicación de Archivos
 
 ```
-TireCheck_Pro_Proyecto/
+TireAnalyze_Pro_Proyecto/
 ├── INICIAR_TIRECHECK.bat               # Punto de entrada Windows: pip check + abre navegador + inicia FastAPI
 ├── iniciar_app.bat                   # Respaldo de contingencia para escritorio Tkinter
 ├── app.py                            # Aplicación de escritorio Tkinter original (conservada intacta)

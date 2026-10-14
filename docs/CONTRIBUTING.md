@@ -1,6 +1,6 @@
-# Guía de Contribución y Estándares de Desarrollo - TireCheck Pro
+# Guía de Contribución y Estándares de Desarrollo - TireAnalyze Pro
 
-Bienvenido a la guía de desarrollo de **TireCheck Pro**. Este documento define las pautas técnicas, convenciones de arquitectura y estándares de ingeniería para mantener la estabilidad, calidad y mantenibilidad del proyecto.
+Bienvenido a la guía de desarrollo de **TireAnalyze Pro**. Este documento define las pautas técnicas, convenciones de arquitectura y estándares de ingeniería para mantener la estabilidad, calidad y mantenibilidad del proyecto.
 
 ---
 
@@ -15,7 +15,7 @@ Bienvenido a la guía de desarrollo de **TireCheck Pro**. Este documento define 
 ```bash
 # 1. Clonar el repositorio
 git clone <url-del-repositorio>
-cd TireCheck_Pro_Proyecto
+cd TireAnalyze_Pro_Proyecto
 
 # 2. Crear y activar entorno virtual (opcional pero recomendado)
 python -m venv venv

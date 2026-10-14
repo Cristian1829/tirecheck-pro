@@ -12,7 +12,7 @@ def test_api_info_servidor():
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "online"
-    assert data["app"] == "TireCheck Pro"
+    assert data["app"] == "TireAnalyze Pro"
 
 def test_index_page_loads_all_views():
     res = client.get("/")

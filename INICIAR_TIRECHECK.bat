@@ -1,9 +1,9 @@
 @echo off
-title TireCheck Pro - Suite Web Integral
+title TireAnalyze Pro - Suite Web Integral
 color 0B
 cd /d "%~dp0"
 echo ========================================================
-echo       TIRECHECK PRO - SUITE WEB DE INSPECCION Y DIAGNOSTICO
+echo       TIREANALYZE PRO - SUITE WEB DE INSPECCION Y DIAGNOSTICO
 echo ========================================================
 echo.
 echo [1/3] Verificando dependencias necesarias...

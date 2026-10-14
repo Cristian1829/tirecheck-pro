@@ -1,12 +1,12 @@
-# Arquitectura del Sistema - TireCheck Pro
+# Arquitectura del Sistema - TireAnalyze Pro
 
-Este documento describe la arquitectura técnica, el modelo de datos, los componentes de software y el flujo de información de la plataforma **TireCheck Pro**.
+Este documento describe la arquitectura técnica, el modelo de datos, los componentes de software y el flujo de información de la plataforma **TireAnalyze Pro**.
 
 ---
 
 ## 1. Visión General de la Arquitectura
 
-TireCheck Pro sigue el patrón de **Arquitectura en Capas (Layered Architecture)** con separación estricta de responsabilidades entre la interfaz de usuario en el navegador (Single Page Application), el gateway de servicios RESTful asíncronos en FastAPI, y el motor de persistencia y lógica de negocio en SQLite.
+TireAnalyze Pro sigue el patrón de **Arquitectura en Capas (Layered Architecture)** con separación estricta de responsabilidades entre la interfaz de usuario en el navegador (Single Page Application), el gateway de servicios RESTful asíncronos en FastAPI, y el motor de persistencia y lógica de negocio en SQLite.
 
 ```mermaid
 graph TD
@@ -54,7 +54,7 @@ graph TD
 
 ## 2. Modelo de Datos Relacional (SQLite)
 
-La persistencia se gestiona en [inspecciones.db](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireCheck_Pro_Proyecto/inspecciones.db) con un esquema normalizado de 6 tablas:
+La persistencia se gestiona en [inspecciones.db](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireAnalyze_Pro_Proyecto/inspecciones.db) con un esquema normalizado de 6 tablas:
 
 ```mermaid
 erDiagram
@@ -202,7 +202,7 @@ Para permitir que los inspectores técnicos trabajen en sótanos, patios remotos
 
 ## 5. Motor de Chasis Interactivo
 
-El mapeo visual del chasis en [templates/index.html](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireCheck_Pro_Proyecto/templates/index.html) es completamente dinámico y reactivo:
+El mapeo visual del chasis en [templates/index.html](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireAnalyze_Pro_Proyecto/templates/index.html) es completamente dinámico y reactivo:
 - **Consulta de Esquema:** Al seleccionar una tipología en el formulario, se invoca `GET /api/esquema?tipologia=...`, que consulta el campo `esquema_json` de la base de datos.
 - **Renderizado por Ejes:** Se crea la estructura visual de la viga central del chasis (`chassis-spine`), barras de suspensión según el tipo de eje (direccional, tracción o trailer) y las ruedas en sus lados izquierdo y derecho.
 - **Micro-estados Visuales:**
@@ -214,7 +214,7 @@ El mapeo visual del chasis en [templates/index.html](file:///c:/Users/crist/OneD
 
 ## 6. Generación de Reportes Técnicos en Streaming
 
-TireCheck Pro genera documentos PDF binarios en memoria mediante **ReportLab** a través de [pdf_generator.py](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireCheck_Pro_Proyecto/pdf_generator.py):
+TireAnalyze Pro genera documentos PDF binarios en memoria mediante **ReportLab** a través de [pdf_generator.py](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireAnalyze_Pro_Proyecto/pdf_generator.py):
 - **Plan de Mantenimiento Vehicular (`/api/informe-pdf/{placa}`):**
   - Encabezado corporativo, odómetro, cliente y fecha.
   - Semáforo general de estado del vehículo (Alerta Roja: cambio urgente, Amarilla: alineación/dual, Verde: en norma).

@@ -1,6 +1,6 @@
 # 🌐 Guía de Despliegue en Render.com (Plan Gratuito 24/7)
 
-Esta guía te explica cómo publicar **TireCheck Pro** en internet de forma **100% gratuita** utilizando **Render.com** para que cualquier persona pueda ver y probar la aplicación desde su computadora o celular a través de una URL pública con HTTPS.
+Esta guía te explica cómo publicar **TireAnalyze Pro** en internet de forma **100% gratuita** utilizando **Render.com** para que cualquier persona pueda ver y probar la aplicación desde su computadora o celular a través de una URL pública con HTTPS.
 
 ---
 
@@ -16,7 +16,7 @@ Esta guía te explica cómo publicar **TireCheck Pro** en internet de forma **10
 ### Paso 1: Subir el Proyecto a tu GitHub (✅ ¡COMPLETADO!)
 
 El proyecto completo ya se encuentra subido y sincronizado en tu repositorio:
-- **URL del Repositorio:** [https://github.com/Cristian1829/tirecheck-pro](https://github.com/Cristian1829/tirecheck-pro)
+- **URL del Repositorio:** [https://github.com/Cristian1829/tireanalyzepro](https://github.com/Cristian1829/tireanalyzepro)
 - **Rama principal:** `main` (69 archivos, base de datos precargada y configuración de Render).
 
 ---
@@ -26,9 +26,9 @@ El proyecto completo ya se encuentra subido y sincronizado en tu repositorio:
 1. Inicia sesión en **[dashboard.render.com](https://dashboard.render.com/)**.
 2. Haz clic en el botón azul **`New +`** (arriba a la derecha) y selecciona **`Web Service`**.
 3. Selecciona la opción **`Build and deploy from a Git repository`**.
-4. Conecta tu cuenta de GitHub y selecciona tu repositorio `tirecheck-pro`.
+4. Conecta tu cuenta de GitHub y selecciona tu repositorio `tireanalyzepro`.
 5. Render leerá automáticamente el archivo `render.yaml` o te pedirá confirmar estos datos:
-   - **Name:** `tirecheck-pro` (o el nombre que prefieras).
+   - **Name:** `tireanalyzepro` (o el nombre que prefieras).
    - **Region:** `Oregon (US West)` o la más cercana.
    - **Branch:** `main`.
    - **Runtime:** `Python 3` (o `Docker`).
@@ -47,7 +47,7 @@ El proyecto completo ya se encuentra subido y sincronizado en tu repositorio:
    ```
 2. En la parte superior izquierda de tu dashboard verás tu URL pública oficial con certificado SSL seguro gratuito:
    ```text
-   https://tirecheck-pro.onrender.com
+   https://tireanalyzepro.onrender.com
    ```
 3. ¡Comparte ese enlace con tus clientes o evaluadores! Funciona directamente desde computadoras de escritorio, tablets y teléfonos celulares.
 

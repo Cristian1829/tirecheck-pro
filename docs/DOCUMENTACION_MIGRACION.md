@@ -1,4 +1,4 @@
-# Plan de Arquitectura, Migración Web y Matriz de Entrega - TireCheck Pro
+# Plan de Arquitectura, Migración Web y Matriz de Entrega - TireAnalyze Pro
 
 **Versión:** 2.0.0 (Migración Web Completa y Verificada)  
 **Fecha:** Octubre 2026  
@@ -60,7 +60,7 @@
 | **FN-19** | Motor de diagnóstico y planes de acción | `database.py`, `app.py` | Sábana de inspecciones | DataFrame con alertas por vehículo | Reglas: Alineación (>=2mm), Dual mal apareado (>=2mm), Cambio (prof <= límite) | `GET /api/diagnostico` | Vista 3: Diagnóstico & Planes | ✅ Verificado E2E & Unitario |
 | **FN-20** | Exportación de Diagnóstico a Excel | `app.py` | Clic del usuario | Libro con hojas `Planes_Accion` y `Detalle_Inspecciones` | Formato multi-hoja con columnas formateadas | `GET /api/diagnostico/exportar-excel` | Vista 3: Botón Exportar | ✅ Verificado E2E & Unitario |
 | **FN-21** | Trazabilidad y KPIs de Llantas | `database.py`, `app.py` | Filtros (No. Interno, Cliente, Sede, Operación, Marca) | 4 tarjetas métricas + tabla de rendimiento | Fórmulas: Km/mm, CPK ($/km), Proyección total km, CPK proy, Km restantes | `GET /api/kpis-llantas` | Vista 4: Trazabilidad & KPIs | ✅ Verificado E2E & Unitario |
-| **FN-22** | Exportación de KPIs a Excel | `app.py` | Clic con filtros activos | Libro `KPIs_Llantas_TireCheck_YYYYMMDD.xlsx` | Columnas completas de rendimiento y proyección de vida | `GET /api/kpis-llantas/exportar-excel` | Vista 4: Botón Exportar | ✅ Verificado E2E & Unitario |
+| **FN-22** | Exportación de KPIs a Excel | `app.py` | Clic con filtros activos | Libro `KPIs_Llantas_TireAnalyze_YYYYMMDD.xlsx` | Columnas completas de rendimiento y proyección de vida | `GET /api/kpis-llantas/exportar-excel` | Vista 4: Botón Exportar | ✅ Verificado E2E & Unitario |
 | **FN-23** | Generación de PDF: Plan de Mantenimiento | `pdf_generator.py` | Placa, fecha | Documento PDF binario (formato carta) | Cabecera, alertas semafóricas, tabla de llantas por eje y firma | `GET /api/informe-pdf/{placa}` | Modal PDF / Descarga | ✅ Verificado E2E & Unitario |
 | **FN-24** | Generación de PDF: Consolidado de Jornada | `pdf_generator.py` | Cliente, subcliente, fecha | Documento PDF binario de flota | Resumen ejecutivo, estadísticas de desgaste y estado de vehículos | `GET /api/informe-pdf-consolidado` | Modal PDF / Descarga | ✅ Verificado E2E & Unitario |
 | **FN-25** | Compartir informe por WhatsApp | `templates/index.html`, `app.py` | Placa, URL del PDF | Enlace `api.whatsapp.com/send` | Mensaje preformateado con enlace directo de descarga | `window.open` vía Web | Modal PDF: Botón WhatsApp | ✅ Verificado E2E |

@@ -1,6 +1,6 @@
-# Referencia de API RESTful - TireCheck Pro
+# Referencia de API RESTful - TireAnalyze Pro
 
-Esta es la especificación técnica completa de los endpoints HTTP provistos por el backend FastAPI en [server.py](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireCheck_Pro_Proyecto/server.py).
+Esta es la especificación técnica completa de los endpoints HTTP provistos por el backend FastAPI en [server.py](file:///c:/Users/crist/OneDrive/Documentos/Tyre/TireAnalyze_Pro_Proyecto/server.py).
 
 ---
 

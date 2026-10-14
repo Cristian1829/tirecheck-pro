@@ -1,6 +1,6 @@
-# Guía Técnica y Funcional: Chasis Interactivo por Ejes - TireCheck Pro
+# Guía Técnica y Funcional: Chasis Interactivo por Ejes - TireAnalyze Pro
 
-El **Chasis Interactivo por Ejes** es el componente central de captura visual y ergonómica de **TireCheck Pro**. Su propósito es transformar la inspección técnica de neumáticos en patio en un proceso intuitivo, libre de ambigüedades espaciales y optimizado para pantallas táctiles de dispositivos móviles y tablets.
+El **Chasis Interactivo por Ejes** es el componente central de captura visual y ergonómica de **TireAnalyze Pro**. Su propósito es transformar la inspección técnica de neumáticos en patio en un proceso intuitivo, libre de ambigüedades espaciales y optimizado para pantallas táctiles de dispositivos móviles y tablets.
 
 ---
 
@@ -11,7 +11,7 @@ En las auditorías tradicionales de flotas de carga pesada, los inspectores come
 - Invertir el lado izquierdo con el derecho al cambiar de posición física alrededor del vehículo.
 - Desconocer la numeración de los ejes en configuraciones complejas (ej. camiones *Cuatro Manos 8x4*, *Tráilers de 3 ejes* o *Biarticulados*).
 
-### La Solución de TireCheck Pro:
+### La Solución de TireAnalyze Pro:
 El chasis interactivo renderiza una representación espacial isométrica en dos dimensiones del vehículo visto desde arriba (vista en planta o *top-down*), con orientación inequívoca (`FRENTE / CABINA`), permitiendo al técnico tocar directamente la rueda que tiene al frente en el patio.
 
 ---

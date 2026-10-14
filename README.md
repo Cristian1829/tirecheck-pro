@@ -1,12 +1,12 @@
-# 🚛 TireCheck Pro - Suite Web Integral de Inspección y Diagnóstico de Llantas
+# 🚛 TireAnalyze Pro - Suite Web Integral de Inspección y Diagnóstico de Llantas
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
-[![Tests](https://img.shields.io/badge/Tests-20%2F20%20Passing-brightgreen.svg)](tests/)
-[![Architecture](https://img.shields.io/badge/Architecture-100%25%20Web%20SPA-purple.svg)](ARCHITECTURE.md)
+[![Tests](https://img.shields.io/badge/Tests-32%2F32%20Passing-brightgreen.svg)](tests/)
+[![Architecture](https://img.shields.io/badge/Architecture-100%25%20Web%20SPA-purple.svg)](docs/ARCHITECTURE.md)
 [![Database](https://img.shields.io/badge/SQLite-data%2Finspecciones.db-blue.svg)](data/inspecciones.db)
 
-**TireCheck Pro** es una plataforma integral accesible 100% desde el navegador para la inspección técnica de neumáticos en patio, control de flotas de carga pesada, diagnóstico predictivo (alineación, duales y retiro), trazabilidad histórica de llantas y cálculo de costos por kilómetro (CPK).
+**TireAnalyze Pro** es una plataforma integral accesible 100% desde el navegador para la inspección técnica de neumáticos en patio, control de flotas de carga pesada, diagnóstico predictivo (alineación, duales y retiro), trazabilidad histórica de llantas y cálculo de costos por kilómetro (CPK).
 
 Diseñada con enfoque **Offline-First**, permite que los inspectores trabajen en patios o sótanos sin señal celular y sincronicen automáticamente sus datos al recuperar conexión.
 
@@ -17,7 +17,7 @@ Diseñada con enfoque **Offline-First**, permite que los inspectores trabajen en
 ### En Windows:
 Haz doble clic sobre:
 ```cmd
-INICIAR_TIRECHECK.bat
+INICIAR_TIREANALYZE.bat
 ```
 El script verificará las dependencias, iniciará el servidor FastAPI y **abrirá automáticamente tu navegador predeterminado en `http://localhost:8000`**.
 

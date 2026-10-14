@@ -1,6 +1,6 @@
 """
 Módulo de Procesamiento e Inserción de Evidencia Fotográfica en Reportes PDF
-TireCheck Pro - Inspección Técnica Vehicular
+TireAnalyze Pro - Inspección Técnica Vehicular
 """
 
 import base64

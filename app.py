@@ -22,7 +22,7 @@ def obtener_ip_local():
 class AppInspeccionLlantas(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('TireCheck Pro - Sistema Integral de Inspeccion de Llantas')
+        self.title('TireAnalyze Pro - Sistema Integral de Inspeccion de Llantas')
         self.geometry('1280x760')
         self.minsize(1050, 650)
         self.df_inspecciones = pd.DataFrame()
@@ -67,7 +67,7 @@ class AppInspeccionLlantas(tk.Tk):
         header.pack(fill='x', side='top')
         top_frame = ttk.Frame(header, style='Header.TFrame')
         top_frame.pack(fill='x')
-        lbl_titulo = ttk.Label(top_frame, text='TireCheck Pro - Gestion y Diagnostico de Flotas', style='HeaderTitle.TLabel')
+        lbl_titulo = ttk.Label(top_frame, text='TireAnalyze Pro - Gestion y Diagnostico de Flotas', style='HeaderTitle.TLabel')
         lbl_titulo.pack(side='left', anchor='w')
         ip_local = obtener_ip_local()
         lbl_ip = ttk.Label(top_frame, text='Movil Conectado: http://' + ip_local + ':8000', background='#1e293b', foreground='#38bdf8', font=('Segoe UI', 9, 'bold'), padding=(8, 4))
@@ -2111,7 +2111,7 @@ class AppInspeccionLlantas(tk.Tk):
             return
         df = pd.DataFrame(data)
         f_str = datetime.now().strftime('%Y%m%d_%H%M')
-        ruta = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[('Libro Excel', '*.xlsx')], initialfile=f'KPIs_Llantas_TireCheck_{f_str}.xlsx')
+        ruta = filedialog.asksaveasfilename(defaultextension='.xlsx', filetypes=[('Libro Excel', '*.xlsx')], initialfile=f'KPIs_Llantas_TireAnalyze_{f_str}.xlsx')
         if not ruta:
             return
         try:

@@ -23,7 +23,7 @@ FILES_SPEC = [
 
     # 2. Documentación Técnica y Arquitectura
     ("README.md", "2. Arquitectura y Documentación Técnica", "markdown", "Documento general del repositorio, resumen de arquitectura y guía de inicio"),
-    ("docs/GUIA_DESPLIEGUE_RENDER.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía paso a paso para desplegar TireCheck Pro en Render.com de forma 100% gratuita"),
+    ("docs/GUIA_DESPLIEGUE_RENDER.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía paso a paso para desplegar TireAnalyze Pro en Render.com de forma 100% gratuita"),
     ("docs/AGENTS.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía especializada para Agentes de IA: invariantes del sistema, reglas críticas y no regresión"),
     ("docs/ARCHITECTURE.md", "2. Arquitectura y Documentación Técnica", "markdown", "Arquitectura en capas, diagrama C4, flujos de inspección y persistencia de datos"),
     ("docs/API_REFERENCE.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación técnica de los endpoints RESTful de FastAPI"),
@@ -136,14 +136,14 @@ def generar_documento():
 
     md = []
     # Encabezado principal
-    md.append("# 🚛 TireCheck Pro — Código Completo del Proyecto para Análisis de IA")
+    md.append("# 🚛 TireAnalyze Pro — Código Completo del Proyecto para Análisis de IA")
     md.append("")
-    md.append("> **Documento unificado que contiene el 100% del código fuente, arquitectura, esquemas de datos y suite de pruebas de TireCheck Pro.**")
+    md.append("> **Documento unificado que contiene el 100% del código fuente, arquitectura, esquemas de datos y suite de pruebas de TireAnalyze Pro.**")
     md.append("> Optimizado para ingesta directa por Modelos de Lenguaje (LLMs) y agentes inteligentes de desarrollo.")
     md.append("")
     md.append("## 📌 Metadatos del Repositorio")
     md.append("")
-    md.append(f"- **Nombre del Sistema:** TireCheck Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)")
+    md.append(f"- **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)")
     md.append(f"- **Fecha de Generación:** `{fecha_generacion}`")
     md.append(f"- **Total de Archivos Incluidos:** `{total_archivos}` archivos de código y documentación")
     md.append(f"- **Líneas Totales de Código:** `{total_lineas:,}` líneas")
@@ -156,7 +156,7 @@ def generar_documento():
     # Resumen Arquitectónico
     md.append("## 🏗️ Resumen Arquitectónico del Sistema")
     md.append("")
-    md.append("TireCheck Pro es una plataforma **Offline-First** diseñada para la gestión técnica de neumáticos de flotas de transporte pesado:")
+    md.append("TireAnalyze Pro es una plataforma **Offline-First** diseñada para la gestión técnica de neumáticos de flotas de transporte pesado:")
     md.append("")
     md.append("1. **Frontend Web SPA (`templates/index.html`):**")
     md.append("   - Sin dependencias de frameworks pesados (Vanilla JS, CSS personalizado con estética Glassmorphism moderna y modo oscuro/claro).")
@@ -201,7 +201,7 @@ def generar_documento():
     md.append("| `data/plantillas/Plantilla_Cargue_Masivo_Inspecciones.xlsx` | Excel (.xlsx) | 5.4 KB | Hoja `Plantilla_Inspecciones` con 22 columnas canónicas para importación masiva |")
     md.append("| `data/plantillas/plantilla_inspecciones_completa.xlsx` | Excel (.xlsx) | 5.5 KB | Hoja con 18 columnas estándar de inspección de flota |")
     md.append("| `data/plantillas/prueba_sabana.xlsx` | Excel (.xlsx) | 5.3 KB | Formato de prueba tipo sábana de patio con datos de medición |")
-    md.append("| `static/img/logo_hd.svg` | Gráfico Vectorial SVG | ~86 KB | Logotipo oficial vectorial de TireCheck Pro en alta definición (264x150) |")
+    md.append("| `static/img/logo_hd.svg` | Gráfico Vectorial SVG | ~86 KB | Logotipo oficial vectorial de TireAnalyze Pro en alta definición (264x150) |")
     md.append("| `static/img/pocillo_hd.svg` | Gráfico Vectorial SVG | ~119 KB | Ilustración técnica oficial vectorial del pocillo con vehículo en alta definición (200x276) |")
     md.append("")
     md.append("> **Nota sobre scripts temporales:** El archivo `scripts/temp_script.js` corresponde a un volcado de auditoría sintáctica generado por `scripts/check_js.py` para validar los bloques `<script>` de `templates/index.html`. El código fuente canónico se encuentra en `templates/index.html`.")

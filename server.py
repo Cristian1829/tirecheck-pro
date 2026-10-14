@@ -25,7 +25,7 @@ from pydantic import BaseModel
 import database
 import pdf_generator
 
-app = FastAPI(title="TireCheck Pro - Sistema Integral Web & Móvil")
+app = FastAPI(title="TireAnalyze Pro - Sistema Integral Web & Móvil")
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
@@ -117,7 +117,7 @@ class LimiteClienteItem(BaseModel):
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
 # ==========================================
 
-SECRET_KEY = os.environ.get("TIRECHECK_SECRET_KEY", "tirecheck-pro-super-secret-key-2026-production")
+SECRET_KEY = os.environ.get("TIREANALYZE_SECRET_KEY", os.environ.get("TIRECHECK_SECRET_KEY", "tireanalyze-pro-super-secret-key-2026-production"))
 TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
 
 def crear_token_acceso(username: str, rol: str) -> str:
@@ -156,6 +156,8 @@ def obtener_usuario_actual(request: Request) -> dict:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
+    elif "tireanalyze_token" in request.cookies:
+        token = request.cookies.get("tireanalyze_token")
     elif "tirecheck_token" in request.cookies:
         token = request.cookies.get("tirecheck_token")
     elif "token" in request.query_params:
@@ -198,7 +200,7 @@ def preview_chasis():
 @app.get("/api/servidor/info")
 def api_info_servidor():
     return {
-        "app": "TireCheck Pro",
+        "app": "TireAnalyze Pro",
         "status": "online",
         "version": "2.0"
     }
@@ -500,7 +502,7 @@ def api_exportar_kpis_excel(
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Trazabilidad_KPIs", index=False)
     f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
-    filename = f"KPIs_Llantas_TireCheck_{f_str}.xlsx"
+    filename = f"KPIs_Llantas_TireAnalyze_{f_str}.xlsx"
     return Response(
         content=buf.getvalue(),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -661,6 +663,13 @@ def api_login(item: LoginItem, response: Response):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     token = crear_token_acceso(usr["username"], usr["rol"])
     response.set_cookie(
+        key="tireanalyze_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=TOKEN_EXPIRATION_SECONDS
+    )
+    response.set_cookie(
         key="tirecheck_token",
         value=token,
         httponly=True,
@@ -671,6 +680,7 @@ def api_login(item: LoginItem, response: Response):
 
 @app.post("/api/logout")
 def api_logout(response: Response):
+    response.delete_cookie(key="tireanalyze_token")
     response.delete_cookie(key="tirecheck_token")
     return {"status": "ok", "mensaje": "Sesión cerrada correctamente"}
 

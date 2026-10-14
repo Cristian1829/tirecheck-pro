@@ -84,9 +84,9 @@ class NumberedCanvas(canvas.Canvas):
         self.setFont("Helvetica-Bold", 12)
         self.drawCentredString(52, 755.5, "T")
 
-        # Texto TireCheck Pro
+        # Texto TireAnalyze Pro
         self.setFont("Helvetica-Bold", 10.5)
-        self.drawString(68, 761, "TireCheck Pro")
+        self.drawString(68, 761, "TireAnalyze Pro")
         self.setFont("Helvetica", 6.5)
         self.setFillColor(colors.HexColor('#94A3B8'))
         self.drawString(68, 751, "Informe de inspección de vehículo")
@@ -112,7 +112,7 @@ class NumberedCanvas(canvas.Canvas):
 
         self.setFont("Helvetica", 6.5)
         self.setFillColor(colors.HexColor('#94A3B8'))
-        self.drawString(36, 14, "TireCheck Pro · Sistema de Inspección y Gestión Técnica de Flotas")
+        self.drawString(36, 14, "TireAnalyze Pro · Sistema de Inspección y Gestión Técnica de Flotas")
 
         self.setFillColor(colors.HexColor('#64748B'))
         self.drawRightString(576, 14, f"Página {self._pageNumber} de {n}")
@@ -139,7 +139,7 @@ def crear_banner_superior_reporte(num_informe, fecha_emision, width=540):
         [
             logo_drawing,
             [
-                Paragraph("<b>TireCheck Pro</b>", style_tit),
+                Paragraph("<b>TireAnalyze Pro</b>", style_tit),
                 Paragraph("Informe de inspección de vehículo", style_sub)
             ]
         ]
@@ -845,7 +845,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
     # Cabecera
     head_tbl = Table([
         [
-            Paragraph("<b>TIRECHECK PRO</b><br/><font size=8.5 color='#64748b'>Informe Ejecutivo & Diagnóstico Consolidado de Flota</font>", style_titulo),
+            Paragraph("<b>TIREANALYZE PRO</b><br/><font size=8.5 color='#64748b'>Informe Ejecutivo & Diagnóstico Consolidado de Flota</font>", style_titulo),
             Paragraph(f"<b>CONSOLIDADO DE INSPECCIÓN</b><br/>Fecha: {fecha or 'Histórico Completo'}<br/>Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ParagraphStyle('RH', parent=style_subtitulo, alignment=2))
         ]
     ], colWidths=[330, 210])
