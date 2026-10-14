@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireCheck Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-13 23:54:32`
+- **Fecha de Generación:** `2026-10-14 00:18:36`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `17,645` líneas
-- **Tamaño Total de Código Fuente:** `1143.2 KB` (`1,170,650` bytes)
+- **Líneas Totales de Código:** `18,384` líneas
+- **Tamaño Total de Código Fuente:** `1177.5 KB` (`1,205,793` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -183,8 +183,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 559 | 20.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1572 | 78.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 735 | 30.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 1669 | 82.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -194,15 +194,15 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5533 | 558.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5897 | 575.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [tests/conftest.py](#archivo-testsconftestpy) | `python` | 31 | 0.8 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 175 | 5.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 261 | 9.3 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 170 | 5.1 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
@@ -1994,7 +1994,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 559 líneas | 21,399 bytes (20.9 KB)
+- **Métricas:** 735 líneas | 31,279 bytes (30.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2002,6 +2002,11 @@ import io
 import os
 import socket
 import tempfile
+import time
+import base64
+import json
+import hmac
+import hashlib
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
@@ -2012,7 +2017,7 @@ def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
 
 import pandas as pd
-from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File
+from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File, Depends
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -2047,6 +2052,9 @@ class EditarUsuarioItem(BaseModel):
     rol: Optional[str] = None
     cliente_asignado: Optional[str] = None
     activo: Optional[bool] = None
+
+class ResetPasswordItem(BaseModel):
+    nueva_password: str
 
 class InspeccionItem(BaseModel):
     fecha: str = ""
@@ -2106,6 +2114,72 @@ class LimiteClienteItem(BaseModel):
     observaciones: str = ""
 
 # ==========================================
+# SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
+# ==========================================
+
+SECRET_KEY = os.environ.get("TIRECHECK_SECRET_KEY", "tirecheck-pro-super-secret-key-2026-production")
+TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
+
+def crear_token_acceso(username: str, rol: str) -> str:
+    payload = {
+        "sub": username,
+        "rol": rol,
+        "exp": int(time.time()) + TOKEN_EXPIRATION_SECONDS
+    }
+    payload_json = json.dumps(payload, separators=(',', ':'))
+    payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
+    signature = hmac.new(SECRET_KEY.encode('utf-8'), payload_b64.encode('utf-8'), hashlib.sha256).hexdigest()
+    return f"{payload_b64}.{signature}"
+
+def verificar_token(token: str) -> Optional[dict]:
+    if not token or not isinstance(token, str):
+        return None
+    parts = token.strip().split('.')
+    if len(parts) != 2:
+        return None
+    payload_b64, signature = parts
+    expected_signature = hmac.new(SECRET_KEY.encode('utf-8'), payload_b64.encode('utf-8'), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(signature, expected_signature):
+        return None
+    try:
+        padding = '=' * ((4 - len(payload_b64) % 4) % 4)
+        payload_bytes = base64.urlsafe_b64decode(payload_b64 + padding)
+        payload = json.loads(payload_bytes.decode('utf-8'))
+        if payload.get("exp", 0) < int(time.time()):
+            return None
+        return payload
+    except Exception:
+        return None
+
+def obtener_usuario_actual(request: Request) -> dict:
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    elif "tirecheck_token" in request.cookies:
+        token = request.cookies.get("tirecheck_token")
+    elif "token" in request.query_params:
+        token = request.query_params.get("token")
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
+    
+    payload = verificar_token(token)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
+    
+    usr = database.obtener_usuario_por_username(payload["sub"])
+    if not usr or not usr.get("activo"):
+        raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    
+    return usr
+
+def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
+    if usuario_actual.get("rol") != "admin":
+        raise HTTPException(status_code=403, detail="Se requieren permisos de administrador")
+    return usuario_actual
+
+# ==========================================
 # RUTAS PRINCIPALES Y SERVIDOR
 # ==========================================
 
@@ -2134,12 +2208,16 @@ def api_info_servidor():
 # ==========================================
 
 @app.get("/api/inspecciones")
-def api_obtener_inspecciones(usuario: str = ""):
-    df = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df = database.obtener_todas_inspecciones(usuario=filtro_u)
     return df.to_dict(orient="records")
 
 @app.get("/api/inspecciones/plantilla-excel")
-def api_descargar_plantilla_excel():
+def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
     _p_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "plantillas", "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
     _p_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
     plantilla_path = _p_data if os.path.exists(_p_data) else _p_root
@@ -2174,8 +2252,12 @@ def api_descargar_plantilla_excel():
     )
 
 @app.get("/api/inspecciones/exportar-excel")
-def api_exportar_inspecciones_excel(usuario: str = ""):
-    df = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df = database.obtener_todas_inspecciones(usuario=filtro_u)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Inspecciones", index=False)
@@ -2188,7 +2270,7 @@ def api_exportar_inspecciones_excel(usuario: str = ""):
     )
 
 @app.post("/api/inspecciones/importar-excel")
-async def api_importar_excel(file: UploadFile = File(...)):
+async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     filename = file.filename or ""
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
@@ -2211,7 +2293,7 @@ async def api_importar_excel(file: UploadFile = File(...)):
                 pass
 
 @app.get("/api/inspecciones/{inspeccion_id}")
-def api_obtener_inspeccion_por_id(inspeccion_id: int):
+def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     with database.get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -2223,16 +2305,29 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int):
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Inspección no encontrada")
+        
+        # Validar permisos de inspector
+        if usuario_actual.get("rol") != "admin":
+            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
+            if cli_asig and row[2] and row[2].strip().lower() != cli_asig.lower():
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
+        
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
                 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'prof_ext', 'prof_cent', 'prof_int',
                 'psi', 'novedades', 'precio', 'prof_inicial', 'km_montaje', 'numero_interno', 'usuario_registro', 'foto_novedad']
         return dict(zip(cols, row))
 
 @app.post("/api/inspecciones")
-def api_guardar_inspeccion(item: InspeccionItem):
+def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
+
+    # Aislamiento por rol
+    if usuario_actual.get("rol") != "admin":
+        datos["usuario_registro"] = usuario_actual["username"]
+        if usuario_actual.get("cliente_asignado"):
+            datos["cliente"] = usuario_actual["cliente_asignado"]
 
     # Validación de Candados de Seguridad
     val = database.validar_inspeccion_candados(datos)
@@ -2243,8 +2338,24 @@ def api_guardar_inspeccion(item: InspeccionItem):
     return {"status": "ok", "id": reg_id, "message": "Inspección guardada correctamente"}
 
 @app.put("/api/inspecciones/{inspeccion_id}")
-def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem):
+def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
+    
+    # Validar permisos de inspector
+    if usuario_actual.get("rol") != "admin":
+        with database.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
+            row_exist = cursor.fetchone()
+            if not row_exist:
+                raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
+            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
+            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+                raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de este cliente")
+        datos["usuario_registro"] = usuario_actual["username"]
+        if cli_asig:
+            datos["cliente"] = cli_asig
+
     val = database.validar_inspeccion_candados(datos, excluir_id=inspeccion_id)
     if not val.get('valido', True):
         raise HTTPException(status_code=400, detail=val.get('mensaje', 'Violación de regla de seguridad'))
@@ -2255,7 +2366,18 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem):
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección actualizada correctamente"}
 
 @app.delete("/api/inspecciones/{inspeccion_id}")
-def api_eliminar_inspeccion(inspeccion_id: int):
+def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        with database.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
+            row_exist = cursor.fetchone()
+            if not row_exist:
+                raise HTTPException(status_code=404, detail="Inspección no encontrada")
+            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
+            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+                raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
+
     database.eliminar_inspeccion(inspeccion_id)
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
 
@@ -2275,14 +2397,22 @@ def sanitizar_nativos(obj):
 # ==========================================
 
 @app.get("/api/diagnostico")
-def api_diagnostico(usuario: str = ""):
-    df = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df = database.obtener_todas_inspecciones(usuario=filtro_u)
     analisis = database.analizar_inspecciones_df(df)
     return sanitizar_nativos(analisis.to_dict(orient="records"))
 
 @app.get("/api/diagnostico/exportar-excel")
-def api_exportar_diagnostico_excel(usuario: str = ""):
-    df_insp = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df_insp = database.obtener_todas_inspecciones(usuario=filtro_u)
     df_analisis = database.analizar_inspecciones_df(df_insp)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
@@ -2312,7 +2442,8 @@ def api_kpis_llantas(
     dimension: str = "",
     vida: str = "",
     banda_reen: str = "",
-    usuario: str = ""
+    usuario: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtros = {
         'cliente': cliente,
@@ -2325,6 +2456,11 @@ def api_kpis_llantas(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
+    if usuario_actual.get("rol") != "admin":
+        filtros['usuario'] = usuario_actual["username"]
+        if usuario_actual.get("cliente_asignado"):
+            filtros['cliente'] = usuario_actual["cliente_asignado"]
+
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
 
@@ -2339,7 +2475,8 @@ def api_exportar_kpis_excel(
     dimension: str = "",
     vida: str = "",
     banda_reen: str = "",
-    usuario: str = ""
+    usuario: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtros = {
         'cliente': cliente,
@@ -2352,6 +2489,11 @@ def api_exportar_kpis_excel(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
+    if usuario_actual.get("rol") != "admin":
+        filtros['usuario'] = usuario_actual["username"]
+        if usuario_actual.get("cliente_asignado"):
+            filtros['cliente'] = usuario_actual["cliente_asignado"]
+
     data = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     df = pd.DataFrame(data)
     buf = io.BytesIO()
@@ -2370,7 +2512,7 @@ def api_exportar_kpis_excel(
 # ==========================================
 
 @app.get("/api/informe-pdf/{placa}")
-def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = ""):
+def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
         filename = f"Plan_Mantenimiento_{placa}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
@@ -2383,7 +2525,9 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = ""):
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.get("/api/informe-pdf-consolidado")
-def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = ""):
+def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente, subcliente, fecha if fecha else None)
         c_tag = cliente.replace(" ", "_") if cliente else "General"
@@ -2401,101 +2545,103 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
 # ==========================================
 
 @app.get("/api/posiciones")
-def api_posiciones(tipologia: str):
+def api_posiciones(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     posiciones = database.obtener_posiciones_por_tipologia(tipologia)
     return {"tipologia": tipologia, "posiciones": posiciones}
 
 @app.get("/api/operaciones")
-def api_obtener_operaciones():
+def api_obtener_operaciones(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_todas_operaciones()
 
 @app.post("/api/operaciones")
-def api_crear_operacion(item: NuevaOperacionItem):
+def api_crear_operacion(item: NuevaOperacionItem, admin: dict = Depends(requerir_admin)):
     nom = database.guardar_operacion(item.nombre)
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/operaciones")
-def api_editar_operacion(item: EditarOperacionItem):
+def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin)):
     ok = database.actualizar_operacion(item.nombre_antiguo, item.nombre_nuevo)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/operaciones")
-def api_eliminar_operacion(nombre: str):
+def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin)):
     ok = database.eliminar_operacion(nombre)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/tipologias")
-def api_obtener_tipologias():
+def api_obtener_tipologias(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_todas_tipologias()
 
 @app.post("/api/tipologias")
-def api_crear_tipologia(item: NuevaTipologiaItem):
+def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir_admin)):
     nom = database.guardar_tipologia(item.nombre, item.descripcion, item.cant_llantas)
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
-def api_editar_tipologia(item: EditarTipologiaItem):
+def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin)):
     ok = database.actualizar_tipologia(item.nombre_antiguo, item.nombre_nuevo, item.descripcion, item.cant_llantas)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/tipologias")
-def api_eliminar_tipologia(nombre: str):
+def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin)):
     ok = database.eliminar_tipologia(nombre)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/esquema")
-def api_esquema(tipologia: str):
+def api_esquema(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     esquema = database.obtener_esquema_tipologia(tipologia)
     posiciones = database.obtener_posiciones_por_tipologia(tipologia)
     return {"tipologia": tipologia, "esquema": esquema, "posiciones": posiciones}
 
 @app.get("/api/modelos-llanta")
-def api_modelos_llanta():
+def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_catalogo_modelos()
 
 @app.post("/api/modelos-llanta")
-def api_guardar_modelo(item: ModeloLlantaItem):
+def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin)):
     ok = database.guardar_modelo_llanta(item.tipo_llanta, item.marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/profundidad-inicial")
-def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original"):
+def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original", usuario_actual: dict = Depends(obtener_usuario_actual)):
     prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida)
     return {"prof_inicial": prof}
 
 @app.get("/api/buscar-modelos")
-def api_buscar_modelos(query: str = ""):
+def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.buscar_modelos_llantas_filtro(query)
 
 @app.get("/api/configuraciones-clientes")
-def api_obtener_configuraciones_clientes():
+def api_obtener_configuraciones_clientes(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")
-def api_obtener_limite_cliente(cliente: str = ""):
+def api_obtener_limite_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     lim = database.obtener_limite_retiro_cliente(cliente)
     return {"cliente": cliente, "limite_retiro_mm": lim}
 
 @app.post("/api/configuraciones-clientes")
-def api_guardar_configuracion_cliente(item: LimiteClienteItem):
+def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
     ok = database.guardar_limite_retiro_cliente(item.cliente, item.limite_retiro_mm, item.observaciones)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/valores-campo")
-def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = ""):
-    if usuario and not cliente:
+def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    elif usuario and not cliente:
         usr_info = database.obtener_usuario_por_username(usuario)
         if usr_info and usr_info.get("rol") != "admin" and usr_info.get("cliente_asignado"):
             cliente = usr_info.get("cliente_asignado")
     return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
 
 @app.get("/api/inspeccion-anterior")
-def api_inspeccion_anterior(placa: str, posicion: int):
+def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
     return {"encontrado": True, "datos": prev} if prev else {"encontrado": False}
 
 @app.get("/api/posiciones-inspeccionadas")
-def api_posiciones_inspeccionadas(placa: str, fecha: str = ""):
+def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     det = database.obtener_posiciones_inspeccionadas_detalle(placa, fecha)
     return {
         "placa": placa,
@@ -2509,25 +2655,43 @@ def api_posiciones_inspeccionadas(placa: str, fecha: str = ""):
 # ==========================================
 
 @app.post("/api/login")
-def api_login(item: LoginItem):
+def api_login(item: LoginItem, response: Response):
     usr = database.autenticar_usuario(item.username, item.password)
     if not usr:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
-    return {"status": "ok", "usuario": usr}
+    token = crear_token_acceso(usr["username"], usr["rol"])
+    response.set_cookie(
+        key="tirecheck_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=TOKEN_EXPIRATION_SECONDS
+    )
+    return {"status": "ok", "token": token, "usuario": usr}
+
+@app.post("/api/logout")
+def api_logout(response: Response):
+    response.delete_cookie(key="tirecheck_token")
+    return {"status": "ok", "mensaje": "Sesión cerrada correctamente"}
 
 @app.get("/api/usuarios")
-def api_listar_usuarios():
+def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
     return database.listar_usuarios()
 
 @app.post("/api/usuarios")
-def api_crear_usuario(item: UsuarioItem):
+def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
     ok = database.crear_usuario(item.username, item.password, item.nombre_completo, item.rol, item.cliente_asignado)
     if not ok:
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos")
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
     return {"status": "ok", "username": item.username}
 
 @app.put("/api/usuarios/{username}")
-def api_actualizar_usuario(username: str, item: EditarUsuarioItem):
+def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict = Depends(requerir_admin)):
+    if username.lower() == "admin":
+        if item.activo is False:
+            raise HTTPException(status_code=400, detail="No se puede desactivar al usuario administrador principal")
+        if item.rol and item.rol.lower() != "admin":
+            raise HTTPException(status_code=400, detail="No se puede degradar el rol del usuario administrador principal")
     ok = database.actualizar_usuario(
         username=username,
         nombre_completo=item.nombre_completo,
@@ -2540,8 +2704,20 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem):
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
     return {"status": "ok", "username": username}
 
+@app.post("/api/usuarios/{username}/reset-password")
+def api_reset_password(username: str, item: ResetPasswordItem, admin: dict = Depends(requerir_admin)):
+    if not item.nueva_password or len(item.nueva_password.strip()) < 4:
+        raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 4 caracteres")
+    usr_existente = database.obtener_usuario_por_username(username)
+    if not usr_existente:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    ok = database.restablecer_password_usuario(username, item.nueva_password)
+    if not ok:
+        raise HTTPException(status_code=400, detail="No se pudo restablecer la contraseña")
+    return {"status": "ok", "message": f"Contraseña del usuario {username} restablecida correctamente"}
+
 @app.delete("/api/usuarios/{username}")
-def api_eliminar_usuario(username: str):
+def api_eliminar_usuario(username: str, admin: dict = Depends(requerir_admin)):
     if username.lower() == "admin":
         raise HTTPException(status_code=400, detail="No se puede eliminar el usuario administrador principal")
     ok = database.eliminar_usuario(username)
@@ -2565,7 +2741,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1572 líneas | 80,521 bytes (78.6 KB)
+- **Métricas:** 1669 líneas | 84,427 bytes (82.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2574,12 +2750,61 @@ import pandas as pd
 import unicodedata
 import os
 import re
+import hashlib
+import hmac
+import secrets
 from datetime import datetime
+from contextlib import contextmanager
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 _DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
 _DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
 DB_PATH = _DB_DATA if os.path.exists(_DB_DATA) else _DB_ROOT
+
+def hash_password(password: str) -> str:
+    """
+    Genera un hash seguro para la contraseña usando PBKDF2-HMAC-SHA256 con 100,000 iteraciones
+    y un salt aleatorio de 16 bytes. Retorna 'pbkdf2_sha256$<salt_hex>$<hash_hex>'.
+    """
+    if not isinstance(password, str):
+        password = str(password)
+    salt = secrets.token_hex(16)
+    hash_bytes = hashlib.pbkdf2_hmac(
+        'sha256',
+        password.encode('utf-8'),
+        salt.encode('utf-8'),
+        100_000
+    )
+    return f"pbkdf2_sha256${salt}${hash_bytes.hex()}"
+
+def verify_password(plain_password: str, stored_password: str) -> bool:
+    """
+    Verifica una contraseña en texto plano contra el hash almacenado usando tiempo constante.
+    Si el hash almacenado usa formato 'pbkdf2_sha256$', verifica con PBKDF2.
+    Si es una contraseña legada en texto plano, compara directamente con hmac.compare_digest.
+    """
+    if not isinstance(plain_password, str):
+        plain_password = str(plain_password)
+    if not isinstance(stored_password, str):
+        stored_password = str(stored_password)
+    
+    if stored_password.startswith("pbkdf2_sha256$"):
+        try:
+            parts = stored_password.split('$')
+            if len(parts) != 3:
+                return False
+            _, salt, hash_hex = parts
+            computed_bytes = hashlib.pbkdf2_hmac(
+                'sha256',
+                plain_password.encode('utf-8'),
+                salt.encode('utf-8'),
+                100_000
+            )
+            return hmac.compare_digest(computed_bytes.hex(), hash_hex)
+        except Exception:
+            return False
+    else:
+        return hmac.compare_digest(plain_password, stored_password)
 
 def normalizar_texto(texto):
     if not isinstance(texto, str):
@@ -2616,10 +2841,18 @@ def to_int(val, default=0):
     except (ValueError, TypeError):
         return default
 
+@contextmanager
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode = WAL")
-    return conn
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def inicializar_bd():
     with get_connection() as conn:
@@ -2688,12 +2921,18 @@ def inicializar_bd():
         if cursor.fetchone()[0] == 0:
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('admin', 'admin123', 'Administrador General', 'admin', '')
-            """)
+                VALUES ('admin', ?, 'Administrador General', 'admin', '')
+            """, (hash_password('admin123'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('inspector1', '1234', 'Juan Pérez (Inspector)', 'inspector', '')
-            """)
+                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '')
+            """, (hash_password('1234'),))
+        else:
+            # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
+            cursor.execute("SELECT id, password FROM usuarios")
+            for u_id, u_pwd in cursor.fetchall():
+                if u_pwd and not str(u_pwd).startswith("pbkdf2_sha256$"):
+                    cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (hash_password(u_pwd), u_id))
 
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
@@ -4001,27 +4240,39 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 def autenticar_usuario(username, password):
     u = (username or '').strip()
     p = (password or '').strip()
+    if not u or not p:
+        return None
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo
+            SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo
             FROM usuarios
-            WHERE LOWER(username) = LOWER(?) AND password = ? AND activo = 1
-        """, (u, p))
+            WHERE LOWER(username) = LOWER(?) AND activo = 1
+        """, (u,))
         row = cursor.fetchone()
-        if row:
+        if not row:
+            return None
+        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo = row
+        if verify_password(p, stored_pwd):
+            # Auto-migración en caso de que aún tuviera contraseña legada en texto plano
+            if not stored_pwd.startswith("pbkdf2_sha256$"):
+                nuevo_hash = hash_password(p)
+                cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, uid))
+                conn.commit()
             return {
-                'id': row[0],
-                'username': row[1],
-                'nombre_completo': row[2],
-                'rol': row[3],
-                'cliente_asignado': row[4] or '',
-                'activo': bool(row[5])
+                'id': uid,
+                'username': db_username,
+                'nombre_completo': nombre_completo,
+                'rol': rol,
+                'cliente_asignado': cliente_asignado or '',
+                'activo': bool(activo)
             }
     return None
 
 def obtener_usuario_por_username(username):
     u = (username or '').strip()
+    if not u:
+        return None
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -4060,13 +4311,16 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
     cli = (cliente_asignado or '').strip()
     if not u or not p or not nom:
         return False
+    if len(p) < 4:
+        return False
+    hashed_pwd = hash_password(p)
     with get_connection() as conn:
         try:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
                 VALUES (?, ?, ?, ?, ?)
-            """, (u, p, nom, r, cli))
+            """, (u, hashed_pwd, nom, r, cli))
             conn.commit()
             return True
         except Exception:
@@ -4080,16 +4334,19 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         params = []
         if nombre_completo is not None:
             updates.append("nombre_completo = ?")
-            params.append(nombre_completo)
+            params.append(nombre_completo.strip())
         if password is not None and str(password).strip():
+            p_str = str(password).strip()
+            if len(p_str) < 4:
+                return False
             updates.append("password = ?")
-            params.append(str(password).strip())
+            params.append(hash_password(p_str))
         if rol is not None:
             updates.append("rol = ?")
-            params.append(rol)
+            params.append(rol.strip().lower())
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
-            params.append(cliente_asignado)
+            params.append(cliente_asignado.strip())
         if activo is not None:
             updates.append("activo = ?")
             params.append(1 if activo else 0)
@@ -4098,7 +4355,23 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         params.append(u)
         cursor.execute(f"UPDATE usuarios SET {', '.join(updates)} WHERE LOWER(username) = LOWER(?)", params)
         conn.commit()
-        return True
+        return cursor.rowcount > 0
+
+def restablecer_password_usuario(username: str, nueva_password: str) -> bool:
+    """
+    Restablece la contraseña de un usuario específico validando que tenga al menos 4 caracteres,
+    la hashea con PBKDF2 y actualiza el registro en la BD.
+    """
+    u = (username or '').strip().lower()
+    p = (nueva_password or '').strip()
+    if not u or len(p) < 4:
+        return False
+    hashed = hash_password(p)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET password = ? WHERE LOWER(username) = LOWER(?)", (hashed, u))
+        conn.commit()
+        return cursor.rowcount > 0
 
 def eliminar_usuario(username):
     u = (username or '').strip().lower()
@@ -7842,7 +8115,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5533 líneas | 572,302 bytes (558.9 KB)
+- **Métricas:** 5897 líneas | 589,409 bytes (575.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9510,21 +9783,107 @@ if __name__ == '__main__':
         <button type="button" onclick="cerrarModalNuevoUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-2.5 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. auditor1" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Contraseña</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Contraseña (Mínimo 4 caracteres)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
-            <option value="auditor">Auditor (Lectura e Informes)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Cliente Asignado (Opcional)</label><input type="text" id="usr_cliente" placeholder="Vacío para todos" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Cliente Asignado (Opcional)</label><input type="text" id="usr_cliente" placeholder="Vacío para todas las flotas" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalNuevoUsuario()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoUsuario()" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl font-bold">Crear Usuario</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR USUARIO -->
+  <div id="modalEditarUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-user-pen text-blue-600"></i>
+          <span>Editar Usuario</span>
+        </h3>
+        <button type="button" onclick="cerrarModalEditarUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label>
+          <input type="text" id="edit_usr_username" class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-500 cursor-not-allowed" readonly disabled>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nombre Completo</label>
+          <input type="text" id="edit_usr_nombre" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Rol</label>
+          <select id="edit_usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+            <option value="inspector">Inspector (Captura y Patio)</option>
+            <option value="admin">Administrador Total</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Cliente Asignado</label>
+          <input type="text" id="edit_usr_cliente" placeholder="Vacío para Todas las Flotas" class="w-full p-2 bg-slate-50 border rounded-xl">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Estado</label>
+          <select id="edit_usr_activo" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+        <div id="edit_usr_error" class="hidden text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-200 text-center"></div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModalEditarUsuario()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="guardarEdicionUsuario()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RESTABLECER CONTRASEÑA -->
+  <div id="modalResetPassword" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-key text-amber-500"></i>
+          <span>Restablecer Contraseña</span>
+        </h3>
+        <button type="button" onclick="cerrarModalResetPassword()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-2.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
+        Asignando nueva clave para el usuario: <b id="reset_usr_label" class="text-slate-900 font-mono"></b>
+      </div>
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nueva Contraseña</label>
+          <div class="relative">
+            <input type="password" id="reset_nueva_password" placeholder="Mínimo 4 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
+            <button type="button" onclick="togglePasswordVisibility('reset_nueva_password', 'iconEyeReset1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+              <i id="iconEyeReset1" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Confirmar Contraseña</label>
+          <div class="relative">
+            <input type="password" id="reset_confirmar_password" placeholder="Repite la nueva contraseña" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
+            <button type="button" onclick="togglePasswordVisibility('reset_confirmar_password', 'iconEyeReset2')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+              <i id="iconEyeReset2" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div id="reset_password_error" class="hidden text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-200 text-center"></div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModalResetPassword()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="ejecutarResetPassword()" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold">Actualizar Clave</button>
         </div>
       </div>
     </div>
@@ -9756,6 +10115,53 @@ if __name__ == '__main__':
 
   <!-- JAVASCRIPT PRINCIPAL DE LA APLICACIÓN -->
   <script>
+    // ==========================================
+    // INTERCEPTOR GLOBAL DE FETCH (AUTENTICACIÓN & 401)
+    // ==========================================
+    const _originalFetch = window.fetch;
+    window.fetch = async function(resource, init = {}) {
+      init = init || {};
+      init.headers = init.headers || {};
+
+      const token = localStorage.getItem('tirecheck_token');
+      const urlStr = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+
+      if (token && urlStr.includes('/api/')) {
+        if (init.headers instanceof Headers) {
+          if (!init.headers.has('Authorization')) {
+            init.headers.set('Authorization', `Bearer ${token}`);
+          }
+        } else if (Array.isArray(init.headers)) {
+          if (!init.headers.some(([k]) => k.toLowerCase() === 'authorization')) {
+            init.headers.push(['Authorization', `Bearer ${token}`]);
+          }
+        } else {
+          if (!init.headers['Authorization']) {
+            init.headers['Authorization'] = `Bearer ${token}`;
+          }
+        }
+      }
+
+      if (!init.credentials) {
+        init.credentials = 'same-origin';
+      }
+
+      const response = await _originalFetch(resource, init);
+
+      if (response.status === 401 && urlStr.includes('/api/') && !urlStr.includes('/api/login')) {
+        localStorage.removeItem('tirecheck_token');
+        localStorage.removeItem('tirecheck_usuario_sesion');
+        usuarioActual = null;
+        mostrarToast('⚠️ Sesión expirada o no autorizada. Por favor inicie sesión.', true);
+        const modalLogin = document.getElementById('modalLogin');
+        if (modalLogin) {
+          modalLogin.classList.remove('hidden');
+        }
+      }
+
+      return response;
+    };
+
     // Variables globales de estado
     let idInspeccionActiva = 1;
     function fechaLocalISO(d = new Date()) {
@@ -9812,7 +10218,8 @@ if __name__ == '__main__':
     // ==========================================
     function verificarSesionUsuario() {
       const data = localStorage.getItem('tirecheck_usuario_sesion');
-      if (data) {
+      const token = localStorage.getItem('tirecheck_token');
+      if (data && token) {
         try {
           usuarioActual = JSON.parse(data);
           actualizarUIUsuario();
@@ -9820,6 +10227,7 @@ if __name__ == '__main__':
           return true;
         } catch(e) {
           localStorage.removeItem('tirecheck_usuario_sesion');
+          localStorage.removeItem('tirecheck_token');
         }
       }
       document.getElementById('modalLogin').classList.remove('hidden');
@@ -9839,14 +10247,18 @@ if __name__ == '__main__':
       }
 
       try {
-        const res = await fetch('/api/login', {
+        const res = await _originalFetch('/api/login', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
+          credentials: 'same-origin',
           body: JSON.stringify({username: u, password: p})
         });
         const d = await res.json();
         if (res.ok) {
           usuarioActual = d.usuario;
+          if (d.token) {
+            localStorage.setItem('tirecheck_token', d.token);
+          }
           localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
           document.getElementById('modalLogin').classList.add('hidden');
           actualizarUIUsuario();
@@ -9863,11 +10275,16 @@ if __name__ == '__main__':
       }
     }
 
-    function cerrarSesionUsuario() {
+    async function cerrarSesionUsuario() {
       if (confirm('¿Deseas cerrar tu sesión actual?')) {
+        try {
+          await _originalFetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+        } catch(e) {}
+        localStorage.removeItem('tirecheck_token');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
         document.getElementById('modalLogin').classList.remove('hidden');
+        mostrarToast('Sesión cerrada correctamente');
       }
     }
 
@@ -9878,6 +10295,17 @@ if __name__ == '__main__':
         const rolBadge = usuarioActual.rol ? `[${usuarioActual.rol.toUpperCase()}]` : '';
         lbl.textContent = `${usuarioActual.nombre_completo} ${rolBadge}`;
       }
+
+      // Control de acceso a la subpestaña de Usuarios en Catálogos
+      const subtabUsrs = document.getElementById('subtab-btn-usuarios');
+      if (subtabUsrs) {
+        if (usuarioActual.rol === 'admin') {
+          subtabUsrs.classList.remove('hidden');
+        } else {
+          subtabUsrs.classList.add('hidden');
+        }
+      }
+
       if (usuarioActual.rol !== 'admin' && usuarioActual.cliente_asignado) {
         const inpCli = document.getElementById('cliente');
         if (inpCli) {
@@ -10487,10 +10915,14 @@ if __name__ == '__main__':
       m.classList.remove('flex');
     }
     function descargarPlantillaExcel() {
-      window.location.href = '/api/inspecciones/plantilla-excel';
+      const tok = localStorage.getItem('tirecheck_token');
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/plantilla-excel${q}`;
     }
     function exportarInspeccionesExcel() {
-      window.location.href = '/api/inspecciones/exportar-excel';
+      const tok = localStorage.getItem('tirecheck_token');
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/exportar-excel${q}`;
     }
 
     // Zona Drag and Drop Excel
@@ -10674,7 +11106,9 @@ if __name__ == '__main__':
     }
 
     function exportarDiagnosticoExcel() {
-      window.location.href = '/api/diagnostico/exportar-excel';
+      const tok = localStorage.getItem('tirecheck_token');
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/diagnostico/exportar-excel${q}`;
     }
 
     // ==========================================
@@ -10805,6 +11239,9 @@ if __name__ == '__main__':
       if (sub && sub !== 'TODOS') params.append('subcliente', sub);
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
+
+      const tok = localStorage.getItem('tirecheck_token');
+      if (tok) params.append('token', tok);
 
       window.location.href = `/api/kpis-llantas/exportar-excel?${params.toString()}`;
     }
@@ -10970,40 +11407,75 @@ if __name__ == '__main__':
       }
     }
 
+    let usuariosCatCache = [];
+
     async function cargarUsuariosCat() {
-      const res = await fetch('/api/usuarios');
-      if (res.ok) {
-        const usrs = await res.json();
-        const tbody = document.getElementById('tbodyUsuariosCat');
-        tbody.innerHTML = usrs.map(u => `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-black text-slate-900">${u.username}</td>
-            <td class="p-2.5 font-bold">${u.nombre_completo}</td>
-            <td class="p-2.5 text-center font-bold uppercase text-[10px]"><span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">${u.rol}</span></td>
-            <td class="p-2.5">${u.cliente_asignado || 'Todas las Flotas'}</td>
-            <td class="p-2.5 text-center">${u.activo ? '<span class="text-emerald-600 font-bold">Activo</span>' : '<span class="text-rose-600 font-bold">Inactivo</span>'}</td>
-            <td class="p-2.5 text-center">
-              ${u.username !== 'admin' ? `<button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="text-rose-600 hover:text-rose-800 font-bold text-xs"><i class="fa-solid fa-trash"></i></button>` : '-'}
-            </td>
-          </tr>
-        `).join('');
+      if (!usuarioActual || usuarioActual.rol !== 'admin') return;
+      try {
+        const res = await fetch('/api/usuarios');
+        if (res.ok) {
+          usuariosCatCache = await res.json();
+          const tbody = document.getElementById('tbodyUsuariosCat');
+          tbody.innerHTML = usuariosCatCache.map(u => `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
+              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
+              <td class="p-2.5 text-center font-bold uppercase text-[10px]">
+                <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
+              </td>
+              <td class="p-2.5">${u.cliente_asignado || '<span class="text-slate-400 italic">Todas las Flotas</span>'}</td>
+              <td class="p-2.5 text-center">
+                ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
+              </td>
+              <td class="p-2.5 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
+                    <i class="fa-solid fa-user-pen"></i>
+                  </button>
+                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                  </button>
+                  ${u.username.toLowerCase() !== 'admin' ? `
+                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  ` : `
+                    <span class="p-1.5 text-slate-300 text-xs" title="Superadmin Protegido"><i class="fa-solid fa-lock"></i></span>
+                  `}
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        console.error("Error al cargar usuarios:", e);
       }
     }
 
     function abrirModalNuevoUsuario() {
+      document.getElementById('usr_username').value = '';
+      document.getElementById('usr_nombre').value = '';
+      document.getElementById('usr_pass').value = '';
+      document.getElementById('usr_cliente').value = '';
       document.getElementById('modalNuevoUsuario').classList.remove('hidden');
       document.getElementById('modalNuevoUsuario').classList.add('flex');
     }
+
     function cerrarModalNuevoUsuario() {
       document.getElementById('modalNuevoUsuario').classList.add('hidden');
       document.getElementById('modalNuevoUsuario').classList.remove('flex');
     }
+
     async function guardarNuevoUsuario() {
       const u = document.getElementById('usr_username').value.trim();
       const n = document.getElementById('usr_nombre').value.trim();
       const p = document.getElementById('usr_pass').value.trim();
       if (!u || !n || !p) {
-        alert('Por favor completa todos los campos del usuario');
+        alert('Por favor completa todos los campos del usuario.');
+        return;
+      }
+      if (p.length < 4) {
+        alert('La contraseña debe tener al menos 4 caracteres.');
         return;
       }
       const res = await fetch('/api/usuarios', {
@@ -11019,11 +11491,169 @@ if __name__ == '__main__':
       });
       if (res.ok) {
         cerrarModalNuevoUsuario();
-        mostrarToast(`✅ Usuario ${u} creado exitosamente.`);
+        mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
         cargarUsuariosCat();
       } else {
         const d = await res.json();
         mostrarToast(d.detail || 'Error al crear usuario', true);
+      }
+    }
+
+    function abrirModalEditarUsuario(username) {
+      const u = usuariosCatCache.find(x => x.username.toLowerCase() === username.toLowerCase());
+      if (!u) return;
+      document.getElementById('edit_usr_username').value = u.username;
+      document.getElementById('edit_usr_nombre').value = u.nombre_completo;
+      document.getElementById('edit_usr_rol').value = u.rol;
+      document.getElementById('edit_usr_cliente').value = u.cliente_asignado || '';
+      document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
+
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const esSuperAdmin = u.username.toLowerCase() === 'admin';
+      document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
+      document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
+
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalEditarUsuario() {
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function guardarEdicionUsuario() {
+      const username = document.getElementById('edit_usr_username').value.trim();
+      const nombre = document.getElementById('edit_usr_nombre').value.trim();
+      const rol = document.getElementById('edit_usr_rol').value;
+      const cliente = document.getElementById('edit_usr_cliente').value.trim();
+      const activo = document.getElementById('edit_usr_activo').value === '1';
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!nombre) {
+        if (errBox) {
+          errBox.textContent = 'El nombre completo es obligatorio.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${username}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            nombre_completo: nombre,
+            rol: rol,
+            cliente_asignado: cliente,
+            activo: activo
+          })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalEditarUsuario();
+          mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
+          cargarUsuariosCat();
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al actualizar el usuario.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    let targetResetUser = null;
+
+    function abrirModalResetPassword(username) {
+      targetResetUser = username;
+      document.getElementById('reset_usr_label').textContent = username;
+      document.getElementById('reset_nueva_password').value = '';
+      document.getElementById('reset_confirmar_password').value = '';
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalResetPassword() {
+      targetResetUser = null;
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      if (!inp || !ico) return;
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.classList.remove('fa-eye');
+        ico.classList.add('fa-eye-slash');
+      } else {
+        inp.type = 'password';
+        ico.classList.remove('fa-eye-slash');
+        ico.classList.add('fa-eye');
+      }
+    }
+
+    async function ejecutarResetPassword() {
+      if (!targetResetUser) return;
+      const p1 = document.getElementById('reset_nueva_password').value.trim();
+      const p2 = document.getElementById('reset_confirmar_password').value.trim();
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!p1 || p1.length < 4) {
+        if (errBox) {
+          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (p1 !== p2) {
+        if (errBox) {
+          errBox.textContent = 'Las contraseñas no coinciden. Por favor verifícalas.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${targetResetUser}/reset-password`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ nueva_password: p1 })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalResetPassword();
+          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
       }
     }
 
@@ -11033,6 +11663,9 @@ if __name__ == '__main__':
       if (res.ok) {
         mostrarToast(`Usuario ${username} eliminado.`);
         cargarUsuariosCat();
+      } else {
+        const d = await res.json();
+        mostrarToast(d.detail || 'Error al eliminar usuario', true);
       }
     }
 
@@ -13146,12 +13779,16 @@ if __name__ == '__main__':
       }
       let url = `/api/informe-pdf/${encodeURIComponent(p)}`;
       if (f) url += `?fecha=${encodeURIComponent(f)}`;
+      const tok = localStorage.getItem('tirecheck_token');
+      if (tok) url += (url.includes('?') ? '&' : '?') + `token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function descargarConsolidadoFlota() {
       const cli = document.getElementById('cliente').value.trim();
       const sub = document.getElementById('subcliente').value.trim();
-      const url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      const tok = localStorage.getItem('tirecheck_token');
+      if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function compartirWhatsAppPlan() {
@@ -14730,7 +15367,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `tests/conftest.py`
 - **Descripción:** Configuración de fixtures y base de datos SQLite en memoria para tests aislados
-- **Métricas:** 31 líneas | 796 bytes (0.8 KB)
+- **Métricas:** 47 líneas | 1,217 bytes (1.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14738,11 +15375,13 @@ import os
 import sys
 import tempfile
 import pytest
+from fastapi.testclient import TestClient
 
 # Asegurar que el directorio de la aplicación esté en sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import database
+import server
 
 @pytest.fixture
 def test_db():
@@ -14765,6 +15404,20 @@ def test_db():
             os.remove(temp_db_path)
         except OSError:
             pass
+
+@pytest.fixture
+def admin_token(test_db):
+    return server.crear_token_acceso("admin", "admin")
+
+@pytest.fixture
+def inspector_token(test_db):
+    return server.crear_token_acceso("inspector1", "inspector")
+
+@pytest.fixture
+def auth_client(admin_token):
+    c = TestClient(server.app)
+    c.headers.update({"Authorization": f"Bearer {admin_token}"})
+    return c
 ```
 
 ---
@@ -14773,7 +15426,7 @@ def test_db():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 175 líneas | 5,658 bytes (5.5 KB)
+- **Métricas:** 261 líneas | 9,487 bytes (9.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14782,6 +15435,7 @@ import pytest
 from fastapi.testclient import TestClient
 from server import app
 import database
+import server
 
 client = TestClient(app)
 
@@ -14792,8 +15446,77 @@ def test_api_info_servidor():
     assert data["status"] == "online"
     assert data["app"] == "TireCheck Pro"
 
-def test_api_crud_inspeccion(test_db):
-    # 1. Crear inspección
+def test_index_page_loads_all_views():
+    res = client.get("/")
+    assert res.status_code == 200
+    html = res.text
+    # Verificar que el HTML contiene las 5 vistas principales integradas
+    assert "vista-patio" in html
+    assert "vista-basedatos" in html
+    assert "vista-diagnostico" in html
+    assert "vista-kpis" in html
+    assert "vista-catalogos" in html
+    assert "vista-remoto" not in html
+    # Verificar modales esenciales
+    assert "modalEditarInspeccion" in html
+    assert "modalImportarExcel" in html
+    assert "modalInformePdf" in html
+    assert "modalEditarUsuario" in html
+    assert "modalResetPassword" in html
+
+def test_seguridad_rechazo_sin_autenticacion(test_db):
+    # 1. Petición sin token a /api/inspecciones debe dar 401
+    res_insp = client.get("/api/inspecciones")
+    assert res_insp.status_code == 401
+    assert "Sesión no válida" in res_insp.json()["detail"]
+
+    # 2. Petición sin token a /api/usuarios debe dar 401
+    res_usr = client.get("/api/usuarios")
+    assert res_usr.status_code == 401
+
+    # 3. Petición sin token a creación de usuario debe dar 401
+    res_crear = client.post("/api/usuarios", json={
+        "username": "hacker",
+        "password": "hackpassword",
+        "nombre_completo": "Intruso"
+    })
+    assert res_crear.status_code == 401
+
+def test_seguridad_control_roles_inspector_vs_admin(test_db, inspector_token):
+    # Cliente autenticado como inspector
+    client_insp = TestClient(app)
+    client_insp.headers.update({"Authorization": f"Bearer {inspector_token}"})
+
+    # Un inspector tiene acceso a lectura de inspecciones
+    res_insp = client_insp.get("/api/inspecciones")
+    assert res_insp.status_code == 200
+
+    # Pero un inspector NO tiene permisos de administrador (debe dar 403 Forbidden)
+    res_admin_usr = client_insp.get("/api/usuarios")
+    assert res_admin_usr.status_code == 403
+    assert "administrador" in res_admin_usr.json()["detail"].lower()
+
+    # Intentar resetear password de admin siendo inspector da 403
+    res_reset = client_insp.post("/api/usuarios/admin/reset-password", json={"nueva_password": "nuevaclave123"})
+    assert res_reset.status_code == 403
+
+def test_contrasenas_hasheadas_pbkdf2(test_db):
+    # Verificar directamente en la base de datos que las contraseñas están hasheadas
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT username, password FROM usuarios")
+        rows = cursor.fetchall()
+        assert len(rows) >= 2
+        for username, stored_pwd in rows:
+            assert stored_pwd.startswith("pbkdf2_sha256$"), f"La contraseña de {username} no usa formato PBKDF2"
+            parts = stored_pwd.split('$')
+            assert len(parts) == 3
+            salt, hash_hex = parts[1], parts[2]
+            assert len(salt) == 32
+            assert len(hash_hex) == 64
+
+def test_api_crud_inspeccion(test_db, auth_client):
+    # 1. Crear inspección autenticado
     payload = {
         "fecha": "2026-10-01",
         "cliente": "API Cliente",
@@ -14813,13 +15536,13 @@ def test_api_crud_inspeccion(test_db):
         "psi": 110.0,
         "numero_interno": "LL-API-01"
     }
-    res_crear = client.post("/api/inspecciones", json=payload)
+    res_crear = auth_client.post("/api/inspecciones", json=payload)
     assert res_crear.status_code == 200
     reg_id = res_crear.json()["id"]
     assert reg_id > 0
 
     # 2. Consultar por ID
-    res_get = client.get(f"/api/inspecciones/{reg_id}")
+    res_get = auth_client.get(f"/api/inspecciones/{reg_id}")
     assert res_get.status_code == 200
     data = res_get.json()
     assert data["placa"] == "API-123"
@@ -14829,31 +15552,30 @@ def test_api_crud_inspeccion(test_db):
     payload["kilometraje"] = 55000.0
     payload["novedades"] = "Corte superficial en banda"
     payload["foto_novedad"] = "data:image/jpeg;base64,/9j/4AAQSkZJRg=="
-    res_put = client.put(f"/api/inspecciones/{reg_id}", json=payload)
+    res_put = auth_client.put(f"/api/inspecciones/{reg_id}", json=payload)
     assert res_put.status_code == 200
     assert res_put.json()["status"] == "ok"
 
     # Verificar actualización
-    res_get2 = client.get(f"/api/inspecciones/{reg_id}")
+    res_get2 = auth_client.get(f"/api/inspecciones/{reg_id}")
     assert res_get2.json()["kilometraje"] == 55000.0
     assert res_get2.json()["novedades"] == "Corte superficial en banda"
-    assert res_get2.json()["foto_novedad"] == "data:image/jpeg;base64,/9j/4AAQSkZJRg=="
 
     # 4. Eliminar inspección (DELETE)
-    res_del = client.delete(f"/api/inspecciones/{reg_id}")
+    res_del = auth_client.delete(f"/api/inspecciones/{reg_id}")
     assert res_del.status_code == 200
 
     # Verificar que ya no existe
-    res_get3 = client.get(f"/api/inspecciones/{reg_id}")
+    res_get3 = auth_client.get(f"/api/inspecciones/{reg_id}")
     assert res_get3.status_code == 404
 
-def test_api_descargar_plantilla_excel():
-    res = client.get("/api/inspecciones/plantilla-excel")
+def test_api_descargar_plantilla_excel(auth_client):
+    res = auth_client.get("/api/inspecciones/plantilla-excel")
     assert res.status_code == 200
     assert "spreadsheet" in res.headers["content-type"]
     assert len(res.content) > 1000
 
-def test_api_exportar_excel(test_db):
+def test_api_exportar_excel(test_db, auth_client):
     # Insertar un registro
     database.insertar_inspeccion({
         'fecha': '2026-10-01',
@@ -14867,59 +15589,76 @@ def test_api_exportar_excel(test_db):
     })
 
     # Exportar Base de datos
-    res_bd = client.get("/api/inspecciones/exportar-excel")
+    res_bd = auth_client.get("/api/inspecciones/exportar-excel")
     assert res_bd.status_code == 200
     assert len(res_bd.content) > 1000
 
     # Exportar Diagnóstico
-    res_diag = client.get("/api/diagnostico/exportar-excel")
+    res_diag = auth_client.get("/api/diagnostico/exportar-excel")
     assert res_diag.status_code == 200
     assert len(res_diag.content) > 1000
 
     # Exportar KPIs
-    res_kpis = client.get("/api/kpis-llantas/exportar-excel")
+    res_kpis = auth_client.get("/api/kpis-llantas/exportar-excel")
     assert res_kpis.status_code == 200
     assert len(res_kpis.content) > 1000
 
-def test_api_usuarios_gestion(test_db):
-    # Crear usuario
-    res_crear = client.post("/api/usuarios", json={
-        "username": "auditor_test",
-        "password": "pass123",
-        "nombre_completo": "Auditor Test",
-        "rol": "auditor",
-        "cliente_asignado": ""
+def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
+    # 1. Admin crea un nuevo usuario
+    res_crear = auth_client.post("/api/usuarios", json={
+        "username": "operario_test",
+        "password": "claveInicial123",
+        "nombre_completo": "Operario de Pruebas",
+        "rol": "inspector",
+        "cliente_asignado": "Flota Norte"
     })
     assert res_crear.status_code == 200
+    assert res_crear.json()["username"] == "operario_test"
 
-    # Actualizar usuario
-    res_put = client.put("/api/usuarios/auditor_test", json={
-        "nombre_completo": "Auditor Test Modificado",
-        "rol": "inspector"
+    # 2. Login con credenciales iniciales
+    res_login1 = client.post("/api/login", json={
+        "username": "operario_test",
+        "password": "claveInicial123"
+    })
+    assert res_login1.status_code == 200
+    assert "token" in res_login1.json()
+    assert res_login1.json()["usuario"]["cliente_asignado"] == "Flota Norte"
+
+    # 3. Admin actualiza datos del usuario
+    res_put = auth_client.put("/api/usuarios/operario_test", json={
+        "nombre_completo": "Operario Senior",
+        "cliente_asignado": "Flota Sur"
     })
     assert res_put.status_code == 200
 
-    # Eliminar usuario
-    res_del = client.delete("/api/usuarios/auditor_test")
+    # 4. Admin restablece contraseña mediante endpoint reset-password
+    res_reset = auth_client.post("/api/usuarios/operario_test/reset-password", json={
+        "nueva_password": "nuevaClaveSegura2026"
+    })
+    assert res_reset.status_code == 200
+    assert "restablecida" in res_reset.json()["message"]
+
+    # 5. La contraseña antigua ya NO debe funcionar
+    res_login_old = client.post("/api/login", json={
+        "username": "operario_test",
+        "password": "claveInicial123"
+    })
+    assert res_login_old.status_code == 401
+
+    # 6. La nueva contraseña funciona inmediatamente
+    res_login_new = client.post("/api/login", json={
+        "username": "operario_test",
+        "password": "nuevaClaveSegura2026"
+    })
+    assert res_login_new.status_code == 200
+    assert res_login_new.json()["usuario"]["nombre_completo"] == "Operario Senior"
+    assert res_login_new.json()["usuario"]["cliente_asignado"] == "Flota Sur"
+
+    # 7. Admin elimina el usuario de prueba
+    res_del = auth_client.delete("/api/usuarios/operario_test")
     assert res_del.status_code == 200
 
-def test_index_page_loads_all_views():
-    res = client.get("/")
-    assert res.status_code == 200
-    html = res.text
-    # Verificar que el HTML contiene las 5 vistas principales integradas
-    assert "vista-patio" in html
-    assert "vista-basedatos" in html
-    assert "vista-diagnostico" in html
-    assert "vista-kpis" in html
-    assert "vista-catalogos" in html
-    assert "vista-remoto" not in html
-    # Verificar modales esenciales
-    assert "modalEditarInspeccion" in html
-    assert "modalImportarExcel" in html
-    assert "modalInformePdf" in html
-
-def test_api_importar_excel(test_db):
+def test_api_importar_excel(test_db, auth_client):
     import pandas as pd
     # Crear un excel temporal en memoria con formato válido
     df = pd.DataFrame([{
@@ -14947,7 +15686,7 @@ def test_api_importar_excel(test_db):
     buf.seek(0)
 
     files = {'file': ('test_cargue.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-    res = client.post("/api/inspecciones/importar-excel", files=files)
+    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"

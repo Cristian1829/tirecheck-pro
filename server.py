@@ -2,6 +2,11 @@ import io
 import os
 import socket
 import tempfile
+import time
+import base64
+import json
+import hmac
+import hashlib
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
@@ -12,7 +17,7 @@ def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
 
 import pandas as pd
-from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File
+from fastapi import FastAPI, Request, HTTPException, Response, UploadFile, File, Depends
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -47,6 +52,9 @@ class EditarUsuarioItem(BaseModel):
     rol: Optional[str] = None
     cliente_asignado: Optional[str] = None
     activo: Optional[bool] = None
+
+class ResetPasswordItem(BaseModel):
+    nueva_password: str
 
 class InspeccionItem(BaseModel):
     fecha: str = ""
@@ -106,6 +114,72 @@ class LimiteClienteItem(BaseModel):
     observaciones: str = ""
 
 # ==========================================
+# SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
+# ==========================================
+
+SECRET_KEY = os.environ.get("TIRECHECK_SECRET_KEY", "tirecheck-pro-super-secret-key-2026-production")
+TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
+
+def crear_token_acceso(username: str, rol: str) -> str:
+    payload = {
+        "sub": username,
+        "rol": rol,
+        "exp": int(time.time()) + TOKEN_EXPIRATION_SECONDS
+    }
+    payload_json = json.dumps(payload, separators=(',', ':'))
+    payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
+    signature = hmac.new(SECRET_KEY.encode('utf-8'), payload_b64.encode('utf-8'), hashlib.sha256).hexdigest()
+    return f"{payload_b64}.{signature}"
+
+def verificar_token(token: str) -> Optional[dict]:
+    if not token or not isinstance(token, str):
+        return None
+    parts = token.strip().split('.')
+    if len(parts) != 2:
+        return None
+    payload_b64, signature = parts
+    expected_signature = hmac.new(SECRET_KEY.encode('utf-8'), payload_b64.encode('utf-8'), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(signature, expected_signature):
+        return None
+    try:
+        padding = '=' * ((4 - len(payload_b64) % 4) % 4)
+        payload_bytes = base64.urlsafe_b64decode(payload_b64 + padding)
+        payload = json.loads(payload_bytes.decode('utf-8'))
+        if payload.get("exp", 0) < int(time.time()):
+            return None
+        return payload
+    except Exception:
+        return None
+
+def obtener_usuario_actual(request: Request) -> dict:
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    elif "tirecheck_token" in request.cookies:
+        token = request.cookies.get("tirecheck_token")
+    elif "token" in request.query_params:
+        token = request.query_params.get("token")
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
+    
+    payload = verificar_token(token)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
+    
+    usr = database.obtener_usuario_por_username(payload["sub"])
+    if not usr or not usr.get("activo"):
+        raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    
+    return usr
+
+def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
+    if usuario_actual.get("rol") != "admin":
+        raise HTTPException(status_code=403, detail="Se requieren permisos de administrador")
+    return usuario_actual
+
+# ==========================================
 # RUTAS PRINCIPALES Y SERVIDOR
 # ==========================================
 
@@ -134,12 +208,16 @@ def api_info_servidor():
 # ==========================================
 
 @app.get("/api/inspecciones")
-def api_obtener_inspecciones(usuario: str = ""):
-    df = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df = database.obtener_todas_inspecciones(usuario=filtro_u)
     return df.to_dict(orient="records")
 
 @app.get("/api/inspecciones/plantilla-excel")
-def api_descargar_plantilla_excel():
+def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
     _p_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "plantillas", "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
     _p_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
     plantilla_path = _p_data if os.path.exists(_p_data) else _p_root
@@ -174,8 +252,12 @@ def api_descargar_plantilla_excel():
     )
 
 @app.get("/api/inspecciones/exportar-excel")
-def api_exportar_inspecciones_excel(usuario: str = ""):
-    df = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df = database.obtener_todas_inspecciones(usuario=filtro_u)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Inspecciones", index=False)
@@ -188,7 +270,7 @@ def api_exportar_inspecciones_excel(usuario: str = ""):
     )
 
 @app.post("/api/inspecciones/importar-excel")
-async def api_importar_excel(file: UploadFile = File(...)):
+async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     filename = file.filename or ""
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
@@ -211,7 +293,7 @@ async def api_importar_excel(file: UploadFile = File(...)):
                 pass
 
 @app.get("/api/inspecciones/{inspeccion_id}")
-def api_obtener_inspeccion_por_id(inspeccion_id: int):
+def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     with database.get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -223,16 +305,29 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int):
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Inspección no encontrada")
+        
+        # Validar permisos de inspector
+        if usuario_actual.get("rol") != "admin":
+            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
+            if cli_asig and row[2] and row[2].strip().lower() != cli_asig.lower():
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
+        
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
                 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'prof_ext', 'prof_cent', 'prof_int',
                 'psi', 'novedades', 'precio', 'prof_inicial', 'km_montaje', 'numero_interno', 'usuario_registro', 'foto_novedad']
         return dict(zip(cols, row))
 
 @app.post("/api/inspecciones")
-def api_guardar_inspeccion(item: InspeccionItem):
+def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
+
+    # Aislamiento por rol
+    if usuario_actual.get("rol") != "admin":
+        datos["usuario_registro"] = usuario_actual["username"]
+        if usuario_actual.get("cliente_asignado"):
+            datos["cliente"] = usuario_actual["cliente_asignado"]
 
     # Validación de Candados de Seguridad
     val = database.validar_inspeccion_candados(datos)
@@ -243,8 +338,24 @@ def api_guardar_inspeccion(item: InspeccionItem):
     return {"status": "ok", "id": reg_id, "message": "Inspección guardada correctamente"}
 
 @app.put("/api/inspecciones/{inspeccion_id}")
-def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem):
+def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
+    
+    # Validar permisos de inspector
+    if usuario_actual.get("rol") != "admin":
+        with database.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
+            row_exist = cursor.fetchone()
+            if not row_exist:
+                raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
+            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
+            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+                raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de este cliente")
+        datos["usuario_registro"] = usuario_actual["username"]
+        if cli_asig:
+            datos["cliente"] = cli_asig
+
     val = database.validar_inspeccion_candados(datos, excluir_id=inspeccion_id)
     if not val.get('valido', True):
         raise HTTPException(status_code=400, detail=val.get('mensaje', 'Violación de regla de seguridad'))
@@ -255,7 +366,18 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem):
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección actualizada correctamente"}
 
 @app.delete("/api/inspecciones/{inspeccion_id}")
-def api_eliminar_inspeccion(inspeccion_id: int):
+def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        with database.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
+            row_exist = cursor.fetchone()
+            if not row_exist:
+                raise HTTPException(status_code=404, detail="Inspección no encontrada")
+            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
+            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+                raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
+
     database.eliminar_inspeccion(inspeccion_id)
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
 
@@ -275,14 +397,22 @@ def sanitizar_nativos(obj):
 # ==========================================
 
 @app.get("/api/diagnostico")
-def api_diagnostico(usuario: str = ""):
-    df = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df = database.obtener_todas_inspecciones(usuario=filtro_u)
     analisis = database.analizar_inspecciones_df(df)
     return sanitizar_nativos(analisis.to_dict(orient="records"))
 
 @app.get("/api/diagnostico/exportar-excel")
-def api_exportar_diagnostico_excel(usuario: str = ""):
-    df_insp = database.obtener_todas_inspecciones(usuario=usuario if usuario else None)
+def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+    else:
+        filtro_u = usuario if usuario else None
+    df_insp = database.obtener_todas_inspecciones(usuario=filtro_u)
     df_analisis = database.analizar_inspecciones_df(df_insp)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
@@ -312,7 +442,8 @@ def api_kpis_llantas(
     dimension: str = "",
     vida: str = "",
     banda_reen: str = "",
-    usuario: str = ""
+    usuario: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtros = {
         'cliente': cliente,
@@ -325,6 +456,11 @@ def api_kpis_llantas(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
+    if usuario_actual.get("rol") != "admin":
+        filtros['usuario'] = usuario_actual["username"]
+        if usuario_actual.get("cliente_asignado"):
+            filtros['cliente'] = usuario_actual["cliente_asignado"]
+
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
 
@@ -339,7 +475,8 @@ def api_exportar_kpis_excel(
     dimension: str = "",
     vida: str = "",
     banda_reen: str = "",
-    usuario: str = ""
+    usuario: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtros = {
         'cliente': cliente,
@@ -352,6 +489,11 @@ def api_exportar_kpis_excel(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
+    if usuario_actual.get("rol") != "admin":
+        filtros['usuario'] = usuario_actual["username"]
+        if usuario_actual.get("cliente_asignado"):
+            filtros['cliente'] = usuario_actual["cliente_asignado"]
+
     data = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     df = pd.DataFrame(data)
     buf = io.BytesIO()
@@ -370,7 +512,7 @@ def api_exportar_kpis_excel(
 # ==========================================
 
 @app.get("/api/informe-pdf/{placa}")
-def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = ""):
+def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
         filename = f"Plan_Mantenimiento_{placa}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
@@ -383,7 +525,9 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = ""):
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.get("/api/informe-pdf-consolidado")
-def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = ""):
+def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente, subcliente, fecha if fecha else None)
         c_tag = cliente.replace(" ", "_") if cliente else "General"
@@ -401,101 +545,103 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
 # ==========================================
 
 @app.get("/api/posiciones")
-def api_posiciones(tipologia: str):
+def api_posiciones(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     posiciones = database.obtener_posiciones_por_tipologia(tipologia)
     return {"tipologia": tipologia, "posiciones": posiciones}
 
 @app.get("/api/operaciones")
-def api_obtener_operaciones():
+def api_obtener_operaciones(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_todas_operaciones()
 
 @app.post("/api/operaciones")
-def api_crear_operacion(item: NuevaOperacionItem):
+def api_crear_operacion(item: NuevaOperacionItem, admin: dict = Depends(requerir_admin)):
     nom = database.guardar_operacion(item.nombre)
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/operaciones")
-def api_editar_operacion(item: EditarOperacionItem):
+def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin)):
     ok = database.actualizar_operacion(item.nombre_antiguo, item.nombre_nuevo)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/operaciones")
-def api_eliminar_operacion(nombre: str):
+def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin)):
     ok = database.eliminar_operacion(nombre)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/tipologias")
-def api_obtener_tipologias():
+def api_obtener_tipologias(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_todas_tipologias()
 
 @app.post("/api/tipologias")
-def api_crear_tipologia(item: NuevaTipologiaItem):
+def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir_admin)):
     nom = database.guardar_tipologia(item.nombre, item.descripcion, item.cant_llantas)
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
-def api_editar_tipologia(item: EditarTipologiaItem):
+def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin)):
     ok = database.actualizar_tipologia(item.nombre_antiguo, item.nombre_nuevo, item.descripcion, item.cant_llantas)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/tipologias")
-def api_eliminar_tipologia(nombre: str):
+def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin)):
     ok = database.eliminar_tipologia(nombre)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/esquema")
-def api_esquema(tipologia: str):
+def api_esquema(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     esquema = database.obtener_esquema_tipologia(tipologia)
     posiciones = database.obtener_posiciones_por_tipologia(tipologia)
     return {"tipologia": tipologia, "esquema": esquema, "posiciones": posiciones}
 
 @app.get("/api/modelos-llanta")
-def api_modelos_llanta():
+def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_catalogo_modelos()
 
 @app.post("/api/modelos-llanta")
-def api_guardar_modelo(item: ModeloLlantaItem):
+def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin)):
     ok = database.guardar_modelo_llanta(item.tipo_llanta, item.marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/profundidad-inicial")
-def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original"):
+def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original", usuario_actual: dict = Depends(obtener_usuario_actual)):
     prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida)
     return {"prof_inicial": prof}
 
 @app.get("/api/buscar-modelos")
-def api_buscar_modelos(query: str = ""):
+def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.buscar_modelos_llantas_filtro(query)
 
 @app.get("/api/configuraciones-clientes")
-def api_obtener_configuraciones_clientes():
+def api_obtener_configuraciones_clientes(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")
-def api_obtener_limite_cliente(cliente: str = ""):
+def api_obtener_limite_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     lim = database.obtener_limite_retiro_cliente(cliente)
     return {"cliente": cliente, "limite_retiro_mm": lim}
 
 @app.post("/api/configuraciones-clientes")
-def api_guardar_configuracion_cliente(item: LimiteClienteItem):
+def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
     ok = database.guardar_limite_retiro_cliente(item.cliente, item.limite_retiro_mm, item.observaciones)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/valores-campo")
-def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = ""):
-    if usuario and not cliente:
+def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    elif usuario and not cliente:
         usr_info = database.obtener_usuario_por_username(usuario)
         if usr_info and usr_info.get("rol") != "admin" and usr_info.get("cliente_asignado"):
             cliente = usr_info.get("cliente_asignado")
     return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
 
 @app.get("/api/inspeccion-anterior")
-def api_inspeccion_anterior(placa: str, posicion: int):
+def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
     return {"encontrado": True, "datos": prev} if prev else {"encontrado": False}
 
 @app.get("/api/posiciones-inspeccionadas")
-def api_posiciones_inspeccionadas(placa: str, fecha: str = ""):
+def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     det = database.obtener_posiciones_inspeccionadas_detalle(placa, fecha)
     return {
         "placa": placa,
@@ -509,25 +655,43 @@ def api_posiciones_inspeccionadas(placa: str, fecha: str = ""):
 # ==========================================
 
 @app.post("/api/login")
-def api_login(item: LoginItem):
+def api_login(item: LoginItem, response: Response):
     usr = database.autenticar_usuario(item.username, item.password)
     if not usr:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
-    return {"status": "ok", "usuario": usr}
+    token = crear_token_acceso(usr["username"], usr["rol"])
+    response.set_cookie(
+        key="tirecheck_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=TOKEN_EXPIRATION_SECONDS
+    )
+    return {"status": "ok", "token": token, "usuario": usr}
+
+@app.post("/api/logout")
+def api_logout(response: Response):
+    response.delete_cookie(key="tirecheck_token")
+    return {"status": "ok", "mensaje": "Sesión cerrada correctamente"}
 
 @app.get("/api/usuarios")
-def api_listar_usuarios():
+def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
     return database.listar_usuarios()
 
 @app.post("/api/usuarios")
-def api_crear_usuario(item: UsuarioItem):
+def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
     ok = database.crear_usuario(item.username, item.password, item.nombre_completo, item.rol, item.cliente_asignado)
     if not ok:
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos")
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
     return {"status": "ok", "username": item.username}
 
 @app.put("/api/usuarios/{username}")
-def api_actualizar_usuario(username: str, item: EditarUsuarioItem):
+def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict = Depends(requerir_admin)):
+    if username.lower() == "admin":
+        if item.activo is False:
+            raise HTTPException(status_code=400, detail="No se puede desactivar al usuario administrador principal")
+        if item.rol and item.rol.lower() != "admin":
+            raise HTTPException(status_code=400, detail="No se puede degradar el rol del usuario administrador principal")
     ok = database.actualizar_usuario(
         username=username,
         nombre_completo=item.nombre_completo,
@@ -540,8 +704,20 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem):
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
     return {"status": "ok", "username": username}
 
+@app.post("/api/usuarios/{username}/reset-password")
+def api_reset_password(username: str, item: ResetPasswordItem, admin: dict = Depends(requerir_admin)):
+    if not item.nueva_password or len(item.nueva_password.strip()) < 4:
+        raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 4 caracteres")
+    usr_existente = database.obtener_usuario_por_username(username)
+    if not usr_existente:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    ok = database.restablecer_password_usuario(username, item.nueva_password)
+    if not ok:
+        raise HTTPException(status_code=400, detail="No se pudo restablecer la contraseña")
+    return {"status": "ok", "message": f"Contraseña del usuario {username} restablecida correctamente"}
+
 @app.delete("/api/usuarios/{username}")
-def api_eliminar_usuario(username: str):
+def api_eliminar_usuario(username: str, admin: dict = Depends(requerir_admin)):
     if username.lower() == "admin":
         raise HTTPException(status_code=400, detail="No se puede eliminar el usuario administrador principal")
     ok = database.eliminar_usuario(username)

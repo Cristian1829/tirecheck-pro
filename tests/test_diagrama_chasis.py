@@ -378,8 +378,9 @@ def test_comparacion_tres_caminos(test_db):
     pdf2 = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha_ult)
 
     # Camino 3: Endpoint de API FastAPI
+    token = server.crear_token_acceso("admin", "admin")
     client = TestClient(server.app)
-    resp = client.get(f"/api/informe-pdf/{placa}?fecha={fecha_ult}")
+    resp = client.get(f"/api/informe-pdf/{placa}?fecha={fecha_ult}", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
     pdf3 = resp.content
 

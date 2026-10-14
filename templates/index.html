@@ -1662,21 +1662,107 @@
         <button type="button" onclick="cerrarModalNuevoUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-2.5 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. auditor1" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Contraseña</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Contraseña (Mínimo 4 caracteres)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
-            <option value="auditor">Auditor (Lectura e Informes)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Cliente Asignado (Opcional)</label><input type="text" id="usr_cliente" placeholder="Vacío para todos" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Cliente Asignado (Opcional)</label><input type="text" id="usr_cliente" placeholder="Vacío para todas las flotas" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalNuevoUsuario()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoUsuario()" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl font-bold">Crear Usuario</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR USUARIO -->
+  <div id="modalEditarUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-user-pen text-blue-600"></i>
+          <span>Editar Usuario</span>
+        </h3>
+        <button type="button" onclick="cerrarModalEditarUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label>
+          <input type="text" id="edit_usr_username" class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-500 cursor-not-allowed" readonly disabled>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nombre Completo</label>
+          <input type="text" id="edit_usr_nombre" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Rol</label>
+          <select id="edit_usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+            <option value="inspector">Inspector (Captura y Patio)</option>
+            <option value="admin">Administrador Total</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Cliente Asignado</label>
+          <input type="text" id="edit_usr_cliente" placeholder="Vacío para Todas las Flotas" class="w-full p-2 bg-slate-50 border rounded-xl">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Estado</label>
+          <select id="edit_usr_activo" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+        <div id="edit_usr_error" class="hidden text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-200 text-center"></div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModalEditarUsuario()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="guardarEdicionUsuario()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RESTABLECER CONTRASEÑA -->
+  <div id="modalResetPassword" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-key text-amber-500"></i>
+          <span>Restablecer Contraseña</span>
+        </h3>
+        <button type="button" onclick="cerrarModalResetPassword()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-2.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
+        Asignando nueva clave para el usuario: <b id="reset_usr_label" class="text-slate-900 font-mono"></b>
+      </div>
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nueva Contraseña</label>
+          <div class="relative">
+            <input type="password" id="reset_nueva_password" placeholder="Mínimo 4 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
+            <button type="button" onclick="togglePasswordVisibility('reset_nueva_password', 'iconEyeReset1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+              <i id="iconEyeReset1" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Confirmar Contraseña</label>
+          <div class="relative">
+            <input type="password" id="reset_confirmar_password" placeholder="Repite la nueva contraseña" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
+            <button type="button" onclick="togglePasswordVisibility('reset_confirmar_password', 'iconEyeReset2')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+              <i id="iconEyeReset2" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div id="reset_password_error" class="hidden text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-200 text-center"></div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModalResetPassword()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="ejecutarResetPassword()" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold">Actualizar Clave</button>
         </div>
       </div>
     </div>
@@ -1908,6 +1994,53 @@
 
   <!-- JAVASCRIPT PRINCIPAL DE LA APLICACIÓN -->
   <script>
+    // ==========================================
+    // INTERCEPTOR GLOBAL DE FETCH (AUTENTICACIÓN & 401)
+    // ==========================================
+    const _originalFetch = window.fetch;
+    window.fetch = async function(resource, init = {}) {
+      init = init || {};
+      init.headers = init.headers || {};
+
+      const token = localStorage.getItem('tirecheck_token');
+      const urlStr = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+
+      if (token && urlStr.includes('/api/')) {
+        if (init.headers instanceof Headers) {
+          if (!init.headers.has('Authorization')) {
+            init.headers.set('Authorization', `Bearer ${token}`);
+          }
+        } else if (Array.isArray(init.headers)) {
+          if (!init.headers.some(([k]) => k.toLowerCase() === 'authorization')) {
+            init.headers.push(['Authorization', `Bearer ${token}`]);
+          }
+        } else {
+          if (!init.headers['Authorization']) {
+            init.headers['Authorization'] = `Bearer ${token}`;
+          }
+        }
+      }
+
+      if (!init.credentials) {
+        init.credentials = 'same-origin';
+      }
+
+      const response = await _originalFetch(resource, init);
+
+      if (response.status === 401 && urlStr.includes('/api/') && !urlStr.includes('/api/login')) {
+        localStorage.removeItem('tirecheck_token');
+        localStorage.removeItem('tirecheck_usuario_sesion');
+        usuarioActual = null;
+        mostrarToast('⚠️ Sesión expirada o no autorizada. Por favor inicie sesión.', true);
+        const modalLogin = document.getElementById('modalLogin');
+        if (modalLogin) {
+          modalLogin.classList.remove('hidden');
+        }
+      }
+
+      return response;
+    };
+
     // Variables globales de estado
     let idInspeccionActiva = 1;
     function fechaLocalISO(d = new Date()) {
@@ -1964,7 +2097,8 @@
     // ==========================================
     function verificarSesionUsuario() {
       const data = localStorage.getItem('tirecheck_usuario_sesion');
-      if (data) {
+      const token = localStorage.getItem('tirecheck_token');
+      if (data && token) {
         try {
           usuarioActual = JSON.parse(data);
           actualizarUIUsuario();
@@ -1972,6 +2106,7 @@
           return true;
         } catch(e) {
           localStorage.removeItem('tirecheck_usuario_sesion');
+          localStorage.removeItem('tirecheck_token');
         }
       }
       document.getElementById('modalLogin').classList.remove('hidden');
@@ -1991,14 +2126,18 @@
       }
 
       try {
-        const res = await fetch('/api/login', {
+        const res = await _originalFetch('/api/login', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
+          credentials: 'same-origin',
           body: JSON.stringify({username: u, password: p})
         });
         const d = await res.json();
         if (res.ok) {
           usuarioActual = d.usuario;
+          if (d.token) {
+            localStorage.setItem('tirecheck_token', d.token);
+          }
           localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
           document.getElementById('modalLogin').classList.add('hidden');
           actualizarUIUsuario();
@@ -2015,11 +2154,16 @@
       }
     }
 
-    function cerrarSesionUsuario() {
+    async function cerrarSesionUsuario() {
       if (confirm('¿Deseas cerrar tu sesión actual?')) {
+        try {
+          await _originalFetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+        } catch(e) {}
+        localStorage.removeItem('tirecheck_token');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
         document.getElementById('modalLogin').classList.remove('hidden');
+        mostrarToast('Sesión cerrada correctamente');
       }
     }
 
@@ -2030,6 +2174,17 @@
         const rolBadge = usuarioActual.rol ? `[${usuarioActual.rol.toUpperCase()}]` : '';
         lbl.textContent = `${usuarioActual.nombre_completo} ${rolBadge}`;
       }
+
+      // Control de acceso a la subpestaña de Usuarios en Catálogos
+      const subtabUsrs = document.getElementById('subtab-btn-usuarios');
+      if (subtabUsrs) {
+        if (usuarioActual.rol === 'admin') {
+          subtabUsrs.classList.remove('hidden');
+        } else {
+          subtabUsrs.classList.add('hidden');
+        }
+      }
+
       if (usuarioActual.rol !== 'admin' && usuarioActual.cliente_asignado) {
         const inpCli = document.getElementById('cliente');
         if (inpCli) {
@@ -2639,10 +2794,14 @@
       m.classList.remove('flex');
     }
     function descargarPlantillaExcel() {
-      window.location.href = '/api/inspecciones/plantilla-excel';
+      const tok = localStorage.getItem('tirecheck_token');
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/plantilla-excel${q}`;
     }
     function exportarInspeccionesExcel() {
-      window.location.href = '/api/inspecciones/exportar-excel';
+      const tok = localStorage.getItem('tirecheck_token');
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/exportar-excel${q}`;
     }
 
     // Zona Drag and Drop Excel
@@ -2826,7 +2985,9 @@
     }
 
     function exportarDiagnosticoExcel() {
-      window.location.href = '/api/diagnostico/exportar-excel';
+      const tok = localStorage.getItem('tirecheck_token');
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/diagnostico/exportar-excel${q}`;
     }
 
     // ==========================================
@@ -2957,6 +3118,9 @@
       if (sub && sub !== 'TODOS') params.append('subcliente', sub);
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
+
+      const tok = localStorage.getItem('tirecheck_token');
+      if (tok) params.append('token', tok);
 
       window.location.href = `/api/kpis-llantas/exportar-excel?${params.toString()}`;
     }
@@ -3122,40 +3286,75 @@
       }
     }
 
+    let usuariosCatCache = [];
+
     async function cargarUsuariosCat() {
-      const res = await fetch('/api/usuarios');
-      if (res.ok) {
-        const usrs = await res.json();
-        const tbody = document.getElementById('tbodyUsuariosCat');
-        tbody.innerHTML = usrs.map(u => `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-black text-slate-900">${u.username}</td>
-            <td class="p-2.5 font-bold">${u.nombre_completo}</td>
-            <td class="p-2.5 text-center font-bold uppercase text-[10px]"><span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">${u.rol}</span></td>
-            <td class="p-2.5">${u.cliente_asignado || 'Todas las Flotas'}</td>
-            <td class="p-2.5 text-center">${u.activo ? '<span class="text-emerald-600 font-bold">Activo</span>' : '<span class="text-rose-600 font-bold">Inactivo</span>'}</td>
-            <td class="p-2.5 text-center">
-              ${u.username !== 'admin' ? `<button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="text-rose-600 hover:text-rose-800 font-bold text-xs"><i class="fa-solid fa-trash"></i></button>` : '-'}
-            </td>
-          </tr>
-        `).join('');
+      if (!usuarioActual || usuarioActual.rol !== 'admin') return;
+      try {
+        const res = await fetch('/api/usuarios');
+        if (res.ok) {
+          usuariosCatCache = await res.json();
+          const tbody = document.getElementById('tbodyUsuariosCat');
+          tbody.innerHTML = usuariosCatCache.map(u => `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
+              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
+              <td class="p-2.5 text-center font-bold uppercase text-[10px]">
+                <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
+              </td>
+              <td class="p-2.5">${u.cliente_asignado || '<span class="text-slate-400 italic">Todas las Flotas</span>'}</td>
+              <td class="p-2.5 text-center">
+                ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
+              </td>
+              <td class="p-2.5 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
+                    <i class="fa-solid fa-user-pen"></i>
+                  </button>
+                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                  </button>
+                  ${u.username.toLowerCase() !== 'admin' ? `
+                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  ` : `
+                    <span class="p-1.5 text-slate-300 text-xs" title="Superadmin Protegido"><i class="fa-solid fa-lock"></i></span>
+                  `}
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        console.error("Error al cargar usuarios:", e);
       }
     }
 
     function abrirModalNuevoUsuario() {
+      document.getElementById('usr_username').value = '';
+      document.getElementById('usr_nombre').value = '';
+      document.getElementById('usr_pass').value = '';
+      document.getElementById('usr_cliente').value = '';
       document.getElementById('modalNuevoUsuario').classList.remove('hidden');
       document.getElementById('modalNuevoUsuario').classList.add('flex');
     }
+
     function cerrarModalNuevoUsuario() {
       document.getElementById('modalNuevoUsuario').classList.add('hidden');
       document.getElementById('modalNuevoUsuario').classList.remove('flex');
     }
+
     async function guardarNuevoUsuario() {
       const u = document.getElementById('usr_username').value.trim();
       const n = document.getElementById('usr_nombre').value.trim();
       const p = document.getElementById('usr_pass').value.trim();
       if (!u || !n || !p) {
-        alert('Por favor completa todos los campos del usuario');
+        alert('Por favor completa todos los campos del usuario.');
+        return;
+      }
+      if (p.length < 4) {
+        alert('La contraseña debe tener al menos 4 caracteres.');
         return;
       }
       const res = await fetch('/api/usuarios', {
@@ -3171,11 +3370,169 @@
       });
       if (res.ok) {
         cerrarModalNuevoUsuario();
-        mostrarToast(`✅ Usuario ${u} creado exitosamente.`);
+        mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
         cargarUsuariosCat();
       } else {
         const d = await res.json();
         mostrarToast(d.detail || 'Error al crear usuario', true);
+      }
+    }
+
+    function abrirModalEditarUsuario(username) {
+      const u = usuariosCatCache.find(x => x.username.toLowerCase() === username.toLowerCase());
+      if (!u) return;
+      document.getElementById('edit_usr_username').value = u.username;
+      document.getElementById('edit_usr_nombre').value = u.nombre_completo;
+      document.getElementById('edit_usr_rol').value = u.rol;
+      document.getElementById('edit_usr_cliente').value = u.cliente_asignado || '';
+      document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
+
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const esSuperAdmin = u.username.toLowerCase() === 'admin';
+      document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
+      document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
+
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalEditarUsuario() {
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function guardarEdicionUsuario() {
+      const username = document.getElementById('edit_usr_username').value.trim();
+      const nombre = document.getElementById('edit_usr_nombre').value.trim();
+      const rol = document.getElementById('edit_usr_rol').value;
+      const cliente = document.getElementById('edit_usr_cliente').value.trim();
+      const activo = document.getElementById('edit_usr_activo').value === '1';
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!nombre) {
+        if (errBox) {
+          errBox.textContent = 'El nombre completo es obligatorio.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${username}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            nombre_completo: nombre,
+            rol: rol,
+            cliente_asignado: cliente,
+            activo: activo
+          })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalEditarUsuario();
+          mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
+          cargarUsuariosCat();
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al actualizar el usuario.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    let targetResetUser = null;
+
+    function abrirModalResetPassword(username) {
+      targetResetUser = username;
+      document.getElementById('reset_usr_label').textContent = username;
+      document.getElementById('reset_nueva_password').value = '';
+      document.getElementById('reset_confirmar_password').value = '';
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalResetPassword() {
+      targetResetUser = null;
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      if (!inp || !ico) return;
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.classList.remove('fa-eye');
+        ico.classList.add('fa-eye-slash');
+      } else {
+        inp.type = 'password';
+        ico.classList.remove('fa-eye-slash');
+        ico.classList.add('fa-eye');
+      }
+    }
+
+    async function ejecutarResetPassword() {
+      if (!targetResetUser) return;
+      const p1 = document.getElementById('reset_nueva_password').value.trim();
+      const p2 = document.getElementById('reset_confirmar_password').value.trim();
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!p1 || p1.length < 4) {
+        if (errBox) {
+          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (p1 !== p2) {
+        if (errBox) {
+          errBox.textContent = 'Las contraseñas no coinciden. Por favor verifícalas.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${targetResetUser}/reset-password`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ nueva_password: p1 })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalResetPassword();
+          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
       }
     }
 
@@ -3185,6 +3542,9 @@
       if (res.ok) {
         mostrarToast(`Usuario ${username} eliminado.`);
         cargarUsuariosCat();
+      } else {
+        const d = await res.json();
+        mostrarToast(d.detail || 'Error al eliminar usuario', true);
       }
     }
 
@@ -5298,12 +5658,16 @@
       }
       let url = `/api/informe-pdf/${encodeURIComponent(p)}`;
       if (f) url += `?fecha=${encodeURIComponent(f)}`;
+      const tok = localStorage.getItem('tirecheck_token');
+      if (tok) url += (url.includes('?') ? '&' : '?') + `token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function descargarConsolidadoFlota() {
       const cli = document.getElementById('cliente').value.trim();
       const sub = document.getElementById('subcliente').value.trim();
-      const url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      const tok = localStorage.getItem('tirecheck_token');
+      if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function compartirWhatsAppPlan() {

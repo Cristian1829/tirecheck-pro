@@ -3,12 +3,61 @@ import pandas as pd
 import unicodedata
 import os
 import re
+import hashlib
+import hmac
+import secrets
 from datetime import datetime
+from contextlib import contextmanager
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 _DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
 _DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
 DB_PATH = _DB_DATA if os.path.exists(_DB_DATA) else _DB_ROOT
+
+def hash_password(password: str) -> str:
+    """
+    Genera un hash seguro para la contraseña usando PBKDF2-HMAC-SHA256 con 100,000 iteraciones
+    y un salt aleatorio de 16 bytes. Retorna 'pbkdf2_sha256$<salt_hex>$<hash_hex>'.
+    """
+    if not isinstance(password, str):
+        password = str(password)
+    salt = secrets.token_hex(16)
+    hash_bytes = hashlib.pbkdf2_hmac(
+        'sha256',
+        password.encode('utf-8'),
+        salt.encode('utf-8'),
+        100_000
+    )
+    return f"pbkdf2_sha256${salt}${hash_bytes.hex()}"
+
+def verify_password(plain_password: str, stored_password: str) -> bool:
+    """
+    Verifica una contraseña en texto plano contra el hash almacenado usando tiempo constante.
+    Si el hash almacenado usa formato 'pbkdf2_sha256$', verifica con PBKDF2.
+    Si es una contraseña legada en texto plano, compara directamente con hmac.compare_digest.
+    """
+    if not isinstance(plain_password, str):
+        plain_password = str(plain_password)
+    if not isinstance(stored_password, str):
+        stored_password = str(stored_password)
+    
+    if stored_password.startswith("pbkdf2_sha256$"):
+        try:
+            parts = stored_password.split('$')
+            if len(parts) != 3:
+                return False
+            _, salt, hash_hex = parts
+            computed_bytes = hashlib.pbkdf2_hmac(
+                'sha256',
+                plain_password.encode('utf-8'),
+                salt.encode('utf-8'),
+                100_000
+            )
+            return hmac.compare_digest(computed_bytes.hex(), hash_hex)
+        except Exception:
+            return False
+    else:
+        return hmac.compare_digest(plain_password, stored_password)
 
 def normalizar_texto(texto):
     if not isinstance(texto, str):
@@ -45,10 +94,18 @@ def to_int(val, default=0):
     except (ValueError, TypeError):
         return default
 
+@contextmanager
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode = WAL")
-    return conn
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def inicializar_bd():
     with get_connection() as conn:
@@ -117,12 +174,18 @@ def inicializar_bd():
         if cursor.fetchone()[0] == 0:
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('admin', 'admin123', 'Administrador General', 'admin', '')
-            """)
+                VALUES ('admin', ?, 'Administrador General', 'admin', '')
+            """, (hash_password('admin123'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('inspector1', '1234', 'Juan Pérez (Inspector)', 'inspector', '')
-            """)
+                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '')
+            """, (hash_password('1234'),))
+        else:
+            # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
+            cursor.execute("SELECT id, password FROM usuarios")
+            for u_id, u_pwd in cursor.fetchall():
+                if u_pwd and not str(u_pwd).startswith("pbkdf2_sha256$"):
+                    cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (hash_password(u_pwd), u_id))
 
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
@@ -1430,27 +1493,39 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 def autenticar_usuario(username, password):
     u = (username or '').strip()
     p = (password or '').strip()
+    if not u or not p:
+        return None
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo
+            SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo
             FROM usuarios
-            WHERE LOWER(username) = LOWER(?) AND password = ? AND activo = 1
-        """, (u, p))
+            WHERE LOWER(username) = LOWER(?) AND activo = 1
+        """, (u,))
         row = cursor.fetchone()
-        if row:
+        if not row:
+            return None
+        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo = row
+        if verify_password(p, stored_pwd):
+            # Auto-migración en caso de que aún tuviera contraseña legada en texto plano
+            if not stored_pwd.startswith("pbkdf2_sha256$"):
+                nuevo_hash = hash_password(p)
+                cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, uid))
+                conn.commit()
             return {
-                'id': row[0],
-                'username': row[1],
-                'nombre_completo': row[2],
-                'rol': row[3],
-                'cliente_asignado': row[4] or '',
-                'activo': bool(row[5])
+                'id': uid,
+                'username': db_username,
+                'nombre_completo': nombre_completo,
+                'rol': rol,
+                'cliente_asignado': cliente_asignado or '',
+                'activo': bool(activo)
             }
     return None
 
 def obtener_usuario_por_username(username):
     u = (username or '').strip()
+    if not u:
+        return None
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -1489,13 +1564,16 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
     cli = (cliente_asignado or '').strip()
     if not u or not p or not nom:
         return False
+    if len(p) < 4:
+        return False
+    hashed_pwd = hash_password(p)
     with get_connection() as conn:
         try:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
                 VALUES (?, ?, ?, ?, ?)
-            """, (u, p, nom, r, cli))
+            """, (u, hashed_pwd, nom, r, cli))
             conn.commit()
             return True
         except Exception:
@@ -1509,16 +1587,19 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         params = []
         if nombre_completo is not None:
             updates.append("nombre_completo = ?")
-            params.append(nombre_completo)
+            params.append(nombre_completo.strip())
         if password is not None and str(password).strip():
+            p_str = str(password).strip()
+            if len(p_str) < 4:
+                return False
             updates.append("password = ?")
-            params.append(str(password).strip())
+            params.append(hash_password(p_str))
         if rol is not None:
             updates.append("rol = ?")
-            params.append(rol)
+            params.append(rol.strip().lower())
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
-            params.append(cliente_asignado)
+            params.append(cliente_asignado.strip())
         if activo is not None:
             updates.append("activo = ?")
             params.append(1 if activo else 0)
@@ -1527,7 +1608,23 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         params.append(u)
         cursor.execute(f"UPDATE usuarios SET {', '.join(updates)} WHERE LOWER(username) = LOWER(?)", params)
         conn.commit()
-        return True
+        return cursor.rowcount > 0
+
+def restablecer_password_usuario(username: str, nueva_password: str) -> bool:
+    """
+    Restablece la contraseña de un usuario específico validando que tenga al menos 4 caracteres,
+    la hashea con PBKDF2 y actualiza el registro en la BD.
+    """
+    u = (username or '').strip().lower()
+    p = (nueva_password or '').strip()
+    if not u or len(p) < 4:
+        return False
+    hashed = hash_password(p)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET password = ? WHERE LOWER(username) = LOWER(?)", (hashed, u))
+        conn.commit()
+        return cursor.rowcount > 0
 
 def eliminar_usuario(username):
     u = (username or '').strip().lower()
