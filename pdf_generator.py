@@ -1049,7 +1049,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     matriz_data = [
         [
             Paragraph("Vehículo", style_cell_header),
-            Paragraph("Operación", style_cell_header),
+            Paragraph("Sede / Operación", style_cell_header),
             Paragraph("Llantas", style_cell_header),
             Paragraph("Cambio", style_cell_header),
             Paragraph("Alinear", style_cell_header),
@@ -1072,9 +1072,18 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
             alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
 
+        sede_val = str(r.get('Subcliente', '') or '').strip()
+        op_val = str(r.get('Operación', '') or '').strip()
+        sede_op_parts = []
+        if sede_val and sede_val.lower() not in ('nan', 'none', '-'):
+            sede_op_parts.append(f"<b>{sede_val}</b>")
+        if op_val and op_val.lower() not in ('nan', 'none', '-'):
+            sede_op_parts.append(f"<font color='#64748b'>{op_val}</font>")
+        sede_op_html = "<br/>".join(sede_op_parts) if sede_op_parts else "-"
+
         matriz_data.append([
             Paragraph(f"<b>{r.get('Vehículo/Placa', '')}</b>", style_cell_body),
-            Paragraph(str(r.get('Operación', '') or '-'), style_cell_body),
+            Paragraph(sede_op_html, style_cell_body),
             Paragraph(str(r.get('Llantas Inspeccionadas', '')), style_cell_body),
             Paragraph(f"<b>{p_cambio}</b>", style_cell_alert if p_cambio == 'SÍ' else style_cell_body),
             Paragraph(f"<b>{p_ali}</b>", style_cell_alert if p_ali == 'SÍ' else style_cell_body),
@@ -1106,7 +1115,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     t_f.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('TOPPADDING', (0,0), (-1,-1), 10)]))
     elements.append(KeepTogether(t_f))
 
-    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_txt)
+    cliente_canvas = cliente_txt
+    if subcliente and subcliente != 'Todos':
+        cliente_canvas += f" ({subcliente})"
+    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_canvas)
     doc.build(elements, canvasmaker=canvas_maker)
     buffer.seek(0)
     return buffer.getvalue()

@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 12:56:59`
+- **Fecha de Generación:** `2026-10-14 15:29:04`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `19,959` líneas
-- **Tamaño Total de Código Fuente:** `1248.5 KB` (`1,278,506` bytes)
+- **Líneas Totales de Código:** `20,052` líneas
+- **Tamaño Total de Código Fuente:** `1252.4 KB` (`1,282,424` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -196,10 +196,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 846 | 35.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 850 | 35.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1983 | 97.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1112 | 50.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2175 | 118.5 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
@@ -207,7 +207,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6298 | 597.4 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6351 | 599.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 444 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
-| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 52 | 1.5 KB | Pruebas de generación y estructura de informes técnicos PDF |
+| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 76 | 2.3 KB | Pruebas de generación y estructura de informes técnicos PDF |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
 
@@ -2018,7 +2018,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 846 líneas | 35,919 bytes (35.1 KB)
+- **Métricas:** 850 líneas | 36,254 bytes (35.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2578,12 +2578,16 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
         cliente = usuario_actual["cliente_asignado"]
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(
-            cliente=cliente if cliente else None,
-            subcliente=subcliente if subcliente else None,
-            fecha=fecha if fecha else None,
-            operacion=operacion if operacion else None
+            cliente=cliente if (cliente and cliente != "Todos") else None,
+            subcliente=subcliente if (subcliente and subcliente != "Todos") else None,
+            fecha=fecha if (fecha and fecha != "Todos") else None,
+            operacion=operacion if (operacion and operacion != "Todos") else None
         )
-        c_tag = cliente.replace(" ", "_") if cliente else "General"
+        c_tag = cliente.replace(" ", "_") if (cliente and cliente != "Todos") else "General"
+        if subcliente and subcliente != "Todos":
+            c_tag += f"_{subcliente.replace(' ', '_')}"
+        if operacion and operacion != "Todos":
+            c_tag += f"_{operacion.replace(' ', '_')}"
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
         filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
         return Response(
@@ -5026,7 +5030,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1112 líneas | 51,358 bytes (50.2 KB)
+- **Métricas:** 1124 líneas | 51,961 bytes (50.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6081,7 +6085,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     matriz_data = [
         [
             Paragraph("Vehículo", style_cell_header),
-            Paragraph("Operación", style_cell_header),
+            Paragraph("Sede / Operación", style_cell_header),
             Paragraph("Llantas", style_cell_header),
             Paragraph("Cambio", style_cell_header),
             Paragraph("Alinear", style_cell_header),
@@ -6104,9 +6108,18 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
             alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
 
+        sede_val = str(r.get('Subcliente', '') or '').strip()
+        op_val = str(r.get('Operación', '') or '').strip()
+        sede_op_parts = []
+        if sede_val and sede_val.lower() not in ('nan', 'none', '-'):
+            sede_op_parts.append(f"<b>{sede_val}</b>")
+        if op_val and op_val.lower() not in ('nan', 'none', '-'):
+            sede_op_parts.append(f"<font color='#64748b'>{op_val}</font>")
+        sede_op_html = "<br/>".join(sede_op_parts) if sede_op_parts else "-"
+
         matriz_data.append([
             Paragraph(f"<b>{r.get('Vehículo/Placa', '')}</b>", style_cell_body),
-            Paragraph(str(r.get('Operación', '') or '-'), style_cell_body),
+            Paragraph(sede_op_html, style_cell_body),
             Paragraph(str(r.get('Llantas Inspeccionadas', '')), style_cell_body),
             Paragraph(f"<b>{p_cambio}</b>", style_cell_alert if p_cambio == 'SÍ' else style_cell_body),
             Paragraph(f"<b>{p_ali}</b>", style_cell_alert if p_ali == 'SÍ' else style_cell_body),
@@ -6138,7 +6151,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     t_f.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('TOPPADDING', (0,0), (-1,-1), 10)]))
     elements.append(KeepTogether(t_f))
 
-    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_txt)
+    cliente_canvas = cliente_txt
+    if subcliente and subcliente != 'Todos':
+        cliente_canvas += f" ({subcliente})"
+    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_canvas)
     doc.build(elements, canvasmaker=canvas_maker)
     buffer.seek(0)
     return buffer.getvalue()
@@ -8685,7 +8701,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6298 líneas | 611,747 bytes (597.4 KB)
+- **Métricas:** 6351 líneas | 613,930 bytes (599.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9826,11 +9842,17 @@ if __name__ == '__main__':
       </div>
 
       <!-- Filtros de Diagnóstico -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs items-end bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs items-end bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
-          <select id="filtroDiagCliente" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+          <select id="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
             <option value="Todos">Todos los Clientes</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Sede:</label>
+          <select id="filtroDiagSede" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+            <option value="Todos">Todas las Sedes</option>
           </select>
         </div>
         <div>
@@ -11674,6 +11696,8 @@ if __name__ == '__main__':
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
 
+      actualizarCombosSedesDiagnostico();
+
       if (selOp) {
         const valOp = selOp.value || 'Todos';
         selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
@@ -11682,20 +11706,56 @@ if __name__ == '__main__':
       }
     }
 
+    function actualizarCombosSedesDiagnostico() {
+      const selCli = document.getElementById('filtroDiagCliente');
+      const selSede = document.getElementById('filtroDiagSede');
+      if (!selSede) return;
+
+      const valCli = selCli ? (selCli.value || 'Todos') : 'Todos';
+      const valSedeActual = selSede.value || 'Todos';
+
+      const sedes = Array.from(new Set(
+        cacheDiagnostico
+          .filter(r => (valCli === 'Todos' || r.Cliente === valCli))
+          .map(r => r.Subcliente)
+          .filter(Boolean)
+      )).sort();
+
+      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      if (sedes.includes(valSedeActual)) {
+        selSede.value = valSedeActual;
+      } else {
+        selSede.value = 'Todos';
+      }
+    }
+
+    function onCambioFiltroDiagCliente() {
+      actualizarCombosSedesDiagnostico();
+      filtrarTablaDiagnostico();
+    }
+
     function filtrarTablaDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
       const cli = document.getElementById('filtroDiagCliente')?.value || 'Todos';
+      const sede = document.getElementById('filtroDiagSede')?.value || 'Todos';
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
       const alerta = document.getElementById('filtroDiagAlerta')?.value || 'Todos';
       const placa = (document.getElementById('filtroDiagPlaca')?.value || '').trim().toLowerCase();
 
-      // Actualizar botón de Consolidado Flota según el cliente filtrado
+      // Actualizar botón de Consolidado Flota según el cliente y sede filtrados
       const btnCons = document.getElementById('btnConsolidadoDiag');
       const lblCons = document.getElementById('lblConsolidadoDiag');
       if (lblCons) {
         if (cli && cli !== 'Todos') {
-          lblCons.textContent = `Consolidado Flota (${cli})`;
-          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}`;
+          let texto = `Consolidado Flota (${cli}`;
+          if (sede && sede !== 'Todos') {
+            texto += ` - ${sede}`;
+          }
+          texto += `)`;
+          lblCons.textContent = texto;
+          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}${sede && sede !== 'Todos' ? ' · Sede ' + sede : ''}`;
         } else {
           lblCons.textContent = 'Consolidado Flota PDF';
           if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
@@ -11714,6 +11774,7 @@ if __name__ == '__main__':
 
         // Filtros
         if (cli !== 'Todos' && r.Cliente !== cli) return false;
+        if (sede !== 'Todos' && r.Subcliente !== sede) return false;
         if (op !== 'Todos' && r.Operación !== op) return false;
         if (placa && !(r['Vehículo/Placa'] || '').toLowerCase().includes(placa)) return false;
 
@@ -11769,6 +11830,8 @@ if __name__ == '__main__':
     function limpiarFiltrosDiagnostico() {
       const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
       setVal('filtroDiagCliente', 'Todos');
+      actualizarCombosSedesDiagnostico();
+      setVal('filtroDiagSede', 'Todos');
       setVal('filtroDiagOperacion', 'Todos');
       setVal('filtroDiagAlerta', 'Todos');
       setVal('filtroDiagPlaca', '');
@@ -14762,8 +14825,14 @@ if __name__ == '__main__':
         return;
       }
 
+      const selectSede = document.getElementById('filtroDiagSede');
+      const sede = (selectSede ? selectSede.value : '').trim();
       const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+
       let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (sede && sede !== 'Todos') {
+        url += `&subcliente=${encodeURIComponent(sede)}`;
+      }
       if (op && op !== 'Todos') {
         url += `&operacion=${encodeURIComponent(op)}`;
       }
@@ -17665,7 +17734,7 @@ def test_calculo_trazabilidad_kpis(test_db):
 
 - **Ruta:** `tests/test_pdf.py`
 - **Descripción:** Pruebas de generación y estructura de informes técnicos PDF
-- **Métricas:** 52 líneas | 1,575 bytes (1.5 KB)
+- **Métricas:** 76 líneas | 2,372 bytes (2.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17718,6 +17787,29 @@ def test_generar_pdf_consolidado(test_db):
     database.insertar_inspeccion(datos)
 
     pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado')
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 1000
+    assert pdf_bytes.startswith(b'%PDF-')
+
+def test_generar_pdf_consolidado_cliente_y_sede(test_db):
+    # Probar filtrado estricto por cliente y sede
+    datos = {
+        'fecha': '2026-10-01',
+        'cliente': 'Cliente Consolidado',
+        'subcliente': 'Sede Norte',
+        'tipo_operacion': 'Carga',
+        'placa': 'PDF-003',
+        'posicion': 1,
+        'kilometraje': 100000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 10.0,
+        'prof_cent': 10.0,
+        'prof_int': 10.0,
+        'psi': 105.0
+    }
+    database.insertar_inspeccion(datos)
+    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado', subcliente='Sede Norte')
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b'%PDF-')

@@ -1135,11 +1135,17 @@
       </div>
 
       <!-- Filtros de Diagnóstico -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs items-end bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs items-end bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
-          <select id="filtroDiagCliente" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+          <select id="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
             <option value="Todos">Todos los Clientes</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Sede:</label>
+          <select id="filtroDiagSede" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+            <option value="Todos">Todas las Sedes</option>
           </select>
         </div>
         <div>
@@ -2983,6 +2989,8 @@
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
 
+      actualizarCombosSedesDiagnostico();
+
       if (selOp) {
         const valOp = selOp.value || 'Todos';
         selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
@@ -2991,20 +2999,56 @@
       }
     }
 
+    function actualizarCombosSedesDiagnostico() {
+      const selCli = document.getElementById('filtroDiagCliente');
+      const selSede = document.getElementById('filtroDiagSede');
+      if (!selSede) return;
+
+      const valCli = selCli ? (selCli.value || 'Todos') : 'Todos';
+      const valSedeActual = selSede.value || 'Todos';
+
+      const sedes = Array.from(new Set(
+        cacheDiagnostico
+          .filter(r => (valCli === 'Todos' || r.Cliente === valCli))
+          .map(r => r.Subcliente)
+          .filter(Boolean)
+      )).sort();
+
+      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      if (sedes.includes(valSedeActual)) {
+        selSede.value = valSedeActual;
+      } else {
+        selSede.value = 'Todos';
+      }
+    }
+
+    function onCambioFiltroDiagCliente() {
+      actualizarCombosSedesDiagnostico();
+      filtrarTablaDiagnostico();
+    }
+
     function filtrarTablaDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
       const cli = document.getElementById('filtroDiagCliente')?.value || 'Todos';
+      const sede = document.getElementById('filtroDiagSede')?.value || 'Todos';
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
       const alerta = document.getElementById('filtroDiagAlerta')?.value || 'Todos';
       const placa = (document.getElementById('filtroDiagPlaca')?.value || '').trim().toLowerCase();
 
-      // Actualizar botón de Consolidado Flota según el cliente filtrado
+      // Actualizar botón de Consolidado Flota según el cliente y sede filtrados
       const btnCons = document.getElementById('btnConsolidadoDiag');
       const lblCons = document.getElementById('lblConsolidadoDiag');
       if (lblCons) {
         if (cli && cli !== 'Todos') {
-          lblCons.textContent = `Consolidado Flota (${cli})`;
-          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}`;
+          let texto = `Consolidado Flota (${cli}`;
+          if (sede && sede !== 'Todos') {
+            texto += ` - ${sede}`;
+          }
+          texto += `)`;
+          lblCons.textContent = texto;
+          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}${sede && sede !== 'Todos' ? ' · Sede ' + sede : ''}`;
         } else {
           lblCons.textContent = 'Consolidado Flota PDF';
           if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
@@ -3023,6 +3067,7 @@
 
         // Filtros
         if (cli !== 'Todos' && r.Cliente !== cli) return false;
+        if (sede !== 'Todos' && r.Subcliente !== sede) return false;
         if (op !== 'Todos' && r.Operación !== op) return false;
         if (placa && !(r['Vehículo/Placa'] || '').toLowerCase().includes(placa)) return false;
 
@@ -3078,6 +3123,8 @@
     function limpiarFiltrosDiagnostico() {
       const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
       setVal('filtroDiagCliente', 'Todos');
+      actualizarCombosSedesDiagnostico();
+      setVal('filtroDiagSede', 'Todos');
       setVal('filtroDiagOperacion', 'Todos');
       setVal('filtroDiagAlerta', 'Todos');
       setVal('filtroDiagPlaca', '');
@@ -6071,8 +6118,14 @@
         return;
       }
 
+      const selectSede = document.getElementById('filtroDiagSede');
+      const sede = (selectSede ? selectSede.value : '').trim();
       const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+
       let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (sede && sede !== 'Todos') {
+        url += `&subcliente=${encodeURIComponent(sede)}`;
+      }
       if (op && op !== 'Todos') {
         url += `&operacion=${encodeURIComponent(op)}`;
       }

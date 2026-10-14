@@ -554,12 +554,16 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
         cliente = usuario_actual["cliente_asignado"]
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(
-            cliente=cliente if cliente else None,
-            subcliente=subcliente if subcliente else None,
-            fecha=fecha if fecha else None,
-            operacion=operacion if operacion else None
+            cliente=cliente if (cliente and cliente != "Todos") else None,
+            subcliente=subcliente if (subcliente and subcliente != "Todos") else None,
+            fecha=fecha if (fecha and fecha != "Todos") else None,
+            operacion=operacion if (operacion and operacion != "Todos") else None
         )
-        c_tag = cliente.replace(" ", "_") if cliente else "General"
+        c_tag = cliente.replace(" ", "_") if (cliente and cliente != "Todos") else "General"
+        if subcliente and subcliente != "Todos":
+            c_tag += f"_{subcliente.replace(' ', '_')}"
+        if operacion and operacion != "Todos":
+            c_tag += f"_{operacion.replace(' ', '_')}"
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
         filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
         return Response(

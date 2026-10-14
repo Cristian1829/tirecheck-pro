@@ -50,3 +50,27 @@ def test_generar_pdf_consolidado(test_db):
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b'%PDF-')
+
+def test_generar_pdf_consolidado_cliente_y_sede(test_db):
+    # Probar filtrado estricto por cliente y sede
+    datos = {
+        'fecha': '2026-10-01',
+        'cliente': 'Cliente Consolidado',
+        'subcliente': 'Sede Norte',
+        'tipo_operacion': 'Carga',
+        'placa': 'PDF-003',
+        'posicion': 1,
+        'kilometraje': 100000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 10.0,
+        'prof_cent': 10.0,
+        'prof_int': 10.0,
+        'psi': 105.0
+    }
+    database.insertar_inspeccion(datos)
+    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado', subcliente='Sede Norte')
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 1000
+    assert pdf_bytes.startswith(b'%PDF-')
+
