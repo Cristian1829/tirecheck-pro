@@ -186,7 +186,10 @@ def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> di
 # ==========================================
 
 @app.get("/", response_class=HTMLResponse)
-def index():
+def index(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
