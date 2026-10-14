@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireCheck Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-13 23:47:49`
+- **Fecha de Generación:** `2026-10-13 23:54:32`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `17,644` líneas
-- **Tamaño Total de Código Fuente:** `1143.2 KB` (`1,170,586` bytes)
+- **Líneas Totales de Código:** `17,645` líneas
+- **Tamaño Total de Código Fuente:** `1143.2 KB` (`1,170,650` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -194,7 +194,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5532 | 558.8 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5533 | 558.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -7842,7 +7842,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5532 líneas | 572,238 bytes (558.8 KB)
+- **Métricas:** 5533 líneas | 572,302 bytes (558.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8200,7 +8200,8 @@ if __name__ == '__main__':
             <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
               <i class="fa-solid fa-building"></i>
             </div>
-            <span>1. Cliente, Operación & Vehículo</span>
+            <span class="text-xs sm:text-sm font-extrabold">1. Cliente, Operación &amp; Vehículo</span>
+          </div>
         </div>
 
         <!-- Campos de Cliente & Operación -->
