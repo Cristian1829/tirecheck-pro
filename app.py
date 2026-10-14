@@ -226,7 +226,9 @@ class AppInspeccionLlantas(tk.Tk):
         btn_prev.grid(row=1, column=4, padx=5, pady=4, sticky='w')
 
         ttk.Label(sec2, text='No. Interno:', font=('Segoe UI', 9, 'bold'), foreground='#1e3a8a').grid(row=1, column=5, padx=5, pady=4, sticky='w')
-        ttk.Entry(sec2, textvariable=self.form_vars['numero_interno'], width=10).grid(row=1, column=5, padx=(80, 5), pady=4)
+        self.ent_numero_interno_pc = ttk.Entry(sec2, textvariable=self.form_vars['numero_interno'], width=10)
+        self.ent_numero_interno_pc.grid(row=1, column=5, padx=(80, 5), pady=4)
+        self.ent_numero_interno_pc.bind('<FocusOut>', self.al_perder_foco_numero_interno_pc)
 
         sec3 = ttk.LabelFrame(card, text='3. Especificaciones de Llanta & 3 Profundidades', padding=8)
         sec3.grid(row=3, column=0, columnspan=6, sticky='ew', pady=(0, 8))
@@ -368,8 +370,56 @@ class AppInspeccionLlantas(tk.Tk):
 
         if nueva_placa:
             self._ultima_placa_pc = nueva_placa
+            # Autocompletado reactivo del perfil del vehículo (tipología, cliente, subcliente, operación, km)
+            perfil = database.obtener_perfil_vehiculo(nueva_placa)
+            if perfil.get('encontrado'):
+                if perfil.get('cliente') and not self.form_vars['cliente'].get():
+                    self.form_vars['cliente'].set(perfil['cliente'])
+                    if hasattr(self, 'al_cambiar_cliente_pc'):
+                        self.al_cambiar_cliente_pc()
+                if perfil.get('subcliente') and not self.form_vars['subcliente'].get():
+                    self.form_vars['subcliente'].set(perfil['subcliente'])
+                if perfil.get('tipo_operacion') and not self.form_vars['tipo_operacion'].get():
+                    self.form_vars['tipo_operacion'].set(perfil['tipo_operacion'])
+                if perfil.get('ultimo_km') and not self.form_vars['kilometraje'].get():
+                    self.form_vars['kilometraje'].set(str(int(perfil['ultimo_km'])))
+                if perfil.get('tipologia') and self.form_vars['tipologia'].get() != perfil['tipologia']:
+                    self.form_vars['tipologia'].set(perfil['tipologia'])
+                    if hasattr(self, 'on_cambio_tipologia_pc'):
+                        self.on_cambio_tipologia_pc()
+
             self.actualizar_estado_posiciones_inspeccionadas_pc()
             self.verificar_llanta_previa_pc()
+
+    def al_perder_foco_numero_interno_pc(self, event=None):
+        num_int = self.form_vars['numero_interno'].get().strip().upper()
+        if not num_int:
+            return
+        self.form_vars['numero_interno'].set(num_int)
+        cli = self.form_vars['cliente'].get().strip()
+        placa = self.form_vars['placa'].get().strip().upper()
+        lt = database.obtener_llanta_por_cliente(cliente=cli, numero_interno=num_int, placa=placa)
+        if lt:
+            if lt.get('marca'):
+                self.form_vars['marca'].set(lt['marca'])
+                if hasattr(self, 'al_cambiar_marca_pc'):
+                    self.al_cambiar_marca_pc()
+            if lt.get('diseno'):
+                self.form_vars['diseno'].set(lt['diseno'])
+            if lt.get('dimension'):
+                self.form_vars['dimension'].set(lt['dimension'])
+            if lt.get('vida'):
+                self.form_vars['vida'].set(lt['vida'])
+                if hasattr(self, 'al_cambiar_vida_pc'):
+                    self.al_cambiar_vida_pc()
+            if lt.get('banda_reen'):
+                self.form_vars['banda_reen'].set(lt['banda_reen'])
+            if lt.get('prof_inicial') and not self.form_vars['prof_inicial'].get():
+                self.form_vars['prof_inicial'].set(str(lt['prof_inicial']))
+            if lt.get('precio') and not self.form_vars['precio'].get():
+                self.form_vars['precio'].set(str(lt['precio']))
+            if lt.get('km_montaje') and not self.form_vars['km_montaje'].get():
+                self.form_vars['km_montaje'].set(str(lt['km_montaje']))
 
     def actualizar_estado_posiciones_inspeccionadas_pc(self):
         placa = self.form_vars['placa'].get().strip()

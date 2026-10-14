@@ -47,8 +47,10 @@ FILES_SPEC = [
     # 5. Suite de Pruebas Automatizadas (Pytest)
     ("tests/conftest.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Configuración de fixtures y base de datos SQLite en memoria para tests aislados"),
     ("tests/test_api_web.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de endpoints RESTful y respuestas HTTP de FastAPI"),
+    ("tests/test_automatizacion_placa_llanta.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual"),
     ("tests/test_candados.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas unitarias de los 6 candados operativos de captura en patio"),
     ("tests/test_diagnostico.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro)"),
+    ("tests/test_diagrama_chasis.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas del generador vectorial de diagramas de chasis en PDF"),
     ("tests/test_kpis.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK"),
     ("tests/test_pdf.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de generación y estructura de informes técnicos PDF"),
 

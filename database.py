@@ -243,6 +243,32 @@ def inicializar_bd():
             )
         """)
 
+        # Tabla de Catálogo de Tipologías
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_tipologias (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT UNIQUE NOT NULL,
+                descripcion TEXT,
+                cant_llantas INTEGER,
+                esquema_json TEXT,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("SELECT COUNT(*) FROM catalogo_tipologias")
+        if cursor.fetchone()[0] == 0:
+            for s_path in ["seed_inspecciones.db", "data/inspecciones.db", os.path.join(os.path.dirname(__file__), "seed_inspecciones.db")]:
+                if os.path.exists(s_path) and os.path.abspath(s_path) != os.path.abspath(DB_PATH):
+                    try:
+                        s_conn = sqlite3.connect(s_path)
+                        s_cur = s_conn.cursor()
+                        s_cur.execute("SELECT nombre, descripcion, cant_llantas, esquema_json FROM catalogo_tipologias")
+                        rows = s_cur.fetchall()
+                        cursor.executemany("INSERT OR IGNORE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)", rows)
+                        s_conn.close()
+                        break
+                    except Exception:
+                        pass
+
         # Tabla de Catálogo de Llantas Nuevas y Reencauches (con profundidad inicial de fábrica)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_modelos_llantas (
@@ -289,7 +315,179 @@ def inicializar_bd():
                 VALUES (?, ?, ?, ?, ?, ?)
             """, modelos_seed)
 
+        # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_vehiculos (
+                placa TEXT PRIMARY KEY,
+                tipologia TEXT NOT NULL,
+                cliente TEXT DEFAULT '',
+                subcliente TEXT DEFAULT '',
+                tipo_operacion TEXT DEFAULT '',
+                ultimo_km REAL DEFAULT 0.0,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Migración automática inicial (Backfill): poblar catalogo_vehiculos desde inspecciones históricas
+        cursor.execute("""
+            INSERT OR IGNORE INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion)
+            SELECT i.placa, i.tipologia, 
+                   IFNULL(i.cliente, ''), 
+                   IFNULL(i.subcliente, ''), 
+                   IFNULL(i.tipo_operacion, ''), 
+                   IFNULL(MAX(i.kilometraje), 0.0), 
+                   CURRENT_TIMESTAMP
+            FROM inspecciones i
+            WHERE i.placa IS NOT NULL AND TRIM(i.placa) != '' AND i.tipologia IS NOT NULL AND TRIM(i.tipologia) != ''
+            GROUP BY i.placa
+        """)
+
         conn.commit()
+
+# ==========================================
+# CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
+# ==========================================
+
+def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None):
+    pl = str(placa or '').strip().upper()
+    tip = str(tipologia or '').strip()
+    if not pl or not tip or tip.lower() in ('nan', 'none'):
+        return
+    cli = '' if (pd.isna(cliente) or str(cliente).strip().lower() in ('nan', 'none')) else str(cliente).strip()
+    sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip()
+    op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip()
+    km = to_float(kilometraje, 0.0)
+
+    sql = """
+        INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(placa) DO UPDATE SET
+            tipologia = excluded.tipologia,
+            cliente = CASE WHEN excluded.cliente != '' THEN excluded.cliente ELSE catalogo_vehiculos.cliente END,
+            subcliente = CASE WHEN excluded.subcliente != '' THEN excluded.subcliente ELSE catalogo_vehiculos.subcliente END,
+            tipo_operacion = CASE WHEN excluded.tipo_operacion != '' THEN excluded.tipo_operacion ELSE catalogo_vehiculos.tipo_operacion END,
+            ultimo_km = MAX(catalogo_vehiculos.ultimo_km, excluded.ultimo_km),
+            fecha_actualizacion = CURRENT_TIMESTAMP
+    """
+    params = (pl, tip, cli, sub, op, km)
+
+    if conn is not None:
+        cursor = conn.cursor()
+        cursor.execute(sql, params)
+    else:
+        with get_connection() as c:
+            cursor = c.cursor()
+            cursor.execute(sql, params)
+            c.commit()
+
+def obtener_perfil_vehiculo(placa: str) -> dict:
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return {"encontrado": False, "placa": ""}
+    
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
+            FROM catalogo_vehiculos
+            WHERE UPPER(TRIM(placa)) = ?
+        """, (pl,))
+        row = cursor.fetchone()
+        
+        # Si no está en el catálogo, buscar en la última inspección histórica
+        if not row or not row[1]:
+            cursor.execute("""
+                SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+                FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (pl,))
+            row = cursor.fetchone()
+            if row and row[1]:
+                sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
+
+    if row and row[1]:
+        tip = row[1]
+        posiciones = obtener_posiciones_por_tipologia(tip)
+        esquema = obtener_esquema_tipologia(tip)
+        return {
+            "encontrado": True,
+            "placa": row[0],
+            "tipologia": tip,
+            "cliente": row[2] or "",
+            "subcliente": row[3] or "",
+            "tipo_operacion": row[4] or "",
+            "ultimo_km": to_float(row[5], 0.0),
+            "cant_llantas": len(posiciones),
+            "esquema": esquema,
+            "posiciones": posiciones
+        }
+    
+    return {"encontrado": False, "placa": pl}
+
+def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "") -> dict | None:
+    num_norm = str(numero_interno or '').strip().upper()
+    cli_norm = str(cliente or '').strip()
+    pl_norm = str(placa or '').strip().upper()
+    
+    if not num_norm:
+        return None
+    
+    # Si no se pasó cliente pero sí placa, intentar inferir cliente
+    if not cli_norm and pl_norm:
+        perf = obtener_perfil_vehiculo(pl_norm)
+        if perf.get("encontrado") and perf.get("cliente"):
+            cli_norm = perf["cliente"].strip()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if cli_norm:
+            cursor.execute("""
+                SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
+                       prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
+                FROM inspecciones
+                WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (num_norm, cli_norm))
+        else:
+            cursor.execute("""
+                SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
+                       prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
+                FROM inspecciones
+                WHERE UPPER(TRIM(numero_interno)) = ?
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (num_norm,))
+        
+        row = cursor.fetchone()
+        if row:
+            p_ext = to_float(row[13])
+            p_cent = to_float(row[14])
+            p_int = to_float(row[15])
+            profs = [p for p in (p_ext, p_cent, p_int) if p > 0]
+            prof_min = min(profs) if profs else 0.0
+            return {
+                "encontrado": True,
+                "numero_interno": num_norm,
+                "cliente": row[0] or "",
+                "subcliente": row[1] or "",
+                "ult_placa": row[2] or "",
+                "ult_posicion": to_int(row[3], 1),
+                "ult_fecha": row[4] or "",
+                "marca": row[5] or "",
+                "diseno": row[6] or "",
+                "dimension": row[7] or "",
+                "vida": row[8] or "Original",
+                "banda_reen": row[9] or "",
+                "prof_inicial": to_float(row[10]),
+                "precio": to_float(row[11]),
+                "km_montaje": to_float(row[12]),
+                "ult_prof_ext": p_ext,
+                "ult_prof_cent": p_cent,
+                "ult_prof_int": p_int,
+                "ult_prof_min": prof_min,
+                "ult_novedades": row[16] or ""
+            }
+    return None
 
 def obtener_posiciones_por_tipologia(tipologia):
     """
@@ -299,44 +497,68 @@ def obtener_posiciones_por_tipologia(tipologia):
     import json
     t_nom = str(tipologia or '').strip().lower()
     if t_nom:
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT nombre, cant_llantas, esquema_json FROM catalogo_tipologias')
-            filas = cursor.fetchall()
-            
-            # 1. Coincidencia exacta primero
-            for r in filas:
-                if r[0] and str(r[0]).strip().lower() == t_nom:
-                    if r[2]:
-                        try:
-                            esq = json.loads(r[2])
-                            pos_set = []
-                            for eje in esq:
-                                for p in eje.get('posiciones', []):
-                                    pos_set.append(int(p['pos']))
-                            if pos_set:
-                                return sorted(list(set(pos_set)))
-                        except Exception:
-                            pass
-                    if r[1]:
-                        return list(range(1, int(r[1]) + 1))
-            
-            # 2. Coincidencia parcial si no hay exacta
-            for r in filas:
-                if r[0] and t_nom in str(r[0]).strip().lower():
-                    if r[2]:
-                        try:
-                            esq = json.loads(r[2])
-                            pos_set = []
-                            for eje in esq:
-                                for p in eje.get('posiciones', []):
-                                    pos_set.append(int(p['pos']))
-                            if pos_set:
-                                return sorted(list(set(pos_set)))
-                        except Exception:
-                            pass
-                    if r[1]:
-                        return list(range(1, int(r[1]) + 1))
+        try:
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT nombre, cant_llantas, esquema_json FROM catalogo_tipologias')
+                filas = cursor.fetchall()
+                
+                # 1. Coincidencia exacta primero
+                for r in filas:
+                    if r[0] and str(r[0]).strip().lower() == t_nom:
+                        if r[2]:
+                            try:
+                                esq = json.loads(r[2])
+                                pos_set = []
+                                for eje in esq:
+                                    for p in eje.get('posiciones', []):
+                                        pos_set.append(int(p['pos']))
+                                if pos_set:
+                                    return sorted(list(set(pos_set)))
+                            except Exception:
+                                pass
+                        if r[1]:
+                            return list(range(1, int(r[1]) + 1))
+                
+                # 2. Coincidencia parcial si no hay exacta
+                for r in filas:
+                    nom_row = str(r[0] or '').strip().lower()
+                    if nom_row and (t_nom in nom_row or nom_row in t_nom):
+                        if r[2]:
+                            try:
+                                esq = json.loads(r[2])
+                                pos_set = []
+                                for eje in esq:
+                                    for p in eje.get('posiciones', []):
+                                        pos_set.append(int(p['pos']))
+                                if pos_set:
+                                    return sorted(list(set(pos_set)))
+                            except Exception:
+                                pass
+                        if r[1]:
+                            return list(range(1, int(r[1]) + 1))
+                
+                # 2b. Coincidencia por palabras clave
+                palabras = [w for w in re.sub(r'[^a-zA-Z0-9]', ' ', t_nom).split() if len(w) >= 2]
+                if palabras:
+                    for r in filas:
+                        nom_row = str(r[0] or '').strip().lower()
+                        if all(p in nom_row for p in palabras):
+                            if r[2]:
+                                try:
+                                    esq = json.loads(r[2])
+                                    pos_set = []
+                                    for eje in esq:
+                                        for p in eje.get('posiciones', []):
+                                            pos_set.append(int(p['pos']))
+                                    if pos_set:
+                                        return sorted(list(set(pos_set)))
+                                except Exception:
+                                    pass
+                            if r[1]:
+                                return list(range(1, int(r[1]) + 1))
+        except Exception:
+            pass
 
     # Reglas heurísticas de respaldo
     if "cuatro manos" in t_nom or "4 manos" in t_nom or "8x4" in t_nom or "biarticulado" in t_nom:
@@ -403,20 +625,23 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     # Consultar historial previo de esta placa
     with get_connection() as conn:
         cursor = conn.cursor()
-        
-        # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente
+        # Mes de inspección (YYYY-MM)
+        mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
+
+        # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
         num_interno = str(datos.get('numero_interno', '')).strip().upper()
         cliente_val = str(datos.get('cliente', '')).strip()
         subcliente_val = str(datos.get('subcliente', '')).strip()
-        if num_interno:
-            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente
+        if num_interno and cliente_val:
+            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente en el mismo mes
             sql_dup = '''
                 SELECT placa, posicion, cliente, subcliente, fecha, id FROM inspecciones
                 WHERE UPPER(TRIM(numero_interno)) = ?
                   AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+                  AND strftime('%Y-%m', fecha) = ?
                   AND (UPPER(TRIM(placa)) != ? OR posicion != ?)
             '''
-            params_dup = [num_interno, cliente_val, placa, posicion]
+            params_dup = [num_interno, cliente_val, mes_inspeccion, placa, posicion]
             if excluir_id is not None:
                 sql_dup += ' AND id != ?'
                 params_dup.append(to_int(excluir_id))
@@ -427,12 +652,11 @@ def validar_inspeccion_candados(datos, excluir_id=None):
             if dup_row:
                 return {
                     'valido': False,
-                    'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} (Fecha: {dup_row[4]}). No se permiten números de llanta duplicados por cliente/subcliente.'
+                    'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} en el mes de inspección ({dup_row[4]}). No se permiten números de llanta duplicados en el mismo mes.'
                 }
 
         # Candado 2: Solo una inspección por placa al mes (mismo YYYY-MM)
         # Si la fecha de registro o inspección contiene el mismo año-mes
-        mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
         sql_mes = """
             SELECT id, fecha, posicion FROM inspecciones 
             WHERE placa = ? AND strftime('%Y-%m', fecha) = ? AND posicion = ?
@@ -545,7 +769,16 @@ def insertar_inspeccion(datos):
             str(datos.get('foto_novedad', '')).strip()
         ))
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+    sincronizar_vehiculo_catalogo(
+        datos.get('placa'),
+        datos.get('tipologia'),
+        datos.get('cliente'),
+        datos.get('subcliente'),
+        datos.get('tipo_operacion'),
+        datos.get('kilometraje')
+    )
+    return last_id
 
 def obtener_todas_inspecciones(usuario=None):
     with get_connection() as conn:
@@ -610,7 +843,17 @@ def actualizar_inspeccion(inspeccion_id, datos):
             inspeccion_id
         ))
         conn.commit()
-        return cursor.rowcount > 0
+        ok = cursor.rowcount > 0
+    if ok:
+        sincronizar_vehiculo_catalogo(
+            datos.get('placa'),
+            datos.get('tipologia'),
+            datos.get('cliente'),
+            datos.get('subcliente'),
+            datos.get('tipo_operacion'),
+            datos.get('kilometraje')
+        )
+    return ok
 
 def eliminar_inspeccion(inspeccion_id):
     with get_connection() as conn:
@@ -707,6 +950,15 @@ def cargar_excel_a_bd(file_path):
                 to_float(row[col_encontradas['km_montaje']]) if 'km_montaje' in col_encontradas else 0.0,
                 str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''
             ))
+            sincronizar_vehiculo_catalogo(
+                placa,
+                str(row[col_encontradas['tipologia']]) if 'tipologia' in col_encontradas and not pd.isna(row[col_encontradas['tipologia']]) else '',
+                str(row[col_encontradas['cliente']]) if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) else '',
+                str(row[col_encontradas['subcliente']]) if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) else '',
+                str(row[col_encontradas['tipo_operacion']]) if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) else '',
+                to_float(row[col_encontradas['kilometraje']]) if 'kilometraje' in col_encontradas else 0.0,
+                conn=conn
+            )
             registros_insertados += 1
         conn.commit()
     return registros_insertados
@@ -1212,11 +1464,16 @@ def obtener_esquema_tipologia(tipologia_nombre):
                     return json.loads(r[2]) if r[2] else []
             # 2. Coincidencia parcial si no hay exacta
             for r in filas:
-                if r[0] and t_norm in str(r[0]).strip().lower():
+                nom_row = str(r[0] or '').strip().lower()
+                if nom_row and (t_norm in nom_row or nom_row in t_norm):
                     return json.loads(r[2]) if r[2] else []
-            # 3. Retornar primer registro si hay filas
-            if filas and filas[0][2]:
-                return json.loads(filas[0][2])
+            # 2b. Coincidencia por palabras clave
+            palabras = [w for w in re.sub(r'[^a-zA-Z0-9]', ' ', t_norm).split() if len(w) >= 2]
+            if palabras:
+                for r in filas:
+                    nom_row = str(r[0] or '').strip().lower()
+                    if all(p in nom_row for p in palabras):
+                        return json.loads(r[2]) if r[2] else []
     except Exception:
         pass
 

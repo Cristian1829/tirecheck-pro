@@ -658,10 +658,41 @@ def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: s
             cliente = usr_info.get("cliente_asignado")
     return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
 
+@app.get("/api/vehiculo-perfil")
+def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    perfil = database.obtener_perfil_vehiculo(placa)
+    # Validar permisos de inspector con cliente asignado
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cli_asig = usuario_actual["cliente_asignado"].strip().lower()
+        if perfil.get("encontrado") and perfil.get("cliente") and perfil["cliente"].strip().lower() != cli_asig:
+            raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
+    return sanitizar_nativos(perfil)
+
+@app.get("/api/llanta-por-cliente")
+def api_llanta_por_cliente(
+    numero_interno: str,
+    cliente: str = "",
+    placa: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    res = database.obtener_llanta_por_cliente(cliente=cliente, numero_interno=numero_interno, placa=placa)
+    if res:
+        return sanitizar_nativos({"encontrado": True, "datos": res})
+    return {"encontrado": False}
+
 @app.get("/api/inspeccion-anterior")
 def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
-    return {"encontrado": True, "datos": prev} if prev else {"encontrado": False}
+    perfil = database.obtener_perfil_vehiculo(placa)
+    if prev:
+        return sanitizar_nativos({
+            "encontrado": True,
+            "datos": prev,
+            "vehiculo_perfil": perfil if perfil.get("encontrado") else None
+        })
+    return {"encontrado": False, "vehiculo_perfil": perfil if perfil.get("encontrado") else None}
 
 @app.get("/api/posiciones-inspeccionadas")
 def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):

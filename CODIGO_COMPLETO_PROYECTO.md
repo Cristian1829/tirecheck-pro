@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 11:23:55`
-- **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,687` líneas
-- **Tamaño Total de Código Fuente:** `1195.1 KB` (`1,223,771` bytes)
+- **Fecha de Generación:** `2026-10-14 11:58:24`
+- **Total de Archivos Incluidos:** `47` archivos de código y documentación
+- **Líneas Totales de Código:** `19,844` líneas
+- **Tamaño Total de Código Fuente:** `1244.5 KB` (`1,274,324` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -75,6 +75,19 @@ CREATE TABLE catalogo_tipologias (
             cant_llantas INTEGER,
             esquema_json TEXT
         );
+
+-- ========================================================
+-- TABLA: catalogo_vehiculos
+-- ========================================================
+CREATE TABLE catalogo_vehiculos (
+                placa TEXT PRIMARY KEY,
+                tipologia TEXT NOT NULL,
+                cliente TEXT DEFAULT '',
+                subcliente TEXT DEFAULT '',
+                tipo_operacion TEXT DEFAULT '',
+                ultimo_km REAL DEFAULT 0.0,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
 
 -- ========================================================
 -- TABLA: configuracion_clientes
@@ -183,18 +196,18 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 808 | 33.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1726 | 84.9 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 839 | 34.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 1983 | 97.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
-| [app.py](#archivo-apppy) | `python` | 2125 | 115.4 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
+| [app.py](#archivo-apppy) | `python` | 2175 | 118.5 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
 ### 4. Frontend Web SPA & Plantillas
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6061 | 586.3 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6261 | 595.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -203,8 +216,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
 | [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 261 | 9.3 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 175 | 5.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 170 | 5.1 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
+| [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 444 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 52 | 1.5 KB | Pruebas de generación y estructura de informes técnicos PDF |
 
@@ -2003,7 +2018,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 808 líneas | 34,116 bytes (33.3 KB)
+- **Métricas:** 839 líneas | 35,595 bytes (34.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2667,10 +2682,41 @@ def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: s
             cliente = usr_info.get("cliente_asignado")
     return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
 
+@app.get("/api/vehiculo-perfil")
+def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    perfil = database.obtener_perfil_vehiculo(placa)
+    # Validar permisos de inspector con cliente asignado
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cli_asig = usuario_actual["cliente_asignado"].strip().lower()
+        if perfil.get("encontrado") and perfil.get("cliente") and perfil["cliente"].strip().lower() != cli_asig:
+            raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
+    return sanitizar_nativos(perfil)
+
+@app.get("/api/llanta-por-cliente")
+def api_llanta_por_cliente(
+    numero_interno: str,
+    cliente: str = "",
+    placa: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    res = database.obtener_llanta_por_cliente(cliente=cliente, numero_interno=numero_interno, placa=placa)
+    if res:
+        return sanitizar_nativos({"encontrado": True, "datos": res})
+    return {"encontrado": False}
+
 @app.get("/api/inspeccion-anterior")
 def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
-    return {"encontrado": True, "datos": prev} if prev else {"encontrado": False}
+    perfil = database.obtener_perfil_vehiculo(placa)
+    if prev:
+        return sanitizar_nativos({
+            "encontrado": True,
+            "datos": prev,
+            "vehiculo_perfil": perfil if perfil.get("encontrado") else None
+        })
+    return {"encontrado": False, "vehiculo_perfil": perfil if perfil.get("encontrado") else None}
 
 @app.get("/api/posiciones-inspeccionadas")
 def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -2823,7 +2869,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1726 líneas | 86,922 bytes (84.9 KB)
+- **Métricas:** 1983 líneas | 99,350 bytes (97.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3072,6 +3118,32 @@ def inicializar_bd():
             )
         """)
 
+        # Tabla de Catálogo de Tipologías
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_tipologias (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT UNIQUE NOT NULL,
+                descripcion TEXT,
+                cant_llantas INTEGER,
+                esquema_json TEXT,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("SELECT COUNT(*) FROM catalogo_tipologias")
+        if cursor.fetchone()[0] == 0:
+            for s_path in ["seed_inspecciones.db", "data/inspecciones.db", os.path.join(os.path.dirname(__file__), "seed_inspecciones.db")]:
+                if os.path.exists(s_path) and os.path.abspath(s_path) != os.path.abspath(DB_PATH):
+                    try:
+                        s_conn = sqlite3.connect(s_path)
+                        s_cur = s_conn.cursor()
+                        s_cur.execute("SELECT nombre, descripcion, cant_llantas, esquema_json FROM catalogo_tipologias")
+                        rows = s_cur.fetchall()
+                        cursor.executemany("INSERT OR IGNORE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)", rows)
+                        s_conn.close()
+                        break
+                    except Exception:
+                        pass
+
         # Tabla de Catálogo de Llantas Nuevas y Reencauches (con profundidad inicial de fábrica)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_modelos_llantas (
@@ -3118,7 +3190,179 @@ def inicializar_bd():
                 VALUES (?, ?, ?, ?, ?, ?)
             """, modelos_seed)
 
+        # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_vehiculos (
+                placa TEXT PRIMARY KEY,
+                tipologia TEXT NOT NULL,
+                cliente TEXT DEFAULT '',
+                subcliente TEXT DEFAULT '',
+                tipo_operacion TEXT DEFAULT '',
+                ultimo_km REAL DEFAULT 0.0,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Migración automática inicial (Backfill): poblar catalogo_vehiculos desde inspecciones históricas
+        cursor.execute("""
+            INSERT OR IGNORE INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion)
+            SELECT i.placa, i.tipologia, 
+                   IFNULL(i.cliente, ''), 
+                   IFNULL(i.subcliente, ''), 
+                   IFNULL(i.tipo_operacion, ''), 
+                   IFNULL(MAX(i.kilometraje), 0.0), 
+                   CURRENT_TIMESTAMP
+            FROM inspecciones i
+            WHERE i.placa IS NOT NULL AND TRIM(i.placa) != '' AND i.tipologia IS NOT NULL AND TRIM(i.tipologia) != ''
+            GROUP BY i.placa
+        """)
+
         conn.commit()
+
+# ==========================================
+# CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
+# ==========================================
+
+def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None):
+    pl = str(placa or '').strip().upper()
+    tip = str(tipologia or '').strip()
+    if not pl or not tip or tip.lower() in ('nan', 'none'):
+        return
+    cli = '' if (pd.isna(cliente) or str(cliente).strip().lower() in ('nan', 'none')) else str(cliente).strip()
+    sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip()
+    op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip()
+    km = to_float(kilometraje, 0.0)
+
+    sql = """
+        INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(placa) DO UPDATE SET
+            tipologia = excluded.tipologia,
+            cliente = CASE WHEN excluded.cliente != '' THEN excluded.cliente ELSE catalogo_vehiculos.cliente END,
+            subcliente = CASE WHEN excluded.subcliente != '' THEN excluded.subcliente ELSE catalogo_vehiculos.subcliente END,
+            tipo_operacion = CASE WHEN excluded.tipo_operacion != '' THEN excluded.tipo_operacion ELSE catalogo_vehiculos.tipo_operacion END,
+            ultimo_km = MAX(catalogo_vehiculos.ultimo_km, excluded.ultimo_km),
+            fecha_actualizacion = CURRENT_TIMESTAMP
+    """
+    params = (pl, tip, cli, sub, op, km)
+
+    if conn is not None:
+        cursor = conn.cursor()
+        cursor.execute(sql, params)
+    else:
+        with get_connection() as c:
+            cursor = c.cursor()
+            cursor.execute(sql, params)
+            c.commit()
+
+def obtener_perfil_vehiculo(placa: str) -> dict:
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return {"encontrado": False, "placa": ""}
+    
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
+            FROM catalogo_vehiculos
+            WHERE UPPER(TRIM(placa)) = ?
+        """, (pl,))
+        row = cursor.fetchone()
+        
+        # Si no está en el catálogo, buscar en la última inspección histórica
+        if not row or not row[1]:
+            cursor.execute("""
+                SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+                FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (pl,))
+            row = cursor.fetchone()
+            if row and row[1]:
+                sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
+
+    if row and row[1]:
+        tip = row[1]
+        posiciones = obtener_posiciones_por_tipologia(tip)
+        esquema = obtener_esquema_tipologia(tip)
+        return {
+            "encontrado": True,
+            "placa": row[0],
+            "tipologia": tip,
+            "cliente": row[2] or "",
+            "subcliente": row[3] or "",
+            "tipo_operacion": row[4] or "",
+            "ultimo_km": to_float(row[5], 0.0),
+            "cant_llantas": len(posiciones),
+            "esquema": esquema,
+            "posiciones": posiciones
+        }
+    
+    return {"encontrado": False, "placa": pl}
+
+def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "") -> dict | None:
+    num_norm = str(numero_interno or '').strip().upper()
+    cli_norm = str(cliente or '').strip()
+    pl_norm = str(placa or '').strip().upper()
+    
+    if not num_norm:
+        return None
+    
+    # Si no se pasó cliente pero sí placa, intentar inferir cliente
+    if not cli_norm and pl_norm:
+        perf = obtener_perfil_vehiculo(pl_norm)
+        if perf.get("encontrado") and perf.get("cliente"):
+            cli_norm = perf["cliente"].strip()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if cli_norm:
+            cursor.execute("""
+                SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
+                       prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
+                FROM inspecciones
+                WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (num_norm, cli_norm))
+        else:
+            cursor.execute("""
+                SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
+                       prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
+                FROM inspecciones
+                WHERE UPPER(TRIM(numero_interno)) = ?
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (num_norm,))
+        
+        row = cursor.fetchone()
+        if row:
+            p_ext = to_float(row[13])
+            p_cent = to_float(row[14])
+            p_int = to_float(row[15])
+            profs = [p for p in (p_ext, p_cent, p_int) if p > 0]
+            prof_min = min(profs) if profs else 0.0
+            return {
+                "encontrado": True,
+                "numero_interno": num_norm,
+                "cliente": row[0] or "",
+                "subcliente": row[1] or "",
+                "ult_placa": row[2] or "",
+                "ult_posicion": to_int(row[3], 1),
+                "ult_fecha": row[4] or "",
+                "marca": row[5] or "",
+                "diseno": row[6] or "",
+                "dimension": row[7] or "",
+                "vida": row[8] or "Original",
+                "banda_reen": row[9] or "",
+                "prof_inicial": to_float(row[10]),
+                "precio": to_float(row[11]),
+                "km_montaje": to_float(row[12]),
+                "ult_prof_ext": p_ext,
+                "ult_prof_cent": p_cent,
+                "ult_prof_int": p_int,
+                "ult_prof_min": prof_min,
+                "ult_novedades": row[16] or ""
+            }
+    return None
 
 def obtener_posiciones_por_tipologia(tipologia):
     """
@@ -3128,44 +3372,68 @@ def obtener_posiciones_por_tipologia(tipologia):
     import json
     t_nom = str(tipologia or '').strip().lower()
     if t_nom:
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT nombre, cant_llantas, esquema_json FROM catalogo_tipologias')
-            filas = cursor.fetchall()
-            
-            # 1. Coincidencia exacta primero
-            for r in filas:
-                if r[0] and str(r[0]).strip().lower() == t_nom:
-                    if r[2]:
-                        try:
-                            esq = json.loads(r[2])
-                            pos_set = []
-                            for eje in esq:
-                                for p in eje.get('posiciones', []):
-                                    pos_set.append(int(p['pos']))
-                            if pos_set:
-                                return sorted(list(set(pos_set)))
-                        except Exception:
-                            pass
-                    if r[1]:
-                        return list(range(1, int(r[1]) + 1))
-            
-            # 2. Coincidencia parcial si no hay exacta
-            for r in filas:
-                if r[0] and t_nom in str(r[0]).strip().lower():
-                    if r[2]:
-                        try:
-                            esq = json.loads(r[2])
-                            pos_set = []
-                            for eje in esq:
-                                for p in eje.get('posiciones', []):
-                                    pos_set.append(int(p['pos']))
-                            if pos_set:
-                                return sorted(list(set(pos_set)))
-                        except Exception:
-                            pass
-                    if r[1]:
-                        return list(range(1, int(r[1]) + 1))
+        try:
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT nombre, cant_llantas, esquema_json FROM catalogo_tipologias')
+                filas = cursor.fetchall()
+                
+                # 1. Coincidencia exacta primero
+                for r in filas:
+                    if r[0] and str(r[0]).strip().lower() == t_nom:
+                        if r[2]:
+                            try:
+                                esq = json.loads(r[2])
+                                pos_set = []
+                                for eje in esq:
+                                    for p in eje.get('posiciones', []):
+                                        pos_set.append(int(p['pos']))
+                                if pos_set:
+                                    return sorted(list(set(pos_set)))
+                            except Exception:
+                                pass
+                        if r[1]:
+                            return list(range(1, int(r[1]) + 1))
+                
+                # 2. Coincidencia parcial si no hay exacta
+                for r in filas:
+                    nom_row = str(r[0] or '').strip().lower()
+                    if nom_row and (t_nom in nom_row or nom_row in t_nom):
+                        if r[2]:
+                            try:
+                                esq = json.loads(r[2])
+                                pos_set = []
+                                for eje in esq:
+                                    for p in eje.get('posiciones', []):
+                                        pos_set.append(int(p['pos']))
+                                if pos_set:
+                                    return sorted(list(set(pos_set)))
+                            except Exception:
+                                pass
+                        if r[1]:
+                            return list(range(1, int(r[1]) + 1))
+                
+                # 2b. Coincidencia por palabras clave
+                palabras = [w for w in re.sub(r'[^a-zA-Z0-9]', ' ', t_nom).split() if len(w) >= 2]
+                if palabras:
+                    for r in filas:
+                        nom_row = str(r[0] or '').strip().lower()
+                        if all(p in nom_row for p in palabras):
+                            if r[2]:
+                                try:
+                                    esq = json.loads(r[2])
+                                    pos_set = []
+                                    for eje in esq:
+                                        for p in eje.get('posiciones', []):
+                                            pos_set.append(int(p['pos']))
+                                    if pos_set:
+                                        return sorted(list(set(pos_set)))
+                                except Exception:
+                                    pass
+                            if r[1]:
+                                return list(range(1, int(r[1]) + 1))
+        except Exception:
+            pass
 
     # Reglas heurísticas de respaldo
     if "cuatro manos" in t_nom or "4 manos" in t_nom or "8x4" in t_nom or "biarticulado" in t_nom:
@@ -3232,20 +3500,23 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     # Consultar historial previo de esta placa
     with get_connection() as conn:
         cursor = conn.cursor()
-        
-        # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente
+        # Mes de inspección (YYYY-MM)
+        mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
+
+        # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
         num_interno = str(datos.get('numero_interno', '')).strip().upper()
         cliente_val = str(datos.get('cliente', '')).strip()
         subcliente_val = str(datos.get('subcliente', '')).strip()
-        if num_interno:
-            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente
+        if num_interno and cliente_val:
+            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente en el mismo mes
             sql_dup = '''
                 SELECT placa, posicion, cliente, subcliente, fecha, id FROM inspecciones
                 WHERE UPPER(TRIM(numero_interno)) = ?
                   AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+                  AND strftime('%Y-%m', fecha) = ?
                   AND (UPPER(TRIM(placa)) != ? OR posicion != ?)
             '''
-            params_dup = [num_interno, cliente_val, placa, posicion]
+            params_dup = [num_interno, cliente_val, mes_inspeccion, placa, posicion]
             if excluir_id is not None:
                 sql_dup += ' AND id != ?'
                 params_dup.append(to_int(excluir_id))
@@ -3256,12 +3527,11 @@ def validar_inspeccion_candados(datos, excluir_id=None):
             if dup_row:
                 return {
                     'valido': False,
-                    'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} (Fecha: {dup_row[4]}). No se permiten números de llanta duplicados por cliente/subcliente.'
+                    'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} en el mes de inspección ({dup_row[4]}). No se permiten números de llanta duplicados en el mismo mes.'
                 }
 
         # Candado 2: Solo una inspección por placa al mes (mismo YYYY-MM)
         # Si la fecha de registro o inspección contiene el mismo año-mes
-        mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
         sql_mes = """
             SELECT id, fecha, posicion FROM inspecciones 
             WHERE placa = ? AND strftime('%Y-%m', fecha) = ? AND posicion = ?
@@ -3374,7 +3644,16 @@ def insertar_inspeccion(datos):
             str(datos.get('foto_novedad', '')).strip()
         ))
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+    sincronizar_vehiculo_catalogo(
+        datos.get('placa'),
+        datos.get('tipologia'),
+        datos.get('cliente'),
+        datos.get('subcliente'),
+        datos.get('tipo_operacion'),
+        datos.get('kilometraje')
+    )
+    return last_id
 
 def obtener_todas_inspecciones(usuario=None):
     with get_connection() as conn:
@@ -3439,7 +3718,17 @@ def actualizar_inspeccion(inspeccion_id, datos):
             inspeccion_id
         ))
         conn.commit()
-        return cursor.rowcount > 0
+        ok = cursor.rowcount > 0
+    if ok:
+        sincronizar_vehiculo_catalogo(
+            datos.get('placa'),
+            datos.get('tipologia'),
+            datos.get('cliente'),
+            datos.get('subcliente'),
+            datos.get('tipo_operacion'),
+            datos.get('kilometraje')
+        )
+    return ok
 
 def eliminar_inspeccion(inspeccion_id):
     with get_connection() as conn:
@@ -3536,6 +3825,15 @@ def cargar_excel_a_bd(file_path):
                 to_float(row[col_encontradas['km_montaje']]) if 'km_montaje' in col_encontradas else 0.0,
                 str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''
             ))
+            sincronizar_vehiculo_catalogo(
+                placa,
+                str(row[col_encontradas['tipologia']]) if 'tipologia' in col_encontradas and not pd.isna(row[col_encontradas['tipologia']]) else '',
+                str(row[col_encontradas['cliente']]) if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) else '',
+                str(row[col_encontradas['subcliente']]) if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) else '',
+                str(row[col_encontradas['tipo_operacion']]) if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) else '',
+                to_float(row[col_encontradas['kilometraje']]) if 'kilometraje' in col_encontradas else 0.0,
+                conn=conn
+            )
             registros_insertados += 1
         conn.commit()
     return registros_insertados
@@ -4041,11 +4339,16 @@ def obtener_esquema_tipologia(tipologia_nombre):
                     return json.loads(r[2]) if r[2] else []
             # 2. Coincidencia parcial si no hay exacta
             for r in filas:
-                if r[0] and t_norm in str(r[0]).strip().lower():
+                nom_row = str(r[0] or '').strip().lower()
+                if nom_row and (t_norm in nom_row or nom_row in t_norm):
                     return json.loads(r[2]) if r[2] else []
-            # 3. Retornar primer registro si hay filas
-            if filas and filas[0][2]:
-                return json.loads(filas[0][2])
+            # 2b. Coincidencia por palabras clave
+            palabras = [w for w in re.sub(r'[^a-zA-Z0-9]', ' ', t_norm).split() if len(w) >= 2]
+            if palabras:
+                for r in filas:
+                    nom_row = str(r[0] or '').strip().lower()
+                    if all(p in nom_row for p in palabras):
+                        return json.loads(r[2]) if r[2] else []
     except Exception:
         pass
 
@@ -6115,7 +6418,7 @@ def seccion_fotos(llantas: List[Dict[str, Any]]) -> List[Any]:
 
 - **Ruta:** `app.py`
 - **Descripción:** Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario
-- **Métricas:** 2125 líneas | 118,217 bytes (115.4 KB)
+- **Métricas:** 2175 líneas | 121,311 bytes (118.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6347,7 +6650,9 @@ class AppInspeccionLlantas(tk.Tk):
         btn_prev.grid(row=1, column=4, padx=5, pady=4, sticky='w')
 
         ttk.Label(sec2, text='No. Interno:', font=('Segoe UI', 9, 'bold'), foreground='#1e3a8a').grid(row=1, column=5, padx=5, pady=4, sticky='w')
-        ttk.Entry(sec2, textvariable=self.form_vars['numero_interno'], width=10).grid(row=1, column=5, padx=(80, 5), pady=4)
+        self.ent_numero_interno_pc = ttk.Entry(sec2, textvariable=self.form_vars['numero_interno'], width=10)
+        self.ent_numero_interno_pc.grid(row=1, column=5, padx=(80, 5), pady=4)
+        self.ent_numero_interno_pc.bind('<FocusOut>', self.al_perder_foco_numero_interno_pc)
 
         sec3 = ttk.LabelFrame(card, text='3. Especificaciones de Llanta & 3 Profundidades', padding=8)
         sec3.grid(row=3, column=0, columnspan=6, sticky='ew', pady=(0, 8))
@@ -6489,8 +6794,56 @@ class AppInspeccionLlantas(tk.Tk):
 
         if nueva_placa:
             self._ultima_placa_pc = nueva_placa
+            # Autocompletado reactivo del perfil del vehículo (tipología, cliente, subcliente, operación, km)
+            perfil = database.obtener_perfil_vehiculo(nueva_placa)
+            if perfil.get('encontrado'):
+                if perfil.get('cliente') and not self.form_vars['cliente'].get():
+                    self.form_vars['cliente'].set(perfil['cliente'])
+                    if hasattr(self, 'al_cambiar_cliente_pc'):
+                        self.al_cambiar_cliente_pc()
+                if perfil.get('subcliente') and not self.form_vars['subcliente'].get():
+                    self.form_vars['subcliente'].set(perfil['subcliente'])
+                if perfil.get('tipo_operacion') and not self.form_vars['tipo_operacion'].get():
+                    self.form_vars['tipo_operacion'].set(perfil['tipo_operacion'])
+                if perfil.get('ultimo_km') and not self.form_vars['kilometraje'].get():
+                    self.form_vars['kilometraje'].set(str(int(perfil['ultimo_km'])))
+                if perfil.get('tipologia') and self.form_vars['tipologia'].get() != perfil['tipologia']:
+                    self.form_vars['tipologia'].set(perfil['tipologia'])
+                    if hasattr(self, 'on_cambio_tipologia_pc'):
+                        self.on_cambio_tipologia_pc()
+
             self.actualizar_estado_posiciones_inspeccionadas_pc()
             self.verificar_llanta_previa_pc()
+
+    def al_perder_foco_numero_interno_pc(self, event=None):
+        num_int = self.form_vars['numero_interno'].get().strip().upper()
+        if not num_int:
+            return
+        self.form_vars['numero_interno'].set(num_int)
+        cli = self.form_vars['cliente'].get().strip()
+        placa = self.form_vars['placa'].get().strip().upper()
+        lt = database.obtener_llanta_por_cliente(cliente=cli, numero_interno=num_int, placa=placa)
+        if lt:
+            if lt.get('marca'):
+                self.form_vars['marca'].set(lt['marca'])
+                if hasattr(self, 'al_cambiar_marca_pc'):
+                    self.al_cambiar_marca_pc()
+            if lt.get('diseno'):
+                self.form_vars['diseno'].set(lt['diseno'])
+            if lt.get('dimension'):
+                self.form_vars['dimension'].set(lt['dimension'])
+            if lt.get('vida'):
+                self.form_vars['vida'].set(lt['vida'])
+                if hasattr(self, 'al_cambiar_vida_pc'):
+                    self.al_cambiar_vida_pc()
+            if lt.get('banda_reen'):
+                self.form_vars['banda_reen'].set(lt['banda_reen'])
+            if lt.get('prof_inicial') and not self.form_vars['prof_inicial'].get():
+                self.form_vars['prof_inicial'].set(str(lt['prof_inicial']))
+            if lt.get('precio') and not self.form_vars['precio'].get():
+                self.form_vars['precio'].set(str(lt['precio']))
+            if lt.get('km_montaje') and not self.form_vars['km_montaje'].get():
+                self.form_vars['km_montaje'].set(str(lt['km_montaje']))
 
     def actualizar_estado_posiciones_inspeccionadas_pc(self):
         placa = self.form_vars['placa'].get().strip()
@@ -8254,7 +8607,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6061 líneas | 600,363 bytes (586.3 KB)
+- **Métricas:** 6261 líneas | 609,786 bytes (595.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8645,8 +8998,13 @@ if __name__ == '__main__':
         <!-- Campos del Vehículo -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Placa Vehículo *</label>
-            <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa');" onblur="verificarInspeccionAnterior()">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-slate-600">Placa Vehículo *</label>
+              <span id="badgePlacaVinculada" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                <i class="fa-solid fa-link mr-1"></i>Esquema Vinculado
+              </span>
+            </div>
+            <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa'); onInputPlacaDebounced();" onblur="consultarPerfilPlacaInmediato(); verificarInspeccionAnterior();">
             <p id="err_placa" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
               <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
               <span>La placa del vehículo es obligatoria</span>
@@ -8654,8 +9012,14 @@ if __name__ == '__main__':
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Tipología</label>
-            <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"></select>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-slate-600">Tipología</label>
+              <button type="button" id="btnDesbloquearTipologia" onclick="desbloquearTipologia()" class="hidden text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Permite modificar la tipología de este vehículo">
+                <i class="fa-solid fa-lock-open text-[9px]"></i>
+                <span>Cambiar</span>
+              </button>
+            </div>
+            <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all"></select>
           </div>
 
           <div>
@@ -8844,8 +9208,14 @@ if __name__ == '__main__':
 
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">No. Interno / Ficha</label>
-                  <input type="text" id="numero_interno" placeholder="ej. LL-042" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 uppercase placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-slate-600">No. Interno / Ficha</label>
+                    <span id="badgeLlantaCliente" class="hidden text-[10px] text-emerald-600 font-bold flex items-center space-x-1">
+                      <i class="fa-solid fa-check text-[9px]"></i>
+                      <span>Reconocida</span>
+                    </span>
+                  </div>
+                  <input type="text" id="numero_interno" placeholder="ej. LL-042" oninput="this.value = this.value.toUpperCase(); onInputNumeroInternoDebounced();" onblur="consultarLlantaPorCliente(this.value);" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 uppercase placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div>
@@ -12005,6 +12375,10 @@ if __name__ == '__main__':
           poblarSelect('subcliente', `/api/valores-campo?campo=subcliente&cliente=${encodeURIComponent(cli)}`, 'ej. Principal (Seleccionar sede)'),
           actualizarLimiteCliente()
         ]);
+        const numInt = (document.getElementById('numero_interno')?.value || '').trim();
+        if (numInt) {
+          consultarLlantaPorCliente(numInt);
+        }
       }
     }
 
@@ -13575,6 +13949,179 @@ if __name__ == '__main__':
       }
     }
 
+    // ==========================================
+    // AUTOCOMPLETADO PERFIL PLACA <-> ESQUEMA & FLOTA
+    // ==========================================
+    let timerPlacaDebounce = null;
+    let ultimaPlacaConsultadaPerfil = '';
+
+    function onInputPlacaDebounced() {
+      clearTimeout(timerPlacaDebounce);
+      timerPlacaDebounce = setTimeout(() => {
+        const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+        if (placa && placa.length >= 3) {
+          consultarPerfilPlaca(placa);
+        }
+      }, 300);
+    }
+
+    function consultarPerfilPlacaInmediato() {
+      clearTimeout(timerPlacaDebounce);
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placa && placa !== ultimaPlacaConsultadaPerfil) {
+        consultarPerfilPlaca(placa);
+      }
+    }
+
+    async function consultarPerfilPlaca(placa) {
+      if (!placa) return;
+      ultimaPlacaConsultadaPerfil = placa;
+
+      try {
+        const res = await fetch(`/api/vehiculo-perfil?placa=${encodeURIComponent(placa)}`);
+        if (res.ok) {
+          const d = await res.json();
+          const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+          if (placaActual !== placa) return;
+
+          if (d.encontrado) {
+            // 1. Mostrar badge de esquema vinculado
+            const b = document.getElementById('badgePlacaVinculada');
+            if (b) b.classList.remove('hidden');
+
+            // 2. Precargar Cliente, Subcliente y Operación si están vacíos o no restringidos
+            const selCli = document.getElementById('cliente');
+            if (d.cliente && selCli && (!selCli.value || selCli.value === '__nuevo__')) {
+              asignarValorSelect('cliente', d.cliente);
+              await alCambiarClienteMobile();
+            }
+
+            if (d.subcliente && document.getElementById('subcliente')) {
+              asignarValorSelect('subcliente', d.subcliente);
+            }
+
+            if (d.tipo_operacion && document.getElementById('tipo_operacion')) {
+              asignarValorSelect('tipo_operacion', d.tipo_operacion);
+            }
+
+            // 3. Odómetro / Km si está vacío
+            const inputKm = document.getElementById('kilometraje');
+            if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
+              inputKm.value = Math.round(d.ultimo_km);
+            }
+
+            // 4. Seleccionar Tipología y redibujar chasis
+            if (d.tipologia) {
+              const selTip = document.getElementById('tipologia');
+              if (selTip) {
+                asignarValorSelect('tipologia', d.tipologia);
+                await cambioTipologia();
+                selTip.disabled = true;
+                selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+                const btnDesb = document.getElementById('btnDesbloquearTipologia');
+                if (btnDesb) btnDesb.classList.remove('hidden');
+              }
+            }
+          } else {
+            const b = document.getElementById('badgePlacaVinculada');
+            if (b) b.classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar perfil del vehículo:', err);
+      }
+    }
+
+    function desbloquearTipologia() {
+      const selTip = document.getElementById('tipologia');
+      if (selTip) {
+        selTip.disabled = false;
+        selTip.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        selTip.focus();
+      }
+      const btnDesb = document.getElementById('btnDesbloquearTipologia');
+      if (btnDesb) btnDesb.classList.add('hidden');
+      const b = document.getElementById('badgePlacaVinculada');
+      if (b) b.classList.add('hidden');
+    }
+
+    // ==========================================
+    // AUTOCOMPLETADO DE LLANTA POR CLIENTE
+    // ==========================================
+    let timerNumeroInternoDebounce = null;
+
+    function onInputNumeroInternoDebounced() {
+      clearTimeout(timerNumeroInternoDebounce);
+      timerNumeroInternoDebounce = setTimeout(() => {
+        const num = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+        if (num) {
+          consultarLlantaPorCliente(num);
+        }
+      }, 350);
+    }
+
+    async function consultarLlantaPorCliente(numInterno) {
+      const num = (numInterno || document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+      if (!num) return;
+
+      const cli = (document.getElementById('cliente')?.value || '').trim();
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+
+      try {
+        let url = `/api/llanta-por-cliente?numero_interno=${encodeURIComponent(num)}`;
+        if (cli && cli !== '__nuevo__') url += `&cliente=${encodeURIComponent(cli)}`;
+        if (placa) url += `&placa=${encodeURIComponent(placa)}`;
+
+        const res = await fetch(url);
+        if (res.ok) {
+          const d = await res.json();
+          const numActual = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+          if (numActual !== num) return;
+
+          if (d.encontrado && d.datos) {
+            const lt = d.datos;
+            const bLlanta = document.getElementById('badgeLlantaCliente');
+            if (bLlanta) bLlanta.classList.remove('hidden');
+
+            const bHist = document.getElementById('badgeHistorialPrevia');
+            if (bHist) {
+              bHist.classList.remove('hidden');
+              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + lt.ult_prof_min.toFixed(1) + ' mm' : ''})`;
+            }
+
+            // Precargar especificaciones técnicas de la llanta
+            if (lt.marca) {
+              asignarValorSelect('marca', lt.marca);
+              await alCambiarMarcaMobile();
+            }
+            if (lt.diseno) asignarValorSelect('diseno', lt.diseno);
+            if (lt.dimension) asignarValorSelect('dimension', lt.dimension);
+            if (lt.vida) {
+              asignarValorSelect('vida', lt.vida);
+              validarVida();
+            }
+            if (lt.banda_reen && lt.vida === 'Reencauche') {
+              asignarValorSelect('banda_reen', lt.banda_reen);
+            }
+            if (lt.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
+              document.getElementById('prof_inicial').value = lt.prof_inicial;
+            }
+            if (lt.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
+              document.getElementById('precio').value = lt.precio;
+            }
+            if (lt.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
+              document.getElementById('km_montaje').value = lt.km_montaje;
+            }
+          } else {
+            const bLlanta = document.getElementById('badgeLlantaCliente');
+            if (bLlanta) bLlanta.classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar llanta por cliente:', err);
+      }
+    }
+
     async function verificarInspeccionAnterior() {
       const token = idInspeccionActiva;
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
@@ -13813,6 +14360,12 @@ if __name__ == '__main__':
       if (inpPlaca) inpPlaca.value = '';
       const inpKm = document.getElementById('kilometraje');
       if (inpKm) inpKm.value = '';
+      ultimaPlacaConsultadaPerfil = '';
+      desbloquearTipologia();
+      const bPlaca = document.getElementById('badgePlacaVinculada');
+      if (bPlaca) bPlaca.classList.add('hidden');
+      const bLlanta = document.getElementById('badgeLlantaCliente');
+      if (bLlanta) bLlanta.classList.add('hidden');
 
       // Limpiar cliente y subcliente si no están fijados por rol de usuario
       if (typeof usuarioActual === 'undefined' || !usuarioActual || usuarioActual.rol === 'admin' || !usuarioActual.cliente_asignado) {
@@ -15998,6 +16551,193 @@ def test_api_importar_excel(test_db, auth_client):
 
 ---
 
+## Archivo: tests/test_automatizacion_placa_llanta.py
+
+- **Ruta:** `tests/test_automatizacion_placa_llanta.py`
+- **Descripción:** Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual
+- **Métricas:** 175 líneas | 6,044 bytes (5.9 KB)
+- **Lenguaje:** `python`
+
+```python
+import pytest
+import database
+import server
+
+def test_asociacion_fija_placa_esquema(test_db, auth_client):
+    # 1. Registrar inspección inicial con tipología Trailer (3 Ejes - 12 Llantas)
+    datos = {
+        'fecha': '2026-10-10',
+        'cliente': 'Transportes del Caribe',
+        'subcliente': 'Barranquilla',
+        'tipo_operacion': 'Refrigerada',
+        'placa': 'TRL-999',
+        'posicion': 1,
+        'kilometraje': 85400,
+        'tipologia': 'Trailer (3 Ejes - 12 Llantas)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_ext': 14.0,
+        'prof_cent': 14.0,
+        'prof_int': 14.0,
+        'prof_inicial': 16.5,
+        'numero_interno': 'LL-TRL-01'
+    }
+    database.insertar_inspeccion(datos)
+
+    # 2. Consultar endpoint /api/vehiculo-perfil
+    resp = auth_client.get('/api/vehiculo-perfil?placa=TRL-999')
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data['encontrado'] is True
+    assert data['placa'] == 'TRL-999'
+    assert data['tipologia'] == 'Trailer (3 Ejes - 12 Llantas)'
+    assert data['cliente'] == 'Transportes del Caribe'
+    assert data['subcliente'] == 'Barranquilla'
+    assert data['tipo_operacion'] == 'Refrigerada'
+    assert data['ultimo_km'] == 85400.0
+    assert data['cant_llantas'] == 12
+    assert len(data['posiciones']) == 12
+    assert 12 in data['posiciones']
+
+def test_autocompletado_llanta_dependiente_cliente(test_db, auth_client):
+    # 1. Registrar llanta '1010' en 'Cliente A' como Michelin
+    datos_a = {
+        'fecha': '2026-10-01',
+        'cliente': 'Cliente A',
+        'subcliente': 'Sede Centro',
+        'tipo_operacion': 'Carga Seca',
+        'placa': 'AAA111',
+        'posicion': 1,
+        'kilometraje': 10000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_inicial': 16.5,
+        'precio': 1850000,
+        'prof_ext': 13.0,
+        'prof_cent': 13.0,
+        'prof_int': 13.0,
+        'numero_interno': '1010'
+    }
+    database.insertar_inspeccion(datos_a)
+
+    # 2. Registrar la misma numeración '1010' en 'Cliente B' como Bridgestone
+    datos_b = {
+        'fecha': '2026-10-02',
+        'cliente': 'Cliente B',
+        'subcliente': 'Sede Norte',
+        'tipo_operacion': 'Líquidos',
+        'placa': 'BBB222',
+        'posicion': 3,
+        'kilometraje': 20000,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'Bridgestone',
+        'diseno': 'M726 EL',
+        'dimension': '11R22.5',
+        'vida': 'Original',
+        'prof_inicial': 24.5,
+        'precio': 1950000,
+        'prof_ext': 20.0,
+        'prof_cent': 20.0,
+        'prof_int': 20.0,
+        'numero_interno': '1010'
+    }
+    database.insertar_inspeccion(datos_b)
+
+    # 3. Consultar /api/llanta-por-cliente para Cliente A
+    resp_a = auth_client.get('/api/llanta-por-cliente?cliente=Cliente A&numero_interno=1010')
+    assert resp_a.status_code == 200
+    res_data_a = resp_a.json()
+    assert res_data_a['encontrado'] is True
+    assert res_data_a['datos']['marca'] == 'Michelin'
+    assert res_data_a['datos']['diseno'] == 'X Multi Z'
+    assert res_data_a['datos']['dimension'] == '295/80R22.5'
+    assert res_data_a['datos']['prof_inicial'] == 16.5
+
+    # 4. Consultar /api/llanta-por-cliente para Cliente B
+    resp_b = auth_client.get('/api/llanta-por-cliente?cliente=Cliente B&numero_interno=1010')
+    assert resp_b.status_code == 200
+    res_data_b = resp_b.json()
+    assert res_data_b['encontrado'] is True
+    assert res_data_b['datos']['marca'] == 'Bridgestone'
+    assert res_data_b['datos']['diseno'] == 'M726 EL'
+    assert res_data_b['datos']['dimension'] == '11R22.5'
+    assert res_data_b['datos']['prof_inicial'] == 24.5
+
+def test_candado_rotacion_intermensual(test_db):
+    # 1. Registrar llanta 'ROT-01' en Pos 1 en Octubre 2026
+    datos_oct = {
+        'fecha': '2026-10-05',
+        'cliente': 'Flota Andina',
+        'subcliente': 'Bogota',
+        'tipo_operacion': 'Paqueteo',
+        'placa': 'AND-100',
+        'posicion': 1,
+        'kilometraje': 50000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Goodyear',
+        'diseno': 'KMax S',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': 'ROT-01'
+    }
+    database.insertar_inspeccion(datos_oct)
+
+    # 2. Intentar registrar la misma llanta en Pos 5 en el MISMO mes de Octubre -> DEBE BLOQUEARSE
+    datos_oct_dup = {
+        'fecha': '2026-10-20',
+        'cliente': 'Flota Andina',
+        'subcliente': 'Bogota',
+        'tipo_operacion': 'Paqueteo',
+        'placa': 'AND-100',
+        'posicion': 5,
+        'kilometraje': 52000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Goodyear',
+        'diseno': 'KMax S',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.5,
+        'prof_cent': 11.5,
+        'prof_int': 11.5,
+        'numero_interno': 'ROT-01'
+    }
+    val_dup = database.validar_inspeccion_candados(datos_oct_dup)
+    assert not val_dup['valido']
+    assert 'CANDADO DE NÚMERO INTERNO' in val_dup['mensaje']
+
+    # 3. Intentar registrar la llanta rotada a Pos 5 en NOVIEMBRE (mes siguiente) -> DEBE PERMITIRSE
+    datos_nov_rot = {
+        'fecha': '2026-11-05',
+        'cliente': 'Flota Andina',
+        'subcliente': 'Bogota',
+        'tipo_operacion': 'Paqueteo',
+        'placa': 'AND-100',
+        'posicion': 5,
+        'kilometraje': 55000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Goodyear',
+        'diseno': 'KMax S',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'numero_interno': 'ROT-01'
+    }
+    val_rot = database.validar_inspeccion_candados(datos_nov_rot)
+    assert val_rot['valido'] is True
+```
+
+---
+
 ## Archivo: tests/test_candados.py
 
 - **Ruta:** `tests/test_candados.py`
@@ -16290,6 +17030,462 @@ def test_diagnostico_sugerencia_cambio(test_db):
     fila = res.iloc[0]
     assert fila['Plan_Cambio_Llanta'] == 'SÍ'
     assert 'Pos 1' in fila['Detalle_Cambio']
+```
+
+---
+
+## Archivo: tests/test_diagrama_chasis.py
+
+- **Ruta:** `tests/test_diagrama_chasis.py`
+- **Descripción:** Pruebas del generador vectorial de diagramas de chasis en PDF
+- **Métricas:** 444 líneas | 18,085 bytes (17.7 KB)
+- **Lenguaje:** `python`
+
+```python
+import io
+import os
+import re
+import pytest
+import pypdf
+import pypdfium2 as pdfium
+from fastapi.testclient import TestClient
+
+import database
+import pdf_generator
+import diagrama_chasis_pdf as dg
+import server
+
+# =========================================================================
+# 1. PRUEBA DE GEOMETRÍA, SIMETRÍA Y AUSENCIA DE SOLAPES EN EL DIAGRAMA
+# =========================================================================
+
+def test_geometria_y_simetria_chasis():
+    """
+    Verifica que la geometría del diagrama de chasis sea matemáticamente simétrica
+    y que los elementos de cada neumático (llanta, medallón, rol, valor) no se solapen.
+    """
+    # 1. Simetría de las posiciones horizontales
+    assert dg.TIRE_W == 18.0
+    assert dg.TIRE_H == 26.0
+    assert dg.X_EXT - dg.X_INT == 26.0  # Centros a 26 pt -> hueco entre llantas de 8 pt
+    hueco_duales = (dg.X_EXT - dg.X_INT) - dg.TIRE_W
+    assert hueco_duales == 8.0, "El hueco entre duales debe ser exactamente 8 pt"
+
+    # Simetría en eje direccional sencillo
+    eje_sencillo = {
+        'eje': 1, 'tipo': 'Direccional',
+        'posiciones': [
+            {'pos': 1, 'lado': 'izq', 'rol': 'DIR'},
+            {'pos': 2, 'lado': 'der', 'rol': 'DIR'}
+        ]
+    }
+    llantas_s = dg._llantas_del_eje(eje_sencillo)
+    assert len(llantas_s) == 2
+    dx_izq, p_izq = llantas_s[0]
+    dx_der, p_der = llantas_s[1]
+    assert dx_izq == -dg.X_SEN
+    assert dx_der == dg.X_SEN
+    assert abs(dx_izq) == abs(dx_der), "Llantas direccionales deben ser perfectamente simétricas"
+
+    # Simetría en eje tracción dual
+    eje_dual = {
+        'eje': 2, 'tipo': 'Tracción',
+        'posiciones': [
+            {'pos': 3, 'lado': 'izq', 'rol': 'EXT'},
+            {'pos': 4, 'lado': 'izq', 'rol': 'INT'},
+            {'pos': 5, 'lado': 'der', 'rol': 'INT'},
+            {'pos': 6, 'lado': 'der', 'rol': 'EXT'}
+        ]
+    }
+    llantas_d = dg._llantas_del_eje(eje_dual)
+    assert len(llantas_d) == 4
+    # Orden de izquierda a derecha: -X_EXT, -X_INT, +X_INT, +X_EXT
+    coords_x = [dx for dx, _ in llantas_d]
+    assert coords_x == [-dg.X_EXT, -dg.X_INT, dg.X_INT, dg.X_EXT]
+    assert abs(coords_x[0]) == abs(coords_x[3]), "Duales exteriores deben ser simétricos"
+    assert abs(coords_x[1]) == abs(coords_x[2]), "Duales interiores deben ser simétricos"
+
+    # 2. Pila vertical de cada llanta sin solapamientos
+    # yb = y_top - TIRE_H
+    # cy = yb - GAP_TIRE_BADGE - BADGE_R
+    # y_rol = cy - BADGE_R - GAP_BADGE_ROL - ROL_CAP
+    # y_val = y_rol - GAP_ROL_VAL - VAL_CAP
+    assert dg.GAP_TIRE_BADGE > 0
+    assert dg.GAP_BADGE_ROL > 0
+    assert dg.GAP_ROL_VAL > 0
+    assert dg.PILA_H > dg.TIRE_H + 2 * dg.BADGE_R + dg.ROL_CAP + dg.VAL_CAP
+
+    # 3. Función profundidad_minima como única fuente de verdad
+    fila_con_datos = {'prof_ext': '12.5', 'prof_cent': '10.0', 'prof_int': '11.2'}
+    assert dg.profundidad_minima(fila_con_datos) == 10.0
+
+    fila_con_ceros = {'prof_ext': 0, 'prof_cent': 0.0, 'prof_int': 0}
+    assert dg.profundidad_minima(fila_con_ceros) is None
+
+    fila_vacia = {}
+    assert dg.profundidad_minima(fila_vacia) is None
+
+
+# =========================================================================
+# 2. CASO 1: 2 EJES (CAMIÓN 4x2)
+# =========================================================================
+
+def test_caso_2_ejes(test_db):
+    placa = "DOS-002"
+    fecha = "2026-10-12"
+    # Insertar 6 llantas (2 directores + 4 tracción)
+    for pos, rol, p_ext, p_cen, p_int in [
+        (1, 'DIR', 12.0, 12.0, 12.0),
+        (2, 'DIR', 12.0, 12.0, 12.0),
+        (3, 'EXT', 14.0, 14.0, 14.0),
+        (4, 'INT', 14.0, 14.0, 14.0),
+        (5, 'INT', 14.0, 14.0, 14.0),
+        (6, 'EXT', 14.0, 14.0, 14.0),
+    ]:
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Transportes A',
+            'subcliente': 'Sede Bogotá',
+            'tipo_operacion': 'Carga General',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 85000.0,
+            'tipologia': 'Camión (4x2)',
+            'marca': 'Goodyear',
+            'dimension': '295/80R22.5',
+            'prof_ext': p_ext,
+            'prof_cent': p_cen,
+            'prof_int': p_int,
+            'psi': 105.0,
+            'rol': rol,
+            'usuario_registro': 'Inspector A'
+        })
+
+    pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa)
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b'%PDF-')
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    assert len(reader.pages) >= 1
+    texto = "\n".join(p.extract_text() for p in reader.pages)
+    assert "DOS-002" in texto
+    assert "Eje 1 · Direccional" in texto
+    assert "Eje 2 · Tracción" in texto
+
+
+# =========================================================================
+# 3. CASO 2: 3 EJES CON REPUESTO (CABEZOTE 6x4)
+# =========================================================================
+
+def test_caso_3_ejes_con_repuesto(test_db):
+    placa = "REP-003"
+    fecha = "2026-10-12"
+    # Trailer 3 ejes + repuesto (12 llantas rodantes + repuesto en pos 13)
+    tipologia = "Trailer (3 Ejes - 12 Llantas + Repuesto)"
+    for pos in range(1, 14):
+        es_rep = (pos == 13)
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Logística Pesada',
+            'subcliente': 'Patio Central',
+            'tipo_operacion': 'Troncal',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 120000.0,
+            'tipologia': tipologia,
+            'marca': 'Michelin',
+            'dimension': '295/80R22.5',
+            'prof_ext': 11.0,
+            'prof_cent': 11.0,
+            'prof_int': 11.0,
+            'psi': 100.0,
+            'rol': 'REP' if es_rep else ('EXT' if pos in (1, 4, 5, 8, 9, 12) else 'INT'),
+            'usuario_registro': 'Inspector Central'
+        })
+
+    pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa)
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    texto = "\n".join(p.extract_text() for p in reader.pages)
+    assert "REP-003" in texto
+    assert "Repuesto" in texto
+    assert "Eje 1 · Remolque" in texto
+
+
+# =========================================================================
+# 4. CASO 3: 4 EJES Y 12 POSICIONES CON VARIAS LLANTAS BAJO EL LÍMITE
+# =========================================================================
+
+def test_caso_4_ejes_12_posiciones_con_retiro(test_db):
+    placa = "CUA-012"
+    fecha = "2026-10-12"
+    # Camión 8x4 Cuatro Manos (12 posiciones):
+    # Llantas 1 y 7 bajo límite de retiro (<= 3.0 mm)
+    for pos in range(1, 13):
+        es_retiro = (pos in (1, 7))
+        prof = 2.1 if es_retiro else 11.5
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Minera del Norte',
+            'subcliente': 'Tajo 1',
+            'tipo_operacion': 'Minería Pesada',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 180000.0,
+            'tipologia': 'Camión Cuatro Manos (8x4)',
+            'marca': 'Bridgestone',
+            'dimension': '315/80R22.5',
+            'prof_ext': prof,
+            'prof_cent': prof,
+            'prof_int': prof,
+            'psi': 110.0,
+            'rol': 'DIR' if pos in (1, 2, 3, 4) else 'EXT' if pos in (5, 8, 9, 12) else 'INT',
+            'usuario_registro': 'Inspector Minas'
+        })
+
+    datos = pdf_generator.construir_datos_informe(placa)
+    assert datos['n_cambios'] == 2
+    assert datos['p_min_global'] == 2.1
+    assert any("Posición 1" in a['detalle'] or "posición 1" in a['detalle'] for a in datos['alertas_lista'])
+    assert any("Posición 7" in a['detalle'] or "posición 7" in a['detalle'] for a in datos['alertas_lista'])
+
+    pdf_bytes = pdf_generator.renderizar_informe(datos)
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    texto = "\n".join(p.extract_text() for p in reader.pages)
+    assert "CUA-012" in texto
+    assert "Cambio" in texto
+
+
+# =========================================================================
+# 5. CASO 4: SIN LECTURAS (VALORES CERO / NULOS -> "—")
+# =========================================================================
+
+def test_caso_sin_lecturas(test_db):
+    placa = "VAC-000"
+    fecha = "2026-10-12"
+    for pos in [1, 2]:
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Flota Prueba',
+            'subcliente': 'Taller',
+            'tipo_operacion': 'Urbano',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 50000.0,
+            'tipologia': 'Camión (4x2)',
+            'prof_ext': 0.0,
+            'prof_cent': 0.0,
+            'prof_int': 0.0,
+            'psi': 0.0,
+            'usuario_registro': 'Inspector Prueba'
+        })
+
+    datos = pdf_generator.construir_datos_informe(placa)
+    assert datos['p_min_global'] is None
+    assert datos['p_prom_global'] is None
+
+    pdf_bytes = pdf_generator.renderizar_informe(datos)
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    texto = "\n".join(p.extract_text() for p in reader.pages)
+    assert "VAC-000" in texto
+    # Verificar que aparece el guion largo "—" correspondiente a sin lecturas
+    assert "—" in texto or "PEND" in texto
+
+
+# =========================================================================
+# 6. CASO 5: 8 ALERTAS
+# =========================================================================
+
+def test_caso_8_alertas(test_db):
+    placa = "ALT-008"
+    fecha = "2026-10-12"
+    # Diseñar un vehículo que detone exactamente 8 alertas:
+    # 1. Tres llantas en retiro (pos 1, 2, 3) con prof <= 3.0 mm -> 3 alertas de Cambio
+    # 2. Desgaste disparejo en directores: pos 1 prof_int=3.0, prof_ext=1.0 -> genera Alineación -> 1 alerta
+    # 3. Dual mal apareado en pos 5-6 (pos 5=9.0mm, pos 6=6.0mm, dif 3.0mm >= 2.0mm) -> 1 alerta
+    # 4. Tres novedades mecánicas reportadas en pos 4, 7, 8 -> 3 alertas
+    # Total = 3 + 1 + 1 + 3 = 8 alertas!
+    pos_data = [
+        (1, 'DIR', 1.0, 2.0, 3.0, ''),       # Cambio + dif int-ext 2.0 -> Alineación
+        (2, 'DIR', 2.5, 2.5, 2.5, ''),       # Cambio
+        (3, 'EXT', 2.8, 2.8, 2.8, ''),       # Cambio
+        (4, 'INT', 9.0, 9.0, 9.0, 'Corte en banda de rodamiento'), # Novedad 1
+        (5, 'INT', 9.0, 9.0, 9.0, ''),       # Dual mal apareado con pos 6
+        (6, 'EXT', 6.0, 6.0, 6.0, ''),       # dif=3.0mm
+        (7, 'EXT', 10.0, 10.0, 10.0, 'Válvula defectuosa con fuga'), # Novedad 2
+        (8, 'INT', 10.0, 10.0, 10.0, 'Desgaste anormal en hombro'), # Novedad 3
+    ]
+    for pos, rol, p_ext, p_cen, p_int, nov in pos_data:
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Flota Alertas',
+            'subcliente': 'Base',
+            'tipo_operacion': 'Carga',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 150000.0,
+            'tipologia': 'Cabezote (6x4)',
+            'marca': 'Pirelli',
+            'dimension': '295/80R22.5',
+            'prof_ext': p_ext,
+            'prof_cent': p_cen,
+            'prof_int': p_int,
+            'psi': 100.0,
+            'rol': rol,
+            'novedades': nov,
+            'usuario_registro': 'Inspector Alertas'
+        })
+
+    datos = pdf_generator.construir_datos_informe(placa)
+    assert datos['total_alertas'] >= 8, f"Se esperaban al menos 8 alertas, se encontraron {datos['total_alertas']}"
+    assert len(datos['alertas_lista']) >= 8
+    # Comprobar que no hay recorte artificial a 4
+    pdf_bytes = pdf_generator.renderizar_informe(datos)
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    texto = "\n".join(p.extract_text() for p in reader.pages)
+    assert "Corte en banda" in texto
+    assert "Válvula defectuosa" in texto
+    assert "Desgaste anormal" in texto
+
+
+# =========================================================================
+# 7. CASO 6: INFORME QUE PASE DE 2 PÁGINAS (PAGINACIÓN DINÁMICA N >= 3)
+# =========================================================================
+
+def test_caso_informe_pasa_de_2_paginas(test_db):
+    placa = "PAG-003"
+    fecha = "2026-10-12"
+    # Vehículo de 4 ejes (12 posiciones) con múltiples novedades extensas
+    # que empujan el contenido y la tabla detallada de llantas a 3 páginas
+    for pos in range(1, 13):
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Transportes Transcontinentales de Carga Pesada S.A.',
+            'subcliente': 'Operación Fronteriza Norte',
+            'tipo_operacion': 'Transporte Especial Refrigerado de Alta Exigencia',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 295000.0,
+            'tipologia': 'Camión Cuatro Manos (8x4)',
+            'marca': 'Continental Hybrid Multi-Track Ultra Premium',
+            'diseno': 'Conti EcoPlus HD3 High Mileage Long Distance',
+            'dimension': '315/80R22.5 156/150K',
+            'prof_ext': 2.5 if pos % 2 == 0 else 12.0,
+            'prof_cent': 2.5 if pos % 2 == 0 else 12.0,
+            'prof_int': 2.5 if pos % 2 == 0 else 12.0,
+            'psi': 105.0,
+            'rol': 'DIR' if pos in (1, 2, 3, 4) else 'EXT' if pos in (5, 8, 9, 12) else 'INT',
+            'novedades': f"Posición {pos}: Inspección detallada con desgaste en banda, corte lateral superficial por piedras en vía, requiere seguimiento en próximo mantenimiento programado de la flota.",
+            'usuario_registro': 'Inspector de Garantías Técnicas y Certificación de Flotas'
+        })
+
+    pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa)
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    num_paginas = len(reader.pages)
+    assert num_paginas >= 3, f"El informe con alto volumen de alertas y novedades debe superar 2 páginas (generó {num_paginas})"
+
+    # Verificar que el footer tenga la numeración dinámica 'Página X de Y'
+    ultimo_texto = reader.pages[-1].extract_text()
+    assert f"Página {num_paginas} de {num_paginas}" in ultimo_texto
+
+
+# =========================================================================
+# 8. CASO 7: COMPARACIÓN DE LOS TRES CAMINOS (TEXTO EXACTAMENTE IGUAL)
+# =========================================================================
+
+def test_comparacion_tres_caminos(test_db):
+    placa = "CAM-999"
+    # Insertar dos fechas distintas: inspección anterior y última inspección
+    fecha_ant = "2026-10-01"
+    fecha_ult = "2026-10-12"
+
+    for f_fecha in (fecha_ant, fecha_ult):
+        for pos in (1, 2):
+            database.insertar_inspeccion({
+                'fecha': f_fecha,
+                'cliente': 'Cliente Tres Caminos',
+                'subcliente': 'Sede 1',
+                'tipo_operacion': 'Troncal',
+                'placa': placa,
+                'posicion': pos,
+                'kilometraje': 100000.0 if f_fecha == fecha_ant else 105000.0,
+                'tipologia': 'Camión (4x2)',
+                'prof_ext': 8.0 if f_fecha == fecha_ant else 7.0,
+                'prof_cent': 8.0 if f_fecha == fecha_ant else 7.0,
+                'prof_int': 8.0 if f_fecha == fecha_ant else 7.0,
+                'psi': 100.0,
+                'usuario_registro': 'Inspector Caminos'
+            })
+
+    # Camino 1: Función directa sin fecha (debe resolver a la última fecha: 2026-10-12)
+    pdf1 = pdf_generator.generar_pdf_plan_mantenimiento(placa)
+
+    # Camino 2: Función directa con fecha explícita de la última inspección
+    pdf2 = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha_ult)
+
+    # Camino 3: Endpoint de API FastAPI
+    token = server.crear_token_acceso("admin", "admin")
+    client = TestClient(server.app)
+    resp = client.get(f"/api/informe-pdf/{placa}?fecha={fecha_ult}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+    pdf3 = resp.content
+
+    def extraer_texto_limpio(pdf_b):
+        r = pypdf.PdfReader(io.BytesIO(pdf_b))
+        txt = " ".join(p.extract_text() for p in r.pages)
+        # Normalizar espacios en blanco
+        return re.sub(r'\s+', ' ', txt).strip()
+
+    txt1 = extraer_texto_limpio(pdf1)
+    txt2 = extraer_texto_limpio(pdf2)
+    txt3 = extraer_texto_limpio(pdf3)
+
+    assert txt1 == txt2, "El PDF sin fecha (última inspección) debe ser idéntico al PDF con fecha explícita"
+    assert txt1 == txt3, "El PDF vía endpoint API debe ser idéntico al generado directamente"
+
+
+# =========================================================================
+# 9. RENDERIZADO DE PÁGINAS A PNG CON PYPDFIUM2
+# =========================================================================
+
+def test_renderizar_paginas_png(test_db):
+    """
+    Renderiza las páginas del informe a archivos PNG con pypdfium2 y valida su generación.
+    """
+    placa = "PNG-101"
+    fecha = "2026-10-12"
+    for pos in [1, 2, 3, 4]:
+        database.insertar_inspeccion({
+            'fecha': fecha,
+            'cliente': 'Flota Visual',
+            'subcliente': 'Base Visual',
+            'tipo_operacion': 'Reparto',
+            'placa': placa,
+            'posicion': pos,
+            'kilometraje': 45000.0,
+            'tipologia': 'Camión (4x2)',
+            'prof_ext': 9.0,
+            'prof_cent': 9.0,
+            'prof_int': 9.0,
+            'psi': 100.0,
+            'usuario_registro': 'Inspector Visual'
+        })
+
+    pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha)
+    pdf_doc = pdfium.PdfDocument(pdf_bytes)
+    assert len(pdf_doc) > 0
+
+    out_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "ejemplos")
+    os.makedirs(out_dir, exist_ok=True)
+
+    archivos_generados = []
+    for idx, page in enumerate(pdf_doc):
+        image = page.render(scale=2).to_pil()
+        png_path = os.path.join(out_dir, f"test_{placa}_pagina_{idx + 1}.png")
+        image.save(png_path)
+        assert os.path.exists(png_path)
+        assert os.path.getsize(png_path) > 1000
+        archivos_generados.append(png_path)
+
+    assert len(archivos_generados) == len(pdf_doc)
 ```
 
 ---

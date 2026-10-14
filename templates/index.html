@@ -385,8 +385,13 @@
         <!-- Campos del Vehículo -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Placa Vehículo *</label>
-            <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa');" onblur="verificarInspeccionAnterior()">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-slate-600">Placa Vehículo *</label>
+              <span id="badgePlacaVinculada" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                <i class="fa-solid fa-link mr-1"></i>Esquema Vinculado
+              </span>
+            </div>
+            <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa'); onInputPlacaDebounced();" onblur="consultarPerfilPlacaInmediato(); verificarInspeccionAnterior();">
             <p id="err_placa" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
               <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
               <span>La placa del vehículo es obligatoria</span>
@@ -394,8 +399,14 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Tipología</label>
-            <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"></select>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-slate-600">Tipología</label>
+              <button type="button" id="btnDesbloquearTipologia" onclick="desbloquearTipologia()" class="hidden text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Permite modificar la tipología de este vehículo">
+                <i class="fa-solid fa-lock-open text-[9px]"></i>
+                <span>Cambiar</span>
+              </button>
+            </div>
+            <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all"></select>
           </div>
 
           <div>
@@ -584,8 +595,14 @@
 
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">No. Interno / Ficha</label>
-                  <input type="text" id="numero_interno" placeholder="ej. LL-042" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 uppercase placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-slate-600">No. Interno / Ficha</label>
+                    <span id="badgeLlantaCliente" class="hidden text-[10px] text-emerald-600 font-bold flex items-center space-x-1">
+                      <i class="fa-solid fa-check text-[9px]"></i>
+                      <span>Reconocida</span>
+                    </span>
+                  </div>
+                  <input type="text" id="numero_interno" placeholder="ej. LL-042" oninput="this.value = this.value.toUpperCase(); onInputNumeroInternoDebounced();" onblur="consultarLlantaPorCliente(this.value);" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 uppercase placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div>
@@ -3745,6 +3762,10 @@
           poblarSelect('subcliente', `/api/valores-campo?campo=subcliente&cliente=${encodeURIComponent(cli)}`, 'ej. Principal (Seleccionar sede)'),
           actualizarLimiteCliente()
         ]);
+        const numInt = (document.getElementById('numero_interno')?.value || '').trim();
+        if (numInt) {
+          consultarLlantaPorCliente(numInt);
+        }
       }
     }
 
@@ -5315,6 +5336,179 @@
       }
     }
 
+    // ==========================================
+    // AUTOCOMPLETADO PERFIL PLACA <-> ESQUEMA & FLOTA
+    // ==========================================
+    let timerPlacaDebounce = null;
+    let ultimaPlacaConsultadaPerfil = '';
+
+    function onInputPlacaDebounced() {
+      clearTimeout(timerPlacaDebounce);
+      timerPlacaDebounce = setTimeout(() => {
+        const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+        if (placa && placa.length >= 3) {
+          consultarPerfilPlaca(placa);
+        }
+      }, 300);
+    }
+
+    function consultarPerfilPlacaInmediato() {
+      clearTimeout(timerPlacaDebounce);
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placa && placa !== ultimaPlacaConsultadaPerfil) {
+        consultarPerfilPlaca(placa);
+      }
+    }
+
+    async function consultarPerfilPlaca(placa) {
+      if (!placa) return;
+      ultimaPlacaConsultadaPerfil = placa;
+
+      try {
+        const res = await fetch(`/api/vehiculo-perfil?placa=${encodeURIComponent(placa)}`);
+        if (res.ok) {
+          const d = await res.json();
+          const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+          if (placaActual !== placa) return;
+
+          if (d.encontrado) {
+            // 1. Mostrar badge de esquema vinculado
+            const b = document.getElementById('badgePlacaVinculada');
+            if (b) b.classList.remove('hidden');
+
+            // 2. Precargar Cliente, Subcliente y Operación si están vacíos o no restringidos
+            const selCli = document.getElementById('cliente');
+            if (d.cliente && selCli && (!selCli.value || selCli.value === '__nuevo__')) {
+              asignarValorSelect('cliente', d.cliente);
+              await alCambiarClienteMobile();
+            }
+
+            if (d.subcliente && document.getElementById('subcliente')) {
+              asignarValorSelect('subcliente', d.subcliente);
+            }
+
+            if (d.tipo_operacion && document.getElementById('tipo_operacion')) {
+              asignarValorSelect('tipo_operacion', d.tipo_operacion);
+            }
+
+            // 3. Odómetro / Km si está vacío
+            const inputKm = document.getElementById('kilometraje');
+            if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
+              inputKm.value = Math.round(d.ultimo_km);
+            }
+
+            // 4. Seleccionar Tipología y redibujar chasis
+            if (d.tipologia) {
+              const selTip = document.getElementById('tipologia');
+              if (selTip) {
+                asignarValorSelect('tipologia', d.tipologia);
+                await cambioTipologia();
+                selTip.disabled = true;
+                selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+                const btnDesb = document.getElementById('btnDesbloquearTipologia');
+                if (btnDesb) btnDesb.classList.remove('hidden');
+              }
+            }
+          } else {
+            const b = document.getElementById('badgePlacaVinculada');
+            if (b) b.classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar perfil del vehículo:', err);
+      }
+    }
+
+    function desbloquearTipologia() {
+      const selTip = document.getElementById('tipologia');
+      if (selTip) {
+        selTip.disabled = false;
+        selTip.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        selTip.focus();
+      }
+      const btnDesb = document.getElementById('btnDesbloquearTipologia');
+      if (btnDesb) btnDesb.classList.add('hidden');
+      const b = document.getElementById('badgePlacaVinculada');
+      if (b) b.classList.add('hidden');
+    }
+
+    // ==========================================
+    // AUTOCOMPLETADO DE LLANTA POR CLIENTE
+    // ==========================================
+    let timerNumeroInternoDebounce = null;
+
+    function onInputNumeroInternoDebounced() {
+      clearTimeout(timerNumeroInternoDebounce);
+      timerNumeroInternoDebounce = setTimeout(() => {
+        const num = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+        if (num) {
+          consultarLlantaPorCliente(num);
+        }
+      }, 350);
+    }
+
+    async function consultarLlantaPorCliente(numInterno) {
+      const num = (numInterno || document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+      if (!num) return;
+
+      const cli = (document.getElementById('cliente')?.value || '').trim();
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+
+      try {
+        let url = `/api/llanta-por-cliente?numero_interno=${encodeURIComponent(num)}`;
+        if (cli && cli !== '__nuevo__') url += `&cliente=${encodeURIComponent(cli)}`;
+        if (placa) url += `&placa=${encodeURIComponent(placa)}`;
+
+        const res = await fetch(url);
+        if (res.ok) {
+          const d = await res.json();
+          const numActual = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+          if (numActual !== num) return;
+
+          if (d.encontrado && d.datos) {
+            const lt = d.datos;
+            const bLlanta = document.getElementById('badgeLlantaCliente');
+            if (bLlanta) bLlanta.classList.remove('hidden');
+
+            const bHist = document.getElementById('badgeHistorialPrevia');
+            if (bHist) {
+              bHist.classList.remove('hidden');
+              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + lt.ult_prof_min.toFixed(1) + ' mm' : ''})`;
+            }
+
+            // Precargar especificaciones técnicas de la llanta
+            if (lt.marca) {
+              asignarValorSelect('marca', lt.marca);
+              await alCambiarMarcaMobile();
+            }
+            if (lt.diseno) asignarValorSelect('diseno', lt.diseno);
+            if (lt.dimension) asignarValorSelect('dimension', lt.dimension);
+            if (lt.vida) {
+              asignarValorSelect('vida', lt.vida);
+              validarVida();
+            }
+            if (lt.banda_reen && lt.vida === 'Reencauche') {
+              asignarValorSelect('banda_reen', lt.banda_reen);
+            }
+            if (lt.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
+              document.getElementById('prof_inicial').value = lt.prof_inicial;
+            }
+            if (lt.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
+              document.getElementById('precio').value = lt.precio;
+            }
+            if (lt.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
+              document.getElementById('km_montaje').value = lt.km_montaje;
+            }
+          } else {
+            const bLlanta = document.getElementById('badgeLlantaCliente');
+            if (bLlanta) bLlanta.classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar llanta por cliente:', err);
+      }
+    }
+
     async function verificarInspeccionAnterior() {
       const token = idInspeccionActiva;
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
@@ -5553,6 +5747,12 @@
       if (inpPlaca) inpPlaca.value = '';
       const inpKm = document.getElementById('kilometraje');
       if (inpKm) inpKm.value = '';
+      ultimaPlacaConsultadaPerfil = '';
+      desbloquearTipologia();
+      const bPlaca = document.getElementById('badgePlacaVinculada');
+      if (bPlaca) bPlaca.classList.add('hidden');
+      const bLlanta = document.getElementById('badgeLlantaCliente');
+      if (bLlanta) bLlanta.classList.add('hidden');
 
       // Limpiar cliente y subcliente si no están fijados por rol de usuario
       if (typeof usuarioActual === 'undefined' || !usuarioActual || usuarioActual.rol === 'admin' || !usuarioActual.cliente_asignado) {
