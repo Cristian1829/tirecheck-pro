@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 10:42:06`
+- **Fecha de Generación:** `2026-10-14 11:01:45`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,514` líneas
-- **Tamaño Total de Código Fuente:** `1186.0 KB` (`1,214,482` bytes)
+- **Líneas Totales de Código:** `18,663` líneas
+- **Tamaño Total de Código Fuente:** `1193.8 KB` (`1,222,418` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -184,7 +184,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 796 | 32.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1713 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 1714 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -194,7 +194,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5913 | 578.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6061 | 586.3 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2811,7 +2811,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1713 líneas | 85,986 bytes (84.0 KB)
+- **Métricas:** 1714 líneas | 86,002 bytes (84.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3369,8 +3369,9 @@ def obtener_todas_inspecciones(usuario=None):
         query = """
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
             FROM inspecciones
+
         """
         params = []
         if usuario:
@@ -8229,7 +8230,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5913 líneas | 592,443 bytes (578.6 KB)
+- **Métricas:** 6061 líneas | 600,363 bytes (586.3 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8992,31 +8993,40 @@ if __name__ == '__main__':
                 </button>
               </div>
 
-              <!-- MÓDULO REACTIVO: EVIDENCIAS FOTOGRÁFICAS (1 O VARIAS IMÁGENES) -->
-              <div id="boxAdjuntarFotoNovedad" class="hidden pt-2 border-t border-slate-100 space-y-2 transition-all duration-300">
-                <div class="flex items-center justify-between text-xs font-bold text-slate-600">
+              <!-- MÓDULO: EVIDENCIAS FOTOGRÁFICAS (CÁMARA DIRECTA O GALERÍA) -->
+              <div id="boxAdjuntarFotoNovedad" class="pt-2 border-t border-slate-100 space-y-2 transition-all duration-300">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span class="flex items-center space-x-1.5 text-blue-700">
                     <i class="fa-solid fa-camera"></i>
-                    <span>Evidencias Fotográficas de la Novedad:</span>
+                    <span>Evidencias Fotográficas:</span>
                   </span>
-                  <span class="text-xs text-slate-400 font-normal">Sube 1 o varias fotos</span>
+                  <span id="lblConteoFotosResumen" class="text-[11px] text-slate-500 font-medium">0 fotos</span>
                 </div>
 
-                <!-- Input invisible para fotos (múltiple selección o cámara celular) -->
+                <!-- Inputs invisibles: Uno exclusivo para cámara celular trasera (capture) y otro para selector múltiple de galería -->
+                <input type="file" id="foto_camara_directa_input" accept="image/*" capture="environment" class="hidden" onchange="procesarFotosNovedad(this)">
                 <input type="file" id="foto_novedad_input" accept="image/*" multiple class="hidden" onchange="procesarFotosNovedad(this)">
                 <input type="hidden" id="foto_novedad_base64" value="">
 
-                <!-- Botones de Acción de Subida -->
-                <div class="flex items-center gap-2">
-                  <button type="button" id="btnDispararCamaraNovedad" onclick="document.getElementById('foto_novedad_input').click()" class="flex-1 py-2.5 px-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs rounded-xl border border-blue-200/90 flex items-center justify-center space-x-2 transition-all shadow-xs">
-                    <i class="fa-solid fa-camera-retro text-sm"></i>
-                    <span id="txtBtnCamaraNovedad">Tomar Foto o Subir Imágenes (1 o varias)</span>
+                <!-- Botones de Acción de Captura: Cámara Celular vs Galería -->
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" id="btnTomarFotoCamara" onclick="dispararCamaraDirecta()" class="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-all cursor-pointer" title="Abrir cámara del celular para tomar foto directa">
+                    <i class="fa-solid fa-camera text-sm"></i>
+                    <span>Cámara Celular</span>
                   </button>
-                  <button type="button" id="btnQuitarTodasFotos" onclick="quitarTodasFotosNovedad()" class="hidden py-2.5 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-all flex items-center space-x-1" title="Quitar todas las fotos adjuntas">
-                    <i class="fa-solid fa-trash-can text-xs"></i>
+                  <button type="button" id="btnSubirDesdeGaleria" onclick="document.getElementById('foto_novedad_input').click()" class="py-2.5 px-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 flex items-center justify-center space-x-2 transition-all shadow-xs cursor-pointer" title="Elegir fotos desde la galería o archivos">
+                    <i class="fa-solid fa-images text-sm"></i>
+                    <span>Subir de Galería</span>
+                  </button>
+                </div>
+
+                <div id="btnQuitarTodasContainer" class="hidden flex justify-end pt-0.5">
+                  <button type="button" id="btnQuitarTodasFotos" onclick="quitarTodasFotosNovedad()" class="py-1 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] rounded-lg border border-rose-200 transition-all flex items-center space-x-1 cursor-pointer" title="Quitar todas las fotos adjuntas">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i>
                     <span>Quitar Todas</span>
                   </button>
                 </div>
+
 
                 <!-- Vista Previa Ordenada de Imágenes Adjuntas -->
                 <div id="previewFotoNovedadBox" class="hidden rounded-xl border border-blue-200 bg-blue-50/40 p-2.5 space-y-2">
@@ -9062,18 +9072,23 @@ if __name__ == '__main__':
       <!-- BARRA FLOTANTE FIJA INFERIOR PARA MÓVIL Y TABLET (PULGAR)    -->
       <!-- ============================================================ -->
       <div id="stickyBottomActionBarMobile" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-2.5 sm:p-3 shadow-2xl flex items-center space-x-2">
-        <button type="button" onclick="limpiarMediciones()" class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm border border-slate-200 transition-all shrink-0" title="Limpiar mediciones">
+        <button type="button" onclick="limpiarMediciones()" class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm border border-slate-200 transition-all shrink-0 cursor-pointer" title="Limpiar mediciones">
           <i class="fa-solid fa-eraser"></i>
         </button>
-        <button type="button" onclick="dispararSubmitInspeccion()" class="flex-1 h-11 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-1.5 transition-all">
+        <button type="button" onclick="dispararCamaraDirecta()" class="w-11 h-11 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl flex items-center justify-center font-bold text-base shadow-md shadow-amber-500/30 transition-all shrink-0 relative cursor-pointer" title="Tomar foto con la cámara del celular">
+          <i class="fa-solid fa-camera"></i>
+          <span id="badgeFotosMobileSticky" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-black flex items-center justify-center border-2 border-white shadow-xs">0</span>
+        </button>
+        <button type="button" onclick="dispararSubmitInspeccion()" class="flex-1 h-11 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-1.5 transition-all cursor-pointer">
           <i class="fa-solid fa-circle-check text-sm"></i>
           <span>Guardar Pos. <b id="lblPosStickyBtn" class="font-mono text-sm">1</b> & Sig.</span>
         </button>
-        <button type="button" onclick="confirmarFinalizarInspeccion()" id="btnFinalizarMob" class="h-11 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-1.5 transition-all shrink-0" title="Finalizar Inspección">
+        <button type="button" onclick="confirmarFinalizarInspeccion()" id="btnFinalizarMob" class="h-11 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-1.5 transition-all shrink-0 cursor-pointer" title="Finalizar Inspección">
           <i class="fa-solid fa-flag-checkered text-xs"></i>
           <span>Finalizar</span>
         </button>
       </div>
+
 
     </form>
   </main>
@@ -9702,7 +9717,34 @@ if __name__ == '__main__':
           <input type="text" id="edit_novedades" class="w-full p-2 bg-slate-50 border rounded-xl font-medium">
         </div>
 
+        <!-- Evidencias fotográficas en Edición -->
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+          <div class="flex items-center justify-between font-bold text-slate-700">
+            <span class="flex items-center space-x-1.5 text-blue-700">
+              <i class="fa-solid fa-camera"></i>
+              <span>Evidencias Fotográficas:</span>
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="dispararCamaraEdicion()" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] rounded-lg shadow-xs flex items-center space-x-1 cursor-pointer">
+                <i class="fa-solid fa-camera text-[10px]"></i>
+                <span>Cámara</span>
+              </button>
+              <button type="button" onclick="document.getElementById('edit_foto_novedad_input').click()" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] rounded-lg border border-blue-200 flex items-center space-x-1 cursor-pointer">
+                <i class="fa-solid fa-images text-[10px]"></i>
+                <span>Galería</span>
+              </button>
+            </div>
+          </div>
+          <input type="file" id="edit_foto_camara_input" accept="image/*" capture="environment" class="hidden" onchange="procesarFotosEdicion(this)">
+          <input type="file" id="edit_foto_novedad_input" accept="image/*" multiple class="hidden" onchange="procesarFotosEdicion(this)">
+          <input type="hidden" id="edit_foto_novedad_base64" value="">
+          <div id="gridPreviewFotosEdicion" class="flex flex-wrap gap-2 pt-1 min-h-[48px] p-2 bg-slate-50 rounded-xl border border-slate-200">
+            <span class="text-slate-400 text-xs italic self-center">Sin fotos adjuntas</span>
+          </div>
+        </div>
+
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+
           <button type="button" onclick="cerrarModalEditarInspeccion()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 font-bold rounded-xl text-slate-700">Cancelar</button>
           <button type="submit" id="btnGuardarEdicion" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow">Guardar Cambios</button>
         </div>
@@ -10957,6 +10999,8 @@ if __name__ == '__main__':
         document.getElementById('edit_precio').value = d.precio || 0;
         document.getElementById('edit_km_montaje').value = d.km_montaje || 0;
         document.getElementById('edit_novedades').value = d.novedades || '';
+        fotosEdicionActuales = obtenerListaFotos(d.foto_novedad);
+        actualizarUIFotosEdicion();
 
         document.getElementById('modalEditarInspeccion').classList.remove('hidden');
         document.getElementById('modalEditarInspeccion').classList.add('flex');
@@ -10969,6 +11013,7 @@ if __name__ == '__main__':
       const m = document.getElementById('modalEditarInspeccion');
       m.classList.add('hidden');
       m.classList.remove('flex');
+      fotosEdicionActuales = [];
     }
 
     async function guardarEdicionInspeccion(e) {
@@ -10996,8 +11041,10 @@ if __name__ == '__main__':
         prof_inicial: parseFloat(document.getElementById('edit_prof_inicial').value) || 0,
         precio: parseFloat(document.getElementById('edit_precio').value) || 0,
         km_montaje: parseFloat(document.getElementById('edit_km_montaje').value) || 0,
-        novedades: document.getElementById('edit_novedades').value
+        novedades: document.getElementById('edit_novedades').value,
+        foto_novedad: document.getElementById('edit_foto_novedad_base64')?.value || ''
       };
+
 
       try {
         const res = await fetch(`/api/inspecciones/${id}`, {
@@ -12988,15 +13035,19 @@ if __name__ == '__main__':
     }
 
     function evaluarHabilitarFotoNovedad() {
-      const nov = document.getElementById('novedades');
-      const box = document.getElementById('boxAdjuntarFotoNovedad');
-      if (!box) return;
-      const tieneTexto = nov && nov.value.trim().length > 0;
-      const tieneFotos = fotosNovedadActuales && fotosNovedadActuales.length > 0;
-      if (tieneTexto || tieneFotos) {
-        box.classList.remove('hidden');
+      const lblResumen = document.getElementById('lblConteoFotosResumen');
+      if (lblResumen) {
+        const cant = (fotosNovedadActuales && fotosNovedadActuales.length) || 0;
+        lblResumen.textContent = cant === 0 ? '0 fotos' : `${cant} foto${cant > 1 ? 's' : ''}`;
+      }
+    }
+
+    function dispararCamaraDirecta() {
+      const inp = document.getElementById('foto_camara_directa_input');
+      if (inp) {
+        inp.click();
       } else {
-        box.classList.add('hidden');
+        document.getElementById('foto_novedad_input')?.click();
       }
     }
 
@@ -13014,10 +13065,6 @@ if __name__ == '__main__':
     function limpiarNovedades() {
       const nov = document.getElementById('novedades');
       if (nov) nov.value = '';
-      if (!fotosNovedadActuales || fotosNovedadActuales.length === 0) {
-        const box = document.getElementById('boxAdjuntarFotoNovedad');
-        if (box) box.classList.add('hidden');
-      }
     }
 
     function procesarFotosNovedad(input) {
@@ -13026,7 +13073,7 @@ if __name__ == '__main__':
       let procesadas = 0;
       const nuevasFotos = [];
 
-      mostrarToast(`Procesando ${files.length} imagen(es)...`);
+      mostrarToast(`📸 Procesando ${files.length} foto(s)...`);
 
       files.forEach(file => {
         const reader = new FileReader();
@@ -13079,22 +13126,28 @@ if __name__ == '__main__':
 
       const previewBox = document.getElementById('previewFotoNovedadBox');
       const grid = document.getElementById('gridPreviewFotosNovedad');
-      const txtBtn = document.getElementById('txtBtnCamaraNovedad');
-      const btnQuitarTodas = document.getElementById('btnQuitarTodasFotos');
+      const btnQuitarCont = document.getElementById('btnQuitarTodasContainer');
       const lblConteo = document.getElementById('lblConteoFotosAdjuntas');
+      const badgeMob = document.getElementById('badgeFotosMobileSticky');
+      const lblResumen = document.getElementById('lblConteoFotosResumen');
 
       if (!fotosNovedadActuales || fotosNovedadActuales.length === 0) {
         if (previewBox) previewBox.classList.add('hidden');
         if (grid) grid.innerHTML = '';
-        if (txtBtn) txtBtn.textContent = 'Tomar Foto o Subir Imágenes (1 o varias)';
-        if (btnQuitarTodas) btnQuitarTodas.classList.add('hidden');
+        if (btnQuitarCont) btnQuitarCont.classList.add('hidden');
+        if (badgeMob) badgeMob.classList.add('hidden');
+        if (lblResumen) lblResumen.textContent = '0 fotos';
         evaluarHabilitarFotoNovedad();
         return;
       }
 
       if (previewBox) previewBox.classList.remove('hidden');
-      if (btnQuitarTodas) btnQuitarTodas.classList.remove('hidden');
-      if (txtBtn) txtBtn.textContent = '+ Agregar más fotos';
+      if (btnQuitarCont) btnQuitarCont.classList.remove('hidden');
+      if (badgeMob) {
+        badgeMob.textContent = fotosNovedadActuales.length;
+        badgeMob.classList.remove('hidden');
+      }
+      if (lblResumen) lblResumen.textContent = `${fotosNovedadActuales.length} foto${fotosNovedadActuales.length > 1 ? 's' : ''}`;
       if (lblConteo) lblConteo.textContent = `${fotosNovedadActuales.length} imagen${fotosNovedadActuales.length > 1 ? 'es' : ''} adjunta${fotosNovedadActuales.length > 1 ? 's' : ''}`;
 
       if (grid) {
@@ -13105,7 +13158,7 @@ if __name__ == '__main__':
           card.title = `Clic para ver foto ${idx + 1} en grande`;
           card.innerHTML = `
             <img src="${foto}" alt="Miniatura ${idx + 1}" class="w-full h-full object-cover">
-            <button type="button" onclick="event.stopPropagation(); eliminarFotoNovedadIndex(${idx});" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition-all" title="Quitar esta foto">
+            <button type="button" onclick="event.stopPropagation(); eliminarFotoNovedadIndex(${idx});" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition-all cursor-pointer" title="Quitar esta foto">
               <i class="fa-solid fa-xmark"></i>
             </button>
             <span class="absolute bottom-0 left-0 right-0 bg-slate-900/80 text-white text-[8px] text-center font-mono font-bold leading-tight py-0.5">
@@ -13132,12 +13185,108 @@ if __name__ == '__main__':
       fotosNovedadActuales = [];
       const inp = document.getElementById('foto_novedad_input');
       if (inp) inp.value = '';
+      const inpCam = document.getElementById('foto_camara_directa_input');
+      if (inpCam) inpCam.value = '';
       actualizarUIFotosNovedad();
     }
 
     function quitarFotoNovedad() {
       quitarTodasFotosNovedad();
     }
+
+    // ==========================================
+    // FOTOS EN MODAL DE EDICIÓN DE INSPECCIÓN
+    // ==========================================
+    let fotosEdicionActuales = [];
+
+    function dispararCamaraEdicion() {
+      document.getElementById('edit_foto_camara_input')?.click();
+    }
+
+    function procesarFotosEdicion(input) {
+      if (!input.files || input.files.length === 0) return;
+      const files = Array.from(input.files);
+      let procesadas = 0;
+      const nuevasFotos = [];
+
+      mostrarToast(`📸 Procesando ${files.length} foto(s)...`);
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const maxDim = 1000;
+            let w = img.width;
+            let h = img.height;
+            if (w > h && w > maxDim) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else if (h > maxDim) {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
+            nuevasFotos.push(dataUrl);
+
+            procesadas++;
+            if (procesadas === files.length) {
+              fotosEdicionActuales = fotosEdicionActuales.concat(nuevasFotos);
+              actualizarUIFotosEdicion();
+              mostrarToast(`📸 ${nuevasFotos.length} foto(s) agregada(s) para guardar`);
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      input.value = '';
+    }
+
+    function actualizarUIFotosEdicion() {
+      const b64 = document.getElementById('edit_foto_novedad_base64');
+      if (b64) {
+        b64.value = fotosEdicionActuales.length > 0 ? JSON.stringify(fotosEdicionActuales) : '';
+      }
+      const grid = document.getElementById('gridPreviewFotosEdicion');
+      if (!grid) return;
+
+      if (!fotosEdicionActuales || fotosEdicionActuales.length === 0) {
+        grid.innerHTML = '<span class="text-slate-400 text-xs italic self-center">Sin fotos adjuntas</span>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      fotosEdicionActuales.forEach((foto, idx) => {
+        const card = document.createElement('div');
+        card.className = 'relative group w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 border-blue-400 bg-slate-900 shadow-sm flex-shrink-0 cursor-pointer transition-transform hover:scale-105';
+        card.title = `Clic para ver foto ${idx + 1} en grande`;
+        card.innerHTML = `
+          <img src="${foto}" alt="Miniatura ${idx + 1}" class="w-full h-full object-cover">
+          <button type="button" onclick="event.stopPropagation(); eliminarFotoEdicionIndex(${idx});" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition-all cursor-pointer" title="Quitar esta foto">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <span class="absolute bottom-0 left-0 right-0 bg-slate-900/80 text-white text-[8px] text-center font-mono font-bold leading-tight py-0.5">
+            #${idx + 1}
+          </span>
+        `;
+        card.onclick = () => abrirGaleriaFotosDirecta(fotosEdicionActuales, idx, 'Evidencias fotográficas en edición');
+        grid.appendChild(card);
+      });
+    }
+
+    function eliminarFotoEdicionIndex(idx) {
+      if (idx >= 0 && idx < fotosEdicionActuales.length) {
+        fotosEdicionActuales.splice(idx, 1);
+        actualizarUIFotosEdicion();
+      }
+    }
+
 
     // ==========================================
     // VISOR MODAL DE GALERÍA DE FOTOS (BASE DE DATOS & FORMULARIO)

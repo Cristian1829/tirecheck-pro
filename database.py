@@ -552,8 +552,9 @@ def obtener_todas_inspecciones(usuario=None):
         query = """
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
             FROM inspecciones
+
         """
         params = []
         if usuario:
