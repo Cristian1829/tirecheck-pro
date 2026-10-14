@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 15:35:09`
+- **Fecha de Generación:** `2026-10-14 15:58:24`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,082` líneas
-- **Tamaño Total de Código Fuente:** `1254.4 KB` (`1,284,535` bytes)
+- **Líneas Totales de Código:** `20,075` líneas
+- **Tamaño Total de Código Fuente:** `1254.1 KB` (`1,284,204` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -197,7 +197,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 850 | 35.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1983 | 97.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 1976 | 96.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -2880,7 +2880,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1983 líneas | 99,350 bytes (97.0 KB)
+- **Métricas:** 1976 líneas | 99,005 bytes (96.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3485,20 +3485,13 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     p_int = to_float(datos.get('prof_int', 0))
     profs = [p_ext, p_cent, p_int]
 
-    # Candado 1: Límite de profundidad (27 mm para llantas R22.5 o generales)
-    if '22.5' in dimension or 'R22.5' in dimension:
-        if any(p > 27.0 for p in profs):
-            return {
-                'valido': False,
-                'mensaje': f'⛔ CANDADO DE SEGURIDAD: En dimensión {dimension}, ninguna profundidad puede superar los 27.0 mm (Valores ingresados: {profs}).'
-            }
-    else:
-        # Límite general razonable (máx 32mm para minería/offroad)
-        if any(p > 32.0 for p in profs):
-            return {
-                'valido': False,
-                'mensaje': f'⛔ CANDADO DE SEGURIDAD: La profundidad ingresada supera el límite físico de 32 mm.'
-            }
+    # Candado 1: Límite de profundidad (máximo físico 27.0 mm)
+    if any(p > 27.0 for p in profs):
+        dim_txt = f"En dimensión {dimension}, n" if dimension else "N"
+        return {
+            'valido': False,
+            'mensaje': f'⛔ CANDADO DE SEGURIDAD: {dim_txt}inguna profundidad puede superar los 27.0 mm (Valores ingresados: {profs}).'
+        }
 
     # Candado 1.2: Ninguna profundidad puede superar la Profundidad Inicial de la llanta
     if prof_inicial > 0:
@@ -8701,7 +8694,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6381 líneas | 616,041 bytes (601.6 KB)
+- **Métricas:** 6381 líneas | 616,055 bytes (601.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9398,7 +9391,7 @@ if __name__ == '__main__':
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Ext *</label>
                   <div class="relative flex items-center">
-                    <input type="number" id="prof_ext" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
+                    <input type="number" id="prof_ext" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
                     <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
                   </div>
                 </div>
@@ -9406,7 +9399,7 @@ if __name__ == '__main__':
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Cent *</label>
                   <div class="relative flex items-center">
-                    <input type="number" id="prof_cent" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
+                    <input type="number" id="prof_cent" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
                     <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
                   </div>
                 </div>
@@ -9414,7 +9407,7 @@ if __name__ == '__main__':
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Int *</label>
                   <div class="relative flex items-center">
-                    <input type="number" id="prof_int" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
+                    <input type="number" id="prof_int" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
                     <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
                   </div>
                 </div>
@@ -10198,9 +10191,9 @@ if __name__ == '__main__':
           </div>
           <div><label class="font-bold text-slate-600">Banda Reen</label><input type="text" id="edit_banda_reen" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Presión (PSI)</label><input type="number" id="edit_psi" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-          <div><label class="font-bold text-slate-600">Prof. Ext (mm)</label><input type="number" step="0.1" id="edit_prof_ext" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label class="font-bold text-slate-600">Prof. Cent (mm)</label><input type="number" step="0.1" id="edit_prof_cent" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label class="font-bold text-slate-600">Prof. Int (mm)</label><input type="number" step="0.1" id="edit_prof_int" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label class="font-bold text-slate-600">Prof. Ext (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_ext" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label class="font-bold text-slate-600">Prof. Cent (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_cent" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label class="font-bold text-slate-600">Prof. Int (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_int" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
           <div><label class="font-bold text-slate-600">Prof Inicial (mm)</label><input type="number" step="0.1" id="edit_prof_inicial" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
           <div><label class="font-bold text-slate-600">Precio ($)</label><input type="number" id="edit_precio" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Km Montaje</label><input type="number" id="edit_km_montaje" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
@@ -14942,8 +14935,8 @@ if __name__ == '__main__':
       const dimension = document.getElementById('dimension').value.trim();
       const prof_inicial_num = parseFloat(document.getElementById('prof_inicial').value) || 0;
 
-      if (dimension.includes('22.5') && (p_ext > 27 || p_cent > 27 || p_int > 27)) {
-        mostrarToast('⛔ CANDADO: Para dimensión R22.5, ninguna profundidad puede superar los 27.0 mm', true);
+      if (p_ext > 27 || p_cent > 27 || p_int > 27) {
+        mostrarToast('⛔ CANDADO: Ninguna profundidad puede superar el límite físico de 27.0 mm', true);
         return;
       }
       if (prof_inicial_num > 0 && (p_ext > prof_inicial_num || p_cent > prof_inicial_num || p_int > prof_inicial_num)) {
@@ -15482,7 +15475,7 @@ if __name__ == '__main__':
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Ext *</label>
                 <div class="relative flex items-center">
-                  <input type="number" id="prof_ext" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal"
+                  <input type="number" id="prof_ext" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
                     class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
                     oninput="evaluarSugerenciaCambio();">
                   <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
@@ -15493,7 +15486,7 @@ if __name__ == '__main__':
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Cent *</label>
                 <div class="relative flex items-center">
-                  <input type="number" id="prof_cent" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal"
+                  <input type="number" id="prof_cent" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
                     class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
                     oninput="evaluarSugerenciaCambio();">
                   <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
@@ -15504,7 +15497,7 @@ if __name__ == '__main__':
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Int *</label>
                 <div class="relative flex items-center">
-                  <input type="number" id="prof_int" step="0.1" min="0" max="32" placeholder="0.0" inputmode="decimal"
+                  <input type="number" id="prof_int" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
                     class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
                     oninput="evaluarSugerenciaCambio();">
                   <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>

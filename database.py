@@ -599,20 +599,13 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     p_int = to_float(datos.get('prof_int', 0))
     profs = [p_ext, p_cent, p_int]
 
-    # Candado 1: Límite de profundidad (27 mm para llantas R22.5 o generales)
-    if '22.5' in dimension or 'R22.5' in dimension:
-        if any(p > 27.0 for p in profs):
-            return {
-                'valido': False,
-                'mensaje': f'⛔ CANDADO DE SEGURIDAD: En dimensión {dimension}, ninguna profundidad puede superar los 27.0 mm (Valores ingresados: {profs}).'
-            }
-    else:
-        # Límite general razonable (máx 32mm para minería/offroad)
-        if any(p > 32.0 for p in profs):
-            return {
-                'valido': False,
-                'mensaje': f'⛔ CANDADO DE SEGURIDAD: La profundidad ingresada supera el límite físico de 32 mm.'
-            }
+    # Candado 1: Límite de profundidad (máximo físico 27.0 mm)
+    if any(p > 27.0 for p in profs):
+        dim_txt = f"En dimensión {dimension}, n" if dimension else "N"
+        return {
+            'valido': False,
+            'mensaje': f'⛔ CANDADO DE SEGURIDAD: {dim_txt}inguna profundidad puede superar los 27.0 mm (Valores ingresados: {profs}).'
+        }
 
     # Candado 1.2: Ninguna profundidad puede superar la Profundidad Inicial de la llanta
     if prof_inicial > 0:
