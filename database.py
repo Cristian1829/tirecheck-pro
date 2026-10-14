@@ -874,8 +874,9 @@ def analizar_inspecciones_df(df_inspecciones):
             'Subcliente': subcliente,
             'Operación': operacion,
             'Tipo': desc_tipo,
-            'Km': group['kilometraje'].max() if 'kilometraje' in group else 0,
+            'Km': 0.0 if ('kilometraje' not in group or pd.isna(group['kilometraje'].max())) else to_float(group['kilometraje'].max()),
             'Llantas Inspeccionadas': len(group),
+
             'Limite_Retiro_mm': limite_cambio_cliente,
             'Plan_Alineacion': "SÍ" if plan_alineacion else "NO",
             'Plan_Dual_Mal_Apareado': "SÍ" if plan_dual else "NO",

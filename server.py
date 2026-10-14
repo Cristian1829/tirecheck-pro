@@ -217,11 +217,15 @@ def sanitizar_nativos(obj):
         return [sanitizar_nativos(i) for i in obj]
     elif isinstance(obj, dict):
         return {k: sanitizar_nativos(v) for k, v in obj.items()}
-    elif hasattr(obj, "item"):
-        return obj.item()
     elif pd.isna(obj):
         return None
+    elif hasattr(obj, "item"):
+        val = obj.item()
+        return None if (isinstance(val, float) and math.isnan(val)) else val
+    elif isinstance(obj, float) and math.isnan(obj):
+        return None
     return obj
+
 
 # ==========================================
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)
@@ -409,13 +413,20 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
 
 @app.get("/api/diagnostico")
 def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin":
-        filtro_u = usuario_actual["username"]
-    else:
-        filtro_u = usuario if usuario else None
-    df = database.obtener_todas_inspecciones(usuario=filtro_u)
-    analisis = database.analizar_inspecciones_df(df)
-    return sanitizar_nativos(analisis.to_dict(orient="records"))
+    try:
+        if usuario_actual.get("rol") != "admin":
+            filtro_u = usuario_actual["username"]
+        else:
+            filtro_u = usuario if usuario else None
+        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        analisis = database.analizar_inspecciones_df(df)
+        analisis = analisis.fillna("")
+        return sanitizar_nativos(analisis.to_dict(orient="records"))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al calcular diagnóstico: {str(e)}")
+
 
 @app.get("/api/diagnostico/exportar-excel")
 def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):

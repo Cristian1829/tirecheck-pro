@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 11:01:45`
+- **Fecha de Generación:** `2026-10-14 11:10:19`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,663` líneas
-- **Tamaño Total de Código Fuente:** `1193.8 KB` (`1,222,418` bytes)
+- **Líneas Totales de Código:** `18,675` líneas
+- **Tamaño Total de Código Fuente:** `1194.2 KB` (`1,222,883` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -183,8 +183,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 796 | 32.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1714 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 807 | 33.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 1715 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -2003,7 +2003,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 796 líneas | 33,683 bytes (32.9 KB)
+- **Métricas:** 807 líneas | 34,089 bytes (33.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2226,11 +2226,15 @@ def sanitizar_nativos(obj):
         return [sanitizar_nativos(i) for i in obj]
     elif isinstance(obj, dict):
         return {k: sanitizar_nativos(v) for k, v in obj.items()}
-    elif hasattr(obj, "item"):
-        return obj.item()
     elif pd.isna(obj):
         return None
+    elif hasattr(obj, "item"):
+        val = obj.item()
+        return None if (isinstance(val, float) and math.isnan(val)) else val
+    elif isinstance(obj, float) and math.isnan(obj):
+        return None
     return obj
+
 
 # ==========================================
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)
@@ -2418,13 +2422,20 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
 
 @app.get("/api/diagnostico")
 def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin":
-        filtro_u = usuario_actual["username"]
-    else:
-        filtro_u = usuario if usuario else None
-    df = database.obtener_todas_inspecciones(usuario=filtro_u)
-    analisis = database.analizar_inspecciones_df(df)
-    return sanitizar_nativos(analisis.to_dict(orient="records"))
+    try:
+        if usuario_actual.get("rol") != "admin":
+            filtro_u = usuario_actual["username"]
+        else:
+            filtro_u = usuario if usuario else None
+        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        analisis = database.analizar_inspecciones_df(df)
+        analisis = analisis.fillna("")
+        return sanitizar_nativos(analisis.to_dict(orient="records"))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al calcular diagnóstico: {str(e)}")
+
 
 @app.get("/api/diagnostico/exportar-excel")
 def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -2811,7 +2822,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1714 líneas | 86,002 bytes (84.0 KB)
+- **Métricas:** 1715 líneas | 86,061 bytes (84.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3691,8 +3702,9 @@ def analizar_inspecciones_df(df_inspecciones):
             'Subcliente': subcliente,
             'Operación': operacion,
             'Tipo': desc_tipo,
-            'Km': group['kilometraje'].max() if 'kilometraje' in group else 0,
+            'Km': 0.0 if ('kilometraje' not in group or pd.isna(group['kilometraje'].max())) else to_float(group['kilometraje'].max()),
             'Llantas Inspeccionadas': len(group),
+
             'Limite_Retiro_mm': limite_cambio_cliente,
             'Plan_Alineacion': "SÍ" if plan_alineacion else "NO",
             'Plan_Dual_Mal_Apareado': "SÍ" if plan_dual else "NO",
