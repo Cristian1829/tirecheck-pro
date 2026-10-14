@@ -2259,16 +2259,33 @@
     let bdFiltrosPoblados = false;
 
     async function cargarBaseInspecciones() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
+      }
       try {
         const res = await fetch('/api/inspecciones');
         if (res.ok) {
           cacheTodasInspecciones = await res.json();
-          document.getElementById('badgeTotalInspecciones').textContent = cacheTodasInspecciones.length;
-          document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
+          const bTotal = document.getElementById('badgeTotalInspecciones');
+          if (bTotal) bTotal.textContent = cacheTodasInspecciones.length;
+          const lTotal = document.getElementById('lblTotalBD');
+          if (lTotal) lTotal.textContent = cacheTodasInspecciones.length;
           poblarSelectoresFiltroBD(cacheTodasInspecciones);
           filtrarTablaBD();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
         }
       } catch (e) {
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+        }
         mostrarToast('Error al cargar inspecciones desde el servidor', true);
       }
     }
@@ -2868,14 +2885,23 @@
     // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
     // ==========================================
     async function cargarDiagnostico() {
+      const tbody = document.getElementById('tbodyDiagnostico');
+      if (tbody && (!cacheDiagnostico || cacheDiagnostico.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando diagnósticos de flota...</td></tr>';
+      }
       try {
         const res = await fetch('/api/diagnostico');
         if (res.ok) {
           cacheDiagnostico = await res.json();
           actualizarCombosFiltroDiagnostico();
           filtrarTablaDiagnostico();
+        } else if (res.status === 401) {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
+        } else {
+          if (tbody) tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar diagnósticos (HTTP ${res.status}). <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
         }
       } catch (e) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión con el servidor. <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
         mostrarToast('Error al cargar diagnóstico de flota', true);
       }
     }

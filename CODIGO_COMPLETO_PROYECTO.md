@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 08:50:23`
+- **Fecha de Generación:** `2026-10-14 08:59:11`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,387` líneas
-- **Tamaño Total de Código Fuente:** `1179.5 KB` (`1,207,757` bytes)
+- **Líneas Totales de Código:** `18,413` líneas
+- **Tamaño Total de Código Fuente:** `1182.4 KB` (`1,210,792` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -194,7 +194,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5887 | 575.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5913 | 578.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -8128,7 +8128,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 5887 líneas | 589,408 bytes (575.6 KB)
+- **Métricas:** 5913 líneas | 592,443 bytes (578.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -10393,16 +10393,33 @@ if __name__ == '__main__':
     let bdFiltrosPoblados = false;
 
     async function cargarBaseInspecciones() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
+      }
       try {
         const res = await fetch('/api/inspecciones');
         if (res.ok) {
           cacheTodasInspecciones = await res.json();
-          document.getElementById('badgeTotalInspecciones').textContent = cacheTodasInspecciones.length;
-          document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
+          const bTotal = document.getElementById('badgeTotalInspecciones');
+          if (bTotal) bTotal.textContent = cacheTodasInspecciones.length;
+          const lTotal = document.getElementById('lblTotalBD');
+          if (lTotal) lTotal.textContent = cacheTodasInspecciones.length;
           poblarSelectoresFiltroBD(cacheTodasInspecciones);
           filtrarTablaBD();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
         }
       } catch (e) {
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+        }
         mostrarToast('Error al cargar inspecciones desde el servidor', true);
       }
     }
@@ -11002,14 +11019,23 @@ if __name__ == '__main__':
     // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
     // ==========================================
     async function cargarDiagnostico() {
+      const tbody = document.getElementById('tbodyDiagnostico');
+      if (tbody && (!cacheDiagnostico || cacheDiagnostico.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando diagnósticos de flota...</td></tr>';
+      }
       try {
         const res = await fetch('/api/diagnostico');
         if (res.ok) {
           cacheDiagnostico = await res.json();
           actualizarCombosFiltroDiagnostico();
           filtrarTablaDiagnostico();
+        } else if (res.status === 401) {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
+        } else {
+          if (tbody) tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar diagnósticos (HTTP ${res.status}). <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
         }
       } catch (e) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión con el servidor. <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
         mostrarToast('Error al cargar diagnóstico de flota', true);
       }
     }
