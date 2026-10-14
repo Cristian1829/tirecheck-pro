@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 15:58:24`
+- **Fecha de Generación:** `2026-10-14 16:18:25`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,075` líneas
-- **Tamaño Total de Código Fuente:** `1254.1 KB` (`1,284,204` bytes)
+- **Líneas Totales de Código:** `20,071` líneas
+- **Tamaño Total de Código Fuente:** `1253.9 KB` (`1,283,997` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -207,7 +207,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6381 | 601.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6377 | 601.4 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -8694,7 +8694,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6381 líneas | 616,055 bytes (601.6 KB)
+- **Métricas:** 6377 líneas | 615,848 bytes (601.4 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -8925,10 +8925,6 @@ if __name__ == '__main__':
           <span>Ingresar a la Plataforma</span>
           <i class="fa-solid fa-arrow-right"></i>
         </button>
-      </div>
-
-      <div class="pt-2 text-center text-[11px] text-slate-400 border-t border-slate-100">
-        Usuarios predeterminados: <b>admin</b> (clave: admin123) / <b>inspector1</b> (clave: 1234)
       </div>
     </div>
   </div>
