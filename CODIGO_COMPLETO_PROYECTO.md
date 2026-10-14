@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 10:14:54`
+- **Fecha de Generación:** `2026-10-14 10:28:55`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,435` líneas
-- **Tamaño Total de Código Fuente:** `1182.9 KB` (`1,211,279` bytes)
+- **Líneas Totales de Código:** `18,512` líneas
+- **Tamaño Total de Código Fuente:** `1186.0 KB` (`1,214,461` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -160,7 +160,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [requirements.txt](#archivo-requirementstxt) | `text` | 12 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.) |
 | [.gitignore](#archivo-gitignore) | `gitignore` | 30 | 0.4 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
-| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 30 | 0.8 KB | Definición estandarizada del contenedor Docker para producción/cloud |
+| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 34 | 1.0 KB | Definición estandarizada del contenedor Docker para producción/cloud |
 | [render.yaml](#archivo-renderyaml) | `yaml` | 11 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
 | [INICIAR_TIRECHECK.bat](#archivo-iniciar-tirecheckbat) | `bat` | 23 | 0.7 KB | Script de arranque automático para Windows: verificación de entorno, servidor uvicorn y apertura de navegador |
 | [iniciar_app.bat](#archivo-iniciar-appbat) | `bat` | 9 | 0.2 KB | Script de arranque directo sin dependencias |
@@ -183,8 +183,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 756 | 31.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1678 | 82.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 794 | 32.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 1713 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -329,7 +329,7 @@ scripts/temp_*
 
 - **Ruta:** `Dockerfile`
 - **Descripción:** Definición estandarizada del contenedor Docker para producción/cloud
-- **Métricas:** 30 líneas | 782 bytes (0.8 KB)
+- **Métricas:** 34 líneas | 983 bytes (1.0 KB)
 - **Lenguaje:** `dockerfile`
 
 ```dockerfile
@@ -355,8 +355,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código de la aplicación
 COPY . .
 
+# Asegurar que el archivo seed_inspecciones.db exista en la raíz del contenedor (fuera del punto de montaje del volumen)
+RUN cp -n data/inspecciones.db /app/seed_inspecciones.db 2>/dev/null || true
+
 # Asegurar existencia y permisos del directorio data para SQLite
 RUN mkdir -p /app/data && chmod 777 /app/data
+
 
 # Exponer puerto
 EXPOSE 8000
@@ -1999,7 +2003,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 756 líneas | 32,064 bytes (31.3 KB)
+- **Métricas:** 794 líneas | 33,662 bytes (32.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2747,7 +2751,45 @@ def api_eliminar_usuario(username: str, admin: dict = Depends(requerir_admin)):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return {"status": "ok", "username": username}
 
+@app.get("/api/admin/db-info")
+def api_admin_db_info(admin: dict = Depends(requerir_admin)):
+    with database.get_connection() as conn:
+        c = conn.cursor()
+        total_insp = c.execute("SELECT COUNT(*) FROM inspecciones").fetchone()[0]
+        total_usr = c.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+    return {
+        "db_path": database.DB_PATH,
+        "db_size_bytes": os.path.getsize(database.DB_PATH) if os.path.exists(database.DB_PATH) else 0,
+        "total_inspecciones": total_insp,
+        "total_usuarios": total_usr
+    }
+
+@app.post("/api/admin/restaurar-seed")
+def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
+    import shutil
+    candidates = [database._DB_SEED, database._DB_ROOT]
+    seed_found = None
+    for c in candidates:
+        if os.path.exists(c) and os.path.getsize(c) > 10000:
+            seed_found = c
+            break
+    if not seed_found:
+        raise HTTPException(status_code=404, detail="No se encontró el archivo de semilla de la base de datos.")
+    try:
+        shutil.copy2(seed_found, database.DB_PATH)
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            total_insp = cur.execute("SELECT COUNT(*) FROM inspecciones").fetchone()[0]
+        return {
+            "status": "ok",
+            "message": f"Base de datos restaurada con éxito desde {seed_found}. Total inspecciones: {total_insp}",
+            "total_inspecciones": total_insp
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al restaurar semilla: {str(e)}")
+
 # ==========================================
+
 # PUNTO DE ENTRADA
 # ==========================================
 
@@ -2767,7 +2809,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1678 líneas | 84,603 bytes (82.6 KB)
+- **Métricas:** 1713 líneas | 85,986 bytes (84.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2786,15 +2828,50 @@ _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(_DATA_DIR, exist_ok=True)
 _DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
 _DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
+_DB_SEED = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seed_inspecciones.db")
 
-if not os.path.exists(_DB_DATA) and os.path.exists(_DB_ROOT):
-    try:
-        import shutil
-        shutil.copy2(_DB_ROOT, _DB_DATA)
-    except Exception:
-        pass
+def verificar_y_poblar_seed():
+    """
+    Garantiza que si la base de datos en data/inspecciones.db no existe,
+    está vacía o tiene 0 inspecciones (como ocurre al montar un volumen nuevo en Railway),
+    se carguen inmediatamente todas las inspecciones y catálogos desde seed_inspecciones.db.
+    """
+    candidatos_seed = [_DB_SEED, _DB_ROOT]
+    seed_valido = None
+    for s in candidatos_seed:
+        if os.path.exists(s) and os.path.getsize(s) > 10000:
+            seed_valido = s
+            break
 
+    if not seed_valido:
+        return
+
+    necesita_poblado = False
+    if not os.path.exists(_DB_DATA) or os.path.getsize(_DB_DATA) == 0:
+        necesita_poblado = True
+    else:
+        try:
+            conn = sqlite3.connect(_DB_DATA)
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM inspecciones")
+            row = cur.fetchone()
+            if not row or row[0] == 0:
+                necesita_poblado = True
+            conn.close()
+        except Exception:
+            necesita_poblado = True
+
+    if necesita_poblado:
+        try:
+            import shutil
+            shutil.copy2(seed_valido, _DB_DATA)
+            print(f"[DATABASE] ✅ Base de datos poblada automáticamente desde seed: {seed_valido} ({os.path.getsize(_DB_DATA)} bytes)")
+        except Exception as e:
+            print(f"[DATABASE] ⚠️ Error al copiar seed a {_DB_DATA}: {e}")
+
+verificar_y_poblar_seed()
 DB_PATH = _DB_DATA
+
 
 def hash_password(password: str) -> str:
     """
@@ -2890,7 +2967,9 @@ def get_connection():
         conn.close()
 
 def inicializar_bd():
+    verificar_y_poblar_seed()
     with get_connection() as conn:
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS inspecciones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -3295,16 +3374,14 @@ def obtener_todas_inspecciones(usuario=None):
         if usuario:
             usr_info = obtener_usuario_por_username(usuario)
             if usr_info and usr_info.get('rol') != 'admin':
-                # Si tiene cliente asignado o filtra por sus registros
-                cli_asig = usr_info.get('cliente_asignado')
+                # Si tiene cliente asignado, filtra por ese cliente. Si no tiene cliente asignado (vacío), tiene acceso a todas las flotas.
+                cli_asig = (usr_info.get('cliente_asignado') or '').strip()
                 if cli_asig:
                     query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
                     params.append(cli_asig)
-                else:
-                    query += " WHERE usuario_registro = ?"
-                    params.append(usuario)
         query += " ORDER BY id DESC"
         return pd.read_sql_query(query, conn, params=params)
+
 
 def actualizar_inspeccion(inspeccion_id, datos):
     """

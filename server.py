@@ -742,7 +742,45 @@ def api_eliminar_usuario(username: str, admin: dict = Depends(requerir_admin)):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return {"status": "ok", "username": username}
 
+@app.get("/api/admin/db-info")
+def api_admin_db_info(admin: dict = Depends(requerir_admin)):
+    with database.get_connection() as conn:
+        c = conn.cursor()
+        total_insp = c.execute("SELECT COUNT(*) FROM inspecciones").fetchone()[0]
+        total_usr = c.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+    return {
+        "db_path": database.DB_PATH,
+        "db_size_bytes": os.path.getsize(database.DB_PATH) if os.path.exists(database.DB_PATH) else 0,
+        "total_inspecciones": total_insp,
+        "total_usuarios": total_usr
+    }
+
+@app.post("/api/admin/restaurar-seed")
+def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
+    import shutil
+    candidates = [database._DB_SEED, database._DB_ROOT]
+    seed_found = None
+    for c in candidates:
+        if os.path.exists(c) and os.path.getsize(c) > 10000:
+            seed_found = c
+            break
+    if not seed_found:
+        raise HTTPException(status_code=404, detail="No se encontró el archivo de semilla de la base de datos.")
+    try:
+        shutil.copy2(seed_found, database.DB_PATH)
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            total_insp = cur.execute("SELECT COUNT(*) FROM inspecciones").fetchone()[0]
+        return {
+            "status": "ok",
+            "message": f"Base de datos restaurada con éxito desde {seed_found}. Total inspecciones: {total_insp}",
+            "total_inspecciones": total_insp
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al restaurar semilla: {str(e)}")
+
 # ==========================================
+
 # PUNTO DE ENTRADA
 # ==========================================
 

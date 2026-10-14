@@ -20,8 +20,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código de la aplicación
 COPY . .
 
+# Asegurar que el archivo seed_inspecciones.db exista en la raíz del contenedor (fuera del punto de montaje del volumen)
+RUN cp -n data/inspecciones.db /app/seed_inspecciones.db 2>/dev/null || true
+
 # Asegurar existencia y permisos del directorio data para SQLite
 RUN mkdir -p /app/data && chmod 777 /app/data
+
 
 # Exponer puerto
 EXPOSE 8000

@@ -13,15 +13,50 @@ _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(_DATA_DIR, exist_ok=True)
 _DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
 _DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
+_DB_SEED = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seed_inspecciones.db")
 
-if not os.path.exists(_DB_DATA) and os.path.exists(_DB_ROOT):
-    try:
-        import shutil
-        shutil.copy2(_DB_ROOT, _DB_DATA)
-    except Exception:
-        pass
+def verificar_y_poblar_seed():
+    """
+    Garantiza que si la base de datos en data/inspecciones.db no existe,
+    está vacía o tiene 0 inspecciones (como ocurre al montar un volumen nuevo en Railway),
+    se carguen inmediatamente todas las inspecciones y catálogos desde seed_inspecciones.db.
+    """
+    candidatos_seed = [_DB_SEED, _DB_ROOT]
+    seed_valido = None
+    for s in candidatos_seed:
+        if os.path.exists(s) and os.path.getsize(s) > 10000:
+            seed_valido = s
+            break
 
+    if not seed_valido:
+        return
+
+    necesita_poblado = False
+    if not os.path.exists(_DB_DATA) or os.path.getsize(_DB_DATA) == 0:
+        necesita_poblado = True
+    else:
+        try:
+            conn = sqlite3.connect(_DB_DATA)
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM inspecciones")
+            row = cur.fetchone()
+            if not row or row[0] == 0:
+                necesita_poblado = True
+            conn.close()
+        except Exception:
+            necesita_poblado = True
+
+    if necesita_poblado:
+        try:
+            import shutil
+            shutil.copy2(seed_valido, _DB_DATA)
+            print(f"[DATABASE] ✅ Base de datos poblada automáticamente desde seed: {seed_valido} ({os.path.getsize(_DB_DATA)} bytes)")
+        except Exception as e:
+            print(f"[DATABASE] ⚠️ Error al copiar seed a {_DB_DATA}: {e}")
+
+verificar_y_poblar_seed()
 DB_PATH = _DB_DATA
+
 
 def hash_password(password: str) -> str:
     """
@@ -117,7 +152,9 @@ def get_connection():
         conn.close()
 
 def inicializar_bd():
+    verificar_y_poblar_seed()
     with get_connection() as conn:
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS inspecciones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -522,16 +559,14 @@ def obtener_todas_inspecciones(usuario=None):
         if usuario:
             usr_info = obtener_usuario_por_username(usuario)
             if usr_info and usr_info.get('rol') != 'admin':
-                # Si tiene cliente asignado o filtra por sus registros
-                cli_asig = usr_info.get('cliente_asignado')
+                # Si tiene cliente asignado, filtra por ese cliente. Si no tiene cliente asignado (vacío), tiene acceso a todas las flotas.
+                cli_asig = (usr_info.get('cliente_asignado') or '').strip()
                 if cli_asig:
                     query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
                     params.append(cli_asig)
-                else:
-                    query += " WHERE usuario_registro = ?"
-                    params.append(usuario)
         query += " ORDER BY id DESC"
         return pd.read_sql_query(query, conn, params=params)
+
 
 def actualizar_inspeccion(inspeccion_id, datos):
     """
