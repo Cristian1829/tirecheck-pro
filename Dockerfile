@@ -26,5 +26,5 @@ RUN mkdir -p /app/data && chmod 777 /app/data
 # Exponer puerto
 EXPOSE 8000
 
-# Comando de arranque adaptativo al puerto inyectado por la plataforma
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Comando de arranque directo con Python (parseo robusto de puerto)
+CMD ["python", "server.py"]

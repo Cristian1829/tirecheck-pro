@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 09:56:34`
+- **Fecha de Generación:** `2026-10-14 10:10:29`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,431` líneas
-- **Tamaño Total de Código Fuente:** `1182.8 KB` (`1,211,232` bytes)
+- **Líneas Totales de Código:** `18,435` líneas
+- **Tamaño Total de Código Fuente:** `1182.9 KB` (`1,211,279` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -183,7 +183,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 752 | 31.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 756 | 31.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1678 | 82.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -329,7 +329,7 @@ scripts/temp_*
 
 - **Ruta:** `Dockerfile`
 - **Descripción:** Definición estandarizada del contenedor Docker para producción/cloud
-- **Métricas:** 30 líneas | 832 bytes (0.8 KB)
+- **Métricas:** 30 líneas | 782 bytes (0.8 KB)
 - **Lenguaje:** `dockerfile`
 
 ```dockerfile
@@ -361,8 +361,8 @@ RUN mkdir -p /app/data && chmod 777 /app/data
 # Exponer puerto
 EXPOSE 8000
 
-# Comando de arranque adaptativo al puerto inyectado por la plataforma
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Comando de arranque directo con Python (parseo robusto de puerto)
+CMD ["python", "server.py"]
 ```
 
 ---
@@ -1999,7 +1999,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 752 líneas | 31,967 bytes (31.2 KB)
+- **Métricas:** 756 líneas | 32,064 bytes (31.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2753,7 +2753,11 @@ def api_eliminar_usuario(username: str, admin: dict = Depends(requerir_admin)):
 
 if __name__ == "__main__":
     import uvicorn
-    puerto = int(os.environ.get("PORT", 8000))
+    raw_port = os.environ.get("PORT", "8000")
+    try:
+        puerto = int(raw_port)
+    except (ValueError, TypeError):
+        puerto = 8000
     uvicorn.run("server:app", host="0.0.0.0", port=puerto, reload=False)
 ```
 

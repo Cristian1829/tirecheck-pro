@@ -748,5 +748,9 @@ def api_eliminar_usuario(username: str, admin: dict = Depends(requerir_admin)):
 
 if __name__ == "__main__":
     import uvicorn
-    puerto = int(os.environ.get("PORT", 8000))
+    raw_port = os.environ.get("PORT", "8000")
+    try:
+        puerto = int(raw_port)
+    except (ValueError, TypeError):
+        puerto = 8000
     uvicorn.run("server:app", host="0.0.0.0", port=puerto, reload=False)
