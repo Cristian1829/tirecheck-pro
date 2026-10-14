@@ -538,7 +538,8 @@ def api_exportar_kpis_excel(
 def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
-        filename = f"Plan_Mantenimiento_{placa}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+        f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
+        filename = f"TireAnalyze_Informe_{placa}_{f_tag}.pdf"
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
@@ -554,7 +555,8 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente, subcliente, fecha if fecha else None)
         c_tag = cliente.replace(" ", "_") if cliente else "General"
-        filename = f"Consolidado_Flota_{c_tag}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+        f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
+        filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",

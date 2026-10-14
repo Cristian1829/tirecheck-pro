@@ -6050,7 +6050,7 @@
       const ip = window.location.host;
       let url = `http://${ip}/api/informe-pdf/${encodeURIComponent(p)}`;
       if (f) url += `?fecha=${encodeURIComponent(f)}`;
-      const msg = encodeURIComponent(`Hola! Te comparto el Plan de Mantenimiento e Inspección de Llantas para el vehículo ${p}:\n${url}`);
+      const msg = encodeURIComponent(`Hola! Te comparto el Informe Técnico de Inspección TireAnalyze Pro para el vehículo ${p}:\n${url}`);
       window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
     }
 

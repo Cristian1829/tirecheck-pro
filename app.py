@@ -2015,14 +2015,14 @@ class AppInspeccionLlantas(tk.Tk):
                 ruta = filedialog.asksaveasfilename(
                     defaultextension='.pdf',
                     filetypes=[('Documento PDF', '*.pdf')],
-                    initialfile=f'Plan_Mantenimiento_{p}_{f_str}.pdf'
+                    initialfile=f'TireAnalyze_Informe_{p}_{f_str}.pdf'
                 )
                 if not ruta:
                     return
                 with open(ruta, 'wb') as f:
                     f.write(pdf_bytes)
                 top.destroy()
-                messagebox.showinfo('Éxito', f'Plan de Mantenimiento PDF generado con éxito en:\n{ruta}\n\nListo para entregar al cliente o enviar por WhatsApp.')
+                messagebox.showinfo('Éxito', f'Informe Técnico PDF generado con éxito en:\n{ruta}\n\nListo para entregar al cliente o enviar por WhatsApp.')
             except Exception as e:
                 messagebox.showerror('Error', str(e))
 
@@ -2060,7 +2060,7 @@ class AppInspeccionLlantas(tk.Tk):
                 ruta = filedialog.asksaveasfilename(
                     defaultextension='.pdf',
                     filetypes=[('Documento PDF', '*.pdf')],
-                    initialfile=f'Consolidado_Flota_{c_tag}_{f_str}.pdf'
+                    initialfile=f'TireAnalyze_Consolidado_Flota_{c_tag}_{f_str}.pdf'
                 )
                 if not ruta:
                     return

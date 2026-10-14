@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 11:58:24`
+- **Fecha de Generación:** `2026-10-14 12:24:30`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `19,844` líneas
-- **Tamaño Total de Código Fuente:** `1244.5 KB` (`1,274,324` bytes)
+- **Líneas Totales de Código:** `19,910` líneas
+- **Tamaño Total de Código Fuente:** `1246.0 KB` (`1,275,954` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -196,10 +196,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 839 | 34.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 841 | 34.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 1983 | 97.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1105 | 49.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2175 | 118.5 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
@@ -2018,7 +2018,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 839 líneas | 35,595 bytes (34.8 KB)
+- **Métricas:** 841 líneas | 35,726 bytes (34.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2562,7 +2562,8 @@ def api_exportar_kpis_excel(
 def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
-        filename = f"Plan_Mantenimiento_{placa}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+        f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
+        filename = f"TireAnalyze_Informe_{placa}_{f_tag}.pdf"
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
@@ -2578,7 +2579,8 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente, subcliente, fecha if fecha else None)
         c_tag = cliente.replace(" ", "_") if cliente else "General"
-        filename = f"Consolidado_Flota_{c_tag}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+        f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
+        filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
@@ -5019,12 +5021,13 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1041 líneas | 49,469 bytes (48.3 KB)
+- **Métricas:** 1105 líneas | 50,959 bytes (49.8 KB)
 - **Lenguaje:** `python`
 
 ```python
 import html
 import io
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import pandas as pd
@@ -5076,6 +5079,10 @@ def dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=3.0, width
         return Spacer(1, 5)
     return dg.dibujar_diagrama_chasis(esquema, filas, limite_retiro, width)
 
+BANNER_IMG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "banner_tireanalyze_hd.png")
+if not os.path.exists(BANNER_IMG_PATH):
+    BANNER_IMG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "banner_tireanalyze_hd.png")
+
 class NumberedCanvas(canvas.Canvas):
     _num_informe = ""
     _fecha_emision = ""
@@ -5099,34 +5106,50 @@ class NumberedCanvas(canvas.Canvas):
 
     def _draw_header(self):
         self.saveState()
+        x = 36
+        y_top = 780
+        w = 540
+        h_banner = 42
+        h_sub = 14
+        h_total = h_banner + h_sub
+        y_banner = y_top - h_banner
+        y_sub = y_banner - h_sub
+
+        # Fondo del contenedor
         self.setFillColor(colors.HexColor('#0B192C'))
-        self.roundRect(36, 746, 540, 28, 3, fill=1, stroke=0)
+        self.roundRect(x, y_sub, w, h_total, 3, fill=1, stroke=0)
 
-        # Isotipo T azul
-        self.setFillColor(colors.HexColor('#2563EB'))
-        self.roundRect(42, 750, 20, 20, 3, fill=1, stroke=0)
-        self.setFillColor(colors.white)
-        self.setFont("Helvetica-Bold", 12)
-        self.drawCentredString(52, 755.5, "T")
+        # Imagen oficial HD de TireAnalyze Pro
+        if os.path.exists(BANNER_IMG_PATH):
+            self.drawImage(BANNER_IMG_PATH, x, y_banner, width=w, height=h_banner, preserveAspectRatio=False, mask='auto')
 
-        # Texto TireAnalyze Pro
-        self.setFont("Helvetica-Bold", 10.5)
-        self.drawString(68, 761, "TireAnalyze Pro")
-        self.setFont("Helvetica", 6.5)
-        self.setFillColor(colors.HexColor('#94A3B8'))
-        self.drawString(68, 751, "Informe de inspección de vehículo")
+        # Sub-barra inferior integrada con datos de informe
+        self.setFillColor(colors.HexColor('#060D1A'))
+        self.roundRect(x, y_sub, w, h_sub, 0, fill=1, stroke=0)
 
-        # Datos del informe a la derecha
+        # Línea divisoria cian sutil
+        self.setStrokeColor(colors.HexColor('#1E3A8A'))
+        self.setLineWidth(0.5)
+        self.line(x, y_banner, x + w, y_banner)
+
+        # Título técnico en cian
+        self.setFillColor(colors.HexColor('#38BDF8'))
+        self.setFont("Helvetica-Bold", 6.8)
+        self.drawString(x + 10, y_sub + 4, "INFORME TÉCNICO DE INSPECCIÓN Y GESTIÓN DE FLOTA")
+
         num_inf = getattr(self, '_num_informe', '')
         fec_em = getattr(self, '_fecha_emision', '')
-        self.setFont("Helvetica-Bold", 7.5)
-        self.setFillColor(colors.white)
+        info_der = []
         if num_inf:
-            self.drawRightString(568, 761, f"Informe N.º {num_inf}")
-        self.setFont("Helvetica", 7.0)
-        self.setFillColor(colors.HexColor('#94A3B8'))
+            info_der.append(f"Informe N.º {num_inf}")
         if fec_em:
-            self.drawRightString(568, 751, f"Emitido: {fec_em}")
+            info_der.append(f"Emitido: {fec_em}")
+
+        if info_der:
+            self.setFillColor(colors.white)
+            self.setFont("Helvetica", 6.8)
+            self.drawRightString(x + w - 10, y_sub + 4, "   ·   ".join(info_der))
+
         self.restoreState()
 
     def _draw_footer(self, n):
@@ -5137,7 +5160,78 @@ class NumberedCanvas(canvas.Canvas):
 
         self.setFont("Helvetica", 6.5)
         self.setFillColor(colors.HexColor('#94A3B8'))
-        self.drawString(36, 14, "TireAnalyze Pro · Sistema de Inspección y Gestión Técnica de Flotas")
+        self.drawString(36, 14, "TireAnalyze Pro · Sistema Integral de Inspección y Diagnóstico Técnico de Llantas")
+
+        self.setFillColor(colors.HexColor('#64748B'))
+        self.drawRightString(576, 14, f"Página {self._pageNumber} de {n}")
+        self.restoreState()
+
+class ConsolidadoNumberedCanvas(canvas.Canvas):
+    _fecha = ""
+    _cliente = ""
+
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self._saved = []
+
+    def showPage(self):
+        self._saved.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        n = len(self._saved)
+        for st in self._saved:
+            self.__dict__.update(st)
+            self._draw_header()
+            self._draw_footer(n)
+            super().showPage()
+        super().save()
+
+    def _draw_header(self):
+        self.saveState()
+        x = 36
+        y_top = 780
+        w = 540
+        h_banner = 42
+        h_sub = 14
+        h_total = h_banner + h_sub
+        y_banner = y_top - h_banner
+        y_sub = y_banner - h_sub
+
+        self.setFillColor(colors.HexColor('#0B192C'))
+        self.roundRect(x, y_sub, w, h_total, 3, fill=1, stroke=0)
+
+        if os.path.exists(BANNER_IMG_PATH):
+            self.drawImage(BANNER_IMG_PATH, x, y_banner, width=w, height=h_banner, preserveAspectRatio=False, mask='auto')
+
+        self.setFillColor(colors.HexColor('#060D1A'))
+        self.roundRect(x, y_sub, w, h_sub, 0, fill=1, stroke=0)
+
+        self.setStrokeColor(colors.HexColor('#1E3A8A'))
+        self.setLineWidth(0.5)
+        self.line(x, y_banner, x + w, y_banner)
+
+        self.setFillColor(colors.HexColor('#38BDF8'))
+        self.setFont("Helvetica-Bold", 6.8)
+        self.drawString(x + 10, y_sub + 4, "INFORME EJECUTIVO & DIAGNÓSTICO CONSOLIDADO DE FLOTA")
+
+        fec_txt = getattr(self, '_fecha', '') or 'Histórico General'
+        ahora_txt = ahora_bogota().strftime('%d/%m/%Y %H:%M')
+        self.setFillColor(colors.white)
+        self.setFont("Helvetica", 6.8)
+        self.drawRightString(x + w - 10, y_sub + 4, f"Corte: {fec_txt}   ·   Generado: {ahora_txt}")
+
+        self.restoreState()
+
+    def _draw_footer(self, n):
+        self.saveState()
+        self.setStrokeColor(colors.HexColor('#E2E8F0'))
+        self.setLineWidth(0.5)
+        self.line(36, 26, 576, 26)
+
+        self.setFont("Helvetica", 6.5)
+        self.setFillColor(colors.HexColor('#94A3B8'))
+        self.drawString(36, 14, "TireAnalyze Pro · Suite Integral de Diagnóstico y Gestión de Flotas")
 
         self.setFillColor(colors.HexColor('#64748B'))
         self.drawRightString(576, 14, f"Página {self._pageNumber} de {n}")
@@ -5149,33 +5243,16 @@ def obtener_canvas_reporte_vehiculo(num_informe, fecha_emision):
         _fecha_emision = fecha_emision
     return ReporteNumberedCanvas
 
-def crear_banner_superior_reporte(num_informe, fecha_emision, width=540):
-    logo_drawing = Drawing(26, 26)
-    logo_drawing.add(Rect(0, 0, 26, 26, rx=4, ry=4, fillColor=colors.HexColor('#2563EB'), strokeColor=None))
-    logo_drawing.add(String(13, 7.5, "T", fontName="Helvetica-Bold", fontSize=15, fillColor=colors.white, textAnchor="middle"))
+def obtener_canvas_consolidado_flota(fecha="", cliente=""):
+    class ReporteConsolidadoCanvas(ConsolidadoNumberedCanvas):
+        _fecha = fecha
+        _cliente = cliente
+    return ReporteConsolidadoCanvas
 
+def crear_banner_superior_reporte(num_informe, fecha_emision, width=540):
     styles = getSampleStyleSheet()
-    style_tit = ParagraphStyle('BannTit', fontName='Helvetica-Bold', fontSize=12, leading=14, textColor=colors.white)
-    style_sub = ParagraphStyle('BannSub', fontName='Helvetica', fontSize=7.5, leading=9, textColor=colors.HexColor('#94A3B8'))
     style_inf_num = ParagraphStyle('BannNum', fontName='Helvetica-Bold', fontSize=8.0, leading=10, textColor=colors.white, alignment=2)
     style_inf_fec = ParagraphStyle('BannFec', fontName='Helvetica', fontSize=7.5, leading=9.5, textColor=colors.HexColor('#94A3B8'), alignment=2)
-
-    col_izq = Table([
-        [
-            logo_drawing,
-            [
-                Paragraph("<b>TireAnalyze Pro</b>", style_tit),
-                Paragraph("Informe de inspección de vehículo", style_sub)
-            ]
-        ]
-    ], colWidths=[32, 280])
-    col_izq.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-    ]))
 
     col_der = [
         Paragraph(f"<b>Informe N.º {num_informe}</b>", style_inf_num),
@@ -5183,8 +5260,8 @@ def crear_banner_superior_reporte(num_informe, fecha_emision, width=540):
     ]
 
     banner = Table([
-        [col_izq, col_der]
-    ], colWidths=[320, 220])
+        ["", col_der]
+    ], colWidths=[width - 220, 220])
     banner.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#0B192C')),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -5382,13 +5459,12 @@ def renderizar_informe(datos) -> bytes:
         pagesize=letter,
         rightMargin=36,
         leftMargin=36,
-        topMargin=52,
-        bottomMargin=34
+        topMargin=68,
+        bottomMargin=32
     )
 
     styles = getSampleStyleSheet()
-    style_tit_doc = ParagraphStyle('DocTit', fontName='Helvetica-Bold', fontSize=16, leading=19, textColor=colors.HexColor('#0F172A'), spaceBefore=4, spaceAfter=2)
-    style_sub_doc = ParagraphStyle('DocSub', fontName='Helvetica', fontSize=8.5, leading=11, textColor=colors.HexColor('#64748B'), spaceAfter=8)
+    style_ficha_tit = ParagraphStyle('FichaTit', fontName='Helvetica-Bold', fontSize=8.5, leading=10, textColor=colors.HexColor('#0F172A'), spaceBefore=2, spaceAfter=4)
     style_sec_tit = ParagraphStyle('SecTit', fontName='Helvetica-Bold', fontSize=10.0, leading=13, textColor=colors.HexColor('#0F172A'), spaceBefore=8, spaceAfter=4)
     style_kpi_num = ParagraphStyle('KpiNum', fontName='Helvetica-Bold', fontSize=13, leading=15, alignment=1)
     style_kpi_lbl = ParagraphStyle('KpiLbl', fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#64748B'), alignment=1)
@@ -5400,8 +5476,7 @@ def renderizar_informe(datos) -> bytes:
     # =========================================================================
     # SECCIÓN 1: ENCABEZADO Y FICHA TÉCNICA
     # =========================================================================
-    elements.append(Paragraph("Informe de inspección de vehículo", style_tit_doc))
-    elements.append(Paragraph(f"Placa {html.escape(placa)} · {html.escape(tipologia)} · Inspección del {fecha_insp_fmt}", style_sub_doc))
+    elements.append(Paragraph(f"<b>FICHA TÉCNICA Y RESUMEN OPERATIVO · VEHÍCULO {html.escape(placa)} ({html.escape(tipologia)})</b>", style_ficha_tit))
 
     style_lbl_meta = ParagraphStyle('MetaLbl', fontName='Helvetica-Bold', fontSize=5.5, leading=7, textColor=colors.HexColor('#64748B'))
     style_val_meta = ParagraphStyle('MetaVal', fontName='Helvetica-Bold', fontSize=8.0, leading=10, textColor=colors.HexColor('#0F172A'))
@@ -5852,8 +5927,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
         pagesize=letter,
         rightMargin=36,
         leftMargin=36,
-        topMargin=36,
-        bottomMargin=36
+        topMargin=68,
+        bottomMargin=32
     )
 
     styles = getSampleStyleSheet()
@@ -5866,17 +5941,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
     style_cell_alert = ParagraphStyle('CellAlert', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, leading=9, textColor=colors.HexColor('#b91c1c'))
 
     elements = []
-
-    # Cabecera
-    head_tbl = Table([
-        [
-            Paragraph("<b>TIREANALYZE PRO</b><br/><font size=8.5 color='#64748b'>Informe Ejecutivo & Diagnóstico Consolidado de Flota</font>", style_titulo),
-            Paragraph(f"<b>CONSOLIDADO DE INSPECCIÓN</b><br/>Fecha: {fecha or 'Histórico Completo'}<br/>Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ParagraphStyle('RH', parent=style_subtitulo, alignment=2))
-        ]
-    ], colWidths=[330, 210])
-    head_tbl.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('BOTTOMPADDING', (0,0), (-1,-1), 4)]))
-    elements.append(head_tbl)
-    elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#2563eb'), spaceAfter=8, spaceBefore=2))
+    elements.append(Spacer(1, 2))
 
     # Tarjetas Resumen de Flota
     cliente_txt = cliente if cliente and cliente != 'Todos' else 'Consolidado General'
@@ -6061,7 +6126,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None):
     t_f.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('TOPPADDING', (0,0), (-1,-1), 10)]))
     elements.append(KeepTogether(t_f))
 
-    doc.build(elements)
+    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_txt)
+    doc.build(elements, canvasmaker=canvas_maker)
     buffer.seek(0)
     return buffer.getvalue()
 ```
@@ -6418,7 +6484,7 @@ def seccion_fotos(llantas: List[Dict[str, Any]]) -> List[Any]:
 
 - **Ruta:** `app.py`
 - **Descripción:** Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario
-- **Métricas:** 2175 líneas | 121,311 bytes (118.5 KB)
+- **Métricas:** 2175 líneas | 121,319 bytes (118.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -8439,14 +8505,14 @@ class AppInspeccionLlantas(tk.Tk):
                 ruta = filedialog.asksaveasfilename(
                     defaultextension='.pdf',
                     filetypes=[('Documento PDF', '*.pdf')],
-                    initialfile=f'Plan_Mantenimiento_{p}_{f_str}.pdf'
+                    initialfile=f'TireAnalyze_Informe_{p}_{f_str}.pdf'
                 )
                 if not ruta:
                     return
                 with open(ruta, 'wb') as f:
                     f.write(pdf_bytes)
                 top.destroy()
-                messagebox.showinfo('Éxito', f'Plan de Mantenimiento PDF generado con éxito en:\n{ruta}\n\nListo para entregar al cliente o enviar por WhatsApp.')
+                messagebox.showinfo('Éxito', f'Informe Técnico PDF generado con éxito en:\n{ruta}\n\nListo para entregar al cliente o enviar por WhatsApp.')
             except Exception as e:
                 messagebox.showerror('Error', str(e))
 
@@ -8484,7 +8550,7 @@ class AppInspeccionLlantas(tk.Tk):
                 ruta = filedialog.asksaveasfilename(
                     defaultextension='.pdf',
                     filetypes=[('Documento PDF', '*.pdf')],
-                    initialfile=f'Consolidado_Flota_{c_tag}_{f_str}.pdf'
+                    initialfile=f'TireAnalyze_Consolidado_Flota_{c_tag}_{f_str}.pdf'
                 )
                 if not ruta:
                     return
@@ -8607,7 +8673,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6261 líneas | 609,786 bytes (595.5 KB)
+- **Métricas:** 6261 líneas | 609,787 bytes (595.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -14663,7 +14729,7 @@ if __name__ == '__main__':
       const ip = window.location.host;
       let url = `http://${ip}/api/informe-pdf/${encodeURIComponent(p)}`;
       if (f) url += `?fecha=${encodeURIComponent(f)}`;
-      const msg = encodeURIComponent(`Hola! Te comparto el Plan de Mantenimiento e Inspección de Llantas para el vehículo ${p}:\n${url}`);
+      const msg = encodeURIComponent(`Hola! Te comparto el Informe Técnico de Inspección TireAnalyze Pro para el vehículo ${p}:\n${url}`);
       window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
     }
 
