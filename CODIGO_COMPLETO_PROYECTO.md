@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 15:29:04`
+- **Fecha de Generación:** `2026-10-14 15:35:09`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,052` líneas
-- **Tamaño Total de Código Fuente:** `1252.4 KB` (`1,282,424` bytes)
+- **Líneas Totales de Código:** `20,082` líneas
+- **Tamaño Total de Código Fuente:** `1254.4 KB` (`1,284,535` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -207,7 +207,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6351 | 599.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6381 | 601.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -8701,7 +8701,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6351 líneas | 613,930 bytes (599.5 KB)
+- **Métricas:** 6381 líneas | 616,041 bytes (601.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9792,23 +9792,23 @@ if __name__ == '__main__':
     
     <!-- 5 Tarjetas Métricas de Diagnóstico -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+      <div id="cardBoxTotal" onclick="filtrarDiagnosticoPorCard('Todos')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Ver todos los vehículos de la flota filtrada">
         <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Vehículos</span>
         <span id="cardDiagTotal" class="text-2xl font-black text-slate-900 block mt-1">0</span>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm">
+      <div id="cardBoxCambio" onclick="filtrarDiagnosticoPorCard('Cambio')" class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos con sugerencia de cambio">
         <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider block">Sugerencia Cambio</span>
         <span id="cardDiagCambio" class="text-2xl font-black text-rose-600 block mt-1">0</span>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-red-200 shadow-sm">
+      <div id="cardBoxAlineacion" onclick="filtrarDiagnosticoPorCard('Alineacion')" class="bg-white p-4 rounded-2xl border border-red-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos con plan de alineación">
         <span class="text-[11px] font-bold text-red-600 uppercase tracking-wider block">Plan Alineación</span>
         <span id="cardDiagAlineacion" class="text-2xl font-black text-red-600 block mt-1">0</span>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm">
+      <div id="cardBoxDual" onclick="filtrarDiagnosticoPorCard('Dual')" class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos con dual mal apareado">
         <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">Dual Mal Apareado</span>
         <span id="cardDiagDual" class="text-2xl font-black text-amber-600 block mt-1">0</span>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm">
+      <div id="cardBoxOK" onclick="filtrarDiagnosticoPorCard('OK')" class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos sin novedades (OK)">
         <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Sin Novedades (OK)</span>
         <span id="cardDiagOK" class="text-2xl font-black text-emerald-600 block mt-1">0</span>
       </div>
@@ -11736,6 +11736,14 @@ if __name__ == '__main__':
       filtrarTablaDiagnostico();
     }
 
+    function filtrarDiagnosticoPorCard(tipoAlerta) {
+      const sel = document.getElementById('filtroDiagAlerta');
+      if (sel) {
+        sel.value = tipoAlerta;
+        filtrarTablaDiagnostico();
+      }
+    }
+
     function filtrarTablaDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
       const cli = document.getElementById('filtroDiagCliente')?.value || 'Todos';
@@ -11762,37 +11770,59 @@ if __name__ == '__main__':
         }
       }
 
-      let tot = 0, cambio = 0, alin = 0, dual = 0, ok = 0;
-
-      const filtradas = cacheDiagnostico.filter(r => {
-        // Conteo métrico
-        tot++;
-        if (r.Plan_Cambio_Llanta === 'SÍ') cambio++;
-        if (r.Plan_Alineacion === 'SÍ') alin++;
-        if (r.Plan_Dual_Mal_Apareado === 'SÍ') dual++;
-        if (r.Plan_Cambio_Llanta !== 'SÍ' && r.Plan_Alineacion !== 'SÍ' && r.Plan_Dual_Mal_Apareado !== 'SÍ') ok++;
-
-        // Filtros
+      // 1. Filtrar por ámbito de flota (Cliente, Sede, Operación y Placa)
+      const flotaFiltrada = cacheDiagnostico.filter(r => {
         if (cli !== 'Todos' && r.Cliente !== cli) return false;
         if (sede !== 'Todos' && r.Subcliente !== sede) return false;
         if (op !== 'Todos' && r.Operación !== op) return false;
         if (placa && !(r['Vehículo/Placa'] || '').toLowerCase().includes(placa)) return false;
+        return true;
+      });
 
+      // 2. Conteo métrico de las tarjetas según el ámbito filtrado de flota
+      let tot = flotaFiltrada.length;
+      let cambio = 0, alin = 0, dual = 0, ok = 0;
+      flotaFiltrada.forEach(r => {
+        if (r.Plan_Cambio_Llanta === 'SÍ') cambio++;
+        if (r.Plan_Alineacion === 'SÍ') alin++;
+        if (r.Plan_Dual_Mal_Apareado === 'SÍ') dual++;
+        if (r.Plan_Cambio_Llanta !== 'SÍ' && r.Plan_Alineacion !== 'SÍ' && r.Plan_Dual_Mal_Apareado !== 'SÍ') ok++;
+      });
+
+      // 3. Filtrar por tipo de alerta para la tabla
+      const filtradas = flotaFiltrada.filter(r => {
         if (alerta === 'Cambio' && r.Plan_Cambio_Llanta !== 'SÍ') return false;
         if (alerta === 'Alineacion' && r.Plan_Alineacion !== 'SÍ') return false;
         if (alerta === 'Dual' && r.Plan_Dual_Mal_Apareado !== 'SÍ') return false;
         if (alerta === 'Alerta' && r.Plan_Cambio_Llanta !== 'SÍ' && r.Plan_Alineacion !== 'SÍ' && r.Plan_Dual_Mal_Apareado !== 'SÍ') return false;
         if (alerta === 'OK' && (r.Plan_Cambio_Llanta === 'SÍ' || r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ')) return false;
-
         return true;
       });
 
-      // Actualizar tarjetas
+      // Actualizar tarjetas métricas
       document.getElementById('cardDiagTotal').textContent = tot;
       document.getElementById('cardDiagCambio').textContent = cambio;
       document.getElementById('cardDiagAlineacion').textContent = alin;
       document.getElementById('cardDiagDual').textContent = dual;
       document.getElementById('cardDiagOK').textContent = ok;
+
+      // Resaltar tarjeta seleccionada si el filtro de alerta está activo
+      const mapCards = {
+        'Todos': 'cardBoxTotal',
+        'Cambio': 'cardBoxCambio',
+        'Alineacion': 'cardBoxAlineacion',
+        'Dual': 'cardBoxDual',
+        'OK': 'cardBoxOK'
+      };
+      ['cardBoxTotal', 'cardBoxCambio', 'cardBoxAlineacion', 'cardBoxDual', 'cardBoxOK'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+      });
+      const activeId = mapCards[alerta];
+      if (activeId && alerta !== 'Todos') {
+        const el = document.getElementById(activeId);
+        if (el) el.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+      }
 
       if (filtradas.length === 0) {
         tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-400">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
