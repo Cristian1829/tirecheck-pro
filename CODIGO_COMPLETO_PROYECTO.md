@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 08:59:11`
+- **Fecha de Generación:** `2026-10-14 09:56:34`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,413` líneas
-- **Tamaño Total de Código Fuente:** `1182.4 KB` (`1,210,792` bytes)
+- **Líneas Totales de Código:** `18,431` líneas
+- **Tamaño Total de Código Fuente:** `1182.8 KB` (`1,211,232` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -157,10 +157,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [requirements.txt](#archivo-requirementstxt) | `text` | 11 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.) |
+| [requirements.txt](#archivo-requirementstxt) | `text` | 12 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.) |
 | [.gitignore](#archivo-gitignore) | `gitignore` | 30 | 0.4 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
-| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 26 | 0.7 KB | Definición estandarizada del contenedor Docker para producción/cloud |
+| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 30 | 0.8 KB | Definición estandarizada del contenedor Docker para producción/cloud |
 | [render.yaml](#archivo-renderyaml) | `yaml` | 11 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
 | [INICIAR_TIRECHECK.bat](#archivo-iniciar-tirecheckbat) | `bat` | 23 | 0.7 KB | Script de arranque automático para Windows: verificación de entorno, servidor uvicorn y apertura de navegador |
 | [iniciar_app.bat](#archivo-iniciar-appbat) | `bat` | 9 | 0.2 KB | Script de arranque directo sin dependencias |
@@ -183,8 +183,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 748 | 31.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1669 | 82.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 752 | 31.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 1678 | 82.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -238,7 +238,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 - **Ruta:** `requirements.txt`
 - **Descripción:** Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.)
-- **Métricas:** 11 líneas | 167 bytes (0.2 KB)
+- **Métricas:** 12 líneas | 182 bytes (0.2 KB)
 - **Lenguaje:** `text`
 
 ```text
@@ -252,6 +252,7 @@ reportlab>=4.0.0
 jinja2>=3.1.0
 python-multipart>=0.0.9
 requests>=2.31.0
+tzdata>=2024.1
 ```
 
 ---
@@ -328,7 +329,7 @@ scripts/temp_*
 
 - **Ruta:** `Dockerfile`
 - **Descripción:** Definición estandarizada del contenedor Docker para producción/cloud
-- **Métricas:** 26 líneas | 701 bytes (0.7 KB)
+- **Métricas:** 30 líneas | 832 bytes (0.8 KB)
 - **Lenguaje:** `dockerfile`
 
 ```dockerfile
@@ -344,6 +345,7 @@ WORKDIR /app
 # Instalar dependencias del sistema mínimas necesarias para compilación y fonts
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependencias Python
@@ -353,11 +355,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código de la aplicación
 COPY . .
 
+# Asegurar existencia y permisos del directorio data para SQLite
+RUN mkdir -p /app/data && chmod 777 /app/data
+
 # Exponer puerto
 EXPOSE 8000
 
 # Comando de arranque adaptativo al puerto inyectado por la plataforma
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
 ```
 
 ---
@@ -1994,7 +1999,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 748 líneas | 31,849 bytes (31.1 KB)
+- **Métricas:** 752 líneas | 31,967 bytes (31.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2011,7 +2016,11 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
 
-BOGOTA_TZ = ZoneInfo("America/Bogota")
+try:
+    BOGOTA_TZ = ZoneInfo("America/Bogota")
+except Exception:
+    from datetime import timezone, timedelta
+    BOGOTA_TZ = timezone(timedelta(hours=-5))
 
 def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
@@ -2754,7 +2763,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1669 líneas | 84,427 bytes (82.4 KB)
+- **Métricas:** 1678 líneas | 84,603 bytes (82.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2770,9 +2779,18 @@ from datetime import datetime
 from contextlib import contextmanager
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+os.makedirs(_DATA_DIR, exist_ok=True)
 _DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
 _DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
-DB_PATH = _DB_DATA if os.path.exists(_DB_DATA) else _DB_ROOT
+
+if not os.path.exists(_DB_DATA) and os.path.exists(_DB_ROOT):
+    try:
+        import shutil
+        shutil.copy2(_DB_ROOT, _DB_DATA)
+    except Exception:
+        pass
+
+DB_PATH = _DB_DATA
 
 def hash_password(password: str) -> str:
     """

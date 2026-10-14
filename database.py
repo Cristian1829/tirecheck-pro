@@ -10,9 +10,18 @@ from datetime import datetime
 from contextlib import contextmanager
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+os.makedirs(_DATA_DIR, exist_ok=True)
 _DB_DATA = os.path.join(_DATA_DIR, "inspecciones.db")
 _DB_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inspecciones.db")
-DB_PATH = _DB_DATA if os.path.exists(_DB_DATA) else _DB_ROOT
+
+if not os.path.exists(_DB_DATA) and os.path.exists(_DB_ROOT):
+    try:
+        import shutil
+        shutil.copy2(_DB_ROOT, _DB_DATA)
+    except Exception:
+        pass
+
+DB_PATH = _DB_DATA
 
 def hash_password(password: str) -> str:
     """

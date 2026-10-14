@@ -10,6 +10,7 @@ WORKDIR /app
 # Instalar dependencias del sistema mínimas necesarias para compilación y fonts
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependencias Python
@@ -19,8 +20,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código de la aplicación
 COPY . .
 
+# Asegurar existencia y permisos del directorio data para SQLite
+RUN mkdir -p /app/data && chmod 777 /app/data
+
 # Exponer puerto
 EXPOSE 8000
 
 # Comando de arranque adaptativo al puerto inyectado por la plataforma
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]

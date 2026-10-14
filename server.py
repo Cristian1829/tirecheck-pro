@@ -11,7 +11,11 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
 
-BOGOTA_TZ = ZoneInfo("America/Bogota")
+try:
+    BOGOTA_TZ = ZoneInfo("America/Bogota")
+except Exception:
+    from datetime import timezone, timedelta
+    BOGOTA_TZ = timezone(timedelta(hours=-5))
 
 def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
