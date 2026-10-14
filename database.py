@@ -306,7 +306,7 @@ def obtener_posiciones_por_tipologia(tipologia):
             
             # 1. Coincidencia exacta primero
             for r in filas:
-                if r[0].strip().lower() == t_nom:
+                if r[0] and str(r[0]).strip().lower() == t_nom:
                     if r[2]:
                         try:
                             esq = json.loads(r[2])
@@ -323,7 +323,7 @@ def obtener_posiciones_por_tipologia(tipologia):
             
             # 2. Coincidencia parcial si no hay exacta
             for r in filas:
-                if t_nom in r[0].strip().lower():
+                if r[0] and t_nom in str(r[0]).strip().lower():
                     if r[2]:
                         try:
                             esq = json.loads(r[2])
@@ -738,10 +738,17 @@ def analizar_inspecciones_df(df_inspecciones):
     resultados = []
     
     for placa, group in df.groupby('placa'):
-        t_veh = group['tipo_calc'].iloc[0]
-        cliente = group['cliente'].iloc[0] if 'cliente' in group and group['cliente'].iloc[0] else ''
-        subcliente = group['subcliente'].iloc[0] if 'subcliente' in group and group['subcliente'].iloc[0] else ''
-        operacion = group['tipo_operacion'].iloc[0] if 'tipo_operacion' in group and group['tipo_operacion'].iloc[0] else ''
+        t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
+        t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
+
+        cli_val = group['cliente'].iloc[0] if ('cliente' in group and pd.notna(group['cliente'].iloc[0])) else ''
+        cliente = '' if (pd.isna(cli_val) or str(cli_val).strip().lower() in ('nan', 'none')) else str(cli_val).strip()
+
+        sub_val = group['subcliente'].iloc[0] if ('subcliente' in group and pd.notna(group['subcliente'].iloc[0])) else ''
+        subcliente = '' if (pd.isna(sub_val) or str(sub_val).strip().lower() in ('nan', 'none')) else str(sub_val).strip()
+
+        op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
+        operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip()
         
         max_pos = group['posicion'].max()
         es_cuatro_manos = ('cuatro manos' in t_veh.lower() or max_pos >= 12 and 'cabezote' in t_veh.lower())
@@ -1038,8 +1045,10 @@ def buscar_modelos_llantas_filtro(termino=''):
 
 # --- CONFIGURACIÓN DE LÍMITES POR CLIENTE ---
 def obtener_limite_retiro_cliente(cliente=''):
-    c = (cliente or '').strip()
-    if not c:
+    if pd.isna(cliente) or cliente is None:
+        return 3.0
+    c = str(cliente).strip()
+    if not c or c.lower() in ('nan', 'none'):
         return 3.0
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -1050,8 +1059,10 @@ def obtener_limite_retiro_cliente(cliente=''):
     return 3.0
 
 def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones=''):
-    c = (cliente or '').strip()
-    if not c:
+    if pd.isna(cliente) or cliente is None:
+        return False
+    c = str(cliente).strip()
+    if not c or c.lower() in ('nan', 'none'):
         return False
     lim = to_float(limite_retiro_mm, 3.0)
     with get_connection() as conn:
@@ -1189,7 +1200,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
 
 def obtener_esquema_tipologia(tipologia_nombre):
     import json
-    t_norm = (tipologia_nombre or '').strip().lower()
+    t_norm = str(tipologia_nombre or '').strip().lower()
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -1197,11 +1208,11 @@ def obtener_esquema_tipologia(tipologia_nombre):
             filas = cursor.fetchall()
             # 1. Coincidencia exacta primero
             for r in filas:
-                if r[0].strip().lower() == t_norm:
+                if r[0] and str(r[0]).strip().lower() == t_norm:
                     return json.loads(r[2]) if r[2] else []
             # 2. Coincidencia parcial si no hay exacta
             for r in filas:
-                if t_norm in r[0].strip().lower():
+                if r[0] and t_norm in str(r[0]).strip().lower():
                     return json.loads(r[2]) if r[2] else []
             # 3. Retornar primer registro si hay filas
             if filas and filas[0][2]:
@@ -1526,9 +1537,9 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         if usr_info and usr_info.get('rol') != 'admin':
             cli_asig = usr_info.get('cliente_asignado')
             if cli_asig:
-                resultados = [r for r in resultados if r.get('cliente', '').strip().lower() == cli_asig.strip().lower()]
+                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() == str(cli_asig).strip().lower()]
             else:
-                resultados = [r for r in resultados if r.get('usuario_registro', '').strip().lower() == usuario_filtro.strip().lower()]
+                resultados = [r for r in resultados if str(r.get('usuario_registro') or '').strip().lower() == str(usuario_filtro).strip().lower()]
 
     return resultados
 

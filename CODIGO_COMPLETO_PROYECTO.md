@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 11:10:19`
+- **Fecha de Generación:** `2026-10-14 11:23:55`
 - **Total de Archivos Incluidos:** `45` archivos de código y documentación
-- **Líneas Totales de Código:** `18,675` líneas
-- **Tamaño Total de Código Fuente:** `1194.2 KB` (`1,222,883` bytes)
+- **Líneas Totales de Código:** `18,687` líneas
+- **Tamaño Total de Código Fuente:** `1195.1 KB` (`1,223,771` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -183,8 +183,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 807 | 33.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1715 | 84.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 808 | 33.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 1726 | 84.9 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1041 | 48.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -2003,11 +2003,12 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 807 líneas | 34,089 bytes (33.3 KB)
+- **Métricas:** 808 líneas | 34,116 bytes (33.3 KB)
 - **Lenguaje:** `python`
 
 ```python
 import io
+import math
 import os
 import socket
 import tempfile
@@ -2343,7 +2344,7 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
         # Validar permisos de inspector
         if usuario_actual.get("rol") != "admin":
             cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row[2] and row[2].strip().lower() != cli_asig.lower():
+            if cli_asig and row[2] and str(row[2]).strip().lower() != cli_asig.lower():
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
         
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
@@ -2384,7 +2385,7 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
             if not row_exist:
                 raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
             cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
                 raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de este cliente")
         datos["usuario_registro"] = usuario_actual["username"]
         if cli_asig:
@@ -2409,7 +2410,7 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
             if not row_exist:
                 raise HTTPException(status_code=404, detail="Inspección no encontrada")
             cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
 
     database.eliminar_inspeccion(inspeccion_id)
@@ -2822,7 +2823,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1715 líneas | 86,061 bytes (84.0 KB)
+- **Métricas:** 1726 líneas | 86,922 bytes (84.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3134,7 +3135,7 @@ def obtener_posiciones_por_tipologia(tipologia):
             
             # 1. Coincidencia exacta primero
             for r in filas:
-                if r[0].strip().lower() == t_nom:
+                if r[0] and str(r[0]).strip().lower() == t_nom:
                     if r[2]:
                         try:
                             esq = json.loads(r[2])
@@ -3151,7 +3152,7 @@ def obtener_posiciones_por_tipologia(tipologia):
             
             # 2. Coincidencia parcial si no hay exacta
             for r in filas:
-                if t_nom in r[0].strip().lower():
+                if r[0] and t_nom in str(r[0]).strip().lower():
                     if r[2]:
                         try:
                             esq = json.loads(r[2])
@@ -3566,10 +3567,17 @@ def analizar_inspecciones_df(df_inspecciones):
     resultados = []
     
     for placa, group in df.groupby('placa'):
-        t_veh = group['tipo_calc'].iloc[0]
-        cliente = group['cliente'].iloc[0] if 'cliente' in group and group['cliente'].iloc[0] else ''
-        subcliente = group['subcliente'].iloc[0] if 'subcliente' in group and group['subcliente'].iloc[0] else ''
-        operacion = group['tipo_operacion'].iloc[0] if 'tipo_operacion' in group and group['tipo_operacion'].iloc[0] else ''
+        t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
+        t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
+
+        cli_val = group['cliente'].iloc[0] if ('cliente' in group and pd.notna(group['cliente'].iloc[0])) else ''
+        cliente = '' if (pd.isna(cli_val) or str(cli_val).strip().lower() in ('nan', 'none')) else str(cli_val).strip()
+
+        sub_val = group['subcliente'].iloc[0] if ('subcliente' in group and pd.notna(group['subcliente'].iloc[0])) else ''
+        subcliente = '' if (pd.isna(sub_val) or str(sub_val).strip().lower() in ('nan', 'none')) else str(sub_val).strip()
+
+        op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
+        operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip()
         
         max_pos = group['posicion'].max()
         es_cuatro_manos = ('cuatro manos' in t_veh.lower() or max_pos >= 12 and 'cabezote' in t_veh.lower())
@@ -3866,8 +3874,10 @@ def buscar_modelos_llantas_filtro(termino=''):
 
 # --- CONFIGURACIÓN DE LÍMITES POR CLIENTE ---
 def obtener_limite_retiro_cliente(cliente=''):
-    c = (cliente or '').strip()
-    if not c:
+    if pd.isna(cliente) or cliente is None:
+        return 3.0
+    c = str(cliente).strip()
+    if not c or c.lower() in ('nan', 'none'):
         return 3.0
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -3878,8 +3888,10 @@ def obtener_limite_retiro_cliente(cliente=''):
     return 3.0
 
 def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones=''):
-    c = (cliente or '').strip()
-    if not c:
+    if pd.isna(cliente) or cliente is None:
+        return False
+    c = str(cliente).strip()
+    if not c or c.lower() in ('nan', 'none'):
         return False
     lim = to_float(limite_retiro_mm, 3.0)
     with get_connection() as conn:
@@ -4017,7 +4029,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
 
 def obtener_esquema_tipologia(tipologia_nombre):
     import json
-    t_norm = (tipologia_nombre or '').strip().lower()
+    t_norm = str(tipologia_nombre or '').strip().lower()
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -4025,11 +4037,11 @@ def obtener_esquema_tipologia(tipologia_nombre):
             filas = cursor.fetchall()
             # 1. Coincidencia exacta primero
             for r in filas:
-                if r[0].strip().lower() == t_norm:
+                if r[0] and str(r[0]).strip().lower() == t_norm:
                     return json.loads(r[2]) if r[2] else []
             # 2. Coincidencia parcial si no hay exacta
             for r in filas:
-                if t_norm in r[0].strip().lower():
+                if r[0] and t_norm in str(r[0]).strip().lower():
                     return json.loads(r[2]) if r[2] else []
             # 3. Retornar primer registro si hay filas
             if filas and filas[0][2]:
@@ -4354,9 +4366,9 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         if usr_info and usr_info.get('rol') != 'admin':
             cli_asig = usr_info.get('cliente_asignado')
             if cli_asig:
-                resultados = [r for r in resultados if r.get('cliente', '').strip().lower() == cli_asig.strip().lower()]
+                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() == str(cli_asig).strip().lower()]
             else:
-                resultados = [r for r in resultados if r.get('usuario_registro', '').strip().lower() == usuario_filtro.strip().lower()]
+                resultados = [r for r in resultados if str(r.get('usuario_registro') or '').strip().lower() == str(usuario_filtro).strip().lower()]
 
     return resultados
 

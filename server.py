@@ -1,4 +1,5 @@
 import io
+import math
 import os
 import socket
 import tempfile
@@ -334,7 +335,7 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
         # Validar permisos de inspector
         if usuario_actual.get("rol") != "admin":
             cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row[2] and row[2].strip().lower() != cli_asig.lower():
+            if cli_asig and row[2] and str(row[2]).strip().lower() != cli_asig.lower():
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
         
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
@@ -375,7 +376,7 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
             if not row_exist:
                 raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
             cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
                 raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de este cliente")
         datos["usuario_registro"] = usuario_actual["username"]
         if cli_asig:
@@ -400,7 +401,7 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
             if not row_exist:
                 raise HTTPException(status_code=404, detail="Inspección no encontrada")
             cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and row_exist[0].strip().lower() != cli_asig.lower():
+            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
 
     database.eliminar_inspeccion(inspeccion_id)
