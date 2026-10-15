@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 13:12:22`
+- **Fecha de Generación:** `2026-10-15 13:53:25`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `22,322` líneas
-- **Tamaño Total de Código Fuente:** `1358.4 KB` (`1,391,038` bytes)
+- **Líneas Totales de Código:** `22,516` líneas
+- **Tamaño Total de Código Fuente:** `1366.6 KB` (`1,399,393` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -210,8 +210,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 922 | 38.7 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2523 | 122.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 928 | 38.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 2538 | 123.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7573 | 660.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7675 | 664.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -234,7 +234,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
-| [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 58 | 2.1 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
+| [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 76 | 2.3 KB | Pruebas de generación y estructura de informes técnicos PDF |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
@@ -2032,7 +2032,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 922 líneas | 39,607 bytes (38.7 KB)
+- **Métricas:** 928 líneas | 39,841 bytes (38.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2539,10 +2539,13 @@ def api_kpis_llantas(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
-    if usuario_actual.get("rol") != "admin":
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    es_admin = (rol == "admin" or rol == "administrador" or user == "admin")
+    if not es_admin:
         filtros['usuario'] = usuario_actual["username"]
-        if usuario_actual.get("cliente_asignado"):
-            filtros['cliente'] = usuario_actual["cliente_asignado"]
+    elif usuario:
+        filtros['usuario'] = usuario
 
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
@@ -2572,10 +2575,13 @@ def api_exportar_kpis_excel(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
-    if usuario_actual.get("rol") != "admin":
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    es_admin = (rol == "admin" or rol == "administrador" or user == "admin")
+    if not es_admin:
         filtros['usuario'] = usuario_actual["username"]
-        if usuario_actual.get("cliente_asignado"):
-            filtros['cliente'] = usuario_actual["cliente_asignado"]
+    elif usuario:
+        filtros['usuario'] = usuario
 
     data = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     df = pd.DataFrame(data)
@@ -2966,7 +2972,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2523 líneas | 125,793 bytes (122.8 KB)
+- **Métricas:** 2538 líneas | 126,470 bytes (123.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5108,11 +5114,21 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
     Permite filtrar por cliente, subcliente, tipo_operacion, marca, diseno, dimension, vida, banda_reen.
     """
     filtros = filtros or {}
+    usuario_filtro = filtros.get('usuario')
+    clis_autorizados = None
+    if usuario_filtro:
+        usr_info = obtener_usuario_por_username(usuario_filtro)
+        if usr_info and usr_info.get('rol') != 'admin' and str(usr_info.get('username')).lower() != 'admin':
+            clis = parsear_clientes_asignados(usr_info.get('cliente_asignado'))
+            if clis:
+                clis_autorizados = [c.strip().upper() for c in clis if c.strip()]
+
     with get_connection() as conn:
         query = """
             SELECT id, fecha, placa, posicion, kilometraje, numero_interno,
                    marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion
+                   prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion,
+                   usuario_registro
             FROM inspecciones
             WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
         """
@@ -5120,10 +5136,28 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         if numero_interno and str(numero_interno).strip():
             query += " AND UPPER(TRIM(numero_interno)) LIKE UPPER(TRIM(?))"
             params.append(f"%{str(numero_interno).strip()}%")
-        
-        for k_campo in ['cliente', 'subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
+
+        # Filtro de cliente respetando permisos del perfil
+        cliente_solicitado = filtros.get('cliente')
+        if cliente_solicitado and str(cliente_solicitado).strip() and str(cliente_solicitado).strip().upper() != 'TODOS':
+            cli_sol_up = str(cliente_solicitado).strip().upper()
+            if clis_autorizados is not None:
+                if cli_sol_up in clis_autorizados:
+                    query += " AND UPPER(TRIM(cliente)) = ?"
+                    params.append(cli_sol_up)
+                else:
+                    return []
+            else:
+                query += " AND UPPER(TRIM(cliente)) = ?"
+                params.append(cli_sol_up)
+        elif clis_autorizados is not None:
+            placeholders = ', '.join(['?'] * len(clis_autorizados))
+            query += f" AND UPPER(TRIM(cliente)) IN ({placeholders})"
+            params.extend(clis_autorizados)
+
+        for k_campo in ['subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
             v_val = filtros.get(k_campo)
-            if v_val and str(v_val).strip() and str(v_val).strip() != 'Todos':
+            if v_val and str(v_val).strip() and str(v_val).strip().upper() != 'TODOS':
                 query += f" AND UPPER(TRIM({k_campo})) = UPPER(TRIM(?))"
                 params.append(str(v_val).strip())
 
@@ -5224,19 +5258,6 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
             'requiere_cambio': 'SÍ' if requiere_cambio else 'NO',
             'usuario_registro': ultima.get('usuario_registro', '')
         })
-
-    # Filtrar por usuario si es inspector y no es admin
-    usuario_filtro = filtros.get('usuario')
-    if usuario_filtro:
-        usr_info = obtener_usuario_por_username(usuario_filtro)
-        if usr_info and usr_info.get('rol') != 'admin':
-            cli_asig = usr_info.get('cliente_asignado')
-            clis = parsear_clientes_asignados(cli_asig)
-            if clis:
-                clis_lower = [c.lower() for c in clis]
-                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() in clis_lower]
-            else:
-                resultados = [r for r in resultados if str(r.get('usuario_registro') or '').strip().lower() == str(usuario_filtro).strip().lower()]
 
     return resultados
 
@@ -9327,7 +9348,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 7573 líneas | 675,802 bytes (660.0 KB)
+- **Métricas:** 7675 líneas | 680,553 bytes (664.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -10600,19 +10621,27 @@ if __name__ == '__main__':
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Cliente:</label>
-          <select id="filtroKpiCliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiCliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todos los Clientes</option>
+          </select>
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Sede / Subcli:</label>
-          <select id="filtroKpiSubcliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiSubcliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todas las Sedes</option>
+          </select>
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Operación:</label>
-          <select id="filtroKpiOperacion" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiOperacion" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todas las Operaciones</option>
+          </select>
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Marca:</label>
-          <select id="filtroKpiMarca" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiMarca" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todas las Marcas</option>
+          </select>
         </div>
       </div>
 
@@ -12835,11 +12864,23 @@ if __name__ == '__main__':
     let kpisFiltrosPoblados = false;
 
     async function cargarKpis() {
-      const qNum = (document.getElementById('filtroKpiNumero').value || '').trim();
-      const cli = document.getElementById('filtroKpiCliente').value || '';
-      const sub = document.getElementById('filtroKpiSubcliente').value || '';
-      const op = document.getElementById('filtroKpiOperacion').value || '';
-      const marca = document.getElementById('filtroKpiMarca').value || '';
+      const tbody = document.getElementById('tbodyKpis');
+      if (tbody && (!cacheKpis || cacheKpis.length === 0)) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="20" class="p-8 text-center text-slate-500 font-bold text-xs">
+              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 mr-2 text-sm"></i>
+              Cargando métricas de trazabilidad y KPIs...
+            </td>
+          </tr>
+        `;
+      }
+
+      const qNum = (document.getElementById('filtroKpiNumero')?.value || '').trim();
+      const cli = document.getElementById('filtroKpiCliente')?.value || '';
+      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
+      const op = document.getElementById('filtroKpiOperacion')?.value || '';
+      const marca = document.getElementById('filtroKpiMarca')?.value || '';
 
       const params = new URLSearchParams();
       if (qNum) params.append('numero_interno', qNum);
@@ -12848,36 +12889,115 @@ if __name__ == '__main__':
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
 
+      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
       try {
-        const res = await fetch(`/api/kpis-llantas?${params.toString()}`);
+        const res = await fetch(`/api/kpis-llantas?${params.toString()}`, { headers });
         if (res.ok) {
           cacheKpis = await res.json();
-          if (!kpisFiltrosPoblados) {
-            poblarSelectoresFiltroKpis(cacheKpis);
-          }
+          poblarSelectoresFiltroKpis(cacheKpis);
           renderizarTablaKpis();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no válida o expirada. Por favor inicia sesión nuevamente.</td></tr>`;
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar métricas (${res.status}). <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
         }
       } catch (e) {
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-wifi mr-2"></i>Error de conexión con el servidor. <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+        }
         mostrarToast('Error al cargar métricas de KPIs', true);
       }
     }
 
     function poblarSelectoresFiltroKpis(data) {
-      if (!data || data.length === 0) return;
-      const clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
-      const subclientes = Array.from(new Set(data.map(d => d.subcliente).filter(Boolean))).sort();
-      const operaciones = Array.from(new Set(data.map(d => d.tipo_operacion).filter(Boolean))).sort();
-      const marcas = Array.from(new Set(data.map(d => d.marca).filter(Boolean))).sort();
-
       const selCli = document.getElementById('filtroKpiCliente');
       const selSub = document.getElementById('filtroKpiSubcliente');
       const selOp = document.getElementById('filtroKpiOperacion');
       const selMar = document.getElementById('filtroKpiMarca');
 
-      if (selCli) selCli.innerHTML = '<option value="TODOS">Todos los Clientes</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (selSub) selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' + subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
-      if (selOp) selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      if (selMar) selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+      const valCliActual = selCli ? (selCli.value || 'TODOS') : 'TODOS';
+      const valSubActual = selSub ? (selSub.value || 'TODOS') : 'TODOS';
+      const valOpActual = selOp ? (selOp.value || 'TODOS') : 'TODOS';
+      const valMarActual = selMar ? (selMar.value || 'TODOS') : 'TODOS';
+
+      // Detectar clientes asignados del usuario si es inspector
+      let clisAsignados = [];
+      if (usuarioActual && !esUsuarioAdmin()) {
+        if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
+          clisAsignados = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
+        } else if (usuarioActual.cliente_asignado) {
+          clisAsignados = usuarioActual.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+
+      // Clientes disponibles
+      let clientes = [];
+      if (data && data.length > 0) {
+        clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
+      }
+      if (clisAsignados.length > 0) {
+        clisAsignados.forEach(c => {
+          if (!clientes.some(x => x.toLowerCase() === c.toLowerCase())) clientes.push(c);
+        });
+        clientes.sort();
+      }
+
+      if (selCli) {
+        if (clisAsignados.length === 1) {
+          const unico = clisAsignados[0];
+          selCli.innerHTML = `<option value="${unico}" selected>${unico} (Fijo)</option>`;
+          selCli.disabled = true;
+          selCli.classList.add('bg-slate-100', 'cursor-not-allowed');
+        } else {
+          selCli.disabled = false;
+          selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+          const lblTodos = clisAsignados.length > 1 ? 'Todas Mis Flotas Asignadas' : 'Todos los Clientes';
+          selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
+            clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valCliActual && clientes.includes(valCliActual)) {
+            selCli.value = valCliActual;
+          } else {
+            selCli.value = 'TODOS';
+          }
+        }
+      }
+
+      // Subclientes / Sedes disponibles (filtrados por cliente si está seleccionado)
+      const cliFiltro = selCli ? selCli.value : 'TODOS';
+      const dataSedes = (cliFiltro && cliFiltro !== 'TODOS')
+        ? (data || []).filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
+        : (data || []);
+      const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
+      if (selSub) {
+        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+        if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
+        else selSub.value = 'TODOS';
+      }
+
+      // Operaciones
+      const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
+      if (selOp) {
+        selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' +
+          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+        if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
+        else selOp.value = 'TODOS';
+      }
+
+      // Marcas
+      const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
+      if (selMar) {
+        selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
+        else selMar.value = 'TODOS';
+      }
 
       kpisFiltrosPoblados = true;
     }
@@ -12937,7 +13057,10 @@ if __name__ == '__main__':
 
     function limpiarFiltrosKpis() {
       document.getElementById('filtroKpiNumero').value = '';
-      document.getElementById('filtroKpiCliente').value = 'TODOS';
+      const selCli = document.getElementById('filtroKpiCliente');
+      if (selCli && !selCli.disabled) {
+        selCli.value = 'TODOS';
+      }
       document.getElementById('filtroKpiSubcliente').value = 'TODOS';
       document.getElementById('filtroKpiOperacion').value = 'TODOS';
       document.getElementById('filtroKpiMarca').value = 'TODOS';
@@ -19943,7 +20066,7 @@ def test_renderizar_paginas_png(test_db):
 
 - **Ruta:** `tests/test_kpis.py`
 - **Descripción:** Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK
-- **Métricas:** 58 líneas | 2,145 bytes (2.1 KB)
+- **Métricas:** 129 líneas | 4,838 bytes (4.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -20004,6 +20127,76 @@ def test_resolucion_limites_retiro_en_memoria(test_db):
     assert resolver("CLIENTE_TEST") == 4.5
     assert resolver("CLIENTE_TEST", "SEDE_INEXISTENTE") == 4.5
     assert resolver("CLIENTE_INEXISTENTE") == 3.0  # Fallback estándar
+
+
+def test_kpis_permisos_inspector_flotas(test_db):
+    # Insertar llantas de dos flotas distintas
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'FLOTA ALFA',
+        'subcliente': 'Sede 1',
+        'tipo_operacion': 'Carga',
+        'placa': 'ALF-001',
+        'posicion': 1,
+        'kilometraje': 50000.0,
+        'km_montaje': 40000.0,
+        'numero_interno': 'LL-ALFA-1',
+        'marca': 'Michelin',
+        'diseno': 'X Multi',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'precio': 1500000.0,
+        'prof_inicial': 15.0,
+        'prof_ext': 10.0,
+        'prof_cent': 10.0,
+        'prof_int': 10.0,
+        'psi': 110.0
+    })
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'FLOTA BETA',
+        'subcliente': 'Sede 2',
+        'tipo_operacion': 'Carga',
+        'placa': 'BET-001',
+        'posicion': 1,
+        'kilometraje': 30000.0,
+        'km_montaje': 20000.0,
+        'numero_interno': 'LL-BETA-1',
+        'marca': 'Bridgestone',
+        'diseno': 'R268',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'precio': 1600000.0,
+        'prof_inicial': 16.0,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'psi': 110.0
+    })
+
+    # Crear inspector asignado a FLOTA ALFA
+    database.crear_usuario('insp_alfa', 'Inspector Alfa', 'pass123', 'inspector', cliente_asignado='FLOTA ALFA')
+    # Crear inspector sin restricción de flotas (acceso a todas las flotas)
+    database.crear_usuario('insp_global', 'Inspector Global', 'pass123', 'inspector', cliente_asignado='')
+
+    # 1. Inspector Alfa consulta KPIs sin especificar cliente -> solo ve FLOTA ALFA
+    kpis_alfa = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_alfa'})
+    assert len(kpis_alfa) == 1
+    assert kpis_alfa[0]['numero_interno'] == 'LL-ALFA-1'
+    assert kpis_alfa[0]['cliente'] == 'FLOTA ALFA'
+
+    # 2. Inspector Alfa intenta consultar FLOTA BETA -> debe recibir lista vacía
+    kpis_beta_intento = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_alfa', 'cliente': 'FLOTA BETA'})
+    assert len(kpis_beta_intento) == 0
+
+    # 3. Inspector Global consulta sin cliente -> ve ambas flotas
+    kpis_global = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_global'})
+    assert len(kpis_global) == 2
+
+    # 4. Inspector Global filtra por FLOTA BETA -> ve FLOTA BETA
+    kpis_global_beta = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_global', 'cliente': 'FLOTA BETA'})
+    assert len(kpis_global_beta) == 1
+    assert kpis_global_beta[0]['numero_interno'] == 'LL-BETA-1'
 ```
 
 ---

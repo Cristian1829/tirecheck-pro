@@ -2136,11 +2136,21 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
     Permite filtrar por cliente, subcliente, tipo_operacion, marca, diseno, dimension, vida, banda_reen.
     """
     filtros = filtros or {}
+    usuario_filtro = filtros.get('usuario')
+    clis_autorizados = None
+    if usuario_filtro:
+        usr_info = obtener_usuario_por_username(usuario_filtro)
+        if usr_info and usr_info.get('rol') != 'admin' and str(usr_info.get('username')).lower() != 'admin':
+            clis = parsear_clientes_asignados(usr_info.get('cliente_asignado'))
+            if clis:
+                clis_autorizados = [c.strip().upper() for c in clis if c.strip()]
+
     with get_connection() as conn:
         query = """
             SELECT id, fecha, placa, posicion, kilometraje, numero_interno,
                    marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion
+                   prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion,
+                   usuario_registro
             FROM inspecciones
             WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
         """
@@ -2148,10 +2158,28 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         if numero_interno and str(numero_interno).strip():
             query += " AND UPPER(TRIM(numero_interno)) LIKE UPPER(TRIM(?))"
             params.append(f"%{str(numero_interno).strip()}%")
-        
-        for k_campo in ['cliente', 'subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
+
+        # Filtro de cliente respetando permisos del perfil
+        cliente_solicitado = filtros.get('cliente')
+        if cliente_solicitado and str(cliente_solicitado).strip() and str(cliente_solicitado).strip().upper() != 'TODOS':
+            cli_sol_up = str(cliente_solicitado).strip().upper()
+            if clis_autorizados is not None:
+                if cli_sol_up in clis_autorizados:
+                    query += " AND UPPER(TRIM(cliente)) = ?"
+                    params.append(cli_sol_up)
+                else:
+                    return []
+            else:
+                query += " AND UPPER(TRIM(cliente)) = ?"
+                params.append(cli_sol_up)
+        elif clis_autorizados is not None:
+            placeholders = ', '.join(['?'] * len(clis_autorizados))
+            query += f" AND UPPER(TRIM(cliente)) IN ({placeholders})"
+            params.extend(clis_autorizados)
+
+        for k_campo in ['subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
             v_val = filtros.get(k_campo)
-            if v_val and str(v_val).strip() and str(v_val).strip() != 'Todos':
+            if v_val and str(v_val).strip() and str(v_val).strip().upper() != 'TODOS':
                 query += f" AND UPPER(TRIM({k_campo})) = UPPER(TRIM(?))"
                 params.append(str(v_val).strip())
 
@@ -2252,19 +2280,6 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
             'requiere_cambio': 'SÍ' if requiere_cambio else 'NO',
             'usuario_registro': ultima.get('usuario_registro', '')
         })
-
-    # Filtrar por usuario si es inspector y no es admin
-    usuario_filtro = filtros.get('usuario')
-    if usuario_filtro:
-        usr_info = obtener_usuario_por_username(usuario_filtro)
-        if usr_info and usr_info.get('rol') != 'admin':
-            cli_asig = usr_info.get('cliente_asignado')
-            clis = parsear_clientes_asignados(cli_asig)
-            if clis:
-                clis_lower = [c.lower() for c in clis]
-                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() in clis_lower]
-            else:
-                resultados = [r for r in resultados if str(r.get('usuario_registro') or '').strip().lower() == str(usuario_filtro).strip().lower()]
 
     return resultados
 

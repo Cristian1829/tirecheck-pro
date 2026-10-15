@@ -56,3 +56,74 @@ def test_resolucion_limites_retiro_en_memoria(test_db):
     assert resolver("CLIENTE_TEST", "SEDE_INEXISTENTE") == 4.5
     assert resolver("CLIENTE_INEXISTENTE") == 3.0  # Fallback estándar
 
+
+def test_kpis_permisos_inspector_flotas(test_db):
+    # Insertar llantas de dos flotas distintas
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'FLOTA ALFA',
+        'subcliente': 'Sede 1',
+        'tipo_operacion': 'Carga',
+        'placa': 'ALF-001',
+        'posicion': 1,
+        'kilometraje': 50000.0,
+        'km_montaje': 40000.0,
+        'numero_interno': 'LL-ALFA-1',
+        'marca': 'Michelin',
+        'diseno': 'X Multi',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'precio': 1500000.0,
+        'prof_inicial': 15.0,
+        'prof_ext': 10.0,
+        'prof_cent': 10.0,
+        'prof_int': 10.0,
+        'psi': 110.0
+    })
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'FLOTA BETA',
+        'subcliente': 'Sede 2',
+        'tipo_operacion': 'Carga',
+        'placa': 'BET-001',
+        'posicion': 1,
+        'kilometraje': 30000.0,
+        'km_montaje': 20000.0,
+        'numero_interno': 'LL-BETA-1',
+        'marca': 'Bridgestone',
+        'diseno': 'R268',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'precio': 1600000.0,
+        'prof_inicial': 16.0,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'psi': 110.0
+    })
+
+    # Crear inspector asignado a FLOTA ALFA
+    database.crear_usuario('insp_alfa', 'Inspector Alfa', 'pass123', 'inspector', cliente_asignado='FLOTA ALFA')
+    # Crear inspector sin restricción de flotas (acceso a todas las flotas)
+    database.crear_usuario('insp_global', 'Inspector Global', 'pass123', 'inspector', cliente_asignado='')
+
+    # 1. Inspector Alfa consulta KPIs sin especificar cliente -> solo ve FLOTA ALFA
+    kpis_alfa = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_alfa'})
+    assert len(kpis_alfa) == 1
+    assert kpis_alfa[0]['numero_interno'] == 'LL-ALFA-1'
+    assert kpis_alfa[0]['cliente'] == 'FLOTA ALFA'
+
+    # 2. Inspector Alfa intenta consultar FLOTA BETA -> debe recibir lista vacía
+    kpis_beta_intento = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_alfa', 'cliente': 'FLOTA BETA'})
+    assert len(kpis_beta_intento) == 0
+
+    # 3. Inspector Global consulta sin cliente -> ve ambas flotas
+    kpis_global = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_global'})
+    assert len(kpis_global) == 2
+
+    # 4. Inspector Global filtra por FLOTA BETA -> ve FLOTA BETA
+    kpis_global_beta = database.obtener_trazabilidad_kpis_llanta('', {'usuario': 'insp_global', 'cliente': 'FLOTA BETA'})
+    assert len(kpis_global_beta) == 1
+    assert kpis_global_beta[0]['numero_interno'] == 'LL-BETA-1'
+
+

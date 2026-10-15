@@ -1267,19 +1267,27 @@
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Cliente:</label>
-          <select id="filtroKpiCliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiCliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todos los Clientes</option>
+          </select>
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Sede / Subcli:</label>
-          <select id="filtroKpiSubcliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiSubcliente" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todas las Sedes</option>
+          </select>
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Operación:</label>
-          <select id="filtroKpiOperacion" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiOperacion" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todas las Operaciones</option>
+          </select>
         </div>
         <div>
           <label class="block font-bold text-slate-600 mb-1">Marca:</label>
-          <select id="filtroKpiMarca" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></select>
+          <select id="filtroKpiMarca" onchange="cargarKpis()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="TODOS">Todas las Marcas</option>
+          </select>
         </div>
       </div>
 
@@ -3502,11 +3510,23 @@
     let kpisFiltrosPoblados = false;
 
     async function cargarKpis() {
-      const qNum = (document.getElementById('filtroKpiNumero').value || '').trim();
-      const cli = document.getElementById('filtroKpiCliente').value || '';
-      const sub = document.getElementById('filtroKpiSubcliente').value || '';
-      const op = document.getElementById('filtroKpiOperacion').value || '';
-      const marca = document.getElementById('filtroKpiMarca').value || '';
+      const tbody = document.getElementById('tbodyKpis');
+      if (tbody && (!cacheKpis || cacheKpis.length === 0)) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="20" class="p-8 text-center text-slate-500 font-bold text-xs">
+              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 mr-2 text-sm"></i>
+              Cargando métricas de trazabilidad y KPIs...
+            </td>
+          </tr>
+        `;
+      }
+
+      const qNum = (document.getElementById('filtroKpiNumero')?.value || '').trim();
+      const cli = document.getElementById('filtroKpiCliente')?.value || '';
+      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
+      const op = document.getElementById('filtroKpiOperacion')?.value || '';
+      const marca = document.getElementById('filtroKpiMarca')?.value || '';
 
       const params = new URLSearchParams();
       if (qNum) params.append('numero_interno', qNum);
@@ -3515,36 +3535,115 @@
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
 
+      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
       try {
-        const res = await fetch(`/api/kpis-llantas?${params.toString()}`);
+        const res = await fetch(`/api/kpis-llantas?${params.toString()}`, { headers });
         if (res.ok) {
           cacheKpis = await res.json();
-          if (!kpisFiltrosPoblados) {
-            poblarSelectoresFiltroKpis(cacheKpis);
-          }
+          poblarSelectoresFiltroKpis(cacheKpis);
           renderizarTablaKpis();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no válida o expirada. Por favor inicia sesión nuevamente.</td></tr>`;
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar métricas (${res.status}). <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
         }
       } catch (e) {
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-wifi mr-2"></i>Error de conexión con el servidor. <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+        }
         mostrarToast('Error al cargar métricas de KPIs', true);
       }
     }
 
     function poblarSelectoresFiltroKpis(data) {
-      if (!data || data.length === 0) return;
-      const clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
-      const subclientes = Array.from(new Set(data.map(d => d.subcliente).filter(Boolean))).sort();
-      const operaciones = Array.from(new Set(data.map(d => d.tipo_operacion).filter(Boolean))).sort();
-      const marcas = Array.from(new Set(data.map(d => d.marca).filter(Boolean))).sort();
-
       const selCli = document.getElementById('filtroKpiCliente');
       const selSub = document.getElementById('filtroKpiSubcliente');
       const selOp = document.getElementById('filtroKpiOperacion');
       const selMar = document.getElementById('filtroKpiMarca');
 
-      if (selCli) selCli.innerHTML = '<option value="TODOS">Todos los Clientes</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      if (selSub) selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' + subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
-      if (selOp) selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      if (selMar) selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+      const valCliActual = selCli ? (selCli.value || 'TODOS') : 'TODOS';
+      const valSubActual = selSub ? (selSub.value || 'TODOS') : 'TODOS';
+      const valOpActual = selOp ? (selOp.value || 'TODOS') : 'TODOS';
+      const valMarActual = selMar ? (selMar.value || 'TODOS') : 'TODOS';
+
+      // Detectar clientes asignados del usuario si es inspector
+      let clisAsignados = [];
+      if (usuarioActual && !esUsuarioAdmin()) {
+        if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
+          clisAsignados = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
+        } else if (usuarioActual.cliente_asignado) {
+          clisAsignados = usuarioActual.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+
+      // Clientes disponibles
+      let clientes = [];
+      if (data && data.length > 0) {
+        clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
+      }
+      if (clisAsignados.length > 0) {
+        clisAsignados.forEach(c => {
+          if (!clientes.some(x => x.toLowerCase() === c.toLowerCase())) clientes.push(c);
+        });
+        clientes.sort();
+      }
+
+      if (selCli) {
+        if (clisAsignados.length === 1) {
+          const unico = clisAsignados[0];
+          selCli.innerHTML = `<option value="${unico}" selected>${unico} (Fijo)</option>`;
+          selCli.disabled = true;
+          selCli.classList.add('bg-slate-100', 'cursor-not-allowed');
+        } else {
+          selCli.disabled = false;
+          selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+          const lblTodos = clisAsignados.length > 1 ? 'Todas Mis Flotas Asignadas' : 'Todos los Clientes';
+          selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
+            clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valCliActual && clientes.includes(valCliActual)) {
+            selCli.value = valCliActual;
+          } else {
+            selCli.value = 'TODOS';
+          }
+        }
+      }
+
+      // Subclientes / Sedes disponibles (filtrados por cliente si está seleccionado)
+      const cliFiltro = selCli ? selCli.value : 'TODOS';
+      const dataSedes = (cliFiltro && cliFiltro !== 'TODOS')
+        ? (data || []).filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
+        : (data || []);
+      const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
+      if (selSub) {
+        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+        if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
+        else selSub.value = 'TODOS';
+      }
+
+      // Operaciones
+      const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
+      if (selOp) {
+        selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' +
+          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+        if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
+        else selOp.value = 'TODOS';
+      }
+
+      // Marcas
+      const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
+      if (selMar) {
+        selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
+        else selMar.value = 'TODOS';
+      }
 
       kpisFiltrosPoblados = true;
     }
@@ -3604,7 +3703,10 @@
 
     function limpiarFiltrosKpis() {
       document.getElementById('filtroKpiNumero').value = '';
-      document.getElementById('filtroKpiCliente').value = 'TODOS';
+      const selCli = document.getElementById('filtroKpiCliente');
+      if (selCli && !selCli.disabled) {
+        selCli.value = 'TODOS';
+      }
       document.getElementById('filtroKpiSubcliente').value = 'TODOS';
       document.getElementById('filtroKpiOperacion').value = 'TODOS';
       document.getElementById('filtroKpiMarca').value = 'TODOS';

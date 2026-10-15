@@ -501,10 +501,13 @@ def api_kpis_llantas(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
-    if usuario_actual.get("rol") != "admin":
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    es_admin = (rol == "admin" or rol == "administrador" or user == "admin")
+    if not es_admin:
         filtros['usuario'] = usuario_actual["username"]
-        if usuario_actual.get("cliente_asignado"):
-            filtros['cliente'] = usuario_actual["cliente_asignado"]
+    elif usuario:
+        filtros['usuario'] = usuario
 
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
@@ -534,10 +537,13 @@ def api_exportar_kpis_excel(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
-    if usuario_actual.get("rol") != "admin":
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    es_admin = (rol == "admin" or rol == "administrador" or user == "admin")
+    if not es_admin:
         filtros['usuario'] = usuario_actual["username"]
-        if usuario_actual.get("cliente_asignado"):
-            filtros['cliente'] = usuario_actual["cliente_asignado"]
+    elif usuario:
+        filtros['usuario'] = usuario
 
     data = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     df = pd.DataFrame(data)
