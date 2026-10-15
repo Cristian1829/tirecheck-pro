@@ -259,3 +259,38 @@ def test_api_importar_excel(test_db, auth_client):
     data = res.json()
     assert data["status"] == "ok"
     assert data["registros_importados"] >= 1
+
+def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
+    import pandas as pd
+    # Crear un excel con profundidad exterior 35.0 mm (> 27.0 mm permitidos en R22.5)
+    df = pd.DataFrame([{
+        'fecha': '2026-10-01',
+        'cliente': 'Cliente Import',
+        'subcliente': 'Sede Import',
+        'tipo_operacion': 'Carga',
+        'placa': 'IMP-ERR',
+        'numero_interno': 'LL-ERR-1',
+        'posicion': 1,
+        'kilometraje': 80000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_ext': 35.0,  # Inválido: supera 27.0 mm
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'psi': 105,
+        'prof_inicial': 16.0
+    }])
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    buf.seek(0)
+
+    files = {'file': ('test_cargue_err.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
+    assert res.status_code == 400
+    data = res.json()
+    assert "detail" in data
+    assert "CANDADO DE SEGURIDAD" in data["detail"] or "27.0 mm" in data["detail"] or "Fila 2" in data["detail"]
+

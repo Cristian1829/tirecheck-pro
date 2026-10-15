@@ -100,3 +100,40 @@ def test_diagnostico_sugerencia_cambio(test_db):
     fila = res.iloc[0]
     assert fila['Plan_Cambio_Llanta'] == 'SÍ'
     assert 'Pos 1' in fila['Detalle_Cambio']
+
+def test_diagnostico_ignora_inspecciones_meses_anteriores(test_db):
+    # Inserta para una misma placa una llanta en 2.0 mm en 2026-06-01 y luego la misma posición renovada en 15.0 mm en 2026-10-01
+    datos = [
+        {
+            'placa': 'V-RENOVAR',
+            'posicion': 1,
+            'fecha': '2026-06-01',
+            'tipologia': 'Cabezote (6x4)',
+            'prof_int': 2.0,
+            'prof_cent': 2.0,
+            'prof_ext': 2.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 80000
+        },
+        {
+            'placa': 'V-RENOVAR',
+            'posicion': 1,
+            'fecha': '2026-10-01',
+            'tipologia': 'Cabezote (6x4)',
+            'prof_int': 15.0,
+            'prof_cent': 15.0,
+            'prof_ext': 15.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 95000
+        }
+    ]
+    df = pd.DataFrame(datos)
+    res = database.analizar_inspecciones_df(df)
+    assert not res.empty
+    fila = res.iloc[0]
+    assert fila['Llantas Inspeccionadas'] == 1
+    assert fila['Plan_Cambio_Llanta'] == 'NO'
+    assert fila['Fecha'] == '2026-10-01'
+

@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 21:55:02`
+- **Fecha de Generación:** `2026-10-15 09:06:17`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `21,018` líneas
-- **Tamaño Total de Código Fuente:** `1295.9 KB` (`1,327,029` bytes)
+- **Líneas Totales de Código:** `21,154` líneas
+- **Tamaño Total de Código Fuente:** `1301.7 KB` (`1,332,890` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -211,7 +211,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 883 | 36.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2325 | 112.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 2389 | 115.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -229,10 +229,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 261 | 9.3 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 296 | 10.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 175 | 5.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
-| [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
+| [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 76 | 2.3 KB | Pruebas de generación y estructura de informes técnicos PDF |
@@ -2927,7 +2927,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2325 líneas | 115,161 bytes (112.5 KB)
+- **Métricas:** 2389 líneas | 118,548 bytes (115.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3612,7 +3612,7 @@ def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
     fecha_50_dias = fecha_base + timedelta(days=50)
     return max(fecha_dia_21_sig, fecha_50_dias)
 
-def validar_inspeccion_candados(datos, excluir_id=None):
+def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
     """
     Evalúa los candados de seguridad de inspección:
     1. Máximo 27 mm en llantas R22.5 o de carga pesada.
@@ -3670,12 +3670,12 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     # Asignación automática de número consecutivo TMP-001 si viene vacío
     num_interno = str(datos.get('numero_interno', '')).strip().upper()
     if not num_interno:
-        num_interno = generar_siguiente_numero_interno_temporal()
+        num_interno = generar_siguiente_numero_interno_temporal(conn=conn)
         datos['numero_interno'] = num_interno
 
     # Consultar historial previo de esta placa
-    with get_connection() as conn:
-        cursor = conn.cursor()
+    def _ejecutar_consultas(c):
+        cursor = c.cursor()
         # Mes de inspección (YYYY-MM)
         mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
 
@@ -3807,7 +3807,13 @@ def validar_inspeccion_candados(datos, excluir_id=None):
                     'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Interior subió de {prev_int} mm a {p_int} mm (Supera la tolerancia de 1.0 mm).'
                 }
 
-    return {'valido': True, 'mensaje': 'Validaciones de seguridad aprobadas.'}
+        return {'valido': True, 'mensaje': 'Validaciones de seguridad aprobadas.'}
+
+    if conn is not None:
+        return _ejecutar_consultas(conn)
+    else:
+        with get_connection() as c:
+            return _ejecutar_consultas(c)
 
 def insertar_inspeccion(datos):
     if not str(datos.get('numero_interno', '')).strip():
@@ -3984,58 +3990,109 @@ def cargar_excel_a_bd(file_path):
     registros_insertados = 0
     with get_connection() as conn:
         cursor = conn.cursor()
-        for _, row in df.iterrows():
-            placa = str(row[col_encontradas['placa']]).strip().upper() if 'placa' in col_encontradas else ''
+        for idx, row in df.iterrows():
+            placa_raw = row[col_encontradas['placa']] if 'placa' in col_encontradas and not pd.isna(row[col_encontradas['placa']]) else ''
+            placa = str(placa_raw).strip().upper()
             if not placa or placa == 'NAN':
                 continue
             
             pos = to_int(row[col_encontradas['posicion']]) if 'posicion' in col_encontradas else 1
-            fecha = str(row[col_encontradas['fecha']]) if 'fecha' in col_encontradas and not pd.isna(row[col_encontradas['fecha']]) else datetime.now().strftime('%Y-%m-%d')
-            if ' ' in fecha:
-                fecha = fecha.split(' ')[0]
 
-            vida = str(row[col_encontradas['vida']]).strip() if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else 'Original'
-            banda = str(row[col_encontradas['banda_reen']]).strip() if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
-            if vida.lower() != 'reencauche':
-                banda = ''
+            # Normalizar fecha a formato YYYY-MM-DD
+            fecha_raw = row[col_encontradas['fecha']] if 'fecha' in col_encontradas and not pd.isna(row[col_encontradas['fecha']]) else None
+            fecha_dt = pd.to_datetime(fecha_raw, errors='coerce') if fecha_raw is not None else pd.NaT
+            if pd.isna(fecha_dt):
+                fecha = datetime.now().strftime('%Y-%m-%d')
+            else:
+                fecha = fecha_dt.strftime('%Y-%m-%d')
+
+            # Normalizar vida y banda
+            vida_raw = str(row[col_encontradas['vida']]).strip() if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else 'ORIGINAL'
+            vida = vida_raw.upper() if vida_raw and vida_raw.upper() != 'NAN' else 'ORIGINAL'
+            banda_raw = str(row[col_encontradas['banda_reen']]).strip() if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
+            banda = banda_raw.upper() if banda_raw and banda_raw.upper() != 'NAN' and vida == 'REENCAUCHE' else ''
+
+            # Número interno con generación automática de consecutivo si viene vacío
+            num_interno_raw = str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''
+            num_interno = num_interno_raw if num_interno_raw and num_interno_raw != 'NAN' else ''
+            if not num_interno:
+                num_interno = generar_siguiente_numero_interno_temporal(conn=conn)
+
+            datos = {
+                'fecha': fecha,
+                'cliente': str(row[col_encontradas['cliente']]).strip().upper() if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) and str(row[col_encontradas['cliente']]).strip().upper() != 'NAN' else '',
+                'subcliente': str(row[col_encontradas['subcliente']]).strip().upper() if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) and str(row[col_encontradas['subcliente']]).strip().upper() != 'NAN' else '',
+                'tipo_operacion': str(row[col_encontradas['tipo_operacion']]).strip().upper() if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) and str(row[col_encontradas['tipo_operacion']]).strip().upper() != 'NAN' else '',
+                'placa': placa,
+                'posicion': pos,
+                'kilometraje': to_float(row[col_encontradas['kilometraje']]) if 'kilometraje' in col_encontradas else 0.0,
+                'tipologia': str(row[col_encontradas['tipologia']]).strip().upper() if 'tipologia' in col_encontradas and not pd.isna(row[col_encontradas['tipologia']]) and str(row[col_encontradas['tipologia']]).strip().upper() != 'NAN' else '',
+                'marca': str(row[col_encontradas['marca']]).strip().upper() if 'marca' in col_encontradas and not pd.isna(row[col_encontradas['marca']]) and str(row[col_encontradas['marca']]).strip().upper() != 'NAN' else '',
+                'diseno': str(row[col_encontradas['diseno']]).strip().upper() if 'diseno' in col_encontradas and not pd.isna(row[col_encontradas['diseno']]) and str(row[col_encontradas['diseno']]).strip().upper() != 'NAN' else '',
+                'dimension': str(row[col_encontradas['dimension']]).strip().upper() if 'dimension' in col_encontradas and not pd.isna(row[col_encontradas['dimension']]) and str(row[col_encontradas['dimension']]).strip().upper() != 'NAN' else '',
+                'vida': vida,
+                'banda_reen': banda,
+                'prof_ext': to_float(row[col_encontradas['prof_ext']]) if 'prof_ext' in col_encontradas else 0.0,
+                'prof_cent': to_float(row[col_encontradas['prof_cent']]) if 'prof_cent' in col_encontradas else 0.0,
+                'prof_int': to_float(row[col_encontradas['prof_int']]) if 'prof_int' in col_encontradas else 0.0,
+                'psi': to_float(row[col_encontradas['psi']]) if 'psi' in col_encontradas else 0.0,
+                'novedades': str(row[col_encontradas['novedades']]).strip().upper() if 'novedades' in col_encontradas and not pd.isna(row[col_encontradas['novedades']]) and str(row[col_encontradas['novedades']]).strip().upper() != 'NAN' else '',
+                'precio': to_float(row[col_encontradas['precio']]) if 'precio' in col_encontradas else 0.0,
+                'prof_inicial': to_float(row[col_encontradas['prof_inicial']]) if 'prof_inicial' in col_encontradas else 0.0,
+                'km_montaje': to_float(row[col_encontradas['km_montaje']]) if 'km_montaje' in col_encontradas else 0.0,
+                'numero_interno': num_interno,
+                'usuario_registro': 'EXCEL_IMPORT',
+                'foto_novedad': ''
+            }
+
+            # Validar candados de seguridad por cada fila
+            val = validar_inspeccion_candados(datos, conn=conn)
+            if not val.get('valido', True):
+                raise ValueError(f"Fila {idx + 2} (Placa {placa}, Pos {pos}): {val.get('mensaje')}")
+
+            # Asegurar número interno asignado en caso de autogeneración
+            num_final = str(datos.get('numero_interno', num_interno)).strip().upper()
 
             cursor.execute("""
                 INSERT INTO inspecciones (
                     fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                     tipologia, marca, diseno, dimension, vida, banda_reen,
-                    prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno,
+                    usuario_registro, foto_novedad
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                fecha,
-                str(row[col_encontradas['cliente']]) if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) else '',
-                str(row[col_encontradas['subcliente']]) if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) else '',
-                str(row[col_encontradas['tipo_operacion']]) if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) else '',
-                placa,
-                pos,
-                to_float(row[col_encontradas['kilometraje']]) if 'kilometraje' in col_encontradas else 0.0,
-                str(row[col_encontradas['tipologia']]) if 'tipologia' in col_encontradas and not pd.isna(row[col_encontradas['tipologia']]) else '',
-                str(row[col_encontradas['marca']]) if 'marca' in col_encontradas and not pd.isna(row[col_encontradas['marca']]) else '',
-                str(row[col_encontradas['diseno']]) if 'diseno' in col_encontradas and not pd.isna(row[col_encontradas['diseno']]) else '',
-                str(row[col_encontradas['dimension']]) if 'dimension' in col_encontradas and not pd.isna(row[col_encontradas['dimension']]) else '',
-                vida,
-                banda,
-                to_float(row[col_encontradas['prof_ext']]) if 'prof_ext' in col_encontradas else 0.0,
-                to_float(row[col_encontradas['prof_cent']]) if 'prof_cent' in col_encontradas else 0.0,
-                to_float(row[col_encontradas['prof_int']]) if 'prof_int' in col_encontradas else 0.0,
-                to_float(row[col_encontradas['psi']]) if 'psi' in col_encontradas else 0.0,
-                str(row[col_encontradas['novedades']]) if 'novedades' in col_encontradas and not pd.isna(row[col_encontradas['novedades']]) else '',
-                to_float(row[col_encontradas['precio']]) if 'precio' in col_encontradas else 0.0,
-                to_float(row[col_encontradas['prof_inicial']]) if 'prof_inicial' in col_encontradas else 0.0,
-                to_float(row[col_encontradas['km_montaje']]) if 'km_montaje' in col_encontradas else 0.0,
-                str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''
+                datos['fecha'],
+                datos['cliente'],
+                datos['subcliente'],
+                datos['tipo_operacion'],
+                datos['placa'],
+                datos['posicion'],
+                datos['kilometraje'],
+                datos['tipologia'],
+                datos['marca'],
+                datos['diseno'],
+                datos['dimension'],
+                datos['vida'],
+                datos['banda_reen'],
+                datos['prof_ext'],
+                datos['prof_cent'],
+                datos['prof_int'],
+                datos['psi'],
+                datos['novedades'],
+                datos['precio'],
+                datos['prof_inicial'],
+                datos['km_montaje'],
+                num_final,
+                datos['usuario_registro'],
+                datos['foto_novedad']
             ))
             sincronizar_vehiculo_catalogo(
-                placa,
-                str(row[col_encontradas['tipologia']]) if 'tipologia' in col_encontradas and not pd.isna(row[col_encontradas['tipologia']]) else '',
-                str(row[col_encontradas['cliente']]) if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) else '',
-                str(row[col_encontradas['subcliente']]) if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) else '',
-                str(row[col_encontradas['tipo_operacion']]) if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) else '',
-                to_float(row[col_encontradas['kilometraje']]) if 'kilometraje' in col_encontradas else 0.0,
+                datos['placa'],
+                datos['tipologia'],
+                datos['cliente'],
+                datos['subcliente'],
+                datos['tipo_operacion'],
+                datos['kilometraje'],
                 conn=conn
             )
             registros_insertados += 1
@@ -4069,6 +4126,12 @@ def analizar_inspecciones_df(df_inspecciones):
     resultados = []
     
     for placa, group in df.groupby('placa'):
+        if 'fecha' in group.columns and not group['fecha'].dropna().empty:
+            fecha_max = group['fecha'].astype(str).str[:10].max()
+            group = group[group['fecha'].astype(str).str[:10] == fecha_max]
+        if 'id' in group.columns:
+            group = group.sort_values('id').groupby('posicion', as_index=False).last()
+
         t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
 
@@ -4099,7 +4162,7 @@ def analizar_inspecciones_df(df_inspecciones):
                         detalles_alineacion.append(f"Pos {p} (dif {diff:.1f}mm)")
         elif 'trailer' in t_veh.lower():
             for _, r in group.iterrows():
-                diff = r['prof_int'] - r['prof_ext']
+                diff = abs(r['prof_int'] - r['prof_ext'])
                 if diff >= 2:
                     plan_alineacion = True
                     detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f}mm)")
@@ -5247,8 +5310,9 @@ def obtener_datos_inspeccion_vehiculo(placa, fecha=None):
                        psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
                 FROM inspecciones
                 WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?))
-                ORDER BY fecha DESC, posicion ASC
-            """, (placa,))
+                  AND fecha = (SELECT MAX(fecha) FROM inspecciones WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)))
+                ORDER BY posicion ASC
+            """, (placa, placa))
         
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
                 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'prof_ext', 'prof_cent', 'prof_int',
@@ -17343,7 +17407,7 @@ def auth_client(admin_token):
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 261 líneas | 9,489 bytes (9.3 KB)
+- **Métricas:** 296 líneas | 10,761 bytes (10.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17608,6 +17672,40 @@ def test_api_importar_excel(test_db, auth_client):
     data = res.json()
     assert data["status"] == "ok"
     assert data["registros_importados"] >= 1
+
+def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
+    import pandas as pd
+    # Crear un excel con profundidad exterior 35.0 mm (> 27.0 mm permitidos en R22.5)
+    df = pd.DataFrame([{
+        'fecha': '2026-10-01',
+        'cliente': 'Cliente Import',
+        'subcliente': 'Sede Import',
+        'tipo_operacion': 'Carga',
+        'placa': 'IMP-ERR',
+        'numero_interno': 'LL-ERR-1',
+        'posicion': 1,
+        'kilometraje': 80000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_ext': 35.0,  # Inválido: supera 27.0 mm
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'psi': 105,
+        'prof_inicial': 16.0
+    }])
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    buf.seek(0)
+
+    files = {'file': ('test_cargue_err.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
+    assert res.status_code == 400
+    data = res.json()
+    assert "detail" in data
+    assert "CANDADO DE SEGURIDAD" in data["detail"] or "27.0 mm" in data["detail"] or "Fila 2" in data["detail"]
 ```
 
 ---
@@ -18087,7 +18185,7 @@ def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
 
 - **Ruta:** `tests/test_diagnostico.py`
 - **Descripción:** Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro)
-- **Métricas:** 102 líneas | 3,104 bytes (3.0 KB)
+- **Métricas:** 139 líneas | 4,306 bytes (4.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -18193,6 +18291,42 @@ def test_diagnostico_sugerencia_cambio(test_db):
     fila = res.iloc[0]
     assert fila['Plan_Cambio_Llanta'] == 'SÍ'
     assert 'Pos 1' in fila['Detalle_Cambio']
+
+def test_diagnostico_ignora_inspecciones_meses_anteriores(test_db):
+    # Inserta para una misma placa una llanta en 2.0 mm en 2026-06-01 y luego la misma posición renovada en 15.0 mm en 2026-10-01
+    datos = [
+        {
+            'placa': 'V-RENOVAR',
+            'posicion': 1,
+            'fecha': '2026-06-01',
+            'tipologia': 'Cabezote (6x4)',
+            'prof_int': 2.0,
+            'prof_cent': 2.0,
+            'prof_ext': 2.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 80000
+        },
+        {
+            'placa': 'V-RENOVAR',
+            'posicion': 1,
+            'fecha': '2026-10-01',
+            'tipologia': 'Cabezote (6x4)',
+            'prof_int': 15.0,
+            'prof_cent': 15.0,
+            'prof_ext': 15.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 95000
+        }
+    ]
+    df = pd.DataFrame(datos)
+    res = database.analizar_inspecciones_df(df)
+    assert not res.empty
+    fila = res.iloc[0]
+    assert fila['Llantas Inspeccionadas'] == 1
+    assert fila['Plan_Cambio_Llanta'] == 'NO'
+    assert fila['Fecha'] == '2026-10-01'
 ```
 
 ---
