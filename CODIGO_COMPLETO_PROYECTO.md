@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 09:06:17`
+- **Fecha de Generación:** `2026-10-15 09:12:29`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `21,154` líneas
-- **Tamaño Total de Código Fuente:** `1301.7 KB` (`1,332,890` bytes)
+- **Líneas Totales de Código:** `21,189` líneas
+- **Tamaño Total de Código Fuente:** `1303.9 KB` (`1,335,236` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -211,7 +211,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 883 | 36.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2389 | 115.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 2410 | 117.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -234,7 +234,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
-| [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
+| [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 58 | 2.1 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 76 | 2.3 KB | Pruebas de generación y estructura de informes técnicos PDF |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
@@ -2927,7 +2927,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2389 líneas | 118,548 bytes (115.8 KB)
+- **Métricas:** 2410 líneas | 120,202 bytes (117.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3294,6 +3294,13 @@ def inicializar_bd():
             WHERE i.placa IS NOT NULL AND TRIM(i.placa) != '' AND i.tipologia IS NOT NULL AND TRIM(i.tipologia) != ''
             GROUP BY i.placa
         """)
+
+        # Índices compuestos para optimizar búsquedas por placa, posición, fecha, número interno y cliente
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_placa_pos_fecha ON inspecciones (placa, posicion, fecha DESC, id DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_placa_fecha ON inspecciones (placa, fecha DESC, id DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_num_interno ON inspecciones (numero_interno, cliente)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_fecha ON inspecciones (cliente, subcliente, fecha)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_limites_retiro_busqueda ON configuracion_limites_retiro (cliente, subcliente, eje)")
 
         conn.commit()
 
@@ -4124,6 +4131,7 @@ def analizar_inspecciones_df(df_inspecciones):
     df['tipo_calc'] = df.apply(resolver_tipo, axis=1)
 
     resultados = []
+    resolver_limite = _construir_cache_limites_retiro()
     
     for placa, group in df.groupby('placa'):
         if 'fecha' in group.columns and not group['fecha'].dropna().empty:
@@ -4167,8 +4175,8 @@ def analizar_inspecciones_df(df_inspecciones):
                     plan_alineacion = True
                     detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f}mm)")
                     
-        # Obtener límite de cambio/retiro programado para este cliente (o 3.0 mm por defecto)
-        limite_cambio_cliente = obtener_limite_retiro_cliente(cliente)
+        # Obtener límite de cambio/retiro programado para este cliente (o 3.0 mm por defecto) en memoria O(1)
+        limite_cambio_cliente = resolver_limite(cliente, subcliente)
 
         # 2. Dual Mal Apareado y Recomendación Inteligente de Emparejamiento
         plan_dual = False
@@ -4432,61 +4440,72 @@ def buscar_modelos_llantas_filtro(termino=''):
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
 # --- CONFIGURACIÓN DE LÍMITES POR CLIENTE, SUBCLIENTE Y EJE ---
-def obtener_limite_retiro_cliente(cliente='', subcliente='TODOS', eje='TODOS'):
-    if pd.isna(cliente) or cliente is None:
-        return 3.0
-    c = str(cliente).strip().upper()
-    if not c or c in ('NAN', 'NONE'):
-        return 3.0
-    sub = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
-    e = str(eje or 'TODOS').strip().upper() or 'TODOS'
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        # 1. Búsqueda exacta: cliente + subcliente + eje
-        cursor.execute("""
-            SELECT limite_retiro_mm FROM configuracion_limites_retiro
-            WHERE cliente = ? AND subcliente = ? AND eje = ?
-        """, (c, sub, e))
-        row = cursor.fetchone()
-        if row and row[0] is not None:
-            return to_float(row[0], 3.0)
+def _construir_cache_limites_retiro(conn=None):
+    """
+    Carga en memoria todas las reglas de límites de retiro de configuracion_limites_retiro
+    y configuracion_clientes en una sola lectura para resolver en O(1) eliminando consultas N+1.
+    Retorna una función resolver_limite(cliente, subcliente='TODOS', eje='TODOS') -> float.
+    """
+    def _cargar(c):
+        cursor = c.cursor()
+        cursor.execute("SELECT cliente, subcliente, eje, limite_retiro_mm FROM configuracion_limites_retiro")
+        mapa_granular = {}
+        for row in cursor.fetchall():
+            cl = str(row[0] or '').strip().upper()
+            sub = str(row[1] or 'TODOS').strip().upper() or 'TODOS'
+            ej = str(row[2] or 'TODOS').strip().upper() or 'TODOS'
+            lim = to_float(row[3], 3.0)
+            mapa_granular[(cl, sub, ej)] = lim
 
-        # 2. cliente + subcliente + TODOS
-        if e != 'TODOS':
-            cursor.execute("""
-                SELECT limite_retiro_mm FROM configuracion_limites_retiro
-                WHERE cliente = ? AND subcliente = ? AND eje = 'TODOS'
-            """, (c, sub))
-            row = cursor.fetchone()
-            if row and row[0] is not None:
-                return to_float(row[0], 3.0)
+        cursor.execute("SELECT cliente, limite_retiro_mm FROM configuracion_clientes")
+        mapa_clientes = {}
+        for row in cursor.fetchall():
+            cl = str(row[0] or '').strip().upper()
+            lim = to_float(row[1], 3.0)
+            mapa_clientes[cl] = lim
 
-        # 3. cliente + TODOS + eje
-        if sub != 'TODOS':
-            cursor.execute("""
-                SELECT limite_retiro_mm FROM configuracion_limites_retiro
-                WHERE cliente = ? AND subcliente = 'TODOS' AND eje = ?
-            """, (c, e))
-            row = cursor.fetchone()
-            if row and row[0] is not None:
-                return to_float(row[0], 3.0)
+        def resolver_limite(cliente='', subcliente='TODOS', eje='TODOS'):
+            if pd.isna(cliente) or cliente is None:
+                return 3.0
+            c_norm = str(cliente).strip().upper()
+            if not c_norm or c_norm in ('NAN', 'NONE'):
+                return 3.0
+            sub_norm = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
+            e_norm = str(eje or 'TODOS').strip().upper() or 'TODOS'
 
-        # 4. cliente + TODOS + TODOS
-        cursor.execute("""
-            SELECT limite_retiro_mm FROM configuracion_limites_retiro
-            WHERE cliente = ? AND subcliente = 'TODOS' AND eje = 'TODOS'
-        """, (c,))
-        row = cursor.fetchone()
-        if row and row[0] is not None:
-            return to_float(row[0], 3.0)
+            # 1. Búsqueda exacta: (cliente, subcliente, eje)
+            if (c_norm, sub_norm, e_norm) in mapa_granular:
+                return mapa_granular[(c_norm, sub_norm, e_norm)]
 
-        # 5. Fallback a tabla legada configuracion_clientes
-        cursor.execute("SELECT limite_retiro_mm FROM configuracion_clientes WHERE UPPER(cliente) = ?", (c,))
-        row = cursor.fetchone()
-        if row and row[0] is not None:
-            return to_float(row[0], 3.0)
+            # 2. cliente + subcliente + TODOS
+            if e_norm != 'TODOS' and (c_norm, sub_norm, 'TODOS') in mapa_granular:
+                return mapa_granular[(c_norm, sub_norm, 'TODOS')]
 
-    return 3.0
+            # 3. cliente + TODOS + eje
+            if sub_norm != 'TODOS' and (c_norm, 'TODOS', e_norm) in mapa_granular:
+                return mapa_granular[(c_norm, 'TODOS', e_norm)]
+
+            # 4. cliente + TODOS + TODOS
+            if (c_norm, 'TODOS', 'TODOS') in mapa_granular:
+                return mapa_granular[(c_norm, 'TODOS', 'TODOS')]
+
+            # 5. Fallback a tabla legada configuracion_clientes
+            if c_norm in mapa_clientes:
+                return mapa_clientes[c_norm]
+
+            return 3.0
+
+        return resolver_limite
+
+    if conn is not None:
+        return _cargar(conn)
+    else:
+        with get_connection() as c:
+            return _cargar(c)
+
+def obtener_limite_retiro_cliente(cliente='', subcliente='TODOS', eje='TODOS', conn=None):
+    resolver = _construir_cache_limites_retiro(conn=conn)
+    return resolver(cliente, subcliente, eje)
 
 def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', subcliente='TODOS', eje='TODOS'):
     if pd.isna(cliente) or cliente is None:
@@ -5031,6 +5050,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
         query += " ORDER BY numero_interno ASC, fecha ASC, id ASC"
         df = pd.read_sql_query(query, conn, params=params)
+        resolver_limite = _construir_cache_limites_retiro(conn=conn)
 
     if df.empty:
         return []
@@ -5074,7 +5094,8 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         cpk = (precio / km_rodados) if (km_rodados > 0 and precio > 0) else 0.0
 
         cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
-        limite_cambio = obtener_limite_retiro_cliente(cliente_nom)
+        subcliente_nom = str(ultima.get('subcliente', '') or primera.get('subcliente', '')).strip()
+        limite_cambio = resolver_limite(cliente_nom, subcliente_nom)
 
         # Proyección útil de vida calculada hasta el límite de cambio programado por cliente (por defecto 3.0 mm)
         mm_utiles = max(0.0, prof_ini - limite_cambio) if prof_ini > limite_cambio else 0.0
@@ -18792,7 +18813,7 @@ def test_renderizar_paginas_png(test_db):
 
 - **Ruta:** `tests/test_kpis.py`
 - **Descripción:** Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK
-- **Métricas:** 44 líneas | 1,453 bytes (1.4 KB)
+- **Métricas:** 58 líneas | 2,145 bytes (2.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -18840,6 +18861,19 @@ def test_calculo_trazabilidad_kpis(test_db):
     assert k['km_restantes'] == 90000.0
     # Proyección total = 10000 * (16.0 - 3.0) = 130000 km
     assert k['proyeccion_total_km'] == 130000.0
+
+def test_resolucion_limites_retiro_en_memoria(test_db):
+    # Guardar límite configurado para CLIENTE_TEST
+    database.guardar_limite_retiro_cliente("CLIENTE_TEST", 4.5, "Límite especial")
+    
+    # Probar que la función pública obtener_limite_retiro_cliente devuelva 4.5
+    assert database.obtener_limite_retiro_cliente("CLIENTE_TEST") == 4.5
+    
+    # Probar que el constructor de caché en memoria _construir_cache_limites_retiro devuelva 4.5
+    resolver = database._construir_cache_limites_retiro()
+    assert resolver("CLIENTE_TEST") == 4.5
+    assert resolver("CLIENTE_TEST", "SEDE_INEXISTENTE") == 4.5
+    assert resolver("CLIENTE_INEXISTENTE") == 3.0  # Fallback estándar
 ```
 
 ---

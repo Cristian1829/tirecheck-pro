@@ -42,3 +42,17 @@ def test_calculo_trazabilidad_kpis(test_db):
     assert k['km_restantes'] == 90000.0
     # Proyección total = 10000 * (16.0 - 3.0) = 130000 km
     assert k['proyeccion_total_km'] == 130000.0
+
+def test_resolucion_limites_retiro_en_memoria(test_db):
+    # Guardar límite configurado para CLIENTE_TEST
+    database.guardar_limite_retiro_cliente("CLIENTE_TEST", 4.5, "Límite especial")
+    
+    # Probar que la función pública obtener_limite_retiro_cliente devuelva 4.5
+    assert database.obtener_limite_retiro_cliente("CLIENTE_TEST") == 4.5
+    
+    # Probar que el constructor de caché en memoria _construir_cache_limites_retiro devuelva 4.5
+    resolver = database._construir_cache_limites_retiro()
+    assert resolver("CLIENTE_TEST") == 4.5
+    assert resolver("CLIENTE_TEST", "SEDE_INEXISTENTE") == 4.5
+    assert resolver("CLIENTE_INEXISTENTE") == 3.0  # Fallback estándar
+
