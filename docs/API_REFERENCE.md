@@ -209,13 +209,20 @@ Genera y transmite el informe técnico en PDF consolidado de toda la jornada par
 |---|---|---|
 | `/api/operaciones` | `GET` | Lista todos los tipos de operación registrados. |
 | `/api/operaciones` | `POST` | Registra una nueva operación (`{"nombre": "..."}`). |
+| `/api/operaciones` | `PUT` | Actualiza el nombre de una operación (`{"nombre_antiguo": "...", "nombre_nuevo": "..."}`). |
 | `/api/operaciones` | `DELETE` | Elimina una operación por query param `nombre`. |
 | `/api/tipologias` | `GET` | Lista las tipologías configuradas y sus esquemas JSON. |
 | `/api/tipologias` | `POST` | Registra una nueva tipología de vehículo. |
+| `/api/tipologias` | `PUT` | Edita una tipología y actualiza en cascada vehículos e inspecciones. |
+| `/api/tipologias` | `DELETE` | Elimina una tipología protegida por candado de uso en BD. |
 | `/api/modelos-llanta` | `GET` | Consulta el catálogo de modelos de llantas. |
 | `/api/modelos-llanta` | `POST` | Añade un nuevo modelo con su profundidad de diseño. |
+| `/api/modelos-llanta` | `PUT` | Edita un modelo y sincroniza la profundidad inicial en inspecciones en BD. |
+| `/api/modelos-llanta/{modelo_id}` | `DELETE` | Elimina un modelo de llanta del catálogo. |
 | `/api/configuraciones-clientes` | `GET` | Lista las políticas y límites de retiro por cliente. |
 | `/api/configuraciones-clientes` | `POST` | Configura el límite en mm de retiro para un cliente. |
+| `/api/configuraciones-clientes` | `PUT` | Edita una política existente de límite de retiro por cliente/sede/eje. |
+| `/api/configuraciones-clientes/{limite_id}` | `DELETE` | Elimina una política de límite de retiro de cliente. |
 | `/api/limite-cliente` | `GET` | Retorna el límite en mm para un cliente (`?cliente=...`). |
 | `/api/esquema` | `GET` | Retorna la distribución de ejes y ruedas de una tipología. |
 | `/api/buscar-modelos` | `GET` | Búsqueda reactiva de sugerencias de catálogo en vivo. |

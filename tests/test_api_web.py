@@ -417,5 +417,156 @@ def test_api_permisos_catalogos_y_usuarios_inspector(test_db):
         "username": "hacker", "password": "123", "nombre_completo": "Hacker", "rol": "admin"
     }).status_code == 403
 
+def test_admin_editar_y_eliminar_tipologia_con_candado_uso(test_db):
+    token = server.crear_token_acceso("admin", "admin")
+    admin_client = TestClient(server.app)
+    admin_client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # 1. Crear tipología de prueba
+    res_crear = admin_client.post("/api/tipologias", json={
+        "nombre": "Volqueta 10x4 Pro",
+        "descripcion": "Volqueta especial",
+        "cant_llantas": 14,
+        "ejes_dir": 2,
+        "ejes_trac": 2,
+        "ejes_libres": 1
+    })
+    assert res_crear.status_code == 200
+
+    # 2. Editar la tipología
+    res_edit = admin_client.put("/api/tipologias", json={
+        "nombre_antiguo": "VOLQUETA 10X4 PRO",
+        "nombre_nuevo": "VOLQUETA 10X4 ULTRA",
+        "descripcion": "Volqueta ultra pesada",
+        "cant_llantas": 14,
+        "ejes_dir": 2,
+        "ejes_trac": 2,
+        "ejes_libres": 1
+    })
+    assert res_edit.status_code == 200
+
+    # Verificar que el nombre nuevo está en el catálogo
+    tips = admin_client.get("/api/tipologias").json()
+    assert any(t["nombre"] == "VOLQUETA 10X4 ULTRA" for t in tips)
+
+    # 3. Vincular una inspección a esta tipología para probar el candado de no eliminación
+    database.insertar_inspeccion({
+        "fecha": "2026-03-01",
+        "cliente": "MINERA DEL SUR",
+        "placa": "VOL-101",
+        "posicion": 1,
+        "kilometraje": 12000,
+        "tipologia": "VOLQUETA 10X4 ULTRA",
+        "marca": "GOODYEAR",
+        "diseno": "KMAX S",
+        "dimension": "295/80R22.5",
+        "vida": "Original",
+        "prof_ext": 12.0,
+        "prof_cent": 12.0,
+        "prof_int": 12.0,
+        "psi": 105.0,
+        "numero_interno": "LL-V101"
+    })
+
+    # 4. Intentar eliminar la tipología en uso -> DEBE FALLAR con 400
+    res_del_fail = admin_client.delete("/api/tipologias?nombre=VOLQUETA 10X4 ULTRA")
+    assert res_del_fail.status_code == 400
+    assert "está siendo utilizada" in res_del_fail.json()["detail"]
+
+    # 5. Crear una tipología no utilizada y eliminarla -> DEBE TENER ÉXITO con 200
+    admin_client.post("/api/tipologias", json={
+        "nombre": "Tipologia Sin Uso",
+        "cant_llantas": 6
+    })
+    res_del_ok = admin_client.delete("/api/tipologias?nombre=TIPOLOGIA SIN USO")
+    assert res_del_ok.status_code == 200
+
+def test_admin_editar_catalogo_modelos_y_sincronizar_prof_inicial(test_db):
+    token = server.crear_token_acceso("admin", "admin")
+    admin_client = TestClient(server.app)
+    admin_client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # 1. Registrar inspección con Goodyear KMax D y profundidad inicial 22.0
+    database.insertar_inspeccion({
+        "fecha": "2026-03-01",
+        "cliente": "LOGISTICA ANDINA",
+        "placa": "LOG-555",
+        "posicion": 1,
+        "kilometraje": 50000,
+        "tipologia": "Cabezote (6x4)",
+        "marca": "GOODYEAR",
+        "diseno": "KMAX D",
+        "dimension": "295/80R22.5",
+        "prof_inicial": 22.0,
+        "prof_ext": 18.0,
+        "prof_cent": 18.0,
+        "prof_int": 18.0,
+        "psi": 100.0,
+        "numero_interno": "LL-LOG1"
+    })
+
+    # 2. Obtener el modelo del catálogo
+    mods = admin_client.get("/api/modelos-llanta").json()
+    mod_goodyear = next(m for m in mods if m["marca"].upper() == "GOODYEAR" and "KMAX D" in m["diseno"].upper())
+    mod_id = mod_goodyear["id"]
+
+    # 3. Editar el modelo en el catálogo cambiando profundidad inicial a 24.0 mm
+    res_edit = admin_client.put("/api/modelos-llanta", json={
+        "id": mod_id,
+        "tipo_llanta": "Nueva",
+        "marca": "Goodyear",
+        "diseno": "KMax D",
+        "dimension": "295/80R22.5",
+        "prof_inicial": 24.0,
+        "descripcion": "Tracción Carretera Actualizada",
+        "actualizar_bd": True
+    })
+    assert res_edit.status_code == 200
+    data_edit = res_edit.json()
+    assert data_edit["status"] == "ok"
+    assert data_edit["filas_actualizadas"] >= 1
+    assert data_edit["prof_inicial"] == 24.0
+
+    # 4. Verificar que en la base de datos de inspecciones la prof_inicial se actualizó a 24.0
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT prof_inicial FROM inspecciones WHERE placa = 'LOG-555' AND numero_interno = 'LL-LOG1'")
+        assert cursor.fetchone()[0] == 24.0
+
+def test_admin_editar_limites_por_cliente(test_db):
+    token = server.crear_token_acceso("admin", "admin")
+    admin_client = TestClient(server.app)
+    admin_client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # 1. Crear un límite
+    res_crear = admin_client.post("/api/configuraciones-clientes", json={
+        "cliente": "FLOTA PRUEBA EDIT",
+        "subcliente": "TODOS",
+        "eje": "TODOS",
+        "limite_retiro_mm": 3.0,
+        "observaciones": "Inicial"
+    })
+    assert res_crear.status_code == 200
+
+    # Obtener el registro para conocer su ID
+    cfgs = admin_client.get("/api/configuraciones-clientes").json()
+    cfg = next(c for c in cfgs if c["cliente"] == "FLOTA PRUEBA EDIT")
+    cfg_id = cfg["id"]
+
+    # 2. Editar el límite mediante PUT /api/configuraciones-clientes
+    res_edit = admin_client.put("/api/configuraciones-clientes", json={
+        "id": cfg_id,
+        "cliente": "FLOTA PRUEBA EDIT",
+        "subcliente": "SEDE BOGOTA",
+        "eje": "DIRECCIONAL",
+        "limite_retiro_mm": 4.5,
+        "observaciones": "Editado por Admin"
+    })
+    assert res_edit.status_code == 200
+
+    # 3. Verificar en BD que el límite cambió a 4.5 mm
+    lim = database.obtener_limite_retiro_cliente("FLOTA PRUEBA EDIT", "SEDE BOGOTA", "DIRECCIONAL")
+    assert lim == 4.5
+
 
 

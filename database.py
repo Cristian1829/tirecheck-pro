@@ -1668,6 +1668,46 @@ def eliminar_limite_retiro_cliente(limite_id):
     except Exception:
         return False
 
+def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, observaciones='', subcliente='TODOS', eje='TODOS'):
+    lid = int(limite_id)
+    c = str(cliente or '').strip().upper()
+    sub = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
+    e = str(eje or 'TODOS').strip().upper() or 'TODOS'
+    obs = str(observaciones or '').strip().upper()
+    lim = to_float(limite_retiro_mm, 3.0)
+
+    if not c or c in ('NAN', 'NONE'):
+        raise ValueError("El nombre del cliente es obligatorio.")
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id FROM configuracion_limites_retiro
+            WHERE UPPER(TRIM(cliente)) = ? AND UPPER(TRIM(subcliente)) = ? AND UPPER(TRIM(eje)) = ? AND id != ?
+        ''', (c, sub, e, lid))
+        if cursor.fetchone():
+            raise ValueError(f"Ya existe una regla de límite para el cliente '{c}', sede '{sub}' y eje '{e}'.")
+
+        cursor.execute('''
+            UPDATE configuracion_limites_retiro
+            SET cliente = ?, subcliente = ?, eje = ?, limite_retiro_mm = ?, observaciones = ?, fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (c, sub, e, lim, obs, lid))
+        if cursor.rowcount == 0:
+            guardar_limite_retiro_cliente(c, lim, obs, sub, e)
+        else:
+            if sub == 'TODOS' and e == 'TODOS':
+                cursor.execute('''
+                    INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(cliente) DO UPDATE SET
+                        limite_retiro_mm = excluded.limite_retiro_mm,
+                        observaciones = excluded.observaciones,
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                ''', (c, lim, obs))
+        conn.commit()
+    return True
+
 def obtener_lista_clientes_unicos():
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -1988,96 +2028,100 @@ def eliminar_operacion(nombre):
         conn.commit()
     return True
 
-def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llantas=10, config_ejes=None):
-    nom_a = (nombre_antiguo or '').strip().upper()
-    nom_n = (nombre_nuevo or '').strip().upper()
-    if not nom_a or not nom_n:
-        return False
-    cant = int(cant_llantas or 10)
-    desc = str(descripcion or '').strip().upper()
-    
-    # Si especificó config_ejes, armar esquema
-    esquema_nuevo = None
-    if config_ejes:
-        codigos = [c.strip().lower() for c in config_ejes.split(',') if c.strip()]
-        if codigos:
-            esquema_nuevo = []
-            pos_act = 1
-            for idx, c in enumerate(codigos):
-                eje_num = idx + 1
-                if c in ('dir', 'direccional', 'delantero'):
-                    esquema_nuevo.append({
-                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Direccional)', 'tipo': 'direccional',
-                        'posiciones': [{'pos': pos_act, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': pos_act+1, 'lado': 'der', 'rol': 'direccional', 'dual': False}]
-                    })
-                    pos_act += 2
-                elif c in ('trac', 'traccion', 'tracción', 'dual'):
-                    esquema_nuevo.append({
-                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Tracción)', 'tipo': 'traccion',
-                        'posiciones': [
-                            {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
-                            {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
-                            {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
-                            {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
-                        ]
-                    })
-                    pos_act += 4
-                elif c in ('libre', 'arrastre', 'loco'):
-                    esquema_nuevo.append({
-                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Libre / Arrastre)', 'tipo': 'libre',
-                        'posiciones': [
-                            {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
-                            {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
-                            {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
-                            {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
-                        ]
-                    })
-                    pos_act += 4
-                elif c in ('remolque', 'trailer'):
-                    esquema_nuevo.append({
-                        'eje': eje_num, 'nombre': f'Eje {eje_num} (Trailer / Remolque)', 'tipo': 'remolque',
-                        'posiciones': [
-                            {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
-                            {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
-                            {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
-                            {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
-                        ]
-                    })
-                    pos_act += 4
-                else:
-                    esquema_nuevo.append({
-                        'eje': eje_num, 'nombre': f'Eje {eje_num}', 'tipo': 'traccion',
-                        'posiciones': [{'pos': pos_act, 'lado': 'izq', 'rol': 'sencillo', 'dual': False}, {'pos': pos_act+1, 'lado': 'der', 'rol': 'sencillo', 'dual': False}]
-                    })
-                    pos_act += 2
-
+def contar_usos_tipologia(nombre):
+    nom = (nombre or '').strip().upper()
+    if not nom:
+        return {'inspecciones': 0, 'vehiculos': 0, 'total': 0}
+    nom_norm = normalizar_texto(nom)
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT esquema_json FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom_a,))
-        row = cursor.fetchone()
-        esquema_json = row[0] if row and row[0] else None
-        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom_a,))
-        conn.commit()
-
-    if esquema_nuevo:
-        return guardar_tipologia(nom_n, desc, cant, esquema_custom=esquema_nuevo)
-    elif esquema_json and nom_a == nom_n:
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                           (nom_n, desc, cant, esquema_json))
-            conn.commit()
-        return True
-    else:
-        return guardar_tipologia(nom_n, desc, cant)
+        cursor.execute('SELECT tipologia FROM inspecciones WHERE tipologia IS NOT NULL AND TRIM(tipologia) != ""')
+        insp_count = sum(1 for (t,) in cursor.fetchall() if (t or '').strip().upper() == nom or normalizar_texto(t) == nom_norm)
+        cursor.execute('SELECT tipologia FROM catalogo_vehiculos WHERE tipologia IS NOT NULL AND TRIM(tipologia) != ""')
+        veh_count = sum(1 for (t,) in cursor.fetchall() if (t or '').strip().upper() == nom or normalizar_texto(t) == nom_norm)
+    return {'inspecciones': insp_count, 'vehiculos': veh_count, 'total': insp_count + veh_count}
 
 def eliminar_tipologia(nombre):
     nom = (nombre or '').strip().upper()
     if not nom:
         return False
+    usos = contar_usos_tipologia(nom)
+    if usos['total'] > 0:
+        raise ValueError(
+            f"No se puede eliminar la tipología '{nom}' porque está siendo utilizada en "
+            f"{usos['inspecciones']} inspección(es) y {usos['vehiculos']} vehículo(s) de la base de datos."
+        )
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom,))
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom,))
+        conn.commit()
+    return True
+
+def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llantas=None,
+                         ejes_dir=None, tipo_dir='sencilla',
+                         ejes_trac=None, tipo_trac='dual',
+                         ejes_libres=None, tipo_libres='dual',
+                         cant_repuestos=None, esquema_custom=None, config_ejes=None):
+    nom_a = (nombre_antiguo or '').strip().upper()
+    nom_n = (nombre_nuevo or '').strip().upper()
+    if not nom_a or not nom_n:
+        raise ValueError("El nombre actual y el nuevo nombre de la tipología son obligatorios.")
+
+    desc = str(descripcion or '').strip().upper()
+    import json
+
+    # Si se especificó composición de ejes desde el modal visual
+    if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
+        esquema, cant_calculada = generar_esquema_desde_composicion(
+            ejes_dir=ejes_dir or 0,
+            tipo_dir=tipo_dir,
+            ejes_trac=ejes_trac or 0,
+            tipo_trac=tipo_trac,
+            ejes_libres=ejes_libres or 0,
+            tipo_libres=tipo_libres,
+            cant_repuestos=cant_repuestos or 0
+        )
+        cant = cant_calculada
+        esquema_json = json.dumps(esquema)
+    elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
+        esquema_json = json.dumps(esquema_custom)
+        cant = sum(len(eje.get('posiciones', [])) for eje in esquema_custom)
+    else:
+        # Mantener el esquema existente
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT esquema_json, cant_llantas FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_a,))
+            row = cursor.fetchone()
+            if row:
+                esquema_json = row[0]
+                cant = int(cant_llantas or row[1] or 10)
+            else:
+                esquema_json = '[]'
+                cant = int(cant_llantas or 10)
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if nom_a == nom_n:
+            cursor.execute('''
+                UPDATE catalogo_tipologias
+                SET descripcion = ?, cant_llantas = ?, esquema_json = ?
+                WHERE UPPER(TRIM(nombre)) = ?
+            ''', (desc, cant, esquema_json, nom_a))
+        else:
+            cursor.execute('SELECT COUNT(*) FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_n,))
+            if cursor.fetchone()[0] > 0:
+                raise ValueError(f"Ya existe una tipología registrada con el nombre '{nom_n}'.")
+
+            cursor.execute('''
+                UPDATE catalogo_tipologias
+                SET nombre = ?, descripcion = ?, cant_llantas = ?, esquema_json = ?
+                WHERE UPPER(TRIM(nombre)) = ?
+            ''', (nom_n, desc, cant, esquema_json, nom_a))
+
+            # Actualizar en cascada en la base de datos de inspecciones y vehículos
+            cursor.execute('UPDATE inspecciones SET tipologia = ? WHERE UPPER(TRIM(tipologia)) = ?', (nom_n, nom_a))
+            cursor.execute('UPDATE catalogo_vehiculos SET tipologia = ? WHERE UPPER(TRIM(tipologia)) = ?', (nom_n, nom_a))
+
         conn.commit()
     return True
 
@@ -2121,6 +2165,107 @@ def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, d
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('INSERT OR REPLACE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion) VALUES (?, ?, ?, ?, ?, ?)', (tipo, m, d, dim, prof, desc))
+        conn.commit()
+    return True
+
+def actualizar_modelo_llanta(modelo_id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion='', actualizar_bd=True):
+    mid = int(modelo_id)
+    tipo = str(tipo_llanta or 'NUEVA').strip().capitalize()
+    m_new = str(marca or '').strip()
+    d_new = str(diseno or '').strip()
+    dim_new = str(dimension or '').strip()
+    prof_new = to_float(prof_inicial, 0.0)
+    desc_new = str(descripcion or '').strip()
+
+    if not m_new or not d_new or prof_new <= 0:
+        raise ValueError("Marca, diseño y una profundidad inicial mayor a 0 son obligatorios.")
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT tipo_llanta, marca, diseno, dimension, prof_inicial FROM catalogo_modelos_llantas WHERE id = ?', (mid,))
+        row_prev = cursor.fetchone()
+        if not row_prev:
+            raise ValueError(f"No se encontró el modelo con ID {mid}.")
+
+        tipo_old, m_old, d_old, dim_old, prof_old = row_prev
+
+        # Actualizar en catalogo_modelos_llantas
+        cursor.execute('''
+            UPDATE catalogo_modelos_llantas
+            SET tipo_llanta = ?, marca = ?, diseno = ?, dimension = ?, prof_inicial = ?, descripcion = ?
+            WHERE id = ?
+        ''', (tipo, m_new, d_new, dim_new, prof_new, desc_new, mid))
+
+        filas_actualizadas = 0
+        if actualizar_bd:
+            # Sincronizar en la tabla de inspecciones: ajustar prof_inicial de las llantas correspondientes
+            m_old_u = str(m_old or '').strip().upper()
+            d_old_u = str(d_old or '').strip().upper()
+            m_new_u = m_new.strip().upper()
+            d_new_u = d_new.strip().upper()
+
+            d_old_clean = re.sub(r'[\s\-_]+', '', d_old_u)
+            d_new_clean = re.sub(r'[\s\-_]+', '', d_new_u)
+
+            dim_old_clean = re.sub(r'[\s\-_]+', '', str(dim_old or '').strip().upper())
+            dim_new_clean = re.sub(r'[\s\-_]+', '', dim_new.strip().upper())
+
+            cursor.execute('SELECT id, marca, diseno, dimension, banda_reen FROM inspecciones')
+            todas_insp = cursor.fetchall()
+            ids_coincidentes = []
+
+            for i_id, i_marca, i_diseno, i_dim, i_banda in todas_insp:
+                im_u = str(i_marca or '').strip().upper()
+                id_u = str(i_diseno or '').strip().upper()
+                id_clean = re.sub(r'[\s\-_]+', '', id_u)
+                ib_u = str(i_banda or '').strip().upper()
+                ib_clean = re.sub(r'[\s\-_]+', '', ib_u)
+                idim_clean = re.sub(r'[\s\-_]+', '', str(i_dim or '').strip().upper())
+
+                marca_match = (
+                    im_u in (m_old_u, m_new_u) or
+                    ib_u in (m_old_u, m_new_u) or
+                    (m_old_u and m_old_u in im_u) or
+                    (m_new_u and m_new_u in im_u)
+                )
+
+                diseno_match = (
+                    id_u in (d_old_u, d_new_u) or
+                    (id_clean and id_clean in (d_old_clean, d_new_clean)) or
+                    (ib_clean and ib_clean in (d_old_clean, d_new_clean)) or
+                    ib_u in (d_old_u, d_new_u)
+                )
+
+                if marca_match and diseno_match:
+                    if dim_new_clean and idim_clean:
+                        if idim_clean not in (dim_old_clean, dim_new_clean):
+                            continue
+                    ids_coincidentes.append(i_id)
+
+            if ids_coincidentes:
+                placeholders = ','.join(['?'] * len(ids_coincidentes))
+                cursor.execute(f'''
+                    UPDATE inspecciones
+                    SET prof_inicial = ?
+                    WHERE id IN ({placeholders})
+                ''', [prof_new] + ids_coincidentes)
+                filas_actualizadas = cursor.rowcount
+
+        conn.commit()
+
+    return {
+        'status': 'ok',
+        'modelo_id': mid,
+        'filas_actualizadas': filas_actualizadas,
+        'prof_inicial': prof_new,
+        'mensaje': f'Modelo actualizado con éxito. Se actualizó la profundidad inicial ({prof_new} mm) en {filas_actualizadas} inspección(es) de la base de datos.'
+    }
+
+def eliminar_modelo_llanta(modelo_id):
+    mid = int(modelo_id)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM catalogo_modelos_llantas WHERE id = ?', (mid,))
         conn.commit()
     return True
 

@@ -112,8 +112,16 @@ class NuevaTipologiaItem(BaseModel):
 class EditarTipologiaItem(BaseModel):
     nombre_antiguo: str
     nombre_nuevo: str
-    descripcion: str = ""
-    cant_llantas: int = 10
+    descripcion: Optional[str] = ""
+    cant_llantas: Optional[int] = 10
+    ejes_dir: Optional[int] = None
+    tipo_dir: Optional[str] = "sencilla"
+    ejes_trac: Optional[int] = None
+    tipo_trac: Optional[str] = "dual"
+    ejes_libres: Optional[int] = None
+    tipo_libres: Optional[str] = "dual"
+    cant_repuestos: Optional[int] = None
+    esquema_custom: Optional[list] = None
 
 class ModeloLlantaItem(BaseModel):
     tipo_llanta: str = "Nueva"
@@ -123,12 +131,30 @@ class ModeloLlantaItem(BaseModel):
     prof_inicial: float
     descripcion: str = ""
 
+class EditarModeloLlantaItem(BaseModel):
+    id: int
+    tipo_llanta: str = "Nueva"
+    marca: str
+    diseno: str
+    dimension: str
+    prof_inicial: float
+    descripcion: Optional[str] = ""
+    actualizar_bd: Optional[bool] = True
+
 class LimiteClienteItem(BaseModel):
     cliente: str
     subcliente: str = "TODOS"
     eje: str = "TODOS"
     limite_retiro_mm: float = 3.0
     observaciones: str = ""
+
+class EditarLimiteClienteItem(BaseModel):
+    id: int
+    cliente: str
+    subcliente: Optional[str] = "TODOS"
+    eje: Optional[str] = "TODOS"
+    limite_retiro_mm: float = 3.0
+    observaciones: Optional[str] = ""
 
 # ==========================================
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
@@ -653,13 +679,32 @@ def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir
 
 @app.put("/api/tipologias")
 def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin)):
-    ok = database.actualizar_tipologia(item.nombre_antiguo, item.nombre_nuevo, item.descripcion, item.cant_llantas)
-    return {"status": "ok" if ok else "error"}
+    try:
+        ok = database.actualizar_tipologia(
+            nombre_antiguo=item.nombre_antiguo,
+            nombre_nuevo=item.nombre_nuevo,
+            descripcion=item.descripcion or "",
+            cant_llantas=item.cant_llantas,
+            ejes_dir=item.ejes_dir,
+            tipo_dir=item.tipo_dir or "sencilla",
+            ejes_trac=item.ejes_trac,
+            tipo_trac=item.tipo_trac or "dual",
+            ejes_libres=item.ejes_libres,
+            tipo_libres=item.tipo_libres or "dual",
+            cant_repuestos=item.cant_repuestos,
+            esquema_custom=item.esquema_custom
+        )
+        return {"status": "ok" if ok else "error"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/tipologias")
 def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin)):
-    ok = database.eliminar_tipologia(nombre)
-    return {"status": "ok" if ok else "error"}
+    try:
+        ok = database.eliminar_tipologia(nombre)
+        return {"status": "ok" if ok else "error"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/esquema")
 def api_esquema(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -675,6 +720,31 @@ def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
 def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin)):
     ok = database.guardar_modelo_llanta(item.tipo_llanta, item.marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
     return {"status": "ok" if ok else "error"}
+
+@app.put("/api/modelos-llanta")
+def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin)):
+    try:
+        res = database.actualizar_modelo_llanta(
+            modelo_id=item.id,
+            tipo_llanta=item.tipo_llanta,
+            marca=item.marca,
+            diseno=item.diseno,
+            dimension=item.dimension,
+            prof_inicial=item.prof_inicial,
+            descripcion=item.descripcion or "",
+            actualizar_bd=item.actualizar_bd if item.actualizar_bd is not None else True
+        )
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/modelos-llanta/{modelo_id}")
+def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin)):
+    try:
+        ok = database.eliminar_modelo_llanta(modelo_id)
+        return {"status": "ok" if ok else "error"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/profundidad-inicial")
 def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original", usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -704,6 +774,36 @@ def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Dep
         eje=item.eje
     )
     return {"status": "ok" if ok else "error"}
+
+@app.put("/api/configuraciones-clientes")
+def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict = Depends(requerir_admin)):
+    try:
+        ok = database.actualizar_limite_retiro_cliente(
+            limite_id=item.id,
+            cliente=item.cliente,
+            limite_retiro_mm=item.limite_retiro_mm,
+            observaciones=item.observaciones or "",
+            subcliente=item.subcliente or "TODOS",
+            eje=item.eje or "TODOS"
+        )
+        return {"status": "ok" if ok else "error"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/api/configuraciones-clientes/{limite_id}")
+def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
+    try:
+        ok = database.actualizar_limite_retiro_cliente(
+            limite_id=limite_id,
+            cliente=item.cliente,
+            limite_retiro_mm=item.limite_retiro_mm,
+            observaciones=item.observaciones or "",
+            subcliente=item.subcliente or "TODOS",
+            eje=item.eje or "TODOS"
+        )
+        return {"status": "ok" if ok else "error"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/configuraciones-clientes/{limite_id}")
 def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin)):

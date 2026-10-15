@@ -1396,6 +1396,7 @@
                 <th class="p-2.5">Dimensión</th>
                 <th class="p-2.5 text-center">Prof. Inicial</th>
                 <th class="p-2.5">Aplicación / Obs</th>
+                <th class="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody id="tbodyModelosCat" class="divide-y divide-slate-100"></tbody>
@@ -1685,12 +1686,19 @@
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR MODELO DE LLANTA -->
+  <!-- MODAL: AGREGAR / EDITAR MODELO DE LLANTA -->
   <div id="modalNuevoModelo" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Nuevo Modelo de Llanta</h3>
+        <div>
+          <h3 id="tituloModalModelo" class="text-sm font-black text-slate-900">Nuevo Modelo de Llanta</h3>
+          <p class="text-[11px] text-slate-500">Parámetros de catálogo y profundidad inicial</p>
+        </div>
         <button type="button" onclick="cerrarModalNuevoModelo()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="notaSincronizarModelo" class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 font-medium hidden flex items-start space-x-1.5">
+        <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 shrink-0"></i>
+        <span>Al modificar la profundidad inicial, se actualizarán automáticamente las inspecciones en la base de datos vinculadas a este modelo.</span>
       </div>
       <div class="space-y-2.5 text-xs">
         <div>
@@ -1700,25 +1708,25 @@
             <option value="Reencauche">Banda de Reencauche</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Marca</label><input type="text" id="mod_marca" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Diseño / Banda</label><input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Dimensión</label><input type="text" id="mod_dimension" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Profundidad Inicial (mm)*</label><input type="number" step="0.1" id="mod_prof" placeholder="16.5" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Marca *</label><input type="text" id="mod_marca" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label><input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Dimensión</label><input type="text" id="mod_dimension" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Profundidad Inicial (mm) *</label><input type="number" step="0.1" id="mod_prof" placeholder="16.5" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Aplicación / Notas</label><input type="text" id="mod_desc" placeholder="Toda Posición / Direccional" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalNuevoModelo()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
-          <button type="button" onclick="guardarNuevoModelo()" class="px-4 py-1.5 bg-blue-600 text-white rounded-xl font-bold">Guardar</button>
+          <button type="button" onclick="guardarNuevoModelo()" id="btnGuardarModelo" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition-all"><span id="btnGuardarModeloTexto">Guardar</span></button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: CONFIGURAR LÍMITE DE CLIENTE, SUBCLIENTE Y EJE -->
+  <!-- MODAL: CONFIGURAR / EDITAR LÍMITE DE CLIENTE, SUBCLIENTE Y EJE -->
   <div id="modalLimiteCliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <div>
-          <h3 class="text-sm font-black text-slate-900">Límite de Retiro por Cliente y Eje</h3>
+          <h3 id="tituloModalLimiteCliente" class="text-sm font-black text-slate-900">Límite de Retiro por Cliente y Eje</h3>
           <p class="text-[11px] text-slate-500">Define umbral de profundidad mínima de retiro</p>
         </div>
         <button type="button" onclick="cerrarModalLimiteCliente()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
@@ -1757,7 +1765,7 @@
         </div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalLimiteCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
-          <button type="button" onclick="guardarLimiteCliente()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20">Guardar Límite</button>
+          <button type="button" onclick="guardarLimiteCliente()" id="btnGuardarLimite" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20"><span id="btnGuardarLimiteTexto">Guardar Límite</span></button>
         </div>
       </div>
     </div>
@@ -2122,7 +2130,7 @@
       <!-- Encabezado -->
       <div class="flex items-start justify-between pb-1">
         <div>
-          <h3 class="text-lg font-black text-slate-900 tracking-tight">Crear Tipología de Vehículo</h3>
+          <h3 id="tituloModalTipologia" class="text-lg font-black text-slate-900 tracking-tight">Crear Tipología de Vehículo</h3>
           <p class="text-xs text-slate-500 font-medium mt-0.5">Configura los ejes direccionales, tracción y libres (pacha dual o sencilla).</p>
         </div>
         <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
@@ -2234,8 +2242,8 @@
           <button type="button" onclick="cerrarModalTipologia()" class="w-1/2 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-center">
             Cancelar
           </button>
-          <button type="button" onclick="guardarNuevaTipologia()" class="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/25 transition-all text-center flex items-center justify-center space-x-1.5">
-            <span>Guardar Tipología</span>
+          <button type="button" onclick="guardarNuevaTipologia()" id="btnGuardarTipologia" class="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/25 transition-all text-center flex items-center justify-center space-x-1.5">
+            <span id="btnGuardarTipologiaTexto">Guardar Tipología</span>
           </button>
         </div>
 
@@ -3803,85 +3811,231 @@
       }
     }
 
+    let tipologiaEditando = null;
+    let catalogoModelosCache = [];
+    let modeloEditandoId = null;
+    let catalogoLimitesCache = [];
+    let limiteClienteEditandoId = null;
+
     async function cargarTipologiasCat() {
       const res = await fetch('/api/tipologias');
       if (res.ok) {
         const tips = await res.json();
         const box = document.getElementById('listaTipologiasCat');
-        box.innerHTML = tips.map(t => `
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
-            <div class="flex items-center justify-between">
-              <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
-              <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+        const esAdmin = esUsuarioAdmin();
+        box.innerHTML = tips.map(t => {
+          return `
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:shadow-sm transition-all flex flex-col justify-between">
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
+                  <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                </div>
+                <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
+              </div>
+              ${esAdmin ? `
+                <div class="pt-2 border-t border-slate-200/70 flex items-center justify-end space-x-1.5">
+                  <button type="button" onclick="abrirModalEditarTipologia('${encodeURIComponent(JSON.stringify(t))}')" class="px-2.5 py-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center space-x-1 transition-all" title="Editar Tipología">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Editar</span>
+                  </button>
+                  <button type="button" onclick="eliminarTipologiaCat('${encodeURIComponent(t.nombre)}')" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg flex items-center space-x-1 transition-all" title="Eliminar Tipología">
+                    <i class="fa-solid fa-trash"></i>
+                    <span>Eliminar</span>
+                  </button>
+                </div>
+              ` : ''}
             </div>
-            <p class="text-xs text-slate-500">${t.descripcion || 'Sin descripción'}</p>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+      }
+    }
+
+    async function eliminarTipologiaCat(nombreEncoded) {
+      const nombre = decodeURIComponent(nombreEncoded);
+      if (!confirm(`¿Estás seguro de eliminar la tipología "${nombre}"?\nEsta acción sólo se completará si no está en uso por ningún vehículo o inspección en la base de datos.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/tipologias?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`✅ Tipología "${nombre}" eliminada correctamente.`);
+          cargarTipologiasCat();
+          cargarCatalogos();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          const msg = data.detail || `No se pudo eliminar la tipología "${nombre}".`;
+          alert(`⚠️ ${msg}`);
+        }
+      } catch (err) {
+        alert('Error de conexión al intentar eliminar la tipología.');
       }
     }
 
     async function cargarModelosCat() {
       const res = await fetch('/api/modelos-llanta');
       if (res.ok) {
-        const mods = await res.json();
+        catalogoModelosCache = await res.json();
         const tbody = document.getElementById('tbodyModelosCat');
-        tbody.innerHTML = mods.map(m => `
-          <tr class="hover:bg-slate-50">
+        const esAdmin = esUsuarioAdmin();
+        tbody.innerHTML = catalogoModelosCache.map(m => `
+          <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-2.5 font-bold">${m.tipo_llanta}</td>
             <td class="p-2.5 font-black text-slate-900">${m.marca}</td>
-            <td class="p-2.5">${m.diseno}</td>
-            <td class="p-2.5">${m.dimension}</td>
-            <td class="p-2.5 text-center font-mono font-bold text-blue-700">${m.prof_inicial} mm</td>
+            <td class="p-2.5 font-bold text-slate-800">${m.diseno}</td>
+            <td class="p-2.5 text-slate-700">${m.dimension}</td>
+            <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
             <td class="p-2.5 text-slate-500">${m.descripcion || '-'}</td>
+            <td class="p-2.5 text-center">
+              ${esAdmin ? `
+                <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar modelo y sincronizar prof. inicial en BD">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent(m.marca + ' ' + m.diseno)}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar modelo del catálogo">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              ` : '-'}
+            </td>
           </tr>
         `).join('');
       }
     }
 
     function abrirModalNuevoModelo() {
+      modeloEditandoId = null;
+      const elTit = document.getElementById('tituloModalModelo');
+      if (elTit) elTit.textContent = 'Nuevo Modelo de Llanta';
+      const elNota = document.getElementById('notaSincronizarModelo');
+      if (elNota) elNota.classList.add('hidden');
+      const elBtn = document.getElementById('btnGuardarModeloTexto');
+      if (elBtn) elBtn.textContent = 'Guardar';
+      document.getElementById('mod_tipo').value = 'Nueva';
+      document.getElementById('mod_marca').value = '';
+      document.getElementById('mod_diseno').value = '';
+      document.getElementById('mod_dimension').value = '295/80R22.5';
+      document.getElementById('mod_prof').value = '';
+      document.getElementById('mod_desc').value = '';
       document.getElementById('modalNuevoModelo').classList.remove('hidden');
       document.getElementById('modalNuevoModelo').classList.add('flex');
     }
+
+    function abrirModalEditarModelo(id) {
+      const m = catalogoModelosCache.find(x => x.id === id);
+      if (!m) return;
+      modeloEditandoId = id;
+      const elTit = document.getElementById('tituloModalModelo');
+      if (elTit) elTit.textContent = `Editar Modelo: ${m.marca} ${m.diseno}`;
+      const elNota = document.getElementById('notaSincronizarModelo');
+      if (elNota) elNota.classList.remove('hidden');
+      const elBtn = document.getElementById('btnGuardarModeloTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Cambios';
+      document.getElementById('mod_tipo').value = m.tipo_llanta;
+      document.getElementById('mod_marca').value = m.marca;
+      document.getElementById('mod_diseno').value = m.diseno;
+      document.getElementById('mod_dimension').value = m.dimension;
+      document.getElementById('mod_prof').value = m.prof_inicial;
+      document.getElementById('mod_desc').value = m.descripcion || '';
+      document.getElementById('modalNuevoModelo').classList.remove('hidden');
+      document.getElementById('modalNuevoModelo').classList.add('flex');
+    }
+
     function cerrarModalNuevoModelo() {
       document.getElementById('modalNuevoModelo').classList.add('hidden');
       document.getElementById('modalNuevoModelo').classList.remove('flex');
     }
+
     async function guardarNuevoModelo() {
       const p = parseFloat(document.getElementById('mod_prof').value);
       if (!p || p <= 0) {
-        alert('Ingresa una profundidad inicial válida');
+        alert('Ingresa una profundidad inicial válida (mayor a 0)');
         return;
       }
       const item = {
         tipo_llanta: document.getElementById('mod_tipo').value,
-        marca: document.getElementById('mod_marca').value.trim(),
-        diseno: document.getElementById('mod_diseno').value.trim(),
-        dimension: document.getElementById('mod_dimension').value.trim(),
+        marca: document.getElementById('mod_marca').value.trim().toUpperCase(),
+        diseno: document.getElementById('mod_diseno').value.trim().toUpperCase(),
+        dimension: document.getElementById('mod_dimension').value.trim().toUpperCase(),
         prof_inicial: p,
         descripcion: document.getElementById('mod_desc').value.trim()
       };
-      const res = await fetch('/api/modelos-llanta', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(item)
-      });
-      if (res.ok) {
-        cerrarModalNuevoModelo();
-        mostrarToast('✅ Modelo guardado en catálogo.');
-        cargarModelosCat();
+      if (!item.marca || !item.diseno) {
+        alert('Marca y Diseño son obligatorios');
+        return;
+      }
+
+      if (modeloEditandoId) {
+        const payload = {
+          id: modeloEditandoId,
+          ...item,
+          actualizar_bd: true
+        };
+        try {
+          const res = await fetch('/api/modelos-llanta', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            cerrarModalNuevoModelo();
+            const msgSinc = data.filas_actualizadas > 0 
+              ? ` Se actualizó la prof. inicial (${data.prof_inicial} mm) en ${data.filas_actualizadas} inspección(es) de la base de datos.` 
+              : '';
+            mostrarToast(`✅ Modelo "${item.marca} ${item.diseno}" actualizado.${msgSinc}`);
+            cargarModelosCat();
+            if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Error al actualizar el modelo de llanta.');
+          }
+        } catch (e) {
+          alert('Error de conexión al actualizar el modelo.');
+        }
+      } else {
+        const res = await fetch('/api/modelos-llanta', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(item)
+        });
+        if (res.ok) {
+          cerrarModalNuevoModelo();
+          mostrarToast('✅ Modelo guardado en catálogo.');
+          cargarModelosCat();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al guardar el modelo de llanta.');
+        }
+      }
+    }
+
+    async function eliminarModeloCat(id, nombreEncoded) {
+      const nombre = decodeURIComponent(nombreEncoded);
+      if (!confirm(`¿Eliminar el modelo "${nombre}" del catálogo?`)) return;
+      try {
+        const res = await fetch(`/api/modelos-llanta/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`✅ Modelo "${nombre}" eliminado del catálogo.`);
+          cargarModelosCat();
+        } else {
+          alert('Error al eliminar el modelo.');
+        }
+      } catch (e) {
+        alert('Error de conexión al eliminar modelo.');
       }
     }
 
     async function cargarClientesLimCat() {
       const res = await fetch('/api/configuraciones-clientes');
       if (res.ok) {
-        const clis = await res.json();
+        catalogoLimitesCache = await res.json();
         const tbody = document.getElementById('tbodyClientesLimCat');
-        if (!clis || clis.length === 0) {
+        if (!catalogoLimitesCache || catalogoLimitesCache.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
           return;
         }
-        tbody.innerHTML = clis.map(c => {
+        tbody.innerHTML = catalogoLimitesCache.map(c => {
           let badgeEje = '';
           const ejeUpper = (c.eje || 'TODOS').toUpperCase();
           if (ejeUpper === 'DIRECCIONAL') {
@@ -3904,9 +4058,14 @@
               <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
               <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
               <td class="p-2.5 text-center">
-                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+                <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar límite de retiro">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           `;
@@ -3915,39 +4074,99 @@
     }
 
     function abrirModalLimiteCliente() {
+      limiteClienteEditandoId = null;
+      const elTit = document.getElementById('tituloModalLimiteCliente');
+      if (elTit) elTit.textContent = 'Límite de Retiro por Cliente y Eje';
+      const elBtn = document.getElementById('btnGuardarLimiteTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Límite';
+      document.getElementById('lim_cliente').value = '';
+      document.getElementById('lim_subcliente').value = 'TODOS';
+      document.getElementById('lim_eje').value = 'TODOS';
+      document.getElementById('lim_mm').value = '3.0';
+      document.getElementById('lim_obs').value = '';
       document.getElementById('modalLimiteCliente').classList.remove('hidden');
       document.getElementById('modalLimiteCliente').classList.add('flex');
     }
+
+    function abrirModalEditarLimiteCliente(id) {
+      const c = catalogoLimitesCache.find(x => x.id === id);
+      if (!c) return;
+      limiteClienteEditandoId = id;
+      const elTit = document.getElementById('tituloModalLimiteCliente');
+      if (elTit) elTit.textContent = `Editar Límite: ${c.cliente}`;
+      const elBtn = document.getElementById('btnGuardarLimiteTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Cambios';
+      document.getElementById('lim_cliente').value = c.cliente;
+      document.getElementById('lim_subcliente').value = c.subcliente || 'TODOS';
+      document.getElementById('lim_eje').value = (c.eje || 'TODOS').toUpperCase();
+      document.getElementById('lim_mm').value = c.limite_retiro_mm;
+      document.getElementById('lim_obs').value = c.observaciones || '';
+      document.getElementById('modalLimiteCliente').classList.remove('hidden');
+      document.getElementById('modalLimiteCliente').classList.add('flex');
+    }
+
     function cerrarModalLimiteCliente() {
       document.getElementById('modalLimiteCliente').classList.add('hidden');
       document.getElementById('modalLimiteCliente').classList.remove('flex');
     }
+
     async function guardarLimiteCliente() {
       const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
       const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
       const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
       const mm = parseFloat(document.getElementById('lim_mm').value);
+      const obs = document.getElementById('lim_obs').value.trim().toUpperCase();
       if (!cli || isNaN(mm)) {
         alert('Por favor completa el cliente y el límite en mm');
         return;
       }
-      const res = await fetch('/api/configuraciones-clientes', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
+
+      if (limiteClienteEditandoId) {
+        const payload = {
+          id: limiteClienteEditandoId,
           cliente: cli,
           subcliente: sub,
           eje: eje,
           limite_retiro_mm: mm,
-          observaciones: document.getElementById('lim_obs').value.trim().toUpperCase()
-        })
-      });
-      if (res.ok) {
-        cerrarModalLimiteCliente();
-        mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
-        cargarClientesLimCat();
+          observaciones: obs
+        };
+        try {
+          const res = await fetch('/api/configuraciones-clientes', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            cerrarModalLimiteCliente();
+            mostrarToast(`✅ Límite actualizado para ${cli} (${sub} - ${eje}) a ${mm} mm.`);
+            cargarClientesLimCat();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Error al actualizar el límite de cliente');
+          }
+        } catch (e) {
+          alert('Error de conexión al actualizar límite.');
+        }
       } else {
-        alert('Error al guardar el límite de cliente');
+        const res = await fetch('/api/configuraciones-clientes', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            cliente: cli,
+            subcliente: sub,
+            eje: eje,
+            limite_retiro_mm: mm,
+            observaciones: obs
+          })
+        });
+        if (res.ok) {
+          cerrarModalLimiteCliente();
+          mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
+          cargarClientesLimCat();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al guardar el límite de cliente');
+        }
       }
     }
 
@@ -7193,12 +7412,79 @@
     }
 
     function abrirModalTipologia() {
+      tipologiaEditando = null;
+      const elTit = document.getElementById('tituloModalTipologia');
+      if (elTit) elTit.textContent = 'Crear Tipología de Vehículo';
+      const elBtn = document.getElementById('btnGuardarTipologiaTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Tipología';
+      const nomInput = document.getElementById('nueva_tip_nombre');
+      if (nomInput) nomInput.value = '';
+      const descInput = document.getElementById('nueva_tip_desc');
+      if (descInput) descInput.value = '';
+      document.getElementById('tip_ejes_dir_cant').value = '1';
+      document.getElementById('tip_ejes_dir_tipo').value = 'sencilla';
+      document.getElementById('tip_ejes_trac_cant').value = '2';
+      document.getElementById('tip_ejes_trac_tipo').value = 'dual';
+      document.getElementById('tip_ejes_libre_cant').value = '0';
+      document.getElementById('tip_ejes_libre_tipo').value = 'dual';
+      document.getElementById('tip_ejes_repuesto_cant').value = '0';
       document.getElementById('modalTipologia').classList.remove('hidden');
       document.getElementById('modalTipologia').classList.add('flex');
       recalcularLlantasTipologia();
     }
 
+    function abrirModalEditarTipologia(tipologiaEncoded) {
+      const t = JSON.parse(decodeURIComponent(tipologiaEncoded));
+      tipologiaEditando = t.nombre;
+      const elTit = document.getElementById('tituloModalTipologia');
+      if (elTit) elTit.textContent = `Editar Tipología: ${t.nombre}`;
+      const elBtn = document.getElementById('btnGuardarTipologiaTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Cambios';
+      const nomInput = document.getElementById('nueva_tip_nombre');
+      if (nomInput) nomInput.value = t.nombre;
+      const descInput = document.getElementById('nueva_tip_desc');
+      if (descInput) descInput.value = t.descripcion || '';
+
+      let eDir = 0, tDir = 'sencilla', eTrac = 0, tTrac = 'dual', eLib = 0, tLib = 'dual', eRep = 0;
+      if (t.esquema && Array.isArray(t.esquema) && t.esquema.length > 0) {
+        t.esquema.forEach(eje => {
+          const tipo = (eje.tipo || '').toLowerCase();
+          const cantPos = (eje.posiciones || []).length;
+          if (tipo === 'direccional') {
+            eDir++;
+            if (cantPos >= 4) tDir = 'dual';
+          } else if (tipo === 'traccion') {
+            eTrac++;
+            if (cantPos <= 2) tTrac = 'sencilla';
+          } else if (tipo === 'remolque' || tipo === 'libre') {
+            eLib++;
+            if (cantPos <= 2) tLib = 'sencilla';
+          } else if (tipo === 'repuesto') {
+            eRep += cantPos;
+          }
+        });
+      } else {
+        if (t.cant_llantas === 6) { eDir = 1; tDir = 'sencilla'; eTrac = 1; tTrac = 'dual'; }
+        else if (t.cant_llantas === 10) { eDir = 1; tDir = 'sencilla'; eTrac = 2; tTrac = 'dual'; }
+        else if (t.cant_llantas === 12) { eDir = 2; tDir = 'sencilla'; eTrac = 2; tTrac = 'dual'; }
+        else { eDir = 1; tDir = 'sencilla'; eTrac = Math.max(0, Math.floor((t.cant_llantas - 2) / 4)); tTrac = 'dual'; }
+      }
+
+      document.getElementById('tip_ejes_dir_cant').value = eDir;
+      document.getElementById('tip_ejes_dir_tipo').value = tDir;
+      document.getElementById('tip_ejes_trac_cant').value = eTrac;
+      document.getElementById('tip_ejes_trac_tipo').value = tTrac;
+      document.getElementById('tip_ejes_libre_cant').value = eLib;
+      document.getElementById('tip_ejes_libre_tipo').value = tLib;
+      document.getElementById('tip_ejes_repuesto_cant').value = eRep;
+      recalcularLlantasTipologia();
+
+      document.getElementById('modalTipologia').classList.remove('hidden');
+      document.getElementById('modalTipologia').classList.add('flex');
+    }
+
     function cerrarModalTipologia() {
+      tipologiaEditando = null;
       document.getElementById('modalTipologia').classList.add('hidden');
       document.getElementById('modalTipologia').classList.remove('flex');
     }
@@ -7224,33 +7510,72 @@
 
       const totalLlantas = recalcularLlantasTipologia();
 
-      const payload = {
-        nombre: nom,
-        descripcion: desc,
-        cant_llantas: totalLlantas,
-        ejes_dir: eDir,
-        tipo_dir: tDir,
-        ejes_trac: eTrac,
-        tipo_trac: tTrac,
-        ejes_libres: eLib,
-        tipo_libres: tLib,
-        cant_repuestos: eRep
-      };
-
-      const res = await fetch('/api/tipologias', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        cerrarModalTipologia();
-        if (nomInput) nomInput.value = '';
-        if (descInput) descInput.value = '';
-        cargarCatalogos(null, nom);
-        cargarTipologiasCat();
-        mostrarToast(`✅ Tipología "${nom}" guardada exitosamente (${totalLlantas} llantas).`);
+      if (tipologiaEditando) {
+        const editPayload = {
+          nombre_antiguo: tipologiaEditando,
+          nombre_nuevo: nom,
+          descripcion: desc,
+          cant_llantas: totalLlantas,
+          ejes_dir: eDir,
+          tipo_dir: tDir,
+          ejes_trac: eTrac,
+          tipo_trac: tTrac,
+          ejes_libres: eLib,
+          tipo_libres: tLib,
+          cant_repuestos: eRep
+        };
+        try {
+          const res = await fetch('/api/tipologias', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(editPayload)
+          });
+          if (res.ok) {
+            cerrarModalTipologia();
+            cargarCatalogos(null, nom);
+            cargarTipologiasCat();
+            mostrarToast(`✅ Tipología "${nom}" actualizada exitosamente.`);
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Error al actualizar la tipología.');
+          }
+        } catch (e) {
+          alert('Error de conexión al actualizar tipología.');
+        }
       } else {
-        alert('Error al guardar la tipología. Verifica que el nombre no esté duplicado.');
+        const payload = {
+          nombre: nom,
+          descripcion: desc,
+          cant_llantas: totalLlantas,
+          ejes_dir: eDir,
+          tipo_dir: tDir,
+          ejes_trac: eTrac,
+          tipo_trac: tTrac,
+          ejes_libres: eLib,
+          tipo_libres: tLib,
+          cant_repuestos: eRep
+        };
+
+        try {
+          const res = await fetch('/api/tipologias', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            cerrarModalTipologia();
+            if (nomInput) nomInput.value = '';
+            if (descInput) descInput.value = '';
+            cargarCatalogos(null, nom);
+            cargarTipologiasCat();
+            mostrarToast(`✅ Tipología "${nom}" guardada exitosamente (${totalLlantas} llantas).`);
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Error al guardar la tipología. Verifica que el nombre no esté duplicado.');
+          }
+        } catch (e) {
+          alert('Error de conexión al guardar tipología.');
+        }
       }
     }
 

@@ -1327,6 +1327,7 @@ class AppInspeccionLlantas(tk.Tk):
         bar_mod = ttk.Frame(sub2)
         bar_mod.pack(fill='x', pady=(0, 8))
         ttk.Button(bar_mod, text='+ Agregar Modelo de Llanta', style='Primary.TButton', command=self.modal_agregar_modelo_llanta).pack(side='left', padx=(0, 6))
+        ttk.Button(bar_mod, text='Editar Modelo', command=self.modal_editar_modelo_llanta).pack(side='left', padx=(0, 6))
         ttk.Button(bar_mod, text='Recargar Modelos', command=self.recargar_catalogo_modelos).pack(side='left', padx=(0, 15))
         ttk.Label(bar_mod, text='Filtro Tipo:').pack(side='left', padx=(0, 4))
         self.filtro_mod_tipo = tk.StringVar(value='Todos')
@@ -1780,9 +1781,107 @@ class AppInspeccionLlantas(tk.Tk):
             messagebox.showwarning('Atención', 'Selecciona una tipología para eliminar.')
             return
         nom = str(self.tree_tips.item(sel[0])['values'][0])
-        if messagebox.askyesno('Confirmar', f'¿Eliminar la tipología "{nom}"?'):
-            database.eliminar_tipologia(nom)
-            self.recargar_listas_catalogos()
+        if messagebox.askyesno('Confirmar', f'¿Eliminar la tipología "{nom}"?\nSolo se eliminará si no está en uso en inspecciones o vehículos.'):
+            try:
+                database.eliminar_tipologia(nom)
+                self.recargar_listas_catalogos()
+                messagebox.showinfo('Éxito', f'Tipología "{nom}" eliminada.')
+            except ValueError as e:
+                messagebox.showerror('No se puede eliminar', str(e))
+
+    def modal_editar_modelo_llanta(self):
+        sel = self.tree_modelos.selection()
+        if not sel:
+            messagebox.showwarning('Atención', 'Selecciona un modelo de la lista para editar.')
+            return
+        vals = self.tree_modelos.item(sel[0])['values']
+        tipo_sel = str(vals[0])
+        marca_sel = str(vals[1])
+        diseno_sel = str(vals[2])
+        dim_sel = str(vals[3])
+        prof_sel = str(vals[4])
+        desc_sel = str(vals[5]) if len(vals) > 5 else ''
+
+        catalogo = database.obtener_catalogo_modelos()
+        mid = None
+        for m in catalogo:
+            if m['marca'].upper() == marca_sel.upper() and m['diseno'].upper() == diseno_sel.upper():
+                mid = m['id']
+                break
+        if not mid:
+            messagebox.showerror('Error', 'No se encontró el identificador del modelo en el catálogo.')
+            return
+
+        top = tk.Toplevel(self)
+        top.title(f'Editar Modelo: {marca_sel} {diseno_sel}')
+        top.geometry('460x360')
+        top.resizable(False, False)
+        top.transient(self)
+        top.grab_set()
+
+        f = ttk.Frame(top, padding=16)
+        f.pack(fill='both', expand=True)
+
+        ttk.Label(f, text='Tipo:').grid(row=0, column=0, sticky='w', pady=4)
+        var_tipo = tk.StringVar(value=tipo_sel)
+        cb_t = ttk.Combobox(f, textvariable=var_tipo, values=['Nueva', 'Reencauche'], state='readonly', width=18)
+        cb_t.grid(row=0, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text='Marca:*').grid(row=1, column=0, sticky='w', pady=4)
+        var_m = tk.StringVar(value=marca_sel)
+        ttk.Entry(f, textvariable=var_m, width=22).grid(row=1, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text='Diseño / Banda:*').grid(row=2, column=0, sticky='w', pady=4)
+        var_d = tk.StringVar(value=diseno_sel)
+        ttk.Entry(f, textvariable=var_d, width=22).grid(row=2, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text='Dimensión:').grid(row=3, column=0, sticky='w', pady=4)
+        var_dim = tk.StringVar(value=dim_sel)
+        ttk.Entry(f, textvariable=var_dim, width=22).grid(row=3, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text='Prof. Inicial (mm):*').grid(row=4, column=0, sticky='w', pady=4)
+        var_prof = tk.StringVar(value=str(prof_sel))
+        ttk.Entry(f, textvariable=var_prof, width=12).grid(row=4, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text='Descripción / Posición:').grid(row=5, column=0, sticky='w', pady=4)
+        var_desc = tk.StringVar(value=desc_sel)
+        ttk.Entry(f, textvariable=var_desc, width=25).grid(row=5, column=1, sticky='w', pady=4)
+
+        ttk.Label(f, text='* Modificar la prof. inicial actualizará las inspecciones históricas en BD.',
+                  font=('Segoe UI', 8, 'italic'), foreground='blue').grid(row=6, column=0, columnspan=2, pady=6)
+
+        def guardar():
+            m = var_m.get().strip()
+            d = var_d.get().strip()
+            if not m or not d:
+                messagebox.showwarning('Atención', 'Marca y Diseño son obligatorios.')
+                return
+            try:
+                prof = float(var_prof.get())
+            except ValueError:
+                messagebox.showerror('Error', 'La profundidad inicial debe ser un número válido.')
+                return
+            try:
+                res = database.actualizar_modelo_llanta(
+                    modelo_id=mid,
+                    tipo_llanta=var_tipo.get(),
+                    marca=m,
+                    diseno=d,
+                    dimension=var_dim.get().strip(),
+                    prof_inicial=prof,
+                    descripcion=var_desc.get().strip(),
+                    actualizar_bd=True
+                )
+                self.recargar_catalogo_modelos()
+                top.destroy()
+                messagebox.showinfo('Éxito', res.get('mensaje', 'Modelo actualizado con éxito.'))
+            except Exception as e:
+                messagebox.showerror('Error al actualizar', str(e))
+
+        btn_box = ttk.Frame(f)
+        btn_box.grid(row=7, column=0, columnspan=2, pady=10)
+        ttk.Button(btn_box, text='Guardar Cambios', style='Primary.TButton', command=guardar).pack(side='left', padx=6)
+        ttk.Button(btn_box, text='Cancelar', command=top.destroy).pack(side='left')
 
     def modal_agregar_modelo_llanta(self):
         top = tk.Toplevel(self)
