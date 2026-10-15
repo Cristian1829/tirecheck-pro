@@ -1,6 +1,60 @@
 
+    // ==========================================
+    // INTERCEPTOR GLOBAL DE FETCH (AUTENTICACIÓN & 401)
+    // ==========================================
+    const _originalFetch = window.fetch;
+    window.fetch = async function(resource, init = {}) {
+      init = init || {};
+      init.headers = init.headers || {};
+
+      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const urlStr = typeof resource === 'string' ? resource : (resource && resource.url ? resource.url : '');
+
+      if (token && urlStr.includes('/api/')) {
+        if (init.headers instanceof Headers) {
+          if (!init.headers.has('Authorization')) {
+            init.headers.set('Authorization', `Bearer ${token}`);
+          }
+        } else if (Array.isArray(init.headers)) {
+          if (!init.headers.some(([k]) => k.toLowerCase() === 'authorization')) {
+            init.headers.push(['Authorization', `Bearer ${token}`]);
+          }
+        } else {
+          if (!init.headers['Authorization']) {
+            init.headers['Authorization'] = `Bearer ${token}`;
+          }
+        }
+      }
+
+      if (!init.credentials) {
+        init.credentials = 'same-origin';
+      }
+
+      const response = await _originalFetch(resource, init);
+
+      if (response.status === 401 && urlStr.includes('/api/') && !urlStr.includes('/api/login')) {
+        localStorage.removeItem('tireanalyze_token');
+        localStorage.removeItem('tirecheck_token');
+        localStorage.removeItem('tireanalyze_usuario_sesion');
+        localStorage.removeItem('tirecheck_usuario_sesion');
+        usuarioActual = null;
+        mostrarToast('⚠️ Sesión expirada o no autorizada. Por favor inicie sesión.', true);
+        const modalLogin = document.getElementById('modalLogin');
+        if (modalLogin) {
+          modalLogin.classList.remove('hidden');
+        }
+      }
+
+      return response;
+    };
+
     // Variables globales de estado
-    let listaPosicionesActual = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let idInspeccionActiva = 1;
+    function fechaLocalISO(d = new Date()) {
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+    let listaPosicionesActual = [1, 3, 4, 7, 8, 2, 6, 5, 10, 9];
     let posicionesInspeccionadasPlaca = new Set();
     let posicionesConNovedadPlaca = new Map();
     let fotosNovedadActuales = [];
@@ -19,18 +73,18 @@
     // NAVEGACIÓN ENTRE PESTAÑAS (SPA)
     // ==========================================
     function navegarTab(tabId) {
-      const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos', 'remoto'];
+      const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
       tabs.forEach(t => {
         const elVista = document.getElementById(`vista-${t}`);
         const elBtn = document.getElementById(`nav-btn-${t}`);
         if (elVista) elVista.classList.add('hidden');
-        if (elBtn) elBtn.classList.remove('active');
+        if (elBtn) { elBtn.classList.remove('active'); elBtn.removeAttribute('aria-current'); }
       });
 
       const vistaActiva = document.getElementById(`vista-${tabId}`);
       const btnActivo = document.getElementById(`nav-btn-${tabId}`);
       if (vistaActiva) vistaActiva.classList.remove('hidden');
-      if (btnActivo) btnActivo.classList.add('active');
+      if (btnActivo) { btnActivo.classList.add('active'); btnActivo.setAttribute('aria-current', 'page'); }
 
       const stickyBar = document.getElementById('stickyBottomActionBarMobile');
       if (stickyBar) {
@@ -43,22 +97,25 @@
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
       else if (tabId === 'catalogos') cargarGestionCatalogos();
-      else if (tabId === 'remoto') cargarInfoServidor();
     }
 
     // ==========================================
     // AUTENTICACIÓN Y SESIÓN
     // ==========================================
     function verificarSesionUsuario() {
-      const data = localStorage.getItem('tirecheck_usuario_sesion');
-      if (data) {
+      const data = (localStorage.getItem('tireanalyze_usuario_sesion') || localStorage.getItem('tirecheck_usuario_sesion'));
+      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (data && token) {
         try {
           usuarioActual = JSON.parse(data);
           actualizarUIUsuario();
           document.getElementById('modalLogin').classList.add('hidden');
           return true;
         } catch(e) {
+          localStorage.removeItem('tireanalyze_usuario_sesion');
           localStorage.removeItem('tirecheck_usuario_sesion');
+          localStorage.removeItem('tireanalyze_token');
+          localStorage.removeItem('tirecheck_token');
         }
       }
       document.getElementById('modalLogin').classList.remove('hidden');
@@ -78,14 +135,20 @@
       }
 
       try {
-        const res = await fetch('/api/login', {
+        const res = await _originalFetch('/api/login', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
+          credentials: 'same-origin',
           body: JSON.stringify({username: u, password: p})
         });
         const d = await res.json();
         if (res.ok) {
           usuarioActual = d.usuario;
+          if (d.token) {
+            localStorage.setItem('tireanalyze_token', d.token);
+            localStorage.setItem('tirecheck_token', d.token);
+          }
+          localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
           localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
           document.getElementById('modalLogin').classList.add('hidden');
           actualizarUIUsuario();
@@ -102,11 +165,18 @@
       }
     }
 
-    function cerrarSesionUsuario() {
+    async function cerrarSesionUsuario() {
       if (confirm('¿Deseas cerrar tu sesión actual?')) {
+        try {
+          await _originalFetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+        } catch(e) {}
+        localStorage.removeItem('tireanalyze_token');
+        localStorage.removeItem('tirecheck_token');
+        localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
         document.getElementById('modalLogin').classList.remove('hidden');
+        mostrarToast('Sesión cerrada correctamente');
       }
     }
 
@@ -117,12 +187,24 @@
         const rolBadge = usuarioActual.rol ? `[${usuarioActual.rol.toUpperCase()}]` : '';
         lbl.textContent = `${usuarioActual.nombre_completo} ${rolBadge}`;
       }
+
+      // Control de acceso a la subpestaña de Usuarios en Catálogos
+      const subtabUsrs = document.getElementById('subtab-btn-usuarios');
+      if (subtabUsrs) {
+        if (usuarioActual.rol === 'admin') {
+          subtabUsrs.classList.remove('hidden');
+        } else {
+          subtabUsrs.classList.add('hidden');
+        }
+      }
+
       if (usuarioActual.rol !== 'admin' && usuarioActual.cliente_asignado) {
         const inpCli = document.getElementById('cliente');
         if (inpCli) {
           inpCli.value = usuarioActual.cliente_asignado;
           inpCli.readOnly = true;
-          document.getElementById('badgeClienteGuardado').textContent = 'Asignado a Flota';
+          const bCli = document.getElementById('badgeClienteGuardado');
+          if (bCli) bCli.textContent = 'Asignado a Flota';
         }
       }
     }
@@ -191,16 +273,33 @@
     let bdFiltrosPoblados = false;
 
     async function cargarBaseInspecciones() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
+      }
       try {
         const res = await fetch('/api/inspecciones');
         if (res.ok) {
           cacheTodasInspecciones = await res.json();
-          document.getElementById('badgeTotalInspecciones').textContent = cacheTodasInspecciones.length;
-          document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
+          const bTotal = document.getElementById('badgeTotalInspecciones');
+          if (bTotal) bTotal.textContent = cacheTodasInspecciones.length;
+          const lTotal = document.getElementById('lblTotalBD');
+          if (lTotal) lTotal.textContent = cacheTodasInspecciones.length;
           poblarSelectoresFiltroBD(cacheTodasInspecciones);
           filtrarTablaBD();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
         }
       } catch (e) {
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+        }
         mostrarToast('Error al cargar inspecciones desde el servidor', true);
       }
     }
@@ -239,7 +338,25 @@
       if (marcas.includes(valMar)) selMar.value = valMar;
     }
 
+    let paginaActualBD = 1;
+    const ITEMS_POR_PAGINA_BD = 25;
+    let cacheFiltradasBD = [];
+
     function filtrarTablaBD() {
+      paginaActualBD = 1;
+      aplicarFiltrosYRenderizarBD();
+    }
+
+    function cambiarPaginaBD(nuevaPagina) {
+      const totalPaginas = Math.ceil(cacheFiltradasBD.length / ITEMS_POR_PAGINA_BD) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualBD = nuevaPagina;
+      renderizarTablaBD();
+      const contTabla = document.querySelector('#vista-basedatos .overflow-x-auto');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
+    function aplicarFiltrosYRenderizarBD() {
       const tbody = document.getElementById('tbodyInspecciones');
       if (!tbody) return;
 
@@ -275,7 +392,7 @@
         }
       }
 
-      const filtradas = cacheTodasInspecciones.filter(r => {
+      cacheFiltradasBD = cacheTodasInspecciones.filter(r => {
         // 1. Filtro Texto Libre
         if (q) {
           const matchTexto = (r.placa || '').toLowerCase().includes(q) ||
@@ -330,10 +447,18 @@
         return true;
       });
 
-      document.getElementById('lblConteoBD').textContent = filtradas.length;
+      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.length;
       document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
 
-      if (filtradas.length === 0) {
+      renderizarTablaBD();
+    }
+
+    function renderizarTablaBD() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionBD');
+      if (!tbody) return;
+
+      if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="25" class="p-12 text-center text-slate-400">
@@ -348,10 +473,21 @@
             </td>
           </tr>
         `;
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
         return;
       }
 
-      tbody.innerHTML = filtradas.map(r => {
+      // Cálculo de Paginación de 25 resultados
+      const totalRegistros = cacheFiltradasBD.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_BD) || 1;
+      if (paginaActualBD > totalPaginas) paginaActualBD = totalPaginas;
+      if (paginaActualBD < 1) paginaActualBD = 1;
+
+      const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, totalRegistros);
+      const paginaItems = cacheFiltradasBD.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(r => {
         const pExt = parseFloat(r.prof_ext) || 0;
         const pCent = parseFloat(r.prof_cent) || 0;
         const pInt = parseFloat(r.prof_int) || 0;
@@ -379,6 +515,19 @@
         return `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
+            <td class="p-2.5 text-center whitespace-nowrap">
+              ${tieneFotos ? `
+                <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+              ` : ''}
+              <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
             <td class="p-2.5 font-mono text-slate-600">${r.fecha || '-'}</td>
             <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
             <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
@@ -418,22 +567,120 @@
             <td class="p-2.5 text-right font-mono text-slate-600">$${(r.precio || 0).toLocaleString()}</td>
             <td class="p-2.5 text-center font-mono text-slate-400">${r.prof_inicial || 0}</td>
             <td class="p-2.5 text-right font-mono text-slate-400">${(r.km_montaje || 0).toLocaleString()}</td>
-            <td class="p-2.5 text-center whitespace-nowrap">
-              ${tieneFotos ? `
-                <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors" title="Ver evidencias fotográficas">
-                  <i class="fa-solid fa-camera"></i>
-                </button>
-              ` : ''}
-              <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors" title="Editar Fila">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors" title="Eliminar Fila">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </td>
           </tr>
         `;
       }).join('');
+
+      actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin);
+    }
+
+    function actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionBD');
+      const spanInicio = document.getElementById('pagInicioBD');
+      const spanFin = document.getElementById('pagFinBD');
+      const spanTotal = document.getElementById('pagTotalBD');
+      const controles = document.getElementById('controlesPaginacionBD');
+
+      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
+
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+      contenedor.classList.remove('hidden');
+
+      spanInicio.textContent = (inicio + 1).toLocaleString();
+      spanFin.textContent = fin.toLocaleString();
+      spanTotal.textContent = totalRegistros.toLocaleString();
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualBD <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualBD <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(${paginaActualBD - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualBD - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualBD + 1);
+
+        if (paginaActualBD <= 3) {
+          end = 4;
+        } else if (paginaActualBD >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualBD) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaBD(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualBD >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(${paginaActualBD + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualBD >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
     }
 
     function limpiarTextoFiltroBD() {
@@ -489,6 +736,8 @@
         document.getElementById('edit_precio').value = d.precio || 0;
         document.getElementById('edit_km_montaje').value = d.km_montaje || 0;
         document.getElementById('edit_novedades').value = d.novedades || '';
+        fotosEdicionActuales = obtenerListaFotos(d.foto_novedad);
+        actualizarUIFotosEdicion();
 
         document.getElementById('modalEditarInspeccion').classList.remove('hidden');
         document.getElementById('modalEditarInspeccion').classList.add('flex');
@@ -501,6 +750,7 @@
       const m = document.getElementById('modalEditarInspeccion');
       m.classList.add('hidden');
       m.classList.remove('flex');
+      fotosEdicionActuales = [];
     }
 
     async function guardarEdicionInspeccion(e) {
@@ -528,8 +778,10 @@
         prof_inicial: parseFloat(document.getElementById('edit_prof_inicial').value) || 0,
         precio: parseFloat(document.getElementById('edit_precio').value) || 0,
         km_montaje: parseFloat(document.getElementById('edit_km_montaje').value) || 0,
-        novedades: document.getElementById('edit_novedades').value
+        novedades: document.getElementById('edit_novedades').value,
+        foto_novedad: document.getElementById('edit_foto_novedad_base64')?.value || ''
       };
+
 
       try {
         const res = await fetch(`/api/inspecciones/${id}`, {
@@ -577,10 +829,14 @@
       m.classList.remove('flex');
     }
     function descargarPlantillaExcel() {
-      window.location.href = '/api/inspecciones/plantilla-excel';
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/plantilla-excel${q}`;
     }
     function exportarInspeccionesExcel() {
-      window.location.href = '/api/inspecciones/exportar-excel';
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/exportar-excel${q}`;
     }
 
     // Zona Drag and Drop Excel
@@ -648,14 +904,23 @@
     // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
     // ==========================================
     async function cargarDiagnostico() {
+      const tbody = document.getElementById('tbodyDiagnostico');
+      if (tbody && (!cacheDiagnostico || cacheDiagnostico.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando diagnósticos de flota...</td></tr>';
+      }
       try {
         const res = await fetch('/api/diagnostico');
         if (res.ok) {
           cacheDiagnostico = await res.json();
           actualizarCombosFiltroDiagnostico();
           filtrarTablaDiagnostico();
+        } else if (res.status === 401) {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
+        } else {
+          if (tbody) tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar diagnósticos (HTTP ${res.status}). <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
         }
       } catch (e) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión con el servidor. <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
         mostrarToast('Error al cargar diagnóstico de flota', true);
       }
     }
@@ -674,6 +939,8 @@
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
 
+      actualizarCombosSedesDiagnostico();
+
       if (selOp) {
         const valOp = selOp.value || 'Todos';
         selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
@@ -682,43 +949,123 @@
       }
     }
 
+    function actualizarCombosSedesDiagnostico() {
+      const selCli = document.getElementById('filtroDiagCliente');
+      const selSede = document.getElementById('filtroDiagSede');
+      if (!selSede) return;
+
+      const valCli = selCli ? (selCli.value || 'Todos') : 'Todos';
+      const valSedeActual = selSede.value || 'Todos';
+
+      const sedes = Array.from(new Set(
+        cacheDiagnostico
+          .filter(r => (valCli === 'Todos' || r.Cliente === valCli))
+          .map(r => r.Subcliente)
+          .filter(Boolean)
+      )).sort();
+
+      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      if (sedes.includes(valSedeActual)) {
+        selSede.value = valSedeActual;
+      } else {
+        selSede.value = 'Todos';
+      }
+    }
+
+    function onCambioFiltroDiagCliente() {
+      actualizarCombosSedesDiagnostico();
+      filtrarTablaDiagnostico();
+    }
+
+    function filtrarDiagnosticoPorCard(tipoAlerta) {
+      const sel = document.getElementById('filtroDiagAlerta');
+      if (sel) {
+        sel.value = tipoAlerta;
+        filtrarTablaDiagnostico();
+      }
+    }
+
     function filtrarTablaDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
       const cli = document.getElementById('filtroDiagCliente')?.value || 'Todos';
+      const sede = document.getElementById('filtroDiagSede')?.value || 'Todos';
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
       const alerta = document.getElementById('filtroDiagAlerta')?.value || 'Todos';
       const placa = (document.getElementById('filtroDiagPlaca')?.value || '').trim().toLowerCase();
 
-      let tot = 0, cambio = 0, alin = 0, dual = 0, ok = 0;
+      // Actualizar botón de Consolidado Flota según el cliente y sede filtrados
+      const btnCons = document.getElementById('btnConsolidadoDiag');
+      const lblCons = document.getElementById('lblConsolidadoDiag');
+      if (lblCons) {
+        if (cli && cli !== 'Todos') {
+          let texto = `Consolidado Flota (${cli}`;
+          if (sede && sede !== 'Todos') {
+            texto += ` - ${sede}`;
+          }
+          texto += `)`;
+          lblCons.textContent = texto;
+          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}${sede && sede !== 'Todos' ? ' · Sede ' + sede : ''}`;
+        } else {
+          lblCons.textContent = 'Consolidado Flota PDF';
+          if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
+        }
+      }
 
-      const filtradas = cacheDiagnostico.filter(r => {
-        // Conteo métrico
-        tot++;
+      // 1. Filtrar por ámbito de flota (Cliente, Sede, Operación y Placa)
+      const flotaFiltrada = cacheDiagnostico.filter(r => {
+        if (cli !== 'Todos' && r.Cliente !== cli) return false;
+        if (sede !== 'Todos' && r.Subcliente !== sede) return false;
+        if (op !== 'Todos' && r.Operación !== op) return false;
+        if (placa && !(r['Vehículo/Placa'] || '').toLowerCase().includes(placa)) return false;
+        return true;
+      });
+
+      // 2. Conteo métrico de las tarjetas según el ámbito filtrado de flota
+      let tot = flotaFiltrada.length;
+      let cambio = 0, alin = 0, dual = 0, ok = 0;
+      flotaFiltrada.forEach(r => {
         if (r.Plan_Cambio_Llanta === 'SÍ') cambio++;
         if (r.Plan_Alineacion === 'SÍ') alin++;
         if (r.Plan_Dual_Mal_Apareado === 'SÍ') dual++;
         if (r.Plan_Cambio_Llanta !== 'SÍ' && r.Plan_Alineacion !== 'SÍ' && r.Plan_Dual_Mal_Apareado !== 'SÍ') ok++;
+      });
 
-        // Filtros
-        if (cli !== 'Todos' && r.Cliente !== cli) return false;
-        if (op !== 'Todos' && r.Operación !== op) return false;
-        if (placa && !(r['Vehículo/Placa'] || '').toLowerCase().includes(placa)) return false;
-
+      // 3. Filtrar por tipo de alerta para la tabla
+      const filtradas = flotaFiltrada.filter(r => {
         if (alerta === 'Cambio' && r.Plan_Cambio_Llanta !== 'SÍ') return false;
         if (alerta === 'Alineacion' && r.Plan_Alineacion !== 'SÍ') return false;
         if (alerta === 'Dual' && r.Plan_Dual_Mal_Apareado !== 'SÍ') return false;
         if (alerta === 'Alerta' && r.Plan_Cambio_Llanta !== 'SÍ' && r.Plan_Alineacion !== 'SÍ' && r.Plan_Dual_Mal_Apareado !== 'SÍ') return false;
         if (alerta === 'OK' && (r.Plan_Cambio_Llanta === 'SÍ' || r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ')) return false;
-
         return true;
       });
 
-      // Actualizar tarjetas
+      // Actualizar tarjetas métricas
       document.getElementById('cardDiagTotal').textContent = tot;
       document.getElementById('cardDiagCambio').textContent = cambio;
       document.getElementById('cardDiagAlineacion').textContent = alin;
       document.getElementById('cardDiagDual').textContent = dual;
       document.getElementById('cardDiagOK').textContent = ok;
+
+      // Resaltar tarjeta seleccionada si el filtro de alerta está activo
+      const mapCards = {
+        'Todos': 'cardBoxTotal',
+        'Cambio': 'cardBoxCambio',
+        'Alineacion': 'cardBoxAlineacion',
+        'Dual': 'cardBoxDual',
+        'OK': 'cardBoxOK'
+      };
+      ['cardBoxTotal', 'cardBoxCambio', 'cardBoxAlineacion', 'cardBoxDual', 'cardBoxOK'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+      });
+      const activeId = mapCards[alerta];
+      if (activeId && alerta !== 'Todos') {
+        const el = document.getElementById(activeId);
+        if (el) el.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+      }
 
       if (filtradas.length === 0) {
         tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-400">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
@@ -744,7 +1091,7 @@
             <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
             <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
             <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
                 <i class="fa-solid fa-file-pdf"></i>
               </button>
             </td>
@@ -756,6 +1103,8 @@
     function limpiarFiltrosDiagnostico() {
       const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
       setVal('filtroDiagCliente', 'Todos');
+      actualizarCombosSedesDiagnostico();
+      setVal('filtroDiagSede', 'Todos');
       setVal('filtroDiagOperacion', 'Todos');
       setVal('filtroDiagAlerta', 'Todos');
       setVal('filtroDiagPlaca', '');
@@ -764,7 +1113,9 @@
     }
 
     function exportarDiagnosticoExcel() {
-      window.location.href = '/api/diagnostico/exportar-excel';
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/diagnostico/exportar-excel${q}`;
     }
 
     // ==========================================
@@ -896,6 +1247,9 @@
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
 
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) params.append('token', tok);
+
       window.location.href = `/api/kpis-llantas/exportar-excel?${params.toString()}`;
     }
 
@@ -1018,14 +1372,40 @@
       if (res.ok) {
         const clis = await res.json();
         const tbody = document.getElementById('tbodyClientesLimCat');
-        tbody.innerHTML = clis.map(c => `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
-            <td class="p-2.5 text-center font-black text-rose-700 font-mono">${c.limite_retiro_mm} mm</td>
-            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
-            <td class="p-2.5 text-slate-400 font-mono">${c.fecha_actualizacion || '-'}</td>
-          </tr>
-        `).join('');
+        if (!clis || clis.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = clis.map(c => {
+          let badgeEje = '';
+          const ejeUpper = (c.eje || 'TODOS').toUpperCase();
+          if (ejeUpper === 'DIRECCIONAL') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">DIRECCIONAL</span>';
+          } else if (ejeUpper === 'TRACCIÓN' || ejeUpper === 'TRACCION') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">TRACCIÓN</span>';
+          } else if (ejeUpper === 'LIBRE') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">LIBRE</span>';
+          } else if (ejeUpper === 'REPUESTO') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">REPUESTO</span>';
+          } else {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300">TODOS</span>';
+          }
+
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
+              <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
+              <td class="p-2.5 text-center">${badgeEje}</td>
+              <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
+              <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
+              <td class="p-2.5 text-center">
+                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
     }
 
@@ -1038,9 +1418,11 @@
       document.getElementById('modalLimiteCliente').classList.remove('flex');
     }
     async function guardarLimiteCliente() {
-      const cli = document.getElementById('lim_cliente').value.trim();
+      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
+      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
+      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
       const mm = parseFloat(document.getElementById('lim_mm').value);
-      if (!cli || !mm) {
+      if (!cli || isNaN(mm)) {
         alert('Por favor completa el cliente y el límite en mm');
         return;
       }
@@ -1049,51 +1431,99 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           cliente: cli,
+          subcliente: sub,
+          eje: eje,
           limite_retiro_mm: mm,
-          observaciones: document.getElementById('lim_obs').value.trim()
+          observaciones: document.getElementById('lim_obs').value.trim().toUpperCase()
         })
       });
       if (res.ok) {
         cerrarModalLimiteCliente();
-        mostrarToast(`✅ Límite para ${cli} guardado en ${mm} mm.`);
+        mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
+        cargarClientesLimCat();
+      } else {
+        alert('Error al guardar el límite de cliente');
+      }
+    }
+
+    async function eliminarLimiteCliente(id) {
+      if (!confirm('¿Deseas eliminar esta política de límite de retiro?')) return;
+      const res = await fetch(`/api/configuraciones-clientes/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast('Límite eliminado.');
         cargarClientesLimCat();
       }
     }
 
+    let usuariosCatCache = [];
+
     async function cargarUsuariosCat() {
-      const res = await fetch('/api/usuarios');
-      if (res.ok) {
-        const usrs = await res.json();
-        const tbody = document.getElementById('tbodyUsuariosCat');
-        tbody.innerHTML = usrs.map(u => `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-black text-slate-900">${u.username}</td>
-            <td class="p-2.5 font-bold">${u.nombre_completo}</td>
-            <td class="p-2.5 text-center font-bold uppercase text-[10px]"><span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">${u.rol}</span></td>
-            <td class="p-2.5">${u.cliente_asignado || 'Todas las Flotas'}</td>
-            <td class="p-2.5 text-center">${u.activo ? '<span class="text-emerald-600 font-bold">Activo</span>' : '<span class="text-rose-600 font-bold">Inactivo</span>'}</td>
-            <td class="p-2.5 text-center">
-              ${u.username !== 'admin' ? `<button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="text-rose-600 hover:text-rose-800 font-bold text-xs"><i class="fa-solid fa-trash"></i></button>` : '-'}
-            </td>
-          </tr>
-        `).join('');
+      if (!usuarioActual || usuarioActual.rol !== 'admin') return;
+      try {
+        const res = await fetch('/api/usuarios');
+        if (res.ok) {
+          usuariosCatCache = await res.json();
+          const tbody = document.getElementById('tbodyUsuariosCat');
+          tbody.innerHTML = usuariosCatCache.map(u => `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
+              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
+              <td class="p-2.5 text-center font-bold uppercase text-[10px]">
+                <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
+              </td>
+              <td class="p-2.5">${u.cliente_asignado || '<span class="text-slate-400 italic">Todas las Flotas</span>'}</td>
+              <td class="p-2.5 text-center">
+                ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
+              </td>
+              <td class="p-2.5 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
+                    <i class="fa-solid fa-user-pen"></i>
+                  </button>
+                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                  </button>
+                  ${u.username.toLowerCase() !== 'admin' ? `
+                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  ` : `
+                    <span class="p-1.5 text-slate-300 text-xs" title="Superadmin Protegido"><i class="fa-solid fa-lock"></i></span>
+                  `}
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        console.error("Error al cargar usuarios:", e);
       }
     }
 
     function abrirModalNuevoUsuario() {
+      document.getElementById('usr_username').value = '';
+      document.getElementById('usr_nombre').value = '';
+      document.getElementById('usr_pass').value = '';
+      document.getElementById('usr_cliente').value = '';
       document.getElementById('modalNuevoUsuario').classList.remove('hidden');
       document.getElementById('modalNuevoUsuario').classList.add('flex');
     }
+
     function cerrarModalNuevoUsuario() {
       document.getElementById('modalNuevoUsuario').classList.add('hidden');
       document.getElementById('modalNuevoUsuario').classList.remove('flex');
     }
+
     async function guardarNuevoUsuario() {
       const u = document.getElementById('usr_username').value.trim();
       const n = document.getElementById('usr_nombre').value.trim();
       const p = document.getElementById('usr_pass').value.trim();
       if (!u || !n || !p) {
-        alert('Por favor completa todos los campos del usuario');
+        alert('Por favor completa todos los campos del usuario.');
+        return;
+      }
+      if (p.length < 4) {
+        alert('La contraseña debe tener al menos 4 caracteres.');
         return;
       }
       const res = await fetch('/api/usuarios', {
@@ -1109,11 +1539,169 @@
       });
       if (res.ok) {
         cerrarModalNuevoUsuario();
-        mostrarToast(`✅ Usuario ${u} creado exitosamente.`);
+        mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
         cargarUsuariosCat();
       } else {
         const d = await res.json();
         mostrarToast(d.detail || 'Error al crear usuario', true);
+      }
+    }
+
+    function abrirModalEditarUsuario(username) {
+      const u = usuariosCatCache.find(x => x.username.toLowerCase() === username.toLowerCase());
+      if (!u) return;
+      document.getElementById('edit_usr_username').value = u.username;
+      document.getElementById('edit_usr_nombre').value = u.nombre_completo;
+      document.getElementById('edit_usr_rol').value = u.rol;
+      document.getElementById('edit_usr_cliente').value = u.cliente_asignado || '';
+      document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
+
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const esSuperAdmin = u.username.toLowerCase() === 'admin';
+      document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
+      document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
+
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalEditarUsuario() {
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function guardarEdicionUsuario() {
+      const username = document.getElementById('edit_usr_username').value.trim();
+      const nombre = document.getElementById('edit_usr_nombre').value.trim();
+      const rol = document.getElementById('edit_usr_rol').value;
+      const cliente = document.getElementById('edit_usr_cliente').value.trim();
+      const activo = document.getElementById('edit_usr_activo').value === '1';
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!nombre) {
+        if (errBox) {
+          errBox.textContent = 'El nombre completo es obligatorio.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${username}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            nombre_completo: nombre,
+            rol: rol,
+            cliente_asignado: cliente,
+            activo: activo
+          })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalEditarUsuario();
+          mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
+          cargarUsuariosCat();
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al actualizar el usuario.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    let targetResetUser = null;
+
+    function abrirModalResetPassword(username) {
+      targetResetUser = username;
+      document.getElementById('reset_usr_label').textContent = username;
+      document.getElementById('reset_nueva_password').value = '';
+      document.getElementById('reset_confirmar_password').value = '';
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalResetPassword() {
+      targetResetUser = null;
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      if (!inp || !ico) return;
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.classList.remove('fa-eye');
+        ico.classList.add('fa-eye-slash');
+      } else {
+        inp.type = 'password';
+        ico.classList.remove('fa-eye-slash');
+        ico.classList.add('fa-eye');
+      }
+    }
+
+    async function ejecutarResetPassword() {
+      if (!targetResetUser) return;
+      const p1 = document.getElementById('reset_nueva_password').value.trim();
+      const p2 = document.getElementById('reset_confirmar_password').value.trim();
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!p1 || p1.length < 4) {
+        if (errBox) {
+          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (p1 !== p2) {
+        if (errBox) {
+          errBox.textContent = 'Las contraseñas no coinciden. Por favor verifícalas.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${targetResetUser}/reset-password`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ nueva_password: p1 })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalResetPassword();
+          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
       }
     }
 
@@ -1123,91 +1711,95 @@
       if (res.ok) {
         mostrarToast(`Usuario ${username} eliminado.`);
         cargarUsuariosCat();
-      }
-    }
-
-    // ==========================================
-    // VISTA 6: CONECTAR CELULAR / REMOTO (QR & NGROK)
-    // ==========================================
-    async function cargarInfoServidor() {
-      try {
-        const res = await fetch('/api/servidor/info');
-        if (res.ok) {
-          const d = await res.json();
-          document.getElementById('lblUrlLocal').textContent = d.url_local;
-          document.getElementById('imgCodigoQR').src = `/qr?t=${Date.now()}`;
-          actualizarEstadoNgrokUI(d.ngrok_activo, d.ngrok_url);
-        }
-      } catch (e) {}
-    }
-
-    function actualizarEstadoNgrokUI(activo, url) {
-      const badge = document.getElementById('badgeNgrokEstado');
-      const box = document.getElementById('boxUrlNgrok');
-      const txt = document.getElementById('txtUrlNgrok');
-      const btn = document.getElementById('btnToggleNgrok');
-
-      if (activo && url) {
-        badge.className = 'text-xs font-black px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-        badge.textContent = 'En Línea por Internet';
-        box.classList.remove('hidden');
-        txt.value = url;
-        btn.innerHTML = '<i class="fa-solid fa-power-off mr-1"></i> Desactivar Enlace Público';
-        btn.className = 'w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow transition-all';
       } else {
-        badge.className = 'text-xs font-black px-2.5 py-1 rounded-full bg-slate-200 text-slate-700';
-        badge.textContent = 'Desconectado';
-        box.classList.add('hidden');
-        txt.value = '';
-        btn.innerHTML = '<i class="fa-solid fa-bolt mr-1"></i> Activar Enlace Público de Internet (ngrok)';
-        btn.className = 'w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow transition-all';
-      }
-    }
-
-    async function alternarNgrokWeb() {
-      const btn = document.getElementById('btnToggleNgrok');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Comunicando con túnel...';
-
-      try {
-        const res = await fetch('/api/ngrok/toggle', { method: 'POST' });
         const d = await res.json();
-        if (res.ok) {
-          actualizarEstadoNgrokUI(d.activo, d.url);
-          document.getElementById('imgCodigoQR').src = `/qr?t=${Date.now()}`;
-          mostrarToast(d.message);
-        } else {
-          mostrarToast(d.detail || 'Error al alternar ngrok', true);
-        }
-      } catch (e) {
-        mostrarToast('Error de conexión al activar el túnel', true);
-      } finally {
-        btn.disabled = false;
+        mostrarToast(d.detail || 'Error al eliminar usuario', true);
       }
     }
 
-    function copiarEnlaceServidor() {
-      const url = document.getElementById('lblUrlLocal').textContent;
-      navigator.clipboard.writeText(url).then(() => {
-        mostrarToast(`📋 Enlace copiado al portapapeles: ${url}`);
-      });
-    }
-
-    function copiarUrlNgrok() {
-      const url = document.getElementById('txtUrlNgrok').value;
-      navigator.clipboard.writeText(url).then(() => {
-        mostrarToast(`📋 Enlace HTTPS público copiado: ${url}`);
-      });
-    }
 
     // ==========================================
     // FUNCIONES DEL MOTOR DE PATIO Y CAPTURA
     // ==========================================
+    function asignarValorSelect(selectId, valor) {
+      const sel = document.getElementById(selectId);
+      if (!sel || valor === undefined || valor === null || valor === '') return;
+      const valStr = String(valor).trim();
+      let opt = Array.from(sel.options).find(o => o.value.trim().toLowerCase() === valStr.toLowerCase());
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = valStr;
+        opt.textContent = valStr;
+        const optNuevo = Array.from(sel.options).find(o => o.value === '__nuevo__');
+        if (optNuevo) {
+          sel.insertBefore(opt, optNuevo);
+        } else {
+          sel.appendChild(opt);
+        }
+      }
+      sel.value = opt.value;
+    }
+
+    function verificarOpcionNuevaSelect(sel, nombreCampo = 'valor') {
+      if (sel.value === '__nuevo__') {
+        const nuevo = prompt(`Ingresa nuevo ${nombreCampo}:`);
+        if (nuevo && nuevo.trim()) {
+          const valLimpio = nuevo.trim();
+          asignarValorSelect(sel.id, valLimpio);
+          mostrarToast(`Agregado: ${valLimpio}`);
+          if (sel.id === 'marca') alCambiarMarcaMobile();
+          if (sel.id === 'cliente') alCambiarClienteMobile();
+          if (sel.id === 'diseno' || sel.id === 'dimension') autoCompletarProfInicial();
+        } else {
+          sel.value = '';
+        }
+      }
+    }
+
+    async function poblarSelect(elementId, endpoint, placeholderTexto, valorSeleccionado = null) {
+      const sel = document.getElementById(elementId);
+      if (!sel) return;
+      const valorPrevio = valorSeleccionado !== null ? valorSeleccionado : (sel.value || '');
+      try {
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const items = await res.json();
+          const unicos = [];
+          const vistos = new Set();
+          (items || []).forEach(it => {
+            const normal = String(it || '').trim();
+            if (normal && !vistos.has(normal.toLowerCase())) {
+              vistos.add(normal.toLowerCase());
+              unicos.push(normal);
+            }
+          });
+
+          let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholderTexto}</option>`;
+          unicos.forEach(it => {
+            const isSel = (valorPrevio && valorPrevio.toLowerCase() === it.toLowerCase());
+            html += `<option value="${it}" ${isSel ? 'selected' : ''}>${it}</option>`;
+          });
+          html += `<option value="__nuevo__" class="font-bold text-blue-600 bg-blue-50">+ Agregar nuevo valor...</option>`;
+          sel.innerHTML = html;
+
+          if (valorPrevio && !vistos.has(valorPrevio.toLowerCase())) {
+            asignarValorSelect(elementId, valorPrevio);
+          } else if (valorPrevio) {
+            sel.value = valorPrevio;
+          }
+
+          // Mantener compatibilidad con datalist si existe en el DOM
+          const dl = document.getElementById(`dl_${elementId}`) || document.getElementById(`dl_${elementId}s`);
+          if (dl) dl.innerHTML = unicos.map(i => `<option value="${i}">`).join('');
+        }
+      } catch(e) {}
+    }
+
     async function cargarCatalogos(seleccionarOp = null, seleccionarTip = null) {
       await Promise.all([
-        poblarDatalist('dl_clientes', '/api/valores-campo?campo=cliente'),
-        poblarDatalist('dl_marcas', '/api/valores-campo?campo=marca'),
-        poblarDatalist('dl_dimensiones', '/api/valores-campo?campo=dimension')
+        poblarSelect('cliente', '/api/valores-campo?campo=cliente', 'ej. TransCarga (Seleccionar cliente)'),
+        poblarSelect('marca', '/api/valores-campo?campo=marca', 'ej. Michelin (Seleccionar marca)'),
+        poblarSelect('dimension', '/api/valores-campo?campo=dimension', '295/80R22.5', '295/80R22.5')
       ]);
 
       const resOps = await fetch('/api/operaciones');
@@ -1229,6 +1821,11 @@
     }
 
     async function poblarDatalist(elementId, endpoint) {
+      // Wrapper de compatibilidad hacia atrás
+      const idCampo = elementId.replace(/^dl_/, '').replace(/s$/, '');
+      if (document.getElementById(idCampo)?.tagName === 'SELECT') {
+        return poblarSelect(idCampo, endpoint, `Seleccionar ${idCampo}...`);
+      }
       try {
         const res = await fetch(endpoint);
         if (res.ok) {
@@ -1241,11 +1838,15 @@
 
     async function alCambiarClienteMobile() {
       const cli = document.getElementById('cliente').value.trim();
-      if (cli) {
+      if (cli && cli !== '__nuevo__') {
         await Promise.all([
-          poblarDatalist('dl_subclientes', `/api/valores-campo?campo=subcliente&cliente=${encodeURIComponent(cli)}`),
+          poblarSelect('subcliente', `/api/valores-campo?campo=subcliente&cliente=${encodeURIComponent(cli)}`, 'ej. Principal (Seleccionar sede)'),
           actualizarLimiteCliente()
         ]);
+        const numInt = (document.getElementById('numero_interno')?.value || '').trim();
+        if (numInt) {
+          consultarLlantaPorCliente(numInt);
+        }
       }
     }
 
@@ -1277,6 +1878,59 @@
       }
     }
 
+    /**
+     * Calcula el orden físico de inspección del vehículo caminando alrededor:
+     * 1. Lado Izquierdo (ejes 1..N de adelante hacia atrás, exterior antes de interior).
+     * 2. Lado Derecho (ejes 1..N de adelante hacia atrás, exterior antes de interior).
+     * 3. Soporte de Repuesto al final.
+     * Ejemplo en articulado: 1, 3, 4, 7, 8, 2, 6, 5, 10, 9.
+     */
+    function calcularOrdenInspeccion(esquema, posicionesFallback) {
+      if (!esquema || !Array.isArray(esquema) || esquema.length === 0) {
+        return posicionesFallback || [1, 3, 4, 7, 8, 2, 6, 5, 10, 9];
+      }
+      const izq = [];
+      const der = [];
+      const rep = [];
+
+      const ejesRodantes = esquema.filter(e => e.eje !== 99 && (e.tipo || '').toLowerCase() !== 'repuesto');
+      const ejesRepuesto = esquema.filter(e => e.eje === 99 || (e.tipo || '').toLowerCase() === 'repuesto');
+
+      // Lado Izquierdo (ejes 1..N): primero ext, luego int
+      ejesRodantes.forEach(eje => {
+        const posEjeIzq = (eje.posiciones || []).filter(p => (p.lado || '').toLowerCase() === 'izq');
+        posEjeIzq.sort((a, b) => {
+          const rolA = (a.rol || '').toLowerCase();
+          const rolB = (b.rol || '').toLowerCase();
+          if (rolA === 'ext' && rolB === 'int') return -1;
+          if (rolA === 'int' && rolB === 'ext') return 1;
+          return a.pos - b.pos;
+        });
+        posEjeIzq.forEach(p => izq.push(p.pos));
+      });
+
+      // Lado Derecho (ejes 1..N): primero ext, luego int
+      ejesRodantes.forEach(eje => {
+        const posEjeDer = (eje.posiciones || []).filter(p => (p.lado || '').toLowerCase() === 'der');
+        posEjeDer.sort((a, b) => {
+          const rolA = (a.rol || '').toLowerCase();
+          const rolB = (b.rol || '').toLowerCase();
+          if (rolA === 'ext' && rolB === 'int') return -1;
+          if (rolA === 'int' && rolB === 'ext') return 1;
+          return a.pos - b.pos;
+        });
+        posEjeDer.forEach(p => der.push(p.pos));
+      });
+
+      // Repuesto(s)
+      ejesRepuesto.forEach(eje => {
+        (eje.posiciones || []).forEach(p => rep.push(p.pos));
+      });
+
+      const orden = [...izq, ...der, ...rep];
+      return orden.length > 0 ? orden : (posicionesFallback || [1, 3, 4, 7, 8, 2, 6, 5, 10, 9]);
+    }
+
     async function cambioTipologia() {
       const tip = document.getElementById('tipologia').value;
       try {
@@ -1284,13 +1938,13 @@
         if (res.ok) {
           const d = await res.json();
           esquemaTipologiaCache = d.esquema;
-          listaPosicionesActual = d.posiciones;
+          listaPosicionesActual = calcularOrdenInspeccion(d.esquema, d.posiciones);
           const posActual = parseInt(document.getElementById('posicion').value) || 1;
-          renderizarChasisEjes(d.esquema, d.posiciones);
-          renderizarBotonesPosicion(d.posiciones, d.esquema);
+          renderizarChasisEjes(d.esquema, listaPosicionesActual);
+          renderizarBotonesPosicion(listaPosicionesActual, d.esquema);
           renderizarCarruselLlantasMobile();
 
-          // Si la posición actual no existe en la nueva tipología, cambiar a la primera
+          // Si la posición actual no existe en la nueva tipología, cambiar a la primera del orden
           if (!listaPosicionesActual.includes(posActual)) {
             seleccionarPosicion(listaPosicionesActual[0] || 1);
           } else {
@@ -1401,7 +2055,7 @@
       const ejeId = eje.eje;
 
       let svg = `
-        <svg viewBox="0 0 560 158" width="100%" height="auto" class="max-w-[560px] overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 560 158" class="w-full h-auto max-w-[560px] overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <!-- 1. Gradiente Base Grafito (Llanta Pendiente) -->
             <linearGradient id="gradRubber_eje_${ejeId}" x1="0" y1="0" x2="1" y2="0">
@@ -2247,15 +2901,19 @@
     }
 
     function evaluarHabilitarFotoNovedad() {
-      const nov = document.getElementById('novedades');
-      const box = document.getElementById('boxAdjuntarFotoNovedad');
-      if (!box) return;
-      const tieneTexto = nov && nov.value.trim().length > 0;
-      const tieneFotos = fotosNovedadActuales && fotosNovedadActuales.length > 0;
-      if (tieneTexto || tieneFotos) {
-        box.classList.remove('hidden');
+      const lblResumen = document.getElementById('lblConteoFotosResumen');
+      if (lblResumen) {
+        const cant = (fotosNovedadActuales && fotosNovedadActuales.length) || 0;
+        lblResumen.textContent = cant === 0 ? '0 fotos' : `${cant} foto${cant > 1 ? 's' : ''}`;
+      }
+    }
+
+    function dispararCamaraDirecta() {
+      const inp = document.getElementById('foto_camara_directa_input');
+      if (inp) {
+        inp.click();
       } else {
-        box.classList.add('hidden');
+        document.getElementById('foto_novedad_input')?.click();
       }
     }
 
@@ -2273,10 +2931,6 @@
     function limpiarNovedades() {
       const nov = document.getElementById('novedades');
       if (nov) nov.value = '';
-      if (!fotosNovedadActuales || fotosNovedadActuales.length === 0) {
-        const box = document.getElementById('boxAdjuntarFotoNovedad');
-        if (box) box.classList.add('hidden');
-      }
     }
 
     function procesarFotosNovedad(input) {
@@ -2285,7 +2939,7 @@
       let procesadas = 0;
       const nuevasFotos = [];
 
-      mostrarToast(`Procesando ${files.length} imagen(es)...`);
+      mostrarToast(`📸 Procesando ${files.length} foto(s)...`);
 
       files.forEach(file => {
         const reader = new FileReader();
@@ -2338,22 +2992,28 @@
 
       const previewBox = document.getElementById('previewFotoNovedadBox');
       const grid = document.getElementById('gridPreviewFotosNovedad');
-      const txtBtn = document.getElementById('txtBtnCamaraNovedad');
-      const btnQuitarTodas = document.getElementById('btnQuitarTodasFotos');
+      const btnQuitarCont = document.getElementById('btnQuitarTodasContainer');
       const lblConteo = document.getElementById('lblConteoFotosAdjuntas');
+      const badgeMob = document.getElementById('badgeFotosMobileSticky');
+      const lblResumen = document.getElementById('lblConteoFotosResumen');
 
       if (!fotosNovedadActuales || fotosNovedadActuales.length === 0) {
         if (previewBox) previewBox.classList.add('hidden');
         if (grid) grid.innerHTML = '';
-        if (txtBtn) txtBtn.textContent = 'Tomar Foto o Subir Imágenes (1 o varias)';
-        if (btnQuitarTodas) btnQuitarTodas.classList.add('hidden');
+        if (btnQuitarCont) btnQuitarCont.classList.add('hidden');
+        if (badgeMob) badgeMob.classList.add('hidden');
+        if (lblResumen) lblResumen.textContent = '0 fotos';
         evaluarHabilitarFotoNovedad();
         return;
       }
 
       if (previewBox) previewBox.classList.remove('hidden');
-      if (btnQuitarTodas) btnQuitarTodas.classList.remove('hidden');
-      if (txtBtn) txtBtn.textContent = '+ Agregar más fotos';
+      if (btnQuitarCont) btnQuitarCont.classList.remove('hidden');
+      if (badgeMob) {
+        badgeMob.textContent = fotosNovedadActuales.length;
+        badgeMob.classList.remove('hidden');
+      }
+      if (lblResumen) lblResumen.textContent = `${fotosNovedadActuales.length} foto${fotosNovedadActuales.length > 1 ? 's' : ''}`;
       if (lblConteo) lblConteo.textContent = `${fotosNovedadActuales.length} imagen${fotosNovedadActuales.length > 1 ? 'es' : ''} adjunta${fotosNovedadActuales.length > 1 ? 's' : ''}`;
 
       if (grid) {
@@ -2364,7 +3024,7 @@
           card.title = `Clic para ver foto ${idx + 1} en grande`;
           card.innerHTML = `
             <img src="${foto}" alt="Miniatura ${idx + 1}" class="w-full h-full object-cover">
-            <button type="button" onclick="event.stopPropagation(); eliminarFotoNovedadIndex(${idx});" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition-all" title="Quitar esta foto">
+            <button type="button" onclick="event.stopPropagation(); eliminarFotoNovedadIndex(${idx});" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition-all cursor-pointer" title="Quitar esta foto">
               <i class="fa-solid fa-xmark"></i>
             </button>
             <span class="absolute bottom-0 left-0 right-0 bg-slate-900/80 text-white text-[8px] text-center font-mono font-bold leading-tight py-0.5">
@@ -2391,12 +3051,108 @@
       fotosNovedadActuales = [];
       const inp = document.getElementById('foto_novedad_input');
       if (inp) inp.value = '';
+      const inpCam = document.getElementById('foto_camara_directa_input');
+      if (inpCam) inpCam.value = '';
       actualizarUIFotosNovedad();
     }
 
     function quitarFotoNovedad() {
       quitarTodasFotosNovedad();
     }
+
+    // ==========================================
+    // FOTOS EN MODAL DE EDICIÓN DE INSPECCIÓN
+    // ==========================================
+    let fotosEdicionActuales = [];
+
+    function dispararCamaraEdicion() {
+      document.getElementById('edit_foto_camara_input')?.click();
+    }
+
+    function procesarFotosEdicion(input) {
+      if (!input.files || input.files.length === 0) return;
+      const files = Array.from(input.files);
+      let procesadas = 0;
+      const nuevasFotos = [];
+
+      mostrarToast(`📸 Procesando ${files.length} foto(s)...`);
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const maxDim = 1000;
+            let w = img.width;
+            let h = img.height;
+            if (w > h && w > maxDim) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else if (h > maxDim) {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
+            nuevasFotos.push(dataUrl);
+
+            procesadas++;
+            if (procesadas === files.length) {
+              fotosEdicionActuales = fotosEdicionActuales.concat(nuevasFotos);
+              actualizarUIFotosEdicion();
+              mostrarToast(`📸 ${nuevasFotos.length} foto(s) agregada(s) para guardar`);
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      input.value = '';
+    }
+
+    function actualizarUIFotosEdicion() {
+      const b64 = document.getElementById('edit_foto_novedad_base64');
+      if (b64) {
+        b64.value = fotosEdicionActuales.length > 0 ? JSON.stringify(fotosEdicionActuales) : '';
+      }
+      const grid = document.getElementById('gridPreviewFotosEdicion');
+      if (!grid) return;
+
+      if (!fotosEdicionActuales || fotosEdicionActuales.length === 0) {
+        grid.innerHTML = '<span class="text-slate-400 text-xs italic self-center">Sin fotos adjuntas</span>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      fotosEdicionActuales.forEach((foto, idx) => {
+        const card = document.createElement('div');
+        card.className = 'relative group w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 border-blue-400 bg-slate-900 shadow-sm flex-shrink-0 cursor-pointer transition-transform hover:scale-105';
+        card.title = `Clic para ver foto ${idx + 1} en grande`;
+        card.innerHTML = `
+          <img src="${foto}" alt="Miniatura ${idx + 1}" class="w-full h-full object-cover">
+          <button type="button" onclick="event.stopPropagation(); eliminarFotoEdicionIndex(${idx});" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] shadow transition-all cursor-pointer" title="Quitar esta foto">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <span class="absolute bottom-0 left-0 right-0 bg-slate-900/80 text-white text-[8px] text-center font-mono font-bold leading-tight py-0.5">
+            #${idx + 1}
+          </span>
+        `;
+        card.onclick = () => abrirGaleriaFotosDirecta(fotosEdicionActuales, idx, 'Evidencias fotográficas en edición');
+        grid.appendChild(card);
+      });
+    }
+
+    function eliminarFotoEdicionIndex(idx) {
+      if (idx >= 0 && idx < fotosEdicionActuales.length) {
+        fotosEdicionActuales.splice(idx, 1);
+        actualizarUIFotosEdicion();
+      }
+    }
+
 
     // ==========================================
     // VISOR MODAL DE GALERÍA DE FOTOS (BASE DE DATOS & FORMULARIO)
@@ -2590,6 +3346,60 @@
       txt.textContent = `${pl} · ${tip}${km ? ` · ${km} Km` : ''}`;
     }
 
+    function esPosicionDireccionalActual(pos) {
+      const p = parseInt(pos) || 1;
+      if (esquemaTipologiaCache && Array.isArray(esquemaTipologiaCache)) {
+        for (const eje of esquemaTipologiaCache) {
+          const tipoEje = (eje.tipo || '').toLowerCase();
+          const esEjeDir = tipoEje.includes('direccional') || tipoEje === 'dir';
+          for (const r of (eje.posiciones || [])) {
+            if (parseInt(r.pos) === p) {
+              const rol = (r.rol || '').toLowerCase();
+              return esEjeDir || rol.includes('dir');
+            }
+          }
+        }
+      }
+      const tip = (document.getElementById('tipologia')?.value || '').toLowerCase();
+      if (tip.includes('cuatro manos') || tip.includes('8x4') || tip.includes('biarticulado')) {
+        return [1, 2, 3, 4].includes(p);
+      }
+      return [1, 2].includes(p);
+    }
+
+    function aplicarRestriccionEjeDireccional(pos) {
+      const p = parseInt(pos) || 1;
+      const esDir = esPosicionDireccionalActual(p);
+      const selVida = document.getElementById('vida');
+      const optReencauche = selVida ? selVida.querySelector('option[value="Reencauche"]') : null;
+      const badge = document.getElementById('badgeDireccionalOriginal');
+
+      if (esDir) {
+        if (optReencauche) {
+          optReencauche.disabled = true;
+          optReencauche.classList.add('text-slate-400');
+        }
+        if (selVida && selVida.value === 'Reencauche') {
+          selVida.value = 'Original';
+          validarVida();
+        }
+        if (badge) badge.classList.remove('hidden');
+      } else {
+        if (optReencauche) {
+          optReencauche.disabled = false;
+          optReencauche.classList.remove('text-slate-400');
+        }
+        if (badge) badge.classList.add('hidden');
+      }
+    }
+
+    function alCambiarFechaFormulario() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placa) {
+        cargarPosicionesInspeccionadasPlaca(placa);
+      }
+    }
+
     /**
      * Selecciona una posición de neumático, actualiza el formulario y sincroniza el chasis.
      */
@@ -2611,6 +3421,9 @@
       if (b) b.classList.add('active');
 
       actualizarBarraPosicionMobile(p);
+
+      // Candado UI: En eje direccional solo se permite condición Original
+      aplicarRestriccionEjeDireccional(p);
 
       verificarInspeccionAnterior();
     }
@@ -2661,9 +3474,191 @@
       }
     }
 
+    // ==========================================
+    // AUTOCOMPLETADO PERFIL PLACA <-> ESQUEMA & FLOTA
+    // ==========================================
+    let timerPlacaDebounce = null;
+    let ultimaPlacaConsultadaPerfil = '';
+
+    function onInputPlacaDebounced() {
+      clearTimeout(timerPlacaDebounce);
+      timerPlacaDebounce = setTimeout(() => {
+        const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+        if (placa && placa.length >= 3) {
+          consultarPerfilPlaca(placa);
+        }
+      }, 300);
+    }
+
+    function consultarPerfilPlacaInmediato() {
+      clearTimeout(timerPlacaDebounce);
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placa && placa !== ultimaPlacaConsultadaPerfil) {
+        consultarPerfilPlaca(placa);
+      }
+    }
+
+    async function consultarPerfilPlaca(placa) {
+      if (!placa) return;
+      ultimaPlacaConsultadaPerfil = placa;
+
+      try {
+        const res = await fetch(`/api/vehiculo-perfil?placa=${encodeURIComponent(placa)}`);
+        if (res.ok) {
+          const d = await res.json();
+          const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+          if (placaActual !== placa) return;
+
+          if (d.encontrado) {
+            // 1. Mostrar badge de esquema vinculado
+            const b = document.getElementById('badgePlacaVinculada');
+            if (b) b.classList.remove('hidden');
+
+            // 2. Precargar Cliente, Subcliente y Operación si están vacíos o no restringidos
+            const selCli = document.getElementById('cliente');
+            if (d.cliente && selCli && (!selCli.value || selCli.value === '__nuevo__')) {
+              asignarValorSelect('cliente', d.cliente);
+              await alCambiarClienteMobile();
+            }
+
+            if (d.subcliente && document.getElementById('subcliente')) {
+              asignarValorSelect('subcliente', d.subcliente);
+            }
+
+            if (d.tipo_operacion && document.getElementById('tipo_operacion')) {
+              asignarValorSelect('tipo_operacion', d.tipo_operacion);
+            }
+
+            // 3. Odómetro / Km si está vacío
+            const inputKm = document.getElementById('kilometraje');
+            if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
+              inputKm.value = Math.round(d.ultimo_km);
+            }
+
+            // 4. Seleccionar Tipología y redibujar chasis
+            if (d.tipologia) {
+              const selTip = document.getElementById('tipologia');
+              if (selTip) {
+                asignarValorSelect('tipologia', d.tipologia);
+                await cambioTipologia();
+                selTip.disabled = true;
+                selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+                const btnDesb = document.getElementById('btnDesbloquearTipologia');
+                if (btnDesb) btnDesb.classList.remove('hidden');
+              }
+            }
+
+            // 5. Garantizar profundidades en ceros/vacías para nueva inspección
+            document.getElementById('prof_ext').value = '';
+            document.getElementById('prof_cent').value = '';
+            document.getElementById('prof_int').value = '';
+            document.getElementById('novedades').value = '';
+            await cargarPosicionesInspeccionadasPlaca(placa);
+            await verificarInspeccionAnterior();
+          } else {
+            const b = document.getElementById('badgePlacaVinculada');
+            if (b) b.classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar perfil del vehículo:', err);
+      }
+    }
+
+    function desbloquearTipologia() {
+      const selTip = document.getElementById('tipologia');
+      if (selTip) {
+        selTip.disabled = false;
+        selTip.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        selTip.focus();
+      }
+      const btnDesb = document.getElementById('btnDesbloquearTipologia');
+      if (btnDesb) btnDesb.classList.add('hidden');
+      const b = document.getElementById('badgePlacaVinculada');
+      if (b) b.classList.add('hidden');
+    }
+
+    // ==========================================
+    // AUTOCOMPLETADO DE LLANTA POR CLIENTE
+    // ==========================================
+    let timerNumeroInternoDebounce = null;
+
+    function onInputNumeroInternoDebounced() {
+      clearTimeout(timerNumeroInternoDebounce);
+      timerNumeroInternoDebounce = setTimeout(() => {
+        const num = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+        if (num) {
+          consultarLlantaPorCliente(num);
+        }
+      }, 350);
+    }
+
+    async function consultarLlantaPorCliente(numInterno) {
+      const num = (numInterno || document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+      if (!num) return;
+
+      const cli = (document.getElementById('cliente')?.value || '').trim();
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+
+      try {
+        let url = `/api/llanta-por-cliente?numero_interno=${encodeURIComponent(num)}`;
+        if (cli && cli !== '__nuevo__') url += `&cliente=${encodeURIComponent(cli)}`;
+        if (placa) url += `&placa=${encodeURIComponent(placa)}`;
+
+        const res = await fetch(url);
+        if (res.ok) {
+          const d = await res.json();
+          const numActual = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+          if (numActual !== num) return;
+
+          if (d.encontrado && d.datos) {
+            const lt = d.datos;
+            const bLlanta = document.getElementById('badgeLlantaCliente');
+            if (bLlanta) bLlanta.classList.remove('hidden');
+
+            const bHist = document.getElementById('badgeHistorialPrevia');
+            if (bHist) {
+              bHist.classList.remove('hidden');
+              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + lt.ult_prof_min.toFixed(1) + ' mm' : ''})`;
+            }
+
+            // Precargar especificaciones técnicas de la llanta
+            if (lt.marca) {
+              asignarValorSelect('marca', lt.marca);
+              await alCambiarMarcaMobile();
+            }
+            if (lt.diseno) asignarValorSelect('diseno', lt.diseno);
+            if (lt.dimension) asignarValorSelect('dimension', lt.dimension);
+            if (lt.vida) {
+              asignarValorSelect('vida', lt.vida);
+              validarVida();
+            }
+            if (lt.banda_reen && lt.vida === 'Reencauche') {
+              asignarValorSelect('banda_reen', lt.banda_reen);
+            }
+            if (lt.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
+              document.getElementById('prof_inicial').value = lt.prof_inicial;
+            }
+            if (lt.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
+              document.getElementById('precio').value = lt.precio;
+            }
+            if (lt.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
+              document.getElementById('km_montaje').value = lt.km_montaje;
+            }
+          } else {
+            const bLlanta = document.getElementById('badgeLlantaCliente');
+            if (bLlanta) bLlanta.classList.add('hidden');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al consultar llanta por cliente:', err);
+      }
+    }
+
     async function verificarInspeccionAnterior() {
-      const placa = document.getElementById('placa').value.trim().toUpperCase();
-      const pos = parseInt(document.getElementById('posicion').value) || 1;
+      const token = idInspeccionActiva;
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const pos = parseInt(document.getElementById('posicion')?.value) || 1;
       if (!placa) return;
 
       cargarPosicionesInspeccionadasPlaca(placa);
@@ -2671,29 +3666,76 @@
       try {
         const res = await fetch(`/api/inspeccion-anterior?placa=${encodeURIComponent(placa)}&posicion=${pos}`);
         if (res.ok) {
+          if (token !== idInspeccionActiva) return;
+          const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+          if (!placaFin || placaFin !== placa) return;
+
           const d = await res.json();
+          if (token !== idInspeccionActiva) return;
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
-            document.getElementById('badgeHistorialPrevia').classList.remove('hidden');
-            // Precargar datos fijos
-            if (d.datos.marca && !document.getElementById('marca').value) document.getElementById('marca').value = d.datos.marca;
-            if (d.datos.diseno && !document.getElementById('diseno').value) document.getElementById('diseno').value = d.datos.diseno;
-            if (d.datos.dimension && !document.getElementById('dimension').value) document.getElementById('dimension').value = d.datos.dimension;
+            document.getElementById('badgeHistorialPrevia')?.classList.remove('hidden');
+            // Precargar datos fijos técnicos de la llanta
+            if (d.datos.marca && !document.getElementById('marca').value) asignarValorSelect('marca', d.datos.marca);
+            if (d.datos.diseno && !document.getElementById('diseno').value) asignarValorSelect('diseno', d.datos.diseno);
+            if (d.datos.dimension && !document.getElementById('dimension').value) asignarValorSelect('dimension', d.datos.dimension);
             if (d.datos.prof_inicial && !document.getElementById('prof_inicial').value) document.getElementById('prof_inicial').value = d.datos.prof_inicial;
             if (d.datos.numero_interno && !document.getElementById('numero_interno').value) document.getElementById('numero_interno').value = d.datos.numero_interno;
+            if (d.datos.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
+              document.getElementById('precio').value = d.datos.precio;
+            }
+            if (d.datos.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
+              document.getElementById('km_montaje').value = d.datos.km_montaje;
+            }
+            
+            // Condición vida: En eje direccional SIEMPRE forzar a Original
+            const esDir = esPosicionDireccionalActual(pos);
+            if (esDir) {
+              asignarValorSelect('vida', 'Original');
+            } else if (d.datos.vida && !document.getElementById('vida').value) {
+              asignarValorSelect('vida', d.datos.vida);
+              if (d.datos.banda_reen && document.getElementById('banda_reen')) {
+                asignarValorSelect('banda_reen', d.datos.banda_reen);
+              }
+            }
+            aplicarRestriccionEjeDireccional(pos);
+            validarVida();
           } else {
-            document.getElementById('badgeHistorialPrevia').classList.add('hidden');
+            document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+          }
+
+          // REQUERIMIENTO: Profundidades SIEMPRE en ceros / vacías para la nueva inspección
+          if (!posicionesInspeccionadasPlaca.has(pos)) {
+            document.getElementById('prof_ext').value = '';
+            document.getElementById('prof_cent').value = '';
+            document.getElementById('prof_int').value = '';
+            document.getElementById('novedades').value = '';
           }
         }
       } catch (e) {}
     }
 
     async function cargarPosicionesInspeccionadasPlaca(placa) {
+      const token = idInspeccionActiva;
+      const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (!placa || !placaActual || placa !== placaActual) return;
+      const fActual = (document.getElementById('fecha')?.value || '').trim();
+
       try {
-        const res = await fetch(`/api/posiciones-inspeccionadas?placa=${encodeURIComponent(placa)}`);
+        let url = `/api/posiciones-inspeccionadas?placa=${encodeURIComponent(placa)}`;
+        if (fActual) {
+          url += `&fecha=${encodeURIComponent(fActual)}`;
+        }
+        const res = await fetch(url);
         if (res.ok) {
+          if (token !== idInspeccionActiva) return;
+          const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+          if (!placaFin || placaFin !== placa) return;
+
           const d = await res.json();
+          if (token !== idInspeccionActiva) return;
+
           posicionesInspeccionadasPlaca = new Set(d.posiciones || []);
           posicionesConNovedadPlaca = new Map();
           if (d.novedades) {
@@ -2712,19 +3754,29 @@
     }
 
     function validarVida() {
-      const vida = document.getElementById('vida').value;
+      const pos = parseInt(document.getElementById('posicion')?.value) || 1;
+      const selVida = document.getElementById('vida');
+      if (selVida && selVida.value === 'Reencauche' && esPosicionDireccionalActual(pos)) {
+        selVida.value = 'Original';
+        mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
+      }
+      const vida = selVida ? selVida.value : 'Original';
       const boxBanda = document.getElementById('box_banda');
-      if (vida === 'Reencauche') {
-        boxBanda.classList.remove('hidden');
-        poblarDatalist('dl_bandas', '/api/valores-campo?campo=banda_reen');
-      } else {
-        boxBanda.classList.add('hidden');
+      if (boxBanda) {
+        if (vida === 'Reencauche') {
+          boxBanda.classList.remove('hidden');
+          poblarSelect('banda_reen', '/api/valores-campo?campo=banda_reen', 'ej. BDM Bandag (Seleccionar banda)');
+        } else {
+          boxBanda.classList.add('hidden');
+        }
       }
     }
 
     async function alCambiarMarcaMobile() {
       const m = document.getElementById('marca').value.trim();
-      if (m) poblarDatalist('dl_disenos', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`);
+      if (m && m !== '__nuevo__') {
+        await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, 'ej. X Multi Z (Seleccionar diseño)');
+      }
     }
 
     async function autoCompletarProfInicial() {
@@ -2732,7 +3784,7 @@
       const d = document.getElementById('diseno').value.trim();
       const dim = document.getElementById('dimension').value.trim();
       const vida = document.getElementById('vida').value;
-      if (!m || !d) return;
+      if (!m || !d || m === '__nuevo__' || d === '__nuevo__') return;
 
       const res = await fetch(`/api/profundidad-inicial?marca=${encodeURIComponent(m)}&diseno=${encodeURIComponent(d)}&dimension=${encodeURIComponent(dim)}&vida=${encodeURIComponent(vida)}`);
       if (res.ok) {
@@ -2772,10 +3824,11 @@
       } catch (e) {}
     }
 
-    function seleccionarLlantaCatalogo(m) {
-      document.getElementById('marca').value = m.marca;
-      document.getElementById('diseno').value = m.diseno;
-      document.getElementById('dimension').value = m.dimension;
+    async function seleccionarLlantaCatalogo(m) {
+      asignarValorSelect('marca', m.marca);
+      await alCambiarMarcaMobile();
+      asignarValorSelect('diseno', m.diseno);
+      asignarValorSelect('dimension', m.dimension);
       document.getElementById('prof_inicial').value = m.prof_inicial;
       if (m.tipo_llanta === 'Reencauche') {
         document.getElementById('vida').value = 'Reencauche';
@@ -2785,24 +3838,260 @@
       mostrarToast(`Modelo seleccionado: ${m.marca} ${m.diseno}`);
     }
 
-    function limpiarMediciones() {
-      document.getElementById('prof_ext').value = '';
-      document.getElementById('prof_cent').value = '';
-      document.getElementById('prof_int').value = '';
-      document.getElementById('novedades').value = '';
-      document.getElementById('alertaRetiroInmediato').classList.add('hidden');
+    function limpiarMediciones(mostrarAviso = false) {
+      // 1. Limpiar especificaciones de la llanta en la posición actual
+      const inpNum = document.getElementById('numero_interno');
+      if (inpNum) inpNum.value = '';
+
+      const selMarca = document.getElementById('marca');
+      if (selMarca) {
+        selMarca.value = '';
+        if (selMarca.options && selMarca.options.length > 0) selMarca.selectedIndex = 0;
+      }
+
+      const selDis = document.getElementById('diseno');
+      if (selDis) {
+        selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>';
+        selDis.value = '';
+      }
+
+      const selDim = document.getElementById('dimension');
+      if (selDim) selDim.value = '295/80R22.5';
+
+      const selVida = document.getElementById('vida');
+      if (selVida) {
+        selVida.value = 'Original';
+        validarVida();
+      }
+
+      const pIni = document.getElementById('prof_inicial');
+      if (pIni) pIni.value = '';
+
+      const selBanda = document.getElementById('banda_reen');
+      if (selBanda) selBanda.value = '';
+      const boxBanda = document.getElementById('box_banda');
+      if (boxBanda) boxBanda.classList.add('hidden');
+
+      const elPrecio = document.getElementById('precio');
+      if (elPrecio) elPrecio.value = '';
+
+      const elKm = document.getElementById('km_montaje');
+      if (elKm) elKm.value = '';
+
+      // 2. Limpiar mediciones de profundidad y calibración
+      const pExt = document.getElementById('prof_ext'); if (pExt) pExt.value = '';
+      const pCen = document.getElementById('prof_cent'); if (pCen) pCen.value = '';
+      const pInt = document.getElementById('prof_int'); if (pInt) pInt.value = '';
+      const psi = document.getElementById('psi'); if (psi) psi.value = '100';
+      const nov = document.getElementById('novedades'); if (nov) nov.value = '';
+
+      // 3. Ocultar badges de reconocimiento, historial y alertas de retiro
+      const bCli = document.getElementById('badgeLlantaCliente');
+      if (bCli) bCli.classList.add('hidden');
+
+      const bHist = document.getElementById('badgeHistorialPrevia');
+      if (bHist) bHist.classList.add('hidden');
+
+      const bSug = document.getElementById('boxSugerenciasCatalogo');
+      if (bSug) bSug.classList.add('hidden');
+
+      const alertaRetiro = document.getElementById('alertaRetiroInmediato');
+      if (alertaRetiro) alertaRetiro.classList.add('hidden');
+
+      datosInspeccionAnterior = null;
+
+      const posActual = parseInt(document.getElementById('posicion')?.value) || 1;
+      aplicarRestriccionEjeDireccional(posActual);
+
       quitarFotoNovedad();
       limpiarTodosErroresFormulario();
+
+      // 4. Dejar listo para ingresar datos (enfocar campo No. Interno)
+      if (inpNum) {
+        try {
+          inpNum.focus();
+        } catch (e) {}
+      }
+
+      if (mostrarAviso) {
+        mostrarToast('🧹 Datos de la llanta limpiados. Listo para ingresar datos.');
+      }
+    }
+
+    function abrirModalConfirmarFinalizar() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const total = (listaPosicionesActual && listaPosicionesActual.length > 0) ? listaPosicionesActual.length : 10;
+      const auditadas = Array.from(posicionesInspeccionadasPlaca).filter(p => listaPosicionesActual.includes(p)).length;
+      const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
+
+      const lblPlaca = document.getElementById('lblModalFinalizarPlaca');
+      if (lblPlaca) lblPlaca.textContent = placa || '(Sin placa definida)';
+
+      const lblProgreso = document.getElementById('lblModalFinalizarProgreso');
+      if (lblProgreso) lblProgreso.textContent = `${auditadas} de ${total}`;
+
+      const boxPend = document.getElementById('boxModalFinalizarPendientes');
+      const txtPend = document.getElementById('txtModalFinalizarPendientes');
+      const boxComp = document.getElementById('boxModalFinalizarCompleto');
+
+      if (pendientes.length > 0) {
+        if (boxPend) boxPend.classList.remove('hidden');
+        if (boxComp) boxComp.classList.add('hidden');
+        if (txtPend) {
+          txtPend.textContent = `Quedan ${pendientes.length} llanta(s) sin auditar: Posición(es) [ ${pendientes.join(', ')} ].`;
+        }
+      } else {
+        if (boxPend) boxPend.classList.add('hidden');
+        if (boxComp) boxComp.classList.remove('hidden');
+      }
+
+      const modal = document.getElementById('modalConfirmarFinalizar');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function cerrarModalConfirmarFinalizar() {
+      const modal = document.getElementById('modalConfirmarFinalizar');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function confirmarFinalizarInspeccion() {
+      const placa = (document.getElementById('placa')?.value || '').trim();
+      if (!placa && posicionesInspeccionadasPlaca.size === 0) {
+        if (confirm('No hay ningún vehículo en inspección activo. ¿Deseas limpiar todos los campos del formulario?')) {
+          limpiarTodoParaNuevaInspeccion();
+          mostrarToast('Formulario en blanco.');
+        }
+        return;
+      }
+      abrirModalConfirmarFinalizar();
+    }
+
+    function ejecutarFinalizacionInspeccion() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const fechaInsp = (document.getElementById('fecha')?.value || '').trim();
+      const cli = document.getElementById('cliente')?.value.trim() || 'Flota';
+      const tip = document.getElementById('tipologia')?.value || 'Tipología';
+      const auditadas = posicionesInspeccionadasPlaca.size;
+
+      cerrarModalConfirmarFinalizar();
+
+      if (placa && auditadas > 0) {
+        // Mostrar el mismo recuadro que cuando se inspeccionaron todas las llantas para generar PDF y compartir por WhatsApp
+        abrirModalInformePdf(placa, fechaInsp, cli, tip);
+        mostrarToast(`🏁 Inspección de ${placa} finalizada (${auditadas} llanta(s) registradas).`);
+      } else {
+        mostrarToast(`🏁 Inspección finalizada. Formulario y chasis en blanco.`);
+      }
+
+      // Reiniciar completamente el diagrama de chasis y los campos del formulario para la nueva inspección
+      limpiarTodoParaNuevaInspeccion();
+    }
+
+    function limpiarTodoParaNuevaInspeccion() {
+      // Invalida cualquier petición asíncrona en vuelo anterior para que no repinte el chasis
+      idInspeccionActiva++;
+
+      // 1. Limpiar campos de identificación del vehículo
+      const inpPlaca = document.getElementById('placa');
+      if (inpPlaca) inpPlaca.value = '';
+      const inpKm = document.getElementById('kilometraje');
+      if (inpKm) inpKm.value = '';
+      ultimaPlacaConsultadaPerfil = '';
+      desbloquearTipologia();
+      const bPlaca = document.getElementById('badgePlacaVinculada');
+      if (bPlaca) bPlaca.classList.add('hidden');
+      const bLlanta = document.getElementById('badgeLlantaCliente');
+      if (bLlanta) bLlanta.classList.add('hidden');
+
+      // Limpiar cliente y subcliente si no están fijados por rol de usuario
+      if (typeof usuarioActual === 'undefined' || !usuarioActual || usuarioActual.rol === 'admin' || !usuarioActual.cliente_asignado) {
+        const inpCli = document.getElementById('cliente');
+        if (inpCli && !inpCli.readOnly) inpCli.value = '';
+        const inpSub = document.getElementById('subcliente');
+        if (inpSub) inpSub.value = '';
+      }
+
+      // Restablecer fecha a la fecha actual local
+      const inpFecha = document.getElementById('fecha');
+      if (inpFecha) inpFecha.value = fechaLocalISO();
+
+      // 2. Limpiar especificaciones de la llanta
+      const camposEspec = ['numero_interno', 'marca', 'diseno', 'dimension', 'prof_inicial', 'banda_reen', 'precio', 'km_montaje'];
+      camposEspec.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const selDim = document.getElementById('dimension');
+      if (selDim) selDim.value = '295/80R22.5';
+      const selDis = document.getElementById('diseno');
+      if (selDis) selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>';
+      const selVida = document.getElementById('vida');
+      if (selVida) selVida.value = 'Original';
+      validarVida();
+
+      const boxSugerencias = document.getElementById('boxSugerenciasCatalogo');
+      if (boxSugerencias) boxSugerencias.classList.add('hidden');
+      const badgeHistorial = document.getElementById('badgeHistorialPrevia');
+      if (badgeHistorial) badgeHistorial.classList.add('hidden');
+
+      // 3. Limpiar mediciones completas (incluyendo PSI en 100 y novedades)
+      limpiarMediciones();
+
+      // 4. Limpiar sets de seguimiento del vehículo actual (100% vacíos)
+      posicionesInspeccionadasPlaca = new Set();
+      posicionesConNovedadPlaca = new Map();
+
+      // 5. Restablecer botón sin repuesto
+      ruedaSinRepuestoMarcada = false;
+      const btnSinRep = document.getElementById('btnSinRepuesto');
+      const txtSinRep = document.getElementById('txtBtnSinRepuesto');
+      if (txtSinRep) txtSinRep.textContent = 'Marcar: Vehículo sin llanta de repuesto';
+      if (btnSinRep) {
+        btnSinRep.classList.add('bg-slate-100', 'text-slate-600');
+        btnSinRep.classList.remove('bg-amber-100', 'text-amber-800', 'border-amber-300');
+      }
+
+      // 6. Restablecer posición actual al inicio del recorrido físico sin disparar verificarInspeccionAnterior
+      const primerPos = (listaPosicionesActual && listaPosicionesActual.length > 0) ? listaPosicionesActual[0] : 1;
+      const inpPos = document.getElementById('posicion');
+      if (inpPos) inpPos.value = primerPos;
+      const lblPos = document.getElementById('lblPosActualForm');
+      if (lblPos) lblPos.textContent = primerPos;
+      const lblPosEsp = document.getElementById('lblPosActualEspecificaciones');
+      if (lblPosEsp) lblPosEsp.textContent = primerPos;
+
+      // Sincronizar botones accesibles
+      document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+      const bAct = document.getElementById(`btn_pos_${primerPos}`);
+      if (bAct) bAct.classList.add('active');
+      actualizarBarraPosicionMobile(primerPos);
+
+      // 7. Renderizar chasis y selectores completamente limpios (sin ningún color verde ni alertas)
+      if (esquemaTipologiaCache) {
+        renderizarChasisEjes(esquemaTipologiaCache, listaPosicionesActual);
+        renderizarBotonesPosicion(listaPosicionesActual, esquemaTipologiaCache);
+        renderizarCarruselLlantasMobile();
+      }
+
+      // 8. Ocultar banner de completado
+      const bannerComp = document.getElementById('bannerInspeccionCompletaPatio');
+      if (bannerComp) bannerComp.classList.add('hidden');
+
+      // 9. Foco en placa
+      if (inpPlaca) inpPlaca.focus();
     }
 
     function limpiarFormulario(total = false) {
-      limpiarMediciones();
       if (total) {
-        document.getElementById('placa').value = '';
-        document.getElementById('kilometraje').value = '';
-        document.getElementById('numero_interno').value = '';
-        posicionesInspeccionadasPlaca.clear();
-        posicionesConNovedadPlaca.clear();
+        limpiarTodoParaNuevaInspeccion();
+      } else {
+        limpiarMediciones(true);
       }
     }
 
@@ -2824,27 +4113,110 @@
       }
     }
 
-    function abrirModalTipologia() { document.getElementById('modalTipologia').classList.remove('hidden'); document.getElementById('modalTipologia').classList.add('flex'); }
-    function cerrarModalTipologia() { document.getElementById('modalTipologia').classList.add('hidden'); document.getElementById('modalTipologia').classList.remove('flex'); }
-    function alCambiarPresetEjesMobile() {
-      const v = document.getElementById('sel_preset_ejes_mob').value;
-      const cant = v === '4x2' ? 6 : v === 'liviano' ? 4 : (v === '8x4' || v === 'trailer3') ? 12 : v === 'trailer2' ? 8 : 10;
-      document.getElementById('nueva_tip_cant').value = cant;
+    function recalcularLlantasTipologia() {
+      const eDir = Math.max(0, parseInt(document.getElementById('tip_ejes_dir_cant')?.value) || 0);
+      const tDir = document.getElementById('tip_ejes_dir_tipo')?.value || 'sencilla';
+      const llantasPorEjeDir = (tDir === 'dual') ? 4 : 2;
+      const totalDir = eDir * llantasPorEjeDir;
+
+      const eTrac = Math.max(0, parseInt(document.getElementById('tip_ejes_trac_cant')?.value) || 0);
+      const tTrac = document.getElementById('tip_ejes_trac_tipo')?.value || 'dual';
+      const llantasPorEjeTrac = (tTrac === 'sencilla') ? 2 : 4;
+      const totalTrac = eTrac * llantasPorEjeTrac;
+
+      const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
+      const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
+      const llantasPorEjeLib = (tLib === 'sencilla') ? 2 : 4;
+      const totalLib = eLib * llantasPorEjeLib;
+
+      const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+
+      const totalLlantas = totalDir + totalTrac + totalLib + eRep;
+
+      // Generar desglose descriptivo
+      const partes = [];
+      if (eDir > 0) {
+        partes.push(`${eDir} Dir (${totalDir} llantas)`);
+      }
+      if (eTrac > 0) {
+        const modoTrac = tTrac === 'dual' ? 'Dual' : 'Senc';
+        partes.push(`${eTrac} Trac ${modoTrac} (${totalTrac} llantas)`);
+      }
+      if (eLib > 0) {
+        const modoLib = tLib === 'dual' ? 'Dual' : 'Senc';
+        partes.push(`${eLib} Libre ${modoLib} (${totalLib} llantas)`);
+      }
+      if (eRep > 0) {
+        partes.push(`${eRep} Repuesto${eRep > 1 ? 's' : ''}`);
+      }
+
+      const txtDesglose = partes.length > 0 ? partes.join(' + ') : 'Sin ejes configurados (0 llantas)';
+      const elDesglose = document.getElementById('tip_desglose_calculo');
+      const elTotal = document.getElementById('tip_total_calculado');
+      if (elDesglose) elDesglose.textContent = txtDesglose;
+      if (elTotal) elTotal.textContent = totalLlantas;
+      return totalLlantas;
     }
+
+    function abrirModalTipologia() {
+      document.getElementById('modalTipologia').classList.remove('hidden');
+      document.getElementById('modalTipologia').classList.add('flex');
+      recalcularLlantasTipologia();
+    }
+
+    function cerrarModalTipologia() {
+      document.getElementById('modalTipologia').classList.add('hidden');
+      document.getElementById('modalTipologia').classList.remove('flex');
+    }
+
     async function guardarNuevaTipologia() {
-      const nom = document.getElementById('nueva_tip_nombre').value.trim();
-      const cant = parseInt(document.getElementById('nueva_tip_cant').value) || 10;
-      const desc = document.getElementById('nueva_tip_desc').value.trim();
-      if (!nom) return;
+      const nomInput = document.getElementById('nueva_tip_nombre');
+      const nom = nomInput ? nomInput.value.trim().toUpperCase() : '';
+      const descInput = document.getElementById('nueva_tip_desc');
+      const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+      if (!nom) {
+        alert('Por favor ingresa un nombre para la tipología');
+        if (nomInput) nomInput.focus();
+        return;
+      }
+
+      const eDir = Math.max(0, parseInt(document.getElementById('tip_ejes_dir_cant')?.value) || 0);
+      const tDir = document.getElementById('tip_ejes_dir_tipo')?.value || 'sencilla';
+      const eTrac = Math.max(0, parseInt(document.getElementById('tip_ejes_trac_cant')?.value) || 0);
+      const tTrac = document.getElementById('tip_ejes_trac_tipo')?.value || 'dual';
+      const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
+      const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
+      const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+
+      const totalLlantas = recalcularLlantasTipologia();
+
+      const payload = {
+        nombre: nom,
+        descripcion: desc,
+        cant_llantas: totalLlantas,
+        ejes_dir: eDir,
+        tipo_dir: tDir,
+        ejes_trac: eTrac,
+        tipo_trac: tTrac,
+        ejes_libres: eLib,
+        tipo_libres: tLib,
+        cant_repuestos: eRep
+      };
+
       const res = await fetch('/api/tipologias', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({nombre: nom, descripcion: desc, cant_llantas: cant})
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         cerrarModalTipologia();
+        if (nomInput) nomInput.value = '';
+        if (descInput) descInput.value = '';
         cargarCatalogos(null, nom);
-        mostrarToast(`Tipología "${nom}" guardada.`);
+        cargarTipologiasCat();
+        mostrarToast(`✅ Tipología "${nom}" guardada exitosamente (${totalLlantas} llantas).`);
+      } else {
+        alert('Error al guardar la tipología. Verifica que el nombre no esté duplicado.');
       }
     }
 
@@ -2869,15 +4241,16 @@
     }
 
     // Informes PDF & Modal Ejecutivo
-    async function abrirModalInformePdf(placa) {
+    async function abrirModalInformePdf(placa, fecha = '', cliente = '', tipologia = '') {
       document.getElementById('lblPlacaPdfModal').textContent = placa;
+      document.getElementById('lblPlacaPdfModal').dataset.fecha = fecha || '';
       const m = document.getElementById('modalInformePdf');
       m.classList.remove('hidden');
       m.classList.add('flex');
 
       // 1. Datos del encabezado
-      const cli = document.getElementById('cliente').value.trim() || 'Flota';
-      const tip = document.getElementById('tipologia').value || 'Tipología';
+      const cli = cliente || document.getElementById('cliente')?.value.trim() || 'Flota';
+      const tip = tipologia || document.getElementById('tipologia')?.value || 'Tipología';
       const elTip = document.getElementById('lblTipologiaModal');
       const elCli = document.getElementById('lblClienteModal');
       if (elTip) elTip.textContent = tip;
@@ -2979,102 +4352,76 @@
       const m = document.getElementById('modalInformePdf');
       m.classList.add('hidden');
       m.classList.remove('flex');
+      limpiarTodoParaNuevaInspeccion();
+      const inpPlaca = document.getElementById('placa');
+      if (inpPlaca) inpPlaca.focus();
     }
     function descargarPdfVehiculoActual() {
       let p = (document.getElementById('lblPlacaPdfModal')?.textContent || '').trim();
+      let f = (document.getElementById('lblPlacaPdfModal')?.dataset?.fecha || '').trim();
       if (!p || p === '-') {
         p = (document.getElementById('placa')?.value || '').trim();
+        if (!f) f = (document.getElementById('fecha')?.value || '').trim();
       }
       if (!p) {
         mostrarToast('Por favor ingrese o seleccione una placa primero.', true);
         return;
       }
-      window.open(`/api/informe-pdf/${encodeURIComponent(p)}`, '_blank');
+      let url = `/api/informe-pdf/${encodeURIComponent(p)}`;
+      if (f) url += `?fecha=${encodeURIComponent(f)}`;
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) url += (url.includes('?') ? '&' : '?') + `token=${encodeURIComponent(tok)}`;
+      window.open(url, '_blank');
     }
     function descargarConsolidadoFlota() {
       const cli = document.getElementById('cliente').value.trim();
       const sub = document.getElementById('subcliente').value.trim();
-      const url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) url += `&token=${encodeURIComponent(tok)}`;
+      window.open(url, '_blank');
+    }
+    function descargarConsolidadoDesdeDiagnostico() {
+      const selectCliente = document.getElementById('filtroDiagCliente');
+      const cli = (selectCliente ? selectCliente.value : '').trim();
+      if (!cli || cli === 'Todos') {
+        mostrarToast('Por favor selecciona un Cliente en el filtro de diagnóstico para generar su informe consolidado.', true);
+        if (selectCliente) {
+          selectCliente.focus();
+          selectCliente.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+          setTimeout(() => {
+            selectCliente.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+          }, 2000);
+        }
+        return;
+      }
+
+      const selectSede = document.getElementById('filtroDiagSede');
+      const sede = (selectSede ? selectSede.value : '').trim();
+      const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (sede && sede !== 'Todos') {
+        url += `&subcliente=${encodeURIComponent(sede)}`;
+      }
+      if (op && op !== 'Todos') {
+        url += `&operacion=${encodeURIComponent(op)}`;
+      }
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function compartirWhatsAppPlan() {
-      const p = document.getElementById('lblPlacaPdfModal').textContent;
+      const p = (document.getElementById('lblPlacaPdfModal')?.textContent || '').trim();
+      let f = (document.getElementById('lblPlacaPdfModal')?.dataset?.fecha || '').trim();
+      if (!f) f = (document.getElementById('fecha')?.value || '').trim();
       const ip = window.location.host;
-      const url = `http://${ip}/api/informe-pdf/${encodeURIComponent(p)}`;
-      const msg = encodeURIComponent(`Hola! Te comparto el Plan de Mantenimiento e Inspección de Llantas para el vehículo ${p}:\n${url}`);
+      let url = `http://${ip}/api/informe-pdf/${encodeURIComponent(p)}`;
+      if (f) url += `?fecha=${encodeURIComponent(f)}`;
+      const msg = encodeURIComponent(`Hola! Te comparto el Informe Técnico de Inspección TireAnalyze Pro para el vehículo ${p}:\n${url}`);
       window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
     }
 
-    // Cola Offline
-    function obtenerColaOffline() {
-      try { return JSON.parse(localStorage.getItem('tirecheck_offline_queue') || '[]'); } catch(e) { return []; }
-    }
-    function guardarColaOffline(cola) {
-      localStorage.setItem('tirecheck_offline_queue', JSON.stringify(cola));
-      actualizarBadgeRed();
-    }
-    function encolarInspeccionOffline(payload) {
-      const cola = obtenerColaOffline();
-      cola.push({ payload, timestamp: Date.now() });
-      guardarColaOffline(cola);
-    }
-    function actualizarBadgeRed() {
-      const online = navigator.onLine;
-      const bRed = document.getElementById('badgeEstadoRed');
-      const bSync = document.getElementById('btnSincronizarOffline');
-      const lblCount = document.getElementById('lblPendientesCount');
-      const cola = obtenerColaOffline();
-
-      if (bRed) {
-        bRed.className = `inline-flex items-center px-2 py-1 rounded-full text-[11px] font-bold ${
-          online ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-        }`;
-        bRed.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-400' : 'bg-rose-400'} mr-1.5 animate-pulse"></span><span>${online ? 'Online' : 'Offline'}</span>`;
-      }
-
-      if (cola.length > 0) {
-        bSync.classList.remove('hidden');
-        lblCount.textContent = cola.length;
-      } else {
-        bSync.classList.add('hidden');
-      }
-    }
-    async function sincronizarColaOffline() {
-      const cola = obtenerColaOffline();
-      if (cola.length === 0 || !navigator.onLine || sincronizandoCola) return;
-
-      sincronizandoCola = true;
-      mostrarToast(`☁️ Sincronizando ${cola.length} inspección(es) guardadas offline...`);
-      const restantes = [];
-      let exitosos = 0;
-
-      for (const item of cola) {
-        try {
-          const res = await fetch('/api/inspecciones', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(item.payload)
-          });
-          if (res.ok) exitosos++;
-          else {
-            const err = await res.json().catch(() => ({}));
-            if (res.status === 400 && (err.detail || '').includes('ya fue inspeccionado')) exitosos++;
-            else restantes.push(item);
-          }
-        } catch(e) {
-          restantes.push(item);
-        }
-      }
-
-      guardarColaOffline(restantes);
-      sincronizandoCola = false;
-      if (exitosos > 0) mostrarToast(`🎉 ¡${exitosos} inspección(es) sincronizadas con éxito!`);
-      if (restantes.length > 0) mostrarToast(`Quedaron ${restantes.length} pendientes`, true);
-    }
-
-    // Eventos de red
-    window.addEventListener('online', () => { actualizarBadgeRed(); sincronizarColaOffline(); });
-    window.addEventListener('offline', () => { actualizarBadgeRed(); mostrarToast('Modo Offline activo', true); });
 
     // Envío del Formulario de Inspección de Patio
     document.getElementById('inspectionForm').addEventListener('submit', async (e) => {
@@ -3136,8 +4483,8 @@
       const dimension = document.getElementById('dimension').value.trim();
       const prof_inicial_num = parseFloat(document.getElementById('prof_inicial').value) || 0;
 
-      if (dimension.includes('22.5') && (p_ext > 27 || p_cent > 27 || p_int > 27)) {
-        mostrarToast('⛔ CANDADO: Para dimensión R22.5, ninguna profundidad puede superar los 27.0 mm', true);
+      if (p_ext > 27 || p_cent > 27 || p_int > 27) {
+        mostrarToast('⛔ CANDADO: Ninguna profundidad puede superar el límite físico de 27.0 mm', true);
         return;
       }
       if (prof_inicial_num > 0 && (p_ext > prof_inicial_num || p_cent > prof_inicial_num || p_int > prof_inicial_num)) {
@@ -3184,25 +4531,6 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...';
       }
 
-      if (!navigator.onLine) {
-        encolarInspeccionOffline(payload);
-        posicionesInspeccionadasPlaca.add(pos);
-        if (payload.novedades && payload.novedades.trim().length > 0) {
-          posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
-        } else {
-          posicionesConNovedadPlaca.delete(pos);
-        }
-        actualizarBarraPosicionMobile(pos);
-        mostrarToast(`💾 Guardado en MODO OFFLINE (Posición ${payload.posicion} de ${placa}).`);
-        avanzarSiguientePosicion(pos);
-        limpiarMediciones();
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-circle-check text-base"></i><span>Guardar & Siguiente Llanta</span>';
-        }
-        return;
-      }
-
       try {
         const res = await fetch('/api/inspecciones', {
           method: 'POST',
@@ -3222,25 +4550,35 @@
           const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
           if (pendientes.length === 0) {
             mostrarToast(`🎉 ¡Vehículo ${placa} COMPLETADO!`);
-            setTimeout(() => abrirModalInformePdf(placa), 600);
+            const fechaInspActual = (document.getElementById('fecha')?.value || '').trim();
+            const cliActual = document.getElementById('cliente')?.value.trim() || 'Flota';
+            const tipActual = document.getElementById('tipologia')?.value || 'Tipología';
+            setTimeout(() => {
+              abrirModalInformePdf(placa, fechaInspActual, cliActual, tipActual);
+              limpiarTodoParaNuevaInspeccion();
+            }, 600);
+          } else {
+            avanzarSiguientePosicion(pos);
+            limpiarMediciones();
+
+            // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
+            if (window.innerWidth < 1024) {
+              if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+              }
+              setTimeout(() => {
+                const modChasis = document.getElementById('moduloChasis');
+                if (modChasis) {
+                  modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }, 120);
+            }
           }
-          avanzarSiguientePosicion(pos);
-          limpiarMediciones();
         } else {
           mostrarToast(result.detail || result.message || 'Error al guardar', true);
         }
       } catch (err) {
-        encolarInspeccionOffline(payload);
-        posicionesInspeccionadasPlaca.add(pos);
-        if (payload.novedades && payload.novedades.trim().length > 0) {
-          posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
-        } else {
-          posicionesConNovedadPlaca.delete(pos);
-        }
-        actualizarBarraPosicionMobile(pos);
-        mostrarToast(`⚠️ Sin señal: guardado en MODO OFFLINE.`);
-        avanzarSiguientePosicion(pos);
-        limpiarMediciones();
+        mostrarToast('Error de red o comunicación con el servidor al guardar la inspección.', true);
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -3250,25 +4588,53 @@
     });
 
     function avanzarSiguientePosicion(posActual) {
-      const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
       const idx = listaPosicionesActual.indexOf(posActual);
-      if (idx !== -1 && idx + 1 < listaPosicionesActual.length) {
-        seleccionarPosicion(listaPosicionesActual[idx + 1]);
-      } else if (pendientes.length > 0) {
-        seleccionarPosicion(pendientes[0]);
+      let siguientePos = null;
+
+      // 1. Buscar hacia adelante la siguiente posición del recorrido que aún esté pendiente
+      if (idx !== -1) {
+        for (let i = idx + 1; i < listaPosicionesActual.length; i++) {
+          const p = listaPosicionesActual[i];
+          if (!posicionesInspeccionadasPlaca.has(p)) {
+            siguientePos = p;
+            break;
+          }
+        }
       }
+
+      // 2. Si hacia adelante no hay pendientes, buscar la primera pendiente desde el inicio
+      if (siguientePos === null) {
+        const primeraPendiente = listaPosicionesActual.find(p => !posicionesInspeccionadasPlaca.has(p));
+        if (primeraPendiente !== undefined) {
+          siguientePos = primeraPendiente;
+        }
+      }
+
+      // 3. Fallback: avanzar a la siguiente posición secuencial en la lista o a la primera
+      if (siguientePos === null) {
+        if (idx !== -1 && idx + 1 < listaPosicionesActual.length) {
+          siguientePos = listaPosicionesActual[idx + 1];
+        } else {
+          siguientePos = listaPosicionesActual[0] || 1;
+        }
+      }
+
+      seleccionarPosicion(siguientePos);
       document.getElementById('numero_interno').value = '';
+    }
+
+    function sincronizarSlotEspecificaciones() {
+      // Orden de patio: 1. Cliente -> 2. Diagrama Chasis -> 3. Especificaciones de Llanta -> 4. Mediciones
     }
 
     // Inicialización al cargar DOM
     window.addEventListener('DOMContentLoaded', () => {
+      sincronizarSlotEspecificaciones();
       document.getElementById('fecha').value = fechaLocalISO();
-      actualizarBadgeRed();
       const logueado = verificarSesionUsuario();
       if (logueado) {
         cargarCatalogos();
         validarVida();
-        if (navigator.onLine) sincronizarColaOffline();
       }
     });
   

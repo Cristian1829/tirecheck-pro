@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 21:45:33`
+- **Fecha de Generación:** `2026-10-14 21:55:02`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,953` líneas
-- **Tamaño Total de Código Fuente:** `1294.1 KB` (`1,325,198` bytes)
+- **Líneas Totales de Código:** `21,018` líneas
+- **Tamaño Total de Código Fuente:** `1295.9 KB` (`1,327,029` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6757 | 620.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6822 | 622.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -9090,7 +9090,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6757 líneas | 635,815 bytes (620.9 KB)
+- **Métricas:** 6822 líneas | 637,646 bytes (622.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9935,7 +9935,7 @@ if __name__ == '__main__':
                 <i class="fa-solid fa-flag-checkered text-sm"></i>
                 <span>Finalizar</span>
               </button>
-              <button type="button" onclick="limpiarFormulario(false)" class="py-3.5 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all" title="Limpiar mediciones">
+              <button type="button" onclick="limpiarFormulario(false)" class="py-3.5 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all cursor-pointer" title="Limpiar datos de la llanta">
                 <i class="fa-solid fa-eraser"></i>
               </button>
             </div>
@@ -9949,12 +9949,8 @@ if __name__ == '__main__':
       <!-- BARRA FLOTANTE FIJA INFERIOR PARA MÓVIL Y TABLET (PULGAR)    -->
       <!-- ============================================================ -->
       <div id="stickyBottomActionBarMobile" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-2.5 sm:p-3 shadow-2xl flex items-center space-x-2">
-        <button type="button" onclick="limpiarMediciones()" class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm border border-slate-200 transition-all shrink-0 cursor-pointer" title="Limpiar mediciones">
+        <button type="button" onclick="limpiarMediciones(true)" class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 rounded-xl flex items-center justify-center font-bold text-sm border border-slate-200 transition-all shrink-0 cursor-pointer" title="Limpiar datos de la llanta">
           <i class="fa-solid fa-eraser"></i>
-        </button>
-        <button type="button" onclick="dispararCamaraDirecta()" class="w-11 h-11 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl flex items-center justify-center font-bold text-base shadow-md shadow-amber-500/30 transition-all shrink-0 relative cursor-pointer" title="Tomar foto con la cámara del celular">
-          <i class="fa-solid fa-camera"></i>
-          <span id="badgeFotosMobileSticky" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-black flex items-center justify-center border-2 border-white shadow-xs">0</span>
         </button>
         <button type="button" onclick="dispararSubmitInspeccion()" class="flex-1 h-11 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-1.5 transition-all cursor-pointer">
           <i class="fa-solid fa-circle-check text-sm"></i>
@@ -15118,15 +15114,84 @@ if __name__ == '__main__':
       mostrarToast(`Modelo seleccionado: ${m.marca} ${m.diseno}`);
     }
 
-    function limpiarMediciones() {
+    function limpiarMediciones(mostrarAviso = false) {
+      // 1. Limpiar especificaciones de la llanta en la posición actual
+      const inpNum = document.getElementById('numero_interno');
+      if (inpNum) inpNum.value = '';
+
+      const selMarca = document.getElementById('marca');
+      if (selMarca) {
+        selMarca.value = '';
+        if (selMarca.options && selMarca.options.length > 0) selMarca.selectedIndex = 0;
+      }
+
+      const selDis = document.getElementById('diseno');
+      if (selDis) {
+        selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>';
+        selDis.value = '';
+      }
+
+      const selDim = document.getElementById('dimension');
+      if (selDim) selDim.value = '295/80R22.5';
+
+      const selVida = document.getElementById('vida');
+      if (selVida) {
+        selVida.value = 'Original';
+        validarVida();
+      }
+
+      const pIni = document.getElementById('prof_inicial');
+      if (pIni) pIni.value = '';
+
+      const selBanda = document.getElementById('banda_reen');
+      if (selBanda) selBanda.value = '';
+      const boxBanda = document.getElementById('box_banda');
+      if (boxBanda) boxBanda.classList.add('hidden');
+
+      const elPrecio = document.getElementById('precio');
+      if (elPrecio) elPrecio.value = '';
+
+      const elKm = document.getElementById('km_montaje');
+      if (elKm) elKm.value = '';
+
+      // 2. Limpiar mediciones de profundidad y calibración
       const pExt = document.getElementById('prof_ext'); if (pExt) pExt.value = '';
       const pCen = document.getElementById('prof_cent'); if (pCen) pCen.value = '';
       const pInt = document.getElementById('prof_int'); if (pInt) pInt.value = '';
       const psi = document.getElementById('psi'); if (psi) psi.value = '100';
       const nov = document.getElementById('novedades'); if (nov) nov.value = '';
-      const alertaRetiro = document.getElementById('alertaRetiroInmediato'); if (alertaRetiro) alertaRetiro.classList.add('hidden');
+
+      // 3. Ocultar badges de reconocimiento, historial y alertas de retiro
+      const bCli = document.getElementById('badgeLlantaCliente');
+      if (bCli) bCli.classList.add('hidden');
+
+      const bHist = document.getElementById('badgeHistorialPrevia');
+      if (bHist) bHist.classList.add('hidden');
+
+      const bSug = document.getElementById('boxSugerenciasCatalogo');
+      if (bSug) bSug.classList.add('hidden');
+
+      const alertaRetiro = document.getElementById('alertaRetiroInmediato');
+      if (alertaRetiro) alertaRetiro.classList.add('hidden');
+
+      datosInspeccionAnterior = null;
+
+      const posActual = parseInt(document.getElementById('posicion')?.value) || 1;
+      aplicarRestriccionEjeDireccional(posActual);
+
       quitarFotoNovedad();
       limpiarTodosErroresFormulario();
+
+      // 4. Dejar listo para ingresar datos (enfocar campo No. Interno)
+      if (inpNum) {
+        try {
+          inpNum.focus();
+        } catch (e) {}
+      }
+
+      if (mostrarAviso) {
+        mostrarToast('🧹 Datos de la llanta limpiados. Listo para ingresar datos.');
+      }
     }
 
     function abrirModalConfirmarFinalizar() {
@@ -15302,7 +15367,7 @@ if __name__ == '__main__':
       if (total) {
         limpiarTodoParaNuevaInspeccion();
       } else {
-        limpiarMediciones();
+        limpiarMediciones(true);
       }
     }
 
