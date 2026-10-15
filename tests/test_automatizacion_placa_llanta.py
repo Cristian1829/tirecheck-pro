@@ -31,10 +31,10 @@ def test_asociacion_fija_placa_esquema(test_db, auth_client):
     data = resp.json()
     assert data['encontrado'] is True
     assert data['placa'] == 'TRL-999'
-    assert data['tipologia'] == 'Trailer (3 Ejes - 12 Llantas)'
-    assert data['cliente'] == 'Transportes del Caribe'
-    assert data['subcliente'] == 'Barranquilla'
-    assert data['tipo_operacion'] == 'Refrigerada'
+    assert data['tipologia'] == 'TRAILER (3 EJES - 12 LLANTAS)'
+    assert data['cliente'] == 'TRANSPORTES DEL CARIBE'
+    assert data['subcliente'] == 'BARRANQUILLA'
+    assert data['tipo_operacion'] == 'REFRIGERADA'
     assert data['ultimo_km'] == 85400.0
     assert data['cant_llantas'] == 12
     assert len(data['posiciones']) == 12
@@ -92,8 +92,8 @@ def test_autocompletado_llanta_dependiente_cliente(test_db, auth_client):
     assert resp_a.status_code == 200
     res_data_a = resp_a.json()
     assert res_data_a['encontrado'] is True
-    assert res_data_a['datos']['marca'] == 'Michelin'
-    assert res_data_a['datos']['diseno'] == 'X Multi Z'
+    assert res_data_a['datos']['marca'] == 'MICHELIN'
+    assert res_data_a['datos']['diseno'] == 'X MULTI Z'
     assert res_data_a['datos']['dimension'] == '295/80R22.5'
     assert res_data_a['datos']['prof_inicial'] == 16.5
 
@@ -102,7 +102,7 @@ def test_autocompletado_llanta_dependiente_cliente(test_db, auth_client):
     assert resp_b.status_code == 200
     res_data_b = resp_b.json()
     assert res_data_b['encontrado'] is True
-    assert res_data_b['datos']['marca'] == 'Bridgestone'
+    assert res_data_b['datos']['marca'] == 'BRIDGESTONE'
     assert res_data_b['datos']['diseno'] == 'M726 EL'
     assert res_data_b['datos']['dimension'] == '11R22.5'
     assert res_data_b['datos']['prof_inicial'] == 24.5

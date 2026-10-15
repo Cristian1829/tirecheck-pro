@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 20:59:03`
+- **Fecha de Generación:** `2026-10-14 21:45:33`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,438` líneas
-- **Tamaño Total de Código Fuente:** `1269.1 KB` (`1,299,577` bytes)
+- **Líneas Totales de Código:** `20,953` líneas
+- **Tamaño Total de Código Fuente:** `1294.1 KB` (`1,325,198` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -98,6 +98,20 @@ CREATE TABLE configuracion_clientes (
             observaciones TEXT,
             fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+-- ========================================================
+-- TABLA: configuracion_limites_retiro
+-- ========================================================
+CREATE TABLE configuracion_limites_retiro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                subcliente TEXT NOT NULL DEFAULT 'TODOS',
+                eje TEXT NOT NULL DEFAULT 'TODOS',
+                limite_retiro_mm REAL NOT NULL DEFAULT 3.0,
+                observaciones TEXT DEFAULT '',
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(cliente, subcliente, eje)
+            );
 
 -- ========================================================
 -- TABLA: inspecciones
@@ -196,8 +210,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 850 | 35.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2102 | 102.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 883 | 36.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 2325 | 112.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -207,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6499 | 607.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6757 | 620.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -219,7 +233,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 175 | 5.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
-| [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 444 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
+| [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 76 | 2.3 KB | Pruebas de generación y estructura de informes técnicos PDF |
 
@@ -2018,7 +2032,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 850 líneas | 36,254 bytes (35.4 KB)
+- **Métricas:** 883 líneas | 37,395 bytes (36.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2121,7 +2135,15 @@ class EditarOperacionItem(BaseModel):
 class NuevaTipologiaItem(BaseModel):
     nombre: str
     descripcion: str = ""
-    cant_llantas: int = 10
+    cant_llantas: Optional[int] = None
+    ejes_dir: int = 1
+    tipo_dir: str = "sencilla"
+    ejes_trac: int = 2
+    tipo_trac: str = "dual"
+    ejes_libres: int = 0
+    tipo_libres: str = "dual"
+    cant_repuestos: int = 0
+    esquema_custom: Optional[list] = None
 
 class EditarTipologiaItem(BaseModel):
     nombre_antiguo: str
@@ -2139,6 +2161,8 @@ class ModeloLlantaItem(BaseModel):
 
 class LimiteClienteItem(BaseModel):
     cliente: str
+    subcliente: str = "TODOS"
+    eje: str = "TODOS"
     limite_retiro_mm: float = 3.0
     observaciones: str = ""
 
@@ -2632,7 +2656,19 @@ def api_obtener_tipologias(usuario_actual: dict = Depends(obtener_usuario_actual
 
 @app.post("/api/tipologias")
 def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir_admin)):
-    nom = database.guardar_tipologia(item.nombre, item.descripcion, item.cant_llantas)
+    nom = database.guardar_tipologia(
+        nombre=item.nombre,
+        descripcion=item.descripcion,
+        cant_llantas=item.cant_llantas,
+        esquema_custom=item.esquema_custom,
+        ejes_dir=item.ejes_dir,
+        tipo_dir=item.tipo_dir,
+        ejes_trac=item.ejes_trac,
+        tipo_trac=item.tipo_trac,
+        ejes_libres=item.ejes_libres,
+        tipo_libres=item.tipo_libres,
+        cant_repuestos=item.cant_repuestos
+    )
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
@@ -2674,13 +2710,24 @@ def api_obtener_configuraciones_clientes(usuario_actual: dict = Depends(obtener_
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")
-def api_obtener_limite_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    lim = database.obtener_limite_retiro_cliente(cliente)
-    return {"cliente": cliente, "limite_retiro_mm": lim}
+def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje: str = "TODOS", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    lim = database.obtener_limite_retiro_cliente(cliente, subcliente, eje)
+    return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim}
 
 @app.post("/api/configuraciones-clientes")
 def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
-    ok = database.guardar_limite_retiro_cliente(item.cliente, item.limite_retiro_mm, item.observaciones)
+    ok = database.guardar_limite_retiro_cliente(
+        cliente=item.cliente,
+        limite_retiro_mm=item.limite_retiro_mm,
+        observaciones=item.observaciones,
+        subcliente=item.subcliente,
+        eje=item.eje
+    )
+    return {"status": "ok" if ok else "error"}
+
+@app.delete("/api/configuraciones-clientes/{limite_id}")
+def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin)):
+    ok = database.eliminar_limite_retiro_cliente(limite_id)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/valores-campo")
@@ -2880,7 +2927,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2102 líneas | 104,942 bytes (102.5 KB)
+- **Métricas:** 2325 líneas | 115,161 bytes (112.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3129,6 +3176,26 @@ def inicializar_bd():
             )
         """)
 
+        # Tabla de Configuración de Límites de Retiro Granular por Cliente, Subcliente y Eje
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS configuracion_limites_retiro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                subcliente TEXT NOT NULL DEFAULT 'TODOS',
+                eje TEXT NOT NULL DEFAULT 'TODOS',
+                limite_retiro_mm REAL NOT NULL DEFAULT 3.0,
+                observaciones TEXT DEFAULT '',
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(cliente, subcliente, eje)
+            )
+        """)
+        cursor.execute("""
+            INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            SELECT UPPER(TRIM(cliente)), 'TODOS', 'TODOS', limite_retiro_mm, UPPER(TRIM(IFNULL(observaciones, ''))), fecha_actualizacion
+            FROM configuracion_clientes
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+        """)
+
         # Tabla de Catálogo de Tipologías
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_tipologias (
@@ -3236,12 +3303,12 @@ def inicializar_bd():
 
 def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None):
     pl = str(placa or '').strip().upper()
-    tip = str(tipologia or '').strip()
+    tip = str(tipologia or '').strip().upper()
     if not pl or not tip or tip.lower() in ('nan', 'none'):
         return
-    cli = '' if (pd.isna(cliente) or str(cliente).strip().lower() in ('nan', 'none')) else str(cliente).strip()
-    sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip()
-    op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip()
+    cli = '' if (pd.isna(cliente) or str(cliente).strip().lower() in ('nan', 'none')) else str(cliente).strip().upper()
+    sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip().upper()
+    op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip().upper()
     km = to_float(kilometraje, 0.0)
 
     sql = """
@@ -3755,28 +3822,28 @@ def insertar_inspeccion(datos):
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))),
-            str(datos.get('cliente', '')).strip(),
-            str(datos.get('subcliente', '')).strip(),
-            str(datos.get('tipo_operacion', '')).strip(),
+            str(datos.get('cliente', '')).strip().upper(),
+            str(datos.get('subcliente', '')).strip().upper(),
+            str(datos.get('tipo_operacion', '')).strip().upper(),
             str(datos.get('placa', '')).strip().upper(),
             to_int(datos.get('posicion', 1)),
             to_float(datos.get('kilometraje', 0)),
-            str(datos.get('tipologia', '')),
-            str(datos.get('marca', '')),
-            str(datos.get('diseno', '')),
-            str(datos.get('dimension', '')),
-            str(datos.get('vida', 'Original')),
-            str(datos.get('banda_reen', '')) if str(datos.get('vida', '')).strip().lower() == 'reencauche' else '',
+            str(datos.get('tipologia', '')).strip().upper(),
+            str(datos.get('marca', '')).strip().upper(),
+            str(datos.get('diseno', '')).strip().upper(),
+            str(datos.get('dimension', '')).strip().upper(),
+            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
+            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
             to_float(datos.get('psi', 0)),
-            str(datos.get('novedades', '')),
+            str(datos.get('novedades', '')).strip().upper(),
             to_float(datos.get('precio', 0)),
             to_float(datos.get('prof_inicial', 0)),
             to_float(datos.get('km_montaje', 0)),
             str(datos.get('numero_interno', '')).strip().upper(),
-            str(datos.get('usuario_registro', '')).strip(),
+            str(datos.get('usuario_registro', '')).strip().upper(),
             str(datos.get('foto_novedad', '')).strip()
         ))
         conn.commit()
@@ -3805,7 +3872,7 @@ def obtener_todas_inspecciones(usuario=None):
             usr_info = obtener_usuario_por_username(usuario)
             if usr_info and usr_info.get('rol') != 'admin':
                 # Si tiene cliente asignado, filtra por ese cliente. Si no tiene cliente asignado (vacío), tiene acceso a todas las flotas.
-                cli_asig = (usr_info.get('cliente_asignado') or '').strip()
+                cli_asig = (usr_info.get('cliente_asignado') or '').strip().upper()
                 if cli_asig:
                     query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
                     params.append(cli_asig)
@@ -3816,6 +3883,7 @@ def obtener_todas_inspecciones(usuario=None):
 def actualizar_inspeccion(inspeccion_id, datos):
     """
     Actualiza la información de una llanta o inspección específica por su ID.
+    Todos los campos de texto se persisten en mayúsculas.
     """
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -3829,23 +3897,23 @@ def actualizar_inspeccion(inspeccion_id, datos):
             WHERE id = ?
         """, (
             str(datos.get('fecha', '')),
-            str(datos.get('cliente', '')).strip(),
-            str(datos.get('subcliente', '')).strip(),
-            str(datos.get('tipo_operacion', '')).strip(),
+            str(datos.get('cliente', '')).strip().upper(),
+            str(datos.get('subcliente', '')).strip().upper(),
+            str(datos.get('tipo_operacion', '')).strip().upper(),
             str(datos.get('placa', '')).strip().upper(),
             to_int(datos.get('posicion', 1)),
             to_float(datos.get('kilometraje', 0)),
-            str(datos.get('tipologia', '')),
-            str(datos.get('marca', '')),
-            str(datos.get('diseno', '')),
-            str(datos.get('dimension', '')),
-            str(datos.get('vida', 'Original')),
-            str(datos.get('banda_reen', '')) if str(datos.get('vida', '')).strip().lower() == 'reencauche' else '',
+            str(datos.get('tipologia', '')).strip().upper(),
+            str(datos.get('marca', '')).strip().upper(),
+            str(datos.get('diseno', '')).strip().upper(),
+            str(datos.get('dimension', '')).strip().upper(),
+            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
+            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
             to_float(datos.get('psi', 0)),
-            str(datos.get('novedades', '')),
+            str(datos.get('novedades', '')).strip().upper(),
             to_float(datos.get('precio', 0)),
             to_float(datos.get('prof_inicial', 0)),
             to_float(datos.get('km_montaje', 0)),
@@ -4300,47 +4368,116 @@ def buscar_modelos_llantas_filtro(termino=''):
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
-# --- CONFIGURACIÓN DE LÍMITES POR CLIENTE ---
-def obtener_limite_retiro_cliente(cliente=''):
+# --- CONFIGURACIÓN DE LÍMITES POR CLIENTE, SUBCLIENTE Y EJE ---
+def obtener_limite_retiro_cliente(cliente='', subcliente='TODOS', eje='TODOS'):
     if pd.isna(cliente) or cliente is None:
         return 3.0
-    c = str(cliente).strip()
-    if not c or c.lower() in ('nan', 'none'):
+    c = str(cliente).strip().upper()
+    if not c or c in ('NAN', 'NONE'):
         return 3.0
+    sub = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
+    e = str(eje or 'TODOS').strip().upper() or 'TODOS'
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT limite_retiro_mm FROM configuracion_clientes WHERE LOWER(cliente) = LOWER(?)', (c,))
+        # 1. Búsqueda exacta: cliente + subcliente + eje
+        cursor.execute("""
+            SELECT limite_retiro_mm FROM configuracion_limites_retiro
+            WHERE cliente = ? AND subcliente = ? AND eje = ?
+        """, (c, sub, e))
         row = cursor.fetchone()
         if row and row[0] is not None:
             return to_float(row[0], 3.0)
+
+        # 2. cliente + subcliente + TODOS
+        if e != 'TODOS':
+            cursor.execute("""
+                SELECT limite_retiro_mm FROM configuracion_limites_retiro
+                WHERE cliente = ? AND subcliente = ? AND eje = 'TODOS'
+            """, (c, sub))
+            row = cursor.fetchone()
+            if row and row[0] is not None:
+                return to_float(row[0], 3.0)
+
+        # 3. cliente + TODOS + eje
+        if sub != 'TODOS':
+            cursor.execute("""
+                SELECT limite_retiro_mm FROM configuracion_limites_retiro
+                WHERE cliente = ? AND subcliente = 'TODOS' AND eje = ?
+            """, (c, e))
+            row = cursor.fetchone()
+            if row and row[0] is not None:
+                return to_float(row[0], 3.0)
+
+        # 4. cliente + TODOS + TODOS
+        cursor.execute("""
+            SELECT limite_retiro_mm FROM configuracion_limites_retiro
+            WHERE cliente = ? AND subcliente = 'TODOS' AND eje = 'TODOS'
+        """, (c,))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            return to_float(row[0], 3.0)
+
+        # 5. Fallback a tabla legada configuracion_clientes
+        cursor.execute("SELECT limite_retiro_mm FROM configuracion_clientes WHERE UPPER(cliente) = ?", (c,))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            return to_float(row[0], 3.0)
+
     return 3.0
 
-def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones=''):
+def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', subcliente='TODOS', eje='TODOS'):
     if pd.isna(cliente) or cliente is None:
         return False
-    c = str(cliente).strip()
-    if not c or c.lower() in ('nan', 'none'):
+    c = str(cliente).strip().upper()
+    if not c or c in ('NAN', 'NONE'):
         return False
+    sub = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
+    e = str(eje or 'TODOS').strip().upper() or 'TODOS'
+    obs = str(observaciones or '').strip().upper()
     lim = to_float(limite_retiro_mm, 3.0)
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente) DO UPDATE SET
+            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente, subcliente, eje) DO UPDATE SET
                 limite_retiro_mm = excluded.limite_retiro_mm,
                 observaciones = excluded.observaciones,
                 fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lim, str(observaciones or '').strip()))
+        ''', (c, sub, e, lim, obs))
+        if sub == 'TODOS' and e == 'TODOS':
+            cursor.execute('''
+                INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente) DO UPDATE SET
+                    limite_retiro_mm = excluded.limite_retiro_mm,
+                    observaciones = excluded.observaciones,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+            ''', (c, lim, obs))
         conn.commit()
     return True
 
 def obtener_todas_configuraciones_clientes():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT cliente, limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes ORDER BY cliente ASC')
-        cols = ['cliente', 'limite_retiro_mm', 'observaciones', 'fecha_actualizacion']
+        cursor.execute('''
+            SELECT id, cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion
+            FROM configuracion_limites_retiro
+            ORDER BY cliente ASC, subcliente ASC, eje ASC
+        ''')
+        cols = ['id', 'cliente', 'subcliente', 'eje', 'limite_retiro_mm', 'observaciones', 'fecha_actualizacion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def eliminar_limite_retiro_cliente(limite_id):
+    try:
+        lid = int(limite_id)
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM configuracion_limites_retiro WHERE id = ?', (lid,))
+            conn.commit()
+        return True
+    except Exception:
+        return False
 
 def obtener_lista_clientes_unicos():
     with get_connection() as conn:
@@ -4348,6 +4485,8 @@ def obtener_lista_clientes_unicos():
         cursor.execute('''
             SELECT DISTINCT cliente FROM (
                 SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
                 UNION
                 SELECT cliente FROM configuracion_clientes
             ) ORDER BY cliente ASC
@@ -4362,7 +4501,7 @@ def obtener_todas_operaciones():
         return [r[0] for r in cursor.fetchall()]
 
 def guardar_operacion(nombre):
-    nom = (nombre or '').strip()
+    nom = (nombre or '').strip().upper()
     if not nom:
         return None
     with get_connection() as conn:
@@ -4381,21 +4520,153 @@ def obtener_todas_tipologias():
             res.append({'nombre': r[0], 'descripcion': r[1], 'cant_llantas': r[2], 'esquema': json.loads(r[3]) if r[3] else []})
         return res
 
-def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=None):
-    nom = (nombre or '').strip()
+def generar_esquema_desde_composicion(ejes_dir=1, tipo_dir='sencilla', ejes_trac=2, tipo_trac='dual', ejes_libres=0, tipo_libres='dual', cant_repuestos=0):
+    """
+    Construye el esquema dinámico JSON de posiciones y ejes basado en la composición:
+    - Ejes Direccionales (Delanteros): cantidad y si es sencilla (2 llantas) o dual (4 llantas)
+    - Ejes de Tracción (Fuerza): cantidad y si es dual (4 llantas) o sencilla (2 llantas)
+    - Ejes Libres / Arrastre / Trailer: cantidad y si es dual (4 llantas) o sencilla (2 llantas)
+    - Llanta(s) de Repuesto: 0, 1 o 2 llantas
+    """
+    ejes_dir = max(0, int(ejes_dir or 0))
+    ejes_trac = max(0, int(ejes_trac or 0))
+    ejes_libres = max(0, int(ejes_libres or 0))
+    cant_repuestos = max(0, min(2, int(cant_repuestos or 0)))
+    
+    tipo_dir = str(tipo_dir or 'sencilla').strip().lower()
+    tipo_trac = str(tipo_trac or 'dual').strip().lower()
+    tipo_libres = str(tipo_libres or 'dual').strip().lower()
+    
+    esquema = []
+    pos_act = 1
+    num_eje_global = 1
+    
+    # 1. Ejes Direccionales
+    for _ in range(ejes_dir):
+        if 'dual' in tipo_dir:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+            ]
+            pos_act += 4
+        else:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'dir', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'dir', 'dual': False}
+            ]
+            pos_act += 2
+        esquema.append({
+            'eje': num_eje_global,
+            'nombre': f'Eje {num_eje_global} (Direccional)',
+            'tipo': 'direccional',
+            'posiciones': posiciones
+        })
+        num_eje_global += 1
+        
+    # 2. Ejes de Tracción
+    for _ in range(ejes_trac):
+        if 'sencilla' in tipo_trac:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'sen', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'sen', 'dual': False}
+            ]
+            pos_act += 2
+        else:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+            ]
+            pos_act += 4
+        esquema.append({
+            'eje': num_eje_global,
+            'nombre': f'Eje {num_eje_global} (Tracción)',
+            'tipo': 'traccion',
+            'posiciones': posiciones
+        })
+        num_eje_global += 1
+        
+    # 3. Ejes Libres / Arrastre / Trailer
+    for _ in range(ejes_libres):
+        if 'sencilla' in tipo_libres:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'sen', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'sen', 'dual': False}
+            ]
+            pos_act += 2
+        else:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+            ]
+            pos_act += 4
+        esquema.append({
+            'eje': num_eje_global,
+            'nombre': f'Eje {num_eje_global} (Libre / Arrastre)',
+            'tipo': 'libre',
+            'posiciones': posiciones
+        })
+        num_eje_global += 1
+        
+    # 4. Llantas de Repuesto
+    if cant_repuestos == 1:
+        esquema.append({
+            'eje': 99,
+            'nombre': 'Repuesto',
+            'tipo': 'repuesto',
+            'posiciones': [{'pos': pos_act, 'lado': 'izq', 'rol': 'rep', 'dual': False}]
+        })
+        pos_act += 1
+    elif cant_repuestos >= 2:
+        esquema.append({
+            'eje': 99,
+            'nombre': 'Repuestos',
+            'tipo': 'repuesto',
+            'posiciones': [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'rep', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'rep', 'dual': False}
+            ]
+        })
+        pos_act += 2
+        
+    total_llantas = pos_act - 1
+    return esquema, total_llantas
+
+def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=None,
+                      ejes_dir=None, tipo_dir='sencilla',
+                      ejes_trac=None, tipo_trac='dual',
+                      ejes_libres=None, tipo_libres='dual',
+                      cant_repuestos=0):
+    nom = (nombre or '').strip().upper()
     if not nom:
         return None
     import json
-    cant = int(cant_llantas or 10)
+    desc = str(descripcion or '').strip().upper()
 
-    # Si se pasa un esquema personalizado válido
-    if esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
+    # Si se especificó composición de ejes (ejes_dir, ejes_trac, etc.)
+    if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
+        esquema, cant_calculada = generar_esquema_desde_composicion(
+            ejes_dir=ejes_dir or 0,
+            tipo_dir=tipo_dir,
+            ejes_trac=ejes_trac or 0,
+            tipo_trac=tipo_trac,
+            ejes_libres=ejes_libres or 0,
+            tipo_libres=tipo_libres,
+            cant_repuestos=cant_repuestos
+        )
+        cant = cant_calculada
+    elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
         esquema = esquema_custom
+        cant = sum(len(eje.get('posiciones', [])) for eje in esquema)
     else:
-        # Generar esquema inteligente según tipología conocida
+        cant = int(cant_llantas or 10)
         nom_l = nom.lower()
         if 'biarticulado' in nom_l:
-            # 1er eje dir (2), 2do eje tracción (4 dual), 3er eje libre (4 dual), 4to eje libre (4 dual) -> 14 llantas
             cant = 14
             esquema = [
                 {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]},
@@ -4404,7 +4675,6 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
                 {'eje': 4, 'nombre': 'Eje 4 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 11, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 12}, {'pos': 12, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 11}, {'pos': 13, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 14}, {'pos': 14, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 13}]}
             ]
         elif 'articulado' in nom_l and 'bi' not in nom_l:
-            # 1er eje dir (2), 2do eje tracción (4 dual), 3er eje libre (4 dual) -> 10 llantas
             cant = 10
             esquema = [
                 {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]},
@@ -4412,7 +4682,6 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
                 {'eje': 3, 'nombre': 'Eje 3 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 7, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 8}, {'pos': 8, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 7}, {'pos': 9, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 10}, {'pos': 10, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 9}]}
             ]
         else:
-            # Generar esquema automático estándar
             esquema = [
                 {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]}
             ]
@@ -4451,7 +4720,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                       (nom, descripcion, cant, json.dumps(esquema)))
+                       (nom, desc, cant, json.dumps(esquema)))
         conn.commit()
     return nom
 
@@ -4509,33 +4778,34 @@ def obtener_esquema_tipologia(tipologia_nombre):
         ]
 
 def actualizar_operacion(nombre_antiguo, nombre_nuevo):
-    nom_a = (nombre_antiguo or '').strip()
-    nom_n = (nombre_nuevo or '').strip()
+    nom_a = (nombre_antiguo or '').strip().upper()
+    nom_n = (nombre_nuevo or '').strip().upper()
     if not nom_a or not nom_n:
         return False
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('UPDATE catalogo_operaciones SET nombre = ? WHERE nombre = ?', (nom_n, nom_a))
-        cursor.execute('UPDATE inspecciones SET tipo_operacion = ? WHERE tipo_operacion = ?', (nom_n, nom_a))
+        cursor.execute('UPDATE catalogo_operaciones SET nombre = ? WHERE UPPER(nombre) = ?', (nom_n, nom_a))
+        cursor.execute('UPDATE inspecciones SET tipo_operacion = ? WHERE UPPER(tipo_operacion) = ?', (nom_n, nom_a))
         conn.commit()
     return True
 
 def eliminar_operacion(nombre):
-    nom = (nombre or '').strip()
+    nom = (nombre or '').strip().upper()
     if not nom:
         return False
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM catalogo_operaciones WHERE nombre = ?', (nom,))
+        cursor.execute('DELETE FROM catalogo_operaciones WHERE UPPER(nombre) = ?', (nom,))
         conn.commit()
     return True
 
 def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llantas=10, config_ejes=None):
-    nom_a = (nombre_antiguo or '').strip()
-    nom_n = (nombre_nuevo or '').strip()
+    nom_a = (nombre_antiguo or '').strip().upper()
+    nom_n = (nombre_nuevo or '').strip().upper()
     if not nom_a or not nom_n:
         return False
     cant = int(cant_llantas or 10)
+    desc = str(descripcion or '').strip().upper()
     
     # Si especificó config_ejes, armar esquema
     esquema_nuevo = None
@@ -4594,31 +4864,31 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
 
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT esquema_json FROM catalogo_tipologias WHERE nombre = ?', (nom_a,))
+        cursor.execute('SELECT esquema_json FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom_a,))
         row = cursor.fetchone()
         esquema_json = row[0] if row and row[0] else None
-        cursor.execute('DELETE FROM catalogo_tipologias WHERE nombre = ?', (nom_a,))
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom_a,))
         conn.commit()
 
     if esquema_nuevo:
-        return guardar_tipologia(nom_n, descripcion, cant, esquema_custom=esquema_nuevo)
+        return guardar_tipologia(nom_n, desc, cant, esquema_custom=esquema_nuevo)
     elif esquema_json and nom_a == nom_n:
         with get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                           (nom_n, descripcion, cant, esquema_json))
+                           (nom_n, desc, cant, esquema_json))
             conn.commit()
         return True
     else:
-        return guardar_tipologia(nom_n, descripcion, cant)
+        return guardar_tipologia(nom_n, desc, cant)
 
 def eliminar_tipologia(nombre):
-    nom = (nombre or '').strip()
+    nom = (nombre or '').strip().upper()
     if not nom:
         return False
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM catalogo_tipologias WHERE nombre = ?', (nom,))
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom,))
         conn.commit()
     return True
 
@@ -4651,12 +4921,12 @@ def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original'):
     return 0.0
 
 def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion=''):
-    tipo = str(tipo_llanta or 'Nueva').strip()
-    m = str(marca or '').strip()
-    d = str(diseno or '').strip()
-    dim = str(dimension or '').strip()
+    tipo = str(tipo_llanta or 'NUEVA').strip().upper()
+    m = str(marca or '').strip().upper()
+    d = str(diseno or '').strip().upper()
+    dim = str(dimension or '').strip().upper()
     prof = to_float(prof_inicial, 0.0)
-    desc = str(descripcion or '').strip()
+    desc = str(descripcion or '').strip().upper()
     if not m or not d:
         return False
     with get_connection() as conn:
@@ -8820,7 +9090,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6499 líneas | 621,623 bytes (607.1 KB)
+- **Métricas:** 6757 líneas | 635,815 bytes (620.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -10218,13 +10488,16 @@ if __name__ == '__main__':
         </div>
       </div>
 
-      <!-- Subtab 4: Límites de Retiro por Cliente -->
+      <!-- Subtab 4: Límites de Retiro por Cliente, Subcliente y Eje -->
       <div id="cat-seccion-clientes" class="hidden space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">Políticas Técnicas de Retiro por Cliente (mm)</span>
+          <div>
+            <span class="text-xs font-bold text-slate-800">Políticas Técnicas de Retiro por Cliente, Subcliente y Eje (mm)</span>
+            <p class="text-[11px] text-slate-500">Configura umbrales mínimos de retiro para llantas según flota, sede operativa y posición de eje</p>
+          </div>
           <button type="button" onclick="abrirModalLimiteCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-gear"></i>
-            <span>Configurar Límite Cliente</span>
+            <span>Nuevo Límite de Retiro</span>
           </button>
         </div>
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -10232,9 +10505,11 @@ if __name__ == '__main__':
             <thead class="bg-slate-900 text-white font-bold">
               <tr>
                 <th class="p-2.5">Cliente / Flota</th>
+                <th class="p-2.5">Sede / Subcliente</th>
+                <th class="p-2.5 text-center">Eje Aplicable</th>
                 <th class="p-2.5 text-center">Límite Retiro (mm)</th>
                 <th class="p-2.5">Observaciones Técnicas</th>
-                <th class="p-2.5">Última Actualización</th>
+                <th class="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100"></tbody>
@@ -10516,20 +10791,51 @@ if __name__ == '__main__':
     </div>
   </div>
 
-  <!-- MODAL: CONFIGURAR LÍMITE DE CLIENTE -->
+  <!-- MODAL: CONFIGURAR LÍMITE DE CLIENTE, SUBCLIENTE Y EJE -->
   <div id="modalLimiteCliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Límite de Retiro por Cliente</h3>
+        <div>
+          <h3 class="text-sm font-black text-slate-900">Límite de Retiro por Cliente y Eje</h3>
+          <p class="text-[11px] text-slate-500">Define umbral de profundidad mínima de retiro</p>
+        </div>
         <button type="button" onclick="cerrarModalLimiteCliente()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-2.5 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota</label><input type="text" id="lim_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Límite de Cambio / Retiro (mm)*</label><input type="number" step="0.1" min="1.0" max="10.0" id="lim_mm" value="3.0" class="w-full p-2 bg-slate-50 border rounded-xl font-black text-rose-700 font-mono text-base"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Política Técnica / Obs</label><input type="text" id="lim_obs" placeholder="Política de seguridad de flota" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota *</label>
+          <input type="text" id="lim_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Sede / Subcliente</label>
+            <input type="text" id="lim_subcliente" list="dl_subclientes" placeholder="TODOS o Sede Norte" value="TODOS" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Eje / Posición *</label>
+            <select id="lim_eje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800">
+              <option value="TODOS">TODOS (Toda posición)</option>
+              <option value="DIRECCIONAL">DIRECCIONAL (Eje 1 / Delantero)</option>
+              <option value="TRACCIÓN">TRACCIÓN (Ejes de fuerza)</option>
+              <option value="LIBRE">LIBRE (Arrastre / Trailer)</option>
+              <option value="REPUESTO">REPUESTO (Auxiliar)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Límite de Cambio / Retiro (mm) *</label>
+          <div class="relative">
+            <input type="number" step="0.1" min="1.0" max="15.0" id="lim_mm" value="3.0" class="w-full p-2 bg-slate-50 border rounded-xl font-black text-rose-700 font-mono text-base pr-10">
+            <span class="absolute right-3 top-2.5 font-bold text-slate-400 text-xs">mm</span>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Política Técnica / Observaciones</label>
+          <input type="text" id="lim_obs" placeholder="ej. Retiro preventivo por seguridad vial" class="w-full p-2 bg-slate-50 border rounded-xl">
+        </div>
         <div class="pt-2 flex justify-end space-x-2">
-          <button type="button" onclick="cerrarModalLimiteCliente()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
-          <button type="button" onclick="guardarLimiteCliente()" class="px-4 py-1.5 bg-blue-600 text-white rounded-xl font-bold">Guardar Límite</button>
+          <button type="button" onclick="cerrarModalLimiteCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="guardarLimiteCliente()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20">Guardar Límite</button>
         </div>
       </div>
     </div>
@@ -10773,32 +11079,130 @@ if __name__ == '__main__':
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR TIPOLOGÍA -->
-  <div id="modalTipologia" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Nueva Tipología</h3>
-        <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre Tipología</label><input type="text" id="nueva_tip_nombre" placeholder="ej. Tractomula 3 Ejes" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+  <!-- MODAL: CREAR TIPOLOGÍA DE VEHÍCULO (BASADO EN DISEÑO OFICIAL) -->
+  <div id="modalTipologia" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 border border-slate-100 my-auto animate-fade-in">
+      
+      <!-- Encabezado -->
+      <div class="flex items-start justify-between pb-1">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Configuración Rápida de Ejes</label>
-          <select id="sel_preset_ejes_mob" onchange="alCambiarPresetEjesMobile()" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
-            <option value="6x4">Cabezote Estándar (6x4 - 10 Llantas)</option>
-            <option value="8x4">Cabezote 4 Manos (8x4 - 12 Llantas)</option>
-            <option value="trailer3">Trailer 3 Ejes Duales (12 Llantas)</option>
-            <option value="trailer2">Trailer 2 Ejes Duales (8 Llantas)</option>
-            <option value="4x2">Camión Sencillo (4x2 - 6 Llantas)</option>
-            <option value="liviano">Liviano / Camioneta (4 Llantas)</option>
-          </select>
+          <h3 class="text-lg font-black text-slate-900 tracking-tight">Crear Tipología de Vehículo</h3>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">Configura los ejes direccionales, tracción y libres (pacha dual o sencilla).</p>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Total Llantas</label><input type="number" id="nueva_tip_cant" value="10" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Descripción</label><input type="text" id="nueva_tip_desc" placeholder="Configuración de ejes" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
-        <div class="flex justify-end space-x-2 pt-1">
-          <button type="button" onclick="cerrarModalTipologia()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
-          <button type="button" onclick="guardarNuevaTipologia()" class="px-4 py-1.5 bg-emerald-600 text-white rounded-xl font-bold">Guardar</button>
+        <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Formulario -->
+      <div class="space-y-3.5 text-xs">
+        
+        <!-- Nombre de Tipología -->
+        <div>
+          <label class="font-extrabold text-slate-800 block mb-1.5 text-xs">Nombre de Tipología *</label>
+          <input type="text" id="nueva_tip_nombre" placeholder="Ej. Dobletroque Volqueta 6x4 o Trailer 3 Ejes" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 transition-all uppercase">
         </div>
+
+        <!-- Descripción / Aplicación -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1.5 text-xs">Descripción / Aplicación</label>
+          <input type="text" id="nueva_tip_desc" placeholder="Ej. Cabezote de tracción pesada regional" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 transition-all">
+        </div>
+
+        <!-- COMPOSICIÓN DE EJES DEL VEHÍCULO -->
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center space-x-1.5 text-slate-900 font-black text-[11px] uppercase tracking-wider">
+            <i class="fa-solid fa-gear text-blue-600 text-xs"></i>
+            <span>COMPOSICIÓN DE EJES DEL VEHÍCULO</span>
+          </div>
+
+          <!-- Card 1: Ejes Direccionales (Delanteros) -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                <span class="font-extrabold text-amber-800 text-xs">Ejes Direccionales (Delanteros):</span>
+              </div>
+              <input type="number" id="tip_ejes_dir_cant" value="1" min="0" max="10" oninput="recalcularLlantasTipologia()" class="w-24 text-center font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2 focus:bg-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-semibold">Montaje por eje direccional:</span>
+              <select id="tip_ejes_dir_tipo" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-amber-500">
+                <option value="sencilla">Sencilla (2 llantas)</option>
+                <option value="dual">Pacha / Dual (4 llantas por eje)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 2: Ejes de Tracción (Fuerza) -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span class="font-extrabold text-emerald-800 text-xs">Ejes de Tracción (Fuerza):</span>
+              </div>
+              <input type="number" id="tip_ejes_trac_cant" value="2" min="0" max="10" oninput="recalcularLlantasTipologia()" class="w-24 text-center font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2 focus:bg-white focus:outline-none focus:border-emerald-500">
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-semibold">Montaje por eje de tracción:</span>
+              <select id="tip_ejes_trac_tipo" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-emerald-500">
+                <option value="dual">Pacha / Dual (4 llantas por eje)</option>
+                <option value="sencilla">Sencilla (2 llantas)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 3: Ejes Libres / Arrastre / Trailer -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                <span class="font-extrabold text-blue-800 text-xs">Ejes Libres / Arrastre / Trailer:</span>
+              </div>
+              <input type="number" id="tip_ejes_libre_cant" value="0" min="0" max="10" oninput="recalcularLlantasTipologia()" class="w-24 text-center font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2 focus:bg-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-semibold">Montaje por eje libre:</span>
+              <select id="tip_ejes_libre_tipo" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-blue-500">
+                <option value="dual">Pacha / Dual (4 llantas por eje)</option>
+                <option value="sencilla">Sencilla (2 llantas)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 4: ¿Incluye Llanta de Repuesto? -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-compact-disc text-slate-500 text-sm"></i>
+              <span class="font-bold text-slate-800 text-xs">¿Incluye Llanta de Repuesto?</span>
+            </div>
+            <select id="tip_ejes_repuesto_cant" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-blue-500">
+              <option value="0">No trae repuesto</option>
+              <option value="1">1 Llanta de repuesto</option>
+              <option value="2">2 Llantas de repuesto</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Total Llantas Calculadas (Caja Resumen Azul) -->
+        <div class="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl flex items-center justify-between">
+          <div>
+            <span class="font-extrabold text-blue-900 text-xs block">Total Llantas Calculadas:</span>
+            <span id="tip_desglose_calculo" class="text-[11px] text-blue-700 font-semibold">1 Dir (2 llantas) + 2 Trac Dual (8 llantas)</span>
+          </div>
+          <span id="tip_total_calculado" class="text-3xl font-black text-blue-600 font-mono tracking-tight">10</span>
+        </div>
+
+        <!-- Botones al Pie -->
+        <div class="flex items-center space-x-2.5 pt-2">
+          <button type="button" onclick="cerrarModalTipologia()" class="w-1/2 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-center">
+            Cancelar
+          </button>
+          <button type="button" onclick="guardarNuevaTipologia()" class="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/25 transition-all text-center flex items-center justify-center space-x-1.5">
+            <span>Guardar Tipología</span>
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -12248,14 +12652,40 @@ if __name__ == '__main__':
       if (res.ok) {
         const clis = await res.json();
         const tbody = document.getElementById('tbodyClientesLimCat');
-        tbody.innerHTML = clis.map(c => `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
-            <td class="p-2.5 text-center font-black text-rose-700 font-mono">${c.limite_retiro_mm} mm</td>
-            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
-            <td class="p-2.5 text-slate-400 font-mono">${c.fecha_actualizacion || '-'}</td>
-          </tr>
-        `).join('');
+        if (!clis || clis.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = clis.map(c => {
+          let badgeEje = '';
+          const ejeUpper = (c.eje || 'TODOS').toUpperCase();
+          if (ejeUpper === 'DIRECCIONAL') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">DIRECCIONAL</span>';
+          } else if (ejeUpper === 'TRACCIÓN' || ejeUpper === 'TRACCION') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">TRACCIÓN</span>';
+          } else if (ejeUpper === 'LIBRE') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">LIBRE</span>';
+          } else if (ejeUpper === 'REPUESTO') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">REPUESTO</span>';
+          } else {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300">TODOS</span>';
+          }
+
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
+              <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
+              <td class="p-2.5 text-center">${badgeEje}</td>
+              <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
+              <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
+              <td class="p-2.5 text-center">
+                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
     }
 
@@ -12268,9 +12698,11 @@ if __name__ == '__main__':
       document.getElementById('modalLimiteCliente').classList.remove('flex');
     }
     async function guardarLimiteCliente() {
-      const cli = document.getElementById('lim_cliente').value.trim();
+      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
+      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
+      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
       const mm = parseFloat(document.getElementById('lim_mm').value);
-      if (!cli || !mm) {
+      if (!cli || isNaN(mm)) {
         alert('Por favor completa el cliente y el límite en mm');
         return;
       }
@@ -12279,13 +12711,26 @@ if __name__ == '__main__':
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           cliente: cli,
+          subcliente: sub,
+          eje: eje,
           limite_retiro_mm: mm,
-          observaciones: document.getElementById('lim_obs').value.trim()
+          observaciones: document.getElementById('lim_obs').value.trim().toUpperCase()
         })
       });
       if (res.ok) {
         cerrarModalLimiteCliente();
-        mostrarToast(`✅ Límite para ${cli} guardado en ${mm} mm.`);
+        mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
+        cargarClientesLimCat();
+      } else {
+        alert('Error al guardar el límite de cliente');
+      }
+    }
+
+    async function eliminarLimiteCliente(id) {
+      if (!confirm('¿Deseas eliminar esta política de límite de retiro?')) return;
+      const res = await fetch(`/api/configuraciones-clientes/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast('Límite eliminado.');
         cargarClientesLimCat();
       }
     }
@@ -14879,27 +15324,110 @@ if __name__ == '__main__':
       }
     }
 
-    function abrirModalTipologia() { document.getElementById('modalTipologia').classList.remove('hidden'); document.getElementById('modalTipologia').classList.add('flex'); }
-    function cerrarModalTipologia() { document.getElementById('modalTipologia').classList.add('hidden'); document.getElementById('modalTipologia').classList.remove('flex'); }
-    function alCambiarPresetEjesMobile() {
-      const v = document.getElementById('sel_preset_ejes_mob').value;
-      const cant = v === '4x2' ? 6 : v === 'liviano' ? 4 : (v === '8x4' || v === 'trailer3') ? 12 : v === 'trailer2' ? 8 : 10;
-      document.getElementById('nueva_tip_cant').value = cant;
+    function recalcularLlantasTipologia() {
+      const eDir = Math.max(0, parseInt(document.getElementById('tip_ejes_dir_cant')?.value) || 0);
+      const tDir = document.getElementById('tip_ejes_dir_tipo')?.value || 'sencilla';
+      const llantasPorEjeDir = (tDir === 'dual') ? 4 : 2;
+      const totalDir = eDir * llantasPorEjeDir;
+
+      const eTrac = Math.max(0, parseInt(document.getElementById('tip_ejes_trac_cant')?.value) || 0);
+      const tTrac = document.getElementById('tip_ejes_trac_tipo')?.value || 'dual';
+      const llantasPorEjeTrac = (tTrac === 'sencilla') ? 2 : 4;
+      const totalTrac = eTrac * llantasPorEjeTrac;
+
+      const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
+      const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
+      const llantasPorEjeLib = (tLib === 'sencilla') ? 2 : 4;
+      const totalLib = eLib * llantasPorEjeLib;
+
+      const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+
+      const totalLlantas = totalDir + totalTrac + totalLib + eRep;
+
+      // Generar desglose descriptivo
+      const partes = [];
+      if (eDir > 0) {
+        partes.push(`${eDir} Dir (${totalDir} llantas)`);
+      }
+      if (eTrac > 0) {
+        const modoTrac = tTrac === 'dual' ? 'Dual' : 'Senc';
+        partes.push(`${eTrac} Trac ${modoTrac} (${totalTrac} llantas)`);
+      }
+      if (eLib > 0) {
+        const modoLib = tLib === 'dual' ? 'Dual' : 'Senc';
+        partes.push(`${eLib} Libre ${modoLib} (${totalLib} llantas)`);
+      }
+      if (eRep > 0) {
+        partes.push(`${eRep} Repuesto${eRep > 1 ? 's' : ''}`);
+      }
+
+      const txtDesglose = partes.length > 0 ? partes.join(' + ') : 'Sin ejes configurados (0 llantas)';
+      const elDesglose = document.getElementById('tip_desglose_calculo');
+      const elTotal = document.getElementById('tip_total_calculado');
+      if (elDesglose) elDesglose.textContent = txtDesglose;
+      if (elTotal) elTotal.textContent = totalLlantas;
+      return totalLlantas;
     }
+
+    function abrirModalTipologia() {
+      document.getElementById('modalTipologia').classList.remove('hidden');
+      document.getElementById('modalTipologia').classList.add('flex');
+      recalcularLlantasTipologia();
+    }
+
+    function cerrarModalTipologia() {
+      document.getElementById('modalTipologia').classList.add('hidden');
+      document.getElementById('modalTipologia').classList.remove('flex');
+    }
+
     async function guardarNuevaTipologia() {
-      const nom = document.getElementById('nueva_tip_nombre').value.trim();
-      const cant = parseInt(document.getElementById('nueva_tip_cant').value) || 10;
-      const desc = document.getElementById('nueva_tip_desc').value.trim();
-      if (!nom) return;
+      const nomInput = document.getElementById('nueva_tip_nombre');
+      const nom = nomInput ? nomInput.value.trim().toUpperCase() : '';
+      const descInput = document.getElementById('nueva_tip_desc');
+      const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+      if (!nom) {
+        alert('Por favor ingresa un nombre para la tipología');
+        if (nomInput) nomInput.focus();
+        return;
+      }
+
+      const eDir = Math.max(0, parseInt(document.getElementById('tip_ejes_dir_cant')?.value) || 0);
+      const tDir = document.getElementById('tip_ejes_dir_tipo')?.value || 'sencilla';
+      const eTrac = Math.max(0, parseInt(document.getElementById('tip_ejes_trac_cant')?.value) || 0);
+      const tTrac = document.getElementById('tip_ejes_trac_tipo')?.value || 'dual';
+      const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
+      const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
+      const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+
+      const totalLlantas = recalcularLlantasTipologia();
+
+      const payload = {
+        nombre: nom,
+        descripcion: desc,
+        cant_llantas: totalLlantas,
+        ejes_dir: eDir,
+        tipo_dir: tDir,
+        ejes_trac: eTrac,
+        tipo_trac: tTrac,
+        ejes_libres: eLib,
+        tipo_libres: tLib,
+        cant_repuestos: eRep
+      };
+
       const res = await fetch('/api/tipologias', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({nombre: nom, descripcion: desc, cant_llantas: cant})
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         cerrarModalTipologia();
+        if (nomInput) nomInput.value = '';
+        if (descInput) descInput.value = '';
         cargarCatalogos(null, nom);
-        mostrarToast(`Tipología "${nom}" guardada.`);
+        cargarTipologiasCat();
+        mostrarToast(`✅ Tipología "${nom}" guardada exitosamente (${totalLlantas} llantas).`);
+      } else {
+        alert('Error al guardar la tipología. Verifica que el nombre no esté duplicado.');
       }
     }
 
@@ -16883,7 +17411,7 @@ def test_api_crud_inspeccion(test_db, auth_client):
     # Verificar actualización
     res_get2 = auth_client.get(f"/api/inspecciones/{reg_id}")
     assert res_get2.json()["kilometraje"] == 55000.0
-    assert res_get2.json()["novedades"] == "Corte superficial en banda"
+    assert res_get2.json()["novedades"] == "CORTE SUPERFICIAL EN BANDA"
 
     # 4. Eliminar inspección (DELETE)
     res_del = auth_client.delete(f"/api/inspecciones/{reg_id}")
@@ -17060,10 +17588,10 @@ def test_asociacion_fija_placa_esquema(test_db, auth_client):
     data = resp.json()
     assert data['encontrado'] is True
     assert data['placa'] == 'TRL-999'
-    assert data['tipologia'] == 'Trailer (3 Ejes - 12 Llantas)'
-    assert data['cliente'] == 'Transportes del Caribe'
-    assert data['subcliente'] == 'Barranquilla'
-    assert data['tipo_operacion'] == 'Refrigerada'
+    assert data['tipologia'] == 'TRAILER (3 EJES - 12 LLANTAS)'
+    assert data['cliente'] == 'TRANSPORTES DEL CARIBE'
+    assert data['subcliente'] == 'BARRANQUILLA'
+    assert data['tipo_operacion'] == 'REFRIGERADA'
     assert data['ultimo_km'] == 85400.0
     assert data['cant_llantas'] == 12
     assert len(data['posiciones']) == 12
@@ -17121,8 +17649,8 @@ def test_autocompletado_llanta_dependiente_cliente(test_db, auth_client):
     assert resp_a.status_code == 200
     res_data_a = resp_a.json()
     assert res_data_a['encontrado'] is True
-    assert res_data_a['datos']['marca'] == 'Michelin'
-    assert res_data_a['datos']['diseno'] == 'X Multi Z'
+    assert res_data_a['datos']['marca'] == 'MICHELIN'
+    assert res_data_a['datos']['diseno'] == 'X MULTI Z'
     assert res_data_a['datos']['dimension'] == '295/80R22.5'
     assert res_data_a['datos']['prof_inicial'] == 16.5
 
@@ -17131,7 +17659,7 @@ def test_autocompletado_llanta_dependiente_cliente(test_db, auth_client):
     assert resp_b.status_code == 200
     res_data_b = resp_b.json()
     assert res_data_b['encontrado'] is True
-    assert res_data_b['datos']['marca'] == 'Bridgestone'
+    assert res_data_b['datos']['marca'] == 'BRIDGESTONE'
     assert res_data_b['datos']['diseno'] == 'M726 EL'
     assert res_data_b['datos']['dimension'] == '11R22.5'
     assert res_data_b['datos']['prof_inicial'] == 24.5
@@ -17608,7 +18136,7 @@ def test_diagnostico_sugerencia_cambio(test_db):
 
 - **Ruta:** `tests/test_diagrama_chasis.py`
 - **Descripción:** Pruebas del generador vectorial de diagramas de chasis en PDF
-- **Métricas:** 444 líneas | 18,085 bytes (17.7 KB)
+- **Métricas:** 445 líneas | 18,154 bytes (17.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17911,9 +18439,10 @@ def test_caso_8_alertas(test_db):
     pdf_bytes = pdf_generator.renderizar_informe(datos)
     reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
     texto = "\n".join(p.extract_text() for p in reader.pages)
-    assert "Corte en banda" in texto
-    assert "Válvula defectuosa" in texto
-    assert "Desgaste anormal" in texto
+    texto_u = texto.upper()
+    assert "CORTE EN BANDA" in texto_u
+    assert "VALVULA DEFECTUOSA" in texto_u or "VÁLVULA DEFECTUOSA" in texto_u
+    assert "DESGASTE ANORMAL" in texto_u
 
 
 # =========================================================================

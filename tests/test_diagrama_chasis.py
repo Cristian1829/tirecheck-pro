@@ -297,9 +297,10 @@ def test_caso_8_alertas(test_db):
     pdf_bytes = pdf_generator.renderizar_informe(datos)
     reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
     texto = "\n".join(p.extract_text() for p in reader.pages)
-    assert "Corte en banda" in texto
-    assert "Válvula defectuosa" in texto
-    assert "Desgaste anormal" in texto
+    texto_u = texto.upper()
+    assert "CORTE EN BANDA" in texto_u
+    assert "VALVULA DEFECTUOSA" in texto_u or "VÁLVULA DEFECTUOSA" in texto_u
+    assert "DESGASTE ANORMAL" in texto_u
 
 
 # =========================================================================

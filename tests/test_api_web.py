@@ -127,7 +127,7 @@ def test_api_crud_inspeccion(test_db, auth_client):
     # Verificar actualización
     res_get2 = auth_client.get(f"/api/inspecciones/{reg_id}")
     assert res_get2.json()["kilometraje"] == 55000.0
-    assert res_get2.json()["novedades"] == "Corte superficial en banda"
+    assert res_get2.json()["novedades"] == "CORTE SUPERFICIAL EN BANDA"
 
     # 4. Eliminar inspección (DELETE)
     res_del = auth_client.delete(f"/api/inspecciones/{reg_id}")

@@ -1392,13 +1392,16 @@
         </div>
       </div>
 
-      <!-- Subtab 4: Límites de Retiro por Cliente -->
+      <!-- Subtab 4: Límites de Retiro por Cliente, Subcliente y Eje -->
       <div id="cat-seccion-clientes" class="hidden space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">Políticas Técnicas de Retiro por Cliente (mm)</span>
+          <div>
+            <span class="text-xs font-bold text-slate-800">Políticas Técnicas de Retiro por Cliente, Subcliente y Eje (mm)</span>
+            <p class="text-[11px] text-slate-500">Configura umbrales mínimos de retiro para llantas según flota, sede operativa y posición de eje</p>
+          </div>
           <button type="button" onclick="abrirModalLimiteCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-gear"></i>
-            <span>Configurar Límite Cliente</span>
+            <span>Nuevo Límite de Retiro</span>
           </button>
         </div>
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -1406,9 +1409,11 @@
             <thead class="bg-slate-900 text-white font-bold">
               <tr>
                 <th class="p-2.5">Cliente / Flota</th>
+                <th class="p-2.5">Sede / Subcliente</th>
+                <th class="p-2.5 text-center">Eje Aplicable</th>
                 <th class="p-2.5 text-center">Límite Retiro (mm)</th>
                 <th class="p-2.5">Observaciones Técnicas</th>
-                <th class="p-2.5">Última Actualización</th>
+                <th class="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100"></tbody>
@@ -1690,20 +1695,51 @@
     </div>
   </div>
 
-  <!-- MODAL: CONFIGURAR LÍMITE DE CLIENTE -->
+  <!-- MODAL: CONFIGURAR LÍMITE DE CLIENTE, SUBCLIENTE Y EJE -->
   <div id="modalLimiteCliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Límite de Retiro por Cliente</h3>
+        <div>
+          <h3 class="text-sm font-black text-slate-900">Límite de Retiro por Cliente y Eje</h3>
+          <p class="text-[11px] text-slate-500">Define umbral de profundidad mínima de retiro</p>
+        </div>
         <button type="button" onclick="cerrarModalLimiteCliente()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-2.5 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota</label><input type="text" id="lim_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Límite de Cambio / Retiro (mm)*</label><input type="number" step="0.1" min="1.0" max="10.0" id="lim_mm" value="3.0" class="w-full p-2 bg-slate-50 border rounded-xl font-black text-rose-700 font-mono text-base"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Política Técnica / Obs</label><input type="text" id="lim_obs" placeholder="Política de seguridad de flota" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota *</label>
+          <input type="text" id="lim_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Sede / Subcliente</label>
+            <input type="text" id="lim_subcliente" list="dl_subclientes" placeholder="TODOS o Sede Norte" value="TODOS" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">Eje / Posición *</label>
+            <select id="lim_eje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800">
+              <option value="TODOS">TODOS (Toda posición)</option>
+              <option value="DIRECCIONAL">DIRECCIONAL (Eje 1 / Delantero)</option>
+              <option value="TRACCIÓN">TRACCIÓN (Ejes de fuerza)</option>
+              <option value="LIBRE">LIBRE (Arrastre / Trailer)</option>
+              <option value="REPUESTO">REPUESTO (Auxiliar)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Límite de Cambio / Retiro (mm) *</label>
+          <div class="relative">
+            <input type="number" step="0.1" min="1.0" max="15.0" id="lim_mm" value="3.0" class="w-full p-2 bg-slate-50 border rounded-xl font-black text-rose-700 font-mono text-base pr-10">
+            <span class="absolute right-3 top-2.5 font-bold text-slate-400 text-xs">mm</span>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Política Técnica / Observaciones</label>
+          <input type="text" id="lim_obs" placeholder="ej. Retiro preventivo por seguridad vial" class="w-full p-2 bg-slate-50 border rounded-xl">
+        </div>
         <div class="pt-2 flex justify-end space-x-2">
-          <button type="button" onclick="cerrarModalLimiteCliente()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
-          <button type="button" onclick="guardarLimiteCliente()" class="px-4 py-1.5 bg-blue-600 text-white rounded-xl font-bold">Guardar Límite</button>
+          <button type="button" onclick="cerrarModalLimiteCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="guardarLimiteCliente()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20">Guardar Límite</button>
         </div>
       </div>
     </div>
@@ -1947,32 +1983,130 @@
     </div>
   </div>
 
-  <!-- MODAL: AGREGAR TIPOLOGÍA -->
-  <div id="modalTipologia" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Nueva Tipología</h3>
-        <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre Tipología</label><input type="text" id="nueva_tip_nombre" placeholder="ej. Tractomula 3 Ejes" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+  <!-- MODAL: CREAR TIPOLOGÍA DE VEHÍCULO (BASADO EN DISEÑO OFICIAL) -->
+  <div id="modalTipologia" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 border border-slate-100 my-auto animate-fade-in">
+      
+      <!-- Encabezado -->
+      <div class="flex items-start justify-between pb-1">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Configuración Rápida de Ejes</label>
-          <select id="sel_preset_ejes_mob" onchange="alCambiarPresetEjesMobile()" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
-            <option value="6x4">Cabezote Estándar (6x4 - 10 Llantas)</option>
-            <option value="8x4">Cabezote 4 Manos (8x4 - 12 Llantas)</option>
-            <option value="trailer3">Trailer 3 Ejes Duales (12 Llantas)</option>
-            <option value="trailer2">Trailer 2 Ejes Duales (8 Llantas)</option>
-            <option value="4x2">Camión Sencillo (4x2 - 6 Llantas)</option>
-            <option value="liviano">Liviano / Camioneta (4 Llantas)</option>
-          </select>
+          <h3 class="text-lg font-black text-slate-900 tracking-tight">Crear Tipología de Vehículo</h3>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">Configura los ejes direccionales, tracción y libres (pacha dual o sencilla).</p>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Total Llantas</label><input type="number" id="nueva_tip_cant" value="10" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Descripción</label><input type="text" id="nueva_tip_desc" placeholder="Configuración de ejes" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
-        <div class="flex justify-end space-x-2 pt-1">
-          <button type="button" onclick="cerrarModalTipologia()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
-          <button type="button" onclick="guardarNuevaTipologia()" class="px-4 py-1.5 bg-emerald-600 text-white rounded-xl font-bold">Guardar</button>
+        <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Formulario -->
+      <div class="space-y-3.5 text-xs">
+        
+        <!-- Nombre de Tipología -->
+        <div>
+          <label class="font-extrabold text-slate-800 block mb-1.5 text-xs">Nombre de Tipología *</label>
+          <input type="text" id="nueva_tip_nombre" placeholder="Ej. Dobletroque Volqueta 6x4 o Trailer 3 Ejes" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 transition-all uppercase">
         </div>
+
+        <!-- Descripción / Aplicación -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1.5 text-xs">Descripción / Aplicación</label>
+          <input type="text" id="nueva_tip_desc" placeholder="Ej. Cabezote de tracción pesada regional" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 transition-all">
+        </div>
+
+        <!-- COMPOSICIÓN DE EJES DEL VEHÍCULO -->
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center space-x-1.5 text-slate-900 font-black text-[11px] uppercase tracking-wider">
+            <i class="fa-solid fa-gear text-blue-600 text-xs"></i>
+            <span>COMPOSICIÓN DE EJES DEL VEHÍCULO</span>
+          </div>
+
+          <!-- Card 1: Ejes Direccionales (Delanteros) -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                <span class="font-extrabold text-amber-800 text-xs">Ejes Direccionales (Delanteros):</span>
+              </div>
+              <input type="number" id="tip_ejes_dir_cant" value="1" min="0" max="10" oninput="recalcularLlantasTipologia()" class="w-24 text-center font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2 focus:bg-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-semibold">Montaje por eje direccional:</span>
+              <select id="tip_ejes_dir_tipo" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-amber-500">
+                <option value="sencilla">Sencilla (2 llantas)</option>
+                <option value="dual">Pacha / Dual (4 llantas por eje)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 2: Ejes de Tracción (Fuerza) -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span class="font-extrabold text-emerald-800 text-xs">Ejes de Tracción (Fuerza):</span>
+              </div>
+              <input type="number" id="tip_ejes_trac_cant" value="2" min="0" max="10" oninput="recalcularLlantasTipologia()" class="w-24 text-center font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2 focus:bg-white focus:outline-none focus:border-emerald-500">
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-semibold">Montaje por eje de tracción:</span>
+              <select id="tip_ejes_trac_tipo" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-emerald-500">
+                <option value="dual">Pacha / Dual (4 llantas por eje)</option>
+                <option value="sencilla">Sencilla (2 llantas)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 3: Ejes Libres / Arrastre / Trailer -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                <span class="font-extrabold text-blue-800 text-xs">Ejes Libres / Arrastre / Trailer:</span>
+              </div>
+              <input type="number" id="tip_ejes_libre_cant" value="0" min="0" max="10" oninput="recalcularLlantasTipologia()" class="w-24 text-center font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2 focus:bg-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-500 font-semibold">Montaje por eje libre:</span>
+              <select id="tip_ejes_libre_tipo" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-blue-500">
+                <option value="dual">Pacha / Dual (4 llantas por eje)</option>
+                <option value="sencilla">Sencilla (2 llantas)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 4: ¿Incluye Llanta de Repuesto? -->
+          <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-compact-disc text-slate-500 text-sm"></i>
+              <span class="font-bold text-slate-800 text-xs">¿Incluye Llanta de Repuesto?</span>
+            </div>
+            <select id="tip_ejes_repuesto_cant" onchange="recalcularLlantasTipologia()" class="font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl py-1 px-2.5 focus:outline-none focus:border-blue-500">
+              <option value="0">No trae repuesto</option>
+              <option value="1">1 Llanta de repuesto</option>
+              <option value="2">2 Llantas de repuesto</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Total Llantas Calculadas (Caja Resumen Azul) -->
+        <div class="p-4 bg-blue-50/70 border border-blue-200/80 rounded-2xl flex items-center justify-between">
+          <div>
+            <span class="font-extrabold text-blue-900 text-xs block">Total Llantas Calculadas:</span>
+            <span id="tip_desglose_calculo" class="text-[11px] text-blue-700 font-semibold">1 Dir (2 llantas) + 2 Trac Dual (8 llantas)</span>
+          </div>
+          <span id="tip_total_calculado" class="text-3xl font-black text-blue-600 font-mono tracking-tight">10</span>
+        </div>
+
+        <!-- Botones al Pie -->
+        <div class="flex items-center space-x-2.5 pt-2">
+          <button type="button" onclick="cerrarModalTipologia()" class="w-1/2 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition-all text-center">
+            Cancelar
+          </button>
+          <button type="button" onclick="guardarNuevaTipologia()" class="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/25 transition-all text-center flex items-center justify-center space-x-1.5">
+            <span>Guardar Tipología</span>
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -3422,14 +3556,40 @@
       if (res.ok) {
         const clis = await res.json();
         const tbody = document.getElementById('tbodyClientesLimCat');
-        tbody.innerHTML = clis.map(c => `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
-            <td class="p-2.5 text-center font-black text-rose-700 font-mono">${c.limite_retiro_mm} mm</td>
-            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
-            <td class="p-2.5 text-slate-400 font-mono">${c.fecha_actualizacion || '-'}</td>
-          </tr>
-        `).join('');
+        if (!clis || clis.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = clis.map(c => {
+          let badgeEje = '';
+          const ejeUpper = (c.eje || 'TODOS').toUpperCase();
+          if (ejeUpper === 'DIRECCIONAL') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">DIRECCIONAL</span>';
+          } else if (ejeUpper === 'TRACCIÓN' || ejeUpper === 'TRACCION') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">TRACCIÓN</span>';
+          } else if (ejeUpper === 'LIBRE') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">LIBRE</span>';
+          } else if (ejeUpper === 'REPUESTO') {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">REPUESTO</span>';
+          } else {
+            badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300">TODOS</span>';
+          }
+
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
+              <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
+              <td class="p-2.5 text-center">${badgeEje}</td>
+              <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
+              <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
+              <td class="p-2.5 text-center">
+                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
     }
 
@@ -3442,9 +3602,11 @@
       document.getElementById('modalLimiteCliente').classList.remove('flex');
     }
     async function guardarLimiteCliente() {
-      const cli = document.getElementById('lim_cliente').value.trim();
+      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
+      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
+      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
       const mm = parseFloat(document.getElementById('lim_mm').value);
-      if (!cli || !mm) {
+      if (!cli || isNaN(mm)) {
         alert('Por favor completa el cliente y el límite en mm');
         return;
       }
@@ -3453,13 +3615,26 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
           cliente: cli,
+          subcliente: sub,
+          eje: eje,
           limite_retiro_mm: mm,
-          observaciones: document.getElementById('lim_obs').value.trim()
+          observaciones: document.getElementById('lim_obs').value.trim().toUpperCase()
         })
       });
       if (res.ok) {
         cerrarModalLimiteCliente();
-        mostrarToast(`✅ Límite para ${cli} guardado en ${mm} mm.`);
+        mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
+        cargarClientesLimCat();
+      } else {
+        alert('Error al guardar el límite de cliente');
+      }
+    }
+
+    async function eliminarLimiteCliente(id) {
+      if (!confirm('¿Deseas eliminar esta política de límite de retiro?')) return;
+      const res = await fetch(`/api/configuraciones-clientes/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast('Límite eliminado.');
         cargarClientesLimCat();
       }
     }
@@ -6053,27 +6228,110 @@
       }
     }
 
-    function abrirModalTipologia() { document.getElementById('modalTipologia').classList.remove('hidden'); document.getElementById('modalTipologia').classList.add('flex'); }
-    function cerrarModalTipologia() { document.getElementById('modalTipologia').classList.add('hidden'); document.getElementById('modalTipologia').classList.remove('flex'); }
-    function alCambiarPresetEjesMobile() {
-      const v = document.getElementById('sel_preset_ejes_mob').value;
-      const cant = v === '4x2' ? 6 : v === 'liviano' ? 4 : (v === '8x4' || v === 'trailer3') ? 12 : v === 'trailer2' ? 8 : 10;
-      document.getElementById('nueva_tip_cant').value = cant;
+    function recalcularLlantasTipologia() {
+      const eDir = Math.max(0, parseInt(document.getElementById('tip_ejes_dir_cant')?.value) || 0);
+      const tDir = document.getElementById('tip_ejes_dir_tipo')?.value || 'sencilla';
+      const llantasPorEjeDir = (tDir === 'dual') ? 4 : 2;
+      const totalDir = eDir * llantasPorEjeDir;
+
+      const eTrac = Math.max(0, parseInt(document.getElementById('tip_ejes_trac_cant')?.value) || 0);
+      const tTrac = document.getElementById('tip_ejes_trac_tipo')?.value || 'dual';
+      const llantasPorEjeTrac = (tTrac === 'sencilla') ? 2 : 4;
+      const totalTrac = eTrac * llantasPorEjeTrac;
+
+      const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
+      const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
+      const llantasPorEjeLib = (tLib === 'sencilla') ? 2 : 4;
+      const totalLib = eLib * llantasPorEjeLib;
+
+      const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+
+      const totalLlantas = totalDir + totalTrac + totalLib + eRep;
+
+      // Generar desglose descriptivo
+      const partes = [];
+      if (eDir > 0) {
+        partes.push(`${eDir} Dir (${totalDir} llantas)`);
+      }
+      if (eTrac > 0) {
+        const modoTrac = tTrac === 'dual' ? 'Dual' : 'Senc';
+        partes.push(`${eTrac} Trac ${modoTrac} (${totalTrac} llantas)`);
+      }
+      if (eLib > 0) {
+        const modoLib = tLib === 'dual' ? 'Dual' : 'Senc';
+        partes.push(`${eLib} Libre ${modoLib} (${totalLib} llantas)`);
+      }
+      if (eRep > 0) {
+        partes.push(`${eRep} Repuesto${eRep > 1 ? 's' : ''}`);
+      }
+
+      const txtDesglose = partes.length > 0 ? partes.join(' + ') : 'Sin ejes configurados (0 llantas)';
+      const elDesglose = document.getElementById('tip_desglose_calculo');
+      const elTotal = document.getElementById('tip_total_calculado');
+      if (elDesglose) elDesglose.textContent = txtDesglose;
+      if (elTotal) elTotal.textContent = totalLlantas;
+      return totalLlantas;
     }
+
+    function abrirModalTipologia() {
+      document.getElementById('modalTipologia').classList.remove('hidden');
+      document.getElementById('modalTipologia').classList.add('flex');
+      recalcularLlantasTipologia();
+    }
+
+    function cerrarModalTipologia() {
+      document.getElementById('modalTipologia').classList.add('hidden');
+      document.getElementById('modalTipologia').classList.remove('flex');
+    }
+
     async function guardarNuevaTipologia() {
-      const nom = document.getElementById('nueva_tip_nombre').value.trim();
-      const cant = parseInt(document.getElementById('nueva_tip_cant').value) || 10;
-      const desc = document.getElementById('nueva_tip_desc').value.trim();
-      if (!nom) return;
+      const nomInput = document.getElementById('nueva_tip_nombre');
+      const nom = nomInput ? nomInput.value.trim().toUpperCase() : '';
+      const descInput = document.getElementById('nueva_tip_desc');
+      const desc = descInput ? descInput.value.trim().toUpperCase() : '';
+      if (!nom) {
+        alert('Por favor ingresa un nombre para la tipología');
+        if (nomInput) nomInput.focus();
+        return;
+      }
+
+      const eDir = Math.max(0, parseInt(document.getElementById('tip_ejes_dir_cant')?.value) || 0);
+      const tDir = document.getElementById('tip_ejes_dir_tipo')?.value || 'sencilla';
+      const eTrac = Math.max(0, parseInt(document.getElementById('tip_ejes_trac_cant')?.value) || 0);
+      const tTrac = document.getElementById('tip_ejes_trac_tipo')?.value || 'dual';
+      const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
+      const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
+      const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+
+      const totalLlantas = recalcularLlantasTipologia();
+
+      const payload = {
+        nombre: nom,
+        descripcion: desc,
+        cant_llantas: totalLlantas,
+        ejes_dir: eDir,
+        tipo_dir: tDir,
+        ejes_trac: eTrac,
+        tipo_trac: tTrac,
+        ejes_libres: eLib,
+        tipo_libres: tLib,
+        cant_repuestos: eRep
+      };
+
       const res = await fetch('/api/tipologias', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({nombre: nom, descripcion: desc, cant_llantas: cant})
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         cerrarModalTipologia();
+        if (nomInput) nomInput.value = '';
+        if (descInput) descInput.value = '';
         cargarCatalogos(null, nom);
-        mostrarToast(`Tipología "${nom}" guardada.`);
+        cargarTipologiasCat();
+        mostrarToast(`✅ Tipología "${nom}" guardada exitosamente (${totalLlantas} llantas).`);
+      } else {
+        alert('Error al guardar la tipología. Verifica que el nombre no esté duplicado.');
       }
     }
 

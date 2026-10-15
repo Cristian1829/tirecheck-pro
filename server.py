@@ -97,7 +97,15 @@ class EditarOperacionItem(BaseModel):
 class NuevaTipologiaItem(BaseModel):
     nombre: str
     descripcion: str = ""
-    cant_llantas: int = 10
+    cant_llantas: Optional[int] = None
+    ejes_dir: int = 1
+    tipo_dir: str = "sencilla"
+    ejes_trac: int = 2
+    tipo_trac: str = "dual"
+    ejes_libres: int = 0
+    tipo_libres: str = "dual"
+    cant_repuestos: int = 0
+    esquema_custom: Optional[list] = None
 
 class EditarTipologiaItem(BaseModel):
     nombre_antiguo: str
@@ -115,6 +123,8 @@ class ModeloLlantaItem(BaseModel):
 
 class LimiteClienteItem(BaseModel):
     cliente: str
+    subcliente: str = "TODOS"
+    eje: str = "TODOS"
     limite_retiro_mm: float = 3.0
     observaciones: str = ""
 
@@ -608,7 +618,19 @@ def api_obtener_tipologias(usuario_actual: dict = Depends(obtener_usuario_actual
 
 @app.post("/api/tipologias")
 def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir_admin)):
-    nom = database.guardar_tipologia(item.nombre, item.descripcion, item.cant_llantas)
+    nom = database.guardar_tipologia(
+        nombre=item.nombre,
+        descripcion=item.descripcion,
+        cant_llantas=item.cant_llantas,
+        esquema_custom=item.esquema_custom,
+        ejes_dir=item.ejes_dir,
+        tipo_dir=item.tipo_dir,
+        ejes_trac=item.ejes_trac,
+        tipo_trac=item.tipo_trac,
+        ejes_libres=item.ejes_libres,
+        tipo_libres=item.tipo_libres,
+        cant_repuestos=item.cant_repuestos
+    )
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
@@ -650,13 +672,24 @@ def api_obtener_configuraciones_clientes(usuario_actual: dict = Depends(obtener_
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")
-def api_obtener_limite_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    lim = database.obtener_limite_retiro_cliente(cliente)
-    return {"cliente": cliente, "limite_retiro_mm": lim}
+def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje: str = "TODOS", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    lim = database.obtener_limite_retiro_cliente(cliente, subcliente, eje)
+    return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim}
 
 @app.post("/api/configuraciones-clientes")
 def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
-    ok = database.guardar_limite_retiro_cliente(item.cliente, item.limite_retiro_mm, item.observaciones)
+    ok = database.guardar_limite_retiro_cliente(
+        cliente=item.cliente,
+        limite_retiro_mm=item.limite_retiro_mm,
+        observaciones=item.observaciones,
+        subcliente=item.subcliente,
+        eje=item.eje
+    )
+    return {"status": "ok" if ok else "error"}
+
+@app.delete("/api/configuraciones-clientes/{limite_id}")
+def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin)):
+    ok = database.eliminar_limite_retiro_cliente(limite_id)
     return {"status": "ok" if ok else "error"}
 
 @app.get("/api/valores-campo")

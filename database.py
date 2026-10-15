@@ -243,6 +243,26 @@ def inicializar_bd():
             )
         """)
 
+        # Tabla de Configuración de Límites de Retiro Granular por Cliente, Subcliente y Eje
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS configuracion_limites_retiro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                subcliente TEXT NOT NULL DEFAULT 'TODOS',
+                eje TEXT NOT NULL DEFAULT 'TODOS',
+                limite_retiro_mm REAL NOT NULL DEFAULT 3.0,
+                observaciones TEXT DEFAULT '',
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(cliente, subcliente, eje)
+            )
+        """)
+        cursor.execute("""
+            INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            SELECT UPPER(TRIM(cliente)), 'TODOS', 'TODOS', limite_retiro_mm, UPPER(TRIM(IFNULL(observaciones, ''))), fecha_actualizacion
+            FROM configuracion_clientes
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+        """)
+
         # Tabla de Catálogo de Tipologías
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_tipologias (
@@ -350,12 +370,12 @@ def inicializar_bd():
 
 def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None):
     pl = str(placa or '').strip().upper()
-    tip = str(tipologia or '').strip()
+    tip = str(tipologia or '').strip().upper()
     if not pl or not tip or tip.lower() in ('nan', 'none'):
         return
-    cli = '' if (pd.isna(cliente) or str(cliente).strip().lower() in ('nan', 'none')) else str(cliente).strip()
-    sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip()
-    op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip()
+    cli = '' if (pd.isna(cliente) or str(cliente).strip().lower() in ('nan', 'none')) else str(cliente).strip().upper()
+    sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip().upper()
+    op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip().upper()
     km = to_float(kilometraje, 0.0)
 
     sql = """
@@ -869,28 +889,28 @@ def insertar_inspeccion(datos):
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))),
-            str(datos.get('cliente', '')).strip(),
-            str(datos.get('subcliente', '')).strip(),
-            str(datos.get('tipo_operacion', '')).strip(),
+            str(datos.get('cliente', '')).strip().upper(),
+            str(datos.get('subcliente', '')).strip().upper(),
+            str(datos.get('tipo_operacion', '')).strip().upper(),
             str(datos.get('placa', '')).strip().upper(),
             to_int(datos.get('posicion', 1)),
             to_float(datos.get('kilometraje', 0)),
-            str(datos.get('tipologia', '')),
-            str(datos.get('marca', '')),
-            str(datos.get('diseno', '')),
-            str(datos.get('dimension', '')),
-            str(datos.get('vida', 'Original')),
-            str(datos.get('banda_reen', '')) if str(datos.get('vida', '')).strip().lower() == 'reencauche' else '',
+            str(datos.get('tipologia', '')).strip().upper(),
+            str(datos.get('marca', '')).strip().upper(),
+            str(datos.get('diseno', '')).strip().upper(),
+            str(datos.get('dimension', '')).strip().upper(),
+            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
+            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
             to_float(datos.get('psi', 0)),
-            str(datos.get('novedades', '')),
+            str(datos.get('novedades', '')).strip().upper(),
             to_float(datos.get('precio', 0)),
             to_float(datos.get('prof_inicial', 0)),
             to_float(datos.get('km_montaje', 0)),
             str(datos.get('numero_interno', '')).strip().upper(),
-            str(datos.get('usuario_registro', '')).strip(),
+            str(datos.get('usuario_registro', '')).strip().upper(),
             str(datos.get('foto_novedad', '')).strip()
         ))
         conn.commit()
@@ -919,7 +939,7 @@ def obtener_todas_inspecciones(usuario=None):
             usr_info = obtener_usuario_por_username(usuario)
             if usr_info and usr_info.get('rol') != 'admin':
                 # Si tiene cliente asignado, filtra por ese cliente. Si no tiene cliente asignado (vacío), tiene acceso a todas las flotas.
-                cli_asig = (usr_info.get('cliente_asignado') or '').strip()
+                cli_asig = (usr_info.get('cliente_asignado') or '').strip().upper()
                 if cli_asig:
                     query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
                     params.append(cli_asig)
@@ -930,6 +950,7 @@ def obtener_todas_inspecciones(usuario=None):
 def actualizar_inspeccion(inspeccion_id, datos):
     """
     Actualiza la información de una llanta o inspección específica por su ID.
+    Todos los campos de texto se persisten en mayúsculas.
     """
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -943,23 +964,23 @@ def actualizar_inspeccion(inspeccion_id, datos):
             WHERE id = ?
         """, (
             str(datos.get('fecha', '')),
-            str(datos.get('cliente', '')).strip(),
-            str(datos.get('subcliente', '')).strip(),
-            str(datos.get('tipo_operacion', '')).strip(),
+            str(datos.get('cliente', '')).strip().upper(),
+            str(datos.get('subcliente', '')).strip().upper(),
+            str(datos.get('tipo_operacion', '')).strip().upper(),
             str(datos.get('placa', '')).strip().upper(),
             to_int(datos.get('posicion', 1)),
             to_float(datos.get('kilometraje', 0)),
-            str(datos.get('tipologia', '')),
-            str(datos.get('marca', '')),
-            str(datos.get('diseno', '')),
-            str(datos.get('dimension', '')),
-            str(datos.get('vida', 'Original')),
-            str(datos.get('banda_reen', '')) if str(datos.get('vida', '')).strip().lower() == 'reencauche' else '',
+            str(datos.get('tipologia', '')).strip().upper(),
+            str(datos.get('marca', '')).strip().upper(),
+            str(datos.get('diseno', '')).strip().upper(),
+            str(datos.get('dimension', '')).strip().upper(),
+            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
+            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
             to_float(datos.get('psi', 0)),
-            str(datos.get('novedades', '')),
+            str(datos.get('novedades', '')).strip().upper(),
             to_float(datos.get('precio', 0)),
             to_float(datos.get('prof_inicial', 0)),
             to_float(datos.get('km_montaje', 0)),
@@ -1414,47 +1435,116 @@ def buscar_modelos_llantas_filtro(termino=''):
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
-# --- CONFIGURACIÓN DE LÍMITES POR CLIENTE ---
-def obtener_limite_retiro_cliente(cliente=''):
+# --- CONFIGURACIÓN DE LÍMITES POR CLIENTE, SUBCLIENTE Y EJE ---
+def obtener_limite_retiro_cliente(cliente='', subcliente='TODOS', eje='TODOS'):
     if pd.isna(cliente) or cliente is None:
         return 3.0
-    c = str(cliente).strip()
-    if not c or c.lower() in ('nan', 'none'):
+    c = str(cliente).strip().upper()
+    if not c or c in ('NAN', 'NONE'):
         return 3.0
+    sub = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
+    e = str(eje or 'TODOS').strip().upper() or 'TODOS'
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT limite_retiro_mm FROM configuracion_clientes WHERE LOWER(cliente) = LOWER(?)', (c,))
+        # 1. Búsqueda exacta: cliente + subcliente + eje
+        cursor.execute("""
+            SELECT limite_retiro_mm FROM configuracion_limites_retiro
+            WHERE cliente = ? AND subcliente = ? AND eje = ?
+        """, (c, sub, e))
         row = cursor.fetchone()
         if row and row[0] is not None:
             return to_float(row[0], 3.0)
+
+        # 2. cliente + subcliente + TODOS
+        if e != 'TODOS':
+            cursor.execute("""
+                SELECT limite_retiro_mm FROM configuracion_limites_retiro
+                WHERE cliente = ? AND subcliente = ? AND eje = 'TODOS'
+            """, (c, sub))
+            row = cursor.fetchone()
+            if row and row[0] is not None:
+                return to_float(row[0], 3.0)
+
+        # 3. cliente + TODOS + eje
+        if sub != 'TODOS':
+            cursor.execute("""
+                SELECT limite_retiro_mm FROM configuracion_limites_retiro
+                WHERE cliente = ? AND subcliente = 'TODOS' AND eje = ?
+            """, (c, e))
+            row = cursor.fetchone()
+            if row and row[0] is not None:
+                return to_float(row[0], 3.0)
+
+        # 4. cliente + TODOS + TODOS
+        cursor.execute("""
+            SELECT limite_retiro_mm FROM configuracion_limites_retiro
+            WHERE cliente = ? AND subcliente = 'TODOS' AND eje = 'TODOS'
+        """, (c,))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            return to_float(row[0], 3.0)
+
+        # 5. Fallback a tabla legada configuracion_clientes
+        cursor.execute("SELECT limite_retiro_mm FROM configuracion_clientes WHERE UPPER(cliente) = ?", (c,))
+        row = cursor.fetchone()
+        if row and row[0] is not None:
+            return to_float(row[0], 3.0)
+
     return 3.0
 
-def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones=''):
+def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', subcliente='TODOS', eje='TODOS'):
     if pd.isna(cliente) or cliente is None:
         return False
-    c = str(cliente).strip()
-    if not c or c.lower() in ('nan', 'none'):
+    c = str(cliente).strip().upper()
+    if not c or c in ('NAN', 'NONE'):
         return False
+    sub = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
+    e = str(eje or 'TODOS').strip().upper() or 'TODOS'
+    obs = str(observaciones or '').strip().upper()
     lim = to_float(limite_retiro_mm, 3.0)
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente) DO UPDATE SET
+            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente, subcliente, eje) DO UPDATE SET
                 limite_retiro_mm = excluded.limite_retiro_mm,
                 observaciones = excluded.observaciones,
                 fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lim, str(observaciones or '').strip()))
+        ''', (c, sub, e, lim, obs))
+        if sub == 'TODOS' and e == 'TODOS':
+            cursor.execute('''
+                INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente) DO UPDATE SET
+                    limite_retiro_mm = excluded.limite_retiro_mm,
+                    observaciones = excluded.observaciones,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+            ''', (c, lim, obs))
         conn.commit()
     return True
 
 def obtener_todas_configuraciones_clientes():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT cliente, limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes ORDER BY cliente ASC')
-        cols = ['cliente', 'limite_retiro_mm', 'observaciones', 'fecha_actualizacion']
+        cursor.execute('''
+            SELECT id, cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion
+            FROM configuracion_limites_retiro
+            ORDER BY cliente ASC, subcliente ASC, eje ASC
+        ''')
+        cols = ['id', 'cliente', 'subcliente', 'eje', 'limite_retiro_mm', 'observaciones', 'fecha_actualizacion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def eliminar_limite_retiro_cliente(limite_id):
+    try:
+        lid = int(limite_id)
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM configuracion_limites_retiro WHERE id = ?', (lid,))
+            conn.commit()
+        return True
+    except Exception:
+        return False
 
 def obtener_lista_clientes_unicos():
     with get_connection() as conn:
@@ -1462,6 +1552,8 @@ def obtener_lista_clientes_unicos():
         cursor.execute('''
             SELECT DISTINCT cliente FROM (
                 SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
                 UNION
                 SELECT cliente FROM configuracion_clientes
             ) ORDER BY cliente ASC
@@ -1476,7 +1568,7 @@ def obtener_todas_operaciones():
         return [r[0] for r in cursor.fetchall()]
 
 def guardar_operacion(nombre):
-    nom = (nombre or '').strip()
+    nom = (nombre or '').strip().upper()
     if not nom:
         return None
     with get_connection() as conn:
@@ -1495,21 +1587,153 @@ def obtener_todas_tipologias():
             res.append({'nombre': r[0], 'descripcion': r[1], 'cant_llantas': r[2], 'esquema': json.loads(r[3]) if r[3] else []})
         return res
 
-def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=None):
-    nom = (nombre or '').strip()
+def generar_esquema_desde_composicion(ejes_dir=1, tipo_dir='sencilla', ejes_trac=2, tipo_trac='dual', ejes_libres=0, tipo_libres='dual', cant_repuestos=0):
+    """
+    Construye el esquema dinámico JSON de posiciones y ejes basado en la composición:
+    - Ejes Direccionales (Delanteros): cantidad y si es sencilla (2 llantas) o dual (4 llantas)
+    - Ejes de Tracción (Fuerza): cantidad y si es dual (4 llantas) o sencilla (2 llantas)
+    - Ejes Libres / Arrastre / Trailer: cantidad y si es dual (4 llantas) o sencilla (2 llantas)
+    - Llanta(s) de Repuesto: 0, 1 o 2 llantas
+    """
+    ejes_dir = max(0, int(ejes_dir or 0))
+    ejes_trac = max(0, int(ejes_trac or 0))
+    ejes_libres = max(0, int(ejes_libres or 0))
+    cant_repuestos = max(0, min(2, int(cant_repuestos or 0)))
+    
+    tipo_dir = str(tipo_dir or 'sencilla').strip().lower()
+    tipo_trac = str(tipo_trac or 'dual').strip().lower()
+    tipo_libres = str(tipo_libres or 'dual').strip().lower()
+    
+    esquema = []
+    pos_act = 1
+    num_eje_global = 1
+    
+    # 1. Ejes Direccionales
+    for _ in range(ejes_dir):
+        if 'dual' in tipo_dir:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+            ]
+            pos_act += 4
+        else:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'dir', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'dir', 'dual': False}
+            ]
+            pos_act += 2
+        esquema.append({
+            'eje': num_eje_global,
+            'nombre': f'Eje {num_eje_global} (Direccional)',
+            'tipo': 'direccional',
+            'posiciones': posiciones
+        })
+        num_eje_global += 1
+        
+    # 2. Ejes de Tracción
+    for _ in range(ejes_trac):
+        if 'sencilla' in tipo_trac:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'sen', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'sen', 'dual': False}
+            ]
+            pos_act += 2
+        else:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+            ]
+            pos_act += 4
+        esquema.append({
+            'eje': num_eje_global,
+            'nombre': f'Eje {num_eje_global} (Tracción)',
+            'tipo': 'traccion',
+            'posiciones': posiciones
+        })
+        num_eje_global += 1
+        
+    # 3. Ejes Libres / Arrastre / Trailer
+    for _ in range(ejes_libres):
+        if 'sencilla' in tipo_libres:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'sen', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'sen', 'dual': False}
+            ]
+            pos_act += 2
+        else:
+            posiciones = [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': pos_act+1},
+                {'pos': pos_act+1, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': pos_act},
+                {'pos': pos_act+2, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': pos_act+3},
+                {'pos': pos_act+3, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': pos_act+2}
+            ]
+            pos_act += 4
+        esquema.append({
+            'eje': num_eje_global,
+            'nombre': f'Eje {num_eje_global} (Libre / Arrastre)',
+            'tipo': 'libre',
+            'posiciones': posiciones
+        })
+        num_eje_global += 1
+        
+    # 4. Llantas de Repuesto
+    if cant_repuestos == 1:
+        esquema.append({
+            'eje': 99,
+            'nombre': 'Repuesto',
+            'tipo': 'repuesto',
+            'posiciones': [{'pos': pos_act, 'lado': 'izq', 'rol': 'rep', 'dual': False}]
+        })
+        pos_act += 1
+    elif cant_repuestos >= 2:
+        esquema.append({
+            'eje': 99,
+            'nombre': 'Repuestos',
+            'tipo': 'repuesto',
+            'posiciones': [
+                {'pos': pos_act, 'lado': 'izq', 'rol': 'rep', 'dual': False},
+                {'pos': pos_act+1, 'lado': 'der', 'rol': 'rep', 'dual': False}
+            ]
+        })
+        pos_act += 2
+        
+    total_llantas = pos_act - 1
+    return esquema, total_llantas
+
+def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=None,
+                      ejes_dir=None, tipo_dir='sencilla',
+                      ejes_trac=None, tipo_trac='dual',
+                      ejes_libres=None, tipo_libres='dual',
+                      cant_repuestos=0):
+    nom = (nombre or '').strip().upper()
     if not nom:
         return None
     import json
-    cant = int(cant_llantas or 10)
+    desc = str(descripcion or '').strip().upper()
 
-    # Si se pasa un esquema personalizado válido
-    if esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
+    # Si se especificó composición de ejes (ejes_dir, ejes_trac, etc.)
+    if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
+        esquema, cant_calculada = generar_esquema_desde_composicion(
+            ejes_dir=ejes_dir or 0,
+            tipo_dir=tipo_dir,
+            ejes_trac=ejes_trac or 0,
+            tipo_trac=tipo_trac,
+            ejes_libres=ejes_libres or 0,
+            tipo_libres=tipo_libres,
+            cant_repuestos=cant_repuestos
+        )
+        cant = cant_calculada
+    elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
         esquema = esquema_custom
+        cant = sum(len(eje.get('posiciones', [])) for eje in esquema)
     else:
-        # Generar esquema inteligente según tipología conocida
+        cant = int(cant_llantas or 10)
         nom_l = nom.lower()
         if 'biarticulado' in nom_l:
-            # 1er eje dir (2), 2do eje tracción (4 dual), 3er eje libre (4 dual), 4to eje libre (4 dual) -> 14 llantas
             cant = 14
             esquema = [
                 {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]},
@@ -1518,7 +1742,6 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
                 {'eje': 4, 'nombre': 'Eje 4 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 11, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 12}, {'pos': 12, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 11}, {'pos': 13, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 14}, {'pos': 14, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 13}]}
             ]
         elif 'articulado' in nom_l and 'bi' not in nom_l:
-            # 1er eje dir (2), 2do eje tracción (4 dual), 3er eje libre (4 dual) -> 10 llantas
             cant = 10
             esquema = [
                 {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]},
@@ -1526,7 +1749,6 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
                 {'eje': 3, 'nombre': 'Eje 3 (Libre / Arrastre)', 'tipo': 'libre', 'posiciones': [{'pos': 7, 'lado': 'izq', 'rol': 'ext', 'dual': True, 'par': 8}, {'pos': 8, 'lado': 'izq', 'rol': 'int', 'dual': True, 'par': 7}, {'pos': 9, 'lado': 'der', 'rol': 'int', 'dual': True, 'par': 10}, {'pos': 10, 'lado': 'der', 'rol': 'ext', 'dual': True, 'par': 9}]}
             ]
         else:
-            # Generar esquema automático estándar
             esquema = [
                 {'eje': 1, 'nombre': 'Eje 1 (Direccional)', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'direccional', 'dual': False}, {'pos': 2, 'lado': 'der', 'rol': 'direccional', 'dual': False}]}
             ]
@@ -1565,7 +1787,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=10, esquema_custom=No
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                       (nom, descripcion, cant, json.dumps(esquema)))
+                       (nom, desc, cant, json.dumps(esquema)))
         conn.commit()
     return nom
 
@@ -1623,33 +1845,34 @@ def obtener_esquema_tipologia(tipologia_nombre):
         ]
 
 def actualizar_operacion(nombre_antiguo, nombre_nuevo):
-    nom_a = (nombre_antiguo or '').strip()
-    nom_n = (nombre_nuevo or '').strip()
+    nom_a = (nombre_antiguo or '').strip().upper()
+    nom_n = (nombre_nuevo or '').strip().upper()
     if not nom_a or not nom_n:
         return False
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('UPDATE catalogo_operaciones SET nombre = ? WHERE nombre = ?', (nom_n, nom_a))
-        cursor.execute('UPDATE inspecciones SET tipo_operacion = ? WHERE tipo_operacion = ?', (nom_n, nom_a))
+        cursor.execute('UPDATE catalogo_operaciones SET nombre = ? WHERE UPPER(nombre) = ?', (nom_n, nom_a))
+        cursor.execute('UPDATE inspecciones SET tipo_operacion = ? WHERE UPPER(tipo_operacion) = ?', (nom_n, nom_a))
         conn.commit()
     return True
 
 def eliminar_operacion(nombre):
-    nom = (nombre or '').strip()
+    nom = (nombre or '').strip().upper()
     if not nom:
         return False
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM catalogo_operaciones WHERE nombre = ?', (nom,))
+        cursor.execute('DELETE FROM catalogo_operaciones WHERE UPPER(nombre) = ?', (nom,))
         conn.commit()
     return True
 
 def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llantas=10, config_ejes=None):
-    nom_a = (nombre_antiguo or '').strip()
-    nom_n = (nombre_nuevo or '').strip()
+    nom_a = (nombre_antiguo or '').strip().upper()
+    nom_n = (nombre_nuevo or '').strip().upper()
     if not nom_a or not nom_n:
         return False
     cant = int(cant_llantas or 10)
+    desc = str(descripcion or '').strip().upper()
     
     # Si especificó config_ejes, armar esquema
     esquema_nuevo = None
@@ -1708,31 +1931,31 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
 
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT esquema_json FROM catalogo_tipologias WHERE nombre = ?', (nom_a,))
+        cursor.execute('SELECT esquema_json FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom_a,))
         row = cursor.fetchone()
         esquema_json = row[0] if row and row[0] else None
-        cursor.execute('DELETE FROM catalogo_tipologias WHERE nombre = ?', (nom_a,))
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom_a,))
         conn.commit()
 
     if esquema_nuevo:
-        return guardar_tipologia(nom_n, descripcion, cant, esquema_custom=esquema_nuevo)
+        return guardar_tipologia(nom_n, desc, cant, esquema_custom=esquema_nuevo)
     elif esquema_json and nom_a == nom_n:
         with get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                           (nom_n, descripcion, cant, esquema_json))
+                           (nom_n, desc, cant, esquema_json))
             conn.commit()
         return True
     else:
-        return guardar_tipologia(nom_n, descripcion, cant)
+        return guardar_tipologia(nom_n, desc, cant)
 
 def eliminar_tipologia(nombre):
-    nom = (nombre or '').strip()
+    nom = (nombre or '').strip().upper()
     if not nom:
         return False
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM catalogo_tipologias WHERE nombre = ?', (nom,))
+        cursor.execute('DELETE FROM catalogo_tipologias WHERE UPPER(nombre) = ?', (nom,))
         conn.commit()
     return True
 
@@ -1765,12 +1988,12 @@ def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original'):
     return 0.0
 
 def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion=''):
-    tipo = str(tipo_llanta or 'Nueva').strip()
-    m = str(marca or '').strip()
-    d = str(diseno or '').strip()
-    dim = str(dimension or '').strip()
+    tipo = str(tipo_llanta or 'NUEVA').strip().upper()
+    m = str(marca or '').strip().upper()
+    d = str(diseno or '').strip().upper()
+    dim = str(dimension or '').strip().upper()
     prof = to_float(prof_inicial, 0.0)
-    desc = str(descripcion or '').strip()
+    desc = str(descripcion or '').strip().upper()
     if not m or not d:
         return False
     with get_connection() as conn:
