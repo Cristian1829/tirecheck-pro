@@ -488,9 +488,11 @@ def api_diagnostico_matriz_semaforos(
 ):
     try:
         if usuario_actual.get("rol") != "admin":
-            if usuario_actual.get("cliente_asignado"):
-                cliente = usuario_actual["cliente_asignado"]
             filtro_u = usuario_actual["username"]
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and cliente and cliente != "Todos":
+                if not any(c.lower() == cliente.strip().lower() for c in clis):
+                    raise HTTPException(status_code=403, detail="No tiene permisos para ver la matriz de este cliente")
         else:
             filtro_u = usuario if usuario else None
 
@@ -514,6 +516,8 @@ def api_diagnostico_matriz_semaforos(
 
         matriz = database.calcular_matriz_semaforos_posicion(df)
         return sanitizar_nativos(matriz)
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -647,14 +651,23 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
 
 @app.get("/api/informe-pdf-consolidado")
 def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", operacion: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    filtro_u = None
+    if usuario_actual.get("rol") != "admin":
+        filtro_u = usuario_actual["username"]
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            if cliente and cliente != "Todos":
+                if not any(c.lower() == cliente.strip().lower() for c in clis):
+                    raise HTTPException(status_code=403, detail="No tiene permisos para generar informe de este cliente")
+            elif len(clis) == 1:
+                cliente = clis[0]
     try:
         pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(
             cliente=cliente if (cliente and cliente != "Todos") else None,
             subcliente=subcliente if (subcliente and subcliente != "Todos") else None,
             fecha=fecha if (fecha and fecha != "Todos") else None,
-            operacion=operacion if (operacion and operacion != "Todos") else None
+            operacion=operacion if (operacion and operacion != "Todos") else None,
+            usuario=filtro_u
         )
         c_tag = cliente.replace(" ", "_") if (cliente and cliente != "Todos") else "General"
         if subcliente and subcliente != "Todos":
@@ -668,6 +681,8 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
             media_type="application/pdf",
             headers={"Content-Disposition": f"inline; filename={filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 

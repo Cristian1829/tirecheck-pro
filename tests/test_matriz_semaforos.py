@@ -189,3 +189,128 @@ def test_pdf_consolidado_incluye_matriz_semaforos():
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 2000
     assert pdf_bytes.startswith(b'%PDF-')
+
+def test_matriz_semaforos_inspector_multiples_flotas():
+    """
+    Verifica que un usuario inspector con múltiples flotas asignadas (separadas por coma)
+    pueda ver las inspecciones de todas sus flotas asignadas, filtrar por cada una de ellas
+    y no pueda acceder a flotas no asignadas.
+    """
+    import server
+
+    # 1. Crear usuarios inspectores
+    database.crear_usuario(
+        username="inspector_multiflotas",
+        password="password123",
+        nombre_completo="Inspector Multi Flotas",
+        rol="inspector",
+        cliente_asignado="FLOTA ALPHA, FLOTA BETA",
+        vistas_permitidas="patio,diagnostico"
+    )
+    token_multi = server.crear_token_acceso("inspector_multiflotas", "inspector")
+
+    # 2. Insertar inspecciones para FLOTA ALPHA, FLOTA BETA y FLOTA GAMMA (ajena)
+    database.insertar_inspeccion({
+        'fecha': '2026-10-15',
+        'cliente': 'FLOTA ALPHA',
+        'subcliente': 'SEDE A',
+        'tipo_operacion': 'URBANO',
+        'placa': 'ALP101',
+        'posicion': 1,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'prof_ext': 6.0, 'prof_cent': 6.0, 'prof_int': 6.0
+    })
+    database.insertar_inspeccion({
+        'fecha': '2026-10-15',
+        'cliente': 'FLOTA BETA',
+        'subcliente': 'SEDE B',
+        'tipo_operacion': 'NACIONAL',
+        'placa': 'BET202',
+        'posicion': 1,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'prof_ext': 7.0, 'prof_cent': 7.0, 'prof_int': 7.0
+    })
+    database.insertar_inspeccion({
+        'fecha': '2026-10-15',
+        'cliente': 'FLOTA GAMMA',
+        'subcliente': 'SEDE G',
+        'tipo_operacion': 'RURAL',
+        'placa': 'GAM303',
+        'posicion': 1,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'prof_ext': 8.0, 'prof_cent': 8.0, 'prof_int': 8.0
+    })
+
+    # Caso A: Consulta sin parámetro cliente (o 'Todos') -> Debe incluir ALP101 y BET202, NUNCA GAM303
+    res_todos = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {token_multi}"})
+    assert res_todos.status_code == 200
+    data_todos = res_todos.json()
+    placas_todos = [f['placa'] for f in data_todos.get('filas', [])]
+    assert 'ALP101' in placas_todos
+    assert 'BET202' in placas_todos
+    assert 'GAM303' not in placas_todos
+    assert len(placas_todos) == 2
+
+    # Caso B: Filtrar por una flota permitida (FLOTA ALPHA)
+    res_alpha = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA ALPHA", headers={"Authorization": f"Bearer {token_multi}"})
+    assert res_alpha.status_code == 200
+    data_alpha = res_alpha.json()
+    placas_alpha = [f['placa'] for f in data_alpha.get('filas', [])]
+    assert 'ALP101' in placas_alpha
+    assert 'BET202' not in placas_alpha
+    assert 'GAM303' not in placas_alpha
+
+    # Caso C: Filtrar por otra flota permitida (FLOTA BETA)
+    res_beta = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers={"Authorization": f"Bearer {token_multi}"})
+    assert res_beta.status_code == 200
+    data_beta = res_beta.json()
+    placas_beta = [f['placa'] for f in data_beta.get('filas', [])]
+    assert 'BET202' in placas_beta
+    assert 'ALP101' not in placas_beta
+
+    # Caso D: Intentar consultar flota no asignada (FLOTA GAMMA) -> 403 Forbidden
+    res_gamma = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA GAMMA", headers={"Authorization": f"Bearer {token_multi}"})
+    assert res_gamma.status_code == 403
+    assert "No tiene permisos" in res_gamma.json().get("detail", "")
+
+def test_matriz_semaforos_inspector_flota_unica():
+    """Verifica que un inspector con una sola flota asignada solo acceda a su flota"""
+    import server
+
+    database.crear_usuario(
+        username="inspector_uniflota",
+        password="password123",
+        nombre_completo="Inspector Flota Única",
+        rol="inspector",
+        cliente_asignado="FLOTA ALPHA",
+        vistas_permitidas="patio,diagnostico"
+    )
+    token_single = server.crear_token_acceso("inspector_uniflota", "inspector")
+
+    # Consulta general solo debe ver FLOTA ALPHA
+    res = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {token_single}"})
+    assert res.status_code == 200
+    placas = [f['placa'] for f in res.json().get('filas', [])]
+    assert 'ALP101' in placas
+    assert 'BET202' not in placas
+    assert 'GAM303' not in placas
+
+    # Consulta a FLOTA BETA debe retornar 403
+    res_beta = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers={"Authorization": f"Bearer {token_single}"})
+    assert res_beta.status_code == 403
+
+def test_pdf_consolidado_inspector_permisos():
+    """Verifica que el informe PDF consolidado respete las flotas asignadas del inspector"""
+    import server
+
+    token_multi = server.crear_token_acceso("inspector_multiflotas", "inspector")
+
+    # Flota permitida -> 200 OK
+    res_ok = client.get("/api/informe-pdf-consolidado?cliente=FLOTA ALPHA", headers={"Authorization": f"Bearer {token_multi}"})
+    assert res_ok.status_code == 200
+    assert res_ok.headers.get("content-type") == "application/pdf"
+
+    # Flota no permitida -> 403 Forbidden
+    res_denied = client.get("/api/informe-pdf-consolidado?cliente=FLOTA GAMMA", headers={"Authorization": f"Bearer {token_multi}"})
+    assert res_denied.status_code == 403
+

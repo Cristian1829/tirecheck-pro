@@ -850,12 +850,12 @@ def generar_pdf_plan_mantenimiento(placa, fecha=None):
     """
     return renderizar_informe(construir_datos_informe(placa, fecha))
 
-def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None):
+def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None):
     """
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
     """
-    df_insp = database.obtener_todas_inspecciones()
+    df_insp = database.obtener_todas_inspecciones(usuario=usuario)
     if df_insp.empty:
         raise ValueError("No existen inspecciones registradas en el sistema.")
 
