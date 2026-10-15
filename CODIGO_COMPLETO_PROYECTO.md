@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 16:18:25`
+- **Fecha de Generación:** `2026-10-14 20:19:06`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,071` líneas
-- **Tamaño Total de Código Fuente:** `1253.9 KB` (`1,283,997` bytes)
+- **Líneas Totales de Código:** `20,075` líneas
+- **Tamaño Total de Código Fuente:** `1253.7 KB` (`1,283,775` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -208,7 +208,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [templates/index.html](#archivo-templatesindexhtml) | `html` | 6377 | 601.4 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
-| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1329 | 69.4 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
+| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1333 | 69.3 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
@@ -8694,7 +8694,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6377 líneas | 615,848 bytes (601.4 KB)
+- **Métricas:** 6377 líneas | 615,787 bytes (601.4 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9052,68 +9052,79 @@ if __name__ == '__main__':
           </div>
         </div>
 
-        <!-- Campos de Cliente & Operación -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Cliente / Empresa</label>
-            <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
-              <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
-            </select>
-            <datalist id="dl_clientes"></datalist>
-          </div>
+        <!-- Contenedor a 2 Columnas en Web (md:grid-cols-2) y 2 Columnas Compacto en Móvil -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
+          
+          <!-- COLUMNA 1: CLIENTE & INSPECCIÓN -->
+          <div class="space-y-2.5">
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cliente / Empresa</label>
+                <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+                  <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
+                </select>
+                <datalist id="dl_clientes"></datalist>
+              </div>
 
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente</label>
-            <select id="subcliente" onchange="verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
-              <option value="" selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
-            </select>
-            <datalist id="dl_subclientes"></datalist>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Tipo de Operación</label>
-            <select id="tipo_operacion" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-              <option value="Carga Seca">Carga Seca</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Campos del Vehículo -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-[11px] font-bold text-slate-600">Placa Vehículo *</label>
-              <span id="badgePlacaVinculada" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                <i class="fa-solid fa-link mr-1"></i>Esquema Vinculado
-              </span>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente</label>
+                <select id="subcliente" onchange="verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+                  <option value="" selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
+                </select>
+                <datalist id="dl_subclientes"></datalist>
+              </div>
             </div>
-            <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa'); onInputPlacaDebounced();" onblur="consultarPerfilPlacaInmediato(); verificarInspeccionAnterior();">
-            <p id="err_placa" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
-              <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
-              <span>La placa del vehículo es obligatoria</span>
-            </p>
-          </div>
 
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-[11px] font-bold text-slate-600">Tipología</label>
-              <button type="button" id="btnDesbloquearTipologia" onclick="desbloquearTipologia()" class="hidden text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Permite modificar la tipología de este vehículo">
-                <i class="fa-solid fa-lock-open text-[9px]"></i>
-                <span>Cambiar</span>
-              </button>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
+              <input type="date" id="fecha" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
             </div>
-            <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all"></select>
           </div>
 
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
-            <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+          <!-- COLUMNA 2: VEHÍCULO & OPERACIÓN -->
+          <div class="space-y-2.5 pt-2 md:pt-0 border-t md:border-t-0 md:border-l md:pl-5 border-slate-100">
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Placa Vehículo *</label>
+                  <span id="badgePlacaVinculada" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <i class="fa-solid fa-link mr-1"></i>Esquema Vinculado
+                  </span>
+                </div>
+                <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa'); onInputPlacaDebounced();" onblur="consultarPerfilPlacaInmediato(); verificarInspeccionAnterior();">
+                <p id="err_placa" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
+                  <span>La placa del vehículo es obligatoria</span>
+                </p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Tipología</label>
+                  <button type="button" id="btnDesbloquearTipologia" onclick="desbloquearTipologia()" class="hidden text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Permite modificar la tipología de este vehículo">
+                    <i class="fa-solid fa-lock-open text-[9px]"></i>
+                    <span>Cambiar</span>
+                  </button>
+                </div>
+                <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all"></select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+                <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Tipo de Operación</label>
+                <select id="tipo_operacion" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+                  <option value="Carga Seca">Carga Seca</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
-            <input type="date" id="fecha" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-          </div>
         </div>
       </div>
 
@@ -9176,17 +9187,6 @@ if __name__ == '__main__':
                 <i class="fa-solid fa-file-pdf"></i>
                 <span>Generar PDF</span>
               </button>
-            </div>
-          </div>
-
-          <!-- Selector Rápido de Ruedas: Conservado en móvil táctil -->
-          <div class="lg:hidden pt-1 pb-2">
-            <div class="flex items-center justify-between pb-1.5 text-xs text-slate-500 font-bold">
-              <span>Selector Rápido de Ruedas:</span>
-              <span id="badgeEstadoPosPill" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Pendiente</span>
-            </div>
-            <div id="carruselLlantasMobile" class="flex space-x-2 overflow-x-auto pb-1 scrollbar-none custom-scroll scroll-smooth">
-              <!-- Llenado dinámicamente -->
             </div>
           </div>
 
@@ -15083,7 +15083,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/preview_chasis.html`
 - **Descripción:** Visor interactivo y banco de pruebas de renderizado de tipologías de chasis
-- **Métricas:** 1329 líneas | 71,089 bytes (69.4 KB)
+- **Métricas:** 1333 líneas | 70,928 bytes (69.3 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -15211,40 +15211,53 @@ if __name__ == '__main__':
         </div>
       </div>
 
-      <!-- Fila 1: Cliente, Sede, Operación -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa</label>
-          <input type="text" id="cliente" value="Transportes Andes S.A.S" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Sede / Subcliente</label>
-          <input type="text" id="subcliente" value="Patio Principal - Bogotá" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Operación</label>
-          <input type="text" id="tipo_operacion" value="Carga Seca" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-        </div>
-      </div>
+      <!-- Contenedor a 2 Columnas en Web (md:grid-cols-2) y 2 Columnas Compacto en Móvil -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
+        
+        <!-- COLUMNA 1: CLIENTE & INSPECCIÓN -->
+        <div class="space-y-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa</label>
+              <input type="text" id="cliente" value="Transportes Andes S.A.S" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Sede / Subcliente</label>
+              <input type="text" id="subcliente" value="Patio Principal - Bogotá" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+          </div>
 
-      <!-- Fila 2: Placa, Tipología, Odómetro, Fecha -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo *</label>
-          <input type="text" id="placa" value="XYZ789" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Inspección</label>
+            <input type="text" id="fecha" value="2026-10-12" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Tipología</label>
-          <input type="text" id="lblTipologiaNombre" value="Cabezote (6x4)" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+
+        <!-- COLUMNA 2: VEHÍCULO & OPERACIÓN -->
+        <div class="space-y-2.5 pt-2 md:pt-0 border-t md:border-t-0 md:border-l md:pl-5 border-slate-100">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo *</label>
+              <input type="text" id="placa" value="XYZ789" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Tipología</label>
+              <input type="text" id="lblTipologiaNombre" value="Cabezote (6x4)" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+              <input type="number" id="kilometraje" value="128500" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Operación</label>
+              <input type="text" id="tipo_operacion" value="Carga Seca" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
-          <input type="number" id="kilometraje" value="128500" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 font-mono">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Inspección</label>
-          <input type="text" id="fecha" value="2026-10-12" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-        </div>
+
       </div>
     </div>
 
@@ -15292,15 +15305,6 @@ if __name__ == '__main__':
           <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
             <div id="barraProgresoChasis" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%;"></div>
           </div>
-        </div>
-
-        <!-- SELECTOR RÁPIDO DE CHIPS: EN MÓVIL SE CONSERVA EL CARRUSEL TÁCTIL; EN ESCRITORIO SE OCULTA -->
-        <div class="lg:hidden pt-1 pb-2">
-          <div class="flex items-center justify-between pb-1.5 text-xs text-slate-500 font-bold">
-            <span>Selector Rápido de Ruedas:</span>
-            <span id="badgeEstadoPosPillMobile" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Pendiente</span>
-          </div>
-          <div id="carruselLlantasMobile" class="flex space-x-2 overflow-x-auto pb-1 scrollbar-none custom-scroll scroll-smooth"></div>
         </div>
 
         <!-- FILA DE ORIENTACIÓN ESPACIAL: JUSTO SOBRE EL PRIMER EJE -->
