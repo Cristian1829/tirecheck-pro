@@ -202,6 +202,7 @@ def inicializar_bd():
                 cursor.execute(f"ALTER TABLE inspecciones ADD COLUMN {col} {tipo}")
 
         # Tabla de Usuarios con roles y clientes asignados
+        # Tabla de Usuarios con roles y clientes asignados
         conn.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -209,22 +210,32 @@ def inicializar_bd():
                 password TEXT NOT NULL,
                 nombre_completo TEXT NOT NULL,
                 rol TEXT NOT NULL DEFAULT 'inspector', -- 'admin', 'inspector'
-                cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo o vacío para todos
+                cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo, varios separados por comas, o vacío para todos
+                vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', -- Vistas autorizadas (basedatos y catalogos solo admin)
                 activo INTEGER DEFAULT 1,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
+        # Auto-migración segura de columna vistas_permitidas si la tabla ya existía
+        try:
+            cursor.execute("PRAGMA table_info(usuarios)")
+            cols_usr = [r[1] for r in cursor.fetchall()]
+            if 'vistas_permitidas' not in cols_usr:
+                cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
+        except Exception:
+            pass
+
         # Insertar usuarios por defecto si no existen
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         if cursor.fetchone()[0] == 0:
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('admin', ?, 'Administrador General', 'admin', '')
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,catalogos')
             """, (hash_password('admin123'),))
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '')
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis')
             """, (hash_password('1234'),))
         else:
             # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
@@ -947,17 +958,17 @@ def obtener_todas_inspecciones(usuario=None):
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
                    psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
             FROM inspecciones
-
         """
         params = []
         if usuario:
             usr_info = obtener_usuario_por_username(usuario)
             if usr_info and usr_info.get('rol') != 'admin':
-                # Si tiene cliente asignado, filtra por ese cliente. Si no tiene cliente asignado (vacío), tiene acceso a todas las flotas.
-                cli_asig = (usr_info.get('cliente_asignado') or '').strip().upper()
-                if cli_asig:
-                    query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
-                    params.append(cli_asig)
+                # Si tiene uno o varios clientes asignados, filtra por esa lista. Si no tiene cliente asignado (vacío), acceso a todas las flotas.
+                clis = parsear_clientes_asignados(usr_info.get('cliente_asignado'))
+                if clis:
+                    placeholders = ', '.join(['UPPER(TRIM(?))'] * len(clis))
+                    query += f" WHERE UPPER(TRIM(cliente)) IN ({placeholders})"
+                    params.extend([c.upper() for c in clis])
         query += " ORDER BY id DESC"
         return pd.read_sql_query(query, conn, params=params)
 
@@ -2221,8 +2232,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         usr_info = obtener_usuario_por_username(usuario_filtro)
         if usr_info and usr_info.get('rol') != 'admin':
             cli_asig = usr_info.get('cliente_asignado')
-            if cli_asig:
-                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() == str(cli_asig).strip().lower()]
+            clis = parsear_clientes_asignados(cli_asig)
+            if clis:
+                clis_lower = [c.lower() for c in clis]
+                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() in clis_lower]
             else:
                 resultados = [r for r in resultados if str(r.get('usuario_registro') or '').strip().lower() == str(usuario_filtro).strip().lower()]
 
@@ -2232,6 +2245,26 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 # GESTIÓN Y AUTENTICACIÓN DE USUARIOS
 # ==========================================
 
+def parsear_clientes_asignados(cliente_asignado) -> list:
+    """Convierte el string de cliente_asignado (uno o varios separados por comas) en lista limpia."""
+    if not cliente_asignado:
+        return []
+    return [c.strip() for c in str(cliente_asignado).split(',') if c.strip()]
+
+def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
+    """
+    Retorna la lista de vistas autorizadas.
+    REGLA: Solo el admin puede acceder a 'basedatos' y 'catalogos'.
+    """
+    if str(rol).strip().lower() == 'admin':
+        return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+    if not vistas:
+        return ['patio', 'diagnostico', 'kpis']
+    raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
+    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos ni catalogos
+    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis')]
+    return permitidas if permitidas else ['patio']
+
 def autenticar_usuario(username, password):
     u = (username or '').strip()
     p = (password or '').strip()
@@ -2240,26 +2273,31 @@ def autenticar_usuario(username, password):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo
+            SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo,
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
             FROM usuarios
             WHERE LOWER(username) = LOWER(?) AND activo = 1
         """, (u,))
         row = cursor.fetchone()
         if not row:
             return None
-        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo = row
+        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas = row
         if verify_password(p, stored_pwd):
             # Auto-migración en caso de que aún tuviera contraseña legada en texto plano
             if not stored_pwd.startswith("pbkdf2_sha256$"):
                 nuevo_hash = hash_password(p)
                 cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, uid))
                 conn.commit()
+            clis = parsear_clientes_asignados(cliente_asignado)
+            vistas = parsear_vistas_permitidas(raw_vistas, rol)
             return {
                 'id': uid,
                 'username': db_username,
                 'nombre_completo': nombre_completo,
                 'rol': rol,
                 'cliente_asignado': cliente_asignado or '',
+                'clientes_asignados': clis,
+                'vistas_permitidas': vistas,
                 'activo': bool(activo)
             }
     return None
@@ -2271,18 +2309,23 @@ def obtener_usuario_por_username(username):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
             FROM usuarios
             WHERE LOWER(username) = LOWER(?)
         """, (u,))
         row = cursor.fetchone()
         if row:
+            clis = parsear_clientes_asignados(row[4])
+            vistas = parsear_vistas_permitidas(row[6], row[3])
             return {
                 'id': row[0],
                 'username': row[1],
                 'nombre_completo': row[2],
                 'rol': row[3],
                 'cliente_asignado': row[4] or '',
+                'clientes_asignados': clis,
+                'vistas_permitidas': vistas,
                 'activo': bool(row[5])
             }
     return None
@@ -2291,14 +2334,21 @@ def listar_usuarios():
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
             FROM usuarios
             ORDER BY id ASC
         """)
-        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion']
-        return [dict(zip(cols, r)) for r in cursor.fetchall()]
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas']
+        filas = []
+        for r in cursor.fetchall():
+            d = dict(zip(cols, r))
+            d['clientes_asignados'] = parsear_clientes_asignados(d.get('cliente_asignado'))
+            d['vistas_permitidas'] = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
+            filas.append(d)
+        return filas
 
-def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado=''):
+def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado='', vistas_permitidas=None):
     u = (username or '').strip().lower()
     p = (password or '').strip()
     nom = (nombre_completo or '').strip()
@@ -2308,20 +2358,28 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
         return False
     if len(p) < 4:
         return False
+    
+    # Resolver vistas autorizadas según rol
+    if r == 'admin':
+        vistas_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+    else:
+        vistas_limpias = parsear_vistas_permitidas(vistas_permitidas, r)
+        vistas_str = ','.join(vistas_limpias)
+
     hashed_pwd = hash_password(p)
     with get_connection() as conn:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES (?, ?, ?, ?, ?)
-            """, (u, hashed_pwd, nom, r, cli))
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (u, hashed_pwd, nom, r, cli, vistas_str))
             conn.commit()
             return True
         except Exception:
             return False
 
-def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None):
+def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None):
     u = (username or '').strip().lower()
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -2336,9 +2394,28 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
                 return False
             updates.append("password = ?")
             params.append(hash_password(p_str))
+        
+        rol_final = None
         if rol is not None:
+            rol_final = rol.strip().lower()
             updates.append("rol = ?")
-            params.append(rol.strip().lower())
+            params.append(rol_final)
+        else:
+            # Obtener rol actual para validar vistas
+            cursor.execute("SELECT rol FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,))
+            row_rol = cursor.fetchone()
+            if row_rol:
+                rol_final = row_rol[0]
+
+        if vistas_permitidas is not None:
+            if rol_final == 'admin':
+                v_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+            else:
+                v_limpias = parsear_vistas_permitidas(vistas_permitidas, rol_final)
+                v_str = ','.join(v_limpias)
+            updates.append("vistas_permitidas = ?")
+            params.append(v_str)
+
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
             params.append(cliente_asignado.strip())

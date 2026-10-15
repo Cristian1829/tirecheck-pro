@@ -359,7 +359,12 @@
           <div class="space-y-2.5">
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cliente / Empresa</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Cliente / Empresa</label>
+                  <span id="badgeClienteAsignadoFijo" class="hidden text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 shadow-xs">
+                    <i class="fa-solid fa-lock text-[9px] mr-1"></i><span>Predeterminado</span>
+                  </span>
+                </div>
                 <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
                   <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
                 </select>
@@ -1433,7 +1438,8 @@
                 <th class="p-2.5">Usuario</th>
                 <th class="p-2.5">Nombre Completo</th>
                 <th class="p-2.5 text-center">Rol</th>
-                <th class="p-2.5">Cliente Asignado</th>
+                <th class="p-2.5">Vistas Autorizadas</th>
+                <th class="p-2.5">Clientes Asignados</th>
                 <th class="p-2.5 text-center">Estado</th>
                 <th class="p-2.5 text-center">Acciones</th>
               </tr>
@@ -1742,24 +1748,89 @@
   </div>
 
   <!-- MODAL: GESTIÓN DE USUARIOS -->
-  <div id="modalNuevoUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+  <div id="modalNuevoUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100 my-8">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Registrar Usuario</h3>
+        <h3 class="text-sm font-black text-slate-900 flex items-center space-x-2">
+          <i class="fa-solid fa-user-plus text-indigo-600"></i>
+          <span>Registrar Nuevo Usuario</span>
+        </h3>
         <button type="button" onclick="cerrarModalNuevoUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-2.5 text-xs">
+      <div class="space-y-3 text-xs">
         <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Contraseña (Mínimo 4 caracteres)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
-          <select id="usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+          <select id="usr_rol" onchange="alCambiarRolUsuarioModal('nuevo')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Cliente Asignado (Opcional)</label><input type="text" id="usr_cliente" placeholder="Vacío para todas las flotas" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+
+        <!-- VISTAS / MÓDULOS PERMITIDOS -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+            <span>Módulos / Vistas Autorizadas</span>
+          </label>
+          <div class="space-y-1.5 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_patio" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Inspección de Patio</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_diagnostico" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Diagnóstico &amp; Planes</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_kpis" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Trazabilidad &amp; KPIs</span>
+            </label>
+            <label id="lbl_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="usr_vista_basedatos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Base de Inspecciones</span>
+              </span>
+              <span id="badge_usr_vista_basedatos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+            <label id="lbl_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="usr_vista_catalogos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Catálogos &amp; Ajustes</span>
+              </span>
+              <span id="badge_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ASIGNACIÓN DE CLIENTES -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-building text-blue-600"></i>
+            <span>Clientes / Flotas Asignadas</span>
+          </label>
+          <div class="space-y-2 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-800 font-bold cursor-pointer">
+              <input type="checkbox" id="usr_todas_flotas" onchange="toggleClientesTodosModal('nuevo')" class="rounded text-blue-600" checked>
+              <span>Acceso a Todas las Flotas (Sin Restricción)</span>
+            </label>
+            <div id="usr_contenedor_clientes_nuevo" class="hidden space-y-2 pt-1 border-t border-slate-200">
+              <p class="text-[11px] text-slate-500">Marca los clientes a los que puede ingresar este usuario. Si seleccionas solo uno, aparecerá predeterminado y fijo:</p>
+              <div id="usr_lista_clientes_check_nuevo" class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-white rounded-xl border border-slate-200"></div>
+              <div class="flex items-center space-x-1.5 pt-0.5">
+                <input type="text" id="usr_cliente_custom_nuevo" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
+                <button type="button" onclick="agregarClienteCustomModal('nuevo')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalNuevoUsuario()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoUsuario()" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl font-bold">Crear Usuario</button>
@@ -1769,8 +1840,8 @@
   </div>
 
   <!-- MODAL: EDITAR USUARIO -->
-  <div id="modalEditarUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+  <div id="modalEditarUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100 my-8">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
           <i class="fa-solid fa-user-pen text-blue-600"></i>
@@ -1778,7 +1849,7 @@
         </h3>
         <button type="button" onclick="cerrarModalEditarUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-2.5 text-xs">
+      <div class="space-y-3 text-xs">
         <div>
           <label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label>
           <input type="text" id="edit_usr_username" class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-500 cursor-not-allowed" readonly disabled>
@@ -1789,15 +1860,74 @@
         </div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
-          <select id="edit_usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+          <select id="edit_usr_rol" onchange="alCambiarRolUsuarioModal('editar')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">Cliente Asignado</label>
-          <input type="text" id="edit_usr_cliente" placeholder="Vacío para Todas las Flotas" class="w-full p-2 bg-slate-50 border rounded-xl">
+
+        <!-- VISTAS / MÓDULOS PERMITIDOS -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+            <span>Módulos / Vistas Autorizadas</span>
+          </label>
+          <div class="space-y-1.5 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_patio" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Inspección de Patio</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_diagnostico" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Diagnóstico &amp; Planes</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_kpis" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Trazabilidad &amp; KPIs</span>
+            </label>
+            <label id="lbl_edit_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="edit_usr_vista_basedatos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Base de Inspecciones</span>
+              </span>
+              <span id="badge_edit_usr_vista_basedatos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+            <label id="lbl_edit_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="edit_usr_vista_catalogos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Catálogos &amp; Ajustes</span>
+              </span>
+              <span id="badge_edit_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+          </div>
         </div>
+
+        <!-- ASIGNACIÓN DE CLIENTES -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-building text-blue-600"></i>
+            <span>Clientes / Flotas Asignadas</span>
+          </label>
+          <div class="space-y-2 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-800 font-bold cursor-pointer">
+              <input type="checkbox" id="edit_usr_todas_flotas" onchange="toggleClientesTodosModal('editar')" class="rounded text-blue-600" checked>
+              <span>Acceso a Todas las Flotas (Sin Restricción)</span>
+            </label>
+            <div id="edit_usr_contenedor_clientes" class="hidden space-y-2 pt-1 border-t border-slate-200">
+              <p class="text-[11px] text-slate-500">Marca los clientes a los que puede ingresar este usuario. Si seleccionas solo uno, aparecerá predeterminado y fijo:</p>
+              <div id="edit_usr_lista_clientes_check" class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-white rounded-xl border border-slate-200"></div>
+              <div class="flex items-center space-x-1.5 pt-0.5">
+                <input type="text" id="edit_usr_cliente_custom" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
+                <button type="button" onclick="agregarClienteCustomModal('editar')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label class="font-bold text-slate-600 block mb-1">Estado</label>
           <select id="edit_usr_activo" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
@@ -2253,6 +2383,29 @@
     // NAVEGACIÓN ENTRE PESTAÑAS (SPA)
     // ==========================================
     function navegarTab(tabId) {
+      if (!usuarioActual) {
+        document.getElementById('modalLogin').classList.remove('hidden');
+        return;
+      }
+
+      // Regla estricta: Solo el admin puede ingresar a Base de Inspecciones y Catálogos & Ajustes
+      if ((tabId === 'basedatos' || tabId === 'catalogos') && usuarioActual.rol !== 'admin') {
+        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a Base de Inspecciones y Catálogos', true);
+        tabId = 'patio';
+      }
+
+      // Validar si el usuario tiene asignada la vista solicitada
+      if (usuarioActual.rol !== 'admin') {
+        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis')
+          .split(',')
+          .map(v => v.trim().toLowerCase())
+          .filter(Boolean);
+        if (!vistasPermitidas.includes(tabId)) {
+          mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
+          tabId = vistasPermitidas.includes('patio') ? 'patio' : (vistasPermitidas[0] || 'patio');
+        }
+      }
+
       const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
       tabs.forEach(t => {
         const elVista = document.getElementById(`vista-${t}`);
@@ -2368,7 +2521,25 @@
         lbl.textContent = `${usuarioActual.nombre_completo} ${rolBadge}`;
       }
 
-      // Control de acceso a la subpestaña de Usuarios en Catálogos
+      // Control de visibilidad de pestañas de navegación según permisos del perfil
+      const vistasPermitidas = (usuarioActual.rol === 'admin')
+        ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+
+      ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
+        const btnNav = document.getElementById(`nav-btn-${tab}`);
+        if (btnNav) {
+          if (usuarioActual.rol !== 'admin' && (tab === 'basedatos' || tab === 'catalogos')) {
+            btnNav.classList.add('hidden');
+          } else if (vistasPermitidas.includes(tab)) {
+            btnNav.classList.remove('hidden');
+          } else {
+            btnNav.classList.add('hidden');
+          }
+        }
+      });
+
+      // Control de acceso a la subpestaña de Usuarios en Catálogos (Solo Admin)
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) {
         if (usuarioActual.rol === 'admin') {
@@ -2378,15 +2549,8 @@
         }
       }
 
-      if (usuarioActual.rol !== 'admin' && usuarioActual.cliente_asignado) {
-        const inpCli = document.getElementById('cliente');
-        if (inpCli) {
-          inpCli.value = usuarioActual.cliente_asignado;
-          inpCli.readOnly = true;
-          const bCli = document.getElementById('badgeClienteGuardado');
-          if (bCli) bCli.textContent = 'Asignado a Flota';
-        }
-      }
+      // Configurar estado de clientes asignados en la vista de Patio
+      configurarClientesUsuarioEnInspeccion();
     }
 
     // ==========================================
@@ -3637,6 +3801,29 @@
 
     let usuariosCatCache = [];
 
+    function renderizarBadgesVistas(vistasStr, rol) {
+      if (rol === 'admin') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (5 Módulos)</span>`;
+      }
+      const vistas = (vistasStr || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const badges = [];
+      if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
+      if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
+      if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
+    }
+
+    function renderizarBadgesClientes(clienteAsignadoStr) {
+      if (!clienteAsignadoStr || !clienteAsignadoStr.trim()) {
+        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Todas las Flotas</span>';
+      }
+      const clis = clienteAsignadoStr.split(',').map(s => s.trim()).filter(Boolean);
+      if (clis.length === 1) {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
+      }
+      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${c}</span>`).join('')}</div>`;
+    }
+
     async function cargarUsuariosCat() {
       if (!usuarioActual || usuarioActual.rol !== 'admin') return;
       try {
@@ -3651,7 +3838,8 @@
               <td class="p-2.5 text-center font-bold uppercase text-[10px]">
                 <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
               </td>
-              <td class="p-2.5">${u.cliente_asignado || '<span class="text-slate-400 italic">Todas las Flotas</span>'}</td>
+              <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
+              <td class="p-2.5">${renderizarBadgesClientes(u.cliente_asignado)}</td>
               <td class="p-2.5 text-center">
                 ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
               </td>
@@ -3680,18 +3868,250 @@
       }
     }
 
+    // Helpers de Control de Vistas y Asignación de Clientes en Modales
+    function alCambiarRolUsuarioModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const rol = document.getElementById(`${pfx}rol`).value;
+      const chkBD = document.getElementById(`${pfx}vista_basedatos`);
+      const chkCat = document.getElementById(`${pfx}vista_catalogos`);
+      const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
+      const lblCat = document.getElementById(`lbl_${pfx}vista_catalogos`);
+      const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
+      const badgeCat = document.getElementById(`badge_${pfx}vista_catalogos`);
+
+      if (rol === 'admin') {
+        // Para admin: acceso total a las 5 vistas
+        document.getElementById(`${pfx}vista_patio`).checked = true;
+        document.getElementById(`${pfx}vista_diagnostico`).checked = true;
+        document.getElementById(`${pfx}vista_kpis`).checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (lblCat) {
+          lblCat.classList.remove('text-slate-400', 'bg-slate-100');
+          lblCat.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+        if (badgeCat) badgeCat.classList.add('hidden');
+      } else {
+        // Para inspector: NUNCA tiene acceso a basedatos ni a catalogos
+        if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
+        if (chkCat) { chkCat.checked = false; chkCat.disabled = true; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
+          lblBD.classList.add('text-slate-400', 'bg-slate-100');
+        }
+        if (lblCat) {
+          lblCat.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
+          lblCat.classList.add('text-slate-400', 'bg-slate-100');
+        }
+        if (badgeBD) badgeBD.classList.remove('hidden');
+        if (badgeCat) badgeCat.classList.remove('hidden');
+      }
+    }
+
+    function toggleClientesTodosModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chk = document.getElementById(`${pfx}todas_flotas`);
+      const cont = document.getElementById(modo === 'nuevo' ? 'usr_contenedor_clientes_nuevo' : 'edit_usr_contenedor_clientes');
+      if (chk && cont) {
+        if (chk.checked) {
+          cont.classList.add('hidden');
+        } else {
+          cont.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function poblarListaCheckboxesClientesModal(modo, clientesSeleccionados = []) {
+      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
+      const cont = document.getElementById(contId);
+      if (!cont) return;
+
+      let clientesDisponibles = [];
+      try {
+        const res = await fetch('/api/valores-campo?campo=cliente');
+        if (res.ok) {
+          clientesDisponibles = await res.json();
+        }
+      } catch(e) {}
+
+      // Combinar con los ya seleccionados para no perder ningún valor histórico
+      const setTotal = new Set();
+      (clientesSeleccionados || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim()); });
+      (clientesDisponibles || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim()); });
+
+      const lista = Array.from(setTotal).sort((a, b) => a.localeCompare(b));
+      if (lista.length === 0) {
+        cont.innerHTML = '<p class="text-slate-400 italic text-[11px] p-2">No hay clientes registrados en el catálogo. Puedes escribir uno abajo.</p>';
+        return;
+      }
+
+      const selSet = new Set((clientesSeleccionados || []).map(s => s.trim().toLowerCase()));
+      cont.innerHTML = lista.map(c => {
+        const isChecked = selSet.has(c.toLowerCase());
+        return `
+          <label class="flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors">
+            <input type="checkbox" value="${c}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" ${isChecked ? 'checked' : ''}>
+            <span class="font-medium">${c}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function agregarClienteCustomModal(modo) {
+      const inpId = modo === 'nuevo' ? 'usr_cliente_custom_nuevo' : 'edit_usr_cliente_custom';
+      const inp = document.getElementById(inpId);
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (!val) return;
+
+      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
+      const cont = document.getElementById(contId);
+      if (!cont) return;
+
+      // Verificar si ya existe el checkbox
+      const existentes = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).map(el => el.value.toLowerCase());
+      if (existentes.includes(val.toLowerCase())) {
+        const chk = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).find(el => el.value.toLowerCase() === val.toLowerCase());
+        if (chk) chk.checked = true;
+      } else {
+        const lbl = document.createElement('label');
+        lbl.className = 'flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors';
+        lbl.innerHTML = `
+          <input type="checkbox" value="${val}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" checked>
+          <span class="font-medium">${val}</span>
+        `;
+        cont.prepend(lbl);
+      }
+      inp.value = '';
+    }
+
+    function obtenerVistasSeleccionadasModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const rol = document.getElementById(`${pfx}rol`).value;
+      if (rol === 'admin') {
+        return 'patio,basedatos,diagnostico,kpis,catalogos';
+      }
+      const vistas = [];
+      if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
+      if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
+      if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
+      // Seguridad inquebrantable: NUNCA añadir basedatos ni catalogos para no-admin
+      if (vistas.length === 0) vistas.push('patio');
+      return vistas.join(',');
+    }
+
+    function obtenerClientesSeleccionadosModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chkTodas = document.getElementById(`${pfx}todas_flotas`);
+      if (chkTodas && chkTodas.checked) {
+        return '';
+      }
+      const checkboxes = document.querySelectorAll(`.chk-cli-modal-${modo}:checked`);
+      const seleccionados = Array.from(checkboxes).map(c => c.value.trim()).filter(Boolean);
+      return seleccionados.join(', ');
+    }
+
+    function configurarClientesUsuarioEnInspeccion() {
+      if (!usuarioActual) return;
+      const selCli = document.getElementById('cliente');
+      const badgeFijo = document.getElementById('badgeClienteAsignadoFijo');
+      if (!selCli) return;
+
+      let clis = [];
+      if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
+        clis = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
+      } else if (usuarioActual.cliente_asignado && typeof usuarioActual.cliente_asignado === 'string') {
+        clis = usuarioActual.cliente_asignado.split(',').map(c => c.trim()).filter(Boolean);
+      }
+
+      if (usuarioActual.rol !== 'admin' && clis.length === 1) {
+        // REGLA: Si es solo un cliente, en la inspección aparecerá predeterminado y fijo
+        const cliUnico = clis[0];
+
+        let existeOpcion = false;
+        for (let i = 0; i < selCli.options.length; i++) {
+          if (selCli.options[i].value.toLowerCase() === cliUnico.toLowerCase()) {
+            existeOpcion = true;
+            selCli.selectedIndex = i;
+            break;
+          }
+        }
+        if (!existeOpcion) {
+          const opt = document.createElement('option');
+          opt.value = cliUnico;
+          opt.textContent = cliUnico;
+          opt.selected = true;
+          selCli.appendChild(opt);
+        }
+        selCli.value = cliUnico;
+        selCli.disabled = true;
+        selCli.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+        selCli.classList.remove('bg-slate-50');
+
+        if (badgeFijo) {
+          badgeFijo.classList.remove('hidden');
+          badgeFijo.innerHTML = `<i class="fa-solid fa-lock text-[9px] mr-1"></i><span>${cliUnico}</span>`;
+        }
+
+        alCambiarClienteMobile();
+      } else if (usuarioActual.rol !== 'admin' && clis.length > 1) {
+        // REGLA: Múltiples clientes asignados
+        selCli.disabled = false;
+        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        selCli.classList.add('bg-slate-50');
+
+        if (badgeFijo) {
+          badgeFijo.classList.remove('hidden');
+          badgeFijo.innerHTML = `<i class="fa-solid fa-building-user text-[9px] mr-1"></i><span>${clis.length} Flotas</span>`;
+        }
+
+        const valorPrevio = selCli.value;
+        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
+        clis.forEach(c => {
+          const isSel = (valorPrevio && valorPrevio.toLowerCase() === c.toLowerCase());
+          html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
+        });
+        selCli.innerHTML = html;
+        if (valorPrevio && clis.some(c => c.toLowerCase() === valorPrevio.toLowerCase())) {
+          selCli.value = valorPrevio;
+        }
+      } else {
+        // Administrador o Todas las flotas
+        selCli.disabled = false;
+        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        selCli.classList.add('bg-slate-50');
+        if (badgeFijo) badgeFijo.classList.add('hidden');
+      }
+    }
+
     function abrirModalNuevoUsuario() {
       document.getElementById('usr_username').value = '';
       document.getElementById('usr_nombre').value = '';
       document.getElementById('usr_pass').value = '';
-      document.getElementById('usr_cliente').value = '';
-      document.getElementById('modalNuevoUsuario').classList.remove('hidden');
-      document.getElementById('modalNuevoUsuario').classList.add('flex');
+      document.getElementById('usr_rol').value = 'inspector';
+      document.getElementById('usr_vista_patio').checked = true;
+      document.getElementById('usr_vista_diagnostico').checked = true;
+      document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_todas_flotas').checked = true;
+      document.getElementById('usr_cliente_custom_nuevo').value = '';
+      toggleClientesTodosModal('nuevo');
+      alCambiarRolUsuarioModal('nuevo');
+      poblarListaCheckboxesClientesModal('nuevo', []);
+
+      const modal = document.getElementById('modalNuevoUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     function cerrarModalNuevoUsuario() {
-      document.getElementById('modalNuevoUsuario').classList.add('hidden');
-      document.getElementById('modalNuevoUsuario').classList.remove('flex');
+      const modal = document.getElementById('modalNuevoUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     }
 
     async function guardarNuevoUsuario() {
@@ -3706,24 +4126,33 @@
         alert('La contraseña debe tener al menos 4 caracteres.');
         return;
       }
-      const res = await fetch('/api/usuarios', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          username: u,
-          nombre_completo: n,
-          password: p,
-          rol: document.getElementById('usr_rol').value,
-          cliente_asignado: document.getElementById('usr_cliente').value.trim()
-        })
-      });
-      if (res.ok) {
-        cerrarModalNuevoUsuario();
-        mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
-        cargarUsuariosCat();
-      } else {
-        const d = await res.json();
-        mostrarToast(d.detail || 'Error al crear usuario', true);
+      const rol = document.getElementById('usr_rol').value;
+      const vistas = obtenerVistasSeleccionadasModal('nuevo');
+      const cliente = obtenerClientesSeleccionadosModal('nuevo');
+
+      try {
+        const res = await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            username: u,
+            nombre_completo: n,
+            password: p,
+            rol: rol,
+            cliente_asignado: cliente,
+            vistas_permitidas: vistas
+          })
+        });
+        if (res.ok) {
+          cerrarModalNuevoUsuario();
+          mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
+          cargarUsuariosCat();
+        } else {
+          const d = await res.json();
+          mostrarToast(d.detail || 'Error al crear usuario', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión con el servidor', true);
       }
     }
 
@@ -3733,8 +4162,8 @@
       document.getElementById('edit_usr_username').value = u.username;
       document.getElementById('edit_usr_nombre').value = u.nombre_completo;
       document.getElementById('edit_usr_rol').value = u.rol;
-      document.getElementById('edit_usr_cliente').value = u.cliente_asignado || '';
       document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
+      document.getElementById('edit_usr_cliente_custom').value = '';
 
       const errBox = document.getElementById('edit_usr_error');
       if (errBox) errBox.classList.add('hidden');
@@ -3742,6 +4171,29 @@
       const esSuperAdmin = u.username.toLowerCase() === 'admin';
       document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
       document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
+
+      // Vistas permitidas
+      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase());
+      document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
+      document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
+      document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+
+      // Clientes asignados
+      let clis = [];
+      if (Array.isArray(u.clientes_asignados) && u.clientes_asignados.length > 0) {
+        clis = u.clientes_asignados;
+      } else if (u.cliente_asignado) {
+        clis = u.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      if (clis.length === 0) {
+        document.getElementById('edit_usr_todas_flotas').checked = true;
+      } else {
+        document.getElementById('edit_usr_todas_flotas').checked = false;
+      }
+      toggleClientesTodosModal('editar');
+      alCambiarRolUsuarioModal('editar');
+      poblarListaCheckboxesClientesModal('editar', clis);
 
       const modal = document.getElementById('modalEditarUsuario');
       modal.classList.remove('hidden');
@@ -3758,8 +4210,9 @@
       const username = document.getElementById('edit_usr_username').value.trim();
       const nombre = document.getElementById('edit_usr_nombre').value.trim();
       const rol = document.getElementById('edit_usr_rol').value;
-      const cliente = document.getElementById('edit_usr_cliente').value.trim();
       const activo = document.getElementById('edit_usr_activo').value === '1';
+      const vistas = obtenerVistasSeleccionadasModal('editar');
+      const cliente = obtenerClientesSeleccionadosModal('editar');
       const errBox = document.getElementById('edit_usr_error');
       if (errBox) errBox.classList.add('hidden');
 
@@ -3779,11 +4232,23 @@
             nombre_completo: nombre,
             rol: rol,
             cliente_asignado: cliente,
+            vistas_permitidas: vistas,
             activo: activo
           })
         });
         const d = await res.json();
         if (res.ok) {
+          if (usuarioActual && usuarioActual.username.toLowerCase() === username.toLowerCase()) {
+            usuarioActual.nombre_completo = nombre;
+            usuarioActual.rol = rol;
+            usuarioActual.cliente_asignado = cliente;
+            usuarioActual.clientes_asignados = cliente ? cliente.split(',').map(s => s.trim()).filter(Boolean) : [];
+            usuarioActual.vistas_permitidas = vistas;
+            localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
+            localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
+            actualizarUIUsuario();
+          }
+
           cerrarModalEditarUsuario();
           mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
           cargarUsuariosCat();
@@ -3981,6 +4446,9 @@
         poblarSelect('marca', '/api/valores-campo?campo=marca', 'ej. Michelin (Seleccionar marca)'),
         poblarSelect('dimension', '/api/valores-campo?campo=dimension', '295/80R22.5', '295/80R22.5')
       ]);
+
+      // Aplicar predeterminación o filtrado de clientes asignados al usuario en sesión
+      configurarClientesUsuarioEnInspeccion();
 
       const resOps = await fetch('/api/operaciones');
       if (resOps.ok) {
@@ -6315,9 +6783,11 @@
       // Limpiar cliente y subcliente si no están fijados por rol de usuario
       if (typeof usuarioActual === 'undefined' || !usuarioActual || usuarioActual.rol === 'admin' || !usuarioActual.cliente_asignado) {
         const inpCli = document.getElementById('cliente');
-        if (inpCli && !inpCli.readOnly) inpCli.value = '';
+        if (inpCli && !inpCli.readOnly && !inpCli.disabled) inpCli.value = '';
         const inpSub = document.getElementById('subcliente');
         if (inpSub) inpSub.value = '';
+      } else {
+        configurarClientesUsuarioEnInspeccion();
       }
 
       // Restablecer fecha a la fecha actual local

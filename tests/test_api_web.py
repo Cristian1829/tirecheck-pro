@@ -294,3 +294,98 @@ def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
     assert "detail" in data
     assert "CANDADO DE SEGURIDAD" in data["detail"] or "27.0 mm" in data["detail"] or "Fila 2" in data["detail"]
 
+def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
+    # Crear usuario con vistas y múltiples clientes
+    payload = {
+        "username": "inspector_test",
+        "password": "password123",
+        "nombre_completo": "Inspector de Prueba",
+        "rol": "inspector",
+        "cliente_asignado": "TransCarga, Flota Norte",
+        "vistas_permitidas": "patio,diagnostico"
+    }
+    res = auth_client.post("/api/usuarios", json=payload)
+    assert res.status_code == 200
+
+    # Listar usuarios y verificar persistencia
+    res_list = auth_client.get("/api/usuarios")
+    assert res_list.status_code == 200
+    users = res_list.json()
+    u = next(x for x in users if x["username"] == "inspector_test")
+    assert u["rol"] == "inspector"
+    assert "patio" in u["vistas_permitidas"]
+    assert "diagnostico" in u["vistas_permitidas"]
+    # Verificar que basedatos y catalogos quedan excluidos para inspectores
+    assert "basedatos" not in u["vistas_permitidas"]
+    assert "catalogos" not in u["vistas_permitidas"]
+    assert len(u["clientes_asignados"]) == 2
+    assert "TransCarga" in u["clientes_asignados"]
+    assert "Flota Norte" in u["clientes_asignados"]
+
+    # Editar usuario a un solo cliente asignado
+    res_edit = auth_client.put("/api/usuarios/inspector_test", json={
+        "nombre_completo": "Inspector Modificado",
+        "rol": "inspector",
+        "cliente_asignado": "TransCarga",
+        "vistas_permitidas": "patio,kpis",
+        "activo": True
+    })
+    assert res_edit.status_code == 200
+
+    res_list2 = auth_client.get("/api/usuarios")
+    u2 = next(x for x in res_list2.json() if x["username"] == "inspector_test")
+    assert u2["nombre_completo"] == "Inspector Modificado"
+    assert u2["cliente_asignado"] == "TransCarga"
+    assert u2["clientes_asignados"] == ["TransCarga"]
+    assert "kpis" in u2["vistas_permitidas"]
+
+def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
+    # Crear usuario inspector con un único cliente asignado
+    database.crear_usuario("inspector_mono", "12345", "Inspector Mono", "inspector", "TransCarga", "patio,diagnostico")
+    token = server.crear_token_acceso("inspector_mono", "inspector")
+    client = TestClient(server.app)
+    client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # Consulta de valores de campo: solo debe retornar su cliente asignado
+    res_val = client.get("/api/valores-campo?campo=cliente")
+    assert res_val.status_code == 200
+    assert res_val.json() == ["TransCarga"]
+
+    # Registro de inspección: si no manda cliente, el servidor predetermina automáticamente TransCarga
+    insp_payload = {
+        "fecha": "2026-10-15",
+        "subcliente": "Sede Norte",
+        "tipo_operacion": "Urbano",
+        "placa": "TRC-001",
+        "numero_interno": "LL-100",
+        "posicion": 1,
+        "kilometraje": 50000,
+        "tipologia": "Camión 2 Ejes (4x2)",
+        "marca": "Michelin",
+        "diseno": "X Multi Z",
+        "dimension": "295/80R22.5",
+        "vida": "Original",
+        "prof_ext": 12.0,
+        "prof_cent": 12.0,
+        "prof_int": 12.0,
+        "psi": 110,
+        "prof_inicial": 16.0
+    }
+    res_insp = client.post("/api/inspecciones", json=insp_payload)
+    assert res_insp.status_code == 200
+    insp_id = res_insp.json()["id"]
+
+    # Verificar que quedó registrado como TRANSCARGA (estandarizado en mayúsculas)
+    res_get = client.get(f"/api/inspecciones/{insp_id}")
+    assert res_get.status_code == 200
+    assert res_get.json()["cliente"] == "TRANSCARGA"
+
+    # Intento de registrar para un cliente no autorizado -> 403 Forbidden
+    insp_payload_ajeno = dict(insp_payload)
+    insp_payload_ajeno["cliente"] = "Flota Ajena SAS"
+    insp_payload_ajeno["placa"] = "TRC-002"
+    insp_payload_ajeno["numero_interno"] = "LL-101"
+    res_prohibido = client.post("/api/inspecciones", json=insp_payload_ajeno)
+    assert res_prohibido.status_code == 403
+
+

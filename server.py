@@ -50,6 +50,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
+    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis"
 
 class EditarUsuarioItem(BaseModel):
     nombre_completo: Optional[str] = None
@@ -57,6 +58,7 @@ class EditarUsuarioItem(BaseModel):
     rol: Optional[str] = None
     cliente_asignado: Optional[str] = None
     activo: Optional[bool] = None
+    vistas_permitidas: Optional[str] = None
 
 class ResetPasswordItem(BaseModel):
     nueva_password: str
@@ -342,10 +344,10 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
         if not row:
             raise HTTPException(status_code=404, detail="Inspección no encontrada")
         
-        # Validar permisos de inspector
+        # Validar permisos de inspector para uno o varios clientes asignados
         if usuario_actual.get("rol") != "admin":
-            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row[2] and str(row[2]).strip().lower() != cli_asig.lower():
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and row[2] and not any(c.lower() == str(row[2]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
         
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
@@ -359,11 +361,16 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
 
-    # Aislamiento por rol
+    # Aislamiento por rol y asignación de clientes
     if usuario_actual.get("rol") != "admin":
         datos["usuario_registro"] = usuario_actual["username"]
-        if usuario_actual.get("cliente_asignado"):
-            datos["cliente"] = usuario_actual["cliente_asignado"]
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            # Si solo tiene un cliente asignado, predeterminarlo automáticamente
+            if not datos.get("cliente") and len(clis) == 1:
+                datos["cliente"] = clis[0]
+            elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para registrar inspecciones de este cliente")
 
     # Validación de Candados de Seguridad
     val = database.validar_inspeccion_candados(datos)
@@ -385,12 +392,15 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
             row_exist = cursor.fetchone()
             if not row_exist:
                 raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
-            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de este cliente")
         datos["usuario_registro"] = usuario_actual["username"]
-        if cli_asig:
-            datos["cliente"] = cli_asig
+        if clis:
+            if not datos.get("cliente") and len(clis) == 1:
+                datos["cliente"] = clis[0]
+            elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para asignar este cliente")
 
     val = database.validar_inspeccion_candados(datos, excluir_id=inspeccion_id)
     if not val.get('valido', True):
@@ -410,8 +420,8 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
             row_exist = cursor.fetchone()
             if not row_exist:
                 raise HTTPException(status_code=404, detail="Inspección no encontrada")
-            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
 
     database.eliminar_inspeccion(inspeccion_id)
@@ -694,22 +704,35 @@ def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(req
 
 @app.get("/api/valores-campo")
 def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if campo == "cliente" and clis:
+            return sorted(list(set(clis)))
+        if cliente and clis and not any(c.lower() == cliente.strip().lower() for c in clis):
+            return []
+        if not cliente and len(clis) == 1:
+            cliente = clis[0]
     elif usuario and not cliente:
         usr_info = database.obtener_usuario_por_username(usuario)
-        if usr_info and usr_info.get("rol") != "admin" and usr_info.get("cliente_asignado"):
-            cliente = usr_info.get("cliente_asignado")
+        if usr_info and usr_info.get("rol") != "admin":
+            clis = database.parsear_clientes_asignados(usr_info.get("cliente_asignado"))
+            if campo == "cliente" and clis:
+                return sorted(list(set(clis)))
+            if cliente and clis and not any(c.lower() == cliente.strip().lower() for c in clis):
+                return []
+            if not cliente and len(clis) == 1:
+                cliente = clis[0]
     return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
 
 @app.get("/api/vehiculo-perfil")
 def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     perfil = database.obtener_perfil_vehiculo(placa)
-    # Validar permisos de inspector con cliente asignado
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cli_asig = usuario_actual["cliente_asignado"].strip().lower()
-        if perfil.get("encontrado") and perfil.get("cliente") and perfil["cliente"].strip().lower() != cli_asig:
-            raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
+    # Validar permisos de inspector con clientes asignados
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and perfil.get("encontrado") and perfil.get("cliente"):
+            if not any(c.lower() == perfil["cliente"].strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
     return sanitizar_nativos(perfil)
 
 @app.get("/api/llanta-por-cliente")
@@ -719,8 +742,13 @@ def api_llanta_por_cliente(
     placa: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            if cliente and not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para consultar llantas de este cliente")
+            if not cliente and len(clis) == 1:
+                cliente = clis[0]
     res = database.obtener_llanta_por_cliente(cliente=cliente, numero_interno=numero_interno, placa=placa)
     if res:
         return sanitizar_nativos({"encontrado": True, "datos": res})
@@ -786,7 +814,14 @@ def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
 
 @app.post("/api/usuarios")
 def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
-    ok = database.crear_usuario(item.username, item.password, item.nombre_completo, item.rol, item.cliente_asignado)
+    ok = database.crear_usuario(
+        username=item.username,
+        password=item.password,
+        nombre_completo=item.nombre_completo,
+        rol=item.rol,
+        cliente_asignado=item.cliente_asignado,
+        vistas_permitidas=item.vistas_permitidas
+    )
     if not ok:
         raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
     return {"status": "ok", "username": item.username}
@@ -804,7 +839,8 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
         password=item.password,
         rol=item.rol,
         cliente_asignado=item.cliente_asignado,
-        activo=item.activo
+        activo=item.activo,
+        vistas_permitidas=item.vistas_permitidas
     )
     if not ok:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")

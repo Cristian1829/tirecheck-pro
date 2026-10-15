@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 09:48:52`
+- **Fecha de Generación:** `2026-10-15 11:51:13`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `21,418` líneas
-- **Tamaño Total de Código Fuente:** `1313.0 KB` (`1,344,551` bytes)
+- **Líneas Totales de Código:** `22,096` líneas
+- **Tamaño Total de Código Fuente:** `1348.3 KB` (`1,380,619` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -210,8 +210,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 883 | 36.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2412 | 117.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 919 | 38.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 2489 | 121.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6944 | 627.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7414 | 653.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -229,7 +229,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 296 | 10.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 391 | 14.4 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 280 | 9.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -2032,7 +2032,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 883 líneas | 37,395 bytes (36.5 KB)
+- **Métricas:** 919 líneas | 39,421 bytes (38.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2088,6 +2088,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
+    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis"
 
 class EditarUsuarioItem(BaseModel):
     nombre_completo: Optional[str] = None
@@ -2095,6 +2096,7 @@ class EditarUsuarioItem(BaseModel):
     rol: Optional[str] = None
     cliente_asignado: Optional[str] = None
     activo: Optional[bool] = None
+    vistas_permitidas: Optional[str] = None
 
 class ResetPasswordItem(BaseModel):
     nueva_password: str
@@ -2380,10 +2382,10 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
         if not row:
             raise HTTPException(status_code=404, detail="Inspección no encontrada")
         
-        # Validar permisos de inspector
+        # Validar permisos de inspector para uno o varios clientes asignados
         if usuario_actual.get("rol") != "admin":
-            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row[2] and str(row[2]).strip().lower() != cli_asig.lower():
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and row[2] and not any(c.lower() == str(row[2]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
         
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
@@ -2397,11 +2399,16 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
 
-    # Aislamiento por rol
+    # Aislamiento por rol y asignación de clientes
     if usuario_actual.get("rol") != "admin":
         datos["usuario_registro"] = usuario_actual["username"]
-        if usuario_actual.get("cliente_asignado"):
-            datos["cliente"] = usuario_actual["cliente_asignado"]
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            # Si solo tiene un cliente asignado, predeterminarlo automáticamente
+            if not datos.get("cliente") and len(clis) == 1:
+                datos["cliente"] = clis[0]
+            elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para registrar inspecciones de este cliente")
 
     # Validación de Candados de Seguridad
     val = database.validar_inspeccion_candados(datos)
@@ -2423,12 +2430,15 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
             row_exist = cursor.fetchone()
             if not row_exist:
                 raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
-            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de este cliente")
         datos["usuario_registro"] = usuario_actual["username"]
-        if cli_asig:
-            datos["cliente"] = cli_asig
+        if clis:
+            if not datos.get("cliente") and len(clis) == 1:
+                datos["cliente"] = clis[0]
+            elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para asignar este cliente")
 
     val = database.validar_inspeccion_candados(datos, excluir_id=inspeccion_id)
     if not val.get('valido', True):
@@ -2448,8 +2458,8 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
             row_exist = cursor.fetchone()
             if not row_exist:
                 raise HTTPException(status_code=404, detail="Inspección no encontrada")
-            cli_asig = usuario_actual.get("cliente_asignado", "").strip()
-            if cli_asig and row_exist[0] and str(row_exist[0]).strip().lower() != cli_asig.lower():
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
 
     database.eliminar_inspeccion(inspeccion_id)
@@ -2732,22 +2742,35 @@ def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(req
 
 @app.get("/api/valores-campo")
 def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if campo == "cliente" and clis:
+            return sorted(list(set(clis)))
+        if cliente and clis and not any(c.lower() == cliente.strip().lower() for c in clis):
+            return []
+        if not cliente and len(clis) == 1:
+            cliente = clis[0]
     elif usuario and not cliente:
         usr_info = database.obtener_usuario_por_username(usuario)
-        if usr_info and usr_info.get("rol") != "admin" and usr_info.get("cliente_asignado"):
-            cliente = usr_info.get("cliente_asignado")
+        if usr_info and usr_info.get("rol") != "admin":
+            clis = database.parsear_clientes_asignados(usr_info.get("cliente_asignado"))
+            if campo == "cliente" and clis:
+                return sorted(list(set(clis)))
+            if cliente and clis and not any(c.lower() == cliente.strip().lower() for c in clis):
+                return []
+            if not cliente and len(clis) == 1:
+                cliente = clis[0]
     return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
 
 @app.get("/api/vehiculo-perfil")
 def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     perfil = database.obtener_perfil_vehiculo(placa)
-    # Validar permisos de inspector con cliente asignado
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cli_asig = usuario_actual["cliente_asignado"].strip().lower()
-        if perfil.get("encontrado") and perfil.get("cliente") and perfil["cliente"].strip().lower() != cli_asig:
-            raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
+    # Validar permisos de inspector con clientes asignados
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and perfil.get("encontrado") and perfil.get("cliente"):
+            if not any(c.lower() == perfil["cliente"].strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
     return sanitizar_nativos(perfil)
 
 @app.get("/api/llanta-por-cliente")
@@ -2757,8 +2780,13 @@ def api_llanta_por_cliente(
     placa: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    if usuario_actual.get("rol") != "admin" and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            if cliente and not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para consultar llantas de este cliente")
+            if not cliente and len(clis) == 1:
+                cliente = clis[0]
     res = database.obtener_llanta_por_cliente(cliente=cliente, numero_interno=numero_interno, placa=placa)
     if res:
         return sanitizar_nativos({"encontrado": True, "datos": res})
@@ -2824,7 +2852,14 @@ def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
 
 @app.post("/api/usuarios")
 def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
-    ok = database.crear_usuario(item.username, item.password, item.nombre_completo, item.rol, item.cliente_asignado)
+    ok = database.crear_usuario(
+        username=item.username,
+        password=item.password,
+        nombre_completo=item.nombre_completo,
+        rol=item.rol,
+        cliente_asignado=item.cliente_asignado,
+        vistas_permitidas=item.vistas_permitidas
+    )
     if not ok:
         raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
     return {"status": "ok", "username": item.username}
@@ -2842,7 +2877,8 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
         password=item.password,
         rol=item.rol,
         cliente_asignado=item.cliente_asignado,
-        activo=item.activo
+        activo=item.activo,
+        vistas_permitidas=item.vistas_permitidas
     )
     if not ok:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
@@ -2927,7 +2963,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2412 líneas | 120,342 bytes (117.5 KB)
+- **Métricas:** 2489 líneas | 124,332 bytes (121.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3135,6 +3171,7 @@ def inicializar_bd():
                 cursor.execute(f"ALTER TABLE inspecciones ADD COLUMN {col} {tipo}")
 
         # Tabla de Usuarios con roles y clientes asignados
+        # Tabla de Usuarios con roles y clientes asignados
         conn.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -3142,22 +3179,32 @@ def inicializar_bd():
                 password TEXT NOT NULL,
                 nombre_completo TEXT NOT NULL,
                 rol TEXT NOT NULL DEFAULT 'inspector', -- 'admin', 'inspector'
-                cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo o vacío para todos
+                cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo, varios separados por comas, o vacío para todos
+                vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', -- Vistas autorizadas (basedatos y catalogos solo admin)
                 activo INTEGER DEFAULT 1,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
+        # Auto-migración segura de columna vistas_permitidas si la tabla ya existía
+        try:
+            cursor.execute("PRAGMA table_info(usuarios)")
+            cols_usr = [r[1] for r in cursor.fetchall()]
+            if 'vistas_permitidas' not in cols_usr:
+                cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
+        except Exception:
+            pass
+
         # Insertar usuarios por defecto si no existen
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         if cursor.fetchone()[0] == 0:
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('admin', ?, 'Administrador General', 'admin', '')
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,catalogos')
             """, (hash_password('admin123'),))
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '')
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis')
             """, (hash_password('1234'),))
         else:
             # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
@@ -3880,17 +3927,17 @@ def obtener_todas_inspecciones(usuario=None):
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
                    psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
             FROM inspecciones
-
         """
         params = []
         if usuario:
             usr_info = obtener_usuario_por_username(usuario)
             if usr_info and usr_info.get('rol') != 'admin':
-                # Si tiene cliente asignado, filtra por ese cliente. Si no tiene cliente asignado (vacío), tiene acceso a todas las flotas.
-                cli_asig = (usr_info.get('cliente_asignado') or '').strip().upper()
-                if cli_asig:
-                    query += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
-                    params.append(cli_asig)
+                # Si tiene uno o varios clientes asignados, filtra por esa lista. Si no tiene cliente asignado (vacío), acceso a todas las flotas.
+                clis = parsear_clientes_asignados(usr_info.get('cliente_asignado'))
+                if clis:
+                    placeholders = ', '.join(['UPPER(TRIM(?))'] * len(clis))
+                    query += f" WHERE UPPER(TRIM(cliente)) IN ({placeholders})"
+                    params.extend([c.upper() for c in clis])
         query += " ORDER BY id DESC"
         return pd.read_sql_query(query, conn, params=params)
 
@@ -5154,8 +5201,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         usr_info = obtener_usuario_por_username(usuario_filtro)
         if usr_info and usr_info.get('rol') != 'admin':
             cli_asig = usr_info.get('cliente_asignado')
-            if cli_asig:
-                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() == str(cli_asig).strip().lower()]
+            clis = parsear_clientes_asignados(cli_asig)
+            if clis:
+                clis_lower = [c.lower() for c in clis]
+                resultados = [r for r in resultados if str(r.get('cliente') or '').strip().lower() in clis_lower]
             else:
                 resultados = [r for r in resultados if str(r.get('usuario_registro') or '').strip().lower() == str(usuario_filtro).strip().lower()]
 
@@ -5165,6 +5214,26 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 # GESTIÓN Y AUTENTICACIÓN DE USUARIOS
 # ==========================================
 
+def parsear_clientes_asignados(cliente_asignado) -> list:
+    """Convierte el string de cliente_asignado (uno o varios separados por comas) en lista limpia."""
+    if not cliente_asignado:
+        return []
+    return [c.strip() for c in str(cliente_asignado).split(',') if c.strip()]
+
+def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
+    """
+    Retorna la lista de vistas autorizadas.
+    REGLA: Solo el admin puede acceder a 'basedatos' y 'catalogos'.
+    """
+    if str(rol).strip().lower() == 'admin':
+        return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+    if not vistas:
+        return ['patio', 'diagnostico', 'kpis']
+    raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
+    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos ni catalogos
+    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis')]
+    return permitidas if permitidas else ['patio']
+
 def autenticar_usuario(username, password):
     u = (username or '').strip()
     p = (password or '').strip()
@@ -5173,26 +5242,31 @@ def autenticar_usuario(username, password):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo
+            SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo,
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
             FROM usuarios
             WHERE LOWER(username) = LOWER(?) AND activo = 1
         """, (u,))
         row = cursor.fetchone()
         if not row:
             return None
-        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo = row
+        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas = row
         if verify_password(p, stored_pwd):
             # Auto-migración en caso de que aún tuviera contraseña legada en texto plano
             if not stored_pwd.startswith("pbkdf2_sha256$"):
                 nuevo_hash = hash_password(p)
                 cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, uid))
                 conn.commit()
+            clis = parsear_clientes_asignados(cliente_asignado)
+            vistas = parsear_vistas_permitidas(raw_vistas, rol)
             return {
                 'id': uid,
                 'username': db_username,
                 'nombre_completo': nombre_completo,
                 'rol': rol,
                 'cliente_asignado': cliente_asignado or '',
+                'clientes_asignados': clis,
+                'vistas_permitidas': vistas,
                 'activo': bool(activo)
             }
     return None
@@ -5204,18 +5278,23 @@ def obtener_usuario_por_username(username):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
             FROM usuarios
             WHERE LOWER(username) = LOWER(?)
         """, (u,))
         row = cursor.fetchone()
         if row:
+            clis = parsear_clientes_asignados(row[4])
+            vistas = parsear_vistas_permitidas(row[6], row[3])
             return {
                 'id': row[0],
                 'username': row[1],
                 'nombre_completo': row[2],
                 'rol': row[3],
                 'cliente_asignado': row[4] or '',
+                'clientes_asignados': clis,
+                'vistas_permitidas': vistas,
                 'activo': bool(row[5])
             }
     return None
@@ -5224,14 +5303,21 @@ def listar_usuarios():
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion
+            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
             FROM usuarios
             ORDER BY id ASC
         """)
-        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion']
-        return [dict(zip(cols, r)) for r in cursor.fetchall()]
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas']
+        filas = []
+        for r in cursor.fetchall():
+            d = dict(zip(cols, r))
+            d['clientes_asignados'] = parsear_clientes_asignados(d.get('cliente_asignado'))
+            d['vistas_permitidas'] = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
+            filas.append(d)
+        return filas
 
-def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado=''):
+def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado='', vistas_permitidas=None):
     u = (username or '').strip().lower()
     p = (password or '').strip()
     nom = (nombre_completo or '').strip()
@@ -5241,20 +5327,28 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
         return False
     if len(p) < 4:
         return False
+    
+    # Resolver vistas autorizadas según rol
+    if r == 'admin':
+        vistas_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+    else:
+        vistas_limpias = parsear_vistas_permitidas(vistas_permitidas, r)
+        vistas_str = ','.join(vistas_limpias)
+
     hashed_pwd = hash_password(p)
     with get_connection() as conn:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado)
-                VALUES (?, ?, ?, ?, ?)
-            """, (u, hashed_pwd, nom, r, cli))
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (u, hashed_pwd, nom, r, cli, vistas_str))
             conn.commit()
             return True
         except Exception:
             return False
 
-def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None):
+def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None):
     u = (username or '').strip().lower()
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -5269,9 +5363,28 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
                 return False
             updates.append("password = ?")
             params.append(hash_password(p_str))
+        
+        rol_final = None
         if rol is not None:
+            rol_final = rol.strip().lower()
             updates.append("rol = ?")
-            params.append(rol.strip().lower())
+            params.append(rol_final)
+        else:
+            # Obtener rol actual para validar vistas
+            cursor.execute("SELECT rol FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,))
+            row_rol = cursor.fetchone()
+            if row_rol:
+                rol_final = row_rol[0]
+
+        if vistas_permitidas is not None:
+            if rol_final == 'admin':
+                v_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+            else:
+                v_limpias = parsear_vistas_permitidas(vistas_permitidas, rol_final)
+                v_str = ','.join(v_limpias)
+            updates.append("vistas_permitidas = ?")
+            params.append(v_str)
+
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
             params.append(cliente_asignado.strip())
@@ -9177,7 +9290,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6944 líneas | 642,693 bytes (627.6 KB)
+- **Métricas:** 7414 líneas | 668,803 bytes (653.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9542,7 +9655,12 @@ if __name__ == '__main__':
           <div class="space-y-2.5">
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cliente / Empresa</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[11px] font-bold text-slate-600">Cliente / Empresa</label>
+                  <span id="badgeClienteAsignadoFijo" class="hidden text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 shadow-xs">
+                    <i class="fa-solid fa-lock text-[9px] mr-1"></i><span>Predeterminado</span>
+                  </span>
+                </div>
                 <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
                   <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
                 </select>
@@ -10616,7 +10734,8 @@ if __name__ == '__main__':
                 <th class="p-2.5">Usuario</th>
                 <th class="p-2.5">Nombre Completo</th>
                 <th class="p-2.5 text-center">Rol</th>
-                <th class="p-2.5">Cliente Asignado</th>
+                <th class="p-2.5">Vistas Autorizadas</th>
+                <th class="p-2.5">Clientes Asignados</th>
                 <th class="p-2.5 text-center">Estado</th>
                 <th class="p-2.5 text-center">Acciones</th>
               </tr>
@@ -10925,24 +11044,89 @@ if __name__ == '__main__':
   </div>
 
   <!-- MODAL: GESTIÓN DE USUARIOS -->
-  <div id="modalNuevoUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+  <div id="modalNuevoUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100 my-8">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-sm font-black text-slate-900">Registrar Usuario</h3>
+        <h3 class="text-sm font-black text-slate-900 flex items-center space-x-2">
+          <i class="fa-solid fa-user-plus text-indigo-600"></i>
+          <span>Registrar Nuevo Usuario</span>
+        </h3>
         <button type="button" onclick="cerrarModalNuevoUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-2.5 text-xs">
+      <div class="space-y-3 text-xs">
         <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Contraseña (Mínimo 4 caracteres)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
-          <select id="usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+          <select id="usr_rol" onchange="alCambiarRolUsuarioModal('nuevo')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Cliente Asignado (Opcional)</label><input type="text" id="usr_cliente" placeholder="Vacío para todas las flotas" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+
+        <!-- VISTAS / MÓDULOS PERMITIDOS -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+            <span>Módulos / Vistas Autorizadas</span>
+          </label>
+          <div class="space-y-1.5 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_patio" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Inspección de Patio</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_diagnostico" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Diagnóstico &amp; Planes</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_kpis" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Trazabilidad &amp; KPIs</span>
+            </label>
+            <label id="lbl_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="usr_vista_basedatos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Base de Inspecciones</span>
+              </span>
+              <span id="badge_usr_vista_basedatos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+            <label id="lbl_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="usr_vista_catalogos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Catálogos &amp; Ajustes</span>
+              </span>
+              <span id="badge_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ASIGNACIÓN DE CLIENTES -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-building text-blue-600"></i>
+            <span>Clientes / Flotas Asignadas</span>
+          </label>
+          <div class="space-y-2 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-800 font-bold cursor-pointer">
+              <input type="checkbox" id="usr_todas_flotas" onchange="toggleClientesTodosModal('nuevo')" class="rounded text-blue-600" checked>
+              <span>Acceso a Todas las Flotas (Sin Restricción)</span>
+            </label>
+            <div id="usr_contenedor_clientes_nuevo" class="hidden space-y-2 pt-1 border-t border-slate-200">
+              <p class="text-[11px] text-slate-500">Marca los clientes a los que puede ingresar este usuario. Si seleccionas solo uno, aparecerá predeterminado y fijo:</p>
+              <div id="usr_lista_clientes_check_nuevo" class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-white rounded-xl border border-slate-200"></div>
+              <div class="flex items-center space-x-1.5 pt-0.5">
+                <input type="text" id="usr_cliente_custom_nuevo" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
+                <button type="button" onclick="agregarClienteCustomModal('nuevo')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalNuevoUsuario()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoUsuario()" class="px-4 py-1.5 bg-indigo-600 text-white rounded-xl font-bold">Crear Usuario</button>
@@ -10952,8 +11136,8 @@ if __name__ == '__main__':
   </div>
 
   <!-- MODAL: EDITAR USUARIO -->
-  <div id="modalEditarUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+  <div id="modalEditarUsuario" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100 my-8">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
           <i class="fa-solid fa-user-pen text-blue-600"></i>
@@ -10961,7 +11145,7 @@ if __name__ == '__main__':
         </h3>
         <button type="button" onclick="cerrarModalEditarUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-2.5 text-xs">
+      <div class="space-y-3 text-xs">
         <div>
           <label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label>
           <input type="text" id="edit_usr_username" class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-500 cursor-not-allowed" readonly disabled>
@@ -10972,15 +11156,74 @@ if __name__ == '__main__':
         </div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
-          <select id="edit_usr_rol" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
+          <select id="edit_usr_rol" onchange="alCambiarRolUsuarioModal('editar')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">Cliente Asignado</label>
-          <input type="text" id="edit_usr_cliente" placeholder="Vacío para Todas las Flotas" class="w-full p-2 bg-slate-50 border rounded-xl">
+
+        <!-- VISTAS / MÓDULOS PERMITIDOS -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+            <span>Módulos / Vistas Autorizadas</span>
+          </label>
+          <div class="space-y-1.5 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_patio" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Inspección de Patio</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_diagnostico" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Diagnóstico &amp; Planes</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_kpis" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Trazabilidad &amp; KPIs</span>
+            </label>
+            <label id="lbl_edit_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="edit_usr_vista_basedatos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Base de Inspecciones</span>
+              </span>
+              <span id="badge_edit_usr_vista_basedatos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+            <label id="lbl_edit_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
+              <span class="flex items-center space-x-2">
+                <input type="checkbox" id="edit_usr_vista_catalogos" class="rounded text-indigo-600" disabled>
+                <span class="font-semibold">Catálogos &amp; Ajustes</span>
+              </span>
+              <span id="badge_edit_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
+                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
+              </span>
+            </label>
+          </div>
         </div>
+
+        <!-- ASIGNACIÓN DE CLIENTES -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+          <label class="font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="fa-solid fa-building text-blue-600"></i>
+            <span>Clientes / Flotas Asignadas</span>
+          </label>
+          <div class="space-y-2 pt-0.5">
+            <label class="flex items-center space-x-2 text-slate-800 font-bold cursor-pointer">
+              <input type="checkbox" id="edit_usr_todas_flotas" onchange="toggleClientesTodosModal('editar')" class="rounded text-blue-600" checked>
+              <span>Acceso a Todas las Flotas (Sin Restricción)</span>
+            </label>
+            <div id="edit_usr_contenedor_clientes" class="hidden space-y-2 pt-1 border-t border-slate-200">
+              <p class="text-[11px] text-slate-500">Marca los clientes a los que puede ingresar este usuario. Si seleccionas solo uno, aparecerá predeterminado y fijo:</p>
+              <div id="edit_usr_lista_clientes_check" class="max-h-32 overflow-y-auto space-y-1.5 p-2 bg-white rounded-xl border border-slate-200"></div>
+              <div class="flex items-center space-x-1.5 pt-0.5">
+                <input type="text" id="edit_usr_cliente_custom" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
+                <button type="button" onclick="agregarClienteCustomModal('editar')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label class="font-bold text-slate-600 block mb-1">Estado</label>
           <select id="edit_usr_activo" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
@@ -11436,6 +11679,29 @@ if __name__ == '__main__':
     // NAVEGACIÓN ENTRE PESTAÑAS (SPA)
     // ==========================================
     function navegarTab(tabId) {
+      if (!usuarioActual) {
+        document.getElementById('modalLogin').classList.remove('hidden');
+        return;
+      }
+
+      // Regla estricta: Solo el admin puede ingresar a Base de Inspecciones y Catálogos & Ajustes
+      if ((tabId === 'basedatos' || tabId === 'catalogos') && usuarioActual.rol !== 'admin') {
+        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a Base de Inspecciones y Catálogos', true);
+        tabId = 'patio';
+      }
+
+      // Validar si el usuario tiene asignada la vista solicitada
+      if (usuarioActual.rol !== 'admin') {
+        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis')
+          .split(',')
+          .map(v => v.trim().toLowerCase())
+          .filter(Boolean);
+        if (!vistasPermitidas.includes(tabId)) {
+          mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
+          tabId = vistasPermitidas.includes('patio') ? 'patio' : (vistasPermitidas[0] || 'patio');
+        }
+      }
+
       const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
       tabs.forEach(t => {
         const elVista = document.getElementById(`vista-${t}`);
@@ -11551,7 +11817,25 @@ if __name__ == '__main__':
         lbl.textContent = `${usuarioActual.nombre_completo} ${rolBadge}`;
       }
 
-      // Control de acceso a la subpestaña de Usuarios en Catálogos
+      // Control de visibilidad de pestañas de navegación según permisos del perfil
+      const vistasPermitidas = (usuarioActual.rol === 'admin')
+        ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+
+      ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
+        const btnNav = document.getElementById(`nav-btn-${tab}`);
+        if (btnNav) {
+          if (usuarioActual.rol !== 'admin' && (tab === 'basedatos' || tab === 'catalogos')) {
+            btnNav.classList.add('hidden');
+          } else if (vistasPermitidas.includes(tab)) {
+            btnNav.classList.remove('hidden');
+          } else {
+            btnNav.classList.add('hidden');
+          }
+        }
+      });
+
+      // Control de acceso a la subpestaña de Usuarios en Catálogos (Solo Admin)
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) {
         if (usuarioActual.rol === 'admin') {
@@ -11561,15 +11845,8 @@ if __name__ == '__main__':
         }
       }
 
-      if (usuarioActual.rol !== 'admin' && usuarioActual.cliente_asignado) {
-        const inpCli = document.getElementById('cliente');
-        if (inpCli) {
-          inpCli.value = usuarioActual.cliente_asignado;
-          inpCli.readOnly = true;
-          const bCli = document.getElementById('badgeClienteGuardado');
-          if (bCli) bCli.textContent = 'Asignado a Flota';
-        }
-      }
+      // Configurar estado de clientes asignados en la vista de Patio
+      configurarClientesUsuarioEnInspeccion();
     }
 
     // ==========================================
@@ -12820,6 +13097,29 @@ if __name__ == '__main__':
 
     let usuariosCatCache = [];
 
+    function renderizarBadgesVistas(vistasStr, rol) {
+      if (rol === 'admin') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (5 Módulos)</span>`;
+      }
+      const vistas = (vistasStr || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const badges = [];
+      if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
+      if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
+      if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
+    }
+
+    function renderizarBadgesClientes(clienteAsignadoStr) {
+      if (!clienteAsignadoStr || !clienteAsignadoStr.trim()) {
+        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Todas las Flotas</span>';
+      }
+      const clis = clienteAsignadoStr.split(',').map(s => s.trim()).filter(Boolean);
+      if (clis.length === 1) {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
+      }
+      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${c}</span>`).join('')}</div>`;
+    }
+
     async function cargarUsuariosCat() {
       if (!usuarioActual || usuarioActual.rol !== 'admin') return;
       try {
@@ -12834,7 +13134,8 @@ if __name__ == '__main__':
               <td class="p-2.5 text-center font-bold uppercase text-[10px]">
                 <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
               </td>
-              <td class="p-2.5">${u.cliente_asignado || '<span class="text-slate-400 italic">Todas las Flotas</span>'}</td>
+              <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
+              <td class="p-2.5">${renderizarBadgesClientes(u.cliente_asignado)}</td>
               <td class="p-2.5 text-center">
                 ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
               </td>
@@ -12863,18 +13164,250 @@ if __name__ == '__main__':
       }
     }
 
+    // Helpers de Control de Vistas y Asignación de Clientes en Modales
+    function alCambiarRolUsuarioModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const rol = document.getElementById(`${pfx}rol`).value;
+      const chkBD = document.getElementById(`${pfx}vista_basedatos`);
+      const chkCat = document.getElementById(`${pfx}vista_catalogos`);
+      const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
+      const lblCat = document.getElementById(`lbl_${pfx}vista_catalogos`);
+      const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
+      const badgeCat = document.getElementById(`badge_${pfx}vista_catalogos`);
+
+      if (rol === 'admin') {
+        // Para admin: acceso total a las 5 vistas
+        document.getElementById(`${pfx}vista_patio`).checked = true;
+        document.getElementById(`${pfx}vista_diagnostico`).checked = true;
+        document.getElementById(`${pfx}vista_kpis`).checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (lblCat) {
+          lblCat.classList.remove('text-slate-400', 'bg-slate-100');
+          lblCat.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+        if (badgeCat) badgeCat.classList.add('hidden');
+      } else {
+        // Para inspector: NUNCA tiene acceso a basedatos ni a catalogos
+        if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
+        if (chkCat) { chkCat.checked = false; chkCat.disabled = true; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
+          lblBD.classList.add('text-slate-400', 'bg-slate-100');
+        }
+        if (lblCat) {
+          lblCat.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
+          lblCat.classList.add('text-slate-400', 'bg-slate-100');
+        }
+        if (badgeBD) badgeBD.classList.remove('hidden');
+        if (badgeCat) badgeCat.classList.remove('hidden');
+      }
+    }
+
+    function toggleClientesTodosModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chk = document.getElementById(`${pfx}todas_flotas`);
+      const cont = document.getElementById(modo === 'nuevo' ? 'usr_contenedor_clientes_nuevo' : 'edit_usr_contenedor_clientes');
+      if (chk && cont) {
+        if (chk.checked) {
+          cont.classList.add('hidden');
+        } else {
+          cont.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function poblarListaCheckboxesClientesModal(modo, clientesSeleccionados = []) {
+      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
+      const cont = document.getElementById(contId);
+      if (!cont) return;
+
+      let clientesDisponibles = [];
+      try {
+        const res = await fetch('/api/valores-campo?campo=cliente');
+        if (res.ok) {
+          clientesDisponibles = await res.json();
+        }
+      } catch(e) {}
+
+      // Combinar con los ya seleccionados para no perder ningún valor histórico
+      const setTotal = new Set();
+      (clientesSeleccionados || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim()); });
+      (clientesDisponibles || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim()); });
+
+      const lista = Array.from(setTotal).sort((a, b) => a.localeCompare(b));
+      if (lista.length === 0) {
+        cont.innerHTML = '<p class="text-slate-400 italic text-[11px] p-2">No hay clientes registrados en el catálogo. Puedes escribir uno abajo.</p>';
+        return;
+      }
+
+      const selSet = new Set((clientesSeleccionados || []).map(s => s.trim().toLowerCase()));
+      cont.innerHTML = lista.map(c => {
+        const isChecked = selSet.has(c.toLowerCase());
+        return `
+          <label class="flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors">
+            <input type="checkbox" value="${c}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" ${isChecked ? 'checked' : ''}>
+            <span class="font-medium">${c}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function agregarClienteCustomModal(modo) {
+      const inpId = modo === 'nuevo' ? 'usr_cliente_custom_nuevo' : 'edit_usr_cliente_custom';
+      const inp = document.getElementById(inpId);
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (!val) return;
+
+      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
+      const cont = document.getElementById(contId);
+      if (!cont) return;
+
+      // Verificar si ya existe el checkbox
+      const existentes = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).map(el => el.value.toLowerCase());
+      if (existentes.includes(val.toLowerCase())) {
+        const chk = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).find(el => el.value.toLowerCase() === val.toLowerCase());
+        if (chk) chk.checked = true;
+      } else {
+        const lbl = document.createElement('label');
+        lbl.className = 'flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors';
+        lbl.innerHTML = `
+          <input type="checkbox" value="${val}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" checked>
+          <span class="font-medium">${val}</span>
+        `;
+        cont.prepend(lbl);
+      }
+      inp.value = '';
+    }
+
+    function obtenerVistasSeleccionadasModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const rol = document.getElementById(`${pfx}rol`).value;
+      if (rol === 'admin') {
+        return 'patio,basedatos,diagnostico,kpis,catalogos';
+      }
+      const vistas = [];
+      if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
+      if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
+      if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
+      // Seguridad inquebrantable: NUNCA añadir basedatos ni catalogos para no-admin
+      if (vistas.length === 0) vistas.push('patio');
+      return vistas.join(',');
+    }
+
+    function obtenerClientesSeleccionadosModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chkTodas = document.getElementById(`${pfx}todas_flotas`);
+      if (chkTodas && chkTodas.checked) {
+        return '';
+      }
+      const checkboxes = document.querySelectorAll(`.chk-cli-modal-${modo}:checked`);
+      const seleccionados = Array.from(checkboxes).map(c => c.value.trim()).filter(Boolean);
+      return seleccionados.join(', ');
+    }
+
+    function configurarClientesUsuarioEnInspeccion() {
+      if (!usuarioActual) return;
+      const selCli = document.getElementById('cliente');
+      const badgeFijo = document.getElementById('badgeClienteAsignadoFijo');
+      if (!selCli) return;
+
+      let clis = [];
+      if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
+        clis = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
+      } else if (usuarioActual.cliente_asignado && typeof usuarioActual.cliente_asignado === 'string') {
+        clis = usuarioActual.cliente_asignado.split(',').map(c => c.trim()).filter(Boolean);
+      }
+
+      if (usuarioActual.rol !== 'admin' && clis.length === 1) {
+        // REGLA: Si es solo un cliente, en la inspección aparecerá predeterminado y fijo
+        const cliUnico = clis[0];
+
+        let existeOpcion = false;
+        for (let i = 0; i < selCli.options.length; i++) {
+          if (selCli.options[i].value.toLowerCase() === cliUnico.toLowerCase()) {
+            existeOpcion = true;
+            selCli.selectedIndex = i;
+            break;
+          }
+        }
+        if (!existeOpcion) {
+          const opt = document.createElement('option');
+          opt.value = cliUnico;
+          opt.textContent = cliUnico;
+          opt.selected = true;
+          selCli.appendChild(opt);
+        }
+        selCli.value = cliUnico;
+        selCli.disabled = true;
+        selCli.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+        selCli.classList.remove('bg-slate-50');
+
+        if (badgeFijo) {
+          badgeFijo.classList.remove('hidden');
+          badgeFijo.innerHTML = `<i class="fa-solid fa-lock text-[9px] mr-1"></i><span>${cliUnico}</span>`;
+        }
+
+        alCambiarClienteMobile();
+      } else if (usuarioActual.rol !== 'admin' && clis.length > 1) {
+        // REGLA: Múltiples clientes asignados
+        selCli.disabled = false;
+        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        selCli.classList.add('bg-slate-50');
+
+        if (badgeFijo) {
+          badgeFijo.classList.remove('hidden');
+          badgeFijo.innerHTML = `<i class="fa-solid fa-building-user text-[9px] mr-1"></i><span>${clis.length} Flotas</span>`;
+        }
+
+        const valorPrevio = selCli.value;
+        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
+        clis.forEach(c => {
+          const isSel = (valorPrevio && valorPrevio.toLowerCase() === c.toLowerCase());
+          html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
+        });
+        selCli.innerHTML = html;
+        if (valorPrevio && clis.some(c => c.toLowerCase() === valorPrevio.toLowerCase())) {
+          selCli.value = valorPrevio;
+        }
+      } else {
+        // Administrador o Todas las flotas
+        selCli.disabled = false;
+        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        selCli.classList.add('bg-slate-50');
+        if (badgeFijo) badgeFijo.classList.add('hidden');
+      }
+    }
+
     function abrirModalNuevoUsuario() {
       document.getElementById('usr_username').value = '';
       document.getElementById('usr_nombre').value = '';
       document.getElementById('usr_pass').value = '';
-      document.getElementById('usr_cliente').value = '';
-      document.getElementById('modalNuevoUsuario').classList.remove('hidden');
-      document.getElementById('modalNuevoUsuario').classList.add('flex');
+      document.getElementById('usr_rol').value = 'inspector';
+      document.getElementById('usr_vista_patio').checked = true;
+      document.getElementById('usr_vista_diagnostico').checked = true;
+      document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_todas_flotas').checked = true;
+      document.getElementById('usr_cliente_custom_nuevo').value = '';
+      toggleClientesTodosModal('nuevo');
+      alCambiarRolUsuarioModal('nuevo');
+      poblarListaCheckboxesClientesModal('nuevo', []);
+
+      const modal = document.getElementById('modalNuevoUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     function cerrarModalNuevoUsuario() {
-      document.getElementById('modalNuevoUsuario').classList.add('hidden');
-      document.getElementById('modalNuevoUsuario').classList.remove('flex');
+      const modal = document.getElementById('modalNuevoUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
     }
 
     async function guardarNuevoUsuario() {
@@ -12889,24 +13422,33 @@ if __name__ == '__main__':
         alert('La contraseña debe tener al menos 4 caracteres.');
         return;
       }
-      const res = await fetch('/api/usuarios', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          username: u,
-          nombre_completo: n,
-          password: p,
-          rol: document.getElementById('usr_rol').value,
-          cliente_asignado: document.getElementById('usr_cliente').value.trim()
-        })
-      });
-      if (res.ok) {
-        cerrarModalNuevoUsuario();
-        mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
-        cargarUsuariosCat();
-      } else {
-        const d = await res.json();
-        mostrarToast(d.detail || 'Error al crear usuario', true);
+      const rol = document.getElementById('usr_rol').value;
+      const vistas = obtenerVistasSeleccionadasModal('nuevo');
+      const cliente = obtenerClientesSeleccionadosModal('nuevo');
+
+      try {
+        const res = await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            username: u,
+            nombre_completo: n,
+            password: p,
+            rol: rol,
+            cliente_asignado: cliente,
+            vistas_permitidas: vistas
+          })
+        });
+        if (res.ok) {
+          cerrarModalNuevoUsuario();
+          mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
+          cargarUsuariosCat();
+        } else {
+          const d = await res.json();
+          mostrarToast(d.detail || 'Error al crear usuario', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión con el servidor', true);
       }
     }
 
@@ -12916,8 +13458,8 @@ if __name__ == '__main__':
       document.getElementById('edit_usr_username').value = u.username;
       document.getElementById('edit_usr_nombre').value = u.nombre_completo;
       document.getElementById('edit_usr_rol').value = u.rol;
-      document.getElementById('edit_usr_cliente').value = u.cliente_asignado || '';
       document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
+      document.getElementById('edit_usr_cliente_custom').value = '';
 
       const errBox = document.getElementById('edit_usr_error');
       if (errBox) errBox.classList.add('hidden');
@@ -12925,6 +13467,29 @@ if __name__ == '__main__':
       const esSuperAdmin = u.username.toLowerCase() === 'admin';
       document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
       document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
+
+      // Vistas permitidas
+      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase());
+      document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
+      document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
+      document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+
+      // Clientes asignados
+      let clis = [];
+      if (Array.isArray(u.clientes_asignados) && u.clientes_asignados.length > 0) {
+        clis = u.clientes_asignados;
+      } else if (u.cliente_asignado) {
+        clis = u.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      if (clis.length === 0) {
+        document.getElementById('edit_usr_todas_flotas').checked = true;
+      } else {
+        document.getElementById('edit_usr_todas_flotas').checked = false;
+      }
+      toggleClientesTodosModal('editar');
+      alCambiarRolUsuarioModal('editar');
+      poblarListaCheckboxesClientesModal('editar', clis);
 
       const modal = document.getElementById('modalEditarUsuario');
       modal.classList.remove('hidden');
@@ -12941,8 +13506,9 @@ if __name__ == '__main__':
       const username = document.getElementById('edit_usr_username').value.trim();
       const nombre = document.getElementById('edit_usr_nombre').value.trim();
       const rol = document.getElementById('edit_usr_rol').value;
-      const cliente = document.getElementById('edit_usr_cliente').value.trim();
       const activo = document.getElementById('edit_usr_activo').value === '1';
+      const vistas = obtenerVistasSeleccionadasModal('editar');
+      const cliente = obtenerClientesSeleccionadosModal('editar');
       const errBox = document.getElementById('edit_usr_error');
       if (errBox) errBox.classList.add('hidden');
 
@@ -12962,11 +13528,23 @@ if __name__ == '__main__':
             nombre_completo: nombre,
             rol: rol,
             cliente_asignado: cliente,
+            vistas_permitidas: vistas,
             activo: activo
           })
         });
         const d = await res.json();
         if (res.ok) {
+          if (usuarioActual && usuarioActual.username.toLowerCase() === username.toLowerCase()) {
+            usuarioActual.nombre_completo = nombre;
+            usuarioActual.rol = rol;
+            usuarioActual.cliente_asignado = cliente;
+            usuarioActual.clientes_asignados = cliente ? cliente.split(',').map(s => s.trim()).filter(Boolean) : [];
+            usuarioActual.vistas_permitidas = vistas;
+            localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
+            localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
+            actualizarUIUsuario();
+          }
+
           cerrarModalEditarUsuario();
           mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
           cargarUsuariosCat();
@@ -13164,6 +13742,9 @@ if __name__ == '__main__':
         poblarSelect('marca', '/api/valores-campo?campo=marca', 'ej. Michelin (Seleccionar marca)'),
         poblarSelect('dimension', '/api/valores-campo?campo=dimension', '295/80R22.5', '295/80R22.5')
       ]);
+
+      // Aplicar predeterminación o filtrado de clientes asignados al usuario en sesión
+      configurarClientesUsuarioEnInspeccion();
 
       const resOps = await fetch('/api/operaciones');
       if (resOps.ok) {
@@ -15498,9 +16079,11 @@ if __name__ == '__main__':
       // Limpiar cliente y subcliente si no están fijados por rol de usuario
       if (typeof usuarioActual === 'undefined' || !usuarioActual || usuarioActual.rol === 'admin' || !usuarioActual.cliente_asignado) {
         const inpCli = document.getElementById('cliente');
-        if (inpCli && !inpCli.readOnly) inpCli.value = '';
+        if (inpCli && !inpCli.readOnly && !inpCli.disabled) inpCli.value = '';
         const inpSub = document.getElementById('subcliente');
         if (inpSub) inpSub.value = '';
+      } else {
+        configurarClientesUsuarioEnInspeccion();
       }
 
       // Restablecer fecha a la fecha actual local
@@ -17552,7 +18135,7 @@ def auth_client(admin_token):
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 296 líneas | 10,761 bytes (10.5 KB)
+- **Métricas:** 391 líneas | 14,703 bytes (14.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17851,6 +18434,100 @@ def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
     data = res.json()
     assert "detail" in data
     assert "CANDADO DE SEGURIDAD" in data["detail"] or "27.0 mm" in data["detail"] or "Fila 2" in data["detail"]
+
+def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
+    # Crear usuario con vistas y múltiples clientes
+    payload = {
+        "username": "inspector_test",
+        "password": "password123",
+        "nombre_completo": "Inspector de Prueba",
+        "rol": "inspector",
+        "cliente_asignado": "TransCarga, Flota Norte",
+        "vistas_permitidas": "patio,diagnostico"
+    }
+    res = auth_client.post("/api/usuarios", json=payload)
+    assert res.status_code == 200
+
+    # Listar usuarios y verificar persistencia
+    res_list = auth_client.get("/api/usuarios")
+    assert res_list.status_code == 200
+    users = res_list.json()
+    u = next(x for x in users if x["username"] == "inspector_test")
+    assert u["rol"] == "inspector"
+    assert "patio" in u["vistas_permitidas"]
+    assert "diagnostico" in u["vistas_permitidas"]
+    # Verificar que basedatos y catalogos quedan excluidos para inspectores
+    assert "basedatos" not in u["vistas_permitidas"]
+    assert "catalogos" not in u["vistas_permitidas"]
+    assert len(u["clientes_asignados"]) == 2
+    assert "TransCarga" in u["clientes_asignados"]
+    assert "Flota Norte" in u["clientes_asignados"]
+
+    # Editar usuario a un solo cliente asignado
+    res_edit = auth_client.put("/api/usuarios/inspector_test", json={
+        "nombre_completo": "Inspector Modificado",
+        "rol": "inspector",
+        "cliente_asignado": "TransCarga",
+        "vistas_permitidas": "patio,kpis",
+        "activo": True
+    })
+    assert res_edit.status_code == 200
+
+    res_list2 = auth_client.get("/api/usuarios")
+    u2 = next(x for x in res_list2.json() if x["username"] == "inspector_test")
+    assert u2["nombre_completo"] == "Inspector Modificado"
+    assert u2["cliente_asignado"] == "TransCarga"
+    assert u2["clientes_asignados"] == ["TransCarga"]
+    assert "kpis" in u2["vistas_permitidas"]
+
+def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
+    # Crear usuario inspector con un único cliente asignado
+    database.crear_usuario("inspector_mono", "12345", "Inspector Mono", "inspector", "TransCarga", "patio,diagnostico")
+    token = server.crear_token_acceso("inspector_mono", "inspector")
+    client = TestClient(server.app)
+    client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # Consulta de valores de campo: solo debe retornar su cliente asignado
+    res_val = client.get("/api/valores-campo?campo=cliente")
+    assert res_val.status_code == 200
+    assert res_val.json() == ["TransCarga"]
+
+    # Registro de inspección: si no manda cliente, el servidor predetermina automáticamente TransCarga
+    insp_payload = {
+        "fecha": "2026-10-15",
+        "subcliente": "Sede Norte",
+        "tipo_operacion": "Urbano",
+        "placa": "TRC-001",
+        "numero_interno": "LL-100",
+        "posicion": 1,
+        "kilometraje": 50000,
+        "tipologia": "Camión 2 Ejes (4x2)",
+        "marca": "Michelin",
+        "diseno": "X Multi Z",
+        "dimension": "295/80R22.5",
+        "vida": "Original",
+        "prof_ext": 12.0,
+        "prof_cent": 12.0,
+        "prof_int": 12.0,
+        "psi": 110,
+        "prof_inicial": 16.0
+    }
+    res_insp = client.post("/api/inspecciones", json=insp_payload)
+    assert res_insp.status_code == 200
+    insp_id = res_insp.json()["id"]
+
+    # Verificar que quedó registrado como TRANSCARGA (estandarizado en mayúsculas)
+    res_get = client.get(f"/api/inspecciones/{insp_id}")
+    assert res_get.status_code == 200
+    assert res_get.json()["cliente"] == "TRANSCARGA"
+
+    # Intento de registrar para un cliente no autorizado -> 403 Forbidden
+    insp_payload_ajeno = dict(insp_payload)
+    insp_payload_ajeno["cliente"] = "Flota Ajena SAS"
+    insp_payload_ajeno["placa"] = "TRC-002"
+    insp_payload_ajeno["numero_interno"] = "LL-101"
+    res_prohibido = client.post("/api/inspecciones", json=insp_payload_ajeno)
+    assert res_prohibido.status_code == 403
 ```
 
 ---
