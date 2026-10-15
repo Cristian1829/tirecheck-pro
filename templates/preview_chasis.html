@@ -1236,6 +1236,19 @@
       else posicionesConNovedad.delete(p);
 
       irPosicionSiguiente();
+
+      // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
+      if (window.innerWidth < 1024) {
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+        setTimeout(() => {
+          const modChasis = document.getElementById('moduloChasis');
+          if (modChasis) {
+            modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 120);
+      }
     }
 
     function limpiarCamposMediciones() {

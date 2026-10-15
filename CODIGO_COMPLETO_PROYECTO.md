@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 20:19:06`
+- **Fecha de Generación:** `2026-10-14 20:30:13`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,075` líneas
-- **Tamaño Total de Código Fuente:** `1253.7 KB` (`1,283,775` bytes)
+- **Líneas Totales de Código:** `20,101` líneas
+- **Tamaño Total de Código Fuente:** `1254.8 KB` (`1,284,910` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -207,8 +207,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6377 | 601.4 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
-| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1333 | 69.3 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6390 | 602.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
@@ -8694,7 +8694,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6377 líneas | 615,787 bytes (601.4 KB)
+- **Métricas:** 6390 líneas | 616,397 bytes (602.0 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -15008,6 +15008,19 @@ if __name__ == '__main__':
           } else {
             avanzarSiguientePosicion(pos);
             limpiarMediciones();
+
+            // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
+            if (window.innerWidth < 1024) {
+              if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+              }
+              setTimeout(() => {
+                const modChasis = document.getElementById('moduloChasis');
+                if (modChasis) {
+                  modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }, 120);
+            }
           }
         } else {
           mostrarToast(result.detail || result.message || 'Error al guardar', true);
@@ -15083,7 +15096,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/preview_chasis.html`
 - **Descripción:** Visor interactivo y banco de pruebas de renderizado de tipologías de chasis
-- **Métricas:** 1333 líneas | 70,928 bytes (69.3 KB)
+- **Métricas:** 1346 líneas | 71,453 bytes (69.8 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -16325,6 +16338,19 @@ if __name__ == '__main__':
       else posicionesConNovedad.delete(p);
 
       irPosicionSiguiente();
+
+      // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
+      if (window.innerWidth < 1024) {
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+        setTimeout(() => {
+          const modChasis = document.getElementById('moduloChasis');
+          if (modChasis) {
+            modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 120);
+      }
     }
 
     function limpiarCamposMediciones() {
