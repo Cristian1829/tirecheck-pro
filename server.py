@@ -678,7 +678,7 @@ def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_u
     return database.buscar_modelos_llantas_filtro(query)
 
 @app.get("/api/configuraciones-clientes")
-def api_obtener_configuraciones_clientes(usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin)):
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")

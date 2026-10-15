@@ -274,6 +274,28 @@ def inicializar_bd():
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
         """)
 
+        # Tabla de Catálogo de Operaciones
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_operaciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT UNIQUE NOT NULL
+            )
+        """)
+        cursor.execute("SELECT COUNT(*) FROM catalogo_operaciones")
+        if cursor.fetchone()[0] == 0:
+            operaciones_seed = [
+                ('CARGA SECA',),
+                ('REFRIGERADO',),
+                ('LÍQUIDOS',),
+                ('PAQUETERÍA',),
+                ('URBANO',),
+                ('INTERMUNICIPAL',),
+                ('TRANSPORTE DE PERSONAL',),
+                ('VOLQUETA / CONSTRUCCIÓN',),
+                ('OPERACIÓN MIXTA',)
+            ]
+            cursor.executemany("INSERT OR IGNORE INTO catalogo_operaciones (nombre) VALUES (?)", operaciones_seed)
+
         # Tabla de Catálogo de Tipologías
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_tipologias (
@@ -2254,15 +2276,16 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
     Retorna la lista de vistas autorizadas.
-    REGLA: Solo el admin puede acceder a 'basedatos' y 'catalogos'.
+    REGLA: Solo el admin puede acceder a 'basedatos'.
+    Los inspectores pueden acceder a 'patio', 'diagnostico', 'kpis' y 'catalogos' (en modo consulta).
     """
     if str(rol).strip().lower() == 'admin':
         return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
     if not vistas:
-        return ['patio', 'diagnostico', 'kpis']
+        return ['patio', 'diagnostico', 'kpis', 'catalogos']
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
-    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos ni catalogos
-    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis')]
+    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos
+    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'catalogos')]
     return permitidas if permitidas else ['patio']
 
 def autenticar_usuario(username, password):

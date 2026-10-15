@@ -1347,7 +1347,7 @@
       <div id="cat-seccion-operaciones" class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Listado de Operaciones Activas</span>
-          <button type="button" onclick="abrirModalOperacion()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button id="btnNuevaOperacionCat" type="button" onclick="abrirModalOperacion()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-plus"></i>
             <span>Nueva Operación</span>
           </button>
@@ -1359,7 +1359,7 @@
       <div id="cat-seccion-tipologias" class="hidden space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Tipologías Configuradas</span>
-          <button type="button" onclick="abrirModalTipologia()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button id="btnNuevaTipologiaCat" type="button" onclick="abrirModalTipologia()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-plus"></i>
             <span>Nueva Tipología</span>
           </button>
@@ -1371,7 +1371,7 @@
       <div id="cat-seccion-modelos" class="hidden space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Modelos con Profundidad Inicial de Fábrica</span>
-          <button type="button" onclick="abrirModalNuevoModelo()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button id="btnNuevoModeloCat" type="button" onclick="abrirModalNuevoModelo()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-plus"></i>
             <span>Agregar Modelo</span>
           </button>
@@ -1797,14 +1797,9 @@
                 <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
               </span>
             </label>
-            <label id="lbl_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
-              <span class="flex items-center space-x-2">
-                <input type="checkbox" id="usr_vista_catalogos" class="rounded text-indigo-600" disabled>
-                <span class="font-semibold">Catálogos &amp; Ajustes</span>
-              </span>
-              <span id="badge_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
-                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
-              </span>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_catalogos" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Catálogos (Consulta Operaciones, Tipologías y Modelos)</span>
             </label>
           </div>
         </div>
@@ -1894,14 +1889,9 @@
                 <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
               </span>
             </label>
-            <label id="lbl_edit_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
-              <span class="flex items-center space-x-2">
-                <input type="checkbox" id="edit_usr_vista_catalogos" class="rounded text-indigo-600" disabled>
-                <span class="font-semibold">Catálogos &amp; Ajustes</span>
-              </span>
-              <span id="badge_edit_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
-                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
-              </span>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_catalogos" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Catálogos (Consulta Operaciones, Tipologías y Modelos)</span>
             </label>
           </div>
         </div>
@@ -2388,15 +2378,15 @@
         return;
       }
 
-      // Regla estricta: Solo el admin puede ingresar a Base de Inspecciones y Catálogos & Ajustes
-      if ((tabId === 'basedatos' || tabId === 'catalogos') && usuarioActual.rol !== 'admin') {
-        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a Base de Inspecciones y Catálogos', true);
+      // Regla estricta: Solo el admin puede ver e ingresar a la Base de Inspecciones
+      if (tabId === 'basedatos' && usuarioActual.rol !== 'admin') {
+        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a la Base de Inspecciones', true);
         tabId = 'patio';
       }
 
       // Validar si el usuario tiene asignada la vista solicitada
       if (usuarioActual.rol !== 'admin') {
-        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis')
+        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis,catalogos')
           .split(',')
           .map(v => v.trim().toLowerCase())
           .filter(Boolean);
@@ -2429,7 +2419,12 @@
       if (tabId === 'basedatos') cargarBaseInspecciones();
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
-      else if (tabId === 'catalogos') cargarGestionCatalogos();
+      else if (tabId === 'catalogos') {
+        if (usuarioActual && usuarioActual.rol !== 'admin') {
+          mostrarSubtabCat('operaciones');
+        }
+        cargarGestionCatalogos();
+      }
     }
 
     // ==========================================
@@ -2522,14 +2517,16 @@
       }
 
       // Control de visibilidad de pestañas de navegación según permisos del perfil
-      const vistasPermitidas = (usuarioActual.rol === 'admin')
+      const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
+      const vistasPermitidas = esAdmin
         ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
-        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
 
       ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
         if (btnNav) {
-          if (usuarioActual.rol !== 'admin' && (tab === 'basedatos' || tab === 'catalogos')) {
+          // REGLA: solo el admin puede ver la pestaña base de inspecciones
+          if (!esAdmin && tab === 'basedatos') {
             btnNav.classList.add('hidden');
           } else if (vistasPermitidas.includes(tab)) {
             btnNav.classList.remove('hidden');
@@ -2539,15 +2536,21 @@
         }
       });
 
-      // Control de acceso a la subpestaña de Usuarios en Catálogos (Solo Admin)
+      // REGLA: En Catálogos, los demás usuarios solo pueden ver pero no agregar
+      const btnOp = document.getElementById('btnNuevaOperacionCat');
+      if (btnOp) btnOp.classList.toggle('hidden', !esAdmin);
+      const btnTip = document.getElementById('btnNuevaTipologiaCat');
+      if (btnTip) btnTip.classList.toggle('hidden', !esAdmin);
+      const btnMod = document.getElementById('btnNuevoModeloCat');
+      if (btnMod) btnMod.classList.toggle('hidden', !esAdmin);
+
+      // REGLA: no pueden ver los límites por cliente, solo puede el admin
+      const subtabCli = document.getElementById('subtab-btn-clientes');
+      if (subtabCli) subtabCli.classList.toggle('hidden', !esAdmin);
+
+      // REGLA: solo el admin puede ver y crear nuevos usuarios
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
-      if (subtabUsrs) {
-        if (usuarioActual.rol === 'admin') {
-          subtabUsrs.classList.remove('hidden');
-        } else {
-          subtabUsrs.classList.add('hidden');
-        }
-      }
+      if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
 
       // Configurar estado de clientes asignados en la vista de Patio
       configurarClientesUsuarioEnInspeccion();
@@ -3601,22 +3604,31 @@
     // VISTA 5: GESTIÓN DE CATÁLOGOS & CONFIGURACIÓN
     // ==========================================
     function mostrarSubtabCat(subtab) {
+      const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
+      if (!esAdmin && (subtab === 'clientes' || subtab === 'usuarios')) {
+        subtab = 'operaciones';
+      }
       const tabs = ['operaciones', 'tipologias', 'modelos', 'clientes', 'usuarios'];
       tabs.forEach(t => {
-        document.getElementById(`cat-seccion-${t}`).classList.add('hidden');
+        const sec = document.getElementById(`cat-seccion-${t}`);
+        if (sec) sec.classList.add('hidden');
         const btn = document.getElementById(`subtab-btn-${t}`);
-        btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200';
+        if (btn) btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200';
       });
-      document.getElementById(`cat-seccion-${subtab}`).classList.remove('hidden');
-      document.getElementById(`subtab-btn-${subtab}`).className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
+      const secAct = document.getElementById(`cat-seccion-${subtab}`);
+      if (secAct) secAct.classList.remove('hidden');
+      const btnAct = document.getElementById(`subtab-btn-${subtab}`);
+      if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
     }
 
     async function cargarGestionCatalogos() {
       cargarOperacionesCat();
       cargarTipologiasCat();
       cargarModelosCat();
-      cargarClientesLimCat();
-      cargarUsuariosCat();
+      if (usuarioActual && usuarioActual.rol === 'admin') {
+        cargarClientesLimCat();
+        cargarUsuariosCat();
+      }
     }
 
     async function cargarOperacionesCat() {
@@ -3624,10 +3636,13 @@
       if (res.ok) {
         const ops = await res.json();
         const box = document.getElementById('listaOperacionesCat');
+        const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
         box.innerHTML = ops.map(op => `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <span class="font-bold text-slate-800">${op}</span>
-            <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs"><i class="fa-solid fa-trash"></i></button>
+            ${esAdmin ? `
+              <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
+            ` : ''}
           </div>
         `).join('');
       }
@@ -3803,13 +3818,14 @@
 
     function renderizarBadgesVistas(vistasStr, rol) {
       if (rol === 'admin') {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (5 Módulos)</span>`;
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
       }
-      const vistas = (vistasStr || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const vistas = (vistasStr || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
       if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      if (vistas.includes('catalogos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Catálogos (Lectura)</span>');
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
 
@@ -3875,9 +3891,7 @@
       const chkBD = document.getElementById(`${pfx}vista_basedatos`);
       const chkCat = document.getElementById(`${pfx}vista_catalogos`);
       const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
-      const lblCat = document.getElementById(`lbl_${pfx}vista_catalogos`);
       const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
-      const badgeCat = document.getElementById(`badge_${pfx}vista_catalogos`);
 
       if (rol === 'admin') {
         // Para admin: acceso total a las 5 vistas
@@ -3890,26 +3904,18 @@
           lblBD.classList.remove('text-slate-400', 'bg-slate-100');
           lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
         }
-        if (lblCat) {
-          lblCat.classList.remove('text-slate-400', 'bg-slate-100');
-          lblCat.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
-        }
         if (badgeBD) badgeBD.classList.add('hidden');
-        if (badgeCat) badgeCat.classList.add('hidden');
       } else {
-        // Para inspector: NUNCA tiene acceso a basedatos ni a catalogos
+        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos
         if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
-        if (chkCat) { chkCat.checked = false; chkCat.disabled = true; }
         if (lblBD) {
           lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
           lblBD.classList.add('text-slate-400', 'bg-slate-100');
         }
-        if (lblCat) {
-          lblCat.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
-          lblCat.classList.add('text-slate-400', 'bg-slate-100');
-        }
         if (badgeBD) badgeBD.classList.remove('hidden');
-        if (badgeCat) badgeCat.classList.remove('hidden');
+
+        // Catálogos disponible para inspector (solo consulta)
+        if (chkCat) { chkCat.disabled = false; }
       }
     }
 
@@ -4000,7 +4006,8 @@
       if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
-      // Seguridad inquebrantable: NUNCA añadir basedatos ni catalogos para no-admin
+      if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
+      // Seguridad inquebrantable: NUNCA añadir basedatos para no-admin
       if (vistas.length === 0) vistas.push('patio');
       return vistas.join(',');
     }
@@ -4097,11 +4104,18 @@
       document.getElementById('usr_vista_patio').checked = true;
       document.getElementById('usr_vista_diagnostico').checked = true;
       document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_vista_catalogos').checked = true;
       document.getElementById('usr_todas_flotas').checked = true;
       document.getElementById('usr_cliente_custom_nuevo').value = '';
       toggleClientesTodosModal('nuevo');
       alCambiarRolUsuarioModal('nuevo');
       poblarListaCheckboxesClientesModal('nuevo', []);
+
+      // Solo el admin puede asignar el rol admin
+      const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
+      if (optAdminNuevo) {
+        optAdminNuevo.disabled = (!usuarioActual || usuarioActual.rol !== 'admin');
+      }
 
       const modal = document.getElementById('modalNuevoUsuario');
       modal.classList.remove('hidden');
@@ -4127,6 +4141,11 @@
         return;
       }
       const rol = document.getElementById('usr_rol').value;
+      if (rol === 'admin' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+        alert('Solo un administrador puede crear usuarios con rol Administrador.');
+        return;
+      }
+
       const vistas = obtenerVistasSeleccionadasModal('nuevo');
       const cliente = obtenerClientesSeleccionadosModal('nuevo');
 
@@ -4172,11 +4191,18 @@
       document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
       document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
 
+      // Solo el admin puede asignar el rol admin
+      const optAdminEdit = document.querySelector('#edit_usr_rol option[value="admin"]');
+      if (optAdminEdit) {
+        optAdminEdit.disabled = (!usuarioActual || usuarioActual.rol !== 'admin');
+      }
+
       // Vistas permitidas
-      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase());
+      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase());
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+      document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
 
       // Clientes asignados
       let clis = [];
@@ -4219,6 +4245,14 @@
       if (!nombre) {
         if (errBox) {
           errBox.textContent = 'El nombre completo es obligatorio.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (rol === 'admin' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+        if (errBox) {
+          errBox.textContent = 'Solo un administrador puede asignar el rol Administrador.';
           errBox.classList.remove('hidden');
         }
         return;

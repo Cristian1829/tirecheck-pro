@@ -315,9 +315,8 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     assert u["rol"] == "inspector"
     assert "patio" in u["vistas_permitidas"]
     assert "diagnostico" in u["vistas_permitidas"]
-    # Verificar que basedatos y catalogos quedan excluidos para inspectores
+    # Verificar que basedatos queda estrictamente excluido para inspectores (solo admin)
     assert "basedatos" not in u["vistas_permitidas"]
-    assert "catalogos" not in u["vistas_permitidas"]
     assert len(u["clientes_asignados"]) == 2
     assert "TransCarga" in u["clientes_asignados"]
     assert "Flota Norte" in u["clientes_asignados"]
@@ -327,7 +326,7 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
         "nombre_completo": "Inspector Modificado",
         "rol": "inspector",
         "cliente_asignado": "TransCarga",
-        "vistas_permitidas": "patio,kpis",
+        "vistas_permitidas": "patio,kpis,catalogos",
         "activo": True
     })
     assert res_edit.status_code == 200
@@ -338,6 +337,8 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     assert u2["cliente_asignado"] == "TransCarga"
     assert u2["clientes_asignados"] == ["TransCarga"]
     assert "kpis" in u2["vistas_permitidas"]
+    assert "catalogos" in u2["vistas_permitidas"]
+    assert "basedatos" not in u2["vistas_permitidas"]
 
 def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
     # Crear usuario inspector con un único cliente asignado
@@ -387,5 +388,34 @@ def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
     insp_payload_ajeno["numero_interno"] = "LL-101"
     res_prohibido = client.post("/api/inspecciones", json=insp_payload_ajeno)
     assert res_prohibido.status_code == 403
+
+def test_api_permisos_catalogos_y_usuarios_inspector(test_db):
+    # Crear inspector
+    database.crear_usuario("inspector_cat", "12345", "Inspector Cat", "inspector", "TransCarga", "patio,catalogos")
+    token = server.crear_token_acceso("inspector_cat", "inspector")
+    client = TestClient(server.app)
+    client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # 1. Inspector PUEDE ver operaciones, tipologias y modelos
+    assert client.get("/api/operaciones").status_code == 200
+    assert client.get("/api/tipologias").status_code == 200
+    assert client.get("/api/modelos-llanta").status_code == 200
+
+    # 2. Inspector NO PUEDE ver límites por cliente (solo admin)
+    res_lim = client.get("/api/configuraciones-clientes")
+    assert res_lim.status_code == 403
+
+    # 3. Inspector NO PUEDE crear operaciones, tipologías, modelos ni límites
+    assert client.post("/api/operaciones", json={"nombre": "Operacion Ilegal"}).status_code == 403
+    assert client.post("/api/tipologias", json={"nombre": "Tipologia Ilegal", "cant_llantas": 6, "esquema_custom": "2-4"}).status_code == 403
+    assert client.post("/api/modelos-llanta", json={"tipo_llanta": "Nueva", "marca": "X", "diseno": "Y", "dimension": "295/80R22.5", "prof_inicial": 15.0}).status_code == 403
+    assert client.post("/api/configuraciones-clientes", json={"cliente": "CLIX", "limite_retiro_mm": 3.0}).status_code == 403
+
+    # 4. Inspector NO PUEDE crear usuarios ni ver lista de usuarios
+    assert client.get("/api/usuarios").status_code == 403
+    assert client.post("/api/usuarios", json={
+        "username": "hacker", "password": "123", "nombre_completo": "Hacker", "rol": "admin"
+    }).status_code == 403
+
 
 

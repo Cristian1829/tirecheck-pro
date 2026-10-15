@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 11:51:13`
+- **Fecha de Generación:** `2026-10-15 12:13:58`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `22,096` líneas
-- **Tamaño Total de Código Fuente:** `1348.3 KB` (`1,380,619` bytes)
+- **Líneas Totales de Código:** `22,183` líneas
+- **Tamaño Total de Código Fuente:** `1352.3 KB` (`1,384,755` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -211,7 +211,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 919 | 38.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2489 | 121.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 2512 | 122.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7414 | 653.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7448 | 654.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -229,7 +229,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 391 | 14.4 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 421 | 16.1 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 280 | 9.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -2032,7 +2032,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 919 líneas | 39,421 bytes (38.5 KB)
+- **Métricas:** 919 líneas | 39,404 bytes (38.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2716,7 +2716,7 @@ def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_u
     return database.buscar_modelos_llantas_filtro(query)
 
 @app.get("/api/configuraciones-clientes")
-def api_obtener_configuraciones_clientes(usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin)):
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")
@@ -2963,7 +2963,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2489 líneas | 124,332 bytes (121.4 KB)
+- **Métricas:** 2512 líneas | 125,310 bytes (122.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3242,6 +3242,28 @@ def inicializar_bd():
             FROM configuracion_clientes
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
         """)
+
+        # Tabla de Catálogo de Operaciones
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS catalogo_operaciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT UNIQUE NOT NULL
+            )
+        """)
+        cursor.execute("SELECT COUNT(*) FROM catalogo_operaciones")
+        if cursor.fetchone()[0] == 0:
+            operaciones_seed = [
+                ('CARGA SECA',),
+                ('REFRIGERADO',),
+                ('LÍQUIDOS',),
+                ('PAQUETERÍA',),
+                ('URBANO',),
+                ('INTERMUNICIPAL',),
+                ('TRANSPORTE DE PERSONAL',),
+                ('VOLQUETA / CONSTRUCCIÓN',),
+                ('OPERACIÓN MIXTA',)
+            ]
+            cursor.executemany("INSERT OR IGNORE INTO catalogo_operaciones (nombre) VALUES (?)", operaciones_seed)
 
         # Tabla de Catálogo de Tipologías
         conn.execute("""
@@ -5223,15 +5245,16 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
     Retorna la lista de vistas autorizadas.
-    REGLA: Solo el admin puede acceder a 'basedatos' y 'catalogos'.
+    REGLA: Solo el admin puede acceder a 'basedatos'.
+    Los inspectores pueden acceder a 'patio', 'diagnostico', 'kpis' y 'catalogos' (en modo consulta).
     """
     if str(rol).strip().lower() == 'admin':
         return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
     if not vistas:
-        return ['patio', 'diagnostico', 'kpis']
+        return ['patio', 'diagnostico', 'kpis', 'catalogos']
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
-    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos ni catalogos
-    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis')]
+    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos
+    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'catalogos')]
     return permitidas if permitidas else ['patio']
 
 def autenticar_usuario(username, password):
@@ -9290,7 +9313,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 7414 líneas | 668,803 bytes (653.1 KB)
+- **Métricas:** 7448 líneas | 670,205 bytes (654.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -10643,7 +10666,7 @@ if __name__ == '__main__':
       <div id="cat-seccion-operaciones" class="space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Listado de Operaciones Activas</span>
-          <button type="button" onclick="abrirModalOperacion()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button id="btnNuevaOperacionCat" type="button" onclick="abrirModalOperacion()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-plus"></i>
             <span>Nueva Operación</span>
           </button>
@@ -10655,7 +10678,7 @@ if __name__ == '__main__':
       <div id="cat-seccion-tipologias" class="hidden space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Tipologías Configuradas</span>
-          <button type="button" onclick="abrirModalTipologia()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button id="btnNuevaTipologiaCat" type="button" onclick="abrirModalTipologia()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-plus"></i>
             <span>Nueva Tipología</span>
           </button>
@@ -10667,7 +10690,7 @@ if __name__ == '__main__':
       <div id="cat-seccion-modelos" class="hidden space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Modelos con Profundidad Inicial de Fábrica</span>
-          <button type="button" onclick="abrirModalNuevoModelo()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button id="btnNuevoModeloCat" type="button" onclick="abrirModalNuevoModelo()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
             <i class="fa-solid fa-plus"></i>
             <span>Agregar Modelo</span>
           </button>
@@ -11093,14 +11116,9 @@ if __name__ == '__main__':
                 <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
               </span>
             </label>
-            <label id="lbl_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
-              <span class="flex items-center space-x-2">
-                <input type="checkbox" id="usr_vista_catalogos" class="rounded text-indigo-600" disabled>
-                <span class="font-semibold">Catálogos &amp; Ajustes</span>
-              </span>
-              <span id="badge_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
-                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
-              </span>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_catalogos" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Catálogos (Consulta Operaciones, Tipologías y Modelos)</span>
             </label>
           </div>
         </div>
@@ -11190,14 +11208,9 @@ if __name__ == '__main__':
                 <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
               </span>
             </label>
-            <label id="lbl_edit_usr_vista_catalogos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
-              <span class="flex items-center space-x-2">
-                <input type="checkbox" id="edit_usr_vista_catalogos" class="rounded text-indigo-600" disabled>
-                <span class="font-semibold">Catálogos &amp; Ajustes</span>
-              </span>
-              <span id="badge_edit_usr_vista_catalogos" class="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded-md flex items-center space-x-1">
-                <i class="fa-solid fa-lock text-[8px] mr-1"></i>Solo Admin
-              </span>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_catalogos" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Catálogos (Consulta Operaciones, Tipologías y Modelos)</span>
             </label>
           </div>
         </div>
@@ -11684,15 +11697,15 @@ if __name__ == '__main__':
         return;
       }
 
-      // Regla estricta: Solo el admin puede ingresar a Base de Inspecciones y Catálogos & Ajustes
-      if ((tabId === 'basedatos' || tabId === 'catalogos') && usuarioActual.rol !== 'admin') {
-        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a Base de Inspecciones y Catálogos', true);
+      // Regla estricta: Solo el admin puede ver e ingresar a la Base de Inspecciones
+      if (tabId === 'basedatos' && usuarioActual.rol !== 'admin') {
+        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a la Base de Inspecciones', true);
         tabId = 'patio';
       }
 
       // Validar si el usuario tiene asignada la vista solicitada
       if (usuarioActual.rol !== 'admin') {
-        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis')
+        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis,catalogos')
           .split(',')
           .map(v => v.trim().toLowerCase())
           .filter(Boolean);
@@ -11725,7 +11738,12 @@ if __name__ == '__main__':
       if (tabId === 'basedatos') cargarBaseInspecciones();
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
-      else if (tabId === 'catalogos') cargarGestionCatalogos();
+      else if (tabId === 'catalogos') {
+        if (usuarioActual && usuarioActual.rol !== 'admin') {
+          mostrarSubtabCat('operaciones');
+        }
+        cargarGestionCatalogos();
+      }
     }
 
     // ==========================================
@@ -11818,14 +11836,16 @@ if __name__ == '__main__':
       }
 
       // Control de visibilidad de pestañas de navegación según permisos del perfil
-      const vistasPermitidas = (usuarioActual.rol === 'admin')
+      const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
+      const vistasPermitidas = esAdmin
         ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
-        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
 
       ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
         if (btnNav) {
-          if (usuarioActual.rol !== 'admin' && (tab === 'basedatos' || tab === 'catalogos')) {
+          // REGLA: solo el admin puede ver la pestaña base de inspecciones
+          if (!esAdmin && tab === 'basedatos') {
             btnNav.classList.add('hidden');
           } else if (vistasPermitidas.includes(tab)) {
             btnNav.classList.remove('hidden');
@@ -11835,15 +11855,21 @@ if __name__ == '__main__':
         }
       });
 
-      // Control de acceso a la subpestaña de Usuarios en Catálogos (Solo Admin)
+      // REGLA: En Catálogos, los demás usuarios solo pueden ver pero no agregar
+      const btnOp = document.getElementById('btnNuevaOperacionCat');
+      if (btnOp) btnOp.classList.toggle('hidden', !esAdmin);
+      const btnTip = document.getElementById('btnNuevaTipologiaCat');
+      if (btnTip) btnTip.classList.toggle('hidden', !esAdmin);
+      const btnMod = document.getElementById('btnNuevoModeloCat');
+      if (btnMod) btnMod.classList.toggle('hidden', !esAdmin);
+
+      // REGLA: no pueden ver los límites por cliente, solo puede el admin
+      const subtabCli = document.getElementById('subtab-btn-clientes');
+      if (subtabCli) subtabCli.classList.toggle('hidden', !esAdmin);
+
+      // REGLA: solo el admin puede ver y crear nuevos usuarios
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
-      if (subtabUsrs) {
-        if (usuarioActual.rol === 'admin') {
-          subtabUsrs.classList.remove('hidden');
-        } else {
-          subtabUsrs.classList.add('hidden');
-        }
-      }
+      if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
 
       // Configurar estado de clientes asignados en la vista de Patio
       configurarClientesUsuarioEnInspeccion();
@@ -12897,22 +12923,31 @@ if __name__ == '__main__':
     // VISTA 5: GESTIÓN DE CATÁLOGOS & CONFIGURACIÓN
     // ==========================================
     function mostrarSubtabCat(subtab) {
+      const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
+      if (!esAdmin && (subtab === 'clientes' || subtab === 'usuarios')) {
+        subtab = 'operaciones';
+      }
       const tabs = ['operaciones', 'tipologias', 'modelos', 'clientes', 'usuarios'];
       tabs.forEach(t => {
-        document.getElementById(`cat-seccion-${t}`).classList.add('hidden');
+        const sec = document.getElementById(`cat-seccion-${t}`);
+        if (sec) sec.classList.add('hidden');
         const btn = document.getElementById(`subtab-btn-${t}`);
-        btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200';
+        if (btn) btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200';
       });
-      document.getElementById(`cat-seccion-${subtab}`).classList.remove('hidden');
-      document.getElementById(`subtab-btn-${subtab}`).className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
+      const secAct = document.getElementById(`cat-seccion-${subtab}`);
+      if (secAct) secAct.classList.remove('hidden');
+      const btnAct = document.getElementById(`subtab-btn-${subtab}`);
+      if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
     }
 
     async function cargarGestionCatalogos() {
       cargarOperacionesCat();
       cargarTipologiasCat();
       cargarModelosCat();
-      cargarClientesLimCat();
-      cargarUsuariosCat();
+      if (usuarioActual && usuarioActual.rol === 'admin') {
+        cargarClientesLimCat();
+        cargarUsuariosCat();
+      }
     }
 
     async function cargarOperacionesCat() {
@@ -12920,10 +12955,13 @@ if __name__ == '__main__':
       if (res.ok) {
         const ops = await res.json();
         const box = document.getElementById('listaOperacionesCat');
+        const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
         box.innerHTML = ops.map(op => `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <span class="font-bold text-slate-800">${op}</span>
-            <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs"><i class="fa-solid fa-trash"></i></button>
+            ${esAdmin ? `
+              <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
+            ` : ''}
           </div>
         `).join('');
       }
@@ -13099,13 +13137,14 @@ if __name__ == '__main__':
 
     function renderizarBadgesVistas(vistasStr, rol) {
       if (rol === 'admin') {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (5 Módulos)</span>`;
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
       }
-      const vistas = (vistasStr || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const vistas = (vistasStr || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
       if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      if (vistas.includes('catalogos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Catálogos (Lectura)</span>');
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
 
@@ -13171,9 +13210,7 @@ if __name__ == '__main__':
       const chkBD = document.getElementById(`${pfx}vista_basedatos`);
       const chkCat = document.getElementById(`${pfx}vista_catalogos`);
       const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
-      const lblCat = document.getElementById(`lbl_${pfx}vista_catalogos`);
       const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
-      const badgeCat = document.getElementById(`badge_${pfx}vista_catalogos`);
 
       if (rol === 'admin') {
         // Para admin: acceso total a las 5 vistas
@@ -13186,26 +13223,18 @@ if __name__ == '__main__':
           lblBD.classList.remove('text-slate-400', 'bg-slate-100');
           lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
         }
-        if (lblCat) {
-          lblCat.classList.remove('text-slate-400', 'bg-slate-100');
-          lblCat.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
-        }
         if (badgeBD) badgeBD.classList.add('hidden');
-        if (badgeCat) badgeCat.classList.add('hidden');
       } else {
-        // Para inspector: NUNCA tiene acceso a basedatos ni a catalogos
+        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos
         if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
-        if (chkCat) { chkCat.checked = false; chkCat.disabled = true; }
         if (lblBD) {
           lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
           lblBD.classList.add('text-slate-400', 'bg-slate-100');
         }
-        if (lblCat) {
-          lblCat.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
-          lblCat.classList.add('text-slate-400', 'bg-slate-100');
-        }
         if (badgeBD) badgeBD.classList.remove('hidden');
-        if (badgeCat) badgeCat.classList.remove('hidden');
+
+        // Catálogos disponible para inspector (solo consulta)
+        if (chkCat) { chkCat.disabled = false; }
       }
     }
 
@@ -13296,7 +13325,8 @@ if __name__ == '__main__':
       if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
-      // Seguridad inquebrantable: NUNCA añadir basedatos ni catalogos para no-admin
+      if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
+      // Seguridad inquebrantable: NUNCA añadir basedatos para no-admin
       if (vistas.length === 0) vistas.push('patio');
       return vistas.join(',');
     }
@@ -13393,11 +13423,18 @@ if __name__ == '__main__':
       document.getElementById('usr_vista_patio').checked = true;
       document.getElementById('usr_vista_diagnostico').checked = true;
       document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_vista_catalogos').checked = true;
       document.getElementById('usr_todas_flotas').checked = true;
       document.getElementById('usr_cliente_custom_nuevo').value = '';
       toggleClientesTodosModal('nuevo');
       alCambiarRolUsuarioModal('nuevo');
       poblarListaCheckboxesClientesModal('nuevo', []);
+
+      // Solo el admin puede asignar el rol admin
+      const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
+      if (optAdminNuevo) {
+        optAdminNuevo.disabled = (!usuarioActual || usuarioActual.rol !== 'admin');
+      }
 
       const modal = document.getElementById('modalNuevoUsuario');
       modal.classList.remove('hidden');
@@ -13423,6 +13460,11 @@ if __name__ == '__main__':
         return;
       }
       const rol = document.getElementById('usr_rol').value;
+      if (rol === 'admin' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+        alert('Solo un administrador puede crear usuarios con rol Administrador.');
+        return;
+      }
+
       const vistas = obtenerVistasSeleccionadasModal('nuevo');
       const cliente = obtenerClientesSeleccionadosModal('nuevo');
 
@@ -13468,11 +13510,18 @@ if __name__ == '__main__':
       document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
       document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
 
+      // Solo el admin puede asignar el rol admin
+      const optAdminEdit = document.querySelector('#edit_usr_rol option[value="admin"]');
+      if (optAdminEdit) {
+        optAdminEdit.disabled = (!usuarioActual || usuarioActual.rol !== 'admin');
+      }
+
       // Vistas permitidas
-      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis').split(',').map(s => s.trim().toLowerCase());
+      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase());
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+      document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
 
       // Clientes asignados
       let clis = [];
@@ -13515,6 +13564,14 @@ if __name__ == '__main__':
       if (!nombre) {
         if (errBox) {
           errBox.textContent = 'El nombre completo es obligatorio.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (rol === 'admin' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+        if (errBox) {
+          errBox.textContent = 'Solo un administrador puede asignar el rol Administrador.';
           errBox.classList.remove('hidden');
         }
         return;
@@ -18135,7 +18192,7 @@ def auth_client(admin_token):
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 391 líneas | 14,703 bytes (14.4 KB)
+- **Métricas:** 421 líneas | 16,476 bytes (16.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -18456,9 +18513,8 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     assert u["rol"] == "inspector"
     assert "patio" in u["vistas_permitidas"]
     assert "diagnostico" in u["vistas_permitidas"]
-    # Verificar que basedatos y catalogos quedan excluidos para inspectores
+    # Verificar que basedatos queda estrictamente excluido para inspectores (solo admin)
     assert "basedatos" not in u["vistas_permitidas"]
-    assert "catalogos" not in u["vistas_permitidas"]
     assert len(u["clientes_asignados"]) == 2
     assert "TransCarga" in u["clientes_asignados"]
     assert "Flota Norte" in u["clientes_asignados"]
@@ -18468,7 +18524,7 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
         "nombre_completo": "Inspector Modificado",
         "rol": "inspector",
         "cliente_asignado": "TransCarga",
-        "vistas_permitidas": "patio,kpis",
+        "vistas_permitidas": "patio,kpis,catalogos",
         "activo": True
     })
     assert res_edit.status_code == 200
@@ -18479,6 +18535,8 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     assert u2["cliente_asignado"] == "TransCarga"
     assert u2["clientes_asignados"] == ["TransCarga"]
     assert "kpis" in u2["vistas_permitidas"]
+    assert "catalogos" in u2["vistas_permitidas"]
+    assert "basedatos" not in u2["vistas_permitidas"]
 
 def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
     # Crear usuario inspector con un único cliente asignado
@@ -18528,6 +18586,34 @@ def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
     insp_payload_ajeno["numero_interno"] = "LL-101"
     res_prohibido = client.post("/api/inspecciones", json=insp_payload_ajeno)
     assert res_prohibido.status_code == 403
+
+def test_api_permisos_catalogos_y_usuarios_inspector(test_db):
+    # Crear inspector
+    database.crear_usuario("inspector_cat", "12345", "Inspector Cat", "inspector", "TransCarga", "patio,catalogos")
+    token = server.crear_token_acceso("inspector_cat", "inspector")
+    client = TestClient(server.app)
+    client.headers.update({"Authorization": f"Bearer {token}"})
+
+    # 1. Inspector PUEDE ver operaciones, tipologias y modelos
+    assert client.get("/api/operaciones").status_code == 200
+    assert client.get("/api/tipologias").status_code == 200
+    assert client.get("/api/modelos-llanta").status_code == 200
+
+    # 2. Inspector NO PUEDE ver límites por cliente (solo admin)
+    res_lim = client.get("/api/configuraciones-clientes")
+    assert res_lim.status_code == 403
+
+    # 3. Inspector NO PUEDE crear operaciones, tipologías, modelos ni límites
+    assert client.post("/api/operaciones", json={"nombre": "Operacion Ilegal"}).status_code == 403
+    assert client.post("/api/tipologias", json={"nombre": "Tipologia Ilegal", "cant_llantas": 6, "esquema_custom": "2-4"}).status_code == 403
+    assert client.post("/api/modelos-llanta", json={"tipo_llanta": "Nueva", "marca": "X", "diseno": "Y", "dimension": "295/80R22.5", "prof_inicial": 15.0}).status_code == 403
+    assert client.post("/api/configuraciones-clientes", json={"cliente": "CLIX", "limite_retiro_mm": 3.0}).status_code == 403
+
+    # 4. Inspector NO PUEDE crear usuarios ni ver lista de usuarios
+    assert client.get("/api/usuarios").status_code == 403
+    assert client.post("/api/usuarios", json={
+        "username": "hacker", "password": "123", "nombre_completo": "Hacker", "rol": "admin"
+    }).status_code == 403
 ```
 
 ---
