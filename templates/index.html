@@ -1210,6 +1210,66 @@
         </table>
       </div>
     </div>
+
+    <!-- ============================================================== -->
+    <!-- MATRIZ DE SEMÁFOROS POR POSICIÓN (POLÍTICA TÉCNICA DINÁMICA)   -->
+    <!-- ============================================================== -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="p-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-black">
+              <i class="fa-solid fa-traffic-light"></i>
+            </span>
+            <h3 class="text-base font-extrabold text-slate-900">Matriz de Semáforos por Posición</h3>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 tracking-wider uppercase">POLÍTICA DINÁMICA</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Evaluación llanta a llanta: Profundidad mínima (<span class="font-mono font-bold text-slate-700">PB = min({ext, cent, int} &gt; 0)</span>) contrastada contra la política de retiro técnico personalizada (Cliente, Sede y Tipo de Eje).
+          </p>
+        </div>
+
+        <!-- Leyenda interactiva de Semáforos -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-rose-50 border border-rose-200 text-rose-800" title="PB ≤ Límite">
+            <span class="w-2 h-2 rounded-full bg-rose-600 mr-1.5 animate-pulse"></span>🔴 Retiro Inmediato (≤ Límite)
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-800" title="Límite < PB ≤ Límite + 2.0 mm">
+            <span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>🟡 Próxima a Cambio (+2.0 mm)
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800" title="PB > Límite + 2.0 mm">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>🟢 Estado Óptimo (&gt; Límite + 2mm)
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-slate-600" title="PB ≤ 0 o sin medición física">
+            <span class="w-2 h-2 rounded-full bg-slate-400 mr-1.5"></span>⚪ Sin Datos / Casco
+          </span>
+        </div>
+      </div>
+
+      <!-- Tabla dinámica con scroll horizontal -->
+      <div class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[520px]">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead id="theadMatrizSemaforos" class="bg-slate-900 text-white font-bold sticky top-0 z-20 whitespace-nowrap text-center">
+            <tr>
+              <th class="p-2.5 text-left font-bold sticky left-0 z-30 bg-slate-900">Vehículo / Placa</th>
+              <th class="p-2.5 text-left font-bold">Cliente / Sede</th>
+              <th class="p-2.5 text-left font-bold">Tipología</th>
+              <th class="p-2.5 text-center font-bold">Posiciones Flota</th>
+              <th class="p-2.5 text-center font-bold">Resumen (🔴/🟡/🟢)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyMatrizSemaforos" class="divide-y divide-slate-100 bg-white text-slate-700 whitespace-nowrap text-center font-medium">
+            <tr>
+              <td colspan="16" class="p-8 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-600"></i>Cargando matriz de semáforos por posición...
+              </td>
+            </tr>
+          </tbody>
+          <tfoot id="tfootMatrizSemaforos" class="bg-slate-100 font-bold text-slate-800 sticky bottom-0 z-20 border-t-2 border-slate-300 text-center text-xs">
+          </tfoot>
+        </table>
+      </div>
+    </div>
   </section>
 
   <!-- ============================================================== -->
@@ -2397,6 +2457,7 @@
     datosInspeccionAnterior = null;
     let cacheTodasInspecciones = [];
     let cacheDiagnostico = [];
+    let cacheMatrizSemaforos = null;
     let cacheKpis = [];
 
     // ==========================================
@@ -3299,17 +3360,30 @@
     // ==========================================
     async function cargarDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
+      const tbodyMat = document.getElementById('tbodyMatrizSemaforos');
       if (tbody && (!cacheDiagnostico || cacheDiagnostico.length === 0)) {
         tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando diagnósticos de flota...</td></tr>';
       }
+      if (tbodyMat && (!cacheMatrizSemaforos || !cacheMatrizSemaforos.filas)) {
+        tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-600"></i>Cargando matriz de semáforos por posición...</td></tr>';
+      }
       try {
-        const res = await fetch('/api/diagnostico');
+        const [res, resMat] = await Promise.all([
+          fetch('/api/diagnostico'),
+          fetch('/api/diagnostico/matriz-semaforos')
+        ]);
         if (res.ok) {
           cacheDiagnostico = await res.json();
+        }
+        if (resMat.ok) {
+          cacheMatrizSemaforos = await resMat.json();
+        }
+        if (res.ok) {
           actualizarCombosFiltroDiagnostico();
           filtrarTablaDiagnostico();
         } else if (res.status === 401) {
           if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
+          if (tbodyMat) tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada.</td></tr>';
         } else {
           if (tbody) tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar diagnósticos (HTTP ${res.status}). <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
         }
@@ -3463,35 +3537,175 @@
 
       if (filtradas.length === 0) {
         tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-400">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
+      } else {
+        tbody.innerHTML = filtradas.map(r => {
+          const bgRow = r.Plan_Cambio_Llanta === 'SÍ' ? 'bg-rose-50/60' : (r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ') ? 'bg-amber-50/50' : '';
+          return `
+            <tr class="${bgRow} hover:bg-slate-100 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${r['Vehículo/Placa']}</td>
+              <td class="p-2.5 font-bold">${r.Cliente || '-'}</td>
+              <td class="p-2.5">${r.Subcliente || '-'}</td>
+              <td class="p-2.5">${r.Operación || '-'}</td>
+              <td class="p-2.5">${r.Tipo || '-'}</td>
+              <td class="p-2.5 text-right font-mono">${(r.Km || 0).toLocaleString()}</td>
+              <td class="p-2.5 text-center font-bold">${r['Llantas Inspeccionadas']}</td>
+              <td class="p-2.5 text-center font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
+              <td class="p-2.5 text-center">${r.Plan_Cambio_Llanta === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+              <td class="p-2.5 text-center">${r.Plan_Alineacion === 'SÍ' ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+              <td class="p-2.5 text-center">${r.Plan_Dual_Mal_Apareado === 'SÍ' ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+              <td class="p-2.5 max-w-xs truncate font-medium text-rose-700" title="${r.Detalle_Cambio || ''}">${r.Detalle_Cambio || 'OK'}</td>
+              <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
+              <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
+              <td class="p-2.5 text-center">
+                <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
+                  <i class="fa-solid fa-file-pdf"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Actualizar automáticamente la Matriz de Semáforos por Posición
+      renderizarMatrizSemaforos(cli, sede, op, placa);
+    }
+
+    function renderizarMatrizSemaforos(cli, sede, op, placa) {
+      const thead = document.getElementById('theadMatrizSemaforos');
+      const tbody = document.getElementById('tbodyMatrizSemaforos');
+      const tfoot = document.getElementById('tfootMatrizSemaforos');
+      if (!tbody) return;
+
+      if (!cacheMatrizSemaforos || !cacheMatrizSemaforos.filas || cacheMatrizSemaforos.filas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-slate-400">No hay datos de matriz disponibles.</td></tr>';
+        if (tfoot) tfoot.innerHTML = '';
         return;
       }
 
-      tbody.innerHTML = filtradas.map(r => {
-        const bgRow = r.Plan_Cambio_Llanta === 'SÍ' ? 'bg-rose-50/60' : (r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ') ? 'bg-amber-50/50' : '';
+      const cliNorm = String(cli || 'Todos').trim().toUpperCase();
+      const sedeNorm = String(sede || 'Todos').trim().toUpperCase();
+      const opNorm = String(op || 'Todos').trim().toUpperCase();
+      const placaNorm = String(placa || '').trim().toLowerCase();
+
+      const filasFiltradas = cacheMatrizSemaforos.filas.filter(r => {
+        if (cliNorm !== 'TODOS' && String(r.cliente || '').trim().toUpperCase() !== cliNorm) return false;
+        if (sedeNorm !== 'TODOS' && String(r.subcliente || '').trim().toUpperCase() !== sedeNorm) return false;
+        if (opNorm !== 'TODOS' && String(r.tipo_operacion || '').trim().toUpperCase() !== opNorm) return false;
+        if (placaNorm && !String(r.placa || '').toLowerCase().includes(placaNorm)) return false;
+        return true;
+      });
+
+      const posiciones = cacheMatrizSemaforos.posiciones || [];
+
+      // Encabezado dinámico de la tabla matriz
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th class="p-2.5 text-left font-bold sticky left-0 z-30 bg-slate-900 min-w-[95px] shadow-sm">Vehículo</th>
+            <th class="p-2.5 text-left font-bold min-w-[130px]">Cliente / Sede</th>
+            <th class="p-2.5 text-left font-bold min-w-[110px]">Tipología</th>
+            ${posiciones.map(p => `<th class="p-2 text-center font-black min-w-[52px] border-l border-slate-800" title="Posición ${p}">P${p}</th>`).join('')}
+            <th class="p-2.5 text-center font-bold min-w-[95px] border-l border-slate-800">🔴/🟡/🟢</th>
+          </tr>
+        `;
+      }
+
+      if (filasFiltradas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${posiciones.length + 4}" class="p-8 text-center text-slate-400 font-medium">No se encontraron vehículos que coincidan con los filtros aplicados.</td></tr>`;
+        if (tfoot) tfoot.innerHTML = '';
+        return;
+      }
+
+      const posTotales = {};
+      posiciones.forEach(p => {
+        posTotales[p] = { rojo: 0, amarillo: 0, verde: 0, gris: 0, total: 0 };
+      });
+      const globalTot = { rojo: 0, amarillo: 0, verde: 0, gris: 0 };
+
+      tbody.innerHTML = filasFiltradas.map(r => {
+        let cRojo = 0, cAmar = 0, cVerde = 0, cGris = 0;
+        const celdasPos = posiciones.map(p => {
+          const cel = r.posiciones ? r.posiciones[p] : null;
+          if (!cel) {
+            return '<td class="p-2 text-center text-slate-300 font-mono border-l border-slate-100">-</td>';
+          }
+          const pb = cel.pb;
+          const col = cel.color;
+          if (col === 'rojo') { cRojo++; posTotales[p].rojo++; globalTot.rojo++; }
+          else if (col === 'amarillo') { cAmar++; posTotales[p].amarillo++; globalTot.amarillo++; }
+          else if (col === 'verde') { cVerde++; posTotales[p].verde++; globalTot.verde++; }
+          else { cGris++; posTotales[p].gris++; globalTot.gris++; }
+          posTotales[p].total++;
+
+          let badgeClass = '';
+          let dotColor = '';
+          if (col === 'rojo') {
+            badgeClass = 'bg-rose-100 text-rose-800 border-rose-300 font-black';
+            dotColor = 'bg-rose-600 animate-pulse';
+          } else if (col === 'amarillo') {
+            badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+            dotColor = 'bg-amber-500';
+          } else if (col === 'verde') {
+            badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+            dotColor = 'bg-emerald-500';
+          } else {
+            badgeClass = 'bg-slate-100 text-slate-500 border-slate-200 font-medium';
+            dotColor = 'bg-slate-400';
+          }
+
+          const valTxt = pb > 0 ? pb.toFixed(1) : '0.0';
+          const tooltip = `Pos ${p} (${cel.eje || 'Eje'}) | PB: ${valTxt} mm | Límite Retiro: ${cel.limite ? cel.limite.toFixed(1) : '3.0'} mm | ${cel.estado} - ${cel.accion || ''}`;
+
+          return `
+            <td class="p-1.5 text-center border-l border-slate-100" title="${tooltip}">
+              <span class="inline-flex items-center justify-center space-x-1 px-1.5 py-0.5 rounded-md border text-[11px] font-mono ${badgeClass} cursor-help shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+                <span>${valTxt}</span>
+              </span>
+            </td>
+          `;
+        }).join('');
+
+        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
+        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
+
         return `
-          <tr class="${bgRow} hover:bg-slate-100 transition-colors">
-            <td class="p-2.5 font-black text-slate-900">${r['Vehículo/Placa']}</td>
-            <td class="p-2.5 font-bold">${r.Cliente || '-'}</td>
-            <td class="p-2.5">${r.Subcliente || '-'}</td>
-            <td class="p-2.5">${r.Operación || '-'}</td>
-            <td class="p-2.5">${r.Tipo || '-'}</td>
-            <td class="p-2.5 text-right font-mono">${(r.Km || 0).toLocaleString()}</td>
-            <td class="p-2.5 text-center font-bold">${r['Llantas Inspeccionadas']}</td>
-            <td class="p-2.5 text-center font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
-            <td class="p-2.5 text-center">${r.Plan_Cambio_Llanta === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-            <td class="p-2.5 text-center">${r.Plan_Alineacion === 'SÍ' ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-            <td class="p-2.5 text-center">${r.Plan_Dual_Mal_Apareado === 'SÍ' ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-            <td class="p-2.5 max-w-xs truncate font-medium text-rose-700" title="${r.Detalle_Cambio || ''}">${r.Detalle_Cambio || 'OK'}</td>
-            <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
-            <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
-            <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
-                <i class="fa-solid fa-file-pdf"></i>
-              </button>
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${r.placa}</td>
+            <td class="p-2.5 text-left font-bold text-slate-700">${r.cliente || '-'}${subClienteTxt}</td>
+            <td class="p-2.5 text-left text-slate-600 text-[11px]">${tipoTxt}</td>
+            ${celdasPos}
+            <td class="p-2 text-center border-l border-slate-100 font-mono text-xs whitespace-nowrap">
+              <span class="text-rose-700 font-black">${cRojo}</span> /
+              <span class="text-amber-700 font-bold">${cAmar}</span> /
+              <span class="text-emerald-700 font-bold">${cVerde}</span>
             </td>
           </tr>
         `;
       }).join('');
+
+      if (tfoot) {
+        tfoot.innerHTML = `
+          <tr class="bg-slate-100 text-slate-800 border-t-2 border-slate-300">
+            <td class="p-2.5 text-left font-black sticky left-0 z-10 bg-slate-100 shadow-2xs">TOTALES FLOTA</td>
+            <td class="p-2.5 text-left text-[11px] text-slate-500 font-bold">${filasFiltradas.length} Vehículos</td>
+            <td class="p-2.5 text-left text-[10px] text-slate-500 font-bold">🔴/🟡/🟢</td>
+            ${posiciones.map(p => {
+              const t = posTotales[p];
+              return `
+                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos ${p}: ${t.rojo} Retiro Urgente, ${t.amarillo} Próxima a Cambio, ${t.verde} Óptima">
+                  <span class="text-rose-700 font-black">${t.rojo}</span>/<span class="text-amber-700 font-bold">${t.amarillo}</span>/<span class="text-emerald-700 font-bold">${t.verde}</span>
+                </td>
+              `;
+            }).join('')}
+            <td class="p-2 text-center border-l border-slate-200 font-mono font-black text-xs whitespace-nowrap">
+              <span class="text-rose-700">${globalTot.rojo}</span> /
+              <span class="text-amber-700">${globalTot.amarillo}</span> /
+              <span class="text-emerald-700">${globalTot.verde}</span>
+            </td>
+          </tr>
+        `;
+      }
     }
 
     function limpiarFiltrosDiagnostico() {

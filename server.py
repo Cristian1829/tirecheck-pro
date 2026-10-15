@@ -477,6 +477,49 @@ def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_us
         raise HTTPException(status_code=500, detail=f"Error al calcular diagnóstico: {str(e)}")
 
 
+@app.get("/api/diagnostico/matriz-semaforos")
+def api_diagnostico_matriz_semaforos(
+    cliente: str = "",
+    subcliente: str = "",
+    operacion: str = "",
+    placa: str = "",
+    usuario: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    try:
+        if usuario_actual.get("rol") != "admin":
+            if usuario_actual.get("cliente_asignado"):
+                cliente = usuario_actual["cliente_asignado"]
+            filtro_u = usuario_actual["username"]
+        else:
+            filtro_u = usuario if usuario else None
+
+        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        if df.empty:
+            return {
+                "posiciones": [],
+                "filas": [],
+                "totales_posicion": {},
+                "resumen_global": {"total_vehiculos": 0, "total_llantas": 0, "rojo": 0, "amarillo": 0, "verde": 0, "gris": 0}
+            }
+
+        if cliente and cliente != "Todos":
+            df = df[df["cliente"].astype(str).str.upper().str.strip() == str(cliente).upper().strip()]
+        if subcliente and subcliente != "Todos":
+            df = df[df["subcliente"].astype(str).str.upper().str.strip() == str(subcliente).upper().strip()]
+        if operacion and operacion != "Todos":
+            df = df[df["tipo_operacion"].astype(str).str.upper().str.strip() == str(operacion).upper().strip()]
+        if placa:
+            df = df[df["placa"].astype(str).str.upper().str.contains(str(placa).upper().strip(), na=False)]
+
+        matriz = database.calcular_matriz_semaforos_posicion(df)
+        return sanitizar_nativos(matriz)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al calcular matriz de semáforos: {str(e)}")
+
+
 @app.get("/api/diagnostico/exportar-excel")
 def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     if usuario_actual.get("rol") != "admin":

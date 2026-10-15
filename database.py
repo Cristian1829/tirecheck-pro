@@ -1,4 +1,5 @@
 import sqlite3
+import json
 import pandas as pd
 import unicodedata
 import os
@@ -1546,12 +1547,27 @@ def buscar_modelos_llantas_filtro(termino=''):
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
+def _quitar_tildes(s):
+    if not s or pd.isna(s):
+        return ''
+    s_str = str(s).strip().upper()
+    if s_str in ('NAN', 'NONE', '-'):
+        return ''
+    return ''.join(c for c in unicodedata.normalize('NFD', s_str) if unicodedata.category(c) != 'Mn')
+
 # --- CONFIGURACIÓN DE LÍMITES POR CLIENTE, SUBCLIENTE Y EJE ---
 def _construir_cache_limites_retiro(conn=None):
     """
     Carga en memoria todas las reglas de límites de retiro de configuracion_limites_retiro
     y configuracion_clientes en una sola lectura para resolver en O(1) eliminando consultas N+1.
     Retorna una función resolver_limite(cliente, subcliente='TODOS', eje='TODOS') -> float.
+    Aplica jerarquía dinámica en cascada:
+    1. Cliente + Subcliente + Eje
+    2. Cliente + Subcliente + TODOS
+    3. Cliente + TODOS + Eje
+    4. Cliente + TODOS + TODOS
+    5. Fallback a tabla legada configuracion_clientes
+    6. Default sistema (3.0 mm)
     """
     def _cargar(c):
         cursor = c.cursor()
@@ -1563,6 +1579,7 @@ def _construir_cache_limites_retiro(conn=None):
             ej = str(row[2] or 'TODOS').strip().upper() or 'TODOS'
             lim = to_float(row[3], 3.0)
             mapa_granular[(cl, sub, ej)] = lim
+            mapa_granular[(_quitar_tildes(cl), _quitar_tildes(sub), _quitar_tildes(ej))] = lim
 
         cursor.execute("SELECT cliente, limite_retiro_mm FROM configuracion_clientes")
         mapa_clientes = {}
@@ -1570,6 +1587,7 @@ def _construir_cache_limites_retiro(conn=None):
             cl = str(row[0] or '').strip().upper()
             lim = to_float(row[1], 3.0)
             mapa_clientes[cl] = lim
+            mapa_clientes[_quitar_tildes(cl)] = lim
 
         def resolver_limite(cliente='', subcliente='TODOS', eje='TODOS'):
             if pd.isna(cliente) or cliente is None:
@@ -1580,25 +1598,41 @@ def _construir_cache_limites_retiro(conn=None):
             sub_norm = str(subcliente or 'TODOS').strip().upper() or 'TODOS'
             e_norm = str(eje or 'TODOS').strip().upper() or 'TODOS'
 
+            c_sin = _quitar_tildes(c_norm)
+            sub_sin = _quitar_tildes(sub_norm) or 'TODOS'
+            e_sin = _quitar_tildes(e_norm) or 'TODOS'
+
             # 1. Búsqueda exacta: (cliente, subcliente, eje)
             if (c_norm, sub_norm, e_norm) in mapa_granular:
                 return mapa_granular[(c_norm, sub_norm, e_norm)]
+            if (c_sin, sub_sin, e_sin) in mapa_granular:
+                return mapa_granular[(c_sin, sub_sin, e_sin)]
 
             # 2. cliente + subcliente + TODOS
-            if e_norm != 'TODOS' and (c_norm, sub_norm, 'TODOS') in mapa_granular:
-                return mapa_granular[(c_norm, sub_norm, 'TODOS')]
+            if e_norm != 'TODOS':
+                if (c_norm, sub_norm, 'TODOS') in mapa_granular:
+                    return mapa_granular[(c_norm, sub_norm, 'TODOS')]
+                if (c_sin, sub_sin, 'TODOS') in mapa_granular:
+                    return mapa_granular[(c_sin, sub_sin, 'TODOS')]
 
             # 3. cliente + TODOS + eje
-            if sub_norm != 'TODOS' and (c_norm, 'TODOS', e_norm) in mapa_granular:
-                return mapa_granular[(c_norm, 'TODOS', e_norm)]
+            if sub_norm != 'TODOS':
+                if (c_norm, 'TODOS', e_norm) in mapa_granular:
+                    return mapa_granular[(c_norm, 'TODOS', e_norm)]
+                if (c_sin, 'TODOS', e_sin) in mapa_granular:
+                    return mapa_granular[(c_sin, 'TODOS', e_sin)]
 
             # 4. cliente + TODOS + TODOS
             if (c_norm, 'TODOS', 'TODOS') in mapa_granular:
                 return mapa_granular[(c_norm, 'TODOS', 'TODOS')]
+            if (c_sin, 'TODOS', 'TODOS') in mapa_granular:
+                return mapa_granular[(c_sin, 'TODOS', 'TODOS')]
 
             # 5. Fallback a tabla legada configuracion_clientes
             if c_norm in mapa_clientes:
                 return mapa_clientes[c_norm]
+            if c_sin in mapa_clientes:
+                return mapa_clientes[c_sin]
 
             return 3.0
 
@@ -1613,6 +1647,246 @@ def _construir_cache_limites_retiro(conn=None):
 def obtener_limite_retiro_cliente(cliente='', subcliente='TODOS', eje='TODOS', conn=None):
     resolver = _construir_cache_limites_retiro(conn=conn)
     return resolver(cliente, subcliente, eje)
+
+def _cargar_mapa_tipologias_ejes(conn=None):
+    """
+    Carga en memoria el mapa de (tipologia_norm, posicion) -> tipo_eje ('DIRECCIONAL', 'TRACCIÓN', 'LIBRE', 'REPUESTO')
+    a partir de catalogo_tipologias y sus esquemas JSON.
+    """
+    def _cargar(c):
+        mapa = {}
+        try:
+            cursor = c.cursor()
+            cursor.execute("SELECT nombre, esquema_json FROM catalogo_tipologias")
+            for nom, esq_str in cursor.fetchall():
+                if not nom or not esq_str:
+                    continue
+                nom_norm = _quitar_tildes(nom)
+                try:
+                    esq = json.loads(esq_str)
+                    pos_map = {}
+                    for eje_obj in esq:
+                        t = str(eje_obj.get('tipo', '')).strip().lower()
+                        if 'dir' in t:
+                            t_eje = 'DIRECCIONAL'
+                        elif 'trac' in t:
+                            t_eje = 'TRACCIÓN'
+                        elif 'rep' in t:
+                            t_eje = 'REPUESTO'
+                        else:
+                            t_eje = 'LIBRE'
+                        for p_obj in eje_obj.get('posiciones', []):
+                            if 'pos' in p_obj:
+                                pos_map[int(p_obj['pos'])] = t_eje
+                    if pos_map:
+                        mapa[nom_norm] = pos_map
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return mapa
+
+    if conn is not None:
+        return _cargar(conn)
+    else:
+        with get_connection() as c:
+            return _cargar(c)
+
+def obtener_tipo_eje_posicion(tipologia, posicion, max_pos=None, mapa_tipologias=None):
+    """
+    Determina si la posición evaluada pertenece a eje DIRECCIONAL, TRACCIÓN, LIBRE o REPUESTO
+    consultando el catálogo o por heurística técnica de transporte.
+    """
+    try:
+        pos = int(posicion)
+    except (ValueError, TypeError):
+        return 'TRACCIÓN'
+
+    if pos >= 90:
+        return 'REPUESTO'
+
+    t_norm = _quitar_tildes(tipologia)
+    if mapa_tipologias:
+        # 1. Búsqueda exacta
+        if t_norm in mapa_tipologias and pos in mapa_tipologias[t_norm]:
+            return mapa_tipologias[t_norm][pos]
+        # 2. Búsqueda parcial
+        for k, p_map in mapa_tipologias.items():
+            if (t_norm and (t_norm in k or k in t_norm)) and pos in p_map:
+                return p_map[pos]
+
+    # Heurística de ingeniería de transporte
+    t_lower = str(tipologia or '').lower()
+    if 'trailer' in t_lower or 'remolque' in t_lower:
+        return 'LIBRE'
+
+    es_cuatro_manos = ('cuatro manos' in t_lower or (max_pos and max_pos >= 12 and 'cabezote' in t_lower))
+    if es_cuatro_manos:
+        if pos in (1, 2, 3, 4):
+            return 'DIRECCIONAL'
+        return 'TRACCIÓN'
+    else:
+        if pos in (1, 2):
+            return 'DIRECCIONAL'
+        return 'TRACCIÓN'
+
+def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
+    """
+    Construye la Matriz de Semáforos por Posición evaluando cada llanta montada contra
+    la política de retiro técnico personalizada (por cliente, sede y tipo de eje).
+
+    A. Reglas de Cálculo de Profundidad Mínima (PB):
+       PB = min({p in {prof_ext, prof_cent, prof_int} | p > 0})
+       Si todas las mediciones son <= 0, se considera sin datos o llanta en casco (PB = 0.0).
+
+    B. Jerarquía Dinámica del Límite de Retiro (L):
+       1. Cliente + Subcliente (Sede) + Eje específico
+       2. Cliente + Subcliente (Sede) (todos los ejes de esa sede)
+       3. Cliente + Eje específico
+       4. Cliente general (política global del cliente)
+       5. Valor por defecto del sistema (3.0 mm)
+
+    C. Umbrales del Semáforo para cada posición i:
+       🔴 Rojo: PB <= L -> Retiro Inmediato (Cambio YA)
+       🟡 Amarillo: L < PB <= L + 2.0 mm -> Próxima a Cambio (Alerta Preventiva)
+       🟢 Verde: PB > L + 2.0 mm -> Estado Óptimo (Normal)
+       ⚪ Gris: PB <= 0 -> Sin Datos / Pendiente
+    """
+    if df_inspecciones is None or df_inspecciones.empty:
+        return {
+            'posiciones': [],
+            'filas': [],
+            'totales_posicion': {},
+            'resumen_global': {'total_vehiculos': 0, 'total_llantas': 0, 'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0}
+        }
+
+    resolver_limite = _construir_cache_limites_retiro(conn=conn)
+    mapa_tips = _cargar_mapa_tipologias_ejes(conn=conn)
+
+    df = df_inspecciones.copy()
+    if 'posicion' not in df.columns or 'placa' not in df.columns:
+        return {
+            'posiciones': [],
+            'filas': [],
+            'totales_posicion': {},
+            'resumen_global': {'total_vehiculos': 0, 'total_llantas': 0, 'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0}
+        }
+
+    df['posicion'] = pd.to_numeric(df['posicion'], errors='coerce')
+    df = df.dropna(subset=['posicion']).copy()
+    df['posicion'] = df['posicion'].astype(int)
+
+    posiciones_set = set(df['posicion'].unique())
+    posiciones = [int(p) for p in sorted(list(posiciones_set))]
+
+    filas = []
+    totales_posicion = {int(p): {'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0, 'total': 0} for p in posiciones}
+    resumen_global = {'total_vehiculos': 0, 'total_llantas': 0, 'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0}
+
+    for placa, group in df.groupby('placa', sort=False):
+        # Mismo criterio que analizar_inspecciones_df: fecha más reciente y última inspección por posición
+        if 'fecha' in group.columns and not group['fecha'].dropna().empty:
+            fecha_max = group['fecha'].astype(str).str[:10].max()
+            group = group[group['fecha'].astype(str).str[:10] == fecha_max]
+        if 'id' in group.columns:
+            group_ult = group.sort_values('id').groupby('posicion', as_index=False).last()
+        else:
+            group_ult = group.drop_duplicates(subset=['posicion'], keep='last')
+
+        cli = str(group_ult['cliente'].iloc[0] or '').strip() if 'cliente' in group_ult.columns else ''
+        sub = str(group_ult['subcliente'].iloc[0] or '').strip() if 'subcliente' in group_ult.columns else ''
+        op = str(group_ult['tipo_operacion'].iloc[0] or '').strip() if 'tipo_operacion' in group_ult.columns else ''
+        tip = str(group_ult['tipologia'].iloc[0] or '').strip() if 'tipologia' in group_ult.columns else ''
+        km_max = to_float(group_ult['kilometraje'].max()) if 'kilometraje' in group_ult.columns else 0.0
+        fecha_max_str = str(group_ult['fecha'].max() or '') if 'fecha' in group_ult.columns else ''
+        max_p = group_ult['posicion'].max()
+
+        pos_dict = {}
+        conteo_veh = {'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0, 'total': 0}
+
+        for _, r in group_ult.iterrows():
+            pos = int(r['posicion'])
+            pe = to_float(r.get('prof_ext', 0), 0.0)
+            pc = to_float(r.get('prof_cent', 0), 0.0)
+            pi = to_float(r.get('prof_int', 0), 0.0)
+
+            # A. Profundidad Mínima (PB): min({p in {prof_ext, prof_cent, prof_int} | p > 0})
+            validos = [p for p in (pe, pc, pi) if p > 0]
+            if validos:
+                pb = round(float(min(validos)), 1)
+            else:
+                pb = 0.0
+
+            # B. Jerarquía Dinámica del Límite de Retiro
+            eje_tipo = obtener_tipo_eje_posicion(tip, pos, max_pos=max_p, mapa_tipologias=mapa_tips)
+            limite = resolver_limite(cli, sub, eje_tipo)
+
+            # C. Umbrales del Semáforo
+            if pb <= 0:
+                color = 'gris'
+                estado = 'Sin Datos / Casco'
+                icono = '⚪'
+                accion = 'Revisión física o registro de datos'
+            elif pb <= limite:
+                color = 'rojo'
+                estado = 'Retiro Inmediato'
+                icono = '🔴'
+                accion = 'Programar desmontaje urgente para reencauche o baja definitiva'
+            elif pb <= (limite + 2.0):
+                color = 'amarillo'
+                estado = 'Próxima a Cambio'
+                icono = '🟡'
+                accion = 'Monitoreo cercano. Alistar inventario de reemplazo (15 a 30 días)'
+            else:
+                color = 'verde'
+                estado = 'Estado Óptimo'
+                icono = '🟢'
+                accion = 'Llantas con vida útil remanente suficiente. Mantener calibración PSI'
+
+            pos_dict[pos] = {
+                'pb': pb,
+                'limite': limite,
+                'eje': eje_tipo,
+                'color': color,
+                'estado': estado,
+                'icono': icono,
+                'accion': accion,
+                'prof_ext': pe,
+                'prof_cent': pc,
+                'prof_int': pi
+            }
+
+            conteo_veh[color] += 1
+            conteo_veh['total'] += 1
+
+            if pos in totales_posicion:
+                totales_posicion[pos][color] += 1
+                totales_posicion[pos]['total'] += 1
+
+            resumen_global[color] += 1
+            resumen_global['total_llantas'] += 1
+
+        resumen_global['total_vehiculos'] += 1
+
+        filas.append({
+            'placa': placa,
+            'cliente': cli,
+            'subcliente': sub,
+            'tipo_operacion': op,
+            'tipologia': tip,
+            'km': km_max,
+            'fecha': fecha_max_str,
+            'posiciones': pos_dict,
+            'conteo': conteo_veh
+        })
+
+    return {
+        'posiciones': posiciones,
+        'filas': filas,
+        'totales_posicion': totales_posicion,
+        'resumen_global': resumen_global
+    }
+
 
 def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', subcliente='TODOS', eje='TODOS'):
     if pd.isna(cliente) or cliente is None:

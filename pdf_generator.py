@@ -1104,6 +1104,123 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(t_matriz)
     elements.append(Spacer(1, 14))
 
+    # 4. MATRIZ DE SEMÁFOROS POR POSICIÓN (POLÍTICA DE RETIRO POR CLIENTE, SEDE Y EJE)
+    matriz_pos = database.calcular_matriz_semaforos_posicion(df_insp)
+    if matriz_pos and matriz_pos.get('filas'):
+        elements.append(Paragraph("4. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
+        leyenda_sem = (
+            "<b>Umbrales Técnicos por Eje:</b> "
+            "<font color='#b91c1c'><b>🔴 Retiro Inmediato (PB ≤ Límite)</b></font> · "
+            "<font color='#b45309'><b>🟡 Próxima a Cambio (+2.0 mm)</b></font> · "
+            "<font color='#15803d'><b>🟢 Estado Óptimo (&gt; Límite + 2mm)</b></font> · "
+            "<font color='#64748b'><b>⚪ Sin Datos / Casco (PB ≤ 0)</b></font>"
+        )
+        elements.append(Paragraph(leyenda_sem, style_subtitulo))
+        elements.append(Spacer(1, 4))
+
+        pos_list = matriz_pos['posiciones']
+        num_pos = len(pos_list)
+
+        if num_pos <= 10:
+            w_veh = 52
+            w_tip = 58
+            w_res = 65
+            w_pos = (540 - w_veh - w_tip - w_res) / max(1, num_pos)
+        elif num_pos <= 12:
+            w_veh = 48
+            w_tip = 52
+            w_res = 60
+            w_pos = (540 - w_veh - w_tip - w_res) / max(1, num_pos)
+        else:
+            w_veh = 44
+            w_tip = 48
+            w_res = 55
+            w_pos = max(16.0, (540 - w_veh - w_tip - w_res) / max(1, num_pos))
+
+        col_widths_sem = [w_veh, w_tip] + [w_pos] * num_pos + [w_res]
+
+        style_sem_hdr = ParagraphStyle('SemHdr', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=6.5, leading=8, textColor=colors.white, alignment=1)
+        style_sem_cell = ParagraphStyle('SemCell', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=6.5, leading=8, alignment=1)
+        style_sem_text = ParagraphStyle('SemText', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#0f172a'))
+        style_sem_res = ParagraphStyle('SemRes', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=6.5, leading=8, alignment=1)
+
+        t_sem_rows = []
+        hdr_row = [
+            Paragraph("<b>Vehículo</b>", style_sem_hdr),
+            Paragraph("<b>Tipología</b>", style_sem_hdr)
+        ]
+        for p in pos_list:
+            hdr_row.append(Paragraph(f"<b>P{p}</b>", style_sem_hdr))
+        hdr_row.append(Paragraph("<b>🔴/🟡/🟢</b>", style_sem_hdr))
+        t_sem_rows.append(hdr_row)
+
+        table_styles = [
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
+            ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]
+
+        for r_idx, fila in enumerate(matriz_pos['filas'], start=1):
+            f_row = [
+                Paragraph(f"<b>{fila['placa']}</b>", style_sem_text),
+                Paragraph(f"<font size=5.5 color='#475569'>{fila['tipologia'][:16]}</font>", style_sem_text)
+            ]
+            for c_idx, p in enumerate(pos_list):
+                col_pos_table = c_idx + 2
+                if p in fila['posiciones']:
+                    item = fila['posiciones'][p]
+                    pb_val = item['pb']
+                    c_col = item['color']
+
+                    if c_col == 'rojo':
+                        bg_c = colors.HexColor('#fee2e2')
+                        txt_c = '#991b1b'
+                    elif c_col == 'amarillo':
+                        bg_c = colors.HexColor('#fef3c7')
+                        txt_c = '#92400e'
+                    elif c_col == 'verde':
+                        bg_c = colors.HexColor('#dcfce7')
+                        txt_c = '#166534'
+                    else:
+                        bg_c = colors.HexColor('#f1f5f9')
+                        txt_c = '#64748b'
+
+                    table_styles.append(('BACKGROUND', (col_pos_table, r_idx), (col_pos_table, r_idx), bg_c))
+                    pb_str = f"{pb_val:.1f}" if pb_val > 0 else "0.0"
+                    f_row.append(Paragraph(f"<font color='{txt_c}'><b>{pb_str}</b></font>", style_sem_cell))
+                else:
+                    f_row.append(Paragraph("<font color='#cbd5e1'>-</font>", style_sem_cell))
+
+            c_rojo = fila['conteo']['rojo']
+            c_amar = fila['conteo']['amarillo']
+            c_verd = fila['conteo']['verde']
+            f_row.append(Paragraph(f"<font color='#b91c1c'><b>{c_rojo}</b></font>/<font color='#b45309'><b>{c_amar}</b></font>/<font color='#15803d'><b>{c_verd}</b></font>", style_sem_res))
+            t_sem_rows.append(f_row)
+
+        tot_row_idx = len(t_sem_rows)
+        foot_row = [
+            Paragraph("<b>TOTALES</b>", style_sem_text),
+            Paragraph("<b>(R/A/V)</b>", style_sem_hdr)
+        ]
+        for c_idx, p in enumerate(pos_list):
+            t_p = matriz_pos['totales_posicion'].get(p, {'rojo': 0, 'amarillo': 0, 'verde': 0})
+            foot_row.append(Paragraph(f"<font size=5><b><font color='#b91c1c'>{t_p['rojo']}</font>/<font color='#b45309'>{t_p['amarillo']}</font>/<font color='#15803d'>{t_p['verde']}</font></b></font>", style_sem_cell))
+
+        glob = matriz_pos['resumen_global']
+        foot_row.append(Paragraph(f"<b><font color='#b91c1c'>{glob['rojo']}</font>/<font color='#b45309'>{glob['amarillo']}</font>/<font color='#15803d'>{glob['verde']}</font></b>", style_sem_res))
+        t_sem_rows.append(foot_row)
+
+        table_styles.append(('BACKGROUND', (0, tot_row_idx), (-1, tot_row_idx), colors.HexColor('#e2e8f0')))
+        table_styles.append(('LINEABOVE', (0, tot_row_idx), (-1, tot_row_idx), 1, colors.HexColor('#94a3b8')))
+
+        t_matriz_pos = Table(t_sem_rows, colWidths=col_widths_sem, repeatRows=1)
+        t_matriz_pos.setStyle(TableStyle(table_styles))
+        elements.append(t_matriz_pos)
+        elements.append(Spacer(1, 14))
+
     # Firmas
     firma_data = [
         [

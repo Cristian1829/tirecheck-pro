@@ -111,3 +111,31 @@ Implementadas en `database.obtener_trazabilidad_kpis_llanta()`:
 | 🟢 **Óptimo** | $P_{min} > 6.0\text{ mm}$ | `#10b981` (Verde) | Llanta en condiciones seguras de operación. |
 | 🟡 **Precaución** | $3.5\text{ mm} < P_{min} \le 6.0\text{ mm}$ | `#f59e0b` (Ámbar) | Programar seguimiento en la siguiente inspección mensual. |
 | 🔴 **Crítico / Retiro** | $P_{min} \le Límite\text{ (3.0 mm)}$ | `#ef4444` (Rojo) | **Desmonte inmediato.** Prohibido viaje en carretera por riesgo de explosión y sanción vial. |
+
+---
+
+## 5. Matriz de Semáforos por Posición (Política Dinámica por Eje)
+
+Implementada en `database.calcular_matriz_semaforos_posicion()`, en el informe consolidado PDF (`pdf_generator.generar_pdf_consolidado_jornada()`) y en la pantalla de Diagnóstico y Planes.
+
+### A. Regla de Profundidad Mínima ($PB$)
+$$PB = \min(\{p \in \{prof\_ext, prof\_cent, prof\_int\} \mid p > 0\})$$
+- Si todas las mediciones son $\le 0$, se considera sin datos o llanta en casco ($PB = 0.0$).
+
+### B. Jerarquía Dinámica del Límite de Retiro ($L$)
+Prioridad en cascada:
+1. `Cliente + Subcliente (Sede) + Eje específico` (ej. Metrollantas + Teusaca + DIRECCIONAL $\to$ 4.0 mm).
+2. `Cliente + Subcliente (Sede)` (todos los ejes de esa sede $\to$ 3.5 mm).
+3. `Cliente + Eje específico` (ej. Metrollantas + DIRECCIONAL $\to$ 3.0 mm).
+4. `Cliente general` (política global del cliente $\to$ 3.0 mm).
+5. `Valor por defecto del sistema` ($3.0\text{ mm}$).
+
+### C. Umbrales del Semáforo
+
+| Color | Estado | Condición Matemática | Acción Recomendada |
+|---|---|---|---|
+| 🔴 **Rojo** | Retiro Inmediato (Cambio YA) | $PB \le L$ | Desmontaje urgente para reencauche o baja definitiva. Riesgo de rotura de carcasa. |
+| 🟡 **Amarillo** | Próxima a Cambio (Alerta Preventiva) | $L < PB \le L + 2.0\text{ mm}$ | Monitoreo cercano. Alistar inventario de reemplazo (ventana de 15 a 30 días). |
+| 🟢 **Verde** | Estado Óptimo (Normal) | $PB > L + 2.0\text{ mm}$ | Vida útil remanente suficiente. Mantener calibración de PSI y rotación estándar. |
+| ⚪ **Gris** | Sin Datos / Pendiente | $PB \le 0$ (o nulo) | Requiere revisión física o registro de datos. |
+
