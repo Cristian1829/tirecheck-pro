@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 09:12:29`
+- **Fecha de Generación:** `2026-10-15 09:48:52`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `21,189` líneas
-- **Tamaño Total de Código Fuente:** `1303.9 KB` (`1,335,236` bytes)
+- **Líneas Totales de Código:** `21,418` líneas
+- **Tamaño Total de Código Fuente:** `1313.0 KB` (`1,344,551` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -211,7 +211,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 883 | 36.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2410 | 117.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 2412 | 117.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6822 | 622.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6944 | 627.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -230,7 +230,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
 | [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 296 | 10.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
-| [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 175 | 5.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
+| [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 280 | 9.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
@@ -2927,7 +2927,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2410 líneas | 120,202 bytes (117.4 KB)
+- **Métricas:** 2412 líneas | 120,342 bytes (117.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3347,24 +3347,26 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
     
     with get_connection() as conn:
         cursor = conn.cursor()
+        # 1. Buscar en la última inspección registrada previamente para esa placa
         cursor.execute("""
-            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
-            FROM catalogo_vehiculos
-            WHERE UPPER(TRIM(placa)) = ?
+            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
+            ORDER BY fecha DESC, id DESC LIMIT 1
         """, (pl,))
         row = cursor.fetchone()
         
-        # Si no está en el catálogo, buscar en la última inspección histórica
+        # 2. Si no ha tenido inspección previa, consultar el catálogo de vehículos
         if not row or not row[1]:
             cursor.execute("""
-                SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
-                FROM inspecciones
-                WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
-                ORDER BY fecha DESC, id DESC LIMIT 1
+                SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
+                FROM catalogo_vehiculos
+                WHERE UPPER(TRIM(placa)) = ?
             """, (pl,))
             row = cursor.fetchone()
-            if row and row[1]:
-                sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
+        else:
+            # Sincronizar catálogo con los datos de la última inspección
+            sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
 
     if row and row[1]:
         tip = row[1]
@@ -9175,7 +9177,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6822 líneas | 637,646 bytes (622.7 KB)
+- **Métricas:** 6944 líneas | 642,693 bytes (627.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -14871,13 +14873,15 @@ if __name__ == '__main__':
           if (placaActual !== placa) return;
 
           if (d.encontrado) {
-            // 1. Mostrar badge de esquema vinculado
+            // 1. Mostrar badge de tipología fija vinculada al historial
             const b = document.getElementById('badgePlacaVinculada');
-            if (b) b.classList.remove('hidden');
+            if (b) {
+              b.classList.remove('hidden');
+              b.innerHTML = '<i class="fa-solid fa-lock text-[9px] mr-1"></i>Tipología Fija (Historial)';
+            }
 
-            // 2. Precargar Cliente, Subcliente y Operación si están vacíos o no restringidos
-            const selCli = document.getElementById('cliente');
-            if (d.cliente && selCli && (!selCli.value || selCli.value === '__nuevo__')) {
+            // 2. Precargar Cliente, Subcliente y Operación de la inspección anterior
+            if (d.cliente) {
               asignarValorSelect('cliente', d.cliente);
               await alCambiarClienteMobile();
             }
@@ -14890,13 +14894,13 @@ if __name__ == '__main__':
               asignarValorSelect('tipo_operacion', d.tipo_operacion);
             }
 
-            // 3. Odómetro / Km si está vacío
+            // 3. Odómetro / Km si está disponible
             const inputKm = document.getElementById('kilometraje');
             if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
               inputKm.value = Math.round(d.ultimo_km);
             }
 
-            // 4. Seleccionar Tipología y redibujar chasis
+            // 4. Seleccionar Tipología y BLOQUEARLA estrictamente (un vehículo no cambia de tipología)
             if (d.tipologia) {
               const selTip = document.getElementById('tipologia');
               if (selTip) {
@@ -14904,8 +14908,9 @@ if __name__ == '__main__':
                 await cambioTipologia();
                 selTip.disabled = true;
                 selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+                selTip.title = 'Tipología fija: vehículo previamente registrado. No es modificable.';
                 const btnDesb = document.getElementById('btnDesbloquearTipologia');
-                if (btnDesb) btnDesb.classList.remove('hidden');
+                if (btnDesb) btnDesb.classList.add('hidden');
               }
             }
 
@@ -14919,6 +14924,7 @@ if __name__ == '__main__':
           } else {
             const b = document.getElementById('badgePlacaVinculada');
             if (b) b.classList.add('hidden');
+            desbloquearTipologia();
           }
         }
       } catch (err) {
@@ -15033,48 +15039,153 @@ if __name__ == '__main__':
 
           const d = await res.json();
           if (token !== idInspeccionActiva) return;
+
+          // Si esta posición ya fue inspeccionada en la sesión actual, no sobreescribir con la anterior
+          const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos);
+
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
-            document.getElementById('badgeHistorialPrevia')?.classList.remove('hidden');
-            // Precargar datos fijos técnicos de la llanta
-            if (d.datos.marca && !document.getElementById('marca').value) asignarValorSelect('marca', d.datos.marca);
-            if (d.datos.diseno && !document.getElementById('diseno').value) asignarValorSelect('diseno', d.datos.diseno);
-            if (d.datos.dimension && !document.getElementById('dimension').value) asignarValorSelect('dimension', d.datos.dimension);
-            if (d.datos.prof_inicial && !document.getElementById('prof_inicial').value) document.getElementById('prof_inicial').value = d.datos.prof_inicial;
-            if (d.datos.numero_interno && !document.getElementById('numero_interno').value) document.getElementById('numero_interno').value = d.datos.numero_interno;
-            if (d.datos.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
-              document.getElementById('precio').value = d.datos.precio;
+            const badgeHist = document.getElementById('badgeHistorialPrevia');
+            if (badgeHist) {
+              badgeHist.classList.remove('hidden');
+              badgeHist.innerHTML = '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
             }
-            if (d.datos.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
-              document.getElementById('km_montaje').value = d.datos.km_montaje;
-            }
-            
-            // Condición vida: En eje direccional SIEMPRE forzar a Original
-            const esDir = esPosicionDireccionalActual(pos);
-            if (esDir) {
-              asignarValorSelect('vida', 'Original');
-            } else if (d.datos.vida && !document.getElementById('vida').value) {
-              asignarValorSelect('vida', d.datos.vida);
-              if (d.datos.banda_reen && document.getElementById('banda_reen')) {
-                asignarValorSelect('banda_reen', d.datos.banda_reen);
+
+            // Precargar automáticamente todas las Especificaciones de la Llanta con las que se registró en la anterior inspección
+            if (!yaInspeccionadaHoy) {
+              // 1. Número Interno
+              const inpNum = document.getElementById('numero_interno');
+              if (inpNum) inpNum.value = d.datos.numero_interno || '';
+
+              // 2. Marca y Diseños asociados
+              if (d.datos.marca) {
+                asignarValorSelect('marca', d.datos.marca);
+                await alCambiarMarcaMobile();
+              }
+
+              // 3. Diseño
+              if (d.datos.diseno) {
+                asignarValorSelect('diseno', d.datos.diseno);
+              }
+
+              // 4. Dimensión
+              if (d.datos.dimension) {
+                asignarValorSelect('dimension', d.datos.dimension);
+              }
+
+              // 5. Profundidad Inicial
+              const inpProfIni = document.getElementById('prof_inicial');
+              if (inpProfIni) {
+                inpProfIni.value = (d.datos.prof_inicial !== null && d.datos.prof_inicial !== undefined && d.datos.prof_inicial !== '') ? d.datos.prof_inicial : '';
+              }
+
+              // 6. Precio y Km Montaje
+              const inpPrecio = document.getElementById('precio');
+              if (inpPrecio) {
+                inpPrecio.value = (d.datos.precio !== null && d.datos.precio !== undefined && d.datos.precio !== '') ? d.datos.precio : '';
+              }
+              const inpKmMont = document.getElementById('km_montaje');
+              if (inpKmMont) {
+                inpKmMont.value = (d.datos.km_montaje !== null && d.datos.km_montaje !== undefined && d.datos.km_montaje !== '') ? d.datos.km_montaje : '';
+              }
+
+              // 7. Vida / Condición y Banda de Reencauche (respetando restricción de eje direccional)
+              const esDir = esPosicionDireccionalActual(pos);
+              const boxBanda = document.getElementById('box_banda');
+              const selBanda = document.getElementById('banda_reen');
+
+              if (esDir) {
+                asignarValorSelect('vida', 'Original');
+                if (selBanda) selBanda.value = '';
+                if (boxBanda) boxBanda.classList.add('hidden');
+              } else {
+                const vidaVal = d.datos.vida || 'Original';
+                asignarValorSelect('vida', vidaVal);
+                if (vidaVal === 'Reencauche') {
+                  if (boxBanda) boxBanda.classList.remove('hidden');
+                  if (d.datos.banda_reen) {
+                    asignarValorSelect('banda_reen', d.datos.banda_reen);
+                  }
+                } else {
+                  if (selBanda) selBanda.value = '';
+                  if (boxBanda) boxBanda.classList.add('hidden');
+                }
+              }
+
+              aplicarRestriccionEjeDireccional(pos);
+              validarVida();
+
+              const bCli = document.getElementById('badgeLlantaCliente');
+              if (bCli) {
+                if (d.datos.numero_interno) {
+                  bCli.classList.remove('hidden');
+                } else {
+                  bCli.classList.add('hidden');
+                }
               }
             }
-            aplicarRestriccionEjeDireccional(pos);
-            validarVida();
           } else {
+            // Posición sin registro previo
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
+            document.getElementById('badgeLlantaCliente')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+
+            // Si aún no se ha inspeccionado hoy, limpiar las especificaciones para ingresar llanta nueva
+            if (!yaInspeccionadaHoy) {
+              const inpNum = document.getElementById('numero_interno');
+              if (inpNum) inpNum.value = '';
+
+              const selMarca = document.getElementById('marca');
+              if (selMarca) {
+                selMarca.value = '';
+                if (selMarca.options && selMarca.options.length > 0) selMarca.selectedIndex = 0;
+              }
+
+              const selDis = document.getElementById('diseno');
+              if (selDis) {
+                selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>';
+                selDis.value = '';
+              }
+
+              const selDim = document.getElementById('dimension');
+              if (selDim) selDim.value = '295/80R22.5';
+
+              const selVida = document.getElementById('vida');
+              if (selVida) selVida.value = 'Original';
+
+              const selBanda = document.getElementById('banda_reen');
+              if (selBanda) selBanda.value = '';
+              const boxBanda = document.getElementById('box_banda');
+              if (boxBanda) boxBanda.classList.add('hidden');
+
+              const pIni = document.getElementById('prof_inicial');
+              if (pIni) pIni.value = '';
+
+              const elPrecio = document.getElementById('precio');
+              if (elPrecio) elPrecio.value = '';
+
+              const elKm = document.getElementById('km_montaje');
+              if (elKm) elKm.value = '';
+
+              aplicarRestriccionEjeDireccional(pos);
+              validarVida();
+            }
           }
 
           // REQUERIMIENTO: Profundidades SIEMPRE en ceros / vacías para la nueva inspección
-          if (!posicionesInspeccionadasPlaca.has(pos)) {
+          if (!yaInspeccionadaHoy) {
             document.getElementById('prof_ext').value = '';
             document.getElementById('prof_cent').value = '';
             document.getElementById('prof_int').value = '';
+            document.getElementById('psi').value = '100';
             document.getElementById('novedades').value = '';
+            const panelRetiro = document.getElementById('panelAlertaRetiro');
+            if (panelRetiro) panelRetiro.classList.add('hidden');
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error al verificar inspección anterior:', e);
+      }
     }
 
     async function cargarPosicionesInspeccionadasPlaca(placa) {
@@ -15197,6 +15308,20 @@ if __name__ == '__main__':
       }
       document.getElementById('boxSugerenciasCatalogo').classList.add('hidden');
       mostrarToast(`Modelo seleccionado: ${m.marca} ${m.diseno}`);
+    }
+
+    function limpiarSoloMedicionesCaptura() {
+      const pExt = document.getElementById('prof_ext'); if (pExt) pExt.value = '';
+      const pCen = document.getElementById('prof_cent'); if (pCen) pCen.value = '';
+      const pInt = document.getElementById('prof_int'); if (pInt) pInt.value = '';
+      const psi = document.getElementById('psi'); if (psi) psi.value = '100';
+      const nov = document.getElementById('novedades'); if (nov) nov.value = '';
+      const panelRetiro = document.getElementById('panelAlertaRetiro');
+      if (panelRetiro) panelRetiro.classList.add('hidden');
+      const alertaRetiro = document.getElementById('alertaRetiroInmediato');
+      if (alertaRetiro) alertaRetiro.classList.add('hidden');
+      if (typeof quitarFotoNovedad === 'function') quitarFotoNovedad();
+      limpiarTodosErroresFormulario();
     }
 
     function limpiarMediciones(mostrarAviso = false) {
@@ -15919,8 +16044,8 @@ if __name__ == '__main__':
               limpiarTodoParaNuevaInspeccion();
             }, 600);
           } else {
+            limpiarSoloMedicionesCaptura();
             avanzarSiguientePosicion(pos);
-            limpiarMediciones();
 
             // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
             if (window.innerWidth < 1024) {
@@ -15981,7 +16106,6 @@ if __name__ == '__main__':
       }
 
       seleccionarPosicion(siguientePos);
-      document.getElementById('numero_interno').value = '';
     }
 
     function sincronizarSlotEspecificaciones() {
@@ -17735,7 +17859,7 @@ def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
 
 - **Ruta:** `tests/test_automatizacion_placa_llanta.py`
 - **Descripción:** Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual
-- **Métricas:** 175 líneas | 6,055 bytes (5.9 KB)
+- **Métricas:** 280 líneas | 10,183 bytes (9.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17914,6 +18038,110 @@ def test_candado_rotacion_intermensual(test_db):
     }
     val_rot = database.validar_inspeccion_candados(datos_nov_rot)
     assert val_rot['valido'] is True
+
+def test_recuperacion_datos_inspeccion_previa_vehiculo_y_posicion(test_db, auth_client):
+    # 1. Registrar inspección previa para PREV-01 en Posición 1 y Posición 2
+    insp_pos1 = {
+        'fecha': '2026-10-01',
+        'cliente': 'Logística del Norte',
+        'subcliente': 'Sede Central',
+        'tipo_operacion': 'Granel',
+        'placa': 'PREV-01',
+        'posicion': 1,
+        'kilometraje': 120000,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_inicial': 16.5,
+        'precio': 1500000,
+        'km_montaje': 45000,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': 'INT-01'
+    }
+    insp_pos2 = {
+        'fecha': '2026-10-01',
+        'cliente': 'Logística del Norte',
+        'subcliente': 'Sede Central',
+        'tipo_operacion': 'Granel',
+        'placa': 'PREV-01',
+        'posicion': 2,
+        'kilometraje': 120000,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'Bridgestone',
+        'diseno': 'M726 EL',
+        'dimension': '295/80R22.5',
+        'vida': 'Reencauche',
+        'banda_reen': 'BDM Bandag',
+        'prof_inicial': 18.0,
+        'precio': 980000,
+        'km_montaje': 50000,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'numero_interno': 'INT-02'
+    }
+    database.insertar_inspeccion(insp_pos1)
+    database.insertar_inspeccion(insp_pos2)
+
+    # 2. Consultar perfil del vehículo: debe traer Cliente, Subcliente, Operación y Tipología previa
+    perfil = database.obtener_perfil_vehiculo('PREV-01')
+    assert perfil['encontrado'] is True
+    assert perfil['placa'] == 'PREV-01'
+    assert perfil['cliente'] == 'LOGÍSTICA DEL NORTE'
+    assert perfil['subcliente'] == 'SEDE CENTRAL'
+    assert perfil['tipo_operacion'] == 'GRANEL'
+    assert perfil['tipologia'] == 'CAMIÓN SENCILLO (4X2)'
+    assert perfil['ultimo_km'] == 120000.0
+
+    # Vía API
+    resp_perfil = auth_client.get('/api/vehiculo-perfil?placa=PREV-01')
+    assert resp_perfil.status_code == 200
+    data_p = resp_perfil.json()
+    assert data_p['encontrado'] is True
+    assert data_p['cliente'] == 'LOGÍSTICA DEL NORTE'
+    assert data_p['subcliente'] == 'SEDE CENTRAL'
+    assert data_p['tipo_operacion'] == 'GRANEL'
+    assert data_p['tipologia'] == 'CAMIÓN SENCILLO (4X2)'
+
+    # 3. Consultar especificaciones de Posición 1
+    llanta_pos1 = database.obtener_ultima_inspeccion_posicion('PREV-01', 1)
+    assert llanta_pos1 is not None
+    assert llanta_pos1['numero_interno'] == 'INT-01'
+    assert llanta_pos1['marca'] == 'MICHELIN'
+    assert llanta_pos1['diseno'] == 'X MULTI Z'
+    assert llanta_pos1['dimension'] == '295/80R22.5'
+    assert llanta_pos1['vida'] == 'ORIGINAL'
+    assert llanta_pos1['prof_inicial'] == 16.5
+    assert llanta_pos1['precio'] == 1500000
+    assert llanta_pos1['km_montaje'] == 45000
+
+    # Vía API para Posición 1
+    resp_pos1 = auth_client.get('/api/inspeccion-anterior?placa=PREV-01&posicion=1')
+    assert resp_pos1.status_code == 200
+    data_pos1 = resp_pos1.json()
+    assert data_pos1['encontrado'] is True
+    assert data_pos1['datos']['numero_interno'] == 'INT-01'
+    assert data_pos1['datos']['marca'] == 'MICHELIN'
+    assert data_pos1['datos']['diseno'] == 'X MULTI Z'
+
+    # 4. Consultar especificaciones de Posición 2 (Reencauche)
+    llanta_pos2 = database.obtener_ultima_inspeccion_posicion('PREV-01', 2)
+    assert llanta_pos2 is not None
+    assert llanta_pos2['numero_interno'] == 'INT-02'
+    assert llanta_pos2['marca'] == 'BRIDGESTONE'
+    assert llanta_pos2['vida'] == 'REENCAUCHE'
+    assert llanta_pos2['banda_reen'] == 'BDM BANDAG'
+
+    # 5. Posición sin registro previo (por ej. Posición 4)
+    llanta_pos4 = database.obtener_ultima_inspeccion_posicion('PREV-01', 4)
+    assert llanta_pos4 is None
+    resp_pos4 = auth_client.get('/api/inspeccion-anterior?placa=PREV-01&posicion=4')
+    assert resp_pos4.status_code == 200
+    assert resp_pos4.json()['encontrado'] is False
 ```
 
 ---

@@ -5690,13 +5690,15 @@
           if (placaActual !== placa) return;
 
           if (d.encontrado) {
-            // 1. Mostrar badge de esquema vinculado
+            // 1. Mostrar badge de tipología fija vinculada al historial
             const b = document.getElementById('badgePlacaVinculada');
-            if (b) b.classList.remove('hidden');
+            if (b) {
+              b.classList.remove('hidden');
+              b.innerHTML = '<i class="fa-solid fa-lock text-[9px] mr-1"></i>Tipología Fija (Historial)';
+            }
 
-            // 2. Precargar Cliente, Subcliente y Operación si están vacíos o no restringidos
-            const selCli = document.getElementById('cliente');
-            if (d.cliente && selCli && (!selCli.value || selCli.value === '__nuevo__')) {
+            // 2. Precargar Cliente, Subcliente y Operación de la inspección anterior
+            if (d.cliente) {
               asignarValorSelect('cliente', d.cliente);
               await alCambiarClienteMobile();
             }
@@ -5709,13 +5711,13 @@
               asignarValorSelect('tipo_operacion', d.tipo_operacion);
             }
 
-            // 3. Odómetro / Km si está vacío
+            // 3. Odómetro / Km si está disponible
             const inputKm = document.getElementById('kilometraje');
             if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
               inputKm.value = Math.round(d.ultimo_km);
             }
 
-            // 4. Seleccionar Tipología y redibujar chasis
+            // 4. Seleccionar Tipología y BLOQUEARLA estrictamente (un vehículo no cambia de tipología)
             if (d.tipologia) {
               const selTip = document.getElementById('tipologia');
               if (selTip) {
@@ -5723,8 +5725,9 @@
                 await cambioTipologia();
                 selTip.disabled = true;
                 selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+                selTip.title = 'Tipología fija: vehículo previamente registrado. No es modificable.';
                 const btnDesb = document.getElementById('btnDesbloquearTipologia');
-                if (btnDesb) btnDesb.classList.remove('hidden');
+                if (btnDesb) btnDesb.classList.add('hidden');
               }
             }
 
@@ -5738,6 +5741,7 @@
           } else {
             const b = document.getElementById('badgePlacaVinculada');
             if (b) b.classList.add('hidden');
+            desbloquearTipologia();
           }
         }
       } catch (err) {
@@ -5852,48 +5856,153 @@
 
           const d = await res.json();
           if (token !== idInspeccionActiva) return;
+
+          // Si esta posición ya fue inspeccionada en la sesión actual, no sobreescribir con la anterior
+          const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos);
+
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
-            document.getElementById('badgeHistorialPrevia')?.classList.remove('hidden');
-            // Precargar datos fijos técnicos de la llanta
-            if (d.datos.marca && !document.getElementById('marca').value) asignarValorSelect('marca', d.datos.marca);
-            if (d.datos.diseno && !document.getElementById('diseno').value) asignarValorSelect('diseno', d.datos.diseno);
-            if (d.datos.dimension && !document.getElementById('dimension').value) asignarValorSelect('dimension', d.datos.dimension);
-            if (d.datos.prof_inicial && !document.getElementById('prof_inicial').value) document.getElementById('prof_inicial').value = d.datos.prof_inicial;
-            if (d.datos.numero_interno && !document.getElementById('numero_interno').value) document.getElementById('numero_interno').value = d.datos.numero_interno;
-            if (d.datos.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
-              document.getElementById('precio').value = d.datos.precio;
+            const badgeHist = document.getElementById('badgeHistorialPrevia');
+            if (badgeHist) {
+              badgeHist.classList.remove('hidden');
+              badgeHist.innerHTML = '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
             }
-            if (d.datos.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
-              document.getElementById('km_montaje').value = d.datos.km_montaje;
-            }
-            
-            // Condición vida: En eje direccional SIEMPRE forzar a Original
-            const esDir = esPosicionDireccionalActual(pos);
-            if (esDir) {
-              asignarValorSelect('vida', 'Original');
-            } else if (d.datos.vida && !document.getElementById('vida').value) {
-              asignarValorSelect('vida', d.datos.vida);
-              if (d.datos.banda_reen && document.getElementById('banda_reen')) {
-                asignarValorSelect('banda_reen', d.datos.banda_reen);
+
+            // Precargar automáticamente todas las Especificaciones de la Llanta con las que se registró en la anterior inspección
+            if (!yaInspeccionadaHoy) {
+              // 1. Número Interno
+              const inpNum = document.getElementById('numero_interno');
+              if (inpNum) inpNum.value = d.datos.numero_interno || '';
+
+              // 2. Marca y Diseños asociados
+              if (d.datos.marca) {
+                asignarValorSelect('marca', d.datos.marca);
+                await alCambiarMarcaMobile();
+              }
+
+              // 3. Diseño
+              if (d.datos.diseno) {
+                asignarValorSelect('diseno', d.datos.diseno);
+              }
+
+              // 4. Dimensión
+              if (d.datos.dimension) {
+                asignarValorSelect('dimension', d.datos.dimension);
+              }
+
+              // 5. Profundidad Inicial
+              const inpProfIni = document.getElementById('prof_inicial');
+              if (inpProfIni) {
+                inpProfIni.value = (d.datos.prof_inicial !== null && d.datos.prof_inicial !== undefined && d.datos.prof_inicial !== '') ? d.datos.prof_inicial : '';
+              }
+
+              // 6. Precio y Km Montaje
+              const inpPrecio = document.getElementById('precio');
+              if (inpPrecio) {
+                inpPrecio.value = (d.datos.precio !== null && d.datos.precio !== undefined && d.datos.precio !== '') ? d.datos.precio : '';
+              }
+              const inpKmMont = document.getElementById('km_montaje');
+              if (inpKmMont) {
+                inpKmMont.value = (d.datos.km_montaje !== null && d.datos.km_montaje !== undefined && d.datos.km_montaje !== '') ? d.datos.km_montaje : '';
+              }
+
+              // 7. Vida / Condición y Banda de Reencauche (respetando restricción de eje direccional)
+              const esDir = esPosicionDireccionalActual(pos);
+              const boxBanda = document.getElementById('box_banda');
+              const selBanda = document.getElementById('banda_reen');
+
+              if (esDir) {
+                asignarValorSelect('vida', 'Original');
+                if (selBanda) selBanda.value = '';
+                if (boxBanda) boxBanda.classList.add('hidden');
+              } else {
+                const vidaVal = d.datos.vida || 'Original';
+                asignarValorSelect('vida', vidaVal);
+                if (vidaVal === 'Reencauche') {
+                  if (boxBanda) boxBanda.classList.remove('hidden');
+                  if (d.datos.banda_reen) {
+                    asignarValorSelect('banda_reen', d.datos.banda_reen);
+                  }
+                } else {
+                  if (selBanda) selBanda.value = '';
+                  if (boxBanda) boxBanda.classList.add('hidden');
+                }
+              }
+
+              aplicarRestriccionEjeDireccional(pos);
+              validarVida();
+
+              const bCli = document.getElementById('badgeLlantaCliente');
+              if (bCli) {
+                if (d.datos.numero_interno) {
+                  bCli.classList.remove('hidden');
+                } else {
+                  bCli.classList.add('hidden');
+                }
               }
             }
-            aplicarRestriccionEjeDireccional(pos);
-            validarVida();
           } else {
+            // Posición sin registro previo
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
+            document.getElementById('badgeLlantaCliente')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+
+            // Si aún no se ha inspeccionado hoy, limpiar las especificaciones para ingresar llanta nueva
+            if (!yaInspeccionadaHoy) {
+              const inpNum = document.getElementById('numero_interno');
+              if (inpNum) inpNum.value = '';
+
+              const selMarca = document.getElementById('marca');
+              if (selMarca) {
+                selMarca.value = '';
+                if (selMarca.options && selMarca.options.length > 0) selMarca.selectedIndex = 0;
+              }
+
+              const selDis = document.getElementById('diseno');
+              if (selDis) {
+                selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>';
+                selDis.value = '';
+              }
+
+              const selDim = document.getElementById('dimension');
+              if (selDim) selDim.value = '295/80R22.5';
+
+              const selVida = document.getElementById('vida');
+              if (selVida) selVida.value = 'Original';
+
+              const selBanda = document.getElementById('banda_reen');
+              if (selBanda) selBanda.value = '';
+              const boxBanda = document.getElementById('box_banda');
+              if (boxBanda) boxBanda.classList.add('hidden');
+
+              const pIni = document.getElementById('prof_inicial');
+              if (pIni) pIni.value = '';
+
+              const elPrecio = document.getElementById('precio');
+              if (elPrecio) elPrecio.value = '';
+
+              const elKm = document.getElementById('km_montaje');
+              if (elKm) elKm.value = '';
+
+              aplicarRestriccionEjeDireccional(pos);
+              validarVida();
+            }
           }
 
           // REQUERIMIENTO: Profundidades SIEMPRE en ceros / vacías para la nueva inspección
-          if (!posicionesInspeccionadasPlaca.has(pos)) {
+          if (!yaInspeccionadaHoy) {
             document.getElementById('prof_ext').value = '';
             document.getElementById('prof_cent').value = '';
             document.getElementById('prof_int').value = '';
+            document.getElementById('psi').value = '100';
             document.getElementById('novedades').value = '';
+            const panelRetiro = document.getElementById('panelAlertaRetiro');
+            if (panelRetiro) panelRetiro.classList.add('hidden');
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Error al verificar inspección anterior:', e);
+      }
     }
 
     async function cargarPosicionesInspeccionadasPlaca(placa) {
@@ -6016,6 +6125,20 @@
       }
       document.getElementById('boxSugerenciasCatalogo').classList.add('hidden');
       mostrarToast(`Modelo seleccionado: ${m.marca} ${m.diseno}`);
+    }
+
+    function limpiarSoloMedicionesCaptura() {
+      const pExt = document.getElementById('prof_ext'); if (pExt) pExt.value = '';
+      const pCen = document.getElementById('prof_cent'); if (pCen) pCen.value = '';
+      const pInt = document.getElementById('prof_int'); if (pInt) pInt.value = '';
+      const psi = document.getElementById('psi'); if (psi) psi.value = '100';
+      const nov = document.getElementById('novedades'); if (nov) nov.value = '';
+      const panelRetiro = document.getElementById('panelAlertaRetiro');
+      if (panelRetiro) panelRetiro.classList.add('hidden');
+      const alertaRetiro = document.getElementById('alertaRetiroInmediato');
+      if (alertaRetiro) alertaRetiro.classList.add('hidden');
+      if (typeof quitarFotoNovedad === 'function') quitarFotoNovedad();
+      limpiarTodosErroresFormulario();
     }
 
     function limpiarMediciones(mostrarAviso = false) {
@@ -6738,8 +6861,8 @@
               limpiarTodoParaNuevaInspeccion();
             }, 600);
           } else {
+            limpiarSoloMedicionesCaptura();
             avanzarSiguientePosicion(pos);
-            limpiarMediciones();
 
             // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
             if (window.innerWidth < 1024) {
@@ -6800,7 +6923,6 @@
       }
 
       seleccionarPosicion(siguientePos);
-      document.getElementById('numero_interno').value = '';
     }
 
     function sincronizarSlotEspecificaciones() {

@@ -173,3 +173,108 @@ def test_candado_rotacion_intermensual(test_db):
     }
     val_rot = database.validar_inspeccion_candados(datos_nov_rot)
     assert val_rot['valido'] is True
+
+def test_recuperacion_datos_inspeccion_previa_vehiculo_y_posicion(test_db, auth_client):
+    # 1. Registrar inspección previa para PREV-01 en Posición 1 y Posición 2
+    insp_pos1 = {
+        'fecha': '2026-10-01',
+        'cliente': 'Logística del Norte',
+        'subcliente': 'Sede Central',
+        'tipo_operacion': 'Granel',
+        'placa': 'PREV-01',
+        'posicion': 1,
+        'kilometraje': 120000,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_inicial': 16.5,
+        'precio': 1500000,
+        'km_montaje': 45000,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': 'INT-01'
+    }
+    insp_pos2 = {
+        'fecha': '2026-10-01',
+        'cliente': 'Logística del Norte',
+        'subcliente': 'Sede Central',
+        'tipo_operacion': 'Granel',
+        'placa': 'PREV-01',
+        'posicion': 2,
+        'kilometraje': 120000,
+        'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'Bridgestone',
+        'diseno': 'M726 EL',
+        'dimension': '295/80R22.5',
+        'vida': 'Reencauche',
+        'banda_reen': 'BDM Bandag',
+        'prof_inicial': 18.0,
+        'precio': 980000,
+        'km_montaje': 50000,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'numero_interno': 'INT-02'
+    }
+    database.insertar_inspeccion(insp_pos1)
+    database.insertar_inspeccion(insp_pos2)
+
+    # 2. Consultar perfil del vehículo: debe traer Cliente, Subcliente, Operación y Tipología previa
+    perfil = database.obtener_perfil_vehiculo('PREV-01')
+    assert perfil['encontrado'] is True
+    assert perfil['placa'] == 'PREV-01'
+    assert perfil['cliente'] == 'LOGÍSTICA DEL NORTE'
+    assert perfil['subcliente'] == 'SEDE CENTRAL'
+    assert perfil['tipo_operacion'] == 'GRANEL'
+    assert perfil['tipologia'] == 'CAMIÓN SENCILLO (4X2)'
+    assert perfil['ultimo_km'] == 120000.0
+
+    # Vía API
+    resp_perfil = auth_client.get('/api/vehiculo-perfil?placa=PREV-01')
+    assert resp_perfil.status_code == 200
+    data_p = resp_perfil.json()
+    assert data_p['encontrado'] is True
+    assert data_p['cliente'] == 'LOGÍSTICA DEL NORTE'
+    assert data_p['subcliente'] == 'SEDE CENTRAL'
+    assert data_p['tipo_operacion'] == 'GRANEL'
+    assert data_p['tipologia'] == 'CAMIÓN SENCILLO (4X2)'
+
+    # 3. Consultar especificaciones de Posición 1
+    llanta_pos1 = database.obtener_ultima_inspeccion_posicion('PREV-01', 1)
+    assert llanta_pos1 is not None
+    assert llanta_pos1['numero_interno'] == 'INT-01'
+    assert llanta_pos1['marca'] == 'MICHELIN'
+    assert llanta_pos1['diseno'] == 'X MULTI Z'
+    assert llanta_pos1['dimension'] == '295/80R22.5'
+    assert llanta_pos1['vida'] == 'ORIGINAL'
+    assert llanta_pos1['prof_inicial'] == 16.5
+    assert llanta_pos1['precio'] == 1500000
+    assert llanta_pos1['km_montaje'] == 45000
+
+    # Vía API para Posición 1
+    resp_pos1 = auth_client.get('/api/inspeccion-anterior?placa=PREV-01&posicion=1')
+    assert resp_pos1.status_code == 200
+    data_pos1 = resp_pos1.json()
+    assert data_pos1['encontrado'] is True
+    assert data_pos1['datos']['numero_interno'] == 'INT-01'
+    assert data_pos1['datos']['marca'] == 'MICHELIN'
+    assert data_pos1['datos']['diseno'] == 'X MULTI Z'
+
+    # 4. Consultar especificaciones de Posición 2 (Reencauche)
+    llanta_pos2 = database.obtener_ultima_inspeccion_posicion('PREV-01', 2)
+    assert llanta_pos2 is not None
+    assert llanta_pos2['numero_interno'] == 'INT-02'
+    assert llanta_pos2['marca'] == 'BRIDGESTONE'
+    assert llanta_pos2['vida'] == 'REENCAUCHE'
+    assert llanta_pos2['banda_reen'] == 'BDM BANDAG'
+
+    # 5. Posición sin registro previo (por ej. Posición 4)
+    llanta_pos4 = database.obtener_ultima_inspeccion_posicion('PREV-01', 4)
+    assert llanta_pos4 is None
+    resp_pos4 = auth_client.get('/api/inspeccion-anterior?placa=PREV-01&posicion=4')
+    assert resp_pos4.status_code == 200
+    assert resp_pos4.json()['encontrado'] is False
+

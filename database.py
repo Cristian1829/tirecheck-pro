@@ -414,24 +414,26 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
     
     with get_connection() as conn:
         cursor = conn.cursor()
+        # 1. Buscar en la última inspección registrada previamente para esa placa
         cursor.execute("""
-            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
-            FROM catalogo_vehiculos
-            WHERE UPPER(TRIM(placa)) = ?
+            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
+            ORDER BY fecha DESC, id DESC LIMIT 1
         """, (pl,))
         row = cursor.fetchone()
         
-        # Si no está en el catálogo, buscar en la última inspección histórica
+        # 2. Si no ha tenido inspección previa, consultar el catálogo de vehículos
         if not row or not row[1]:
             cursor.execute("""
-                SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
-                FROM inspecciones
-                WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
-                ORDER BY fecha DESC, id DESC LIMIT 1
+                SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
+                FROM catalogo_vehiculos
+                WHERE UPPER(TRIM(placa)) = ?
             """, (pl,))
             row = cursor.fetchone()
-            if row and row[1]:
-                sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
+        else:
+            # Sincronizar catálogo con los datos de la última inspección
+            sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
 
     if row and row[1]:
         tip = row[1]
