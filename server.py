@@ -194,7 +194,9 @@ def obtener_usuario_actual(request: Request) -> dict:
     return usr
 
 def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
-    if usuario_actual.get("rol") != "admin":
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if rol not in ("admin", "administrador") and user != "admin":
         raise HTTPException(status_code=403, detail="Se requieren permisos de administrador")
     return usuario_actual
 
@@ -916,4 +918,5 @@ if __name__ == "__main__":
         puerto = int(raw_port)
     except (ValueError, TypeError):
         puerto = 8000
-    uvicorn.run("server:app", host="0.0.0.0", port=puerto, reload=False)
+    recarga = os.environ.get("ENV") != "production"
+    uvicorn.run("server:app", host="0.0.0.0", port=puerto, reload=recarga)

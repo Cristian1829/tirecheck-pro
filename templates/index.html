@@ -1428,10 +1428,16 @@
       <div id="cat-seccion-usuarios" class="hidden space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-700">Usuarios Registrados en el Sistema</span>
-          <button type="button" onclick="abrirModalNuevoUsuario()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
-            <i class="fa-solid fa-user-plus"></i>
-            <span>Nuevo Usuario</span>
-          </button>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="cargarUsuariosCat()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1 transition-colors" title="Actualizar lista de usuarios">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Actualizar</span>
+            </button>
+            <button type="button" onclick="abrirModalNuevoUsuario()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1 transition-colors">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Nuevo Usuario</span>
+            </button>
+          </div>
         </div>
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
           <table class="w-full text-xs text-left">
@@ -2364,9 +2370,15 @@
     let galeriaFotoIndexActual = 0;
     let ruedaSinRepuestoMarcada = false;
     let usuarioActual = null;
+    function esUsuarioAdmin() {
+      if (!usuarioActual) return false;
+      const rol = String(usuarioActual.rol || '').trim().toLowerCase();
+      const user = String(usuarioActual.username || '').trim().toLowerCase();
+      return rol === 'admin' || rol === 'administrador' || user === 'admin';
+    }
     let esquemaTipologiaCache = null;
     let sincronizandoCola = false;
-    let datosInspeccionAnterior = null;
+    datosInspeccionAnterior = null;
     let cacheTodasInspecciones = [];
     let cacheDiagnostico = [];
     let cacheKpis = [];
@@ -2381,16 +2393,21 @@
       }
 
       // Regla estricta: Solo el admin puede ver e ingresar a la Base de Inspecciones
-      if (tabId === 'basedatos' && usuarioActual.rol !== 'admin') {
+      if (tabId === 'basedatos' && !esUsuarioAdmin()) {
         tabId = 'patio';
       }
 
       // Validar si el usuario tiene asignada la vista solicitada
-      if (usuarioActual.rol !== 'admin') {
-        const vistasPermitidas = (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis,catalogos')
-          .split(',')
-          .map(v => v.trim().toLowerCase())
-          .filter(Boolean);
+      if (!esUsuarioAdmin()) {
+        let rawV = usuarioActual.vistas_permitidas;
+        let vistasPermitidas = [];
+        if (Array.isArray(rawV)) {
+          vistasPermitidas = rawV.map(v => String(v).trim().toLowerCase()).filter(Boolean);
+        } else if (typeof rawV === 'string' && rawV.trim()) {
+          vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+        } else {
+          vistasPermitidas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        }
         if (!vistasPermitidas.includes(tabId)) {
           mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
           tabId = vistasPermitidas.includes('patio') ? 'patio' : (vistasPermitidas[0] || 'patio');
@@ -2421,7 +2438,7 @@
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
       else if (tabId === 'catalogos') {
-        if (usuarioActual && usuarioActual.rol !== 'admin') {
+        if (!esUsuarioAdmin()) {
           mostrarSubtabCat('operaciones');
         }
         cargarGestionCatalogos();
@@ -2518,10 +2535,20 @@
       }
 
       // Control de visibilidad de pestañas de navegación según permisos del perfil
-      const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
-      const vistasPermitidas = esAdmin
-        ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
-        : (usuarioActual.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+      const esAdmin = esUsuarioAdmin();
+      let vistasPermitidas = [];
+      if (esAdmin) {
+        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
+      } else {
+        const rawV = usuarioActual.vistas_permitidas;
+        if (Array.isArray(rawV)) {
+          vistasPermitidas = rawV.map(v => String(v).trim().toLowerCase()).filter(Boolean);
+        } else if (typeof rawV === 'string' && rawV.trim()) {
+          vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+        } else {
+          vistasPermitidas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        }
+      }
 
       ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
@@ -3608,7 +3635,7 @@
     // VISTA 5: GESTIÓN DE CATÁLOGOS & CONFIGURACIÓN
     // ==========================================
     function mostrarSubtabCat(subtab) {
-      const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
+      const esAdmin = esUsuarioAdmin();
       if (!esAdmin && (subtab === 'clientes' || subtab === 'usuarios')) {
         subtab = 'operaciones';
       }
@@ -3625,7 +3652,7 @@
       if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
 
       // Cargar los datos de la subpestaña seleccionada
-      if (subtab === 'usuarios' && esAdmin) {
+      if (subtab === 'usuarios') {
         cargarUsuariosCat();
       } else if (subtab === 'clientes' && esAdmin) {
         cargarClientesLimCat();
@@ -3642,7 +3669,7 @@
       cargarOperacionesCat();
       cargarTipologiasCat();
       cargarModelosCat();
-      if (usuarioActual && usuarioActual.rol === 'admin') {
+      if (esUsuarioAdmin()) {
         cargarClientesLimCat();
         cargarUsuariosCat();
       }
@@ -3653,7 +3680,7 @@
       if (res.ok) {
         const ops = await res.json();
         const box = document.getElementById('listaOperacionesCat');
-        const esAdmin = usuarioActual && usuarioActual.rol === 'admin';
+        const esAdmin = esUsuarioAdmin();
         box.innerHTML = ops.map(op => `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <span class="font-bold text-slate-800">${op}</span>
@@ -3870,17 +3897,44 @@
     }
 
     async function cargarUsuariosCat() {
-      if (!usuarioActual || usuarioActual.rol !== 'admin') return;
       const tbody = document.getElementById('tbodyUsuariosCat');
+      if (!tbody) return;
+
+      if (!esUsuarioAdmin()) {
+        console.warn("Intento de cargar usuarios sin perfil de administrador.");
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="p-6 text-center text-amber-600 font-bold text-xs">
+              <i class="fa-solid fa-lock mr-1"></i>
+              Acceso restringido: Solo los administradores pueden ver y gestionar usuarios.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Feedback visual de carga inmediato
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="p-6 text-center text-slate-500">
+            <div class="inline-flex items-center justify-center space-x-2 text-xs font-bold text-slate-600">
+              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 text-base"></i>
+              <span>Cargando lista de usuarios del sistema...</span>
+            </div>
+          </td>
+        </tr>
+      `;
+
       try {
         const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         const res = await fetch('/api/usuarios', { headers });
+
         if (res.ok) {
           usuariosCatCache = await res.json();
           if (!tbody) return;
           if (!usuariosCatCache || usuariosCatCache.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic text-xs">No hay usuarios registrados. Usa el botón "+ Nuevo Usuario" para crear uno.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic text-xs">No hay usuarios registrados. Usa el botón "+ Nuevo Usuario" para crear uno.</td></tr>`;
             return;
           }
           tbody.innerHTML = usuariosCatCache.map(u => `
@@ -3888,7 +3942,7 @@
               <td class="p-2.5 font-black text-slate-900">${u.username}</td>
               <td class="p-2.5 font-bold">${u.nombre_completo}</td>
               <td class="p-2.5 text-center font-bold uppercase text-[10px]">
-                <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
+                <span class="px-2 py-0.5 rounded-full ${String(u.rol).toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
               </td>
               <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
               <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
@@ -3903,7 +3957,7 @@
                   <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
                     <i class="fa-solid fa-key"></i>
                   </button>
-                  ${u.username.toLowerCase() !== 'admin' ? `
+                  ${String(u.username).toLowerCase() !== 'admin' ? `
                     <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
                       <i class="fa-solid fa-trash"></i>
                     </button>
@@ -3914,16 +3968,36 @@
               </td>
             </tr>
           `).join('');
+          console.info(`Usuarios cargados con éxito (${usuariosCatCache.length} registros).`);
         } else {
-          console.error("Error al obtener usuarios, status:", res.status);
+          const errData = await res.json().catch(() => ({}));
+          console.error("Error al obtener usuarios, status:", res.status, errData);
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 font-bold text-xs">Error (${res.status}) al obtener la lista de usuarios. Por favor recarga la página.</td></tr>`;
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
+                  <div><i class="fa-solid fa-triangle-exclamation mr-1"></i> No se pudo cargar los usuarios (${res.status}): ${errData.detail || 'Sesión no válida o sin permisos'}</div>
+                  <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
+                  </button>
+                </td>
+              </tr>
+            `;
           }
         }
       } catch (e) {
-        console.error("Error al cargar usuarios:", e);
+        console.error("Error de conexión al cargar usuarios:", e);
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 font-bold text-xs">Error de conexión: ${e.message}</td></tr>`;
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
+                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${e.message}</div>
+                <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
+                  <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
+                </button>
+              </td>
+            </tr>
+          `;
         }
       }
     }
@@ -4080,7 +4154,7 @@
         clis = usuarioActual.cliente_asignado.split(',').map(c => c.trim()).filter(Boolean);
       }
 
-      if (usuarioActual.rol !== 'admin' && clis.length === 1) {
+      if (!esUsuarioAdmin() && clis.length === 1) {
         // REGLA: Si es solo un cliente, en la inspección aparecerá predeterminado y fijo
         const cliUnico = clis[0];
 
@@ -4110,7 +4184,7 @@
         }
 
         alCambiarClienteMobile();
-      } else if (usuarioActual.rol !== 'admin' && clis.length > 1) {
+      } else if (!esUsuarioAdmin() && clis.length > 1) {
         // REGLA: Múltiples clientes asignados
         selCli.disabled = false;
         selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
@@ -4158,7 +4232,7 @@
       // Solo el admin puede asignar el rol admin
       const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
       if (optAdminNuevo) {
-        optAdminNuevo.disabled = (!usuarioActual || usuarioActual.rol !== 'admin');
+        optAdminNuevo.disabled = !esUsuarioAdmin();
       }
 
       const modal = document.getElementById('modalNuevoUsuario');
@@ -4185,7 +4259,7 @@
         return;
       }
       const rol = document.getElementById('usr_rol').value;
-      if (rol === 'admin' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+      if (rol === 'admin' && !esUsuarioAdmin()) {
         alert('Solo un administrador puede crear usuarios con rol Administrador.');
         return;
       }
@@ -4238,7 +4312,7 @@
       // Solo el admin puede asignar el rol admin
       const optAdminEdit = document.querySelector('#edit_usr_rol option[value="admin"]');
       if (optAdminEdit) {
-        optAdminEdit.disabled = (!usuarioActual || usuarioActual.rol !== 'admin');
+        optAdminEdit.disabled = !esUsuarioAdmin();
       }
 
       // Vistas permitidas
@@ -4301,7 +4375,7 @@
         return;
       }
 
-      if (rol === 'admin' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+      if (rol === 'admin' && !esUsuarioAdmin()) {
         if (errBox) {
           errBox.textContent = 'Solo un administrador puede asignar el rol Administrador.';
           errBox.classList.remove('hidden');
@@ -6866,7 +6940,7 @@
       if (bLlanta) bLlanta.classList.add('hidden');
 
       // Limpiar cliente y subcliente si no están fijados por rol de usuario
-      if (typeof usuarioActual === 'undefined' || !usuarioActual || usuarioActual.rol === 'admin' || !usuarioActual.cliente_asignado) {
+      if (typeof usuarioActual === 'undefined' || !usuarioActual || esUsuarioAdmin() || !usuarioActual.cliente_asignado) {
         const inpCli = document.getElementById('cliente');
         if (inpCli && !inpCli.readOnly && !inpCli.disabled) inpCli.value = '';
         const inpSub = document.getElementById('subcliente');
