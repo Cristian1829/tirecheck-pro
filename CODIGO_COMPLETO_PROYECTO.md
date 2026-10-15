@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-14 20:30:13`
+- **Fecha de Generación:** `2026-10-14 20:59:03`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `20,101` líneas
-- **Tamaño Total de Código Fuente:** `1254.8 KB` (`1,284,910` bytes)
+- **Líneas Totales de Código:** `20,438` líneas
+- **Tamaño Total de Código Fuente:** `1269.1 KB` (`1,299,577` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -197,7 +197,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 850 | 35.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 1976 | 96.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 2102 | 102.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -207,7 +207,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6390 | 602.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6499 | 607.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -217,7 +217,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
 | [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 261 | 9.3 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 175 | 5.9 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
-| [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 170 | 5.1 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
+| [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 272 | 8.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 102 | 3.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 444 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 44 | 1.4 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
@@ -2880,7 +2880,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 1976 líneas | 99,005 bytes (96.7 KB)
+- **Métricas:** 2102 líneas | 104,942 bytes (102.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2892,7 +2892,7 @@ import re
 import hashlib
 import hmac
 import secrets
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -3460,15 +3460,102 @@ def obtener_posiciones_por_tipologia(tipologia):
     else:
         return list(range(1, 11))
 
+def generar_siguiente_numero_interno_temporal(conn=None):
+    """
+    Genera el siguiente número interno temporal consecutivo con formato TMP-001, TMP-002, etc.
+    Garantiza que no se repita consultando todos los códigos TMP-% existentes en inspecciones.
+    """
+    def _calcular(cursor):
+        cursor.execute("SELECT numero_interno FROM inspecciones WHERE UPPER(TRIM(numero_interno)) LIKE 'TMP-%'")
+        filas = cursor.fetchall()
+        max_num = 0
+        existentes = set()
+        for f in filas:
+            val = str(f[0] or '').strip().upper()
+            existentes.add(val)
+            partes = val.split('-')
+            if len(partes) >= 2 and partes[1].isdigit():
+                try:
+                    n = int(partes[1])
+                    if n > max_num:
+                        max_num = n
+                except Exception:
+                    pass
+        siguiente = max_num + 1
+        codigo = f"TMP-{siguiente:03d}"
+        while codigo in existentes:
+            siguiente += 1
+            codigo = f"TMP-{siguiente:03d}"
+        return codigo
+
+    if conn is not None:
+        return _calcular(conn.cursor())
+    else:
+        with get_connection() as c:
+            return _calcular(c.cursor())
+
+def es_posicion_direccional(tipologia, posicion):
+    """
+    Determina si una posición dada pertenece a un eje direccional.
+    Verifica el esquema de tipología en BD o heurística estándar.
+    """
+    pos = to_int(posicion, 1)
+    esquema = obtener_esquema_tipologia(tipologia)
+    if esquema:
+        for eje in esquema:
+            tipo_eje = str(eje.get('tipo', '')).strip().lower()
+            es_dir_eje = 'direccional' in tipo_eje or tipo_eje == 'dir'
+            for p in eje.get('posiciones', []):
+                if to_int(p.get('pos')) == pos:
+                    rol = str(p.get('rol', '')).strip().lower()
+                    if es_dir_eje or 'dir' in rol:
+                        return True
+                    return False
+    # Heurística de respaldo para pruebas o esquemas sin BD
+    t_norm = str(tipologia or '').lower()
+    if 'cuatro manos' in t_norm or '8x4' in t_norm or 'biarticulado' in t_norm:
+        return pos in [1, 2, 3, 4]
+    return pos in [1, 2]
+
+def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
+    """
+    Calcula la fecha mínima en la que se puede realizar una nueva inspección a un vehículo.
+    Regla: Requiere que transcurra el siguiente mes más 20 días calendario.
+    Si la inspección previa fue en fecha F (ej. 2026-10-01 o 2026-10-15):
+    - Mes siguiente: 2026-11.
+    - Se requiere que transcurra el mes y pasen 20 días (a partir del día 21 del mes siguiente: 2026-11-21).
+    O si la fecha base fue a finales de mes:
+    Garantiza que transcurra 1 mes calendario completo + 20 días.
+    """
+    if isinstance(fecha_base, str):
+        fecha_base = datetime.strptime(str(fecha_base)[:10], '%Y-%m-%d').date()
+    elif isinstance(fecha_base, datetime):
+        fecha_base = fecha_base.date()
+
+    año = fecha_base.year
+    mes = fecha_base.month
+    if mes == 12:
+        año_sig = año + 1
+        mes_sig = 1
+    else:
+        año_sig = año
+        mes_sig = mes + 1
+
+    fecha_dia_21_sig = date(año_sig, mes_sig, 21)
+    fecha_50_dias = fecha_base + timedelta(days=50)
+    return max(fecha_dia_21_sig, fecha_50_dias)
+
 def validar_inspeccion_candados(datos, excluir_id=None):
     """
     Evalúa los candados de seguridad de inspección:
     1. Máximo 27 mm en llantas R22.5 o de carga pesada.
     2. Las profundidades (ext, cent, int) NO pueden ser mayores a la Profundidad Inicial (prof_inicial).
-    3. Candado de No Duplicidad de Número Interno por Cliente / Subcliente.
-    4. No inspeccionar la misma placa más de una vez en el mismo mes calendario (YYYY-MM).
-    5. Kilometraje actual no puede ser menor al de la inspección anterior de la placa.
-    6. La profundidad no puede subir entre inspecciones (desgaste negativo), con tolerancia máx 1 mm.
+    3. Autogeneración de consecutivo TMP-xxx si no se ingresa número interno.
+    4. En eje direccional solo se permite condición Original (prohibido Reencauche).
+    5. Candado de No Duplicidad de Número Interno por Cliente / Subcliente en el mismo mes.
+    6. Frecuencia de inspección: nueva inspección requiere el siguiente mes más 20 días.
+    7. Kilometraje actual no puede ser menor al de la inspección anterior de la placa.
+    8. La profundidad no puede subir entre inspecciones (desgaste negativo), con tolerancia máx 1 mm.
     """
     placa = str(datos.get('placa', '')).strip().upper()
     if not placa:
@@ -3477,6 +3564,7 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     fecha_str = str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))).strip()
     km_actual = to_float(datos.get('kilometraje', 0))
     posicion = to_int(datos.get('posicion', 1))
+    tipologia_val = str(datos.get('tipologia', '')).strip()
     dimension = str(datos.get('dimension', '')).strip().upper()
     prof_inicial = to_float(datos.get('prof_inicial', 0))
 
@@ -3501,6 +3589,23 @@ def validar_inspeccion_candados(datos, excluir_id=None):
                 'mensaje': f'⛔ CANDADO DE SEGURIDAD: Ninguna de las 3 profundidades ({profs}) puede ser mayor a la Profundidad Inicial ({prof_inicial} mm) de la llanta.'
             }
 
+    # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original)
+    vida_val = str(datos.get('vida', 'Original')).strip().capitalize()
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val.lower() == 'reencauche':
+        return {
+            'valido': False,
+            'mensaje': (
+                f'⛔ CANDADO DE SEGURIDAD VIAL: En el eje direccional (Posición {posicion}) '
+                f'no se puede seleccionar en vida/condición Reencauche, únicamente condición Original.'
+            )
+        }
+
+    # Asignación automática de número consecutivo TMP-001 si viene vacío
+    num_interno = str(datos.get('numero_interno', '')).strip().upper()
+    if not num_interno:
+        num_interno = generar_siguiente_numero_interno_temporal()
+        datos['numero_interno'] = num_interno
+
     # Consultar historial previo de esta placa
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -3508,11 +3613,9 @@ def validar_inspeccion_candados(datos, excluir_id=None):
         mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
 
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
-        num_interno = str(datos.get('numero_interno', '')).strip().upper()
         cliente_val = str(datos.get('cliente', '')).strip()
         subcliente_val = str(datos.get('subcliente', '')).strip()
         if num_interno and cliente_val:
-            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente en el mismo mes
             sql_dup = '''
                 SELECT placa, posicion, cliente, subcliente, fecha, id FROM inspecciones
                 WHERE UPPER(TRIM(numero_interno)) = ?
@@ -3534,26 +3637,53 @@ def validar_inspeccion_candados(datos, excluir_id=None):
                     'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} en el mes de inspección ({dup_row[4]}). No se permiten números de llanta duplicados en el mismo mes.'
                 }
 
-        # Candado 2: Solo una inspección por placa al mes (mismo YYYY-MM)
-        # Si la fecha de registro o inspección contiene el mismo año-mes
-        sql_mes = """
-            SELECT id, fecha, posicion FROM inspecciones 
-            WHERE placa = ? AND strftime('%Y-%m', fecha) = ? AND posicion = ?
+        # Candado 2: Frecuencia de inspección vehicular y de posición
+        # A un vehículo se le pueden realizar múltiples inspecciones, pero una nueva inspección
+        # no se puede realizar hasta que pase el siguiente mes más 20 días.
+        sql_ant_vehiculo = """
+            SELECT fecha, posicion FROM inspecciones 
+            WHERE placa = ?
         """
-        params_mes = [placa, mes_inspeccion, posicion]
+        params_ant_v = [placa]
         if excluir_id is not None:
-            sql_mes += " AND id != ?"
-            params_mes.append(to_int(excluir_id))
-        sql_mes += " LIMIT 1"
-
-        cursor.execute(sql_mes, tuple(params_mes))
-        ya_inspeccionada_misma_pos = cursor.fetchone()
-        if ya_inspeccionada_misma_pos:
-            return {
-                'valido': False,
-                'alerta_mes': True,
-                'mensaje': f'⚠️ CANDADO DE SEGURIDAD: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} en el mes {mes_inspeccion} (Fecha: {ya_inspeccionada_misma_pos[1]}).'
-            }
+            sql_ant_vehiculo += " AND id != ?"
+            params_ant_v.append(to_int(excluir_id))
+        sql_ant_vehiculo += " ORDER BY fecha DESC, id DESC"
+        cursor.execute(sql_ant_vehiculo, tuple(params_ant_v))
+        filas_ant = cursor.fetchall()
+        if filas_ant:
+            f_ult_str = str(filas_ant[0][0]).strip()[:10]
+            f_nueva_str = fecha_str[:10]
+            if f_nueva_str == f_ult_str:
+                # Misma fecha (misma jornada): verificar si esta posición específica ya fue inspeccionada
+                pos_ya_registradas = [r[1] for r in filas_ant if str(r[0]).strip()[:10] == f_ult_str]
+                if posicion in pos_ya_registradas:
+                    return {
+                        'valido': False,
+                        'alerta_mes': True,
+                        'mensaje': f'⚠️ CANDADO DE SEGURIDAD: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} en la fecha {f_ult_str}.'
+                    }
+            elif f_nueva_str < f_ult_str:
+                return {
+                    'valido': False,
+                    'alerta_mes': True,
+                    'mensaje': f'⚠️ CANDADO DE FECHA: La fecha de inspección ({f_nueva_str}) no puede ser anterior a la última inspección registrada ({f_ult_str}).'
+                }
+            else:
+                # Fecha posterior: debe haber transcurrido el siguiente mes más 20 días
+                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
+                f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
+                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
+                if f_nueva < f_minima:
+                    return {
+                        'valido': False,
+                        'alerta_mes': True,
+                        'mensaje': (
+                            f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
+                            f'Una nueva inspección requiere que transcurra el siguiente mes más 20 días '
+                            f'(disponible a partir del {f_minima.strftime("%Y-%m-%d")}).'
+                        )
+                    }
 
         # Candado 3: Kilometraje actual no puede ser menor al de la última inspección
         sql_km = """
@@ -3613,6 +3743,8 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     return {'valido': True, 'mensaje': 'Validaciones de seguridad aprobadas.'}
 
 def insertar_inspeccion(datos):
+    if not str(datos.get('numero_interno', '')).strip():
+        datos['numero_interno'] = generar_siguiente_numero_interno_temporal()
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -4096,13 +4228,7 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
                 ORDER BY id ASC
             ''', (pl, f_str))
         else:
-            mes_actual = datetime.now().strftime('%Y-%m')
-            cursor.execute('''
-                SELECT posicion, novedades
-                FROM inspecciones
-                WHERE UPPER(TRIM(placa)) = ? AND substr(fecha, 1, 7) = ?
-                ORDER BY id ASC
-            ''', (pl, mes_actual))
+            return {"posiciones": [], "posiciones_con_novedad": [], "novedades": {}}
         
         posiciones = []
         posiciones_con_novedad = []
@@ -8694,7 +8820,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 6390 líneas | 616,397 bytes (602.0 KB)
+- **Métricas:** 6499 líneas | 621,623 bytes (607.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9077,7 +9203,7 @@ if __name__ == '__main__':
 
             <div>
               <label class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
-              <input type="date" id="fecha" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+              <input type="date" id="fecha" onchange="alCambiarFechaFormulario();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
             </div>
           </div>
 
@@ -9331,6 +9457,10 @@ if __name__ == '__main__':
                     <option value="Original">Original (Nueva)</option>
                     <option value="Reencauche">Reencauche</option>
                   </select>
+                  <div id="badgeDireccionalOriginal" class="hidden mt-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-shield-halved text-amber-600"></i>
+                    <span>Eje Direccional: Por norma solo se permite Original.</span>
+                  </div>
                 </div>
 
                 <div>
@@ -14051,6 +14181,60 @@ if __name__ == '__main__':
       txt.textContent = `${pl} · ${tip}${km ? ` · ${km} Km` : ''}`;
     }
 
+    function esPosicionDireccionalActual(pos) {
+      const p = parseInt(pos) || 1;
+      if (esquemaTipologiaCache && Array.isArray(esquemaTipologiaCache)) {
+        for (const eje of esquemaTipologiaCache) {
+          const tipoEje = (eje.tipo || '').toLowerCase();
+          const esEjeDir = tipoEje.includes('direccional') || tipoEje === 'dir';
+          for (const r of (eje.posiciones || [])) {
+            if (parseInt(r.pos) === p) {
+              const rol = (r.rol || '').toLowerCase();
+              return esEjeDir || rol.includes('dir');
+            }
+          }
+        }
+      }
+      const tip = (document.getElementById('tipologia')?.value || '').toLowerCase();
+      if (tip.includes('cuatro manos') || tip.includes('8x4') || tip.includes('biarticulado')) {
+        return [1, 2, 3, 4].includes(p);
+      }
+      return [1, 2].includes(p);
+    }
+
+    function aplicarRestriccionEjeDireccional(pos) {
+      const p = parseInt(pos) || 1;
+      const esDir = esPosicionDireccionalActual(p);
+      const selVida = document.getElementById('vida');
+      const optReencauche = selVida ? selVida.querySelector('option[value="Reencauche"]') : null;
+      const badge = document.getElementById('badgeDireccionalOriginal');
+
+      if (esDir) {
+        if (optReencauche) {
+          optReencauche.disabled = true;
+          optReencauche.classList.add('text-slate-400');
+        }
+        if (selVida && selVida.value === 'Reencauche') {
+          selVida.value = 'Original';
+          validarVida();
+        }
+        if (badge) badge.classList.remove('hidden');
+      } else {
+        if (optReencauche) {
+          optReencauche.disabled = false;
+          optReencauche.classList.remove('text-slate-400');
+        }
+        if (badge) badge.classList.add('hidden');
+      }
+    }
+
+    function alCambiarFechaFormulario() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placa) {
+        cargarPosicionesInspeccionadasPlaca(placa);
+      }
+    }
+
     /**
      * Selecciona una posición de neumático, actualiza el formulario y sincroniza el chasis.
      */
@@ -14072,6 +14256,9 @@ if __name__ == '__main__':
       if (b) b.classList.add('active');
 
       actualizarBarraPosicionMobile(p);
+
+      // Candado UI: En eje direccional solo se permite condición Original
+      aplicarRestriccionEjeDireccional(p);
 
       verificarInspeccionAnterior();
     }
@@ -14195,6 +14382,14 @@ if __name__ == '__main__':
                 if (btnDesb) btnDesb.classList.remove('hidden');
               }
             }
+
+            // 5. Garantizar profundidades en ceros/vacías para nueva inspección
+            document.getElementById('prof_ext').value = '';
+            document.getElementById('prof_cent').value = '';
+            document.getElementById('prof_int').value = '';
+            document.getElementById('novedades').value = '';
+            await cargarPosicionesInspeccionadasPlaca(placa);
+            await verificarInspeccionAnterior();
           } else {
             const b = document.getElementById('badgePlacaVinculada');
             if (b) b.classList.add('hidden');
@@ -14315,15 +14510,42 @@ if __name__ == '__main__':
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
             document.getElementById('badgeHistorialPrevia')?.classList.remove('hidden');
-            // Precargar datos fijos
+            // Precargar datos fijos técnicos de la llanta
             if (d.datos.marca && !document.getElementById('marca').value) asignarValorSelect('marca', d.datos.marca);
             if (d.datos.diseno && !document.getElementById('diseno').value) asignarValorSelect('diseno', d.datos.diseno);
             if (d.datos.dimension && !document.getElementById('dimension').value) asignarValorSelect('dimension', d.datos.dimension);
             if (d.datos.prof_inicial && !document.getElementById('prof_inicial').value) document.getElementById('prof_inicial').value = d.datos.prof_inicial;
             if (d.datos.numero_interno && !document.getElementById('numero_interno').value) document.getElementById('numero_interno').value = d.datos.numero_interno;
+            if (d.datos.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
+              document.getElementById('precio').value = d.datos.precio;
+            }
+            if (d.datos.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
+              document.getElementById('km_montaje').value = d.datos.km_montaje;
+            }
+            
+            // Condición vida: En eje direccional SIEMPRE forzar a Original
+            const esDir = esPosicionDireccionalActual(pos);
+            if (esDir) {
+              asignarValorSelect('vida', 'Original');
+            } else if (d.datos.vida && !document.getElementById('vida').value) {
+              asignarValorSelect('vida', d.datos.vida);
+              if (d.datos.banda_reen && document.getElementById('banda_reen')) {
+                asignarValorSelect('banda_reen', d.datos.banda_reen);
+              }
+            }
+            aplicarRestriccionEjeDireccional(pos);
+            validarVida();
           } else {
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+          }
+
+          // REQUERIMIENTO: Profundidades SIEMPRE en ceros / vacías para la nueva inspección
+          if (!posicionesInspeccionadasPlaca.has(pos)) {
+            document.getElementById('prof_ext').value = '';
+            document.getElementById('prof_cent').value = '';
+            document.getElementById('prof_int').value = '';
+            document.getElementById('novedades').value = '';
           }
         }
       } catch (e) {}
@@ -14333,9 +14555,14 @@ if __name__ == '__main__':
       const token = idInspeccionActiva;
       const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
       if (!placa || !placaActual || placa !== placaActual) return;
+      const fActual = (document.getElementById('fecha')?.value || '').trim();
 
       try {
-        const res = await fetch(`/api/posiciones-inspeccionadas?placa=${encodeURIComponent(placa)}`);
+        let url = `/api/posiciones-inspeccionadas?placa=${encodeURIComponent(placa)}`;
+        if (fActual) {
+          url += `&fecha=${encodeURIComponent(fActual)}`;
+        }
+        const res = await fetch(url);
         if (res.ok) {
           if (token !== idInspeccionActiva) return;
           const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
@@ -14362,13 +14589,21 @@ if __name__ == '__main__':
     }
 
     function validarVida() {
-      const vida = document.getElementById('vida').value;
+      const pos = parseInt(document.getElementById('posicion')?.value) || 1;
+      const selVida = document.getElementById('vida');
+      if (selVida && selVida.value === 'Reencauche' && esPosicionDireccionalActual(pos)) {
+        selVida.value = 'Original';
+        mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
+      }
+      const vida = selVida ? selVida.value : 'Original';
       const boxBanda = document.getElementById('box_banda');
-      if (vida === 'Reencauche') {
-        boxBanda.classList.remove('hidden');
-        poblarSelect('banda_reen', '/api/valores-campo?campo=banda_reen', 'ej. BDM Bandag (Seleccionar banda)');
-      } else {
-        boxBanda.classList.add('hidden');
+      if (boxBanda) {
+        if (vida === 'Reencauche') {
+          boxBanda.classList.remove('hidden');
+          poblarSelect('banda_reen', '/api/valores-campo?campo=banda_reen', 'ej. BDM Bandag (Seleccionar banda)');
+        } else {
+          boxBanda.classList.add('hidden');
+        }
       }
     }
 
@@ -16788,7 +17023,7 @@ def test_api_importar_excel(test_db, auth_client):
 
 - **Ruta:** `tests/test_automatizacion_placa_llanta.py`
 - **Descripción:** Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual
-- **Métricas:** 175 líneas | 6,044 bytes (5.9 KB)
+- **Métricas:** 175 líneas | 6,055 bytes (5.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -16946,9 +17181,9 @@ def test_candado_rotacion_intermensual(test_db):
     assert not val_dup['valido']
     assert 'CANDADO DE NÚMERO INTERNO' in val_dup['mensaje']
 
-    # 3. Intentar registrar la llanta rotada a Pos 5 en NOVIEMBRE (mes siguiente) -> DEBE PERMITIRSE
+    # 3. Intentar registrar la llanta rotada a Pos 5 en NOVIEMBRE (mes siguiente + 20 días) -> DEBE PERMITIRSE
     datos_nov_rot = {
-        'fecha': '2026-11-05',
+        'fecha': '2026-11-25',
         'cliente': 'Flota Andina',
         'subcliente': 'Bogota',
         'tipo_operacion': 'Paqueteo',
@@ -16975,7 +17210,7 @@ def test_candado_rotacion_intermensual(test_db):
 
 - **Ruta:** `tests/test_candados.py`
 - **Descripción:** Pruebas unitarias de los 6 candados operativos de captura en patio
-- **Métricas:** 170 líneas | 5,252 bytes (5.1 KB)
+- **Métricas:** 272 líneas | 8,745 bytes (8.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17103,9 +17338,9 @@ def test_candado_kilometraje_no_regresivo(test_db):
     }
     database.insertar_inspeccion(datos1)
 
-    # Intentar km 110,000 en 2026-10-01 debe fallar
+    # Intentar km 110,000 en 2026-10-25 (pasado el siguiente mes + 20 días) debe fallar por kilometraje
     datos2 = {
-        'fecha': '2026-10-01',
+        'fecha': '2026-10-25',
         'placa': 'TEST04',
         'posicion': 2,
         'kilometraje': 110000,
@@ -17134,9 +17369,9 @@ def test_candado_desgaste_negativo(test_db):
     }
     database.insertar_inspeccion(datos1)
 
-    # Intentar subir profundidad a 9.0 mm en 2026-10-01 (aumento > 1 mm de tolerancia) debe fallar
+    # Intentar subir profundidad a 9.0 mm en 2026-10-25 (aumento > 1 mm de tolerancia) debe fallar
     datos2 = {
-        'fecha': '2026-10-01',
+        'fecha': '2026-10-25',
         'placa': 'TEST05',
         'posicion': 1,
         'kilometraje': 105000,
@@ -17149,6 +17384,108 @@ def test_candado_desgaste_negativo(test_db):
     res = database.validar_inspeccion_candados(datos2)
     assert not res['valido']
     assert 'candado de desgaste' in res['mensaje'].lower() or 'subió' in res['mensaje'].lower()
+
+def test_generacion_automatica_consecutivo_temporal_tmp(test_db):
+    # Cuando no se ingresa número interno, debe generarse TMP-001 consecutivo y no repetible
+    datos1 = {
+        'fecha': '2026-10-14',
+        'placa': 'TMP01',
+        'posicion': 1,
+        'kilometraje': 10000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': ''
+    }
+    val1 = database.validar_inspeccion_candados(datos1)
+    assert val1['valido'] is True
+    assert datos1['numero_interno'] == 'TMP-001'
+    id1 = database.insertar_inspeccion(datos1)
+
+    # Segunda llanta sin número interno debe generar TMP-002
+    datos2 = {
+        'fecha': '2026-10-14',
+        'placa': 'TMP01',
+        'posicion': 2,
+        'kilometraje': 10000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': '   '
+    }
+    val2 = database.validar_inspeccion_candados(datos2)
+    assert val2['valido'] is True
+    assert datos2['numero_interno'] == 'TMP-002'
+    id2 = database.insertar_inspeccion(datos2)
+
+    assert id1 != id2
+
+def test_candado_eje_direccional_solo_original(test_db):
+    # En posiciones de eje direccional (pos 1 y 2 en cabezote/sencillo), no se puede seleccionar Reencauche
+    datos_dir_reencauche = {
+        'fecha': '2026-10-14',
+        'placa': 'DIR01',
+        'posicion': 1,
+        'tipologia': 'Cabezote (6x4)',
+        'kilometraje': 20000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'vida': 'Reencauche'
+    }
+    val = database.validar_inspeccion_candados(datos_dir_reencauche)
+    assert not val['valido']
+    assert 'eje direccional' in val['mensaje'].lower()
+    assert 'reencauche' in val['mensaje'].lower()
+
+    # En condición Original debe ser aprobado
+    datos_dir_original = dict(datos_dir_reencauche)
+    datos_dir_original['vida'] = 'Original'
+    val_ok = database.validar_inspeccion_candados(datos_dir_original)
+    assert val_ok['valido'] is True
+
+def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
+    # Vehículo inspeccionado el 2026-08-10
+    datos1 = {
+        'fecha': '2026-08-10',
+        'placa': 'FREQ01',
+        'posicion': 1,
+        'kilometraje': 50000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    }
+    database.insertar_inspeccion(datos1)
+
+    # Intentar nueva inspección el 2026-09-15 (aún en el siguiente mes pero antes de los 20 días calculados) debe fallar
+    datos2 = {
+        'fecha': '2026-09-15',
+        'placa': 'FREQ01',
+        'posicion': 1,
+        'kilometraje': 51000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.5,
+        'prof_cent': 11.5,
+        'prof_int': 11.5
+    }
+    val_bloq = database.validar_inspeccion_candados(datos2)
+    assert not val_bloq['valido']
+    assert 'frecuencia' in val_bloq['mensaje'].lower()
+
+    # Una vez transcurrido el siguiente mes más 20 días (ej. 2026-10-01), debe ser permitida
+    datos3 = dict(datos2)
+    datos3['fecha'] = '2026-10-01'
+    val_perm = database.validar_inspeccion_candados(datos3)
+    assert val_perm['valido'] is True
 ```
 
 ---

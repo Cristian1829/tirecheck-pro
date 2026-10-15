@@ -377,7 +377,7 @@
 
             <div>
               <label class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
-              <input type="date" id="fecha" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+              <input type="date" id="fecha" onchange="alCambiarFechaFormulario();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
             </div>
           </div>
 
@@ -631,6 +631,10 @@
                     <option value="Original">Original (Nueva)</option>
                     <option value="Reencauche">Reencauche</option>
                   </select>
+                  <div id="badgeDireccionalOriginal" class="hidden mt-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-shield-halved text-amber-600"></i>
+                    <span>Eje Direccional: Por norma solo se permite Original.</span>
+                  </div>
                 </div>
 
                 <div>
@@ -5351,6 +5355,60 @@
       txt.textContent = `${pl} · ${tip}${km ? ` · ${km} Km` : ''}`;
     }
 
+    function esPosicionDireccionalActual(pos) {
+      const p = parseInt(pos) || 1;
+      if (esquemaTipologiaCache && Array.isArray(esquemaTipologiaCache)) {
+        for (const eje of esquemaTipologiaCache) {
+          const tipoEje = (eje.tipo || '').toLowerCase();
+          const esEjeDir = tipoEje.includes('direccional') || tipoEje === 'dir';
+          for (const r of (eje.posiciones || [])) {
+            if (parseInt(r.pos) === p) {
+              const rol = (r.rol || '').toLowerCase();
+              return esEjeDir || rol.includes('dir');
+            }
+          }
+        }
+      }
+      const tip = (document.getElementById('tipologia')?.value || '').toLowerCase();
+      if (tip.includes('cuatro manos') || tip.includes('8x4') || tip.includes('biarticulado')) {
+        return [1, 2, 3, 4].includes(p);
+      }
+      return [1, 2].includes(p);
+    }
+
+    function aplicarRestriccionEjeDireccional(pos) {
+      const p = parseInt(pos) || 1;
+      const esDir = esPosicionDireccionalActual(p);
+      const selVida = document.getElementById('vida');
+      const optReencauche = selVida ? selVida.querySelector('option[value="Reencauche"]') : null;
+      const badge = document.getElementById('badgeDireccionalOriginal');
+
+      if (esDir) {
+        if (optReencauche) {
+          optReencauche.disabled = true;
+          optReencauche.classList.add('text-slate-400');
+        }
+        if (selVida && selVida.value === 'Reencauche') {
+          selVida.value = 'Original';
+          validarVida();
+        }
+        if (badge) badge.classList.remove('hidden');
+      } else {
+        if (optReencauche) {
+          optReencauche.disabled = false;
+          optReencauche.classList.remove('text-slate-400');
+        }
+        if (badge) badge.classList.add('hidden');
+      }
+    }
+
+    function alCambiarFechaFormulario() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placa) {
+        cargarPosicionesInspeccionadasPlaca(placa);
+      }
+    }
+
     /**
      * Selecciona una posición de neumático, actualiza el formulario y sincroniza el chasis.
      */
@@ -5372,6 +5430,9 @@
       if (b) b.classList.add('active');
 
       actualizarBarraPosicionMobile(p);
+
+      // Candado UI: En eje direccional solo se permite condición Original
+      aplicarRestriccionEjeDireccional(p);
 
       verificarInspeccionAnterior();
     }
@@ -5495,6 +5556,14 @@
                 if (btnDesb) btnDesb.classList.remove('hidden');
               }
             }
+
+            // 5. Garantizar profundidades en ceros/vacías para nueva inspección
+            document.getElementById('prof_ext').value = '';
+            document.getElementById('prof_cent').value = '';
+            document.getElementById('prof_int').value = '';
+            document.getElementById('novedades').value = '';
+            await cargarPosicionesInspeccionadasPlaca(placa);
+            await verificarInspeccionAnterior();
           } else {
             const b = document.getElementById('badgePlacaVinculada');
             if (b) b.classList.add('hidden');
@@ -5615,15 +5684,42 @@
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
             document.getElementById('badgeHistorialPrevia')?.classList.remove('hidden');
-            // Precargar datos fijos
+            // Precargar datos fijos técnicos de la llanta
             if (d.datos.marca && !document.getElementById('marca').value) asignarValorSelect('marca', d.datos.marca);
             if (d.datos.diseno && !document.getElementById('diseno').value) asignarValorSelect('diseno', d.datos.diseno);
             if (d.datos.dimension && !document.getElementById('dimension').value) asignarValorSelect('dimension', d.datos.dimension);
             if (d.datos.prof_inicial && !document.getElementById('prof_inicial').value) document.getElementById('prof_inicial').value = d.datos.prof_inicial;
             if (d.datos.numero_interno && !document.getElementById('numero_interno').value) document.getElementById('numero_interno').value = d.datos.numero_interno;
+            if (d.datos.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
+              document.getElementById('precio').value = d.datos.precio;
+            }
+            if (d.datos.km_montaje && (!document.getElementById('km_montaje').value || document.getElementById('km_montaje').value === '0')) {
+              document.getElementById('km_montaje').value = d.datos.km_montaje;
+            }
+            
+            // Condición vida: En eje direccional SIEMPRE forzar a Original
+            const esDir = esPosicionDireccionalActual(pos);
+            if (esDir) {
+              asignarValorSelect('vida', 'Original');
+            } else if (d.datos.vida && !document.getElementById('vida').value) {
+              asignarValorSelect('vida', d.datos.vida);
+              if (d.datos.banda_reen && document.getElementById('banda_reen')) {
+                asignarValorSelect('banda_reen', d.datos.banda_reen);
+              }
+            }
+            aplicarRestriccionEjeDireccional(pos);
+            validarVida();
           } else {
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+          }
+
+          // REQUERIMIENTO: Profundidades SIEMPRE en ceros / vacías para la nueva inspección
+          if (!posicionesInspeccionadasPlaca.has(pos)) {
+            document.getElementById('prof_ext').value = '';
+            document.getElementById('prof_cent').value = '';
+            document.getElementById('prof_int').value = '';
+            document.getElementById('novedades').value = '';
           }
         }
       } catch (e) {}
@@ -5633,9 +5729,14 @@
       const token = idInspeccionActiva;
       const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
       if (!placa || !placaActual || placa !== placaActual) return;
+      const fActual = (document.getElementById('fecha')?.value || '').trim();
 
       try {
-        const res = await fetch(`/api/posiciones-inspeccionadas?placa=${encodeURIComponent(placa)}`);
+        let url = `/api/posiciones-inspeccionadas?placa=${encodeURIComponent(placa)}`;
+        if (fActual) {
+          url += `&fecha=${encodeURIComponent(fActual)}`;
+        }
+        const res = await fetch(url);
         if (res.ok) {
           if (token !== idInspeccionActiva) return;
           const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
@@ -5662,13 +5763,21 @@
     }
 
     function validarVida() {
-      const vida = document.getElementById('vida').value;
+      const pos = parseInt(document.getElementById('posicion')?.value) || 1;
+      const selVida = document.getElementById('vida');
+      if (selVida && selVida.value === 'Reencauche' && esPosicionDireccionalActual(pos)) {
+        selVida.value = 'Original';
+        mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
+      }
+      const vida = selVida ? selVida.value : 'Original';
       const boxBanda = document.getElementById('box_banda');
-      if (vida === 'Reencauche') {
-        boxBanda.classList.remove('hidden');
-        poblarSelect('banda_reen', '/api/valores-campo?campo=banda_reen', 'ej. BDM Bandag (Seleccionar banda)');
-      } else {
-        boxBanda.classList.add('hidden');
+      if (boxBanda) {
+        if (vida === 'Reencauche') {
+          boxBanda.classList.remove('hidden');
+          poblarSelect('banda_reen', '/api/valores-campo?campo=banda_reen', 'ej. BDM Bandag (Seleccionar banda)');
+        } else {
+          boxBanda.classList.add('hidden');
+        }
       }
     }
 

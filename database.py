@@ -6,7 +6,7 @@ import re
 import hashlib
 import hmac
 import secrets
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -574,15 +574,102 @@ def obtener_posiciones_por_tipologia(tipologia):
     else:
         return list(range(1, 11))
 
+def generar_siguiente_numero_interno_temporal(conn=None):
+    """
+    Genera el siguiente número interno temporal consecutivo con formato TMP-001, TMP-002, etc.
+    Garantiza que no se repita consultando todos los códigos TMP-% existentes en inspecciones.
+    """
+    def _calcular(cursor):
+        cursor.execute("SELECT numero_interno FROM inspecciones WHERE UPPER(TRIM(numero_interno)) LIKE 'TMP-%'")
+        filas = cursor.fetchall()
+        max_num = 0
+        existentes = set()
+        for f in filas:
+            val = str(f[0] or '').strip().upper()
+            existentes.add(val)
+            partes = val.split('-')
+            if len(partes) >= 2 and partes[1].isdigit():
+                try:
+                    n = int(partes[1])
+                    if n > max_num:
+                        max_num = n
+                except Exception:
+                    pass
+        siguiente = max_num + 1
+        codigo = f"TMP-{siguiente:03d}"
+        while codigo in existentes:
+            siguiente += 1
+            codigo = f"TMP-{siguiente:03d}"
+        return codigo
+
+    if conn is not None:
+        return _calcular(conn.cursor())
+    else:
+        with get_connection() as c:
+            return _calcular(c.cursor())
+
+def es_posicion_direccional(tipologia, posicion):
+    """
+    Determina si una posición dada pertenece a un eje direccional.
+    Verifica el esquema de tipología en BD o heurística estándar.
+    """
+    pos = to_int(posicion, 1)
+    esquema = obtener_esquema_tipologia(tipologia)
+    if esquema:
+        for eje in esquema:
+            tipo_eje = str(eje.get('tipo', '')).strip().lower()
+            es_dir_eje = 'direccional' in tipo_eje or tipo_eje == 'dir'
+            for p in eje.get('posiciones', []):
+                if to_int(p.get('pos')) == pos:
+                    rol = str(p.get('rol', '')).strip().lower()
+                    if es_dir_eje or 'dir' in rol:
+                        return True
+                    return False
+    # Heurística de respaldo para pruebas o esquemas sin BD
+    t_norm = str(tipologia or '').lower()
+    if 'cuatro manos' in t_norm or '8x4' in t_norm or 'biarticulado' in t_norm:
+        return pos in [1, 2, 3, 4]
+    return pos in [1, 2]
+
+def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
+    """
+    Calcula la fecha mínima en la que se puede realizar una nueva inspección a un vehículo.
+    Regla: Requiere que transcurra el siguiente mes más 20 días calendario.
+    Si la inspección previa fue en fecha F (ej. 2026-10-01 o 2026-10-15):
+    - Mes siguiente: 2026-11.
+    - Se requiere que transcurra el mes y pasen 20 días (a partir del día 21 del mes siguiente: 2026-11-21).
+    O si la fecha base fue a finales de mes:
+    Garantiza que transcurra 1 mes calendario completo + 20 días.
+    """
+    if isinstance(fecha_base, str):
+        fecha_base = datetime.strptime(str(fecha_base)[:10], '%Y-%m-%d').date()
+    elif isinstance(fecha_base, datetime):
+        fecha_base = fecha_base.date()
+
+    año = fecha_base.year
+    mes = fecha_base.month
+    if mes == 12:
+        año_sig = año + 1
+        mes_sig = 1
+    else:
+        año_sig = año
+        mes_sig = mes + 1
+
+    fecha_dia_21_sig = date(año_sig, mes_sig, 21)
+    fecha_50_dias = fecha_base + timedelta(days=50)
+    return max(fecha_dia_21_sig, fecha_50_dias)
+
 def validar_inspeccion_candados(datos, excluir_id=None):
     """
     Evalúa los candados de seguridad de inspección:
     1. Máximo 27 mm en llantas R22.5 o de carga pesada.
     2. Las profundidades (ext, cent, int) NO pueden ser mayores a la Profundidad Inicial (prof_inicial).
-    3. Candado de No Duplicidad de Número Interno por Cliente / Subcliente.
-    4. No inspeccionar la misma placa más de una vez en el mismo mes calendario (YYYY-MM).
-    5. Kilometraje actual no puede ser menor al de la inspección anterior de la placa.
-    6. La profundidad no puede subir entre inspecciones (desgaste negativo), con tolerancia máx 1 mm.
+    3. Autogeneración de consecutivo TMP-xxx si no se ingresa número interno.
+    4. En eje direccional solo se permite condición Original (prohibido Reencauche).
+    5. Candado de No Duplicidad de Número Interno por Cliente / Subcliente en el mismo mes.
+    6. Frecuencia de inspección: nueva inspección requiere el siguiente mes más 20 días.
+    7. Kilometraje actual no puede ser menor al de la inspección anterior de la placa.
+    8. La profundidad no puede subir entre inspecciones (desgaste negativo), con tolerancia máx 1 mm.
     """
     placa = str(datos.get('placa', '')).strip().upper()
     if not placa:
@@ -591,6 +678,7 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     fecha_str = str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))).strip()
     km_actual = to_float(datos.get('kilometraje', 0))
     posicion = to_int(datos.get('posicion', 1))
+    tipologia_val = str(datos.get('tipologia', '')).strip()
     dimension = str(datos.get('dimension', '')).strip().upper()
     prof_inicial = to_float(datos.get('prof_inicial', 0))
 
@@ -615,6 +703,23 @@ def validar_inspeccion_candados(datos, excluir_id=None):
                 'mensaje': f'⛔ CANDADO DE SEGURIDAD: Ninguna de las 3 profundidades ({profs}) puede ser mayor a la Profundidad Inicial ({prof_inicial} mm) de la llanta.'
             }
 
+    # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original)
+    vida_val = str(datos.get('vida', 'Original')).strip().capitalize()
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val.lower() == 'reencauche':
+        return {
+            'valido': False,
+            'mensaje': (
+                f'⛔ CANDADO DE SEGURIDAD VIAL: En el eje direccional (Posición {posicion}) '
+                f'no se puede seleccionar en vida/condición Reencauche, únicamente condición Original.'
+            )
+        }
+
+    # Asignación automática de número consecutivo TMP-001 si viene vacío
+    num_interno = str(datos.get('numero_interno', '')).strip().upper()
+    if not num_interno:
+        num_interno = generar_siguiente_numero_interno_temporal()
+        datos['numero_interno'] = num_interno
+
     # Consultar historial previo de esta placa
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -622,11 +727,9 @@ def validar_inspeccion_candados(datos, excluir_id=None):
         mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
 
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
-        num_interno = str(datos.get('numero_interno', '')).strip().upper()
         cliente_val = str(datos.get('cliente', '')).strip()
         subcliente_val = str(datos.get('subcliente', '')).strip()
         if num_interno and cliente_val:
-            # Una llanta con un número interno dado no puede estar montada simultáneamente en otra placa/posición del mismo cliente en el mismo mes
             sql_dup = '''
                 SELECT placa, posicion, cliente, subcliente, fecha, id FROM inspecciones
                 WHERE UPPER(TRIM(numero_interno)) = ?
@@ -648,26 +751,53 @@ def validar_inspeccion_candados(datos, excluir_id=None):
                     'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} en el mes de inspección ({dup_row[4]}). No se permiten números de llanta duplicados en el mismo mes.'
                 }
 
-        # Candado 2: Solo una inspección por placa al mes (mismo YYYY-MM)
-        # Si la fecha de registro o inspección contiene el mismo año-mes
-        sql_mes = """
-            SELECT id, fecha, posicion FROM inspecciones 
-            WHERE placa = ? AND strftime('%Y-%m', fecha) = ? AND posicion = ?
+        # Candado 2: Frecuencia de inspección vehicular y de posición
+        # A un vehículo se le pueden realizar múltiples inspecciones, pero una nueva inspección
+        # no se puede realizar hasta que pase el siguiente mes más 20 días.
+        sql_ant_vehiculo = """
+            SELECT fecha, posicion FROM inspecciones 
+            WHERE placa = ?
         """
-        params_mes = [placa, mes_inspeccion, posicion]
+        params_ant_v = [placa]
         if excluir_id is not None:
-            sql_mes += " AND id != ?"
-            params_mes.append(to_int(excluir_id))
-        sql_mes += " LIMIT 1"
-
-        cursor.execute(sql_mes, tuple(params_mes))
-        ya_inspeccionada_misma_pos = cursor.fetchone()
-        if ya_inspeccionada_misma_pos:
-            return {
-                'valido': False,
-                'alerta_mes': True,
-                'mensaje': f'⚠️ CANDADO DE SEGURIDAD: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} en el mes {mes_inspeccion} (Fecha: {ya_inspeccionada_misma_pos[1]}).'
-            }
+            sql_ant_vehiculo += " AND id != ?"
+            params_ant_v.append(to_int(excluir_id))
+        sql_ant_vehiculo += " ORDER BY fecha DESC, id DESC"
+        cursor.execute(sql_ant_vehiculo, tuple(params_ant_v))
+        filas_ant = cursor.fetchall()
+        if filas_ant:
+            f_ult_str = str(filas_ant[0][0]).strip()[:10]
+            f_nueva_str = fecha_str[:10]
+            if f_nueva_str == f_ult_str:
+                # Misma fecha (misma jornada): verificar si esta posición específica ya fue inspeccionada
+                pos_ya_registradas = [r[1] for r in filas_ant if str(r[0]).strip()[:10] == f_ult_str]
+                if posicion in pos_ya_registradas:
+                    return {
+                        'valido': False,
+                        'alerta_mes': True,
+                        'mensaje': f'⚠️ CANDADO DE SEGURIDAD: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} en la fecha {f_ult_str}.'
+                    }
+            elif f_nueva_str < f_ult_str:
+                return {
+                    'valido': False,
+                    'alerta_mes': True,
+                    'mensaje': f'⚠️ CANDADO DE FECHA: La fecha de inspección ({f_nueva_str}) no puede ser anterior a la última inspección registrada ({f_ult_str}).'
+                }
+            else:
+                # Fecha posterior: debe haber transcurrido el siguiente mes más 20 días
+                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
+                f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
+                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
+                if f_nueva < f_minima:
+                    return {
+                        'valido': False,
+                        'alerta_mes': True,
+                        'mensaje': (
+                            f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
+                            f'Una nueva inspección requiere que transcurra el siguiente mes más 20 días '
+                            f'(disponible a partir del {f_minima.strftime("%Y-%m-%d")}).'
+                        )
+                    }
 
         # Candado 3: Kilometraje actual no puede ser menor al de la última inspección
         sql_km = """
@@ -727,6 +857,8 @@ def validar_inspeccion_candados(datos, excluir_id=None):
     return {'valido': True, 'mensaje': 'Validaciones de seguridad aprobadas.'}
 
 def insertar_inspeccion(datos):
+    if not str(datos.get('numero_interno', '')).strip():
+        datos['numero_interno'] = generar_siguiente_numero_interno_temporal()
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -1210,13 +1342,7 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
                 ORDER BY id ASC
             ''', (pl, f_str))
         else:
-            mes_actual = datetime.now().strftime('%Y-%m')
-            cursor.execute('''
-                SELECT posicion, novedades
-                FROM inspecciones
-                WHERE UPPER(TRIM(placa)) = ? AND substr(fecha, 1, 7) = ?
-                ORDER BY id ASC
-            ''', (pl, mes_actual))
+            return {"posiciones": [], "posiciones_con_novedad": [], "novedades": {}}
         
         posiciones = []
         posiciones_con_novedad = []

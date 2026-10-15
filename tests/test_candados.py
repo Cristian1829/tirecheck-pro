@@ -122,9 +122,9 @@ def test_candado_kilometraje_no_regresivo(test_db):
     }
     database.insertar_inspeccion(datos1)
 
-    # Intentar km 110,000 en 2026-10-01 debe fallar
+    # Intentar km 110,000 en 2026-10-25 (pasado el siguiente mes + 20 días) debe fallar por kilometraje
     datos2 = {
-        'fecha': '2026-10-01',
+        'fecha': '2026-10-25',
         'placa': 'TEST04',
         'posicion': 2,
         'kilometraje': 110000,
@@ -153,9 +153,9 @@ def test_candado_desgaste_negativo(test_db):
     }
     database.insertar_inspeccion(datos1)
 
-    # Intentar subir profundidad a 9.0 mm en 2026-10-01 (aumento > 1 mm de tolerancia) debe fallar
+    # Intentar subir profundidad a 9.0 mm en 2026-10-25 (aumento > 1 mm de tolerancia) debe fallar
     datos2 = {
-        'fecha': '2026-10-01',
+        'fecha': '2026-10-25',
         'placa': 'TEST05',
         'posicion': 1,
         'kilometraje': 105000,
@@ -168,3 +168,105 @@ def test_candado_desgaste_negativo(test_db):
     res = database.validar_inspeccion_candados(datos2)
     assert not res['valido']
     assert 'candado de desgaste' in res['mensaje'].lower() or 'subió' in res['mensaje'].lower()
+
+def test_generacion_automatica_consecutivo_temporal_tmp(test_db):
+    # Cuando no se ingresa número interno, debe generarse TMP-001 consecutivo y no repetible
+    datos1 = {
+        'fecha': '2026-10-14',
+        'placa': 'TMP01',
+        'posicion': 1,
+        'kilometraje': 10000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': ''
+    }
+    val1 = database.validar_inspeccion_candados(datos1)
+    assert val1['valido'] is True
+    assert datos1['numero_interno'] == 'TMP-001'
+    id1 = database.insertar_inspeccion(datos1)
+
+    # Segunda llanta sin número interno debe generar TMP-002
+    datos2 = {
+        'fecha': '2026-10-14',
+        'placa': 'TMP01',
+        'posicion': 2,
+        'kilometraje': 10000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'numero_interno': '   '
+    }
+    val2 = database.validar_inspeccion_candados(datos2)
+    assert val2['valido'] is True
+    assert datos2['numero_interno'] == 'TMP-002'
+    id2 = database.insertar_inspeccion(datos2)
+
+    assert id1 != id2
+
+def test_candado_eje_direccional_solo_original(test_db):
+    # En posiciones de eje direccional (pos 1 y 2 en cabezote/sencillo), no se puede seleccionar Reencauche
+    datos_dir_reencauche = {
+        'fecha': '2026-10-14',
+        'placa': 'DIR01',
+        'posicion': 1,
+        'tipologia': 'Cabezote (6x4)',
+        'kilometraje': 20000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'vida': 'Reencauche'
+    }
+    val = database.validar_inspeccion_candados(datos_dir_reencauche)
+    assert not val['valido']
+    assert 'eje direccional' in val['mensaje'].lower()
+    assert 'reencauche' in val['mensaje'].lower()
+
+    # En condición Original debe ser aprobado
+    datos_dir_original = dict(datos_dir_reencauche)
+    datos_dir_original['vida'] = 'Original'
+    val_ok = database.validar_inspeccion_candados(datos_dir_original)
+    assert val_ok['valido'] is True
+
+def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
+    # Vehículo inspeccionado el 2026-08-10
+    datos1 = {
+        'fecha': '2026-08-10',
+        'placa': 'FREQ01',
+        'posicion': 1,
+        'kilometraje': 50000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    }
+    database.insertar_inspeccion(datos1)
+
+    # Intentar nueva inspección el 2026-09-15 (aún en el siguiente mes pero antes de los 20 días calculados) debe fallar
+    datos2 = {
+        'fecha': '2026-09-15',
+        'placa': 'FREQ01',
+        'posicion': 1,
+        'kilometraje': 51000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.5,
+        'prof_cent': 11.5,
+        'prof_int': 11.5
+    }
+    val_bloq = database.validar_inspeccion_candados(datos2)
+    assert not val_bloq['valido']
+    assert 'frecuencia' in val_bloq['mensaje'].lower()
+
+    # Una vez transcurrido el siguiente mes más 20 días (ej. 2026-10-01), debe ser permitida
+    datos3 = dict(datos2)
+    datos3['fecha'] = '2026-10-01'
+    val_perm = database.validar_inspeccion_candados(datos3)
+    assert val_perm['valido'] is True

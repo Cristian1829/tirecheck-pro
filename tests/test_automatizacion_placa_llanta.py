@@ -152,9 +152,9 @@ def test_candado_rotacion_intermensual(test_db):
     assert not val_dup['valido']
     assert 'CANDADO DE NÚMERO INTERNO' in val_dup['mensaje']
 
-    # 3. Intentar registrar la llanta rotada a Pos 5 en NOVIEMBRE (mes siguiente) -> DEBE PERMITIRSE
+    # 3. Intentar registrar la llanta rotada a Pos 5 en NOVIEMBRE (mes siguiente + 20 días) -> DEBE PERMITIRSE
     datos_nov_rot = {
-        'fecha': '2026-11-05',
+        'fecha': '2026-11-25',
         'cliente': 'Flota Andina',
         'subcliente': 'Bogota',
         'tipo_operacion': 'Paqueteo',
