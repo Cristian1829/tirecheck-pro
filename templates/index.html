@@ -3623,6 +3623,19 @@
       if (secAct) secAct.classList.remove('hidden');
       const btnAct = document.getElementById(`subtab-btn-${subtab}`);
       if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
+
+      // Cargar los datos de la subpestaña seleccionada
+      if (subtab === 'usuarios' && esAdmin) {
+        cargarUsuariosCat();
+      } else if (subtab === 'clientes' && esAdmin) {
+        cargarClientesLimCat();
+      } else if (subtab === 'operaciones') {
+        cargarOperacionesCat();
+      } else if (subtab === 'tipologias') {
+        cargarTipologiasCat();
+      } else if (subtab === 'modelos') {
+        cargarModelosCat();
+      }
     }
 
     async function cargarGestionCatalogos() {
@@ -3820,11 +3833,18 @@
 
     let usuariosCatCache = [];
 
-    function renderizarBadgesVistas(vistasStr, rol) {
+    function renderizarBadgesVistas(vistasVal, rol) {
       if (rol === 'admin') {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
       }
-      const vistas = (vistasStr || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      let vistas = [];
+      if (Array.isArray(vistasVal)) {
+        vistas = vistasVal.map(s => String(s).trim().toLowerCase()).filter(Boolean);
+      } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
+        vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      } else {
+        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+      }
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
@@ -3833,11 +3853,16 @@
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
 
-    function renderizarBadgesClientes(clienteAsignadoStr) {
-      if (!clienteAsignadoStr || !clienteAsignadoStr.trim()) {
+    function renderizarBadgesClientes(clienteAsignadoVal) {
+      let clis = [];
+      if (Array.isArray(clienteAsignadoVal)) {
+        clis = clienteAsignadoVal.map(s => String(s).trim()).filter(Boolean);
+      } else if (typeof clienteAsignadoVal === 'string' && clienteAsignadoVal.trim()) {
+        clis = clienteAsignadoVal.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (clis.length === 0) {
         return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Todas las Flotas</span>';
       }
-      const clis = clienteAsignadoStr.split(',').map(s => s.trim()).filter(Boolean);
       if (clis.length === 1) {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
       }
@@ -3846,11 +3871,18 @@
 
     async function cargarUsuariosCat() {
       if (!usuarioActual || usuarioActual.rol !== 'admin') return;
+      const tbody = document.getElementById('tbodyUsuariosCat');
       try {
-        const res = await fetch('/api/usuarios');
+        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/api/usuarios', { headers });
         if (res.ok) {
           usuariosCatCache = await res.json();
-          const tbody = document.getElementById('tbodyUsuariosCat');
+          if (!tbody) return;
+          if (!usuariosCatCache || usuariosCatCache.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic text-xs">No hay usuarios registrados. Usa el botón "+ Nuevo Usuario" para crear uno.</td></tr>`;
+            return;
+          }
           tbody.innerHTML = usuariosCatCache.map(u => `
             <tr class="hover:bg-slate-50 transition-colors">
               <td class="p-2.5 font-black text-slate-900">${u.username}</td>
@@ -3859,7 +3891,7 @@
                 <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
               </td>
               <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
-              <td class="p-2.5">${renderizarBadgesClientes(u.cliente_asignado)}</td>
+              <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
               <td class="p-2.5 text-center">
                 ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
               </td>
@@ -3882,9 +3914,17 @@
               </td>
             </tr>
           `).join('');
+        } else {
+          console.error("Error al obtener usuarios, status:", res.status);
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 font-bold text-xs">Error (${res.status}) al obtener la lista de usuarios. Por favor recarga la página.</td></tr>`;
+          }
         }
       } catch (e) {
         console.error("Error al cargar usuarios:", e);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 font-bold text-xs">Error de conexión: ${e.message}</td></tr>`;
+        }
       }
     }
 
@@ -4202,7 +4242,14 @@
       }
 
       // Vistas permitidas
-      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase());
+      let vistas = [];
+      if (Array.isArray(u.vistas_permitidas)) {
+        vistas = u.vistas_permitidas.map(s => String(s).trim().toLowerCase());
+      } else if (typeof u.vistas_permitidas === 'string' && u.vistas_permitidas.trim()) {
+        vistas = u.vistas_permitidas.split(',').map(s => s.trim().toLowerCase());
+      } else {
+        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+      }
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');

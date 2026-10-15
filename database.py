@@ -151,6 +151,17 @@ def get_connection():
     finally:
         conn.close()
 
+def asegurar_columna_vistas_permitidas(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(usuarios)")
+        cols_usr = [r[1] for r in cursor.fetchall()]
+        if cols_usr and 'vistas_permitidas' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
+            conn.commit()
+    except Exception:
+        pass
+
 def inicializar_bd():
     verificar_y_poblar_seed()
     with get_connection() as conn:
@@ -218,13 +229,7 @@ def inicializar_bd():
         """)
 
         # Auto-migración segura de columna vistas_permitidas si la tabla ya existía
-        try:
-            cursor.execute("PRAGMA table_info(usuarios)")
-            cols_usr = [r[1] for r in cursor.fetchall()]
-            if 'vistas_permitidas' not in cols_usr:
-                cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
-        except Exception:
-            pass
+        asegurar_columna_vistas_permitidas(conn)
 
         # Insertar usuarios por defecto si no existen
         cursor.execute("SELECT COUNT(*) FROM usuarios")
@@ -2294,6 +2299,7 @@ def autenticar_usuario(username, password):
     if not u or not p:
         return None
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo,
@@ -2330,6 +2336,7 @@ def obtener_usuario_por_username(username):
     if not u:
         return None
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
@@ -2355,6 +2362,7 @@ def obtener_usuario_por_username(username):
 
 def listar_usuarios():
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
@@ -2367,7 +2375,8 @@ def listar_usuarios():
         for r in cursor.fetchall():
             d = dict(zip(cols, r))
             d['clientes_asignados'] = parsear_clientes_asignados(d.get('cliente_asignado'))
-            d['vistas_permitidas'] = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
+            v_list = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
+            d['vistas_permitidas'] = ','.join(v_list) if isinstance(v_list, list) else str(v_list or '')
             filas.append(d)
         return filas
 
@@ -2391,6 +2400,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
 
     hashed_pwd = hash_password(p)
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         try:
             cursor = conn.cursor()
             cursor.execute("""
@@ -2405,6 +2415,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
 def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None):
     u = (username or '').strip().lower()
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         updates = []
         params = []

@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 12:24:29`
+- **Fecha de Generación:** `2026-10-15 12:40:01`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `22,187` líneas
-- **Tamaño Total de Código Fuente:** `1352.5 KB` (`1,384,937` bytes)
+- **Líneas Totales de Código:** `22,245` líneas
+- **Tamaño Total de Código Fuente:** `1355.2 KB` (`1,387,718` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -211,7 +211,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 919 | 38.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 2512 | 122.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 2523 | 122.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1124 | 50.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 334 | 11.4 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7452 | 654.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7499 | 656.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2963,7 +2963,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 2512 líneas | 125,310 bytes (122.4 KB)
+- **Métricas:** 2523 líneas | 125,793 bytes (122.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3120,6 +3120,17 @@ def get_connection():
     finally:
         conn.close()
 
+def asegurar_columna_vistas_permitidas(conn):
+    try:
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(usuarios)")
+        cols_usr = [r[1] for r in cursor.fetchall()]
+        if cols_usr and 'vistas_permitidas' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
+            conn.commit()
+    except Exception:
+        pass
+
 def inicializar_bd():
     verificar_y_poblar_seed()
     with get_connection() as conn:
@@ -3187,13 +3198,7 @@ def inicializar_bd():
         """)
 
         # Auto-migración segura de columna vistas_permitidas si la tabla ya existía
-        try:
-            cursor.execute("PRAGMA table_info(usuarios)")
-            cols_usr = [r[1] for r in cursor.fetchall()]
-            if 'vistas_permitidas' not in cols_usr:
-                cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
-        except Exception:
-            pass
+        asegurar_columna_vistas_permitidas(conn)
 
         # Insertar usuarios por defecto si no existen
         cursor.execute("SELECT COUNT(*) FROM usuarios")
@@ -5263,6 +5268,7 @@ def autenticar_usuario(username, password):
     if not u or not p:
         return None
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo,
@@ -5299,6 +5305,7 @@ def obtener_usuario_por_username(username):
     if not u:
         return None
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
@@ -5324,6 +5331,7 @@ def obtener_usuario_por_username(username):
 
 def listar_usuarios():
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
@@ -5336,7 +5344,8 @@ def listar_usuarios():
         for r in cursor.fetchall():
             d = dict(zip(cols, r))
             d['clientes_asignados'] = parsear_clientes_asignados(d.get('cliente_asignado'))
-            d['vistas_permitidas'] = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
+            v_list = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
+            d['vistas_permitidas'] = ','.join(v_list) if isinstance(v_list, list) else str(v_list or '')
             filas.append(d)
         return filas
 
@@ -5360,6 +5369,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
 
     hashed_pwd = hash_password(p)
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         try:
             cursor = conn.cursor()
             cursor.execute("""
@@ -5374,6 +5384,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
 def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None):
     u = (username or '').strip().lower()
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         updates = []
         params = []
@@ -9313,7 +9324,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 7452 líneas | 670,387 bytes (654.7 KB)
+- **Métricas:** 7499 líneas | 672,685 bytes (656.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -12942,6 +12953,19 @@ if __name__ == '__main__':
       if (secAct) secAct.classList.remove('hidden');
       const btnAct = document.getElementById(`subtab-btn-${subtab}`);
       if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
+
+      // Cargar los datos de la subpestaña seleccionada
+      if (subtab === 'usuarios' && esAdmin) {
+        cargarUsuariosCat();
+      } else if (subtab === 'clientes' && esAdmin) {
+        cargarClientesLimCat();
+      } else if (subtab === 'operaciones') {
+        cargarOperacionesCat();
+      } else if (subtab === 'tipologias') {
+        cargarTipologiasCat();
+      } else if (subtab === 'modelos') {
+        cargarModelosCat();
+      }
     }
 
     async function cargarGestionCatalogos() {
@@ -13139,11 +13163,18 @@ if __name__ == '__main__':
 
     let usuariosCatCache = [];
 
-    function renderizarBadgesVistas(vistasStr, rol) {
+    function renderizarBadgesVistas(vistasVal, rol) {
       if (rol === 'admin') {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
       }
-      const vistas = (vistasStr || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      let vistas = [];
+      if (Array.isArray(vistasVal)) {
+        vistas = vistasVal.map(s => String(s).trim().toLowerCase()).filter(Boolean);
+      } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
+        vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      } else {
+        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+      }
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
@@ -13152,11 +13183,16 @@ if __name__ == '__main__':
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
 
-    function renderizarBadgesClientes(clienteAsignadoStr) {
-      if (!clienteAsignadoStr || !clienteAsignadoStr.trim()) {
+    function renderizarBadgesClientes(clienteAsignadoVal) {
+      let clis = [];
+      if (Array.isArray(clienteAsignadoVal)) {
+        clis = clienteAsignadoVal.map(s => String(s).trim()).filter(Boolean);
+      } else if (typeof clienteAsignadoVal === 'string' && clienteAsignadoVal.trim()) {
+        clis = clienteAsignadoVal.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (clis.length === 0) {
         return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Todas las Flotas</span>';
       }
-      const clis = clienteAsignadoStr.split(',').map(s => s.trim()).filter(Boolean);
       if (clis.length === 1) {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
       }
@@ -13165,11 +13201,18 @@ if __name__ == '__main__':
 
     async function cargarUsuariosCat() {
       if (!usuarioActual || usuarioActual.rol !== 'admin') return;
+      const tbody = document.getElementById('tbodyUsuariosCat');
       try {
-        const res = await fetch('/api/usuarios');
+        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/api/usuarios', { headers });
         if (res.ok) {
           usuariosCatCache = await res.json();
-          const tbody = document.getElementById('tbodyUsuariosCat');
+          if (!tbody) return;
+          if (!usuariosCatCache || usuariosCatCache.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic text-xs">No hay usuarios registrados. Usa el botón "+ Nuevo Usuario" para crear uno.</td></tr>`;
+            return;
+          }
           tbody.innerHTML = usuariosCatCache.map(u => `
             <tr class="hover:bg-slate-50 transition-colors">
               <td class="p-2.5 font-black text-slate-900">${u.username}</td>
@@ -13178,7 +13221,7 @@ if __name__ == '__main__':
                 <span class="px-2 py-0.5 rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
               </td>
               <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
-              <td class="p-2.5">${renderizarBadgesClientes(u.cliente_asignado)}</td>
+              <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
               <td class="p-2.5 text-center">
                 ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
               </td>
@@ -13201,9 +13244,17 @@ if __name__ == '__main__':
               </td>
             </tr>
           `).join('');
+        } else {
+          console.error("Error al obtener usuarios, status:", res.status);
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 font-bold text-xs">Error (${res.status}) al obtener la lista de usuarios. Por favor recarga la página.</td></tr>`;
+          }
         }
       } catch (e) {
         console.error("Error al cargar usuarios:", e);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-rose-500 font-bold text-xs">Error de conexión: ${e.message}</td></tr>`;
+        }
       }
     }
 
@@ -13521,7 +13572,14 @@ if __name__ == '__main__':
       }
 
       // Vistas permitidas
-      const vistas = (u.vistas_permitidas || 'patio,diagnostico,kpis,catalogos').split(',').map(s => s.trim().toLowerCase());
+      let vistas = [];
+      if (Array.isArray(u.vistas_permitidas)) {
+        vistas = u.vistas_permitidas.map(s => String(s).trim().toLowerCase());
+      } else if (typeof u.vistas_permitidas === 'string' && u.vistas_permitidas.trim()) {
+        vistas = u.vistas_permitidas.split(',').map(s => s.trim().toLowerCase());
+      } else {
+        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+      }
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
