@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-15 12:13:58`
+- **Fecha de Generación:** `2026-10-15 12:24:29`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `22,183` líneas
-- **Tamaño Total de Código Fuente:** `1352.3 KB` (`1,384,755` bytes)
+- **Líneas Totales de Código:** `22,187` líneas
+- **Tamaño Total de Código Fuente:** `1352.5 KB` (`1,384,937` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -221,7 +221,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7448 | 654.5 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 7452 | 654.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -9313,7 +9313,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 7448 líneas | 670,205 bytes (654.5 KB)
+- **Métricas:** 7452 líneas | 670,387 bytes (654.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -9485,6 +9485,8 @@ if __name__ == '__main__':
     /* ===== NAV ===== */
     .app-hd__nav{display:flex;gap:6px;padding:10px 0 12px;overflow-x:auto;scrollbar-width:none}
     .app-hd__nav button, .app-hd__nav a{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:12px;font-size:12px;font-weight:700;color:#cbd5e1;text-decoration:none;white-space:nowrap;background:transparent;border:none;cursor:pointer;transition:all .15s ease}
+    .app-hd__nav button.hidden, .app-hd__nav a.hidden{display:none !important}
+    #nav-btn-basedatos.hidden{display:none !important}
     .app-hd__nav button:hover, .app-hd__nav a:hover{background:#1b2740;color:#fff}
     .app-hd__nav button i, .app-hd__nav a i{width:12px;height:12px;border-radius:3px;display:block;background:var(--c)}
     .app-hd__nav button.active, .app-hd__nav a.active, .app-hd__nav [aria-current=page]{background:#2563eb !important;color:#fff !important;box-shadow:0 4px 12px rgba(37,99,235,.4)}
@@ -9604,7 +9606,7 @@ if __name__ == '__main__':
           <i style="--c:#38bdf8"></i>
           <span>Inspección de Patio</span>
         </button>
-        <button type="button" onclick="navegarTab('basedatos')" id="nav-btn-basedatos" class="nav-tab-btn">
+        <button type="button" onclick="navegarTab('basedatos')" id="nav-btn-basedatos" class="nav-tab-btn hidden" style="display: none;">
           <i style="--c:#34d399"></i>
           <span>Base de Inspecciones</span>
           <span id="badgeTotalInspecciones" class="text-[10px] bg-slate-700/80 text-slate-200 px-1.5 py-0.5 rounded-full ml-1">0</span>
@@ -11699,7 +11701,6 @@ if __name__ == '__main__':
 
       // Regla estricta: Solo el admin puede ver e ingresar a la Base de Inspecciones
       if (tabId === 'basedatos' && usuarioActual.rol !== 'admin') {
-        mostrarToast('⛔ Acceso denegado: Solo el Administrador puede ingresar a la Base de Inspecciones', true);
         tabId = 'patio';
       }
 
@@ -11847,10 +11848,13 @@ if __name__ == '__main__':
           // REGLA: solo el admin puede ver la pestaña base de inspecciones
           if (!esAdmin && tab === 'basedatos') {
             btnNav.classList.add('hidden');
+            btnNav.style.display = 'none';
           } else if (vistasPermitidas.includes(tab)) {
             btnNav.classList.remove('hidden');
+            btnNav.style.display = 'flex';
           } else {
             btnNav.classList.add('hidden');
+            btnNav.style.display = 'none';
           }
         }
       });
