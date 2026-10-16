@@ -3397,7 +3397,7 @@
       const selCli = document.getElementById('filtroDiagCliente');
       const selOp = document.getElementById('filtroDiagOperacion');
 
-      const clientes = Array.from(new Set(cacheDiagnostico.map(r => r.Cliente).filter(Boolean))).sort();
+      const clientes = Array.from(new Set(cacheDiagnostico.map(r => r.Cliente ? String(r.Cliente).trim().toUpperCase() : '').filter(Boolean))).sort();
       const operaciones = Array.from(new Set(cacheDiagnostico.map(r => r.Operación).filter(Boolean))).sort();
 
       if (selCli) {
@@ -4600,8 +4600,8 @@
 
       // Combinar con los ya seleccionados para no perder ningún valor histórico
       const setTotal = new Set();
-      (clientesSeleccionados || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim()); });
-      (clientesDisponibles || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim()); });
+      (clientesSeleccionados || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim().toUpperCase()); });
+      (clientesDisponibles || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim().toUpperCase()); });
 
       const lista = Array.from(setTotal).sort((a, b) => a.localeCompare(b));
       if (lista.length === 0) {
@@ -4625,7 +4625,7 @@
       const inpId = modo === 'nuevo' ? 'usr_cliente_custom_nuevo' : 'edit_usr_cliente_custom';
       const inp = document.getElementById(inpId);
       if (!inp) return;
-      const val = inp.value.trim();
+      const val = inp.value.trim().toUpperCase();
       if (!val) return;
 
       const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';

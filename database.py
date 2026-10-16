@@ -408,7 +408,65 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_fecha ON inspecciones (cliente, subcliente, fecha)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_limites_retiro_busqueda ON configuracion_limites_retiro (cliente, subcliente, eje)")
 
+        # Normalización automática: asegurar que todos los clientes estén en mayúsculas
+        normalizar_clientes_mayusculas(conn)
+
         conn.commit()
+
+def normalizar_clientes_mayusculas(conn):
+    """
+    Normalización y migración automática para asegurar que todos los nombres de clientes
+    y subclientes estén estrictamente en mayúsculas y sin duplicados en todas las tablas.
+    """
+    cursor = conn.cursor()
+    # 1. Tabla inspecciones
+    cursor.execute("UPDATE inspecciones SET cliente = UPPER(TRIM(cliente)) WHERE cliente IS NOT NULL AND cliente != UPPER(TRIM(cliente))")
+    cursor.execute("UPDATE inspecciones SET subcliente = UPPER(TRIM(subcliente)) WHERE subcliente IS NOT NULL AND subcliente != UPPER(TRIM(subcliente))")
+
+    # 2. Tabla catalogo_vehiculos
+    cursor.execute("UPDATE catalogo_vehiculos SET cliente = UPPER(TRIM(cliente)) WHERE cliente IS NOT NULL AND cliente != UPPER(TRIM(cliente))")
+    cursor.execute("UPDATE catalogo_vehiculos SET subcliente = UPPER(TRIM(subcliente)) WHERE subcliente IS NOT NULL AND subcliente != UPPER(TRIM(subcliente))")
+
+    # 3. Tabla configuracion_clientes (PRIMARY KEY cliente)
+    cursor.execute("SELECT cliente, limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes")
+    for cli, lim, obs, f_act in cursor.fetchall():
+        if cli:
+            cli_up = cli.strip().upper()
+            if cli != cli_up:
+                cursor.execute("DELETE FROM configuracion_clientes WHERE cliente = ?", (cli,))
+                cursor.execute("""
+                    INSERT OR REPLACE INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+                    VALUES (?, ?, ?, ?)
+                """, (cli_up, lim, obs, f_act))
+
+    # 4. Tabla configuracion_limites_retiro (UNIQUE cliente, subcliente, eje)
+    cursor.execute("SELECT id, cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_limites_retiro")
+    for rid, cli, sub, eje, lim, obs, f_act in cursor.fetchall():
+        if cli:
+            cli_up = cli.strip().upper()
+            sub_up = (sub or 'TODOS').strip().upper()
+            eje_up = (eje or 'TODOS').strip().upper()
+            if cli != cli_up or sub != sub_up or eje != eje_up:
+                cursor.execute("DELETE FROM configuracion_limites_retiro WHERE id = ?", (rid,))
+                cursor.execute("""
+                    INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (cli_up, sub_up, eje_up, lim, obs, f_act))
+
+    # 5. Tabla usuarios (cliente_asignado)
+    cursor.execute("SELECT id, cliente_asignado FROM usuarios")
+    for uid, c_asig in cursor.fetchall():
+        if c_asig:
+            vistos = set()
+            clis_up = []
+            for c in str(c_asig).split(','):
+                clean = c.strip().upper()
+                if clean and clean not in vistos:
+                    vistos.add(clean)
+                    clis_up.append(clean)
+            nuevo_str = ', '.join(clis_up)
+            if nuevo_str != str(c_asig).strip():
+                cursor.execute("UPDATE usuarios SET cliente_asignado = ? WHERE id = ?", (nuevo_str, uid))
 
 # ==========================================
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
@@ -1252,13 +1310,13 @@ def analizar_inspecciones_df(df_inspecciones):
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
 
         cli_val = group['cliente'].iloc[0] if ('cliente' in group and pd.notna(group['cliente'].iloc[0])) else ''
-        cliente = '' if (pd.isna(cli_val) or str(cli_val).strip().lower() in ('nan', 'none')) else str(cli_val).strip()
+        cliente = '' if (pd.isna(cli_val) or str(cli_val).strip().lower() in ('nan', 'none')) else str(cli_val).strip().upper()
 
         sub_val = group['subcliente'].iloc[0] if ('subcliente' in group and pd.notna(group['subcliente'].iloc[0])) else ''
-        subcliente = '' if (pd.isna(sub_val) or str(sub_val).strip().lower() in ('nan', 'none')) else str(sub_val).strip()
+        subcliente = '' if (pd.isna(sub_val) or str(sub_val).strip().lower() in ('nan', 'none')) else str(sub_val).strip().upper()
 
         op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
-        operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip()
+        operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip().upper()
         
         max_pos = group['posicion'].max()
         es_cuatro_manos = ('cuatro manos' in t_veh.lower() or max_pos >= 12 and 'cabezote' in t_veh.lower())
@@ -1451,6 +1509,9 @@ def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca=''):
         elif campo == 'cliente':
             cursor.execute("SELECT cliente FROM configuracion_clientes")
             valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+
+        if campo in ('cliente', 'subcliente', 'tipo_operacion'):
+            valores_insp = sorted(list(set(str(v).strip().upper() for v in valores_insp if v and str(v).strip())))
 
         return [v for v in valores_insp if v and str(v).strip()]
 
@@ -1793,9 +1854,9 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
         else:
             group_ult = group.drop_duplicates(subset=['posicion'], keep='last')
 
-        cli = str(group_ult['cliente'].iloc[0] or '').strip() if 'cliente' in group_ult.columns else ''
-        sub = str(group_ult['subcliente'].iloc[0] or '').strip() if 'subcliente' in group_ult.columns else ''
-        op = str(group_ult['tipo_operacion'].iloc[0] or '').strip() if 'tipo_operacion' in group_ult.columns else ''
+        cli = str(group_ult['cliente'].iloc[0] or '').strip().upper() if 'cliente' in group_ult.columns else ''
+        sub = str(group_ult['subcliente'].iloc[0] or '').strip().upper() if 'subcliente' in group_ult.columns else ''
+        op = str(group_ult['tipo_operacion'].iloc[0] or '').strip().upper() if 'tipo_operacion' in group_ult.columns else ''
         tip = str(group_ult['tipologia'].iloc[0] or '').strip() if 'tipologia' in group_ult.columns else ''
         km_max = to_float(group_ult['kilometraje'].max()) if 'kilometraje' in group_ult.columns else 0.0
         fecha_max_str = str(group_ult['fecha'].max() or '') if 'fecha' in group_ult.columns else ''
@@ -1986,15 +2047,15 @@ def obtener_lista_clientes_unicos():
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT DISTINCT cliente FROM (
+            SELECT DISTINCT UPPER(TRIM(cliente)) FROM (
                 SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
                 UNION
                 SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
                 UNION
                 SELECT cliente FROM configuracion_clientes
-            ) ORDER BY cliente ASC
+            ) ORDER BY 1 ASC
         ''')
-        return [r[0] for r in cursor.fetchall()]
+        return [r[0] for r in cursor.fetchall() if r[0]]
 
 # --- CATALOGOS DINAMICOS ---
 def obtener_todas_operaciones():
@@ -2707,10 +2768,17 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 # ==========================================
 
 def parsear_clientes_asignados(cliente_asignado) -> list:
-    """Convierte el string de cliente_asignado (uno o varios separados por comas) en lista limpia."""
+    """Convierte el string de cliente_asignado (uno o varios separados por comas) en lista limpia en mayúsculas."""
     if not cliente_asignado:
         return []
-    return [c.strip() for c in str(cliente_asignado).split(',') if c.strip()]
+    vistos = set()
+    res = []
+    for c in str(cliente_asignado).split(','):
+        clean = c.strip().upper()
+        if clean and clean not in vistos:
+            vistos.add(clean)
+            res.append(clean)
+    return res
 
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
@@ -2819,7 +2887,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
     p = (password or '').strip()
     nom = (nombre_completo or '').strip()
     r = (rol or 'inspector').strip().lower()
-    cli = (cliente_asignado or '').strip()
+    cli = ', '.join(parsear_clientes_asignados(cliente_asignado))
     if not u or not p or not nom:
         return False
     if len(p) < 4:
@@ -2886,7 +2954,7 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
 
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
-            params.append(cliente_asignado.strip())
+            params.append(', '.join(parsear_clientes_asignados(cliente_asignado)))
         if activo is not None:
             updates.append("activo = ?")
             params.append(1 if activo else 0)

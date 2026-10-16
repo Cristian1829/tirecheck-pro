@@ -190,7 +190,7 @@ def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
     })
     assert res_login1.status_code == 200
     assert "token" in res_login1.json()
-    assert res_login1.json()["usuario"]["cliente_asignado"] == "Flota Norte"
+    assert res_login1.json()["usuario"]["cliente_asignado"] == "FLOTA NORTE"
 
     # 3. Admin actualiza datos del usuario
     res_put = auth_client.put("/api/usuarios/operario_test", json={
@@ -220,7 +220,7 @@ def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
     })
     assert res_login_new.status_code == 200
     assert res_login_new.json()["usuario"]["nombre_completo"] == "Operario Senior"
-    assert res_login_new.json()["usuario"]["cliente_asignado"] == "Flota Sur"
+    assert res_login_new.json()["usuario"]["cliente_asignado"] == "FLOTA SUR"
 
     # 7. Admin elimina el usuario de prueba
     res_del = auth_client.delete("/api/usuarios/operario_test")
@@ -318,8 +318,8 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     # Verificar que basedatos queda estrictamente excluido para inspectores (solo admin)
     assert "basedatos" not in u["vistas_permitidas"]
     assert len(u["clientes_asignados"]) == 2
-    assert "TransCarga" in u["clientes_asignados"]
-    assert "Flota Norte" in u["clientes_asignados"]
+    assert "TRANSCARGA" in u["clientes_asignados"]
+    assert "FLOTA NORTE" in u["clientes_asignados"]
 
     # Editar usuario a un solo cliente asignado
     res_edit = auth_client.put("/api/usuarios/inspector_test", json={
@@ -334,8 +334,8 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     res_list2 = auth_client.get("/api/usuarios")
     u2 = next(x for x in res_list2.json() if x["username"] == "inspector_test")
     assert u2["nombre_completo"] == "Inspector Modificado"
-    assert u2["cliente_asignado"] == "TransCarga"
-    assert u2["clientes_asignados"] == ["TransCarga"]
+    assert u2["cliente_asignado"] == "TRANSCARGA"
+    assert u2["clientes_asignados"] == ["TRANSCARGA"]
     assert "kpis" in u2["vistas_permitidas"]
     assert "catalogos" in u2["vistas_permitidas"]
     assert "basedatos" not in u2["vistas_permitidas"]
@@ -350,7 +350,7 @@ def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
     # Consulta de valores de campo: solo debe retornar su cliente asignado
     res_val = client.get("/api/valores-campo?campo=cliente")
     assert res_val.status_code == 200
-    assert res_val.json() == ["TransCarga"]
+    assert res_val.json() == ["TRANSCARGA"]
 
     # Registro de inspección: si no manda cliente, el servidor predetermina automáticamente TransCarga
     insp_payload = {
