@@ -2511,7 +2511,10 @@
       }
 
       // Carga perezosa de datos según la pestaña activa
-      if (tabId === 'basedatos') cargarBaseInspecciones();
+      if (tabId === 'patio') {
+        configurarClientesUsuarioEnInspeccion();
+      }
+      else if (tabId === 'basedatos') cargarBaseInspecciones();
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
       else if (tabId === 'catalogos') {
@@ -2533,6 +2536,8 @@
           usuarioActual = JSON.parse(data);
           actualizarUIUsuario();
           document.getElementById('modalLogin').classList.add('hidden');
+          // Sincronizar datos frescos del usuario en tiempo real con el servidor
+          sincronizarUsuarioActualSesion();
           return true;
         } catch(e) {
           localStorage.removeItem('tireanalyze_usuario_sesion');
@@ -2543,6 +2548,24 @@
       }
       document.getElementById('modalLogin').classList.remove('hidden');
       return false;
+    }
+
+    async function sincronizarUsuarioActualSesion() {
+      try {
+        const res = await _originalFetch('/api/usuario-actual');
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.usuario) {
+            usuarioActual = d.usuario;
+            localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
+            localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
+            actualizarUIUsuario();
+            configurarClientesUsuarioEnInspeccion();
+          }
+        } else if (res.status === 401) {
+          cerrarSesionLocal();
+        }
+      } catch (e) {}
     }
 
     async function ejecutarLogin() {
@@ -4682,12 +4705,22 @@
       const badgeFijo = document.getElementById('badgeClienteAsignadoFijo');
       if (!selCli) return;
 
-      let clis = [];
+      let rawClis = [];
       if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
-        clis = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
+        rawClis = usuarioActual.clientes_asignados;
       } else if (usuarioActual.cliente_asignado && typeof usuarioActual.cliente_asignado === 'string') {
-        clis = usuarioActual.cliente_asignado.split(',').map(c => c.trim()).filter(Boolean);
+        rawClis = usuarioActual.cliente_asignado.split(',');
       }
+
+      // Normalizar a mayúsculas limpias y deduplicar insensible a mayúsculas
+      const mapClis = new Map();
+      rawClis.forEach(c => {
+        const clean = String(c || '').trim().toUpperCase();
+        if (clean && !mapClis.has(clean)) {
+          mapClis.set(clean, clean);
+        }
+      });
+      const clis = Array.from(mapClis.values()).sort();
 
       if (!esUsuarioAdmin() && clis.length === 1) {
         // REGLA: Si es solo un cliente, en la inspección aparecerá predeterminado y fijo
@@ -4695,7 +4728,7 @@
 
         let existeOpcion = false;
         for (let i = 0; i < selCli.options.length; i++) {
-          if (selCli.options[i].value.toLowerCase() === cliUnico.toLowerCase()) {
+          if (selCli.options[i].value.toUpperCase() === cliUnico) {
             existeOpcion = true;
             selCli.selectedIndex = i;
             break;
@@ -4730,14 +4763,14 @@
           badgeFijo.innerHTML = `<i class="fa-solid fa-building-user text-[9px] mr-1"></i><span>${clis.length} Flotas</span>`;
         }
 
-        const valorPrevio = selCli.value;
+        const valorPrevio = selCli.value ? selCli.value.trim().toUpperCase() : '';
         let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
         clis.forEach(c => {
-          const isSel = (valorPrevio && valorPrevio.toLowerCase() === c.toLowerCase());
+          const isSel = (valorPrevio && valorPrevio === c);
           html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
         });
         selCli.innerHTML = html;
-        if (valorPrevio && clis.some(c => c.toLowerCase() === valorPrevio.toLowerCase())) {
+        if (valorPrevio && clis.includes(valorPrevio)) {
           selCli.value = valorPrevio;
         }
       } else {
@@ -4936,16 +4969,18 @@
             usuarioActual.nombre_completo = nombre;
             usuarioActual.rol = rol;
             usuarioActual.cliente_asignado = cliente;
-            usuarioActual.clientes_asignados = cliente ? cliente.split(',').map(s => s.trim()).filter(Boolean) : [];
+            usuarioActual.clientes_asignados = cliente ? cliente.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [];
             usuarioActual.vistas_permitidas = vistas;
             localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
             localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
             actualizarUIUsuario();
+            configurarClientesUsuarioEnInspeccion();
           }
 
           cerrarModalEditarUsuario();
           mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
           cargarUsuariosCat();
+          sincronizarUsuarioActualSesion();
         } else {
           if (errBox) {
             errBox.textContent = d.detail || 'Error al actualizar el usuario.';

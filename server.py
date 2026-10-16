@@ -968,6 +968,13 @@ def api_login(item: LoginItem, response: Response):
     )
     return {"status": "ok", "token": token, "usuario": usr}
 
+@app.get("/api/usuario-actual")
+def api_usuario_actual(usuario_actual: dict = Depends(obtener_usuario_actual)):
+    return sanitizar_nativos({
+        "status": "ok",
+        "usuario": usuario_actual
+    })
+
 @app.post("/api/logout")
 def api_logout(response: Response):
     response.delete_cookie(key="tireanalyze_token")

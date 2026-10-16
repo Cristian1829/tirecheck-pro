@@ -568,5 +568,52 @@ def test_admin_editar_limites_por_cliente(test_db):
     lim = database.obtener_limite_retiro_cliente("FLOTA PRUEBA EDIT", "SEDE BOGOTA", "DIRECCIONAL")
     assert lim == 4.5
 
+def test_api_usuario_actual_sincroniza_flotas_actualizadas(test_db, auth_client):
+    """
+    Verifica que el endpoint /api/usuario-actual devuelva la información fresca de la BD,
+    y que al actualizar las flotas asignadas de un inspector, el token existente
+    reciba inmediatamente las nuevas flotas en mayúsculas sin duplicados.
+    """
+    # 1. Crear usuario inspector con flotas iniciales
+    database.crear_usuario(
+        username="inspector_sync",
+        password="password123",
+        nombre_completo="Inspector Sincronización",
+        rol="inspector",
+        cliente_asignado="FLOTA INICIAL",
+        vistas_permitidas="patio,diagnostico"
+    )
+    token = server.crear_token_acceso("inspector_sync", "inspector")
+    client_insp = TestClient(server.app)
+    client_insp.headers.update({"Authorization": f"Bearer {token}"})
+
+    # Consulta inicial
+    res1 = client_insp.get("/api/usuario-actual")
+    assert res1.status_code == 200
+    u1 = res1.json()["usuario"]
+    assert u1["cliente_asignado"] == "FLOTA INICIAL"
+    assert u1["clientes_asignados"] == ["FLOTA INICIAL"]
+
+    # 2. El administrador actualiza las flotas del inspector a múltiples clientes
+    res_put = auth_client.put("/api/usuarios/inspector_sync", json={
+        "nombre_completo": "Inspector Sincronización",
+        "rol": "inspector",
+        "cliente_asignado": "AXXOM, Demo Flota, DEMO FLOTA",  # Caso real con mezcla y duplicados
+        "activo": True
+    })
+    assert res_put.status_code == 200
+
+    # 3. El inspector consulta /api/usuario-actual sin re-loguear (con su token activo)
+    res2 = client_insp.get("/api/usuario-actual")
+    assert res2.status_code == 200
+    u2 = res2.json()["usuario"]
+    # Debe recibir las nuevas flotas normalizadas en mayúsculas y deduplicadas
+    assert "AXXOM" in u2["clientes_asignados"]
+    assert "DEMO FLOTA" in u2["clientes_asignados"]
+    # 'DEMO FLOTA' y 'Demo Flota' no deben duplicarse
+    assert len(u2["clientes_asignados"]) == 2
+    assert u2["clientes_asignados"] == ["AXXOM", "DEMO FLOTA"]
+
+
 
 
