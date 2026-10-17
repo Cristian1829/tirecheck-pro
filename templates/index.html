@@ -609,7 +609,10 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Marca</label>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-slate-600">Marca</label>
+                    <span id="badgeMarcasModo" class="text-[10px] text-slate-500 font-bold hidden"></span>
+                  </div>
                   <select id="marca" onchange="verificarOpcionNuevaSelect(this, 'marca'); alCambiarMarcaMobile();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected class="text-slate-400 font-normal">ej. Michelin (Seleccionar marca)</option>
                   </select>
@@ -1418,6 +1421,7 @@
         <button type="button" onclick="mostrarSubtabCat('tipologias')" id="subtab-btn-tipologias" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Tipologías de Vehículo</button>
         <button type="button" onclick="mostrarSubtabCat('modelos')" id="subtab-btn-modelos" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Catálogo de Modelos</button>
         <button type="button" onclick="mostrarSubtabCat('clientes')" id="subtab-btn-clientes" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Límites por Cliente</button>
+        <button type="button" onclick="mostrarSubtabCat('marcas_cliente')" id="subtab-btn-marcas_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Marcas por Cliente</button>
         <button type="button" onclick="mostrarSubtabCat('usuarios')" id="subtab-btn-usuarios" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Usuarios & Roles</button>
       </div>
 
@@ -1497,6 +1501,46 @@
               </tr>
             </thead>
             <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Subtab: Parametrización de Marcas por Cliente -->
+      <div id="cat-seccion-marcas_cliente" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+          <div>
+            <span class="text-xs font-bold text-slate-800">Parametrización de Marcas de Llanta por Cliente</span>
+            <p class="text-[11px] text-slate-500">Configura qué marcas utiliza cada flota para acelerar la captura en patio y filtrar el selector de marca</p>
+          </div>
+          <button type="button" onclick="abrirModalAsociarMarcaCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+            <i class="fa-solid fa-plus"></i>
+            <span>Asociar Marca a Cliente</span>
+          </button>
+        </div>
+
+        <!-- Filtro Rápido por Cliente -->
+        <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+          <label class="text-xs font-bold text-slate-700 flex items-center space-x-1">
+            <i class="fa-solid fa-filter text-slate-500"></i>
+            <span>Filtrar por Cliente:</span>
+          </label>
+          <select id="filtroCatMarcaCliente" onchange="filtrarMarcasClienteCat()" class="touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800">
+            <option value="">TODOS LOS CLIENTES</option>
+          </select>
+          <span id="contadorMarcasClienteCat" class="text-xs text-slate-500 font-semibold ml-auto"></span>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-900 text-white font-bold">
+              <tr>
+                <th class="p-2.5">Cliente / Flota</th>
+                <th class="p-2.5">Marca Autorizada / Habitual</th>
+                <th class="p-2.5">Fecha de Actualización</th>
+                <th class="p-2.5 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMarcasClienteCat" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
@@ -1834,6 +1878,37 @@
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalLimiteCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarLimiteCliente()" id="btnGuardarLimite" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20"><span id="btnGuardarLimiteTexto">Guardar Límite</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ASOCIAR MARCA A CLIENTE -->
+  <div id="modalAsociarMarcaCliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-black text-slate-900 flex items-center space-x-2">
+            <i class="fa-solid fa-tags text-blue-600"></i>
+            <span>Asociar Marca a Cliente</span>
+          </h3>
+          <p class="text-[11px] text-slate-500">Define las marcas autorizadas o habituales para la flota</p>
+        </div>
+        <button type="button" onclick="cerrarModalAsociarMarcaCliente()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Cliente / Empresa *</label>
+          <input type="text" id="asoc_marca_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Marca a Vincular *</label>
+          <input type="text" id="asoc_marca_nombre" list="dl_marcas_todas" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-bold">
+          <datalist id="dl_marcas_todas"></datalist>
+        </div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModalAsociarMarcaCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
+          <button type="button" onclick="guardarAsociacionMarcaCliente()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20">Asociar Marca</button>
         </div>
       </div>
     </div>
@@ -4069,10 +4144,10 @@
       if (subtab === 'usuarios' && !esAdmin) {
         subtab = 'operaciones';
       }
-      if (subtab === 'clientes' && !puedeVerClientes) {
+      if ((subtab === 'clientes' || subtab === 'marcas_cliente') && !puedeVerClientes) {
         subtab = 'operaciones';
       }
-      const tabs = ['operaciones', 'tipologias', 'modelos', 'clientes', 'usuarios'];
+      const tabs = ['operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'usuarios'];
       tabs.forEach(t => {
         const sec = document.getElementById(`cat-seccion-${t}`);
         if (sec) sec.classList.add('hidden');
@@ -4089,6 +4164,8 @@
         cargarUsuariosCat();
       } else if (subtab === 'clientes' && puedeVerClientes) {
         cargarClientesLimCat();
+      } else if (subtab === 'marcas_cliente' && puedeVerClientes) {
+        cargarMarcasClienteCat();
       } else if (subtab === 'operaciones') {
         cargarOperacionesCat();
       } else if (subtab === 'tipologias') {
@@ -4104,6 +4181,7 @@
       cargarModelosCat();
       if (esAdminOJefatura()) {
         cargarClientesLimCat();
+        cargarMarcasClienteCat();
       }
       if (esUsuarioAdmin()) {
         cargarUsuariosCat();
@@ -4501,6 +4579,165 @@
       if (res.ok) {
         mostrarToast('Límite eliminado.');
         cargarClientesLimCat();
+      }
+    }
+
+    // ==========================================
+    // GESTIÓN DE MARCAS POR CLIENTE (CATÁLOGOS)
+    // ==========================================
+    let marcasClienteCatCache = [];
+
+    async function cargarMarcasClienteCat() {
+      try {
+        const res = await fetch('/api/configuracion-marcas-cliente');
+        if (!res.ok) return;
+        marcasClienteCatCache = await res.json();
+
+        // Poblar selector de filtro por cliente
+        const selFiltro = document.getElementById('filtroCatMarcaCliente');
+        if (selFiltro) {
+          const valPrevio = selFiltro.value;
+          const clientesUnicos = Array.from(new Set(marcasClienteCatCache.map(m => m.cliente))).sort();
+          selFiltro.innerHTML = `<option value="">TODOS LOS CLIENTES (${clientesUnicos.length})</option>` +
+            clientesUnicos.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valPrevio) selFiltro.value = valPrevio;
+        }
+
+        filtrarMarcasClienteCat();
+      } catch (err) {
+        console.error("Error al cargar marcas cliente en catálogos:", err);
+      }
+    }
+
+    function filtrarMarcasClienteCat() {
+      const cliSel = (document.getElementById('filtroCatMarcaCliente')?.value || '').trim().toUpperCase();
+      let filtradas = marcasClienteCatCache;
+      if (cliSel) {
+        filtradas = marcasClienteCatCache.filter(m => m.cliente === cliSel);
+      }
+      renderizarTablaMarcasCliente(filtradas);
+    }
+
+    function renderizarTablaMarcasCliente(lista) {
+      const tbody = document.getElementById('tbodyMarcasClienteCat');
+      const contador = document.getElementById('contadorMarcasClienteCat');
+      if (contador) contador.textContent = `Mostrando ${lista.length} asociaciones`;
+      if (!tbody) return;
+
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="p-6 text-center text-slate-400">
+              <i class="fa-solid fa-tags text-2xl mb-2 text-slate-300 block"></i>
+              No hay marcas parametrizadas para este cliente aún. Haz clic en "Asociar Marca a Cliente".
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = lista.map(item => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-2.5 font-bold text-slate-900">${item.cliente}</td>
+          <td class="p-2.5">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
+              <i class="fa-solid fa-tag mr-1 text-[10px]"></i>
+              ${item.marca}
+            </span>
+          </td>
+          <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
+          <td class="p-2.5 text-center">
+            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors" title="Desvincular marca de este cliente">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function abrirModalAsociarMarcaCliente(clientePref = '') {
+      const cliInput = document.getElementById('asoc_marca_cliente');
+      const marcaInput = document.getElementById('asoc_marca_nombre');
+      if (cliInput) {
+        const selFiltro = document.getElementById('filtroCatMarcaCliente');
+        cliInput.value = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
+      }
+      if (marcaInput) marcaInput.value = '';
+
+      // Cargar todas las marcas del catálogo en datalist
+      try {
+        const res = await fetch('/api/valores-campo?campo=marca&todas=true');
+        if (res.ok) {
+          const marcas = await res.json();
+          const dl = document.getElementById('dl_marcas_todas');
+          if (dl) dl.innerHTML = marcas.map(m => `<option value="${m}">`).join('');
+        }
+      } catch (e) {}
+
+      const modal = document.getElementById('modalAsociarMarcaCliente');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function cerrarModalAsociarMarcaCliente() {
+      const modal = document.getElementById('modalAsociarMarcaCliente');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    async function guardarAsociacionMarcaCliente() {
+      const cli = (document.getElementById('asoc_marca_cliente')?.value || '').trim().toUpperCase();
+      const marca = (document.getElementById('asoc_marca_nombre')?.value || '').trim();
+      if (!cli || !marca) {
+        alert('Por favor ingresa tanto el Cliente como la Marca');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/configuracion-marcas-cliente', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ cliente: cli, marca: marca })
+        });
+        if (res.ok) {
+          cerrarModalAsociarMarcaCliente();
+          mostrarToast(`✅ Marca '${marca}' asociada a '${cli}'.`);
+          await cargarMarcasClienteCat();
+          // Si el patio tiene seleccionado a este cliente, refrescar marcas de patio
+          const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
+          if (cliPatio === cli) {
+            actualizarMarcasCliente(cli);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al asociar marca');
+        }
+      } catch (err) {
+        alert('Error de conexión al asociar marca');
+      }
+    }
+
+    async function eliminarMarcaClientePorId(id, cliente, marca) {
+      if (!confirm(`¿Deseas desvincular la marca '${marca}' del cliente '${cliente}'?`)) return;
+      try {
+        const res = await fetch(`/api/configuracion-marcas-cliente/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`Marca '${marca}' desvinculada de '${cliente}'.`);
+          await cargarMarcasClienteCat();
+          const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
+          if (cliPatio === cliente) {
+            actualizarMarcasCliente(cliente);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al eliminar asociación');
+        }
+      } catch (err) {
+        alert('Error de conexión al desvincular marca');
       }
     }
 
@@ -5255,18 +5492,111 @@
     }
 
     function verificarOpcionNuevaSelect(sel, nombreCampo = 'valor') {
+      if (sel.id === 'marca' && sel.value === '__ver_todas__') {
+        const cli = document.getElementById('cliente')?.value?.trim() || '';
+        actualizarMarcasCliente(cli, null, true);
+        mostrarToast("Mostrando todas las marcas del catálogo");
+        return;
+      }
+      if (sel.id === 'marca' && sel.value === '__solo_cliente__') {
+        const cli = document.getElementById('cliente')?.value?.trim() || '';
+        actualizarMarcasCliente(cli, null, false);
+        mostrarToast(`Mostrando marcas habituales de ${cli}`);
+        return;
+      }
       if (sel.value === '__nuevo__') {
         const nuevo = prompt(`Ingresa nuevo ${nombreCampo}:`);
         if (nuevo && nuevo.trim()) {
           const valLimpio = nuevo.trim();
           asignarValorSelect(sel.id, valLimpio);
           mostrarToast(`Agregado: ${valLimpio}`);
-          if (sel.id === 'marca') alCambiarMarcaMobile();
+          if (sel.id === 'marca') {
+            alCambiarMarcaMobile();
+            // Si hay cliente seleccionado, registrar automáticamente esta marca para el cliente en backend
+            const cli = document.getElementById('cliente')?.value?.trim();
+            if (cli && cli !== '__nuevo__') {
+              fetch('/api/configuracion-marcas-cliente', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ cliente: cli, marca: valLimpio })
+              }).catch(e => console.error("Error al guardar marca cliente:", e));
+            }
+          }
           if (sel.id === 'cliente') alCambiarClienteMobile();
           if (sel.id === 'diseno' || sel.id === 'dimension') autoCompletarProfInicial();
         } else {
           sel.value = '';
         }
+      }
+    }
+
+    async function actualizarMarcasCliente(cli, valorSeleccionado = null, mostrarTodas = false) {
+      const selMarca = document.getElementById('marca');
+      if (!selMarca) return;
+      const cliente = cli || document.getElementById('cliente')?.value?.trim() || '';
+      const valorPrevio = valorSeleccionado !== null ? valorSeleccionado : (selMarca.value || '');
+
+      let url = `/api/valores-campo?campo=marca`;
+      if (cliente && !mostrarTodas) {
+        url += `&cliente=${encodeURIComponent(cliente)}`;
+      }
+      if (mostrarTodas) {
+        url += `&todas=true`;
+      }
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const marcas = await res.json();
+        const unicos = [];
+        const vistos = new Set();
+        (marcas || []).forEach(m => {
+          const norm = String(m || '').trim();
+          if (norm && !vistos.has(norm.toLowerCase())) {
+            vistos.add(norm.toLowerCase());
+            unicos.push(norm);
+          }
+        });
+
+        const placeholder = cliente && !mostrarTodas
+          ? `ej. Michelin (Marcas de ${cliente})`
+          : `ej. Michelin (Catálogo completo de marcas)`;
+
+        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholder}</option>`;
+
+        if (mostrarTodas && cliente) {
+          html += `<option value="__solo_cliente__" class="font-bold text-emerald-700 bg-emerald-50">🔍 Volver a marcas frecuentes de ${cliente}</option>`;
+        }
+
+        unicos.forEach(m => {
+          const isSel = (valorPrevio && valorPrevio.toLowerCase() === m.toLowerCase());
+          html += `<option value="${m}" ${isSel ? 'selected' : ''}>${m}</option>`;
+        });
+
+        if (!mostrarTodas && cliente) {
+          html += `<option value="__ver_todas__" class="font-bold text-indigo-700 bg-indigo-50">📋 Ver todas las marcas del catálogo...</option>`;
+        }
+        html += `<option value="__nuevo__" class="font-bold text-blue-600 bg-blue-50">+ Agregar nueva marca...</option>`;
+        selMarca.innerHTML = html;
+
+        if (valorPrevio) {
+          asignarValorSelect('marca', valorPrevio);
+        }
+
+        const badge = document.getElementById('badgeMarcasModo');
+        if (badge) {
+          if (cliente && !mostrarTodas) {
+            badge.textContent = `★ ${unicos.length} marcas de flota`;
+            badge.className = "text-[10px] text-blue-600 font-bold block";
+          } else if (mostrarTodas) {
+            badge.textContent = `🌐 Catálogo completo (${unicos.length})`;
+            badge.className = "text-[10px] text-indigo-600 font-bold block";
+          } else {
+            badge.className = "hidden";
+          }
+        }
+      } catch (err) {
+        console.error("Error al actualizar marcas de cliente:", err);
       }
     }
 
@@ -5312,12 +5642,14 @@
     async function cargarCatalogos(seleccionarOp = null, seleccionarTip = null) {
       await Promise.all([
         poblarSelect('cliente', '/api/valores-campo?campo=cliente', 'ej. TransCarga (Seleccionar cliente)'),
-        poblarSelect('marca', '/api/valores-campo?campo=marca', 'ej. Michelin (Seleccionar marca)'),
         poblarSelect('dimension', '/api/valores-campo?campo=dimension', '295/80R22.5', '295/80R22.5')
       ]);
 
       // Aplicar predeterminación o filtrado de clientes asignados al usuario en sesión
       configurarClientesUsuarioEnInspeccion();
+
+      const cliInicial = document.getElementById('cliente')?.value?.trim() || '';
+      await actualizarMarcasCliente(cliInicial);
 
       const resOps = await fetch('/api/operaciones');
       if (resOps.ok) {
@@ -5358,7 +5690,8 @@
       if (cli && cli !== '__nuevo__') {
         await Promise.all([
           poblarSelect('subcliente', `/api/valores-campo?campo=subcliente&cliente=${encodeURIComponent(cli)}`, 'ej. Principal (Seleccionar sede)'),
-          actualizarLimiteCliente()
+          actualizarLimiteCliente(),
+          actualizarMarcasCliente(cli)
         ]);
         const numInt = (document.getElementById('numero_interno')?.value || '').trim();
         if (numInt) {

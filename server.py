@@ -156,6 +156,10 @@ class EditarLimiteClienteItem(BaseModel):
     limite_retiro_mm: float = 3.0
     observaciones: Optional[str] = ""
 
+class MarcaClienteItem(BaseModel):
+    cliente: str
+    marca: str
+
 # ==========================================
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
 # ==========================================
@@ -910,16 +914,67 @@ def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteI
 @app.delete("/api/configuraciones-clientes/{limite_id}")
 def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
     ok = database.eliminar_limite_retiro_cliente(limite_id)
-    return {"status": "ok" if ok else "error"}
+    return sanitizar_nativos({"status": "ok" if ok else "error"})
+
+# ==========================================
+# RUTAS DE MARCAS POR CLIENTE
+# ==========================================
+
+@app.get("/api/configuracion-marcas-cliente")
+def api_obtener_marcas_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            if cliente and not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver configuraciones de este cliente")
+            if not cliente and len(clis) == 1:
+                cliente = clis[0]
+    if cliente:
+        res = database.obtener_marcas_por_cliente(cliente)
+        return sanitizar_nativos({"cliente": cliente.strip().upper(), "marcas": res})
+    todas = database.obtener_todas_configuraciones_marcas()
+    if usuario_actual.get("rol") != "admin":
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            todas = [t for t in todas if any(c.lower() == t["cliente"].strip().lower() for c in clis)]
+    return sanitizar_nativos(todas)
+
+@app.post("/api/configuracion-marcas-cliente")
+def api_guardar_marca_cliente(item: MarcaClienteItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    cli = str(item.cliente or "").strip().upper()
+    m = str(item.marca or "").strip()
+    if not cli or not m:
+        raise HTTPException(status_code=400, detail="Cliente y marca son obligatorios")
+    if rol not in ("admin", "jefatura"):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and not any(c.lower() == cli.lower() for c in clis):
+            raise HTTPException(status_code=403, detail="No tiene permisos para parametrizar marcas en este cliente")
+    database.guardar_marca_cliente(cli, m)
+    return sanitizar_nativos({"status": "ok", "mensaje": f"Marca '{m}' asociada a '{cli}' exitosamente"})
+
+@app.delete("/api/configuracion-marcas-cliente/{marca_id}")
+def api_eliminar_marca_cliente_id(marca_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+    ok = database.eliminar_marca_cliente_por_id(marca_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+    return sanitizar_nativos({"status": "ok", "mensaje": "Marca eliminada del cliente"})
+
+@app.delete("/api/configuracion-marcas-cliente")
+def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+    ok = database.eliminar_marca_cliente(cliente, marca)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+    return sanitizar_nativos({"status": "ok", "mensaje": "Marca desvinculada del cliente"})
 
 @app.get("/api/valores-campo")
-def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", todas: bool = False, usuario_actual: dict = Depends(obtener_usuario_actual)):
     if usuario_actual.get("rol") != "admin":
         clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
         if campo == "cliente" and clis:
-            return sorted(list(set(clis)))
+            return sanitizar_nativos(sorted(list(set(clis))))
         if cliente and clis and not any(c.lower() == cliente.strip().lower() for c in clis):
-            return []
+            return sanitizar_nativos([])
         if not cliente and len(clis) == 1:
             cliente = clis[0]
     elif usuario and not cliente:
@@ -927,12 +982,13 @@ def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: s
         if usr_info and usr_info.get("rol") != "admin":
             clis = database.parsear_clientes_asignados(usr_info.get("cliente_asignado"))
             if campo == "cliente" and clis:
-                return sorted(list(set(clis)))
+                return sanitizar_nativos(sorted(list(set(clis))))
             if cliente and clis and not any(c.lower() == cliente.strip().lower() for c in clis):
-                return []
+                return sanitizar_nativos([])
             if not cliente and len(clis) == 1:
                 cliente = clis[0]
-    return database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca)
+    res = database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca, todas=todas)
+    return sanitizar_nativos(res)
 
 @app.get("/api/vehiculo-perfil")
 def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):

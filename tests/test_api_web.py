@@ -30,6 +30,9 @@ def test_index_page_loads_all_views():
     assert "modalInformePdf" in html
     assert "modalEditarUsuario" in html
     assert "modalResetPassword" in html
+    assert "modalAsociarMarcaCliente" in html
+    assert "cat-seccion-marcas_cliente" in html
+    assert "badgeMarcasModo" in html
     # Verificar filtros clave de base de datos
     assert "filtroBDSede" in html
     assert "filtroBDCliente" in html

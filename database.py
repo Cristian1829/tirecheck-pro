@@ -9,6 +9,7 @@ import hmac
 import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
+import sys
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(_DATA_DIR, exist_ok=True)
@@ -303,6 +304,28 @@ def inicializar_bd():
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
         """)
 
+        # Tabla de Configuración de Marcas Habituales por Cliente
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS configuracion_marcas_cliente (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                marca TEXT NOT NULL,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(cliente, marca)
+            )
+        """)
+
+        # Backfill inicial de marcas por cliente desde inspecciones históricas
+        cursor.execute("SELECT COUNT(*) FROM configuracion_marcas_cliente")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                INSERT OR IGNORE INTO configuracion_marcas_cliente (cliente, marca)
+                SELECT DISTINCT UPPER(TRIM(cliente)), TRIM(marca)
+                FROM inspecciones
+                WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                  AND marca IS NOT NULL AND TRIM(marca) != ''
+            """)
+
         # Tabla de Catálogo de Operaciones
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_operaciones (
@@ -430,6 +453,7 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_num_interno ON inspecciones (numero_interno, cliente)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_fecha ON inspecciones (cliente, subcliente, fecha)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_limites_retiro_busqueda ON configuracion_limites_retiro (cliente, subcliente, eje)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_marcas_cliente ON configuracion_marcas_cliente (cliente)")
 
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
@@ -490,6 +514,9 @@ def normalizar_clientes_mayusculas(conn):
             nuevo_str = ', '.join(clis_up)
             if nuevo_str != str(c_asig).strip():
                 cursor.execute("UPDATE usuarios SET cliente_asignado = ? WHERE id = ?", (nuevo_str, uid))
+
+    # 6. Tabla configuracion_marcas_cliente
+    cursor.execute("UPDATE configuracion_marcas_cliente SET cliente = UPPER(TRIM(cliente)) WHERE cliente IS NOT NULL AND cliente != UPPER(TRIM(cliente))")
 
 # ==========================================
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
@@ -1058,6 +1085,10 @@ def insertar_inspeccion(datos):
         datos.get('tipo_operacion'),
         datos.get('kilometraje')
     )
+    sincronizar_marca_cliente(
+        datos.get('cliente'),
+        datos.get('marca')
+    )
     return last_id
 
 def obtener_todas_inspecciones(usuario=None):
@@ -1133,6 +1164,10 @@ def actualizar_inspeccion(inspeccion_id, datos):
             datos.get('subcliente'),
             datos.get('tipo_operacion'),
             datos.get('kilometraje')
+        )
+        sincronizar_marca_cliente(
+            datos.get('cliente'),
+            datos.get('marca')
         )
     return ok
 
@@ -1289,6 +1324,11 @@ def cargar_excel_a_bd(file_path):
                 datos['subcliente'],
                 datos['tipo_operacion'],
                 datos['kilometraje'],
+                conn=conn
+            )
+            sincronizar_marca_cliente(
+                datos['cliente'],
+                datos['marca'],
                 conn=conn
             )
             registros_insertados += 1
@@ -1493,17 +1533,43 @@ def analizar_inspecciones_df(df_inspecciones):
         
     return pd.DataFrame(resultados)
 
-inicializar_bd()
+if "pytest" not in sys.modules and not os.environ.get("PYTEST_CURRENT_TEST"):
+    inicializar_bd()
 
 
 
 
-def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca=''):
+def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', todas=False):
     validos = ['cliente', 'subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'banda_reen', 'vida']
     if campo not in validos:
         return []
     with get_connection() as conn:
         cursor = conn.cursor()
+
+        # Si se consulta marca para un cliente específico y no se pidieron todas
+        if campo == 'marca' and filtro_cliente and not todas:
+            cli_norm = str(filtro_cliente).strip().upper()
+            cursor.execute("""
+                SELECT DISTINCT marca
+                FROM configuracion_marcas_cliente
+                WHERE UPPER(TRIM(cliente)) = ?
+                ORDER BY marca ASC
+            """, (cli_norm,))
+            marcas_cfg = [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+            if marcas_cfg:
+                return marcas_cfg
+            # Fallback al histórico de inspecciones de ese cliente si aún no tiene configuración explícita
+            cursor.execute("""
+                SELECT DISTINCT marca
+                FROM inspecciones
+                WHERE UPPER(TRIM(cliente)) = ? AND marca IS NOT NULL AND TRIM(marca) != ''
+                ORDER BY marca ASC
+            """, (cli_norm,))
+            marcas_insp = [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+            if marcas_insp:
+                return sorted(list(set(marcas_insp)))
+            # Si no tiene marcas configuradas ni en historial, continúa al catálogo general
+
         query = f"SELECT DISTINCT {campo} FROM inspecciones WHERE {campo} IS NOT NULL AND TRIM({campo}) != ''"
         params = []
         if filtro_cliente and campo == 'subcliente':
@@ -2076,9 +2142,108 @@ def obtener_lista_clientes_unicos():
                 SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
                 UNION
                 SELECT cliente FROM configuracion_clientes
+                UNION
+                SELECT cliente FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
             ) ORDER BY 1 ASC
         ''')
         return [r[0] for r in cursor.fetchall() if r[0]]
+
+# ==========================================
+# CONFIGURACIÓN DE MARCAS POR CLIENTE
+# ==========================================
+
+def sincronizar_marca_cliente(cliente, marca, conn=None):
+    """
+    Registra o actualiza la asociación cliente <-> marca en configuracion_marcas_cliente.
+    """
+    cli = str(cliente or '').strip().upper()
+    m = str(marca or '').strip()
+    if not cli or not m or cli in ('NAN', 'NONE') or m in ('NAN', 'NONE'):
+        return
+    sql = """
+        INSERT INTO configuracion_marcas_cliente (cliente, marca, fecha_actualizacion)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(cliente, marca) DO UPDATE SET fecha_actualizacion = CURRENT_TIMESTAMP
+    """
+    if conn:
+        conn.execute(sql, (cli, m))
+    else:
+        with get_connection() as c:
+            c.execute(sql, (cli, m))
+            c.commit()
+
+def guardar_marca_cliente(cliente: str, marca: str) -> bool:
+    """
+    Asocia explícitamente una marca a un cliente en configuracion_marcas_cliente.
+    """
+    cli = str(cliente or '').strip().upper()
+    m = str(marca or '').strip()
+    if not cli or not m:
+        return False
+    sincronizar_marca_cliente(cli, m)
+    return True
+
+def obtener_marcas_por_cliente(cliente: str) -> list:
+    """
+    Retorna la lista de marcas asociadas a un cliente específico.
+    """
+    cli = str(cliente or '').strip().upper()
+    if not cli:
+        return []
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT DISTINCT marca
+            FROM configuracion_marcas_cliente
+            WHERE UPPER(TRIM(cliente)) = ?
+            ORDER BY marca ASC
+        """, (cli,))
+        return [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+
+def eliminar_marca_cliente(cliente: str, marca: str) -> bool:
+    """
+    Desvincula una marca de un cliente por nombres.
+    """
+    cli = str(cliente or '').strip().upper()
+    m = str(marca or '').strip()
+    if not cli or not m:
+        return False
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            DELETE FROM configuracion_marcas_cliente
+            WHERE UPPER(TRIM(cliente)) = ? AND UPPER(TRIM(marca)) = UPPER(TRIM(?))
+        """, (cli, m))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def eliminar_marca_cliente_por_id(marca_id: int) -> bool:
+    """
+    Elimina una asociación cliente <-> marca por su ID primario.
+    """
+    try:
+        mid = int(marca_id)
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM configuracion_marcas_cliente WHERE id = ?", (mid,))
+            conn.commit()
+            return cursor.rowcount > 0
+    except Exception:
+        return False
+
+def obtener_todas_configuraciones_marcas() -> list:
+    """
+    Retorna todas las configuraciones cliente <-> marca registradas.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, cliente, marca, fecha_actualizacion
+            FROM configuracion_marcas_cliente
+            ORDER BY cliente ASC, marca ASC
+        """)
+        cols = ['id', 'cliente', 'marca', 'fecha_actualizacion']
+        return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
 # --- CATALOGOS DINAMICOS ---
 def obtener_todas_operaciones():

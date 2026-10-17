@@ -556,6 +556,10 @@ class AppInspeccionLlantas(tk.Tk):
         self.cb_sub_pc.config(values=subs)
         if subs and not self.form_vars['subcliente'].get():
             self.form_vars['subcliente'].set(subs[0])
+        # Actualizar marcas comunes para este cliente en el combobox de PC
+        marcas_cli = database.obtener_valores_unicos_campo('marca', filtro_cliente=cli)
+        if hasattr(self, 'cb_marca_pc'):
+            self.cb_marca_pc.config(values=marcas_cli)
 
     def actualizar_lista_buscador_pc(self):
         mods = database.obtener_catalogo_modelos()
