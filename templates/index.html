@@ -7,7 +7,43 @@
   <!-- Tailwind CSS CDN para diseño premium y responsive -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js 4.4.1 y Plugin Datalabels 2.2.0 para Tableros Animados -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <style>
+    /* Estilos del Tablero Analítico y Gráficos Animados (LIGHT vs PRO) */
+    .chart-card {
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-origin: top center;
+    }
+    .chart-card.hidden-card {
+      display: none !important;
+    }
+    .chk-chip {
+      user-select: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .chk-chip.active {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-color: #3b82f6;
+      color: #1e40af;
+      box-shadow: 0 2px 8px -2px rgba(37, 99, 235, 0.25);
+    }
+    .chk-chip:not(.active) {
+      background-color: #f8fafc;
+      border-color: #e2e8f0;
+      color: #64748b;
+      opacity: 0.78;
+    }
+    .chk-chip.locked-pro {
+      background-color: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
     /* Estilos táctiles y ergonómicos */
     .touch-target { min-height: 44px; }
     .pos-btn.active {
@@ -1118,6 +1154,354 @@
       <div id="cardBoxOK" onclick="filtrarDiagnosticoPorCard('OK')" class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos sin novedades (OK)">
         <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Sin Novedades (OK)</span>
         <span id="cardDiagOK" class="text-2xl font-black text-emerald-600 block mt-1">0</span>
+      </div>
+    </div>
+
+    <!-- PANEL DE INTELIGENCIA DE NEGOCIOS Y GRÁFICOS ANIMADOS (LIGHT vs PRO) -->
+    <div id="seccionDashboardGraficosDiag" class="space-y-4">
+
+      <!-- Barra de Control: Licencia LIGHT vs PRO + Conmutador de Eje Temporal + Re-animar -->
+      <div class="bg-slate-900 text-white rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-slate-800">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
+            <i class="fa-solid fa-chart-simple text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-sm font-black tracking-tight">Tablero Analítico de Flota & Proyecciones</h3>
+              <span id="badgeLicenciaActiva" class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/40">LICENCIA PRO</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Gráficos interactivos con animación a 60 FPS y selección personalizada de visibilidad</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Conmutador Modo Licencia (Demo / Admin) -->
+          <div id="boxSwitchLicenciaDemo" class="flex items-center bg-slate-800 border border-slate-700 rounded-xl p-1 text-xs">
+            <span class="px-2 text-slate-400 font-bold text-[11px]">Nivel:</span>
+            <button type="button" id="btnModoLight" onclick="cambiarModoLicenciaDashboard('LIGHT')" class="px-2.5 py-1 rounded-lg font-bold text-slate-300 hover:text-white transition-all">
+              LIGHT (Operativo)
+            </button>
+            <button type="button" id="btnModoPro" onclick="cambiarModoLicenciaDashboard('PRO')" class="px-2.5 py-1 rounded-lg font-extrabold bg-blue-600 text-white shadow transition-all">
+              PRO (Integral + CPK)
+            </button>
+          </div>
+
+          <!-- Conmutador de Eje Temporal -->
+          <select id="selEjeTemporalGraficos" onchange="cargarDatosGraficosDiagnostico()" class="bg-slate-800 border border-slate-700 text-white text-xs font-bold rounded-xl px-2.5 py-1.5 focus:border-blue-500">
+            <option value="mes">Eje: Por Mes de Inspección</option>
+            <option value="insp">Eje: Por Corte (INSP 1..N)</option>
+          </select>
+
+          <button type="button" onclick="reanimarGraficosDiagnostico()" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Re-animar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 6 Tarjetas Ejecutivas de Diagnóstico e Impacto (Se adaptan a LIGHT / PRO) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-xs">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase">
+            <span>Muestra Auditada</span>
+            <i class="fa-solid fa-truck-front text-blue-600"></i>
+          </div>
+          <div id="kpiGrafVehiculos" class="text-xl font-black text-slate-900 font-mono mt-1">0 Vehículos</div>
+          <div id="kpiGrafSubVehiculos" class="text-[11px] text-emerald-600 font-semibold mt-0.5">0 Llantas</div>
+        </div>
+
+        <!-- Tarjeta Impacto Económico: En LIGHT muestra solo mm perdidos; en PRO muestra $ + mm -->
+        <div id="cardKpiImpactoDinero" class="bg-white rounded-2xl p-3.5 border border-rose-200 shadow-xs">
+          <div class="flex items-center justify-between text-[11px] font-bold text-rose-600 uppercase">
+            <span id="lblTituloImpactoKpi">Impacto Económico</span>
+            <i class="fa-solid fa-sack-dollar text-rose-600"></i>
+          </div>
+          <div id="kpiGrafImpactoPesos" class="text-xl font-black text-rose-600 font-mono mt-1">$ 0</div>
+          <div id="kpiGrafPerdidaMm" class="text-[11px] text-rose-700 font-bold mt-0.5">0,0 mm perdidos</div>
+        </div>
+
+        <!-- Tarjetas exclusivas PRO (se atenúan en LIGHT) -->
+        <div id="cardKpiProyeccionProm" class="bg-white rounded-2xl p-3.5 border border-blue-200 shadow-xs transition-opacity duration-300">
+          <div class="flex items-center justify-between text-[11px] font-bold text-blue-700 uppercase">
+            <span>Proyección Prom.</span>
+            <i class="fa-solid fa-road text-blue-600"></i>
+          </div>
+          <div id="kpiGrafProyeccion" class="text-xl font-black text-blue-700 font-mono mt-1">0 km</div>
+          <div id="kpiGrafKmRecorridos" class="text-[11px] text-slate-500 font-semibold mt-0.5">0 km rodados</div>
+        </div>
+
+        <div id="cardKpiCpkRend" class="bg-white rounded-2xl p-3.5 border border-emerald-200 shadow-xs transition-opacity duration-300">
+          <div class="flex items-center justify-between text-[11px] font-bold text-emerald-700 uppercase">
+            <span>CPK / Rendimiento</span>
+            <i class="fa-solid fa-gauge-high text-emerald-600"></i>
+          </div>
+          <div id="kpiGrafCpk" class="text-xl font-black text-emerald-600 font-mono mt-1">$ 0,0 /km</div>
+          <div id="kpiGrafKmMm" class="text-[11px] text-emerald-700 font-bold mt-0.5">0,0 km/mm</div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-3.5 border border-amber-200 shadow-xs">
+          <div class="flex items-center justify-between text-[11px] font-bold text-amber-700 uppercase">
+            <span>% Desgaste Flota</span>
+            <i class="fa-solid fa-circle-half-stroke text-amber-600"></i>
+          </div>
+          <div id="kpiGrafPctDesgaste" class="text-xl font-black text-amber-600 font-mono mt-1">0,0%</div>
+          <div id="kpiGrafProfActual" class="text-[11px] text-slate-500 font-semibold mt-0.5">0,0 mm prom.</div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-3.5 border border-purple-200 shadow-xs">
+          <div class="flex items-center justify-between text-[11px] font-bold text-purple-700 uppercase">
+            <span>% Reencauche / OK</span>
+            <i class="fa-solid fa-recycle text-purple-600"></i>
+          </div>
+          <div id="kpiGrafReencauche" class="text-xl font-black text-purple-700 font-mono mt-1">0,0%</div>
+          <div id="kpiGrafSubReencauche" class="text-[11px] text-purple-600 font-semibold mt-0.5">Alineación OK: 0%</div>
+        </div>
+      </div>
+
+      <!-- Panel Selector de Checkboxes para Mostrar / Ocultar Gráficos -->
+      <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-sliders text-blue-600"></i>
+            <span class="text-xs sm:text-sm font-black text-slate-900">Personalizar Gráficos Visibles (Click para Mostrar / Ocultar)</span>
+            <span id="badgeConteoGraficosVisibles" class="text-[11px] font-mono font-extrabold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">11 visibles</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="cambiarEstadoTodosChecksDiag(true)" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 transition-all">
+              <i class="fa-solid fa-check-double mr-1"></i>Mostrar Todos
+            </button>
+            <button type="button" onclick="cambiarEstadoTodosChecksDiag(false)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl border border-slate-200 transition-all">
+              <i class="fa-regular fa-square mr-1"></i>Ocultar Todos
+            </button>
+          </div>
+        </div>
+        <div id="contenedorCheckboxesGraficosDiag" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs"></div>
+      </div>
+
+      <!-- Cuadrícula de Gráficos Animados (12 Columnas) -->
+      <div id="gridTarjetasGraficosDiag" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- 1. Proyección vs Máx y Mín (KPI 15) -->
+        <article id="card-proy_max_min" class="chart-card lg:col-span-7 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-chart-column"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Proyección vs. Máx y Mín (KPI 15)</h4>
+                <p class="text-[11px] text-slate-400">Barras + Líneas Máx/Mín con filtro de madurez</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">PROYECCIÓN</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_proy_max_min"></canvas>
+          </div>
+        </article>
+
+        <!-- 2. Tacómetros % Desgaste y Meta (KPI 12 y 13) -->
+        <article id="card-gauges_seguimiento" class="chart-card lg:col-span-5 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-gauge-high"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Tacómetros % Desgaste y Meta (KPI 12)</h4>
+                <p class="text-[11px] text-slate-400">Gauges semicirculares de consumo y meta</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">GAUGES</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-3 items-center">
+            <div class="flex flex-col items-center">
+              <div class="relative w-full h-36">
+                <canvas id="canvasDiag_gaugeDesgaste"></canvas>
+              </div>
+              <span id="kpiTxtGaugeDesgaste" class="text-xs font-bold text-slate-700 mt-1 text-center">0% Desgaste</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <div class="relative w-full h-36">
+                <canvas id="canvasDiag_gaugeMeta"></canvas>
+              </div>
+              <span id="kpiTxtGaugeMeta" class="text-xs font-bold text-slate-700 mt-1 text-center">Meta Flota</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3. Pérdida mm y Dinero ($) por Mes (KPI 11) -->
+        <article id="card-perdida_mes" class="chart-card lg:col-span-7 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-sack-dollar"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Pérdida mm y Dinero ($) por Mes (KPI 11)</h4>
+                <p class="text-[11px] text-slate-400">En LIGHT solo mm · En PRO mm + $ COP</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">DESPERDICIO</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_perdida_mes"></canvas>
+          </div>
+        </article>
+
+        <!-- 4. Proyección por Rango de Desgaste (KPI 16) -->
+        <article id="card-proy_rango" class="chart-card lg:col-span-5 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-stairs"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Proyección por % Desgaste (KPI 16)</h4>
+                <p class="text-[11px] text-slate-400">Curva escalonada de madurez 0-100%</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800">MADUREZ</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_proy_rango"></canvas>
+          </div>
+        </article>
+
+        <!-- 5. Estado Alineación por Mes (KPI 06) -->
+        <article id="card-alineacion_mes" class="chart-card lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-arrows-left-right-to-line"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Estado Alineación por Mes (KPI 06)</h4>
+                <p class="text-[11px] text-slate-400">100% Apilado (% Alerta vs % OK)</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">100% APILADO</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_alineacion_mes"></canvas>
+          </div>
+        </article>
+
+        <!-- 6. CPK ($/km) y Km/mm por Diseño (KPI 14) -->
+        <article id="card-cpk_marca" class="chart-card lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-award"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">CPK ($/km) y Km/mm por Diseño (KPI 14)</h4>
+                <p class="text-[11px] text-slate-400">Comparativa financiera y rendimiento por modelo</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800">RENDIMIENTO</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_cpk_marca"></canvas>
+          </div>
+        </article>
+
+        <!-- 7. Evolución Planes de Acción (KPI 05/07/08) -->
+        <article id="card-planes_mes" class="chart-card lg:col-span-7 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Evolución Planes de Acción (KPI 05/07/08)</h4>
+                <p class="text-[11px] text-slate-400">Cambios, Duales, Alineación y Rotación</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-800">PLANES ACCIÓN</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_planes_mes"></canvas>
+          </div>
+        </article>
+
+        <!-- 8. Participación por Daño / Avería (KPI 10) -->
+        <article id="card-danos_torta" class="chart-card lg:col-span-5 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-chart-pie"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Participación por Daño / Avería (KPI 10)</h4>
+                <p class="text-[11px] text-slate-400">Dona interactiva con cantidad y %</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">PARETO</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_danos_torta"></canvas>
+          </div>
+        </article>
+
+        <!-- 9. Unidades por Ciclo y % Reencauche (KPI 03) -->
+        <article id="card-ciclo_reencauche" class="chart-card lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-recycle"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Unidades por Ciclo y % Reencauche (KPI 03)</h4>
+                <p class="text-[11px] text-slate-400">Original vs Reencauche mensual con % efectividad</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">REENCAUCHE</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_ciclo_reencauche"></canvas>
+          </div>
+        </article>
+
+        <!-- 10. Estado de Presiones PSI Real (KPI 09) -->
+        <article id="card-estado_presiones" class="chart-card lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-gauge"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Estado de Presiones PSI Real (KPI 09)</h4>
+                <p class="text-[11px] text-slate-400">100% basado en PSI medido vs Objetivo técnico</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-800">CALIBRACIÓN</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_estado_presiones"></canvas>
+          </div>
+        </article>
+
+        <!-- 11. Profundidad de Baja Máx/Prom/Mín (KPI 19) -->
+        <article id="card-fvu_bajas" class="chart-card col-span-12 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <i class="fa-solid fa-arrow-trend-down"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-black text-slate-900">Profundidad de Baja Máx/Prom/Mín (KPI 19)</h4>
+                <p class="text-[11px] text-slate-400">Curva de retiro y dispersión FVU de llantas dadas de baja</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">RETIROS</span>
+          </div>
+          <div class="relative w-full h-64 sm:h-72 mt-3">
+            <canvas id="canvasDiag_fvu_bajas"></canvas>
+          </div>
+        </article>
+
       </div>
     </div>
 
@@ -3535,6 +3919,1015 @@
       }
     }
 
+    // =========================================================================
+    // CONTROLADOR DE DASHBOARD DE GRÁFICOS Y LICENCIAMIENTO LIGHT VS PRO (KPIs 01 a 19)
+    // =========================================================================
+    if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+      try {
+        Chart.register(ChartDataLabels);
+      } catch (e) {
+        console.warn('ChartDataLabels ya registrado o error:', e);
+      }
+    }
+
+    let modoLicenciaGraficos = 'PRO'; // 'LIGHT' o 'PRO'
+    let datosGraficosActuales = null;
+    const instanciasChartsDiag = {};
+
+    const CATALOGO_GRAFICOS_DIAG = [
+      { id: 'proy_max_min', titulo: 'Proyección vs. Máx y Mín (KPI 15)', sub: 'Barras + Líneas Máx/Mín con filtro madurez', icono: 'fa-chart-column', soloPro: true, visible: true },
+      { id: 'gauges_seguimiento', titulo: 'Tacómetros % Desgaste y Meta (KPI 12)', sub: 'Gauges semicirculares de consumo y meta', icono: 'fa-gauge-high', soloPro: true, visible: true },
+      { id: 'perdida_mes', titulo: 'Pérdida mm y Dinero ($) por Mes (KPI 11)', sub: 'En LIGHT solo mm · En PRO mm + $ COP', icono: 'fa-sack-dollar', soloPro: false, visible: true },
+      { id: 'proy_rango', titulo: 'Proyección por % Desgaste (KPI 16)', sub: 'Curva escalonada de madurez 0-100%', icono: 'fa-stairs', soloPro: true, visible: true },
+      { id: 'alineacion_mes', titulo: 'Estado Alineación por Mes (KPI 06)', sub: '100% Apilado (% Alerta vs % OK)', icono: 'fa-arrows-left-right-to-line', soloPro: false, visible: true },
+      { id: 'cpk_marca', titulo: 'CPK ($/km) y Km/mm por Diseño (KPI 14)', sub: 'Comparativa financiera y rendimiento', icono: 'fa-award', soloPro: true, visible: true },
+      { id: 'planes_mes', titulo: 'Evolución Planes de Acción (KPI 05/07/08)', sub: 'Cambios, Duales, Alineación y Rotación', icono: 'fa-screwdriver-wrench', soloPro: false, visible: true },
+      { id: 'danos_torta', titulo: 'Participación por Daño / Avería (KPI 10)', sub: 'Dona interactiva con cantidad y %', icono: 'fa-chart-pie', soloPro: false, visible: true },
+      { id: 'ciclo_reencauche', titulo: 'Unidades por Ciclo y % Reencauche (KPI 03)', sub: 'Original vs Reencauche mensual', icono: 'fa-recycle', soloPro: false, visible: true },
+      { id: 'estado_presiones', titulo: 'Estado de Presiones PSI Real (KPI 09)', sub: '100% basado en PSI medido vs Objetivo', icono: 'fa-gauge', soloPro: false, visible: true },
+      { id: 'fvu_bajas', titulo: 'Profundidad de Baja Máx/Prom/Mín (KPI 19)', sub: 'Curva de retiro y dispersión FVU', icono: 'fa-arrow-trend-down', soloPro: true, visible: true }
+    ];
+
+    function formatCO_Miles(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      return Math.round(num).toLocaleString('es-CO');
+    }
+
+    function formatCO_Moneda(num) {
+      if (num === null || num === undefined || isNaN(num)) return '$ 0';
+      return '$ ' + Math.round(num).toLocaleString('es-CO');
+    }
+
+    function formatCO_Decimal(num, dec = 1) {
+      if (num === null || num === undefined || isNaN(num)) return '0,0';
+      return Number(num).toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    }
+
+    const animacionCascadaStandard = {
+      duration: 950,
+      easing: 'easeOutQuart',
+      delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 40 : 0
+    };
+
+    function pillDatalabelConfig(bgColor = 'rgba(15, 23, 42, 0.85)', textColor = '#ffffff', formatter = null) {
+      return {
+        display: true,
+        backgroundColor: bgColor,
+        borderRadius: 4,
+        color: textColor,
+        font: { weight: 'bold', size: 10 },
+        padding: { top: 2, bottom: 2, left: 5, right: 5 },
+        formatter: formatter || ((val) => (val !== null && val !== undefined) ? formatCO_Miles(val) : '')
+      };
+    }
+
+    function cambiarModoLicenciaDashboard(nuevoModo) {
+      modoLicenciaGraficos = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'PRO';
+      const badge = document.getElementById('badgeLicenciaActiva');
+      const btnLight = document.getElementById('btnModoLight');
+      const btnPro = document.getElementById('btnModoPro');
+
+      if (modoLicenciaGraficos === 'LIGHT') {
+        if (badge) {
+          badge.textContent = 'LICENCIA LIGHT (OPERATIVA)';
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40';
+        }
+        if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-amber-500 text-slate-950 shadow transition-all';
+        if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-300 hover:text-white transition-all';
+      } else {
+        if (badge) {
+          badge.textContent = 'LICENCIA PRO (INTEGRAL + CPK)';
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/40';
+        }
+        if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-blue-600 text-white shadow transition-all';
+        if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-300 hover:text-white transition-all';
+      }
+
+      // Atenuar tarjetas KPI financieras exclusivas PRO en LIGHT
+      const esPro = (modoLicenciaGraficos === 'PRO');
+      const cardProy = document.getElementById('cardKpiProyeccionProm');
+      const cardCpk = document.getElementById('cardKpiCpkRend');
+      const cardImpacto = document.getElementById('cardKpiImpactoDinero');
+      const lblImpacto = document.getElementById('lblTituloImpactoKpi');
+      const valPesos = document.getElementById('kpiGrafImpactoPesos');
+
+      if (cardProy) cardProy.classList.toggle('opacity-40', !esPro);
+      if (cardCpk) cardCpk.classList.toggle('opacity-40', !esPro);
+
+      if (!esPro) {
+        if (lblImpacto) lblImpacto.textContent = 'Desgaste Irregular';
+        if (valPesos) valPesos.textContent = 'Modo LIGHT';
+      } else if (datosGraficosActuales && datosGraficosActuales.kpis) {
+        if (lblImpacto) lblImpacto.textContent = 'Impacto Económico';
+        if (valPesos) valPesos.textContent = formatCO_Moneda(datosGraficosActuales.kpis.impactoPesos);
+      }
+
+      sincronizarVisibilidadTarjetasGraficos();
+      renderizarBarraCheckboxesDiag();
+
+      if (datosGraficosActuales) {
+        renderizarTodosLosGraficosDiag(datosGraficosActuales);
+      }
+    }
+
+    function sincronizarVisibilidadTarjetasGraficos() {
+      CATALOGO_GRAFICOS_DIAG.forEach(g => {
+        const card = document.getElementById(`card-${g.id}`);
+        if (!card) return;
+        const permitidoPorLicencia = (modoLicenciaGraficos === 'PRO') || !g.soloPro;
+        if (g.visible && permitidoPorLicencia) {
+          card.classList.remove('hidden-card');
+        } else {
+          card.classList.add('hidden-card');
+        }
+      });
+      actualizarBadgeConteoVisibles();
+    }
+
+    function actualizarBadgeConteoVisibles() {
+      const badge = document.getElementById('badgeConteoGraficosVisibles');
+      if (!badge) return;
+      const count = CATALOGO_GRAFICOS_DIAG.filter(g => {
+        const permitido = (modoLicenciaGraficos === 'PRO') || !g.soloPro;
+        return g.visible && permitido;
+      }).length;
+      badge.textContent = `${count} visibles`;
+    }
+
+    function renderizarBarraCheckboxesDiag() {
+      const cont = document.getElementById('contenedorCheckboxesGraficosDiag');
+      if (!cont) return;
+      cont.innerHTML = '';
+
+      CATALOGO_GRAFICOS_DIAG.forEach(g => {
+        const permitido = (modoLicenciaGraficos === 'PRO') || !g.soloPro;
+        const chip = document.createElement('div');
+        const estaActivo = g.visible && permitido;
+
+        if (!permitido) {
+          chip.className = 'chk-chip locked-pro flex items-center justify-between p-2.5 rounded-2xl border';
+          chip.title = 'Requiere Licencia PRO';
+          chip.innerHTML = `
+            <div class="flex items-center space-x-2 truncate">
+              <i class="fa-solid fa-lock text-slate-400"></i>
+              <span class="font-extrabold truncate">${g.titulo}</span>
+            </div>
+            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-slate-200 text-slate-500">PRO</span>
+          `;
+        } else {
+          chip.className = `chk-chip ${estaActivo ? 'active' : ''} flex items-center justify-between p-2.5 rounded-2xl border cursor-pointer`;
+          chip.onclick = () => toggleVisibilidadGraficoDiag(g.id);
+          chip.innerHTML = `
+            <div class="flex items-center space-x-2 truncate">
+              <i class="fa-solid ${estaActivo ? 'fa-square-check text-blue-600' : 'fa-square text-slate-400'}"></i>
+              <span class="font-bold truncate">${g.titulo}</span>
+            </div>
+            <i class="fa-solid ${g.icono} ${estaActivo ? 'text-blue-500' : 'text-slate-400'} text-xs"></i>
+          `;
+        }
+        cont.appendChild(chip);
+      });
+
+      actualizarBadgeConteoVisibles();
+    }
+
+    function toggleVisibilidadGraficoDiag(chartId) {
+      const item = CATALOGO_GRAFICOS_DIAG.find(g => g.id === chartId);
+      if (!item) return;
+      const permitido = (modoLicenciaGraficos === 'PRO') || !item.soloPro;
+      if (!permitido) return;
+
+      item.visible = !item.visible;
+      sincronizarVisibilidadTarjetasGraficos();
+      renderizarBarraCheckboxesDiag();
+
+      // Si se hizo visible y ya hay datos, asegurar que su canvas se renderice
+      if (item.visible && datosGraficosActuales) {
+        renderizarGraficoPorId(item.id, datosGraficosActuales);
+      }
+    }
+
+    function cambiarEstadoTodosChecksDiag(hacerVisibles) {
+      CATALOGO_GRAFICOS_DIAG.forEach(g => {
+        const permitido = (modoLicenciaGraficos === 'PRO') || !g.soloPro;
+        if (permitido) {
+          g.visible = !!hacerVisibles;
+        }
+      });
+      sincronizarVisibilidadTarjetasGraficos();
+      renderizarBarraCheckboxesDiag();
+      if (hacerVisibles && datosGraficosActuales) {
+        renderizarTodosLosGraficosDiag(datosGraficosActuales);
+      }
+    }
+
+    async function cargarDatosGraficosDiagnostico() {
+      try {
+        const selCli = document.getElementById('filtroDiagCliente');
+        const selSede = document.getElementById('filtroDiagSede');
+        const selOp = document.getElementById('filtroDiagOperacion');
+        const selEje = document.getElementById('selEjeTemporalGraficos');
+
+        const cli = (selCli && selCli.value !== 'Todos') ? encodeURIComponent(selCli.value) : '';
+        const sede = (selSede && selSede.value !== 'Todos') ? encodeURIComponent(selSede.value) : '';
+        const op = (selOp && selOp.value !== 'Todos') ? encodeURIComponent(selOp.value) : '';
+        const eje = (selEje && selEje.value) ? encodeURIComponent(selEje.value) : 'mes';
+
+        const q = `?cliente=${cli}&subcliente=${sede}&tipo_operacion=${op}&eje_temporal=${eje}`;
+        const res = await fetch(`/api/diagnostico/graficos${q}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        datosGraficosActuales = data;
+
+        // Si el backend reporta licencia configurada del cliente, sincronizar
+        if (data.licencia && data.licencia !== modoLicenciaGraficos) {
+          modoLicenciaGraficos = data.licencia;
+          const badge = document.getElementById('badgeLicenciaActiva');
+          const btnLight = document.getElementById('btnModoLight');
+          const btnPro = document.getElementById('btnModoPro');
+          if (modoLicenciaGraficos === 'LIGHT') {
+            if (badge) {
+              badge.textContent = 'LICENCIA LIGHT (OPERATIVA)';
+              badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40';
+            }
+            if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-amber-500 text-slate-950 shadow transition-all';
+            if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-300 hover:text-white transition-all';
+          } else {
+            if (badge) {
+              badge.textContent = 'LICENCIA PRO (INTEGRAL + CPK)';
+              badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/40';
+            }
+            if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-blue-600 text-white shadow transition-all';
+            if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-300 hover:text-white transition-all';
+          }
+        }
+
+        // Actualizar Tarjetas Ejecutivas de Diagnóstico e Impacto
+        if (data.kpis) {
+          const k = data.kpis;
+          const elVeh = document.getElementById('kpiGrafVehiculos');
+          const elSubVeh = document.getElementById('kpiGrafSubVehiculos');
+          const elPesos = document.getElementById('kpiGrafImpactoPesos');
+          const elPerdMm = document.getElementById('kpiGrafPerdidaMm');
+          const elProy = document.getElementById('kpiGrafProyeccion');
+          const elKmRec = document.getElementById('kpiGrafKmRecorridos');
+          const elCpk = document.getElementById('kpiGrafCpk');
+          const elKmMm = document.getElementById('kpiGrafKmMm');
+          const elPctDesg = document.getElementById('kpiGrafPctDesgaste');
+          const elProfAct = document.getElementById('kpiGrafProfActual');
+          const elReenc = document.getElementById('kpiGrafReencauche');
+          const elSubReenc = document.getElementById('kpiGrafSubReencauche');
+
+          if (elVeh) elVeh.textContent = k.vehiculos || '0 Vehículos';
+          if (elSubVeh) elSubVeh.textContent = k.subVehiculos || '0 Llantas';
+
+          if (modoLicenciaGraficos === 'LIGHT') {
+            if (elPesos) elPesos.textContent = 'Modo LIGHT';
+          } else {
+            if (elPesos) elPesos.textContent = formatCO_Moneda(k.impactoPesos);
+          }
+          if (elPerdMm) elPerdMm.textContent = `${formatCO_Decimal(k.perdidaMm)} mm perdidos`;
+
+          if (elProy) elProy.textContent = `${formatCO_Miles(k.proyeccionProm)} km`;
+          if (elKmRec) elKmRec.textContent = `${formatCO_Miles(k.kmRecorridosProm)} km rodados`;
+
+          if (elCpk) elCpk.textContent = `$ ${formatCO_Decimal(k.cpkProm, 1)} /km`;
+          if (elKmMm) elKmMm.textContent = `${formatCO_Decimal(k.kmMmProm, 1)} km/mm`;
+
+          if (elPctDesg) elPctDesg.textContent = `${formatCO_Decimal(k.pctDesgasteProm, 1)}%`;
+          if (elProfAct) elProfAct.textContent = `${formatCO_Decimal(k.profActualProm, 1)} mm prom.`;
+
+          if (elReenc) elReenc.textContent = `${formatCO_Decimal(k.pctReencauche, 1)}%`;
+          if (elSubReenc) elSubReenc.textContent = `Alineación OK: ${formatCO_Decimal(k.pctAlineacionOk, 1)}%`;
+        }
+
+        sincronizarVisibilidadTarjetasGraficos();
+        renderizarBarraCheckboxesDiag();
+        renderizarTodosLosGraficosDiag(data);
+
+      } catch (err) {
+        console.error('Error al cargar datos gráficos diagnóstico:', err);
+      }
+    }
+
+    function reanimarGraficosDiagnostico() {
+      Object.keys(instanciasChartsDiag).forEach(k => {
+        const chart = instanciasChartsDiag[k];
+        if (chart) {
+          chart.reset();
+          chart.update();
+        }
+      });
+    }
+
+    function destruirChartDiag(chartId) {
+      if (instanciasChartsDiag[chartId]) {
+        instanciasChartsDiag[chartId].destroy();
+        delete instanciasChartsDiag[chartId];
+      }
+    }
+
+    function renderizarGraficoPorId(id, data) {
+      switch (id) {
+        case 'proy_max_min':
+          renderChartProyMaxMin(data.proyMaxMin);
+          break;
+        case 'gauges_seguimiento':
+          renderChartGauges(data.gauges);
+          break;
+        case 'perdida_mes':
+          renderChartPerdidaMes(data.perdidaMes);
+          break;
+        case 'proy_rango':
+          renderChartProyRango(data.proyRango);
+          break;
+        case 'alineacion_mes':
+          renderChartAlineacionMes(data.alineacionMes);
+          break;
+        case 'cpk_marca':
+          renderChartCpkMarca(data.cpkMarca);
+          break;
+        case 'planes_mes':
+          renderChartPlanesMes(data.planesMes);
+          break;
+        case 'danos_torta':
+          renderChartDanosTorta(data.danos);
+          break;
+        case 'ciclo_reencauche':
+          renderChartCicloReencauche(data.ciclo);
+          break;
+        case 'estado_presiones':
+          renderChartEstadoPresiones(data.presiones);
+          break;
+        case 'fvu_bajas':
+          renderChartFvuBajas(data.fvuProfBaja);
+          break;
+      }
+    }
+
+    function renderizarTodosLosGraficosDiag(data) {
+      CATALOGO_GRAFICOS_DIAG.forEach(g => {
+        const permitido = (modoLicenciaGraficos === 'PRO') || !g.soloPro;
+        if (g.visible && permitido) {
+          renderizarGraficoPorId(g.id, data);
+        }
+      });
+    }
+
+    // 1. Proyección vs Máx y Mín (KPI 15)
+    function renderChartProyMaxMin(ds) {
+      destruirChartDiag('proy_max_min');
+      const ctx = document.getElementById('canvasDiag_proy_max_min');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['proy_max_min'] = new Chart(ctx, {
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Proyección Promedio',
+              data: ds.prom || [],
+              backgroundColor: 'rgba(37, 99, 235, 0.75)',
+              borderColor: '#1d4ed8',
+              borderWidth: 1.5,
+              borderRadius: 8,
+              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.85)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: 'Máx. Proyección',
+              data: ds.max || [],
+              borderColor: '#0284c7',
+              backgroundColor: '#0284c7',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(2, 132, 199, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: 'Mín. Proyección',
+              data: ds.min || [],
+              borderColor: '#ea580c',
+              backgroundColor: '#ea580c',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(234, 88, 12, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${formatCO_Miles(ctx.raw)} km`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (val) => `${formatCO_Miles(val)} km`, font: { size: 10 } }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // 2. Tacómetros Gauges (KPI 12 y 13)
+    function renderChartGauges(ds) {
+      destruirChartDiag('gaugeDesgaste');
+      destruirChartDiag('gaugeMeta');
+      if (!ds) return;
+
+      const ctxDesg = document.getElementById('canvasDiag_gaugeDesgaste');
+      const ctxMeta = document.getElementById('canvasDiag_gaugeMeta');
+      const txtDesg = document.getElementById('kpiTxtGaugeDesgaste');
+      const txtMeta = document.getElementById('kpiTxtGaugeMeta');
+
+      const pctDesg = Math.min(100, Math.max(0, ds.pctDesgaste || 0));
+      if (txtDesg) txtDesg.textContent = `${formatCO_Decimal(pctDesg, 1)}% (${ds.txtDesgaste || '0 mm'})`;
+
+      if (ctxDesg) {
+        instanciasChartsDiag['gaugeDesgaste'] = new Chart(ctxDesg, {
+          type: 'doughnut',
+          data: {
+            labels: ['Desgaste', 'Remanente'],
+            datasets: [{
+              data: [pctDesg, 100 - pctDesg],
+              backgroundColor: ['#f59e0b', '#f1f5f9'],
+              borderWidth: 0,
+              circumference: 180,
+              rotation: 270
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+              tooltip: {
+                callbacks: { label: (c) => `${c.label}: ${formatCO_Decimal(c.raw, 1)}%` }
+              }
+            }
+          }
+        });
+      }
+
+      const proyAct = ds.proyActual || 0;
+      const proyMeta = ds.proyMeta || 100000;
+      const pctMeta = Math.min(100, Math.max(0, Math.round((proyAct / Math.max(1, proyMeta)) * 100)));
+      if (txtMeta) txtMeta.textContent = ds.txtMeta || `Meta: ${formatCO_Miles(proyMeta)} km`;
+
+      if (ctxMeta) {
+        instanciasChartsDiag['gaugeMeta'] = new Chart(ctxMeta, {
+          type: 'doughnut',
+          data: {
+            labels: ['Cumplido', 'Por Alcanzar'],
+            datasets: [{
+              data: [pctMeta, 100 - pctMeta],
+              backgroundColor: ['#10b981', '#f1f5f9'],
+              borderWidth: 0,
+              circumference: 180,
+              rotation: 270
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+              tooltip: {
+                callbacks: { label: (c) => `${c.label}: ${c.raw}%` }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // 3. Pérdida mm y Dinero (KPI 11)
+    function renderChartPerdidaMes(ds) {
+      destruirChartDiag('perdida_mes');
+      const ctx = document.getElementById('canvasDiag_perdida_mes');
+      if (!ctx || !ds) return;
+
+      const datasets = [
+        {
+          type: 'bar',
+          label: 'Pérdida mm',
+          data: ds.mm2025 || [],
+          backgroundColor: 'rgba(239, 68, 68, 0.75)',
+          borderColor: '#dc2626',
+          borderWidth: 1.5,
+          borderRadius: 8,
+          yAxisID: 'y',
+          datalabels: pillDatalabelConfig('rgba(220, 38, 38, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+        }
+      ];
+
+      // En modo PRO se agrega la línea financiera en pesos COP
+      if (modoLicenciaGraficos === 'PRO' && ds.dinero && ds.dinero.length > 0) {
+        datasets.push({
+          type: 'line',
+          label: 'Pérdida Dinero ($ COP)',
+          data: ds.dinero,
+          borderColor: '#f97316',
+          backgroundColor: '#f97316',
+          borderWidth: 3,
+          pointRadius: 4.5,
+          tension: 0.3,
+          yAxisID: 'y1',
+          datalabels: pillDatalabelConfig('rgba(249, 115, 22, 0.95)', '#ffffff', (v) => formatCO_Moneda(v))
+        });
+      }
+
+      instanciasChartsDiag['perdida_mes'] = new Chart(ctx, {
+        data: {
+          labels: ds.labels || [],
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ctx.dataset.yAxisID === 'y1' ? `${ctx.dataset.label}: ${formatCO_Moneda(ctx.raw)}` : `${ctx.dataset.label}: ${formatCO_Decimal(ctx.raw, 1)} mm`
+              }
+            }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              beginAtZero: true,
+              ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} mm`, font: { size: 10 } }
+            },
+            ...(modoLicenciaGraficos === 'PRO' ? {
+              y1: {
+                type: 'linear',
+                position: 'right',
+                beginAtZero: true,
+                grid: { drawOnChartArea: false },
+                ticks: { callback: (v) => formatCO_Moneda(v), font: { size: 10 } }
+              }
+            } : {}),
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // 4. Proyección por Rango de Desgaste (KPI 16)
+    function renderChartProyRango(ds) {
+      destruirChartDiag('proy_rango');
+      const ctx = document.getElementById('canvasDiag_proy_rango');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['proy_rango'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ds.labels || [],
+          datasets: [{
+            label: 'Proyección Promedio (km)',
+            data: ds.valores || [],
+            backgroundColor: 'rgba(139, 92, 246, 0.75)',
+            borderColor: '#7c3aed',
+            borderWidth: 1.5,
+            borderRadius: 8,
+            datalabels: pillDatalabelConfig('rgba(109, 40, 217, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} km` } }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (v) => `${formatCO_Miles(v)} km`, font: { size: 10 } }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 10 } } }
+          }
+        }
+      });
+    }
+
+    // 5. Estado Alineación por Mes (KPI 06)
+    function renderChartAlineacionMes(ds) {
+      destruirChartDiag('alineacion_mes');
+      const ctx = document.getElementById('canvasDiag_alineacion_mes');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['alineacion_mes'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              label: '% Alerta Desalineación',
+              data: ds.alerta || [],
+              backgroundColor: '#ef4444',
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)}%`)
+            },
+            {
+              label: '% Alineación OK',
+              data: ds.ok || [],
+              backgroundColor: '#3b82f6',
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(59, 130, 246, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)}%`)
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCO_Decimal(c.raw, 1)}%` } }
+          },
+          scales: {
+            x: { stacked: true, ticks: { font: { weight: 'bold', size: 11 } } },
+            y: {
+              stacked: true,
+              max: 100,
+              ticks: { callback: (v) => `${v}%`, font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // 6. CPK y Km/mm por Diseño (KPI 14)
+    function renderChartCpkMarca(ds) {
+      destruirChartDiag('cpk_marca');
+      const ctx = document.getElementById('canvasDiag_cpk_marca');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['cpk_marca'] = new Chart(ctx, {
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'CPK ($ / km)',
+              data: ds.cpk || [],
+              backgroundColor: 'rgba(16, 185, 129, 0.75)',
+              borderColor: '#059669',
+              borderWidth: 1.5,
+              borderRadius: 8,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(5, 150, 105, 0.9)', '#ffffff', (v) => `$ ${formatCO_Decimal(v, 1)}`)
+            },
+            {
+              type: 'line',
+              label: 'Rendimiento (Km / mm)',
+              data: ds.kmmm || [],
+              borderColor: '#4f46e5',
+              backgroundColor: '#4f46e5',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.2,
+              yAxisID: 'y1',
+              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} km/mm`)
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ctx.dataset.yAxisID === 'y1' ? `${ctx.dataset.label}: ${formatCO_Decimal(ctx.raw, 1)} km/mm` : `${ctx.dataset.label}: $ ${formatCO_Decimal(ctx.raw, 1)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              beginAtZero: true,
+              ticks: { callback: (v) => `$ ${formatCO_Decimal(v, 1)}`, font: { size: 10 } }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              beginAtZero: true,
+              grid: { drawOnChartArea: false },
+              ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} km/mm`, font: { size: 10 } }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // 7. Planes de Acción Mes a Mes (KPI 05, 07, 08)
+    function renderChartPlanesMes(ds) {
+      destruirChartDiag('planes_mes');
+      const ctx = document.getElementById('canvasDiag_planes_mes');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['planes_mes'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              label: 'Cambios (≤ Límite)',
+              data: ds.cambios || [],
+              borderColor: '#ef4444',
+              backgroundColor: '#ef4444',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              label: 'Duales Mal Apareados',
+              data: ds.duales || [],
+              borderColor: '#f59e0b',
+              backgroundColor: '#f59e0b',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              datalabels: pillDatalabelConfig('rgba(245, 158, 11, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              label: 'Plan Alineación',
+              data: ds.alineacion || [],
+              borderColor: '#3b82f6',
+              backgroundColor: '#3b82f6',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              datalabels: pillDatalabelConfig('rgba(59, 130, 246, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              label: 'Rotación',
+              data: ds.rotacion || [],
+              borderColor: '#8b5cf6',
+              backgroundColor: '#8b5cf6',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              datalabels: pillDatalabelConfig('rgba(139, 92, 246, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw} llantas` } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // 8. Participación por Daño / Avería (KPI 10)
+    function renderChartDanosTorta(ds) {
+      destruirChartDiag('danos_torta');
+      const ctx = document.getElementById('canvasDiag_danos_torta');
+      if (!ctx || !ds) return;
+
+      const paleta = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#64748b'];
+
+      instanciasChartsDiag['danos_torta'] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ds.labels || [],
+          datasets: [{
+            data: ds.valores || [],
+            backgroundColor: paleta.slice(0, (ds.labels || []).length),
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } },
+            datalabels: {
+              color: '#ffffff',
+              font: { weight: 'bold', size: 10 },
+              formatter: (val, ctx) => {
+                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                return pct > 5 ? `${val} (${pct}%)` : '';
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 9. Unidades por Ciclo y % Reencauche (KPI 03)
+    function renderChartCicloReencauche(ds) {
+      destruirChartDiag('ciclo_reencauche');
+      const ctx = document.getElementById('canvasDiag_ciclo_reencauche');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['ciclo_reencauche'] = new Chart(ctx, {
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Originales',
+              data: ds.original || [],
+              backgroundColor: '#3b82f6',
+              borderRadius: 6,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(59, 130, 246, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'bar',
+              label: 'Reencauches',
+              data: ds.reencauche || [],
+              backgroundColor: '#10b981',
+              borderRadius: 6,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(16, 185, 129, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: '% Reencauche',
+              data: ds.pctReenc || [],
+              borderColor: '#059669',
+              backgroundColor: '#059669',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25,
+              yAxisID: 'y1',
+              datalabels: pillDatalabelConfig('rgba(5, 150, 105, 0.95)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)}%`)
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ctx.dataset.yAxisID === 'y1' ? `${ctx.dataset.label}: ${formatCO_Decimal(ctx.raw, 1)}%` : `${ctx.dataset.label}: ${formatCO_Miles(ctx.raw)} llantas`
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true, ticks: { font: { weight: 'bold', size: 11 } } },
+            y: {
+              stacked: true,
+              position: 'left',
+              beginAtZero: true,
+              ticks: { font: { size: 10 } }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              beginAtZero: true,
+              max: 100,
+              grid: { drawOnChartArea: false },
+              ticks: { callback: (v) => `${v}%`, font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // 10. Estado de Presiones PSI Real (KPI 09)
+    function renderChartEstadoPresiones(ds) {
+      destruirChartDiag('estado_presiones');
+      const ctx = document.getElementById('canvasDiag_estado_presiones');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['estado_presiones'] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ds.labels || ['En Norma (OK)', 'Baja Presión', 'Sobreinflado'],
+          datasets: [{
+            data: ds.valores || [0, 0, 0],
+            backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } },
+            datalabels: {
+              color: '#ffffff',
+              font: { weight: 'bold', size: 10 },
+              formatter: (val, ctx) => {
+                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                return pct > 3 ? `${val} (${pct}%)` : '';
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 11. Profundidad de Baja Máx/Prom/Mín (KPI 19)
+    function renderChartFvuBajas(ds) {
+      destruirChartDiag('fvu_bajas');
+      const ctx = document.getElementById('canvasDiag_fvu_bajas');
+      if (!ctx || !ds) return;
+
+      instanciasChartsDiag['fvu_bajas'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              label: 'Profundidad Máxima de Retiro (mm)',
+              data: ds.max || [],
+              borderColor: '#e11d48',
+              backgroundColor: '#e11d48',
+              borderWidth: 2,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(225, 29, 72, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+            },
+            {
+              label: 'Profundidad Promedio de Retiro (mm)',
+              data: ds.prom || [],
+              borderColor: '#f59e0b',
+              backgroundColor: '#f59e0b',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(245, 158, 11, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+            },
+            {
+              label: 'Profundidad Mínima de Retiro (mm)',
+              data: ds.min || [],
+              borderColor: '#64748b',
+              backgroundColor: '#64748b',
+              borderWidth: 2,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(100, 116, 139, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCO_Decimal(c.raw, 1)} mm` } }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} mm`, font: { size: 10 } }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
     // ==========================================
     // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
     // ==========================================
@@ -3561,6 +4954,7 @@
         if (res.ok) {
           actualizarCombosFiltroDiagnostico();
           filtrarTablaDiagnostico();
+          cargarDatosGraficosDiagnostico();
         } else if (res.status === 401) {
           if (tbody) tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
           if (tbodyMat) tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada.</td></tr>';
@@ -3625,6 +5019,7 @@
     function onCambioFiltroDiagCliente() {
       actualizarCombosSedesDiagnostico();
       filtrarTablaDiagnostico();
+      cargarDatosGraficosDiagnostico();
     }
 
     function filtrarDiagnosticoPorCard(tipoAlerta) {
@@ -3897,6 +5292,7 @@
       setVal('filtroDiagAlerta', 'Todos');
       setVal('filtroDiagPlaca', '');
       filtrarTablaDiagnostico();
+      cargarDatosGraficosDiagnostico();
       mostrarToast('Filtros de diagnóstico restablecidos.');
     }
 
@@ -8710,6 +10106,12 @@
     // Inicialización al cargar DOM
     window.addEventListener('DOMContentLoaded', () => {
       sincronizarSlotEspecificaciones();
+      try {
+        renderizarBarraCheckboxesDiag();
+        sincronizarVisibilidadTarjetasGraficos();
+      } catch (e) {
+        console.warn('Error inicializando checkboxes de diagnóstico:', e);
+      }
       document.getElementById('fecha').value = fechaLocalISO();
       const logueado = verificarSesionUsuario();
       if (logueado) {

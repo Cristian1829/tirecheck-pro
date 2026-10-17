@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import pandas as pd
+import numpy as np
 import unicodedata
 import os
 import re
@@ -326,6 +327,63 @@ def inicializar_bd():
                   AND marca IS NOT NULL AND TRIM(marca) != ''
             """)
 
+        # Tabla de Padrón de Vehículos por Cliente (Auditoría de Cumplimiento vs Parque)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS padron_vehiculos_cliente (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                subcliente TEXT DEFAULT '',
+                placa TEXT NOT NULL,
+                tipologia TEXT DEFAULT '',
+                estado_operativo TEXT DEFAULT 'Activo', -- 'Activo', 'En Taller Mecánico', 'Fuera de Operación'
+                activo INTEGER DEFAULT 1,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(cliente, placa)
+            )
+        """)
+
+        # Backfill inicial seguro del padrón desde inspecciones históricas
+        cursor.execute("SELECT COUNT(*) FROM padron_vehiculos_cliente")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                INSERT OR IGNORE INTO padron_vehiculos_cliente (cliente, subcliente, placa, tipologia, estado_operativo, activo)
+                SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(IFNULL(subcliente, ''))), UPPER(TRIM(placa)), IFNULL(tipologia, ''), 'Activo', 1
+                FROM inspecciones
+                WHERE placa IS NOT NULL AND TRIM(placa) != '' AND cliente IS NOT NULL AND TRIM(cliente) != ''
+            """)
+
+        # Tabla de Configuración Avanzada y Licenciamiento por Cliente (LIGHT vs PRO)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS configuracion_avanzada_cliente (
+                cliente TEXT PRIMARY KEY,
+                tipo_licencia TEXT DEFAULT 'PRO', -- 'LIGHT' o 'PRO'
+                mm_retiro_direccional REAL DEFAULT 4.0,
+                mm_retiro_traccion REAL DEFAULT 3.0,
+                mm_retiro_arrastre REAL DEFAULT 3.0,
+                rango_semaforo_amarillo_mm REAL DEFAULT 2.0,
+                criterio_profundidad_calculo TEXT DEFAULT 'MINIMO',
+                psi_objetivo_direccional REAL DEFAULT 110.0,
+                psi_objetivo_traccion REAL DEFAULT 100.0,
+                psi_objetivo_arrastre REAL DEFAULT 100.0,
+                tolerancia_psi_baja_pct REAL DEFAULT 10.0,
+                tolerancia_psi_alta_pct REAL DEFAULT 10.0,
+                tolerancia_desalineacion_hombros_mm REAL DEFAULT 2.0,
+                tolerancia_mal_apareo_pacha_mm REAL DEFAULT 2.5,
+                umbral_diferencia_rotacion_ejes_mm REAL DEFAULT 3.0,
+                diferencia_minima_par_direccional_mm REAL DEFAULT 3.0,
+                plantilla_kpis_json TEXT DEFAULT '{}',
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Poblar configuración inicial PRO para clientes existentes
+        cursor.execute("""
+            INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia)
+            SELECT DISTINCT UPPER(TRIM(cliente)), 'PRO'
+            FROM inspecciones
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+        """)
+
         # Tabla de Catálogo de Operaciones
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_operaciones (
@@ -454,6 +512,8 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_fecha ON inspecciones (cliente, subcliente, fecha)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_limites_retiro_busqueda ON configuracion_limites_retiro (cliente, subcliente, eje)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_marcas_cliente ON configuracion_marcas_cliente (cliente)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_padron_cliente ON padron_vehiculos_cliente (cliente, activo)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_config_avanzada_cliente ON configuracion_avanzada_cliente (cliente)")
 
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
@@ -3223,4 +3283,700 @@ def obtener_datos_inspeccion_vehiculo(placa, fecha=None):
                 'psi', 'novedades', 'precio', 'prof_inicial', 'km_montaje', 'numero_interno', 'usuario_registro', 'foto_novedad']
         rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
         return rows
+
+
+# ==============================================================================
+# MÓDULO DE TABLERO ANALÍTICO Y LICENCIAMIENTO LIGHT VS PRO (KPIs 01 a 19)
+# ==============================================================================
+
+def contar_vehiculos_padron(cliente: str) -> int:
+    """Retorna el número de vehículos activos registrados en el padrón del cliente."""
+    if not cliente or str(cliente).strip().upper() == 'TODOS':
+        query = "SELECT COUNT(*) FROM padron_vehiculos_cliente WHERE activo = 1"
+        params = ()
+    else:
+        query = "SELECT COUNT(*) FROM padron_vehiculos_cliente WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?)) AND activo = 1"
+        params = (cliente,)
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            row = cursor.fetchone()
+            return int(row[0]) if row and row[0] is not None else 0
+    except Exception:
+        return 0
+
+
+def obtener_licencia_cliente(cliente: str) -> str:
+    """
+    Retorna 'LIGHT' o 'PRO' para el cliente especificado. Por defecto 'PRO'.
+    """
+    if not cliente or str(cliente).strip().upper() == 'TODOS':
+        return 'PRO'
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT tipo_licencia FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))",
+                (cliente,)
+            )
+            row = cursor.fetchone()
+            if row and row[0]:
+                modo = str(row[0]).strip().upper()
+                return modo if modo in ('LIGHT', 'PRO') else 'PRO'
+    except Exception:
+        pass
+    return 'PRO'
+
+
+def guardar_licencia_cliente(cliente: str, tipo_licencia: str, plantilla_kpis_json: str = "{}") -> bool:
+    """
+    Guarda o actualiza la licencia ('LIGHT' o 'PRO') y la plantilla de KPIs para un cliente.
+    """
+    cli_limpio = str(cliente).strip().upper()
+    if not cli_limpio:
+        return False
+    tipo = str(tipo_licencia).strip().upper()
+    if tipo not in ('LIGHT', 'PRO'):
+        tipo = 'PRO'
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, plantilla_kpis_json, fecha_actualizacion)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente) DO UPDATE SET
+                    tipo_licencia = excluded.tipo_licencia,
+                    plantilla_kpis_json = excluded.plantilla_kpis_json,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+            """, (cli_limpio, tipo, plantilla_kpis_json))
+            conn.commit()
+            return True
+    except Exception:
+        return False
+
+
+def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
+    """
+    Retorna el diccionario con la configuración avanzada y tolerancias del cliente.
+    Si no existe, retorna los valores técnicos recomendados por defecto.
+    """
+    defaults = {
+        "cliente": cliente,
+        "tipo_licencia": "PRO",
+        "mm_retiro_direccional": 4.0,
+        "mm_retiro_traccion": 3.0,
+        "mm_retiro_arrastre": 3.0,
+        "rango_semaforo_amarillo_mm": 2.0,
+        "criterio_profundidad_calculo": "MINIMO",
+        "psi_objetivo_direccional": 110.0,
+        "psi_objetivo_traccion": 100.0,
+        "psi_objetivo_arrastre": 100.0,
+        "tolerancia_psi_baja_pct": 10.0,
+        "tolerancia_psi_alta_pct": 10.0,
+        "tolerancia_desalineacion_hombros_mm": 2.0,
+        "tolerancia_mal_apareo_pacha_mm": 2.5,
+        "umbral_diferencia_rotacion_ejes_mm": 3.0,
+        "diferencia_minima_par_direccional_mm": 3.0,
+        "plantilla_kpis_json": "{}"
+    }
+    if not cliente or str(cliente).strip().upper() == 'TODOS':
+        return defaults
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre,
+                       rango_semaforo_amarillo_mm, criterio_profundidad_calculo,
+                       psi_objetivo_direccional, psi_objetivo_traccion, psi_objetivo_arrastre,
+                       tolerancia_psi_baja_pct, tolerancia_psi_alta_pct,
+                       tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm,
+                       umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm,
+                       plantilla_kpis_json
+                FROM configuracion_avanzada_cliente
+                WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+            """, (cliente,))
+            row = cursor.fetchone()
+            if row:
+                cols = [
+                    "tipo_licencia", "mm_retiro_direccional", "mm_retiro_traccion", "mm_retiro_arrastre",
+                    "rango_semaforo_amarillo_mm", "criterio_profundidad_calculo",
+                    "psi_objetivo_direccional", "psi_objetivo_traccion", "psi_objetivo_arrastre",
+                    "tolerancia_psi_baja_pct", "tolerancia_psi_alta_pct",
+                    "tolerancia_desalineacion_hombros_mm", "tolerancia_mal_apareo_pacha_mm",
+                    "umbral_diferencia_rotacion_ejes_mm", "diferencia_minima_par_direccional_mm",
+                    "plantilla_kpis_json"
+                ]
+                d = dict(zip(cols, row))
+                d["cliente"] = cliente
+                return d
+    except Exception:
+        pass
+    return defaults
+
+
+def _mes_a_espanol(val_str: str) -> str:
+    """Convierte '2025-01' o '2025-01-15' a formato 'Ene 25'."""
+    meses = {
+        '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr',
+        '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Ago',
+        '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic'
+    }
+    s = str(val_str).strip()
+    if len(s) >= 7 and '-' in s:
+        partes = s[:7].split('-')
+        if len(partes) == 2:
+            anio, mes = partes[0], partes[1]
+            nombre_mes = meses.get(mes, mes)
+            return f"{nombre_mes} {anio[-2:]}"
+    return s
+
+
+def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
+    """
+    Calcula los datos analíticos completos y blindados para el Tablero Ejecutivo
+    de Diagnóstico y Licenciamiento LIGHT vs PRO (KPIs 01 a 19).
+    """
+    filtros = filtros or {}
+    cliente = str(filtros.get("cliente", "")).strip().upper()
+    subcliente = str(filtros.get("subcliente", "")).strip().upper()
+    tipo_operacion = str(filtros.get("tipo_operacion", "")).strip().upper()
+    tipologia = str(filtros.get("tipologia", "")).strip().upper()
+    marca = str(filtros.get("marca", "")).strip().upper()
+    dimension = str(filtros.get("dimension", "")).strip().upper()
+    eje_temporal = str(filtros.get("eje_temporal", "mes")).strip().lower()
+    usuario = str(filtros.get("usuario", "")).strip()
+
+    licencia = obtener_licencia_cliente(cliente)
+    cfg = obtener_configuracion_avanzada_cliente(cliente)
+
+    mm_retiro_dir = to_float(cfg.get("mm_retiro_direccional"), 4.0)
+    mm_retiro_trac = to_float(cfg.get("mm_retiro_traccion"), 3.0)
+    tol_psi_baja = to_float(cfg.get("tolerancia_psi_baja_pct"), 10.0)
+    tol_psi_alta = to_float(cfg.get("tolerancia_psi_alta_pct"), 10.0)
+    psi_obj_dir = to_float(cfg.get("psi_objetivo_direccional"), 110.0)
+    psi_obj_trac = to_float(cfg.get("psi_objetivo_traccion"), 100.0)
+    tol_desalineacion = to_float(cfg.get("tolerancia_desalineacion_hombros_mm"), 2.0)
+
+    # Estructura de respuesta por defecto segura
+    resultado = {
+        "licencia": licencia,
+        "kpis": {
+            "vehiculos": "0 Vehículos",
+            "subVehiculos": "0 Llantas Auditadas",
+            "cumplimientoParquePct": 0.0,
+            "impactoPesos": 0.0,
+            "perdidaMm": 0.0,
+            "proyeccionProm": 0,
+            "kmRecorridosProm": 0,
+            "cpkProm": 0.0,
+            "kmMmProm": 0.0,
+            "pctDesgasteProm": 0.0,
+            "mmGastadosProm": 0.0,
+            "profActualProm": 0.0,
+            "pctReencauche": 0.0,
+            "pctAlineacionOk": 100.0
+        },
+        "gauges": {
+            "pctDesgaste": 0.0,
+            "txtDesgaste": "0,0 mm gastados",
+            "proyActual": 0,
+            "proyMeta": 100000,
+            "txtMeta": "Meta: 100.000 km (0,0%)"
+        },
+        "proyMaxMin": {"labels": [], "prom": [], "max": [], "min": []},
+        "perdidaMes": {"labels": [], "mm2025": [], "mm2026": [], "dinero": []},
+        "proyRango": {
+            "labels": ["1. 0–40%", "2. 40.1–60%", "3. 60.1–80%", "4. 80.1–99.9%", "5. 100%"],
+            "valores": [0, 0, 0, 0, 0]
+        },
+        "alineacionMes": {"labels": [], "alerta": [], "ok": []},
+        "cpkMarca": {"labels": [], "cpk": [], "kmmm": []},
+        "planesMes": {"labels": [], "cambios": [], "duales": [], "alineacion": [], "rotacion": []},
+        "danos": {"labels": [], "valores": []},
+        "ciclo": {"labels": [], "original": [], "reencauche": [], "pctReenc": []},
+        "presiones": {"labels": ["En Norma (OK)", "Baja Presión", "Sobreinflado"], "valores": [0, 0, 0]},
+        "fvuProfBaja": {"labels": [], "max": [], "prom": [], "min": []}
+    }
+
+    try:
+        df_raw = obtener_todas_inspecciones(usuario=usuario)
+        if df_raw.empty:
+            return resultado
+
+        df = df_raw.copy()
+
+        # Filtrado estándar
+        if cliente and cliente != "TODOS":
+            df = df[df["cliente"].astype(str).str.upper().str.strip() == cliente]
+        if subcliente and subcliente != "TODOS":
+            df = df[df["subcliente"].astype(str).str.upper().str.strip() == subcliente]
+        if tipo_operacion and tipo_operacion != "TODOS":
+            df = df[df["tipo_operacion"].astype(str).str.upper().str.strip() == tipo_operacion]
+        if tipologia and tipologia != "TODOS":
+            df = df[df["tipologia"].astype(str).str.upper().str.strip() == tipologia]
+        if marca and marca != "TODOS":
+            df = df[df["marca"].astype(str).str.upper().str.strip() == marca]
+        if dimension and dimension != "TODOS":
+            df = df[df["dimension"].astype(str).str.upper().str.strip() == dimension]
+
+        if df.empty:
+            return resultado
+
+        # Cálculo vectorizado y protegido campo a campo
+        pos_list = [to_int(p) for p in df['posicion']]
+        pe_list = [to_float(p) for p in df['prof_ext']]
+        pc_list = [to_float(p) for p in df['prof_cent']]
+        pi_list = [to_float(p) for p in df['prof_int']]
+        psi_list = [to_float(p) for p in df['psi']]
+        precio_list = [to_float(p) for p in df['precio']]
+        pini_list = [to_float(p) for p in df['prof_inicial']]
+        km_act_list = [to_float(p) for p in df['kilometraje']]
+        km_mont_list = [to_float(p) for p in df['km_montaje']]
+
+        n_rows = len(df)
+        p_min_col = []
+        p_ini_col = []
+        lim_retiro_col = []
+        mm_utiles_col = []
+        delta_mm_col = []
+        pct_desgaste_col = []
+        km_rodados_col = []
+        es_asentamiento_col = []
+        km_mm_col = []
+        proy_total_col = []
+        cpk_col = []
+        es_madura_col = []
+        mm_perdidos_col = []
+        perdida_dinero_col = []
+        estado_psi_col = []
+        es_reencauche_col = []
+
+        for idx in range(n_rows):
+            pos = pos_list[idx]
+            es_dir = (pos in (1, 2))
+            pe = pe_list[idx]
+            pc = pc_list[idx]
+            pi = pi_list[idx]
+            psi = psi_list[idx]
+
+            # 1. Profundidad mínima Pmin
+            positivos = [x for x in (pe, pc, pi) if x > 0]
+            p_min = min(positivos) if positivos else 0.0
+            p_min_col.append(p_min)
+
+            # 2. Profundidad inicial y límite de retiro
+            p_ini = pini_list[idx] if pini_list[idx] > 0 else (16.0 if es_dir else 18.0)
+            p_ini_col.append(p_ini)
+
+            lim_ret = mm_retiro_dir if es_dir else mm_retiro_trac
+            lim_retiro_col.append(lim_ret)
+
+            mm_ut = max(1.0, p_ini - lim_ret)
+            mm_utiles_col.append(mm_ut)
+
+            d_mm = max(0.0, p_ini - p_min)
+            delta_mm_col.append(d_mm)
+
+            pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
+            pct_desgaste_col.append(pct_d)
+
+            # 3. Kilometraje y blindaje de asentamiento
+            km_rod = max(0.0, km_act_list[idx] - km_mont_list[idx])
+            km_rodados_col.append(km_rod)
+
+            asent = (d_mm < 0.5) or (km_rod < 500.0)
+            es_asentamiento_col.append(asent)
+
+            if asent:
+                km_mm = 0.0
+                proy = 0.0
+                cpk_val = 0.0
+            else:
+                km_mm = km_rod / max(0.1, d_mm)
+                proy = km_mm * mm_ut
+                pr = precio_list[idx] if precio_list[idx] > 0 else 1450000.0
+                cpk_val = pr / max(1.0, proy)
+
+            km_mm_col.append(km_mm)
+            proy_total_col.append(proy)
+            cpk_col.append(cpk_val)
+
+            # 4. Filtro de madurez para techos KPI 15
+            es_mad = (d_mm >= 1.5) or (pct_d >= 10.0)
+            es_madura_col.append(es_mad)
+
+            # 5. Desalineación e Impacto Económico
+            dif_hombros = abs(pe - pi)
+            alerta_alin = (dif_hombros >= tol_desalineacion)
+            if alerta_alin:
+                mm_perd = max(pe, pc, pi) - min(pe, pc, pi)
+                pr = precio_list[idx] if precio_list[idx] > 0 else 1450000.0
+                costo_mm = pr / mm_ut
+                perd_dinero = mm_perd * costo_mm
+            else:
+                mm_perd = 0.0
+                perd_dinero = 0.0
+
+            mm_perdidos_col.append(mm_perd)
+            perdida_dinero_col.append(perd_dinero)
+
+            # 6. Presión PSI Real contra objetivo
+            psi_obj = psi_obj_dir if es_dir else psi_obj_trac
+            lim_inf = psi_obj * (1.0 - tol_psi_baja / 100.0)
+            lim_sup = psi_obj * (1.0 + tol_psi_alta / 100.0)
+            if psi < lim_inf:
+                estado_psi = "Baja Presión"
+            elif psi > lim_sup:
+                estado_psi = "Sobreinflado"
+            else:
+                estado_psi = "En Norma (OK)"
+            estado_psi_col.append(estado_psi)
+
+            # 7. Reencauche
+            v_str = str(df['vida'].iloc[idx] if 'vida' in df else '').upper()
+            b_str = str(df['banda_reen'].iloc[idx] if 'banda_reen' in df else '').strip()
+            es_reenc = bool(re.search(r'REENC|R1|R2|R3', v_str) or (b_str and b_str.lower() not in ('nan', 'none', '')))
+            es_reencauche_col.append(es_reenc)
+
+        df['calc_p_min'] = p_min_col
+        df['calc_p_ini'] = p_ini_col
+        df['calc_lim_retiro'] = lim_retiro_col
+        df['calc_mm_utiles'] = mm_utiles_col
+        df['calc_delta_mm'] = delta_mm_col
+        df['calc_pct_desgaste'] = pct_desgaste_col
+        df['calc_km_rodados'] = km_rodados_col
+        df['calc_es_asentamiento'] = es_asentamiento_col
+        df['calc_km_mm'] = km_mm_col
+        df['calc_proy_total'] = proy_total_col
+        df['calc_cpk'] = cpk_col
+        df['calc_es_madura'] = es_madura_col
+        df['calc_mm_perdidos'] = mm_perdidos_col
+        df['calc_perdida_dinero'] = perdida_dinero_col
+        df['calc_estado_psi'] = estado_psi_col
+        df['calc_es_reencauche'] = es_reencauche_col
+
+        # Columna de corte / periodo temporal (YYYY-MM o número de inspección)
+        df['fecha_str'] = df['fecha'].astype(str).str[:10]
+        df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
+
+        # ----------------------------------------------------------------------
+        # MUESTRA AUDITADA (Último Corte por Vehículo)
+        # ----------------------------------------------------------------------
+        # Agrupar por placa y tomar la fecha más reciente
+        grupos_corte = []
+        for placa_v, grp in df.groupby('placa'):
+            f_max = grp['fecha_str'].max()
+            grp_rec = grp[grp['fecha_str'] == f_max]
+            if 'id' in grp_rec.columns:
+                grp_rec = grp_rec.sort_values('id').groupby('posicion', as_index=False).last()
+            grupos_corte.append(grp_rec)
+
+        df_ultimo_corte = pd.concat(grupos_corte, ignore_index=True) if grupos_corte else pd.DataFrame()
+
+        if not df_ultimo_corte.empty:
+            vehiculos_cnt = df_ultimo_corte['placa'].nunique()
+            llantas_cnt = len(df_ultimo_corte)
+            total_padron = contar_vehiculos_padron(cliente)
+            if total_padron > 0:
+                cumplimiento_pct = round(min(100.0, (vehiculos_cnt / total_padron) * 100.0), 1)
+            else:
+                cumplimiento_pct = 100.0
+
+            impacto_dinero = round(float(df_ultimo_corte['calc_perdida_dinero'].sum()))
+            perdida_mm_tot = round(float(df_ultimo_corte['calc_mm_perdidos'].sum()), 1)
+
+            llantas_activas = df_ultimo_corte[~df_ultimo_corte['calc_es_asentamiento']]
+            proy_prom = round(float(llantas_activas['calc_proy_total'].mean())) if not llantas_activas.empty else 0
+            km_rec_prom = round(float(df_ultimo_corte['calc_km_rodados'].mean()))
+            cpk_prom = round(float(llantas_activas['calc_cpk'].mean()), 1) if not llantas_activas.empty else 0.0
+            km_mm_prom = round(float(llantas_activas['calc_km_mm'].mean()), 1) if not llantas_activas.empty else 0.0
+
+            pct_desg_prom = round(float(df_ultimo_corte['calc_pct_desgaste'].mean()), 1)
+            mm_gast_prom = round(float(df_ultimo_corte['calc_delta_mm'].mean()), 1)
+            prof_act_prom = round(float(df_ultimo_corte['calc_p_min'].mean()), 1)
+
+            reenc_cnt = int(df_ultimo_corte['calc_es_reencauche'].sum())
+            pct_reenc = round((reenc_cnt / max(1, llantas_cnt)) * 100.0, 1)
+
+            ok_alin_cnt = int((df_ultimo_corte['calc_mm_perdidos'] == 0.0).sum())
+            pct_alin_ok = round((ok_alin_cnt / max(1, llantas_cnt)) * 100.0, 1)
+
+            resultado["kpis"] = {
+                "vehiculos": f"{vehiculos_cnt:,} Vehículos".replace(',', '.'),
+                "subVehiculos": f"{llantas_cnt:,} Llantas Auditadas".replace(',', '.'),
+                "cumplimientoParquePct": float(cumplimiento_pct),
+                "impactoPesos": float(impacto_dinero),
+                "perdidaMm": float(perdida_mm_tot),
+                "proyeccionProm": int(proy_prom),
+                "kmRecorridosProm": int(km_rec_prom),
+                "cpkProm": float(cpk_prom),
+                "kmMmProm": float(km_mm_prom),
+                "pctDesgasteProm": float(pct_desg_prom),
+                "mmGastadosProm": float(mm_gast_prom),
+                "profActualProm": float(prof_act_prom),
+                "pctReencauche": float(pct_reenc),
+                "pctAlineacionOk": float(pct_alin_ok)
+            }
+
+            # Tacómetros Gauges (KPI 12 y 13)
+            proy_meta = 109885 if proy_prom == 0 else int(max(proy_prom * 1.25, 95000))
+            dif_pct = round(((proy_prom - proy_meta) / proy_meta) * 100.0, 1) if proy_meta > 0 else 0.0
+            signo = "+" if dif_pct >= 0 else ""
+            txt_meta = f"Meta: {proy_meta:,} km ({signo}{str(dif_pct).replace('.', ',')}%)".replace(',', '.')
+
+            resultado["gauges"] = {
+                "pctDesgaste": float(pct_desg_prom),
+                "txtDesgaste": f"{str(mm_gast_prom).replace('.', ',')} mm gastados",
+                "proyActual": int(proy_prom),
+                "proyMeta": int(proy_meta),
+                "txtMeta": txt_meta
+            }
+
+            # Estado de Presiones Real (KPI 09) en corte actual
+            pres_counts = df_ultimo_corte['calc_estado_psi'].value_counts()
+            resultado["presiones"] = {
+                "labels": ["En Norma (OK)", "Baja Presión", "Sobreinflado"],
+                "valores": [
+                    int(pres_counts.get("En Norma (OK)", 0)),
+                    int(pres_counts.get("Baja Presión", 0)),
+                    int(pres_counts.get("Sobreinflado", 0))
+                ]
+            }
+
+            # Curva de Madurez por Rango de Desgaste (KPI 16)
+            tramos = [
+                ("1. 0–40%", (df_ultimo_corte['calc_pct_desgaste'] >= 0.0) & (df_ultimo_corte['calc_pct_desgaste'] <= 40.0)),
+                ("2. 40.1–60%", (df_ultimo_corte['calc_pct_desgaste'] > 40.0) & (df_ultimo_corte['calc_pct_desgaste'] <= 60.0)),
+                ("3. 60.1–80%", (df_ultimo_corte['calc_pct_desgaste'] > 60.0) & (df_ultimo_corte['calc_pct_desgaste'] <= 80.0)),
+                ("4. 80.1–99.9%", (df_ultimo_corte['calc_pct_desgaste'] > 80.0) & (df_ultimo_corte['calc_pct_desgaste'] < 100.0)),
+                ("5. 100%", (df_ultimo_corte['calc_pct_desgaste'] >= 100.0) | (df_ultimo_corte['calc_p_min'] <= df_ultimo_corte['calc_lim_retiro']))
+            ]
+            rango_vals = []
+            for t_nom, mask in tramos:
+                sub_tr = df_ultimo_corte[mask]
+                sub_tr_proy = sub_tr[sub_tr['calc_proy_total'] > 0]
+                if not sub_tr_proy.empty:
+                    val_t = round(float(sub_tr_proy['calc_proy_total'].mean()))
+                elif not sub_tr.empty:
+                    val_t = round(float(sub_tr['calc_km_rodados'].mean()))
+                else:
+                    val_t = 0
+                rango_vals.append(val_t)
+            resultado["proyRango"] = {
+                "labels": [t[0] for t in tramos],
+                "valores": rango_vals
+            }
+
+            # CPK y Km/mm por Diseño / Marca (KPI 14)
+            df_cpk_base = df_ultimo_corte[~df_ultimo_corte['calc_es_asentamiento']]
+            if df_cpk_base.empty:
+                df_cpk_base = df_ultimo_corte
+
+            campo_agrup = 'diseno' if df_cpk_base['diseno'].dropna().nunique() > 1 else 'marca'
+            top_disenos = df_cpk_base[campo_agrup].replace('', np.nan).dropna().value_counts().head(5).index.tolist()
+
+            cpk_labels = []
+            cpk_vals = []
+            kmmm_vals = []
+            for dis in top_disenos:
+                sub_d = df_cpk_base[df_cpk_base[campo_agrup] == dis]
+                cpk_labels.append(str(dis))
+                cpk_mean = sub_d['calc_cpk'].replace(0, np.nan).dropna().mean()
+                kmmm_mean = sub_d['calc_km_mm'].replace(0, np.nan).dropna().mean()
+                cpk_vals.append(round(float(cpk_mean), 1) if pd.notna(cpk_mean) else 0.0)
+                kmmm_vals.append(round(float(kmmm_mean), 1) if pd.notna(kmmm_mean) else 0.0)
+
+            resultado["cpkMarca"] = {
+                "labels": cpk_labels,
+                "cpk": cpk_vals,
+                "kmmm": kmmm_vals
+            }
+
+            # Pareto de Daños / Novedades (KPI 10)
+            palabras_clave_danos = [
+                "Asentamiento", "Corte Costado", "Oxidación", "Impacto Banda",
+                "Desgaste Irregular", "Desalineación", "Dual Mal Apareado", "Baja Presión"
+            ]
+            danos_dict = {d: 0 for d in palabras_clave_danos}
+            for nov in df_ultimo_corte['novedades'].fillna(''):
+                n_str = str(nov).strip()
+                if not n_str or n_str.lower() in ('ok', 'normal', 'ninguna', 'nan'):
+                    continue
+                match = False
+                for d_k in palabras_clave_danos:
+                    if d_k.lower() in n_str.lower():
+                        danos_dict[d_k] += 1
+                        match = True
+                if not match:
+                    danos_dict["Desgaste Irregular"] = danos_dict.get("Desgaste Irregular", 0) + 1
+
+            danos_ordenados = sorted([(k, v) for k, v in danos_dict.items() if v > 0], key=lambda x: x[1], reverse=True)
+            if not danos_ordenados:
+                danos_ordenados = [("Sin Novedades", llantas_cnt)]
+            resultado["danos"] = {
+                "labels": [d[0] for d in danos_ordenados[:6]],
+                "valores": [d[1] for d in danos_ordenados[:6]]
+            }
+
+        # ----------------------------------------------------------------------
+        # EVOLUCIÓN TEMPORAL (Por Mes o por Corte N° INSP)
+        # ----------------------------------------------------------------------
+        if eje_temporal == 'insp':
+            fechas_unicas = sorted([f for f in df['fecha_str'].unique() if f and f != 'nan'])[-8:]
+            periodos = [(f"Insp {i+1}", f) for i, f in enumerate(fechas_unicas)]
+        else:
+            meses_unicos = sorted([m for m in df['periodo_mes'].unique() if m and m != 'nan'])[-8:]
+            periodos = [(_mes_a_espanol(m), m) for m in meses_unicos]
+
+        labels_p = []
+        prom_p = []
+        max_p = []
+        min_p = []
+
+        mm_p = []
+        dinero_p = []
+
+        alerta_p = []
+        ok_p = []
+
+        cambios_p = []
+        duales_p = []
+        alin_p = []
+        rot_p = []
+
+        orig_p = []
+        reenc_p = []
+        pct_reenc_p = []
+
+        fvu_max_p = []
+        fvu_prom_p = []
+        fvu_min_p = []
+
+        for p_label, p_key in periodos:
+            if eje_temporal == 'insp':
+                sub_df = df[df['fecha_str'] == p_key]
+            else:
+                sub_df = df[df['periodo_mes'] == p_key]
+
+            # Tomar último estado por vehículo dentro de este periodo
+            sub_corte = []
+            for _, grp in sub_df.groupby('placa'):
+                f_max = grp['fecha_str'].max()
+                g_f = grp[grp['fecha_str'] == f_max]
+                if 'id' in g_f.columns:
+                    g_f = g_f.sort_values('id').groupby('posicion', as_index=False).last()
+                sub_corte.append(g_f)
+            df_p = pd.concat(sub_corte, ignore_index=True) if sub_corte else pd.DataFrame()
+
+            if df_p.empty:
+                continue
+
+            labels_p.append(p_label)
+
+            # KPI 15: Proyección Máx/Mín con filtro de madurez
+            llantas_maduras = df_p[df_p['calc_es_madura'] & (~df_p['calc_es_asentamiento']) & (df_p['calc_proy_total'] > 0)]
+            if not llantas_maduras.empty:
+                prom_p.append(round(float(llantas_maduras['calc_proy_total'].mean())))
+                max_p.append(round(float(llantas_maduras['calc_proy_total'].max())))
+                min_p.append(round(float(llantas_maduras['calc_proy_total'].min())))
+            else:
+                con_proy = df_p[df_p['calc_proy_total'] > 0]
+                if not con_proy.empty:
+                    prom_p.append(round(float(con_proy['calc_proy_total'].mean())))
+                    max_p.append(round(float(con_proy['calc_proy_total'].max())))
+                    min_p.append(round(float(con_proy['calc_proy_total'].min())))
+                else:
+                    prom_p.append(0)
+                    max_p.append(0)
+                    min_p.append(0)
+
+            # KPI 11: Pérdida mm y Dinero
+            mm_p.append(round(float(df_p['calc_mm_perdidos'].sum()), 1))
+            dinero_p.append(round(float(df_p['calc_perdida_dinero'].sum())))
+
+            # KPI 06: Alineación % Alerta vs % OK
+            total_ll = len(df_p)
+            alerta_cnt = int((df_p['calc_mm_perdidos'] > 0).sum())
+            pct_al = round((alerta_cnt / max(1, total_ll)) * 100.0, 1)
+            pct_o = round(100.0 - pct_al, 1)
+            alerta_p.append(pct_al)
+            ok_p.append(pct_o)
+
+            # KPI 05, 07, 08: Planes de Acción
+            cambios_cnt = int((df_p['calc_p_min'] <= df_p['calc_lim_retiro']).sum())
+            duales_cnt = int(df_p['novedades'].astype(str).str.upper().str.contains('DUAL|APARE', na=False).sum())
+            rot_cnt = int(df_p['novedades'].astype(str).str.upper().str.contains('ROTAC', na=False).sum())
+            cambios_p.append(cambios_cnt)
+            duales_p.append(duales_cnt)
+            alin_p.append(alerta_cnt)
+            rot_p.append(rot_cnt)
+
+            # KPI 03: Ciclo Original vs Reencauche
+            r_cnt = int(df_p['calc_es_reencauche'].sum())
+            o_cnt = int(total_ll - r_cnt)
+            orig_p.append(o_cnt)
+            reenc_p.append(r_cnt)
+            pct_reenc_p.append(round((r_cnt / max(1, total_ll)) * 100.0, 1))
+
+            # KPI 19: FVU Bajas / Retiro
+            bajas = df_p[(df_p['calc_p_min'] <= df_p['calc_lim_retiro']) | df_p['novedades'].astype(str).str.upper().str.contains('BAJA|CAMBIO|RETIRO', na=False)]
+            if not bajas.empty:
+                fvu_max_p.append(round(float(bajas['calc_p_min'].max()), 1))
+                fvu_prom_p.append(round(float(bajas['calc_p_min'].mean()), 1))
+                fvu_min_p.append(round(float(bajas['calc_p_min'].min()), 1))
+            else:
+                fvu_max_p.append(round(float(df_p['calc_p_min'].min()), 1))
+                fvu_prom_p.append(round(float(df_p['calc_p_min'].mean()), 1))
+                fvu_min_p.append(0.0)
+
+        resultado["proyMaxMin"] = {
+            "labels": labels_p,
+            "prom": prom_p,
+            "max": max_p,
+            "min": min_p
+        }
+
+        # Desglose de Pérdida por Mes (soporte para barras comparativas si hay años distintos)
+        resultado["perdidaMes"] = {
+            "labels": labels_p,
+            "mm2025": mm_p,
+            "mm2026": mm_p,
+            "dinero": dinero_p
+        }
+
+        resultado["alineacionMes"] = {
+            "labels": labels_p,
+            "alerta": alerta_p,
+            "ok": ok_p
+        }
+
+        resultado["planesMes"] = {
+            "labels": labels_p,
+            "cambios": cambios_p,
+            "duales": duales_p,
+            "alineacion": alin_p,
+            "rotacion": rot_p
+        }
+
+        resultado["ciclo"] = {
+            "labels": labels_p,
+            "original": orig_p,
+            "reencauche": reenc_p,
+            "pctReenc": pct_reenc_p
+        }
+
+        resultado["fvuProfBaja"] = {
+            "labels": labels_p,
+            "max": fvu_max_p,
+            "prom": fvu_prom_p,
+            "min": fvu_min_p
+        }
+
+    except Exception:
+        import traceback
+        traceback.print_exc()
+
+    return resultado
+
 

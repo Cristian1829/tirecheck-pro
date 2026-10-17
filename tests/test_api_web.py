@@ -686,6 +686,110 @@ def test_roles_jefatura_y_gerencia(test_db):
     assert res_put_jefe.status_code == 200
 
 
+def test_api_diagnostico_graficos_estructura_y_blindaje_matematico(test_db, auth_client):
+    # 1. Llanta recién montada: Delta mm = 0.0, km_rodados = 0
+    database.insertar_inspeccion({
+        "fecha": "2026-03-01",
+        "cliente": "FLOTA PRUEBA BLINDAJE",
+        "subcliente": "BOGOTA",
+        "placa": "NEW-001",
+        "posicion": 1,
+        "kilometraje": 0,
+        "km_montaje": 0,
+        "tipologia": "Cabezote",
+        "marca": "MICHELIN",
+        "diseno": "X MULTI Z",
+        "dimension": "295/80R22.5",
+        "vida": "Original",
+        "prof_inicial": 16.0,
+        "prof_ext": 16.0,
+        "prof_cent": 16.0,
+        "prof_int": 16.0,
+        "psi": 110.0,
+        "precio": 1500000.0
+    })
+
+    # 2. Llanta madura: prof_inicial = 16.0, p_min = 11.5 (Delta mm = 4.5), km_rodados = 36000,
+    # desalineación p_ext = 14.0, p_cent = 13.0, p_int = 11.5 (|14.0 - 11.5| = 2.5 mm >= 2.0 mm),
+    # psi = 82 (objetivo tracción 100 psi, 82 < 90 psi -> Baja Presión)
+    database.insertar_inspeccion({
+        "fecha": "2026-03-01",
+        "cliente": "FLOTA PRUEBA BLINDAJE",
+        "subcliente": "BOGOTA",
+        "placa": "MAD-002",
+        "posicion": 3,
+        "kilometraje": 36000,
+        "km_montaje": 0,
+        "tipologia": "Cabezote",
+        "marca": "GOODYEAR",
+        "diseno": "KMAX D",
+        "dimension": "295/80R22.5",
+        "vida": "Original",
+        "prof_inicial": 16.0,
+        "prof_ext": 14.0,
+        "prof_cent": 13.0,
+        "prof_int": 11.5,
+        "psi": 82.0,
+        "precio": 1450000.0
+    })
+
+    res = auth_client.get("/api/diagnostico/graficos?cliente=FLOTA PRUEBA BLINDAJE")
+    assert res.status_code == 200
+    data = res.json()
+
+    # Comprobación de que no existen NaN ni Infinity
+    raw_str = res.text
+    assert "NaN" not in raw_str
+    assert "Infinity" not in raw_str
+
+    # Comprobación de métricas de diagnóstico
+    kpis = data["kpis"]
+    assert kpis["perdidaMm"] >= 2.5
+    assert kpis["impactoPesos"] > 0
+
+    # Comprobación de presiones: 82 PSI debe clasificarse en 'Baja Presión'
+    presiones = data["presiones"]
+    idx_baja = presiones["labels"].index("Baja Presión")
+    assert presiones["valores"][idx_baja] >= 1
+
+    # Comprobación de techos en proyMaxMin sin distorsión por división entre cero
+    proy = data["proyMaxMin"]
+    assert len(proy["labels"]) >= 1
+    assert proy["prom"][0] > 0
+    assert proy["max"][0] >= proy["prom"][0]
+    assert proy["min"][0] <= proy["prom"][0]
+
+
+def test_configuracion_licencia_light_vs_pro(test_db, auth_client):
+    cliente_test = "CLIENTE LICENCIA TEST"
+    
+    # 1. Configurar en LIGHT mediante POST /api/configuraciones-clientes/licencia
+    res_post = auth_client.post("/api/configuraciones-clientes/licencia", json={
+        "cliente": cliente_test,
+        "tipo_licencia": "LIGHT",
+        "plantilla_kpis_json": "{}"
+    })
+    assert res_post.status_code == 200
+    assert res_post.json()["status"] == "ok"
+
+    # 2. Consultar GET /api/diagnostico/graficos y verificar que retorne LIGHT
+    res_get = auth_client.get(f"/api/diagnostico/graficos?cliente={cliente_test}")
+    assert res_get.status_code == 200
+    assert res_get.json()["licencia"] == "LIGHT"
+
+    # 3. Conmutar a PRO y verificar que retorne PRO
+    res_pro = auth_client.post("/api/configuraciones-clientes/licencia", json={
+        "cliente": cliente_test,
+        "tipo_licencia": "PRO",
+        "plantilla_kpis_json": "{}"
+    })
+    assert res_pro.status_code == 200
+    res_get_pro = auth_client.get(f"/api/diagnostico/graficos?cliente={cliente_test}")
+    assert res_get_pro.status_code == 200
+    assert res_get_pro.json()["licencia"] == "PRO"
+
+
+
 
 
 

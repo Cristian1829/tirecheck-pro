@@ -63,6 +63,12 @@ class EditarUsuarioItem(BaseModel):
 class ResetPasswordItem(BaseModel):
     nueva_password: str
 
+class ConfigLicenciaClienteItem(BaseModel):
+    cliente: str
+    tipo_licencia: str = "PRO"  # "LIGHT" o "PRO"
+    plantilla_kpis_json: str = "{}"
+
+
 class InspeccionItem(BaseModel):
     fecha: str = ""
     cliente: str = ""
@@ -567,6 +573,49 @@ def api_diagnostico_matriz_semaforos(
         raise HTTPException(status_code=500, detail=f"Error al calcular matriz de semáforos: {str(e)}")
 
 
+
+@app.get("/api/diagnostico/graficos")
+def api_diagnostico_graficos(
+    cliente: str = "",
+    subcliente: str = "",
+    tipo_operacion: str = "",
+    tipologia: str = "",
+    marca: str = "",
+    dimension: str = "",
+    eje_temporal: str = "mes",  # "mes" o "insp"
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    try:
+        rol = str(usuario_actual.get("rol", "")).strip().lower()
+        user = str(usuario_actual.get("username", "")).strip().lower()
+        if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and (not cliente or cliente == "Todos"):
+                cliente = clis[0]
+            elif clis and cliente and cliente != "Todos":
+                if not any(c.lower() == cliente.strip().lower() for c in clis):
+                    raise HTTPException(status_code=403, detail="No tiene permisos para ver los gráficos de este cliente")
+
+        filtros = {
+            "cliente": "" if cliente == "Todos" else cliente,
+            "subcliente": "" if subcliente == "Todos" else subcliente,
+            "tipo_operacion": "" if tipo_operacion == "Todos" else tipo_operacion,
+            "tipologia": "" if tipologia == "Todos" else tipologia,
+            "marca": "" if marca == "Todos" else marca,
+            "dimension": "" if dimension == "Todos" else dimension,
+            "eje_temporal": eje_temporal,
+            "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
+        }
+        datos = database.obtener_datos_graficos_diagnostico(filtros)
+        return sanitizar_nativos(datos)
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error al calcular gráficos de diagnóstico: {str(e)}")
+
+
 @app.get("/api/diagnostico/exportar-excel")
 def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
@@ -966,6 +1015,13 @@ def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(r
     if not ok:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
     return sanitizar_nativos({"status": "ok", "mensaje": "Marca desvinculada del cliente"})
+
+@app.post("/api/configuraciones-clientes/licencia")
+def api_guardar_licencia_cliente(item: ConfigLicenciaClienteItem, admin: dict = Depends(requerir_admin)):
+    ok = database.guardar_licencia_cliente(item.cliente, item.tipo_licencia, item.plantilla_kpis_json)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Error al guardar la configuración de licencia")
+    return sanitizar_nativos({"status": "ok"})
 
 @app.get("/api/valores-campo")
 def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", todas: bool = False, usuario_actual: dict = Depends(obtener_usuario_actual)):
