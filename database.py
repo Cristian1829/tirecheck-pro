@@ -241,6 +241,14 @@ def inicializar_bd():
             """, (hash_password('admin123'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,catalogos')
+            """, (hash_password('1234'),))
+            cursor.execute("""
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis')
+            """, (hash_password('1234'),))
+            cursor.execute("""
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
                 VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis')
             """, (hash_password('1234'),))
         else:
@@ -249,6 +257,21 @@ def inicializar_bd():
             for u_id, u_pwd in cursor.fetchall():
                 if u_pwd and not str(u_pwd).startswith("pbkdf2_sha256$"):
                     cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (hash_password(u_pwd), u_id))
+
+            # Asegurar usuarios base de jefatura y gerencia si aún no existen
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE LOWER(username) = 'jefe1'")
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("""
+                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                    VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,catalogos')
+                """, (hash_password('1234'),))
+
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE LOWER(username) = 'gerencia1'")
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("""
+                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                    VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis')
+                """, (hash_password('1234'),))
 
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
@@ -2782,17 +2805,30 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
 
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
-    Retorna la lista de vistas autorizadas.
-    REGLA: Solo el admin puede acceder a 'basedatos'.
-    Los inspectores pueden acceder a 'patio', 'diagnostico', 'kpis' y 'catalogos' (en modo consulta).
+    Retorna la lista de vistas autorizadas según el rol:
+    - admin: Todas las 5 vistas ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos').
+    - jefatura: Por defecto todas ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos') o las asignadas.
+    - gerencia: Por defecto ('basedatos', 'diagnostico', 'kpis'). Opcionalmente 'patio' o 'catalogos'.
+    - inspector: 'patio', 'diagnostico', 'kpis', 'catalogos' (REGLA: NUNCA 'basedatos').
     """
-    if str(rol).strip().lower() == 'admin':
+    rol_clean = str(rol).strip().lower()
+    if rol_clean in ('admin', 'administrador'):
         return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+
     if not vistas:
-        return ['patio', 'diagnostico', 'kpis', 'catalogos']
+        if rol_clean in ('jefatura', 'jefe', 'jefe_llantas'):
+            return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+        elif rol_clean in ('gerencia', 'gerente'):
+            return ['basedatos', 'diagnostico', 'kpis']
+        else:
+            return ['patio', 'diagnostico', 'kpis', 'catalogos']
+
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
-    # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos
-    permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'catalogos')]
+    if rol_clean in ('jefatura', 'jefe', 'jefe_llantas', 'gerencia', 'gerente'):
+        permitidas = [v for v in raw if v in ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos')]
+    else:
+        # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos
+        permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'catalogos')]
     return permitidas if permitidas else ['patio']
 
 def autenticar_usuario(username, password):

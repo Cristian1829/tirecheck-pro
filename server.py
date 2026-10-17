@@ -219,12 +219,47 @@ def obtener_usuario_actual(request: Request) -> dict:
     
     return usr
 
+def es_rol_admin(rol: str, user: str = "") -> bool:
+    r = str(rol or "").strip().lower()
+    u = str(user or "").strip().lower()
+    return r in ("admin", "administrador") or u == "admin"
+
+def es_rol_jefatura(rol: str) -> bool:
+    r = str(rol or "").strip().lower()
+    return r in ("jefatura", "jefe", "jefe_llantas")
+
+def es_rol_gerencia(rol: str) -> bool:
+    r = str(rol or "").strip().lower()
+    return r in ("gerencia", "gerente")
+
 def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     user = str(usuario_actual.get("username", "")).strip().lower()
-    if rol not in ("admin", "administrador") and user != "admin":
+    if not es_rol_admin(rol, user):
         raise HTTPException(status_code=403, detail="Se requieren permisos de administrador")
     return usuario_actual
+
+def requerir_admin_o_jefatura(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not (es_rol_admin(rol, user) or es_rol_jefatura(rol)):
+        raise HTTPException(status_code=403, detail="Se requieren permisos de jefatura o administrador")
+    return usuario_actual
+
+def resolver_filtro_usuario_inspecciones(usuario_actual: dict, usuario_param: str = "") -> Optional[str]:
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if es_rol_admin(rol, user):
+        return usuario_param if usuario_param else None
+    if es_rol_jefatura(rol) or es_rol_gerencia(rol):
+        if usuario_param:
+            return usuario_param
+        elif usuario_actual.get("cliente_asignado"):
+            return usuario_actual["username"]
+        else:
+            return None
+    return usuario_actual["username"]
+
 
 # ==========================================
 # RUTAS PRINCIPALES Y SERVIDOR
@@ -274,10 +309,7 @@ def sanitizar_nativos(obj):
 
 @app.get("/api/inspecciones")
 def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin":
-        filtro_u = usuario_actual["username"]
-    else:
-        filtro_u = usuario if usuario else None
+    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
     return sanitizar_nativos(df.to_dict(orient="records"))
 
@@ -319,10 +351,7 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
 
 @app.get("/api/inspecciones/exportar-excel")
 def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin":
-        filtro_u = usuario_actual["username"]
-    else:
-        filtro_u = usuario if usuario else None
+    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
@@ -337,6 +366,9 @@ def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = De
 
 @app.post("/api/inspecciones/importar-excel")
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if es_rol_gerencia(rol):
+        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede importar inspecciones")
     filename = file.filename or ""
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
@@ -372,8 +404,9 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
         if not row:
             raise HTTPException(status_code=404, detail="Inspección no encontrada")
         
-        # Validar permisos de inspector para uno o varios clientes asignados
-        if usuario_actual.get("rol") != "admin":
+        # Validar permisos de clientes asignados
+        rol = str(usuario_actual.get("rol", "")).strip().lower()
+        if not es_rol_admin(rol, usuario_actual.get("username")):
             clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
             if clis and row[2] and not any(c.lower() == str(row[2]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
@@ -385,12 +418,15 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
 
 @app.post("/api/inspecciones")
 def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if es_rol_gerencia(rol):
+        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede registrar inspecciones")
     datos = item.model_dump()
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
 
     # Aislamiento por rol y asignación de clientes
-    if usuario_actual.get("rol") != "admin":
+    if not es_rol_admin(rol, usuario_actual.get("username")):
         datos["usuario_registro"] = usuario_actual["username"]
         clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
         if clis:
@@ -410,10 +446,13 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
 
 @app.put("/api/inspecciones/{inspeccion_id}")
 def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if es_rol_gerencia(rol):
+        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede modificar inspecciones")
     datos = item.model_dump()
     
-    # Validar permisos de inspector
-    if usuario_actual.get("rol") != "admin":
+    # Validar permisos de asignación de cliente
+    if not es_rol_admin(rol, usuario_actual.get("username")):
         with database.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
@@ -441,7 +480,10 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
 
 @app.delete("/api/inspecciones/{inspeccion_id}")
 def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin":
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if es_rol_gerencia(rol):
+        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede eliminar inspecciones")
+    if not es_rol_admin(rol, usuario_actual.get("username")):
         with database.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
@@ -463,10 +505,7 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
 @app.get("/api/diagnostico")
 def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     try:
-        if usuario_actual.get("rol") != "admin":
-            filtro_u = usuario_actual["username"]
-        else:
-            filtro_u = usuario if usuario else None
+        filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
         df = database.obtener_todas_inspecciones(usuario=filtro_u)
         analisis = database.analizar_inspecciones_df(df)
         analisis = analisis.fillna("")
@@ -487,15 +526,15 @@ def api_diagnostico_matriz_semaforos(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     try:
-        if usuario_actual.get("rol") != "admin":
-            filtro_u = usuario_actual["username"]
+        rol = str(usuario_actual.get("rol", "")).strip().lower()
+        user = str(usuario_actual.get("username", "")).strip().lower()
+        if not es_rol_admin(rol, user):
             clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
             if clis and cliente and cliente != "Todos":
                 if not any(c.lower() == cliente.strip().lower() for c in clis):
                     raise HTTPException(status_code=403, detail="No tiene permisos para ver la matriz de este cliente")
-        else:
-            filtro_u = usuario if usuario else None
 
+        filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
         df = database.obtener_todas_inspecciones(usuario=filtro_u)
         if df.empty:
             return {
@@ -526,10 +565,7 @@ def api_diagnostico_matriz_semaforos(
 
 @app.get("/api/diagnostico/exportar-excel")
 def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    if usuario_actual.get("rol") != "admin":
-        filtro_u = usuario_actual["username"]
-    else:
-        filtro_u = usuario if usuario else None
+    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df_insp = database.obtener_todas_inspecciones(usuario=filtro_u)
     df_analisis = database.analizar_inspecciones_df(df_insp)
     buf = io.BytesIO()
@@ -576,11 +612,14 @@ def api_kpis_llantas(
     }
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     user = str(usuario_actual.get("username", "")).strip().lower()
-    es_admin = (rol == "admin" or rol == "administrador" or user == "admin")
-    if not es_admin:
+    es_admin = es_rol_admin(rol, user)
+    es_privilegiado = es_admin or es_rol_jefatura(rol) or es_rol_gerencia(rol)
+    if not es_privilegiado:
         filtros['usuario'] = usuario_actual["username"]
     elif usuario:
         filtros['usuario'] = usuario
+    elif usuario_actual.get("cliente_asignado"):
+        filtros['usuario'] = usuario_actual["username"]
 
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
@@ -612,11 +651,14 @@ def api_exportar_kpis_excel(
     }
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     user = str(usuario_actual.get("username", "")).strip().lower()
-    es_admin = (rol == "admin" or rol == "administrador" or user == "admin")
-    if not es_admin:
+    es_admin = es_rol_admin(rol, user)
+    es_privilegiado = es_admin or es_rol_jefatura(rol) or es_rol_gerencia(rol)
+    if not es_privilegiado:
         filtros['usuario'] = usuario_actual["username"]
     elif usuario:
         filtros['usuario'] = usuario
+    elif usuario_actual.get("cliente_asignado"):
+        filtros['usuario'] = usuario_actual["username"]
 
     data = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     df = pd.DataFrame(data)
@@ -651,11 +693,13 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
 
 @app.get("/api/informe-pdf-consolidado")
 def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", operacion: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
     filtro_u = None
-    if usuario_actual.get("rol") != "admin":
-        filtro_u = usuario_actual["username"]
+    if not es_rol_admin(rol, user):
         clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
         if clis:
+            filtro_u = usuario_actual["username"]
             if cliente and cliente != "Todos":
                 if not any(c.lower() == cliente.strip().lower() for c in clis):
                     raise HTTPException(status_code=403, detail="No tiene permisos para generar informe de este cliente")
@@ -700,17 +744,17 @@ def api_obtener_operaciones(usuario_actual: dict = Depends(obtener_usuario_actua
     return database.obtener_todas_operaciones()
 
 @app.post("/api/operaciones")
-def api_crear_operacion(item: NuevaOperacionItem, admin: dict = Depends(requerir_admin)):
+def api_crear_operacion(item: NuevaOperacionItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     nom = database.guardar_operacion(item.nombre)
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/operaciones")
-def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin)):
+def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     ok = database.actualizar_operacion(item.nombre_antiguo, item.nombre_nuevo)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/operaciones")
-def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin)):
+def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin_o_jefatura)):
     ok = database.eliminar_operacion(nombre)
     return {"status": "ok" if ok else "error"}
 
@@ -719,7 +763,7 @@ def api_obtener_tipologias(usuario_actual: dict = Depends(obtener_usuario_actual
     return database.obtener_todas_tipologias()
 
 @app.post("/api/tipologias")
-def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir_admin)):
+def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     nom = database.guardar_tipologia(
         nombre=item.nombre,
         descripcion=item.descripcion,
@@ -736,7 +780,7 @@ def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
-def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin)):
+def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
         ok = database.actualizar_tipologia(
             nombre_antiguo=item.nombre_antiguo,
@@ -757,7 +801,7 @@ def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requer
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/tipologias")
-def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin)):
+def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
         ok = database.eliminar_tipologia(nombre)
         return {"status": "ok" if ok else "error"}
@@ -775,12 +819,12 @@ def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.obtener_catalogo_modelos()
 
 @app.post("/api/modelos-llanta")
-def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin)):
+def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     ok = database.guardar_modelo_llanta(item.tipo_llanta, item.marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
     return {"status": "ok" if ok else "error"}
 
 @app.put("/api/modelos-llanta")
-def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin)):
+def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
         res = database.actualizar_modelo_llanta(
             modelo_id=item.id,
@@ -797,7 +841,7 @@ def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/modelos-llanta/{modelo_id}")
-def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin)):
+def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
         ok = database.eliminar_modelo_llanta(modelo_id)
         return {"status": "ok" if ok else "error"}
@@ -814,7 +858,7 @@ def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_u
     return database.buscar_modelos_llantas_filtro(query)
 
 @app.get("/api/configuraciones-clientes")
-def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin)):
+def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin_o_jefatura)):
     return database.obtener_todas_configuraciones_clientes()
 
 @app.get("/api/limite-cliente")
@@ -823,7 +867,7 @@ def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje
     return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim}
 
 @app.post("/api/configuraciones-clientes")
-def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
+def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     ok = database.guardar_limite_retiro_cliente(
         cliente=item.cliente,
         limite_retiro_mm=item.limite_retiro_mm,
@@ -834,7 +878,7 @@ def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Dep
     return {"status": "ok" if ok else "error"}
 
 @app.put("/api/configuraciones-clientes")
-def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict = Depends(requerir_admin)):
+def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
         ok = database.actualizar_limite_retiro_cliente(
             limite_id=item.id,
@@ -849,7 +893,7 @@ def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict 
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.put("/api/configuraciones-clientes/{limite_id}")
-def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteItem, admin: dict = Depends(requerir_admin)):
+def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
         ok = database.actualizar_limite_retiro_cliente(
             limite_id=limite_id,
@@ -864,7 +908,7 @@ def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteI
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/configuraciones-clientes/{limite_id}")
-def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin)):
+def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
     ok = database.eliminar_limite_retiro_cliente(limite_id)
     return {"status": "ok" if ok else "error"}
 

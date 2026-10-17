@@ -615,5 +615,72 @@ def test_api_usuario_actual_sincroniza_flotas_actualizadas(test_db, auth_client)
     assert u2["clientes_asignados"] == ["AXXOM", "DEMO FLOTA"]
 
 
+def test_roles_jefatura_y_gerencia(test_db):
+    # 1. Login con jefe1 y gerencia1 creados automáticamente
+    res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "1234"})
+    assert res_login_jefe.status_code == 200
+    token_jefe = res_login_jefe.json()["token"]
+    u_jefe = res_login_jefe.json()["usuario"]
+    assert u_jefe["rol"] == "jefatura"
+    assert "basedatos" in u_jefe["vistas_permitidas"]
+    assert "catalogos" in u_jefe["vistas_permitidas"]
+
+    res_login_gere = client.post("/api/login", json={"username": "gerencia1", "password": "1234"})
+    assert res_login_gere.status_code == 200
+    token_gere = res_login_gere.json()["token"]
+    u_gere = res_login_gere.json()["usuario"]
+    assert u_gere["rol"] == "gerencia"
+    assert "basedatos" in u_gere["vistas_permitidas"]
+    assert "kpis" in u_gere["vistas_permitidas"]
+
+    client_jefe = TestClient(server.app)
+    client_jefe.headers.update({"Authorization": f"Bearer {token_jefe}"})
+
+    client_gere = TestClient(server.app)
+    client_gere.headers.update({"Authorization": f"Bearer {token_gere}"})
+
+    # 2. Jefatura puede gestionar catálogos (ej: crear tipología)
+    res_tipo = client_jefe.post("/api/tipologias", json={"nombre": "C3R2 TEST", "ejes": 5, "esquema": "2-4-4-4-4"})
+    assert res_tipo.status_code == 200
+
+    # 3. Gerencia NO puede gestionar catálogos (debe dar 403)
+    res_tipo_gere = client_gere.post("/api/tipologias", json={"nombre": "C4 TEST", "ejes": 4, "esquema": "2-4-4-4"})
+    assert res_tipo_gere.status_code == 403
+
+    # 4. Ni Jefatura ni Gerencia pueden gestionar usuarios (debe dar 403)
+    assert client_jefe.get("/api/usuarios").status_code == 403
+    assert client_gere.get("/api/usuarios").status_code == 403
+
+    # 5. Ambos tienen acceso de lectura a /api/inspecciones
+    assert client_jefe.get("/api/inspecciones").status_code == 200
+    assert client_gere.get("/api/inspecciones").status_code == 200
+
+    # 6. Gerencia NO puede crear ni modificar ni eliminar inspecciones
+    insp_payload = {
+        "fecha": "2026-10-16",
+        "cliente": "FLOTA TEST",
+        "placa": "GER001",
+        "posicion": 1,
+        "prof_ext": 12.0,
+        "prof_cent": 12.0,
+        "prof_int": 12.0,
+        "presion_psi": 105.0
+    }
+    assert client_gere.post("/api/inspecciones", json=insp_payload).status_code == 403
+    assert client_gere.put("/api/inspecciones/1", json=insp_payload).status_code == 403
+    assert client_gere.delete("/api/inspecciones/1").status_code == 403
+
+    # 7. Jefatura SÍ puede crear inspecciones
+    res_insp_jefe = client_jefe.post("/api/inspecciones", json=insp_payload)
+    assert res_insp_jefe.status_code == 200
+    id_creado = res_insp_jefe.json()["id"]
+
+    # 8. Jefatura SÍ puede editar inspecciones
+    insp_payload["prof_ext"] = 11.5
+    res_put_jefe = client_jefe.put(f"/api/inspecciones/{id_creado}", json=insp_payload)
+    assert res_put_jefe.status_code == 200
+
+
+
 
 

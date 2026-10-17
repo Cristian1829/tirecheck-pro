@@ -894,11 +894,11 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="navegarTab('patio')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
+          <button type="button" id="btnNuevaInspBD" onclick="navegarTab('patio')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
             <i class="fa-solid fa-plus"></i>
             <span>Nueva Inspección</span>
           </button>
-          <button type="button" onclick="abrirModalImportarExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
+          <button type="button" id="btnImportarExcelBD" onclick="abrirModalImportarExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
             <i class="fa-solid fa-file-excel"></i>
             <span>Importar Excel</span>
           </button>
@@ -1849,6 +1849,8 @@
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="usr_rol" onchange="alCambiarRolUsuarioModal('nuevo')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
+            <option value="jefatura">Jefatura de Llantas (Técnico, Control & Límites)</option>
+            <option value="gerencia">Gerencia (Ejecutivo, KPIs & Reportes)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
@@ -1941,6 +1943,8 @@
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="edit_usr_rol" onchange="alCambiarRolUsuarioModal('editar')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
+            <option value="jefatura">Jefatura de Llantas (Técnico, Control & Límites)</option>
+            <option value="gerencia">Gerencia (Ejecutivo, KPIs & Reportes)</option>
             <option value="admin">Administrador Total</option>
           </select>
         </div>
@@ -2452,6 +2456,19 @@
       const user = String(usuarioActual.username || '').trim().toLowerCase();
       return rol === 'admin' || rol === 'administrador' || user === 'admin';
     }
+    function esUsuarioJefatura() {
+      if (!usuarioActual) return false;
+      const rol = String(usuarioActual.rol || '').trim().toLowerCase();
+      return rol === 'jefatura' || rol === 'jefe' || rol === 'jefe_llantas';
+    }
+    function esUsuarioGerencia() {
+      if (!usuarioActual) return false;
+      const rol = String(usuarioActual.rol || '').trim().toLowerCase();
+      return rol === 'gerencia' || rol === 'gerente';
+    }
+    function esAdminOJefatura() {
+      return esUsuarioAdmin() || esUsuarioJefatura();
+    }
     let esquemaTipologiaCache = null;
     let sincronizandoCola = false;
     datosInspeccionAnterior = null;
@@ -2469,8 +2486,9 @@
         return;
       }
 
-      // Regla estricta: Solo el admin puede ver e ingresar a la Base de Inspecciones
-      if (tabId === 'basedatos' && !esUsuarioAdmin()) {
+      // Regla: Inspectores no pueden ver ni ingresar a Base de Datos (solo admin, jefatura y gerencia)
+      const puedeVerBD = esUsuarioAdmin() || esUsuarioJefatura() || esUsuarioGerencia();
+      if (tabId === 'basedatos' && !puedeVerBD) {
         tabId = 'patio';
       }
 
@@ -2483,7 +2501,7 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis'] : ['patio', 'diagnostico', 'kpis', 'catalogos']);
         }
         if (!vistasPermitidas.includes(tabId)) {
           mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
@@ -2518,7 +2536,7 @@
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
       else if (tabId === 'catalogos') {
-        if (!esUsuarioAdmin()) {
+        if (!esAdminOJefatura()) {
           mostrarSubtabCat('operaciones');
         }
         cargarGestionCatalogos();
@@ -2630,12 +2648,21 @@
       if (!usuarioActual) return;
       const lbl = document.getElementById('lblUsuarioActivo');
       if (lbl) {
-        const rolBadge = usuarioActual.rol ? `[${usuarioActual.rol.toUpperCase()}]` : '';
-        lbl.textContent = `${usuarioActual.nombre_completo} ${rolBadge}`;
+        const rol = String(usuarioActual.rol || '').trim().toLowerCase();
+        let rolTag = 'INSPECTOR';
+        if (rol === 'admin' || rol === 'administrador') rolTag = 'ADMIN';
+        else if (rol === 'jefatura' || rol === 'jefe' || rol === 'jefe_llantas') rolTag = 'JEFATURA LLANTAS';
+        else if (rol === 'gerencia' || rol === 'gerente') rolTag = 'GERENCIA';
+        lbl.textContent = `${usuarioActual.nombre_completo} [${rolTag}]`;
       }
 
       // Control de visibilidad de pestañas de navegación según permisos del perfil
       const esAdmin = esUsuarioAdmin();
+      const esJefe = esUsuarioJefatura();
+      const esGere = esUsuarioGerencia();
+      const puedeVerBD = esAdmin || esJefe || esGere;
+      const puedeGestionarCat = esAdmin || esJefe;
+
       let vistasPermitidas = [];
       if (esAdmin) {
         vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
@@ -2646,15 +2673,15 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis'] : ['patio', 'diagnostico', 'kpis', 'catalogos']);
         }
       }
 
       ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
         if (btnNav) {
-          // REGLA: solo el admin puede ver la pestaña base de inspecciones
-          if (!esAdmin && tab === 'basedatos') {
+          // REGLA: inspectores no pueden ver la pestaña base de inspecciones
+          if (!puedeVerBD && tab === 'basedatos') {
             btnNav.classList.add('hidden');
             btnNav.style.display = 'none';
           } else if (vistasPermitidas.includes(tab)) {
@@ -2667,21 +2694,27 @@
         }
       });
 
-      // REGLA: En Catálogos, los demás usuarios solo pueden ver pero no agregar
+      // REGLA: Admin y Jefatura pueden agregar/editar operaciones, tipologías y modelos en catálogos
       const btnOp = document.getElementById('btnNuevaOperacionCat');
-      if (btnOp) btnOp.classList.toggle('hidden', !esAdmin);
+      if (btnOp) btnOp.classList.toggle('hidden', !puedeGestionarCat);
       const btnTip = document.getElementById('btnNuevaTipologiaCat');
-      if (btnTip) btnTip.classList.toggle('hidden', !esAdmin);
+      if (btnTip) btnTip.classList.toggle('hidden', !puedeGestionarCat);
       const btnMod = document.getElementById('btnNuevoModeloCat');
-      if (btnMod) btnMod.classList.toggle('hidden', !esAdmin);
+      if (btnMod) btnMod.classList.toggle('hidden', !puedeGestionarCat);
 
-      // REGLA: no pueden ver los límites por cliente, solo puede el admin
+      // REGLA: Admin y Jefatura de Llantas pueden ver y configurar límites de retiro por cliente/eje
       const subtabCli = document.getElementById('subtab-btn-clientes');
-      if (subtabCli) subtabCli.classList.toggle('hidden', !esAdmin);
+      if (subtabCli) subtabCli.classList.toggle('hidden', !puedeGestionarCat);
 
-      // REGLA: solo el admin puede ver y crear nuevos usuarios
+      // REGLA: solo el superadmin puede ver y crear nuevos usuarios
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
+
+      // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear ni importar inspecciones.
+      const btnNuevaInspBD = document.getElementById('btnNuevaInspBD');
+      if (btnNuevaInspBD) btnNuevaInspBD.classList.toggle('hidden', esGere);
+      const btnImportarExcelBD = document.getElementById('btnImportarExcelBD');
+      if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', esGere);
 
       // Configurar estado de clientes asignados en la vista de Patio
       configurarClientesUsuarioEnInspeccion();
@@ -2999,12 +3032,14 @@
                   <i class="fa-solid fa-camera"></i>
                 </button>
               ` : ''}
-              <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+              ${esAdminOJefatura() ? `
+                <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
             </td>
             <td class="p-2.5 font-mono text-slate-600">${r.fecha || '-'}</td>
             <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
@@ -3983,7 +4018,11 @@
     // ==========================================
     function mostrarSubtabCat(subtab) {
       const esAdmin = esUsuarioAdmin();
-      if (!esAdmin && (subtab === 'clientes' || subtab === 'usuarios')) {
+      const puedeVerClientes = esAdminOJefatura();
+      if (subtab === 'usuarios' && !esAdmin) {
+        subtab = 'operaciones';
+      }
+      if (subtab === 'clientes' && !puedeVerClientes) {
         subtab = 'operaciones';
       }
       const tabs = ['operaciones', 'tipologias', 'modelos', 'clientes', 'usuarios'];
@@ -3999,9 +4038,9 @@
       if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
 
       // Cargar los datos de la subpestaña seleccionada
-      if (subtab === 'usuarios') {
+      if (subtab === 'usuarios' && esAdmin) {
         cargarUsuariosCat();
-      } else if (subtab === 'clientes' && esAdmin) {
+      } else if (subtab === 'clientes' && puedeVerClientes) {
         cargarClientesLimCat();
       } else if (subtab === 'operaciones') {
         cargarOperacionesCat();
@@ -4016,8 +4055,10 @@
       cargarOperacionesCat();
       cargarTipologiasCat();
       cargarModelosCat();
-      if (esUsuarioAdmin()) {
+      if (esAdminOJefatura()) {
         cargarClientesLimCat();
+      }
+      if (esUsuarioAdmin()) {
         cargarUsuariosCat();
       }
     }
@@ -4027,11 +4068,11 @@
       if (res.ok) {
         const ops = await res.json();
         const box = document.getElementById('listaOperacionesCat');
-        const esAdmin = esUsuarioAdmin();
+        const puedeEditar = esAdminOJefatura();
         box.innerHTML = ops.map(op => `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <span class="font-bold text-slate-800">${op}</span>
-            ${esAdmin ? `
+            ${puedeEditar ? `
               <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
             ` : ''}
           </div>
@@ -4059,7 +4100,7 @@
       if (res.ok) {
         const tips = await res.json();
         const box = document.getElementById('listaTipologiasCat');
-        const esAdmin = esUsuarioAdmin();
+        const puedeEditar = esAdminOJefatura();
         box.innerHTML = tips.map(t => {
           return `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:shadow-sm transition-all flex flex-col justify-between">
@@ -4070,7 +4111,7 @@
                 </div>
                 <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
               </div>
-              ${esAdmin ? `
+              ${puedeEditar ? `
                 <div class="pt-2 border-t border-slate-200/70 flex items-center justify-end space-x-1.5">
                   <button type="button" onclick="abrirModalEditarTipologia('${encodeURIComponent(JSON.stringify(t))}')" class="px-2.5 py-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center space-x-1 transition-all" title="Editar Tipología">
                     <i class="fa-solid fa-pen-to-square"></i>
@@ -4114,7 +4155,7 @@
       if (res.ok) {
         catalogoModelosCache = await res.json();
         const tbody = document.getElementById('tbodyModelosCat');
-        const esAdmin = esUsuarioAdmin();
+        const puedeEditar = esAdminOJefatura();
         tbody.innerHTML = catalogoModelosCache.map(m => `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-2.5 font-bold">${m.tipo_llanta}</td>
@@ -4124,7 +4165,7 @@
             <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
             <td class="p-2.5 text-slate-500">${m.descripcion || '-'}</td>
             <td class="p-2.5 text-center">
-              ${esAdmin ? `
+              ${puedeEditar ? `
                 <div class="flex items-center justify-center space-x-1">
                   <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar modelo y sincronizar prof. inicial en BD">
                     <i class="fa-solid fa-pen-to-square"></i>
@@ -4418,8 +4459,22 @@
 
     let usuariosCatCache = [];
 
+    function renderizarBadgeRol(rol) {
+      const r = String(rol || '').trim().toLowerCase();
+      if (r === 'admin' || r === 'administrador') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">ADMIN</span>`;
+      } else if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">JEFATURA LLANTAS</span>`;
+      } else if (r === 'gerencia' || r === 'gerente') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">GERENCIA</span>`;
+      } else {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">INSPECTOR</span>`;
+      }
+    }
+
     function renderizarBadgesVistas(vistasVal, rol) {
-      if (rol === 'admin') {
+      const r = String(rol || '').trim().toLowerCase();
+      if (r === 'admin' || r === 'administrador') {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
       }
       let vistas = [];
@@ -4428,13 +4483,19 @@
       } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
         vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       } else {
-        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
+        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis'];
+        else vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
       }
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
+      if (vistas.includes('basedatos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Base Datos</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
       if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
-      if (vistas.includes('catalogos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Catálogos (Lectura)</span>');
+      if (vistas.includes('catalogos')) {
+        const catText = (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') ? 'Catálogos & Límites' : 'Catálogos (Lectura)';
+        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">${catText}</span>`);
+      }
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
 
@@ -4500,7 +4561,7 @@
               <td class="p-2.5 font-black text-slate-900">${u.username}</td>
               <td class="p-2.5 font-bold">${u.nombre_completo}</td>
               <td class="p-2.5 text-center font-bold uppercase text-[10px]">
-                <span class="px-2 py-0.5 rounded-full ${String(u.rol).toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">${u.rol}</span>
+                ${renderizarBadgeRol(u.rol)}
               </td>
               <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
               <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
@@ -4563,19 +4624,46 @@
     // Helpers de Control de Vistas y Asignación de Clientes en Modales
     function alCambiarRolUsuarioModal(modo) {
       const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
-      const rol = document.getElementById(`${pfx}rol`).value;
+      const rol = String(document.getElementById(`${pfx}rol`).value || '').trim().toLowerCase();
       const chkBD = document.getElementById(`${pfx}vista_basedatos`);
       const chkCat = document.getElementById(`${pfx}vista_catalogos`);
+      const chkPatio = document.getElementById(`${pfx}vista_patio`);
+      const chkDiag = document.getElementById(`${pfx}vista_diagnostico`);
+      const chkKpis = document.getElementById(`${pfx}vista_kpis`);
       const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
       const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
 
       if (rol === 'admin') {
         // Para admin: acceso total a las 5 vistas
-        document.getElementById(`${pfx}vista_patio`).checked = true;
-        document.getElementById(`${pfx}vista_diagnostico`).checked = true;
-        document.getElementById(`${pfx}vista_kpis`).checked = true;
+        if (chkPatio) chkPatio.checked = true;
+        if (chkDiag) chkDiag.checked = true;
+        if (chkKpis) chkKpis.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+      } else if (rol === 'jefatura') {
+        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Catálogos)
+        if (chkPatio) chkPatio.checked = true;
+        if (chkDiag) chkDiag.checked = true;
+        if (chkKpis) chkKpis.checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+      } else if (rol === 'gerencia') {
+        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs)
+        if (chkPatio) chkPatio.checked = false;
+        if (chkDiag) chkDiag.checked = true;
+        if (chkKpis) chkKpis.checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = false; chkCat.disabled = false; }
         if (lblBD) {
           lblBD.classList.remove('text-slate-400', 'bg-slate-100');
           lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
@@ -4680,11 +4768,12 @@
       }
       const vistas = [];
       if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
+      if (document.getElementById(`${pfx}vista_basedatos`)?.checked && (rol === 'jefatura' || rol === 'gerencia')) vistas.push('basedatos');
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
       if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
-      // Seguridad inquebrantable: NUNCA añadir basedatos para no-admin
-      if (vistas.length === 0) vistas.push('patio');
+      // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
+      if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
       return vistas.join(',');
     }
 
@@ -4883,6 +4972,8 @@
         optAdminEdit.disabled = !esUsuarioAdmin();
       }
 
+      alCambiarRolUsuarioModal('editar');
+
       // Vistas permitidas
       let vistas = [];
       if (Array.isArray(u.vistas_permitidas)) {
@@ -4893,6 +4984,9 @@
         vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
       }
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
+      if (document.getElementById('edit_usr_vista_basedatos')) {
+        document.getElementById('edit_usr_vista_basedatos').checked = vistas.includes('basedatos') && u.rol !== 'inspector';
+      }
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
       document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
@@ -4911,7 +5005,6 @@
         document.getElementById('edit_usr_todas_flotas').checked = false;
       }
       toggleClientesTodosModal('editar');
-      alCambiarRolUsuarioModal('editar');
       poblarListaCheckboxesClientesModal('editar', clis);
 
       const modal = document.getElementById('modalEditarUsuario');
