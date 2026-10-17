@@ -962,17 +962,25 @@
         </div>
 
         <!-- Fila 2: Selectores Especializados en Cuadrícula Responsiva -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs pt-1 border-t border-slate-200/60">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs pt-1 border-t border-slate-200/60">
           
           <!-- 1. Cliente / Empresa -->
           <div class="space-y-1">
             <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Cliente:</label>
-            <select id="filtroBDCliente" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
+            <select id="filtroBDCliente" onchange="onCambioFiltroBDCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todos</option>
             </select>
           </div>
 
-          <!-- 2. Operación -->
+          <!-- 2. Sede / Subcliente -->
+          <div class="space-y-1">
+            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Sede:</label>
+            <select id="filtroBDSede" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
+              <option value="TODOS">Todas las Sedes</option>
+            </select>
+          </div>
+
+          <!-- 3. Operación -->
           <div class="space-y-1">
             <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Operación:</label>
             <select id="filtroBDOperacion" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
@@ -2847,6 +2855,38 @@
       if (operaciones.includes(valOp)) selOp.value = valOp;
       if (tipologias.includes(valTip)) selTip.value = valTip;
       if (marcas.includes(valMar)) selMar.value = valMar;
+
+      actualizarCombosSedesBD();
+    }
+
+    function actualizarCombosSedesBD() {
+      const selCli = document.getElementById('filtroBDCliente');
+      const selSede = document.getElementById('filtroBDSede');
+      if (!selSede) return;
+
+      const valCli = selCli ? (selCli.value || 'TODOS') : 'TODOS';
+      const valSedeActual = selSede.value || 'TODOS';
+
+      const sedes = Array.from(new Set(
+        cacheTodasInspecciones
+          .filter(r => (valCli === 'TODOS' || (r.cliente || '').toLowerCase() === valCli.toLowerCase()))
+          .map(r => (r.subcliente || '').trim())
+          .filter(Boolean)
+      )).sort();
+
+      selSede.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
+        selSede.value = valSedeActual;
+      } else {
+        selSede.value = 'TODOS';
+      }
+    }
+
+    function onCambioFiltroBDCliente() {
+      actualizarCombosSedesBD();
+      filtrarTablaBD();
     }
 
     let paginaActualBD = 1;
@@ -2875,6 +2915,7 @@
       const fDesde = document.getElementById('filtroBDFechaDesde')?.value || '';
       const fHasta = document.getElementById('filtroBDFechaHasta')?.value || '';
       const cli = document.getElementById('filtroBDCliente')?.value || 'TODOS';
+      const sede = document.getElementById('filtroBDSede')?.value || 'TODOS';
       const op = document.getElementById('filtroBDOperacion')?.value || 'TODOS';
       const tip = document.getElementById('filtroBDTipologia')?.value || 'TODOS';
       const marca = document.getElementById('filtroBDMarca')?.value || 'TODOS';
@@ -2887,6 +2928,7 @@
       if (fDesde) filtrosActivos++;
       if (fHasta) filtrosActivos++;
       if (cli !== 'TODOS') filtrosActivos++;
+      if (sede !== 'TODOS') filtrosActivos++;
       if (op !== 'TODOS') filtrosActivos++;
       if (tip !== 'TODOS') filtrosActivos++;
       if (marca !== 'TODOS') filtrosActivos++;
@@ -2924,6 +2966,9 @@
 
         // 3. Cliente
         if (cli !== 'TODOS' && (r.cliente || '').toLowerCase() !== cli.toLowerCase()) return false;
+
+        // 3.1 Sede (subcliente)
+        if (sede !== 'TODOS' && (r.subcliente || '').toLowerCase() !== sede.toLowerCase()) return false;
 
         // 4. Operación
         if (op !== 'TODOS' && (r.tipo_operacion || '').toLowerCase() !== op.toLowerCase()) return false;
@@ -3210,11 +3255,13 @@
       setVal('filtroBDFechaDesde', '');
       setVal('filtroBDFechaHasta', '');
       setVal('filtroBDCliente', 'TODOS');
+      setVal('filtroBDSede', 'TODOS');
       setVal('filtroBDOperacion', 'TODOS');
       setVal('filtroBDTipologia', 'TODOS');
       setVal('filtroBDMarca', 'TODOS');
       setVal('filtroBDVida', 'TODOS');
       setVal('filtroBDSemaforo', 'TODOS');
+      actualizarCombosSedesBD();
       filtrarTablaBD();
       mostrarToast('Filtros de búsqueda restablecidos.');
     }

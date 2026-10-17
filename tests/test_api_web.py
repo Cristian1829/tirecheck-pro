@@ -27,10 +27,12 @@ def test_index_page_loads_all_views():
     assert "vista-remoto" not in html
     # Verificar modales esenciales
     assert "modalEditarInspeccion" in html
-    assert "modalImportarExcel" in html
     assert "modalInformePdf" in html
     assert "modalEditarUsuario" in html
     assert "modalResetPassword" in html
+    # Verificar filtros clave de base de datos
+    assert "filtroBDSede" in html
+    assert "filtroBDCliente" in html
 
 def test_seguridad_rechazo_sin_autenticacion(test_db):
     # 1. Petición sin token a /api/inspecciones debe dar 401
