@@ -2510,7 +2510,7 @@
 
         <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
           <button type="button" onclick="cerrarModalMoverBodega()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancelar</button>
-          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Ejecutar Movimiento</button>
+          <button type="submit" id="btnSubmitMoverBodega" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Ejecutar Movimiento</button>
         </div>
       </form>
     </div>
@@ -11198,6 +11198,7 @@
         }
 
         const costoTotalFormateado = formatearPesosBodega(ll.costo_acumulado_total || ll.costo_ciclo_actual || 0);
+        const serialSeguro = String(ll.numero_interno || '').replace(/'/g, "\\'");
 
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
@@ -11223,13 +11224,13 @@
             <td class="p-3 text-center">${renderizarBadgeGarantia(ll.estado_garantia)}</td>
             <td class="p-3 text-center">
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalMoverBodega('${ll.numero_interno}')" title="Mover a otra bodega o vehículo" class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200">
+                <button type="button" onclick="abrirModalMoverBodega('${serialSeguro}')" title="Mover a otra bodega o vehículo" class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200">
                   <i class="fa-solid fa-arrows-turn-to-dots"></i>
                 </button>
-                <button type="button" onclick="abrirModalGarantia('${ll.numero_interno}')" title="Gestionar Garantía" class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200">
+                <button type="button" onclick="abrirModalGarantia('${serialSeguro}')" title="Gestionar Garantía" class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200">
                   <i class="fa-solid fa-shield-halved"></i>
                 </button>
-                <button type="button" onclick="abrirModalKardex('${ll.numero_interno}')" title="Ver Kardex y Hoja de Vida" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300">
+                <button type="button" onclick="abrirModalKardex('${serialSeguro}')" title="Ver Kardex y Hoja de Vida" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300">
                   <i class="fa-solid fa-timeline"></i>
                 </button>
               </div>
@@ -11305,34 +11306,142 @@
       }
     }
 
+    function nombreUbicacionBodega(cod) {
+      const m = {
+        'BODEGA_1_NUEVAS': 'Bodega 1 (Stock Nuevas)',
+        'BODEGA_2_RECAMBIO': 'Bodega 2 (Recambio Patio)',
+        'BODEGA_3_REENCAUCHE': 'Bodega 3 (En Planta Reencauche)',
+        'BODEGA_4_REENCAUCHADAS': 'Bodega 4 (Reencauchada Lista)',
+        'BODEGA_5_REPARACION': 'Bodega 5 (En Reparación / Taller)',
+        'BODEGA_6_FVU': 'Bodega 6 (Fin de Vida Útil / Desecho)',
+        'BODEGA_7_CHATARRIZADA': 'Bodega 7 (Chatarrizada)',
+        'MONTADA_OPERACION': 'Montada en Operación'
+      };
+      return m[cod] || cod || 'Bodega';
+    }
+
+    function poblarDestinosPermitidos(llanta) {
+      const selDestino = document.getElementById('mover_bodega_destino');
+      if (!selDestino) return;
+      selDestino.innerHTML = '';
+
+      const origen = llanta ? llanta.ubicacion_bodega : '';
+      const btnSubmit = document.getElementById('btnSubmitMoverBodega');
+
+      if (origen === 'BODEGA_7_CHATARRIZADA') {
+        selDestino.disabled = true;
+        if (btnSubmit) btnSubmit.classList.add('hidden');
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '⛔ Llanta Chatarrizada (Baja Definitiva Inmutable)';
+        selDestino.appendChild(opt);
+        return;
+      }
+
+      selDestino.disabled = false;
+      if (btnSubmit) btnSubmit.classList.remove('hidden');
+
+      const destinos = [];
+      if (origen === 'BODEGA_1_NUEVAS') {
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Montar en Vehículo (Operación rodante)' });
+        destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Trasladar a Bodega 2 (Recambio en Patio)' });
+        destinos.push({ val: 'BODEGA_5_REPARACION', text: '🔧 Enviar a Bodega 5 (Reparación Mayor / Taller)' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Dar de Baja a Bodega 6 (Garantía / Daño Mayor)' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrizar en Bodega 7 (Acta Ambiental)' });
+      } else if (origen === 'MONTADA_OPERACION') {
+        destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Desmontar a Bodega 2 (Recambio en Patio)' });
+        destinos.push({ val: 'BODEGA_3_REENCAUCHE', text: '🏭 Desmontar y Enviar a Bodega 3 (Planta Reencauche)' });
+        destinos.push({ val: 'BODEGA_5_REPARACION', text: '🔧 Desmontar a Bodega 5 (Taller / Vulcanizadora)' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Desmontar por Fin de Vida Útil / Baja (Bodega 6)' });
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🔀 Rotar de Posición o Cambiar de Vehículo' });
+      } else if (origen === 'BODEGA_2_RECAMBIO') {
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Montar en Vehículo (Operación rodante)' });
+        destinos.push({ val: 'BODEGA_3_REENCAUCHE', text: '🏭 Enviar a Bodega 3 (Planta de Reencauche)' });
+        destinos.push({ val: 'BODEGA_5_REPARACION', text: '🔧 Enviar a Bodega 5 (Taller / Vulcanizadora)' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Dar de Baja a Bodega 6 (Fin de Vida / Daño)' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrizar en Bodega 7 (Acta Ambiental)' });
+      } else if (origen === 'BODEGA_3_REENCAUCHE') {
+        destinos.push({ val: 'BODEGA_4_REENCAUCHADAS', text: '✨ Retorno de Reencauche a Bodega 4 (Nueva Vida)' });
+        destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Retorno sin Reencauchar a Bodega 2 (Patio)' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Carcasa Rechazada por Planta (Baja Bodega 6)' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrizar en Bodega 7 (Acta Ambiental)' });
+      } else if (origen === 'BODEGA_4_REENCAUCHADAS') {
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Montar en Vehículo (Tracción o Remolque)' });
+        destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Mover a Bodega 2 (Recambio en Patio)' });
+        destinos.push({ val: 'BODEGA_5_REPARACION', text: '🔧 Enviar a Bodega 5 (Taller / Vulcanizadora)' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Dar de Baja a Bodega 6 (Desecho FVU)' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrizar en Bodega 7 (Acta Ambiental)' });
+      } else if (origen === 'BODEGA_5_REPARACION') {
+        destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Retorno Reparada a Bodega 2 (Recambio Patio)' });
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Retorno Reparada Directo a Vehículo' });
+        destinos.push({ val: 'BODEGA_3_REENCAUCHE', text: '🏭 Enviar a Bodega 3 (Planta Reencauche)' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Declarar Irreparable / Baja Bodega 6' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrizar en Bodega 7 (Acta Ambiental)' });
+      } else if (origen === 'BODEGA_6_FVU') {
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrización Final con Acta Ambiental (Bodega 7)' });
+        destinos.push({ val: 'BODEGA_3_REENCAUCHE', text: '🏭 Reconsiderar Carcasa para Envío a Reencauche' });
+      } else {
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Montar en Vehículo (Operación)' });
+        destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Bodega 2: Recambio en Patio' });
+        destinos.push({ val: 'BODEGA_3_REENCAUCHE', text: '🏭 Bodega 3: Planta de Reencauche' });
+        destinos.push({ val: 'BODEGA_4_REENCAUCHADAS', text: '✨ Bodega 4: Reencauchada Lista' });
+        destinos.push({ val: 'BODEGA_5_REPARACION', text: '🔧 Bodega 5: Taller / Vulcanizadora' });
+        destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Bodega 6: Fin de Vida Útil' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Bodega 7: Chatarrización' });
+      }
+
+      destinos.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.val;
+        opt.textContent = d.text;
+        selDestino.appendChild(opt);
+      });
+    }
+
     function abrirModalMoverBodega(numeroInterno) {
-      const llanta = cacheInventarioBodegas.find(l => l.numero_interno === numeroInterno);
+      const cleanNum = String(numeroInterno || '').trim().toUpperCase();
+      let llanta = cacheInventarioBodegas.find(l => String(l.numero_interno || '').trim().toUpperCase() === cleanNum);
       if (!llanta) {
         mostrarToast('❌ Llanta no encontrada en inventario', true);
         return;
       }
 
-      document.getElementById('mover_cliente').value = llanta.cliente;
-      document.getElementById('mover_numero_interno').value = llanta.numero_interno;
-      document.getElementById('lblMoverDetalleLlanta').textContent = `${llanta.numero_interno} (${llanta.marca} ${llanta.diseno} - ${llanta.dimension}) | Ubicación actual: ${llanta.ubicacion_bodega}`;
+      if (document.getElementById('mover_cliente')) document.getElementById('mover_cliente').value = llanta.cliente || '';
+      if (document.getElementById('mover_numero_interno')) document.getElementById('mover_numero_interno').value = llanta.numero_interno || '';
+      if (document.getElementById('lblMoverDetalleLlanta')) {
+        document.getElementById('lblMoverDetalleLlanta').textContent = `${llanta.numero_interno} (${llanta.marca || ''} ${llanta.diseno || ''} - ${llanta.dimension || ''}) | Ubicación actual: ${nombreUbicacionBodega(llanta.ubicacion_bodega)}`;
+      }
 
       // Configurar fecha de hoy
-      document.getElementById('mover_fecha').value = new Date().toISOString().split('T')[0];
+      if (document.getElementById('mover_fecha')) {
+        document.getElementById('mover_fecha').value = new Date().toISOString().split('T')[0];
+      }
 
-      // Resetear campos
-      document.getElementById('mover_placa').value = llanta.placa_actual || '';
-      document.getElementById('mover_posicion').value = llanta.posicion_actual || '';
-      document.getElementById('mover_proveedor').value = llanta.proveedor_actual || '';
-      document.getElementById('mover_soporte').value = '';
+      // Resetear campos de forma segura y completa
+      if (document.getElementById('mover_placa')) document.getElementById('mover_placa').value = llanta.placa_actual || '';
+      if (document.getElementById('mover_posicion')) document.getElementById('mover_posicion').value = llanta.posicion_actual || '';
+      if (document.getElementById('mover_km_vehiculo')) document.getElementById('mover_km_vehiculo').value = '';
+      if (document.getElementById('mover_prof_montaje')) {
+        document.getElementById('mover_prof_montaje').value = (llanta.prof_actual_min != null) ? Number(llanta.prof_actual_min).toFixed(1) : '';
+      }
       if (document.getElementById('mover_prof_recambio')) {
         document.getElementById('mover_prof_recambio').value = (llanta.prof_actual_min != null) ? Number(llanta.prof_actual_min).toFixed(1) : '8.0';
       }
+      if (document.getElementById('mover_motivo_recambio')) document.getElementById('mover_motivo_recambio').value = '';
+      if (document.getElementById('mover_planta_reencauche')) document.getElementById('mover_planta_reencauche').value = llanta.proveedor_actual || '';
+      if (document.getElementById('mover_remision_reencauche')) document.getElementById('mover_remision_reencauche').value = '';
+      if (document.getElementById('mover_banda_reen')) document.getElementById('mover_banda_reen').value = llanta.banda_reen || '';
+      if (document.getElementById('mover_nueva_prof')) document.getElementById('mover_nueva_prof').value = '20.0';
+      if (document.getElementById('mover_costo_reencauche')) document.getElementById('mover_costo_reencauche').value = '';
+      if (document.getElementById('mover_proveedor_rep')) document.getElementById('mover_proveedor_rep').value = llanta.proveedor_actual || '';
+      if (document.getElementById('mover_motivo_reparacion')) document.getElementById('mover_motivo_reparacion').value = '';
+      if (document.getElementById('mover_costo_reparacion')) document.getElementById('mover_costo_reparacion').value = '';
+      if (document.getElementById('mover_causal_fvu')) document.getElementById('mover_causal_fvu').value = 'Corte en costado';
       if (document.getElementById('mover_prof_fvu')) {
         document.getElementById('mover_prof_fvu').value = (llanta.prof_actual_min != null) ? Number(llanta.prof_actual_min).toFixed(1) : '3.0';
       }
-      if (document.getElementById('mover_motivo_reparacion')) {
-        document.getElementById('mover_motivo_reparacion').value = '';
-      }
+      if (document.getElementById('mover_acta_ambiental')) document.getElementById('mover_acta_ambiental').value = '';
+      if (document.getElementById('mover_gestor_ambiental')) document.getElementById('mover_gestor_ambiental').value = '';
 
       // Poblar datalist con placas de flota disponibles
       const dlPlacas = document.getElementById('datalistPlacasBodega');
@@ -11362,10 +11471,12 @@
         });
       }
 
-      // Sugerencia inteligente de destino según estado actual
-      const esMontada = (llanta.ubicacion_bodega === 'MONTADA_OPERACION');
-      const destinoSugerido = esMontada ? 'BODEGA_2_RECAMBIO' : 'MONTADA_OPERACION';
-      document.getElementById('mover_bodega_destino').value = destinoSugerido;
+      // Poblar opciones de destino permitidas según las reglas de negocio
+      poblarDestinosPermitidos(llanta);
+
+      // Adaptar campos y alertas dinámicas según la opción seleccionada por defecto
+      const selDestino = document.getElementById('mover_bodega_destino');
+      const destinoSugerido = selDestino ? selDestino.value : '';
       adaptarCamposModalMover(destinoSugerido, llanta);
 
       document.getElementById('modalMoverBodega').classList.remove('hidden');
@@ -11379,29 +11490,77 @@
 
     function adaptarCamposModalMover(destino, llanta = null) {
       const serial = document.getElementById('mover_numero_interno')?.value || '';
-      const ll = llanta || cacheInventarioBodegas.find(l => l.numero_interno === serial);
+      const cleanNum = String(serial || '').trim().toUpperCase();
+      const ll = llanta || cacheInventarioBodegas.find(l => String(l.numero_interno || '').trim().toUpperCase() === cleanNum);
 
-      document.getElementById('boxMoverMontaje').classList.toggle('hidden', destino !== 'MONTADA_OPERACION');
+      if (document.getElementById('boxMoverMontaje')) {
+        document.getElementById('boxMoverMontaje').classList.toggle('hidden', destino !== 'MONTADA_OPERACION');
+      }
       if (document.getElementById('boxMoverRecambio')) {
         document.getElementById('boxMoverRecambio').classList.toggle('hidden', destino !== 'BODEGA_2_RECAMBIO');
       }
       if (document.getElementById('boxMoverPlanta')) {
         document.getElementById('boxMoverPlanta').classList.toggle('hidden', destino !== 'BODEGA_3_REENCAUCHE');
       }
-      document.getElementById('boxMoverReencauche').classList.toggle('hidden', destino !== 'BODEGA_4_REENCAUCHADAS');
-      document.getElementById('boxMoverReparacion').classList.toggle('hidden', destino !== 'BODEGA_5_REPARACION');
-      document.getElementById('boxMoverFVU').classList.toggle('hidden', destino !== 'BODEGA_6_FVU');
-      document.getElementById('boxMoverChatarra').classList.toggle('hidden', destino !== 'BODEGA_7_CHATARRIZADA');
+      if (document.getElementById('boxMoverReencauche')) {
+        document.getElementById('boxMoverReencauche').classList.toggle('hidden', destino !== 'BODEGA_4_REENCAUCHADAS');
+      }
+      if (document.getElementById('boxMoverReparacion')) {
+        document.getElementById('boxMoverReparacion').classList.toggle('hidden', destino !== 'BODEGA_5_REPARACION');
+      }
+      if (document.getElementById('boxMoverFVU')) {
+        document.getElementById('boxMoverFVU').classList.toggle('hidden', destino !== 'BODEGA_6_FVU');
+      }
+      if (document.getElementById('boxMoverChatarra')) {
+        document.getElementById('boxMoverChatarra').classList.toggle('hidden', destino !== 'BODEGA_7_CHATARRIZADA');
+      }
 
       const alertaBox = document.getElementById('alertaContextualMover');
       if (alertaBox) {
-        alertaBox.classList.remove('hidden', 'bg-blue-50', 'text-blue-900', 'border-blue-200', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-200', 'bg-amber-50', 'text-amber-900', 'border-amber-200');
+        alertaBox.classList.remove('hidden', 'bg-blue-50', 'text-blue-900', 'border-blue-200', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-200', 'bg-amber-50', 'text-amber-900', 'border-amber-200', 'border-amber-300', 'bg-rose-50', 'text-rose-900', 'border-rose-200', 'border-rose-300', 'bg-indigo-50', 'text-indigo-900', 'border-indigo-200', 'bg-teal-50', 'text-teal-900', 'border-teal-200', 'bg-slate-100', 'text-slate-800', 'border-slate-300');
+
+        if (ll && ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
+          alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-slate-100 text-slate-800 border-slate-300 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-ban text-rose-600 text-base"></i><span>Esta carcasa tiene disposición final ambiental con acta de chatarrización inmutable. No puede trasladarse a ninguna otra bodega.</span>';
+          return;
+        }
+
         if (destino === 'MONTADA_OPERACION') {
-          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-blue-50 text-blue-900 border-blue-200 flex items-center space-x-2';
-          alertaBox.innerHTML = '<i class="fa-solid fa-truck text-blue-600"></i><span>Si la posición en el vehículo ya tiene una llanta montada, el sistema la desmontará automáticamente a Bodega 2 (Recambio). Recuerda que no se permiten reencauches en dirección.</span>';
-        } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
-          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
-          alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y pasará a inventario de bodega.</span>`;
+          const esReen = ll && ((ll.vida_actual && String(ll.vida_actual).toUpperCase() !== 'ORIGINAL') || (Number(ll.num_reencauches) > 0) || (ll.ubicacion_bodega === 'BODEGA_4_REENCAUCHADAS'));
+          if (esReen) {
+            alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-amber-50 text-amber-900 border-amber-300 flex items-start space-x-2';
+            alertaBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i><div><span><strong>CANDADO VIAL ACTIVO:</strong> Llanta reencauchada (<strong>' + (ll.vida_actual || 'R1') + '</strong>). Solo permitida en ejes de <strong>Tracción o Remolque (Posiciones 3 a 24)</strong>. Las posiciones direccionales (1 y 2) están bloqueadas por seguridad.</span></div>';
+          } else {
+            alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-blue-50 text-blue-900 border-blue-200 flex items-center space-x-2';
+            alertaBox.innerHTML = '<i class="fa-solid fa-truck text-blue-600"></i><span>Si la posición seleccionada ya tiene una llanta montada, el sistema la desmontará automáticamente a Bodega 2 (Recambio).</span>';
+          }
+        } else if (destino === 'BODEGA_2_RECAMBIO') {
+          const profActual = (ll && ll.prof_actual_min != null) ? Number(ll.prof_actual_min) : 8.0;
+          if (profActual <= 3.0) {
+            alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-rose-50 text-rose-900 border-rose-300 flex items-start space-x-2';
+            alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + profActual.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
+          } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
+            alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
+            alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y quedará disponible en patio para recambio o apareo dual.</span>`;
+          } else {
+            alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
+            alertaBox.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i><span>La llanta estará en stock reutilizable en patio para servicio rápido.</span>';
+          }
+        } else if (destino === 'BODEGA_3_REENCAUCHE') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-indigo-50 text-indigo-900 border-indigo-200 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-industry text-indigo-600"></i><span>Envío de carcasa a la planta de reencauche para renovación de banda.</span>';
+        } else if (destino === 'BODEGA_4_REENCAUCHADAS') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-teal-50 text-teal-900 border-teal-200 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-sparkles text-teal-600"></i><span>Retorno de planta: la llanta inicia ciclo renovado (' + (ll && ll.num_reencauches ? 'R' + (Number(ll.num_reencauches) + 1) : 'R1') + ') con costo de reencauche y nueva profundidad.</span>';
+        } else if (destino === 'BODEGA_5_REPARACION') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-amber-50 text-amber-900 border-amber-200 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-wrench text-amber-600"></i><span>Traslado a vulcanizadora/taller para reparación mayor o parche seccional.</span>';
+        } else if (destino === 'BODEGA_6_FVU') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-rose-50 text-rose-900 border-rose-200 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-600"></i><span>Dar de baja en pila de desecho. Si el desgaste fue menor al 30%, se marcará automáticamente para gestión de garantía con fábrica.</span>';
+        } else if (destino === 'BODEGA_7_CHATARRIZADA') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-slate-100 text-slate-800 border-slate-300 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-recycle text-slate-700"></i><span>Disposición ambiental con acta de chatarrización. Este movimiento es definitivo e inmutable.</span>';
         } else {
           alertaBox.classList.add('hidden');
         }
@@ -11411,9 +11570,18 @@
     async function guardarMovimientoBodega(e) {
       e.preventDefault();
       const destino = document.getElementById('mover_bodega_destino').value;
+      const serial = document.getElementById('mover_numero_interno').value;
+      const cleanNum = String(serial || '').trim().toUpperCase();
+      const ll = cacheInventarioBodegas.find(l => String(l.numero_interno || '').trim().toUpperCase() === cleanNum);
+
+      if (!destino) {
+        mostrarToast('⚠️ Debe seleccionar un destino válido para la llanta', true);
+        return;
+      }
+
       const payload = {
         cliente: document.getElementById('mover_cliente').value,
-        numero_interno: document.getElementById('mover_numero_interno').value,
+        numero_interno: serial,
         bodega_destino: destino,
         fecha_movimiento: document.getElementById('mover_fecha').value,
         proveedor: '',
@@ -11432,8 +11600,16 @@
         payload.km_vehiculo = parseFloat(document.getElementById('mover_km_vehiculo').value) || 0.0;
         const pM = document.getElementById('mover_prof_montaje');
         if (pM && pM.value) payload.prof_min_mm = parseFloat(pM.value);
+
         if (!payload.placa || payload.posicion <= 0) {
-          mostrarToast('⚠️ Para montar llanta debes ingresar placa y posición', true);
+          mostrarToast('⚠️ Para montar llanta debes ingresar placa y posición válida (>= 1)', true);
+          return;
+        }
+
+        // Validación preventiva en cliente del candado vial
+        const esReen = ll && ((ll.vida_actual && String(ll.vida_actual).toUpperCase() !== 'ORIGINAL') || (Number(ll.num_reencauches) > 0) || (ll.ubicacion_bodega === 'BODEGA_4_REENCAUCHADAS'));
+        if (esReen && (payload.posicion === 1 || payload.posicion === 2)) {
+          mostrarToast('⛔ CANDADO VIAL: No se permite montar llantas reencauchadas en posición direccional (1 o 2). Elige posición 3 en adelante.', true);
           return;
         }
       } else if (destino === 'BODEGA_2_RECAMBIO') {
@@ -11441,23 +11617,35 @@
         if (pRec && pRec.value) payload.prof_min_mm = parseFloat(pRec.value);
         const motRec = document.getElementById('mover_motivo_recambio');
         if (motRec && motRec.value) payload.causal_o_motivo = motRec.value.trim();
+
+        // Alerta preventiva si prof <= 3.0 mm
+        const profCheck = (payload.prof_min_mm != null) ? payload.prof_min_mm : ((ll && ll.prof_actual_min != null) ? Number(ll.prof_actual_min) : 8.0);
+        if (profCheck <= 3.0) {
+          mostrarToast('⛔ La profundidad (' + profCheck.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). No puede enviarse a Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).', true);
+          return;
+        }
       } else if (destino === 'BODEGA_3_REENCAUCHE') {
         payload.proveedor = document.getElementById('mover_planta_reencauche')?.value.trim() || '';
         payload.documento_soporte = document.getElementById('mover_remision_reencauche')?.value.trim() || '';
       } else if (destino === 'BODEGA_4_REENCAUCHADAS') {
-        payload.banda_reen = document.getElementById('mover_banda_reen').value.trim().toUpperCase();
-        payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof').value) || 20.0;
-        payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reencauche').value) || 0.0;
+        payload.banda_reen = document.getElementById('mover_banda_reen')?.value.trim().toUpperCase() || '';
+        payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof')?.value) || 20.0;
+        payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reencauche')?.value) || 0.0;
+        payload.prof_min_mm = payload.nueva_prof_inicial;
+        if (!payload.banda_reen) {
+          mostrarToast('⚠️ Ingrese el nombre de la banda de reencauche aplicada', true);
+          return;
+        }
       } else if (destino === 'BODEGA_5_REPARACION') {
         payload.proveedor = document.getElementById('mover_proveedor_rep')?.value.trim() || '';
         const motRep = document.getElementById('mover_motivo_reparacion');
         if (motRep) payload.causal_o_motivo = motRep.value.trim();
-        payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reparacion').value) || 0.0;
+        payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reparacion')?.value) || 0.0;
       } else if (destino === 'BODEGA_6_FVU') {
-        payload.causal_o_motivo = document.getElementById('mover_causal_fvu').value;
-        payload.prof_min_mm = parseFloat(document.getElementById('mover_prof_fvu').value) || 0.0;
+        payload.causal_o_motivo = document.getElementById('mover_causal_fvu')?.value || 'Fin de Vida Útil';
+        payload.prof_min_mm = parseFloat(document.getElementById('mover_prof_fvu')?.value) || 0.0;
       } else if (destino === 'BODEGA_7_CHATARRIZADA') {
-        payload.documento_soporte = document.getElementById('mover_acta_ambiental').value.trim();
+        payload.documento_soporte = document.getElementById('mover_acta_ambiental')?.value.trim() || '';
         payload.proveedor = document.getElementById('mover_gestor_ambiental')?.value.trim() || '';
       }
 
@@ -11487,7 +11675,8 @@
     }
 
     function abrirModalGarantia(numeroInterno) {
-      const llanta = cacheInventarioBodegas.find(l => l.numero_interno === numeroInterno);
+      const cleanNum = String(numeroInterno || '').trim().toUpperCase();
+      const llanta = cacheInventarioBodegas.find(l => String(l.numero_interno || '').trim().toUpperCase() === cleanNum);
       if (!llanta) {
         mostrarToast('❌ Llanta no encontrada', true);
         return;
@@ -11495,7 +11684,7 @@
 
       document.getElementById('garantia_cliente').value = llanta.cliente;
       document.getElementById('garantia_numero_interno').value = llanta.numero_interno;
-      document.getElementById('lblGarantiaDetalleLlanta').textContent = `${llanta.numero_interno} (${llanta.marca} ${llanta.dimension}) | Estado actual: ${llanta.estado_garantia || 'No Aplica'}`;
+      document.getElementById('lblGarantiaDetalleLlanta').textContent = `${llanta.numero_interno} (${llanta.marca || ''} ${llanta.dimension || ''}) | Estado actual: ${llanta.estado_garantia || 'No Aplica'}`;
 
       document.getElementById('garantia_estado').value = (llanta.estado_garantia && llanta.estado_garantia !== 'No Aplica') ? llanta.estado_garantia : 'Posible Garantía';
       document.getElementById('garantia_valor_reconocido').value = llanta.valor_reconocido_garantia || 0;
@@ -11546,16 +11735,17 @@
     }
 
     async function abrirModalKardex(numeroInterno) {
-      const llanta = cacheInventarioBodegas.find(l => l.numero_interno === numeroInterno);
+      const cleanNum = String(numeroInterno || '').trim().toUpperCase();
+      const llanta = cacheInventarioBodegas.find(l => String(l.numero_interno || '').trim().toUpperCase() === cleanNum);
       const cliente = llanta ? llanta.cliente : (document.getElementById('selBodegaCliente')?.value || '');
-      
-      document.getElementById('lblKardexTitulo').textContent = `Trazabilidad completa: Llanta ${numeroInterno}`;
-      
+
+      document.getElementById('lblKardexTitulo').textContent = `Trazabilidad completa: Llanta ${cleanNum}`;
+
       const boxResumen = document.getElementById('boxKardexResumenLlanta');
       if (boxResumen && llanta) {
         boxResumen.innerHTML = `
-          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca} ${llanta.dimension}</strong></div>
-          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual} (${llanta.ubicacion_bodega})</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca || '-'} ${llanta.dimension || ''}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual || 'Original'} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? Number(llanta.prof_actual_min).toFixed(1) + ' mm' : '-'}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Costo Total Acum.:</span><strong class="text-emerald-700">${formatearPesosBodega(llanta.costo_acumulado_total || 0)}</strong></div>
         `;
