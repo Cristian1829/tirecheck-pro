@@ -778,8 +778,72 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
                 ))
             else:
                 ubi = row_m[1]
-                # Si está montada en operación, refrescar sus métricas
-                if ubi == 'MONTADA_OPERACION':
+                # Si otra llanta ocupaba esa misma posición en el vehículo, desmontarla a Bodega 2
+                if placa and pos > 0:
+                    c.execute("""
+                        SELECT id, numero_interno, prof_actual_min, vida_actual FROM llantas_maestro
+                        WHERE UPPER(cliente) = ? AND ubicacion_bodega = 'MONTADA_OPERACION'
+                          AND UPPER(placa_actual) = ? AND posicion_actual = ?
+                          AND UPPER(numero_interno) != ?
+                    """, (cli, placa, pos, serial))
+                    ocupantes = c.fetchall()
+                    for o_id, o_serial, o_prof, o_vida in ocupantes:
+                        c.execute("""
+                            UPDATE llantas_maestro SET
+                                ubicacion_bodega = 'BODEGA_2_RECAMBIO',
+                                estado_actual = 'En Stock - Reutilizable',
+                                placa_actual = '',
+                                posicion_actual = 0,
+                                fecha_actualizacion = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                        """, (o_id,))
+                        c.execute("""
+                            INSERT INTO kardex_movimientos_llanta (
+                                fecha_movimiento, cliente, subcliente, numero_interno,
+                                bodega_origen, bodega_destino, tipo_movimiento,
+                                placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo,
+                                causal_o_motivo, usuario_registro
+                            ) VALUES (?, ?, ?, ?, 'MONTADA_OPERACION', 'BODEGA_2_RECAMBIO', 'DESMONTE_RECAMBIO',
+                                      ?, ?, ?, ?, ?, ?, 'sistema')
+                        """, (
+                            fecha_insp or datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d'),
+                            cli, subc, o_serial, placa, pos, o_vida, o_prof, km_act,
+                            f"Desmonte automático por inspección de {serial} en pos {pos}"
+                        ))
+
+                if ubi != 'MONTADA_OPERACION':
+                    # Transición automática: llanta de bodega que fue montada en patio
+                    c.execute("""
+                        UPDATE llantas_maestro SET
+                            ubicacion_bodega = 'MONTADA_OPERACION',
+                            estado_actual = 'Montada en Vehículo',
+                            placa_actual = ?,
+                            posicion_actual = ?,
+                            prof_ext = ?,
+                            prof_cent = ?,
+                            prof_int = ?,
+                            prof_actual_min = ?,
+                            psi_actual = ?,
+                            km_actual_vehiculo = ?,
+                            km_recorridos_ciclo = ?,
+                            reservada_para_placa = NULL,
+                            reservada_posicion = NULL,
+                            fecha_actualizacion = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (placa, pos, pe, pc, pi, p_min, psi, km_act, km_rod, row_m[0]))
+                    c.execute("""
+                        INSERT INTO kardex_movimientos_llanta (
+                            fecha_movimiento, cliente, subcliente, numero_interno,
+                            bodega_origen, bodega_destino, tipo_movimiento,
+                            placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo,
+                            causal_o_motivo, usuario_registro
+                        ) VALUES (?, ?, ?, ?, ?, 'MONTADA_OPERACION', 'MONTAJE',
+                                  ?, ?, ?, ?, ?, 'Montaje detectado en inspección de patio', 'sistema')
+                    """, (
+                        fecha_insp or datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d'),
+                        cli, subc, serial, ubi, placa, pos, vida, p_min, km_act
+                    ))
+                else:
                     c.execute("""
                         UPDATE llantas_maestro SET
                             placa_actual = ?,
@@ -4444,6 +4508,10 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         # 3. Envío o Retorno de Reparación Mayor (Bodega 5)
         elif bodega_destino == 'BODEGA_5_REPARACION':
             tipo_mov = 'ENVIO_REPARACION'
+            placa_act = ''
+            pos_act = 0
+            if prof_min_in is not None:
+                p_act = to_float(prof_min_in)
             if costo_asoc > 0:
                 costo_rep_ciclo += costo_asoc
                 costo_acum += costo_asoc
@@ -4480,6 +4548,8 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             acta_amb = doc_soporte or f"ACTA-{datetime.now(BOGOTA_TZ).strftime('%Y%m')}-{numero_interno}"
             f_disp = fecha_mov
             proveedor_act = proveedor or cur.get('proveedor_actual', '')
+            placa_act = ''
+            pos_act = 0
 
         # 6. Montaje en Vehículo (Hacia MONTADA_OPERACION)
         elif bodega_destino == 'MONTADA_OPERACION':
@@ -4489,6 +4559,41 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             if prof_min_in is not None:
                 p_act = to_float(prof_min_in)
 
+            # Regla de Integridad de Flota: Si ya existía otra llanta en esa misma posición del vehículo,
+            # se desmonta automáticamente hacia BODEGA_2_RECAMBIO para no tener duplicidad en la posición.
+            if placa_act and pos_act > 0:
+                cursor.execute("""
+                    SELECT id, numero_interno, prof_actual_min, vida_actual FROM llantas_maestro
+                    WHERE UPPER(cliente) = ? AND ubicacion_bodega = 'MONTADA_OPERACION'
+                      AND UPPER(placa_actual) = ? AND posicion_actual = ?
+                      AND UPPER(numero_interno) != ?
+                """, (cliente, placa_act, pos_act, numero_interno))
+                llantas_ocupantes = cursor.fetchall()
+                for o_id, o_serial, o_prof, o_vida in llantas_ocupantes:
+                    cursor.execute("""
+                        UPDATE llantas_maestro SET
+                            ubicacion_bodega = 'BODEGA_2_RECAMBIO',
+                            estado_actual = 'En Stock - Reutilizable',
+                            placa_actual = '',
+                            posicion_actual = 0,
+                            fecha_actualizacion = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (o_id,))
+                    cursor.execute("""
+                        INSERT INTO kardex_movimientos_llanta (
+                            fecha_movimiento, cliente, subcliente, numero_interno,
+                            bodega_origen, bodega_destino, tipo_movimiento,
+                            placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo,
+                            causal_o_motivo, documento_soporte, usuario_registro
+                        ) VALUES (?, ?, ?, ?, 'MONTADA_OPERACION', 'BODEGA_2_RECAMBIO', 'DESMONTE_RECAMBIO',
+                                  ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        fecha_mov, cliente, subcliente, o_serial,
+                        placa_act, pos_act, o_vida, o_prof, km_veh,
+                        f"Desmonte automático por montaje de llanta {numero_interno} en pos {pos_act}",
+                        doc_soporte, user
+                    ))
+
         # 7. Desmonte hacia Bodega 2 (Recambio)
         elif bodega_destino == 'BODEGA_2_RECAMBIO':
             tipo_mov = 'DESMONTE_RECAMBIO'
@@ -4496,6 +4601,9 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             pos_act = 0
             if prof_min_in is not None:
                 p_act = to_float(prof_min_in)
+        else:
+            placa_act = ''
+            pos_act = 0
 
         estado_nuevo = estados_nombre.get(bodega_destino, 'En Stock')
 
@@ -4526,6 +4634,8 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
                 estado_garantia = ?,
                 numero_acta_ambiental = ?,
                 fecha_disposicion = ?,
+                reservada_para_placa = CASE WHEN ? = 'MONTADA_OPERACION' THEN NULL ELSE reservada_para_placa END,
+                reservada_posicion = CASE WHEN ? = 'MONTADA_OPERACION' THEN NULL ELSE reservada_posicion END,
                 fecha_actualizacion = CURRENT_TIMESTAMP
             WHERE id = ?
         """, (
@@ -4534,7 +4644,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             p_ini, p_act, p_act, p_act, p_act,
             costo_ciclo, costo_rep_ciclo, costo_acum, km_ciclo,
             f_envio_planta, proveedor_act, causal_baja, mm_perd, dinero_perd,
-            estado_gar, acta_amb, f_disp, cur['id']
+            estado_gar, acta_amb, f_disp, bodega_destino, bodega_destino, cur['id']
         ))
 
         # Registrar en Kardex
@@ -4699,6 +4809,18 @@ def listar_inventario_bodegas(filtros: dict = None) -> dict:
         cursor.execute(query, params)
         cols = [d[0] for d in cursor.description]
         llantas = [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+        hoy = date.today()
+        for item in llantas:
+            item["reservada_para_dual"] = bool(item.get("reservada_para_placa"))
+            if item.get("fecha_envio_planta"):
+                try:
+                    f_env = datetime.strptime(str(item["fecha_envio_planta"])[:10], '%Y-%m-%d').date()
+                    item["dias_en_planta"] = max(0, (hoy - f_env).days)
+                except Exception:
+                    item["dias_en_planta"] = 0
+            else:
+                item["dias_en_planta"] = 0
 
     return {
         "total": len(llantas),

@@ -260,3 +260,239 @@ def test_calculo_mrp_kpi20_y_par_direccional(test_db, auth_client):
 
     # Compra nuevas direccional = max(0, Demanda Dir (2) - B1 Nuevas (1)) = 1
     assert item_mrp["compra_nuevas_direccional"] == 1
+
+
+def test_montaje_desmonte_automatico_conflicto_posicion(test_db, auth_client):
+    """
+    Valida la regla de integridad de flota:
+    Si una llanta A está en TRK-100 Posición 1 y se monta una llanta B en esa misma posición,
+    la llanta A debe desmontarse automáticamente hacia Bodega 2 (Recambio) con su evento en el Kardex.
+    """
+    cliente = "FLOTA COHERENCIA AUTOMATICA"
+    placa = "TRK-100"
+    pos = 1
+
+    # 1. Dar de alta y montar la llanta A
+    auth_client.post("/api/bodegas/alta", json={
+        "cliente": cliente,
+        "numero_interno": "LL-A-ORIGINAL",
+        "ubicacion_bodega": "BODEGA_1_NUEVAS",
+        "marca": "BRIDGESTONE",
+        "dimension": "295/80R22.5"
+    })
+    auth_client.post("/api/bodegas/movimiento", json={
+        "cliente": cliente,
+        "numero_interno": "LL-A-ORIGINAL",
+        "bodega_destino": "MONTADA_OPERACION",
+        "placa": placa,
+        "posicion": pos,
+        "prof_min_mm": 12.0
+    })
+
+    # Verificar que Llanta A está montada
+    inv_a = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q=LL-A-ORIGINAL").json()["llantas"][0]
+    assert inv_a["ubicacion_bodega"] == "MONTADA_OPERACION"
+    assert inv_a["placa_actual"] == placa
+    assert inv_a["posicion_actual"] == pos
+
+    # 2. Dar de alta la llanta B y montarla en la MISMA placa y posición
+    auth_client.post("/api/bodegas/alta", json={
+        "cliente": cliente,
+        "numero_interno": "LL-B-REEMPLAZO",
+        "ubicacion_bodega": "BODEGA_1_NUEVAS",
+        "marca": "MICHELIN",
+        "dimension": "295/80R22.5"
+    })
+    res_b = auth_client.post("/api/bodegas/movimiento", json={
+        "cliente": cliente,
+        "numero_interno": "LL-B-REEMPLAZO",
+        "bodega_destino": "MONTADA_OPERACION",
+        "placa": placa,
+        "posicion": pos,
+        "prof_min_mm": 18.0
+    })
+    assert res_b.status_code == 200
+
+    # 3. Comprobar que Llanta B es ahora la que está montada
+    inv_b = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q=LL-B-REEMPLAZO").json()["llantas"][0]
+    assert inv_b["ubicacion_bodega"] == "MONTADA_OPERACION"
+    assert inv_b["placa_actual"] == placa
+    assert inv_b["posicion_actual"] == pos
+
+    # 4. Comprobar que Llanta A fue automáticamente desmontada a Bodega 2
+    inv_a_post = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q=LL-A-ORIGINAL").json()["llantas"][0]
+    assert inv_a_post["ubicacion_bodega"] == "BODEGA_2_RECAMBIO"
+    assert inv_a_post["placa_actual"] == ""
+    assert inv_a_post["posicion_actual"] == 0
+
+    # 5. Comprobar que el Kardex de Llanta A tiene el evento DESMONTE_RECAMBIO
+    kardex_a = auth_client.get(f"/api/bodegas/kardex?cliente={cliente}&numero_interno=LL-A-ORIGINAL").json()
+    tipos_a = [m["tipo_movimiento"] for m in kardex_a["movimientos"]]
+    assert "DESMONTE_RECAMBIO" in tipos_a
+
+
+def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
+    """
+    Valida que si una llanta fue registrada en Bodega (ej. B1 Nuevas o B4 Reencauchadas)
+    y luego el inspector en patio la inspecciona en un vehículo, llantas_maestro
+    transicione atómicamente a MONTADA_OPERACION y registre el MONTAJE en el Kardex.
+    """
+    cliente = "FLOTA PATIO SINCRONIZADA"
+    serial = "LL-PATIO-SYNC-01"
+
+    # 1. Crear llanta en Bodega 4 Reencauchadas
+    auth_client.post("/api/bodegas/alta", json={
+        "cliente": cliente,
+        "numero_interno": serial,
+        "ubicacion_bodega": "BODEGA_4_REENCAUCHADAS",
+        "marca": "BANDAG",
+        "dimension": "295/80R22.5",
+        "vida_actual": "R1",
+        "prof_inicial": 21.0
+    })
+
+    inv_antes = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
+    assert inv_antes["ubicacion_bodega"] == "BODEGA_4_REENCAUCHADAS"
+
+    # 2. Registrar inspección en patio con esa llanta
+    database.insertar_inspeccion({
+        "cliente": cliente,
+        "subcliente": "BOGOTA",
+        "placa": "TRK-777",
+        "posicion": 4,
+        "tipologia": "CABEZOTE 6X4",
+        "marca": "BANDAG",
+        "diseno": "BDM",
+        "dimension": "295/80R22.5",
+        "vida": "REENCAUCHE",
+        "prof_ext": 19.0,
+        "prof_cent": 19.5,
+        "prof_int": 19.0,
+        "prof_inicial": 21.0,
+        "numero_interno": serial,
+        "kilometraje": 45000.0,
+        "fecha": "2026-10-17"
+    })
+
+    # 3. Verificar que llantas_maestro se actualizó a MONTADA_OPERACION
+    inv_despues = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
+    assert inv_despues["ubicacion_bodega"] == "MONTADA_OPERACION"
+    assert inv_despues["placa_actual"] == "TRK-777"
+    assert inv_despues["posicion_actual"] == 4
+    assert inv_despues["prof_actual_min"] == 19.0
+
+    # 4. Verificar que se registró el evento MONTAJE en Kardex
+    kardex_sync = auth_client.get(f"/api/bodegas/kardex?cliente={cliente}&numero_interno={serial}").json()
+    tipos_sync = [m["tipo_movimiento"] for m in kardex_sync["movimientos"]]
+    assert "MONTAJE" in tipos_sync
+
+
+def test_reserva_apareo_dual_kpi08_y_liberacion_al_montar(test_db, auth_client):
+    """
+    Valida el ciclo de una llanta en Bodega 2 reservada para apareo dual:
+    - Estado de reserva para dual.
+    - El resumen MRP contabiliza llantas libres vs reservadas.
+    - Al montarse en el camión, la reserva se limpia automáticamente.
+    """
+    cliente = "FLOTA DUALES KPI08"
+    serial = "LL-DUAL-09"
+
+    auth_client.post("/api/bodegas/alta", json={
+        "cliente": cliente,
+        "numero_interno": serial,
+        "ubicacion_bodega": "BODEGA_2_RECAMBIO",
+        "marca": "MICHELIN",
+        "dimension": "295/80R22.5",
+        "prof_actual_min": 10.0
+    })
+
+    # Simular asignación de reserva para dual por parte del algoritmo KPI 08
+    with database.get_connection() as conn:
+        conn.execute("""
+            UPDATE llantas_maestro SET
+                reservada_para_placa = 'TRK-222',
+                reservada_posicion = 5
+            WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?
+        """, (cliente, serial))
+        conn.commit()
+
+    inv_res = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
+    assert inv_res["reservada_para_dual"] is True
+
+    # Montar la llanta en el vehículo
+    res_mont = auth_client.post("/api/bodegas/movimiento", json={
+        "cliente": cliente,
+        "numero_interno": serial,
+        "bodega_destino": "MONTADA_OPERACION",
+        "placa": "TRK-222",
+        "posicion": 5
+    })
+    assert res_mont.status_code == 200
+
+    inv_post_mont = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
+    assert inv_post_mont["ubicacion_bodega"] == "MONTADA_OPERACION"
+    assert inv_post_mont["reservada_para_dual"] is False
+    assert inv_post_mont["placa_actual"] == "TRK-222"
+    assert inv_post_mont["posicion_actual"] == 5
+
+
+def test_deteccion_automatica_garantia_desgaste_bajo_y_busqueda(test_db, auth_client):
+    """
+    Valida:
+    1. Si una llanta es enviada a BODEGA_6_FVU con desgaste < 30% (ej. prof_act 16.5 mm vs prof_ini 18.0 mm),
+       el sistema marca automáticamente estado_garantia = 'Posible Garantía'.
+    2. El buscador de inventario `q` encuentra llantas por serie, marca o placa.
+    """
+    cliente = "FLOTA GARANTIAS QA"
+    serial = "LL-GAR-PREMATURA-01"
+
+    # Configuración de límite de retiro 3.0 mm (mm útiles = 18 - 3 = 15 mm)
+    with database.get_connection() as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_traccion)
+            VALUES (?, 'PRO', 3.0)
+        """, (cliente,))
+        conn.commit()
+
+    # Alta en Bodega 1
+    auth_client.post("/api/bodegas/alta", json={
+        "cliente": cliente,
+        "numero_interno": serial,
+        "ubicacion_bodega": "BODEGA_1_NUEVAS",
+        "marca": "CONTINENTAL",
+        "dimension": "295/80R22.5",
+        "prof_inicial": 18.0,
+        "costo_compra": 1800000.0
+    })
+
+    # Montaje en TRK-333
+    auth_client.post("/api/bodegas/movimiento", json={
+        "cliente": cliente,
+        "numero_interno": serial,
+        "bodega_destino": "MONTADA_OPERACION",
+        "placa": "TRK-333",
+        "posicion": 2,
+        "prof_min_mm": 18.0
+    })
+
+    # Daño severo a los pocos kilómetros: desecho a Bodega 6 con 17.0 mm (desgaste = 1 mm de 15 mm = 6.6% < 30%)
+    res_baja = auth_client.post("/api/bodegas/movimiento", json={
+        "cliente": cliente,
+        "numero_interno": serial,
+        "bodega_destino": "BODEGA_6_FVU",
+        "prof_min_mm": 17.0,
+        "causal_o_motivo": "Separación de lonas en hombro"
+    })
+    assert res_baja.status_code == 200
+
+    inv = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
+    assert inv["ubicacion_bodega"] == "BODEGA_6_FVU"
+    assert inv["estado_garantia"] == "Posible Garantía"
+    assert inv["mm_perdidos_fvu"] == 14.0  # 17.0 - 3.0
+    assert inv["dinero_perdido_fvu"] > 1000000.0  # Gran pérdida por daño prematuro
+
+    # Comprobar búsqueda por placa (debe encontrar llanta que estuvo o está asociada)
+    res_q_marca = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q=CONTINENTAL").json()
+    assert res_q_marca["total"] >= 1
+    assert any(l["numero_interno"] == serial for l in res_q_marca["llantas"])
+

@@ -2391,11 +2391,15 @@
           </select>
         </div>
 
+        <!-- Alerta Contextual Dinámica -->
+        <div id="alertaContextualMover" class="text-xs p-2.5 rounded-xl border font-bold hidden"></div>
+
         <!-- Campos para MONTAJE EN VEHÍCULO -->
         <div id="boxMoverMontaje" class="grid grid-cols-2 gap-3 p-3 bg-blue-50/60 rounded-xl border border-blue-200">
           <div>
             <label class="block text-xs font-bold text-blue-900 mb-1">Placa Vehículo *</label>
-            <input type="text" id="mover_placa" placeholder="ej. TRK-900" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-slate-900 uppercase">
+            <input type="text" id="mover_placa" list="datalistPlacasBodega" placeholder="ej. TRK-900" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-slate-900 uppercase">
+            <datalist id="datalistPlacasBodega"></datalist>
           </div>
           <div>
             <label class="block text-xs font-bold text-blue-900 mb-1">Posición en Chasis (1-24) *</label>
@@ -2404,6 +2408,15 @@
           <div class="col-span-2">
             <label class="block text-xs font-bold text-blue-900 mb-1">Odómetro / Km Vehículo</label>
             <input type="number" id="mover_km_vehiculo" placeholder="ej. 125400" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- Campos para DESMONTE A RECAMBIO (B2) -->
+        <div id="boxMoverRecambio" class="hidden p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2">
+          <div>
+            <label class="block text-xs font-bold text-emerald-900 mb-1">Profundidad al Momento del Desmonte (mm)</label>
+            <input type="number" step="0.1" id="mover_prof_recambio" value="8.0" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-900">
+            <p class="text-[10px] text-emerald-700/80 mt-1">La llanta quedará disponible en patio para recambio o apareo dual.</p>
           </div>
         </div>
 
@@ -2425,6 +2438,10 @@
 
         <!-- Campos para REPARACIÓN (B5) -->
         <div id="boxMoverReparacion" class="hidden p-3 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2">
+          <div>
+            <label class="block text-xs font-bold text-amber-900 mb-1">Motivo / Tipo de Reparación</label>
+            <input type="text" id="mover_motivo_reparacion" placeholder="ej. Parche radial por penetración en banda" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-medium text-slate-900">
+          </div>
           <div>
             <label class="block text-xs font-bold text-amber-900 mb-1">Costo Reparación / Vulcanizadora ($ COP)</label>
             <input type="number" step="1000" id="mover_costo_reparacion" placeholder="ej. 85000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
@@ -11293,10 +11310,49 @@
       document.getElementById('mover_posicion').value = llanta.posicion_actual || '';
       document.getElementById('mover_proveedor').value = llanta.proveedor_actual || '';
       document.getElementById('mover_soporte').value = '';
+      if (document.getElementById('mover_prof_recambio')) {
+        document.getElementById('mover_prof_recambio').value = (llanta.prof_actual_min != null) ? Number(llanta.prof_actual_min).toFixed(1) : '8.0';
+      }
+      if (document.getElementById('mover_prof_fvu')) {
+        document.getElementById('mover_prof_fvu').value = (llanta.prof_actual_min != null) ? Number(llanta.prof_actual_min).toFixed(1) : '3.0';
+      }
+      if (document.getElementById('mover_motivo_reparacion')) {
+        document.getElementById('mover_motivo_reparacion').value = '';
+      }
 
-      // Adaptar según destino por defecto
-      document.getElementById('mover_bodega_destino').value = 'BODEGA_2_RECAMBIO';
-      adaptarCamposModalMover('BODEGA_2_RECAMBIO');
+      // Poblar datalist con placas de flota disponibles
+      const dlPlacas = document.getElementById('datalistPlacasBodega');
+      if (dlPlacas) {
+        dlPlacas.innerHTML = '';
+        const placasVistas = new Set();
+        const selPlacaPatio = document.getElementById('placa');
+        if (selPlacaPatio && selPlacaPatio.options) {
+          Array.from(selPlacaPatio.options).forEach(o => {
+            const p = String(o.value || '').trim().toUpperCase();
+            if (p && !placasVistas.has(p)) {
+              placasVistas.add(p);
+              const opt = document.createElement('option');
+              opt.value = p;
+              dlPlacas.appendChild(opt);
+            }
+          });
+        }
+        cacheInventarioBodegas.forEach(item => {
+          const p = String(item.placa_actual || '').trim().toUpperCase();
+          if (p && !placasVistas.has(p)) {
+            placasVistas.add(p);
+            const opt = document.createElement('option');
+            opt.value = p;
+            dlPlacas.appendChild(opt);
+          }
+        });
+      }
+
+      // Sugerencia inteligente de destino según estado actual
+      const esMontada = (llanta.ubicacion_bodega === 'MONTADA_OPERACION');
+      const destinoSugerido = esMontada ? 'BODEGA_2_RECAMBIO' : 'MONTADA_OPERACION';
+      document.getElementById('mover_bodega_destino').value = destinoSugerido;
+      adaptarCamposModalMover(destinoSugerido, llanta);
 
       document.getElementById('modalMoverBodega').classList.remove('hidden');
       document.getElementById('modalMoverBodega').classList.add('flex');
@@ -11307,12 +11363,32 @@
       document.getElementById('modalMoverBodega').classList.remove('flex');
     }
 
-    function adaptarCamposModalMover(destino) {
+    function adaptarCamposModalMover(destino, llanta = null) {
+      const serial = document.getElementById('mover_numero_interno')?.value || '';
+      const ll = llanta || cacheInventarioBodegas.find(l => l.numero_interno === serial);
+
+      if (document.getElementById('boxMoverRecambio')) {
+        document.getElementById('boxMoverRecambio').classList.toggle('hidden', destino !== 'BODEGA_2_RECAMBIO');
+      }
       document.getElementById('boxMoverMontaje').classList.toggle('hidden', destino !== 'MONTADA_OPERACION');
       document.getElementById('boxMoverReencauche').classList.toggle('hidden', destino !== 'BODEGA_4_REENCAUCHADAS');
       document.getElementById('boxMoverReparacion').classList.toggle('hidden', destino !== 'BODEGA_5_REPARACION');
       document.getElementById('boxMoverFVU').classList.toggle('hidden', destino !== 'BODEGA_6_FVU');
       document.getElementById('boxMoverChatarra').classList.toggle('hidden', destino !== 'BODEGA_7_CHATARRIZADA');
+
+      const alertaBox = document.getElementById('alertaContextualMover');
+      if (alertaBox) {
+        alertaBox.classList.remove('hidden', 'bg-blue-50', 'text-blue-900', 'border-blue-200', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-200', 'bg-amber-50', 'text-amber-900', 'border-amber-200');
+        if (destino === 'MONTADA_OPERACION') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-blue-50 text-blue-900 border-blue-200 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-truck text-blue-600"></i><span>Si la posición en el vehículo ya tiene una llanta montada, el sistema la desmontará automáticamente a Bodega 2 (Recambio).</span>';
+        } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
+          alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
+          alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y pasará a inventario de bodega.</span>`;
+        } else {
+          alertaBox.classList.add('hidden');
+        }
+      }
     }
 
     async function guardarMovimientoBodega(e) {
@@ -11341,11 +11417,16 @@
           mostrarToast('⚠️ Para montar llanta debes ingresar placa y posición', true);
           return;
         }
+      } else if (destino === 'BODEGA_2_RECAMBIO') {
+        const pRec = document.getElementById('mover_prof_recambio');
+        if (pRec) payload.prof_min_mm = parseFloat(pRec.value) || null;
       } else if (destino === 'BODEGA_4_REENCAUCHADAS') {
         payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof').value) || 20.0;
         payload.banda_reen = document.getElementById('mover_banda_reen').value.trim().toUpperCase();
         payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reencauche').value) || 0.0;
       } else if (destino === 'BODEGA_5_REPARACION') {
+        const motRep = document.getElementById('mover_motivo_reparacion');
+        if (motRep) payload.causal_o_motivo = motRep.value.trim();
         payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reparacion').value) || 0.0;
       } else if (destino === 'BODEGA_6_FVU') {
         payload.causal_o_motivo = document.getElementById('mover_causal_fvu').value;
