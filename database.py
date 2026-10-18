@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import math
 import pandas as pd
 import numpy as np
 import unicodedata
@@ -11,6 +12,13 @@ import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 import sys
+
+try:
+    from zoneinfo import ZoneInfo
+    BOGOTA_TZ = ZoneInfo("America/Bogota")
+except Exception:
+    from datetime import timezone
+    BOGOTA_TZ = timezone(timedelta(hours=-5))
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(_DATA_DIR, exist_ok=True)
@@ -369,12 +377,33 @@ def inicializar_bd():
                 tolerancia_psi_alta_pct REAL DEFAULT 10.0,
                 tolerancia_desalineacion_hombros_mm REAL DEFAULT 2.0,
                 tolerancia_mal_apareo_pacha_mm REAL DEFAULT 2.5,
+                tolerancia_busqueda_recambio_mm REAL DEFAULT 1.5,
+                tolerancia_simetria_eje_opuesto_mm REAL DEFAULT 3.5,
+                margen_envio_reencauche_desmonte_mm REAL DEFAULT 1.5,
                 umbral_diferencia_rotacion_ejes_mm REAL DEFAULT 3.0,
                 diferencia_minima_par_direccional_mm REAL DEFAULT 3.0,
+                modo_rotacion_ejes TEXT DEFAULT 'ESTANDAR_FIJO',
+                porcentaje_aprobacion_reencauche REAL DEFAULT 85.0,
+                stock_seguridad_default INTEGER DEFAULT 4,
                 plantilla_kpis_json TEXT DEFAULT '{}',
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migración automática de columnas para configuracion_avanzada_cliente
+        cursor.execute("PRAGMA table_info(configuracion_avanzada_cliente)")
+        cols_cfg = [row[1] for row in cursor.fetchall()]
+        cols_nuevas_cfg = [
+            ("tolerancia_busqueda_recambio_mm", "REAL DEFAULT 1.5"),
+            ("tolerancia_simetria_eje_opuesto_mm", "REAL DEFAULT 3.5"),
+            ("margen_envio_reencauche_desmonte_mm", "REAL DEFAULT 1.5"),
+            ("modo_rotacion_ejes", "TEXT DEFAULT 'ESTANDAR_FIJO'"),
+            ("porcentaje_aprobacion_reencauche", "REAL DEFAULT 85.0"),
+            ("stock_seguridad_default", "INTEGER DEFAULT 4")
+        ]
+        for col_n, col_t in cols_nuevas_cfg:
+            if col_n not in cols_cfg:
+                cursor.execute(f"ALTER TABLE configuracion_avanzada_cliente ADD COLUMN {col_n} {col_t}")
 
         # Poblar configuración inicial PRO para clientes existentes
         cursor.execute("""
@@ -383,6 +412,84 @@ def inicializar_bd():
             FROM inspecciones
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
         """)
+
+        # Tabla Maestra de Llantas e Inventario en las 7 Bodegas
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS llantas_maestro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                numero_interno TEXT NOT NULL,
+                cliente TEXT NOT NULL,
+                subcliente TEXT DEFAULT '',
+                tipo_operacion TEXT DEFAULT '',
+                ubicacion_bodega TEXT NOT NULL DEFAULT 'BODEGA_1_NUEVAS',
+                estado_actual TEXT NOT NULL DEFAULT 'En Stock - Nueva',
+                placa_actual TEXT DEFAULT '',
+                posicion_actual INTEGER DEFAULT 0,
+                marca TEXT NOT NULL DEFAULT '',
+                diseno TEXT DEFAULT '',
+                dimension TEXT NOT NULL DEFAULT '295/80R22.5',
+                vida_actual TEXT NOT NULL DEFAULT 'Original', -- 'Original', 'R1', 'R2', 'R3'
+                num_reencauches INTEGER DEFAULT 0,
+                banda_reen TEXT DEFAULT '',
+                prof_inicial REAL NOT NULL DEFAULT 18.0,
+                prof_ext REAL DEFAULT 18.0,
+                prof_cent REAL DEFAULT 18.0,
+                prof_int REAL DEFAULT 18.0,
+                prof_actual_min REAL NOT NULL DEFAULT 18.0,
+                psi_actual REAL DEFAULT 100.0,
+                km_montaje_ciclo REAL DEFAULT 0.0,
+                km_actual_vehiculo REAL DEFAULT 0.0,
+                km_recorridos_ciclo REAL DEFAULT 0.0,
+                km_acumulados_total REAL DEFAULT 0.0,
+                costo_compra_original REAL DEFAULT 1450000.0,
+                costo_ciclo_actual REAL DEFAULT 1450000.0,
+                costo_reparaciones_ciclo_actual REAL DEFAULT 0.0,
+                costo_acumulado_total REAL DEFAULT 1450000.0,
+                reservada_para_placa TEXT DEFAULT NULL,
+                reservada_posicion INTEGER DEFAULT NULL,
+                fecha_envio_planta TEXT DEFAULT NULL,
+                proveedor_actual TEXT DEFAULT '',
+                causal_baja_fvu TEXT DEFAULT '',
+                mm_perdidos_fvu REAL DEFAULT 0.0,
+                dinero_perdido_fvu REAL DEFAULT 0.0,
+                estado_garantia TEXT DEFAULT 'No Aplica', -- 'No Aplica', 'Posible Garantía', 'En Reclamación', 'Nota Crédito Reconocida', 'Rechazada'
+                valor_reconocido_garantia REAL DEFAULT 0.0,
+                numero_acta_ambiental TEXT DEFAULT '',
+                fecha_disposicion TEXT DEFAULT NULL,
+                observaciones TEXT DEFAULT '',
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(cliente, numero_interno)
+            )
+        """)
+
+        # Tabla de Kardex Histórico de Movimientos entre Bodegas y Vehículos
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS kardex_movimientos_llanta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha_movimiento TEXT NOT NULL,
+                cliente TEXT NOT NULL,
+                subcliente TEXT DEFAULT '',
+                numero_interno TEXT NOT NULL,
+                bodega_origen TEXT NOT NULL,
+                bodega_destino TEXT NOT NULL,
+                tipo_movimiento TEXT NOT NULL, -- 'ALTA_NUEVA', 'MONTAJE', 'DESMONTE_RECAMBIO', 'ENVIO_REENCAUCHE', 'RETORNO_REENCAUCHE', 'ENVIO_REPARACION', 'RETORNO_REPARACION', 'BAJA_FVU', 'CHATARRIZACION', 'AJUSTE_GARANTIA'
+                placa TEXT DEFAULT '',
+                posicion INTEGER DEFAULT 0,
+                vida_ciclo TEXT DEFAULT 'Original',
+                prof_min_mm REAL DEFAULT 0.0,
+                km_vehiculo REAL DEFAULT 0.0,
+                costo_asociado REAL DEFAULT 0.0,
+                proveedor TEXT DEFAULT '',
+                causal_o_motivo TEXT DEFAULT '',
+                documento_soporte TEXT DEFAULT '',
+                usuario_registro TEXT DEFAULT 'admin',
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_bodega ON llantas_maestro (cliente, ubicacion_bodega, dimension)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_serial ON llantas_maestro (numero_interno, cliente)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_serial_cliente ON kardex_movimientos_llanta (cliente, numero_interno, fecha_movimiento DESC)")
 
         # Tabla de Catálogo de Operaciones
         conn.execute("""
@@ -518,6 +625,9 @@ def inicializar_bd():
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
 
+        # Sincronización automática inicial (Backfill) de llantas_maestro desde inspecciones históricas
+        sincronizar_maestro_desde_inspecciones(conn)
+
         conn.commit()
 
 def normalizar_clientes_mayusculas(conn):
@@ -577,6 +687,120 @@ def normalizar_clientes_mayusculas(conn):
 
     # 6. Tabla configuracion_marcas_cliente
     cursor.execute("UPDATE configuracion_marcas_cliente SET cliente = UPPER(TRIM(cliente)) WHERE cliente IS NOT NULL AND cliente != UPPER(TRIM(cliente))")
+
+
+def sincronizar_maestro_desde_inspecciones(conn=None):
+    """
+    Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
+    Para cada combinación única de (cliente, numero_interno), toma el último estado registrado
+    e inserta o actualiza la llanta en 'MONTADA_OPERACION' sin sobreescribir costos de reparaciones
+    ni estados de garantía existentes.
+    """
+    def _ejecutar(c):
+        c.execute("""
+            SELECT cliente, numero_interno, placa, posicion, tipologia, marca, diseno, dimension,
+                   vida, banda_reen, prof_ext, prof_cent, prof_int, psi, kilometraje, km_montaje,
+                   precio, prof_inicial, subcliente, tipo_operacion, fecha, id
+            FROM inspecciones
+            WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
+              AND cliente IS NOT NULL AND TRIM(cliente) != ''
+            ORDER BY fecha ASC, id ASC
+        """)
+        filas = c.fetchall()
+        if not filas:
+            return
+
+        # Quedarse con el último registro por (cliente, numero_interno)
+        ultimos = {}
+        primeros_km = {}
+        for r in filas:
+            cli = str(r[0]).strip().upper()
+            serial = str(r[1]).strip().upper()
+            k = (cli, serial)
+            ultimos[k] = r
+            if k not in primeros_km:
+                primeros_km[k] = to_float(r[14])
+
+        for (cli, serial), r in ultimos.items():
+            placa = str(r[2] or '').strip().upper()
+            pos = to_int(r[3], 0)
+            tipo_veh = str(r[4] or '').strip().upper()
+            marca = str(r[5] or '').strip().upper()
+            diseno = str(r[6] or '').strip().upper()
+            dim = str(r[7] or '295/80R22.5').strip().upper()
+            vida = str(r[8] or 'Original').strip()
+            banda = str(r[9] or '').strip().upper()
+            pe = to_float(r[10])
+            pc = to_float(r[11])
+            pi = to_float(r[12])
+            psi = to_float(r[13], 100.0)
+            km_act = to_float(r[14])
+            km_mont = to_float(r[15])
+            pr = to_float(r[16], 1450000.0)
+            p_ini = to_float(r[17], 18.0)
+            subc = str(r[18] or '').strip().upper()
+            tipo_op = str(r[19] or '').strip().upper()
+            fecha_insp = str(r[20] or '')
+
+            pos_validas = [x for x in (pe, pc, pi) if x > 0]
+            p_min = min(pos_validas) if pos_validas else 0.0
+
+            if km_mont > 0 and km_act >= km_mont:
+                km_rod = km_act - km_mont
+            else:
+                km_base = primeros_km.get((cli, serial), km_act)
+                km_rod = max(0.0, km_act - km_base)
+
+            # Verificar si existe en llantas_maestro
+            c.execute("SELECT id, ubicacion_bodega FROM llantas_maestro WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?", (cli, serial))
+            row_m = c.fetchone()
+
+            if not row_m:
+                costo_base = pr if pr > 0 else 1450000.0
+                c.execute("""
+                    INSERT INTO llantas_maestro (
+                        numero_interno, cliente, subcliente, tipo_operacion, ubicacion_bodega, estado_actual,
+                        placa_actual, posicion_actual, marca, diseno, dimension, vida_actual, banda_reen,
+                        prof_inicial, prof_ext, prof_cent, prof_int, prof_actual_min, psi_actual,
+                        km_montaje_ciclo, km_actual_vehiculo, km_recorridos_ciclo, km_acumulados_total,
+                        costo_compra_original, costo_ciclo_actual, costo_reparaciones_ciclo_actual, costo_acumulado_total
+                    ) VALUES (?, ?, ?, ?, 'MONTADA_OPERACION', 'Montada en Vehículo',
+                              ?, ?, ?, ?, ?, ?, ?,
+                              ?, ?, ?, ?, ?, ?,
+                              ?, ?, ?, ?,
+                              ?, ?, 0.0, ?)
+                """, (
+                    serial, cli, subc, tipo_op,
+                    placa, pos, marca, diseno, dim, vida, banda,
+                    p_ini, pe, pc, pi, p_min, psi,
+                    km_mont, km_act, km_rod, km_rod,
+                    costo_base, costo_base, costo_base
+                ))
+            else:
+                ubi = row_m[1]
+                # Si está montada en operación, refrescar sus métricas
+                if ubi == 'MONTADA_OPERACION':
+                    c.execute("""
+                        UPDATE llantas_maestro SET
+                            placa_actual = ?,
+                            posicion_actual = ?,
+                            prof_ext = ?,
+                            prof_cent = ?,
+                            prof_int = ?,
+                            prof_actual_min = ?,
+                            psi_actual = ?,
+                            km_actual_vehiculo = ?,
+                            km_recorridos_ciclo = ?,
+                            fecha_actualizacion = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (placa, pos, pe, pc, pi, p_min, psi, km_act, km_rod, row_m[0]))
+
+    if conn is not None:
+        _ejecutar(conn.cursor())
+    else:
+        with get_connection() as c_conn:
+            _ejecutar(c_conn.cursor())
+            c_conn.commit()
 
 # ==========================================
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
@@ -1149,6 +1373,7 @@ def insertar_inspeccion(datos):
         datos.get('cliente'),
         datos.get('marca')
     )
+    sincronizar_maestro_desde_inspecciones()
     return last_id
 
 def obtener_todas_inspecciones(usuario=None):
@@ -1229,6 +1454,7 @@ def actualizar_inspeccion(inspeccion_id, datos):
             datos.get('cliente'),
             datos.get('marca')
         )
+        sincronizar_maestro_desde_inspecciones()
     return ok
 
 def eliminar_inspeccion(inspeccion_id):
@@ -1484,17 +1710,45 @@ def analizar_inspecciones_df(df_inspecciones):
                 pb_b = to_float(t_b['prof_min'].values[0])
                 dim_a = str(t_a['dimension'].values[0]).strip()
                 dim_b = str(t_b['dimension'].values[0]).strip()
-                
+
                 diff_pb = abs(pb_a - pb_b)
                 razones = []
                 if diff_pb >= 2:
                     razones.append(f"desgaste dif {diff_pb:.1f}mm ({pb_a:.1f} vs {pb_b:.1f})")
                 if dim_a and dim_b and dim_a != dim_b:
                     razones.append(f"dims distintas ({dim_a} vs {dim_b})")
-                
+
+                # Cruce Inteligente con Bodega 2 en Duales Mal Apareados (KPI 08)
                 if razones:
                     plan_dual = True
                     detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
+
+                    # Buscar candidata en Bodega 2 (Recambio) para aparear
+                    try:
+                        mm_alta = max(pb_a, pb_b)
+                        pos_alta = p_a if pb_a >= pb_b else p_b
+                        mm_baja = min(pb_a, pb_b)
+                        pos_baja = p_b if pb_a >= pb_b else p_a
+                        dim_dual = dim_a or dim_b
+
+                        with get_connection() as c_b2:
+                            cur_b2 = c_b2.cursor()
+                            cur_b2.execute("""
+                                SELECT numero_interno, prof_actual_min FROM llantas_maestro
+                                WHERE UPPER(cliente) = ?
+                                  AND ubicacion_bodega = 'BODEGA_2_RECAMBIO'
+                                  AND (reservada_para_placa IS NULL OR reservada_para_placa = '' OR reservada_para_placa = ?)
+                                  AND UPPER(dimension) = ?
+                                  AND ABS(prof_actual_min - ?) <= 1.5
+                                ORDER BY ABS(prof_actual_min - ?) ASC LIMIT 1
+                            """, (cliente, placa, dim_dual.upper(), mm_alta, mm_alta))
+                            cand_b2 = cur_b2.fetchone()
+                            if cand_b2:
+                                recomendaciones_dual.append(
+                                    f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f}mm) y MONTAR llanta N° {cand_b2[0]} ({cand_b2[1]:.1f}mm) disponible en Bodega 2 (Recambio)."
+                                )
+                    except Exception:
+                        pass
 
                 # Recomendación de emparejamiento cuando una llanta va a cambio y la otra tiene buen remanente
                 a_para_cambio = (pb_a > 0 and pb_a <= limite_cambio_cliente)
@@ -1507,8 +1761,8 @@ def analizar_inspecciones_df(df_inspecciones):
                         f"Pos {p_a} en retiro ({pb_a:.1f}mm) vs Pos {p_b} ({pb_b:.1f}mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
                 elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0):
-                    r_min = max(limite_cambio_cliente + 1.0, pb_a - 1.0)
-                    r_max = pb_a + 1.0
+                    r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
+                    r_max = pb_b + 1.0
                     recomendaciones_dual.append(
                         f"Pos {p_b} en retiro ({pb_b:.1f}mm) vs Pos {p_a} ({pb_a:.1f}mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
@@ -1524,6 +1778,27 @@ def analizar_inspecciones_df(df_inspecciones):
             if pb_r > 0 and pb_r <= limite_cambio_cliente:
                 plan_cambio = True
                 detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
+
+        # Regla de Par Direccional (KPI 05): evaluar ejes direccionales (1, 2) y en 4 manos (3, 4)
+        pares_dir = [(1, 2), (3, 4)] if es_cuatro_manos else [(1, 2)] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()) else []
+        for pd_a, pd_b in pares_dir:
+            ta = group[group['posicion'] == pd_a]
+            tb = group[group['posicion'] == pd_b]
+            if not ta.empty and not tb.empty:
+                pa_val = to_float(ta['prof_min'].values[0])
+                pb_val = to_float(tb['prof_min'].values[0])
+                pa_ini = to_float(ta['prof_inicial'].values[0] if 'prof_inicial' in ta.columns else 18.0, 18.0)
+                pb_ini = to_float(tb['prof_inicial'].values[0] if 'prof_inicial' in tb.columns else 18.0, 18.0)
+
+                pa_ret = (pa_val > 0 and pa_val <= limite_cambio_cliente)
+                pb_ret = (pb_val > 0 and pb_val <= limite_cambio_cliente)
+
+                if pa_ret and not pb_ret and (pb_ini - pb_val) > 3.0:
+                    plan_cambio = True
+                    detalles_cambio.append(f"Ajuste Par Direccional: cambiar también Pos {pd_b} ({pb_val:.1f}mm) y pasarla a Bodega 2 (Recambio)")
+                elif pb_ret and not pa_ret and (pa_ini - pa_val) > 3.0:
+                    plan_cambio = True
+                    detalles_cambio.append(f"Ajuste Par Direccional: cambiar también Pos {pd_a} ({pa_val:.1f}mm) y pasarla a Bodega 2 (Recambio)")
 
         # 4. Alertas Adicionales: Rotación por Desgaste Irregular / Escalonado y Calibración de Presión
         plan_rotacion_irregular = False
@@ -3978,5 +4253,683 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         traceback.print_exc()
 
     return resultado
+
+
+# =============================================================================
+# MÓDULO DE LAS 7 BODEGAS, KARDEX DE CICLO DE VIDA, GARANTÍAS Y BALANCE MRP (KPI 20)
+# =============================================================================
+
+def crear_llanta_en_bodega(datos: dict) -> dict:
+    """
+    Da de alta una nueva carcasa o llanta comprada en una de las bodegas (por defecto BODEGA_1_NUEVAS).
+    Registra automáticamente el movimiento 'ALTA_NUEVA' en el Kardex.
+    """
+    cliente = str(datos.get('cliente', '')).strip().upper()
+    subcliente = str(datos.get('subcliente', '')).strip().upper()
+    numero_interno = str(datos.get('numero_interno', '')).strip().upper()
+
+    if not cliente:
+        return {"ok": False, "mensaje": "El nombre del cliente es obligatorio"}
+    if not numero_interno:
+        return {"ok": False, "mensaje": "El número interno / serial de la llanta es obligatorio"}
+
+    ubicacion = str(datos.get('ubicacion_bodega', 'BODEGA_1_NUEVAS')).strip().upper()
+    marca = str(datos.get('marca', '')).strip().upper()
+    diseno = str(datos.get('diseno', '')).strip().upper()
+    dimension = str(datos.get('dimension', '295/80R22.5')).strip().upper()
+    vida = str(datos.get('vida_actual', 'Original')).strip()
+    banda = str(datos.get('banda_reen', '')).strip().upper()
+    prof_ini = to_float(datos.get('prof_inicial', 18.0), 18.0)
+    prof_act = to_float(datos.get('prof_actual_min', prof_ini), prof_ini)
+    costo = to_float(datos.get('costo_compra', 1450000.0), 1450000.0)
+    proveedor = str(datos.get('proveedor_actual', '')).strip()
+    obs = str(datos.get('observaciones', '')).strip()
+    user = str(datos.get('usuario_registro', 'admin')).strip()
+
+    estados_nombre = {
+        'BODEGA_1_NUEVAS': 'En Stock - Nueva',
+        'BODEGA_2_RECAMBIO': 'En Stock - Reutilizable',
+        'BODEGA_3_REENCAUCHE': 'Enviada a Reencauche',
+        'BODEGA_4_REENCAUCHADAS': 'En Stock - Reencauchada',
+        'BODEGA_5_REPARACION': 'En Reparación Mayor',
+        'BODEGA_6_FVU': 'FVU / Desecho',
+        'BODEGA_7_CHATARRIZADA': 'Disposición Final / Chatarrizada',
+        'MONTADA_OPERACION': 'Montada en Vehículo'
+    }
+    estado_act = estados_nombre.get(ubicacion, 'En Stock - Nueva')
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM llantas_maestro WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?", (cliente, numero_interno))
+        if cursor.fetchone():
+            return {"ok": False, "mensaje": f"La llanta {numero_interno} ya existe en el inventario de {cliente}"}
+
+        cursor.execute("""
+            INSERT INTO llantas_maestro (
+                numero_interno, cliente, subcliente, ubicacion_bodega, estado_actual,
+                marca, diseno, dimension, vida_actual, banda_reen,
+                prof_inicial, prof_ext, prof_cent, prof_int, prof_actual_min,
+                costo_compra_original, costo_ciclo_actual, costo_reparaciones_ciclo_actual, costo_acumulado_total,
+                proveedor_actual, observaciones
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.0, ?, ?, ?)
+        """, (
+            numero_interno, cliente, subcliente, ubicacion, estado_act,
+            marca, diseno, dimension, vida, banda,
+            prof_ini, prof_act, prof_act, prof_act, prof_act,
+            costo, costo, costo,
+            proveedor, obs
+        ))
+        llanta_id = cursor.lastrowid
+
+        # Kardex
+        fecha_mov = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
+        cursor.execute("""
+            INSERT INTO kardex_movimientos_llanta (
+                fecha_movimiento, cliente, subcliente, numero_interno,
+                bodega_origen, bodega_destino, tipo_movimiento,
+                vida_ciclo, prof_min_mm, costo_asociado, proveedor,
+                causal_o_motivo, usuario_registro
+            ) VALUES (?, ?, ?, ?, 'EXTERNO', ?, 'ALTA_NUEVA', ?, ?, ?, ?, 'Alta inicial en inventario de bodega', ?)
+        """, (
+            fecha_mov, cliente, subcliente, numero_interno,
+            ubicacion, vida, prof_act, costo, proveedor, user
+        ))
+
+        conn.commit()
+
+    return {"ok": True, "mensaje": f"Llanta {numero_interno} dada de alta en {estado_act}", "id": llanta_id}
+
+
+def registrar_movimiento_bodega(datos: dict) -> dict:
+    """
+    Ejecuta una transición transaccional atómica entre las 7 bodegas y operación rodante.
+    Actualiza llantas_maestro e inserta el evento en kardex_movimientos_llanta.
+    """
+    cliente = str(datos.get('cliente', '')).strip().upper()
+    numero_interno = str(datos.get('numero_interno', '')).strip().upper()
+    bodega_destino = str(datos.get('bodega_destino', '')).strip().upper()
+
+    if not cliente or not numero_interno or not bodega_destino:
+        return {"ok": False, "mensaje": "Cliente, número interno y bodega destino son obligatorios"}
+
+    fecha_mov = str(datos.get('fecha_movimiento') or datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')).strip()
+    placa = str(datos.get('placa', '')).strip().upper()
+    posicion = to_int(datos.get('posicion', 0))
+    prof_min_in = datos.get('prof_min_mm')
+    nueva_prof_ini = datos.get('nueva_prof_inicial')
+    banda_reen = str(datos.get('banda_reen', '')).strip().upper()
+    km_veh = to_float(datos.get('km_vehiculo', 0.0))
+    costo_asoc = to_float(datos.get('costo_asociado', 0.0))
+    proveedor = str(datos.get('proveedor', '')).strip()
+    causal = str(datos.get('causal_o_motivo', '')).strip()
+    doc_soporte = str(datos.get('documento_soporte', '')).strip()
+    user = str(datos.get('usuario_registro', 'admin')).strip()
+
+    estados_nombre = {
+        'BODEGA_1_NUEVAS': 'En Stock - Nueva',
+        'BODEGA_2_RECAMBIO': 'En Stock - Reutilizable',
+        'BODEGA_3_REENCAUCHE': 'Enviada a Reencauche',
+        'BODEGA_4_REENCAUCHADAS': 'En Stock - Reencauchada',
+        'BODEGA_5_REPARACION': 'En Reparación Mayor',
+        'BODEGA_6_FVU': 'FVU / Desecho',
+        'BODEGA_7_CHATARRIZADA': 'Disposición Final / Chatarrizada',
+        'MONTADA_OPERACION': 'Montada en Vehículo'
+    }
+
+    if bodega_destino not in estados_nombre:
+        return {"ok": False, "mensaje": f"Bodega destino inválida: {bodega_destino}"}
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM llantas_maestro WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?", (cliente, numero_interno))
+        col_names = [d[0] for d in cursor.description]
+        row = cursor.fetchone()
+
+        if not row:
+            return {"ok": False, "mensaje": f"La llanta {numero_interno} no se encuentra en llantas_maestro"}
+
+        cur = dict(zip(col_names, row))
+        bodega_origen = cur['ubicacion_bodega']
+        subcliente = cur.get('subcliente', '')
+
+        # Variables mutables
+        num_reen = to_int(cur.get('num_reencauches', 0))
+        vida_act = str(cur.get('vida_actual', 'Original'))
+        p_ini = to_float(cur.get('prof_inicial', 18.0))
+        p_act = to_float(cur.get('prof_actual_min', 18.0))
+        costo_ciclo = to_float(cur.get('costo_ciclo_actual', 1450000.0))
+        costo_rep_ciclo = to_float(cur.get('costo_reparaciones_ciclo_actual', 0.0))
+        costo_acum = to_float(cur.get('costo_acumulado_total', costo_ciclo))
+        km_ciclo = to_float(cur.get('km_recorridos_ciclo', 0.0))
+        f_envio_planta = cur.get('fecha_envio_planta')
+        proveedor_act = proveedor or cur.get('proveedor_actual', '')
+        causal_baja = cur.get('causal_baja_fvu', '')
+        mm_perd = to_float(cur.get('mm_perdidos_fvu', 0.0))
+        dinero_perd = to_float(cur.get('dinero_perdido_fvu', 0.0))
+        estado_gar = str(cur.get('estado_garantia', 'No Aplica'))
+        val_gar = to_float(cur.get('valor_reconocido_garantia', 0.0))
+        acta_amb = cur.get('numero_acta_ambiental', '')
+        f_disp = cur.get('fecha_disposicion')
+
+        placa_act = cur.get('placa_actual', '')
+        pos_act = to_int(cur.get('posicion_actual', 0))
+
+        tipo_mov = "TRASLADO_BODEGA"
+
+        # 1. Retorno de Reencauche (Bodega 3 -> Bodega 4)
+        if bodega_origen == 'BODEGA_3_REENCAUCHE' and bodega_destino == 'BODEGA_4_REENCAUCHADAS':
+            tipo_mov = 'RETORNO_REENCAUCHE'
+            num_reen += 1
+            vida_act = f"R{num_reen}"
+            p_ini = to_float(nueva_prof_ini, 18.0) if nueva_prof_ini is not None else 18.0
+            p_act = p_ini
+            banda = banda_reen or cur.get('banda_reen', '')
+            costo_ciclo = max(0.0, costo_asoc)
+            costo_rep_ciclo = 0.0
+            km_ciclo = 0.0
+            costo_acum += costo_ciclo
+            f_envio_planta = None
+            placa_act = ''
+            pos_act = 0
+
+        # 2. Envío a Planta de Reencauche (Hacia Bodega 3)
+        elif bodega_destino == 'BODEGA_3_REENCAUCHE':
+            tipo_mov = 'ENVIO_REENCAUCHE'
+            f_envio_planta = fecha_mov
+            placa_act = ''
+            pos_act = 0
+            if prof_min_in is not None:
+                p_act = to_float(prof_min_in)
+
+        # 3. Envío o Retorno de Reparación Mayor (Bodega 5)
+        elif bodega_destino == 'BODEGA_5_REPARACION':
+            tipo_mov = 'ENVIO_REPARACION'
+            if costo_asoc > 0:
+                costo_rep_ciclo += costo_asoc
+                costo_acum += costo_asoc
+        elif bodega_origen == 'BODEGA_5_REPARACION':
+            tipo_mov = 'RETORNO_REPARACION'
+            if costo_asoc > 0:
+                costo_rep_ciclo += costo_asoc
+                costo_acum += costo_asoc
+
+        # 4. Envío a Pila de Desecho / Fin de Vida Útil (Bodega 6 FVU)
+        elif bodega_destino == 'BODEGA_6_FVU':
+            tipo_mov = 'BAJA_FVU'
+            causal_baja = causal or 'Fin de Vida Útil'
+            placa_act = ''
+            pos_act = 0
+            if prof_min_in is not None:
+                p_act = to_float(prof_min_in)
+
+            # Límite de retiro
+            cfg = obtener_configuracion_avanzada_cliente(cliente)
+            lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+            mm_ut = max(1.0, p_ini - lim_ret)
+            mm_perd = max(0.0, p_act - lim_ret)
+            costo_mm = (costo_ciclo + costo_rep_ciclo) / mm_ut
+            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar)
+
+            pct_desgaste = max(0.0, (p_ini - p_act) / mm_ut) * 100.0
+            if pct_desgaste < 30.0 and estado_gar == 'No Aplica':
+                estado_gar = 'Posible Garantía'
+
+        # 5. Chatarrización / Disposición Final Ambiental (Bodega 7)
+        elif bodega_destino == 'BODEGA_7_CHATARRIZADA':
+            tipo_mov = 'CHATARRIZACION'
+            acta_amb = doc_soporte or f"ACTA-{datetime.now(BOGOTA_TZ).strftime('%Y%m')}-{numero_interno}"
+            f_disp = fecha_mov
+            proveedor_act = proveedor or cur.get('proveedor_actual', '')
+
+        # 6. Montaje en Vehículo (Hacia MONTADA_OPERACION)
+        elif bodega_destino == 'MONTADA_OPERACION':
+            tipo_mov = 'MONTAJE'
+            placa_act = placa
+            pos_act = posicion
+            if prof_min_in is not None:
+                p_act = to_float(prof_min_in)
+
+        # 7. Desmonte hacia Bodega 2 (Recambio)
+        elif bodega_destino == 'BODEGA_2_RECAMBIO':
+            tipo_mov = 'DESMONTE_RECAMBIO'
+            placa_act = ''
+            pos_act = 0
+            if prof_min_in is not None:
+                p_act = to_float(prof_min_in)
+
+        estado_nuevo = estados_nombre.get(bodega_destino, 'En Stock')
+
+        # Actualizar llantas_maestro
+        cursor.execute("""
+            UPDATE llantas_maestro SET
+                ubicacion_bodega = ?,
+                estado_actual = ?,
+                placa_actual = ?,
+                posicion_actual = ?,
+                vida_actual = ?,
+                num_reencauches = ?,
+                banda_reen = ?,
+                prof_inicial = ?,
+                prof_ext = ?,
+                prof_cent = ?,
+                prof_int = ?,
+                prof_actual_min = ?,
+                costo_ciclo_actual = ?,
+                costo_reparaciones_ciclo_actual = ?,
+                costo_acumulado_total = ?,
+                km_recorridos_ciclo = ?,
+                fecha_envio_planta = ?,
+                proveedor_actual = ?,
+                causal_baja_fvu = ?,
+                mm_perdidos_fvu = ?,
+                dinero_perdido_fvu = ?,
+                estado_garantia = ?,
+                numero_acta_ambiental = ?,
+                fecha_disposicion = ?,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            bodega_destino, estado_nuevo, placa_act, pos_act,
+            vida_act, num_reen, banda_reen or cur.get('banda_reen', ''),
+            p_ini, p_act, p_act, p_act, p_act,
+            costo_ciclo, costo_rep_ciclo, costo_acum, km_ciclo,
+            f_envio_planta, proveedor_act, causal_baja, mm_perd, dinero_perd,
+            estado_gar, acta_amb, f_disp, cur['id']
+        ))
+
+        # Registrar en Kardex
+        cursor.execute("""
+            INSERT INTO kardex_movimientos_llanta (
+                fecha_movimiento, cliente, subcliente, numero_interno,
+                bodega_origen, bodega_destino, tipo_movimiento,
+                placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo,
+                costo_asociado, proveedor, causal_o_motivo, documento_soporte,
+                usuario_registro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            fecha_mov, cliente, subcliente, numero_interno,
+            bodega_origen, bodega_destino, tipo_mov,
+            placa_act, pos_act, vida_act, p_act, km_veh,
+            costo_asoc, proveedor_act, causal, doc_soporte, user
+        ))
+
+        conn.commit()
+
+    return {
+        "ok": True,
+        "mensaje": f"Llanta {numero_interno} trasladada a {estado_nuevo}",
+        "ubicacion_nueva": bodega_destino,
+        "tipo_movimiento": tipo_mov
+    }
+
+
+def actualizar_garantia_llanta(datos: dict) -> dict:
+    """
+    Actualiza el estado de reclamación y valor reconocido de garantía de una carcasa en Bodega 6 FVU.
+    Recalcula automáticamente el dinero perdido neto descontando la nota de crédito reconocida.
+    """
+    cliente = str(datos.get('cliente', '')).strip().upper()
+    numero_interno = str(datos.get('numero_interno', '')).strip().upper()
+    nuevo_estado = str(datos.get('estado_garantia', 'No Aplica')).strip()
+    val_reconocido = to_float(datos.get('valor_reconocido_garantia', 0.0))
+    user = str(datos.get('usuario_registro', 'admin')).strip()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM llantas_maestro WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?", (cliente, numero_interno))
+        col_names = [d[0] for d in cursor.description]
+        row = cursor.fetchone()
+
+        if not row:
+            return {"ok": False, "mensaje": f"No se encontró la llanta {numero_interno}"}
+
+        ll = dict(zip(col_names, row))
+        p_ini = to_float(ll.get('prof_inicial', 18.0))
+        p_act = to_float(ll.get('prof_actual_min', 18.0))
+        c_ciclo = to_float(ll.get('costo_ciclo_actual', 1450000.0))
+        c_rep = to_float(ll.get('costo_reparaciones_ciclo_actual', 0.0))
+
+        cfg = obtener_configuracion_avanzada_cliente(cliente)
+        lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+        mm_ut = max(1.0, p_ini - lim_ret)
+        mm_perd = max(0.0, p_act - lim_ret)
+        costo_mm = (c_ciclo + c_rep) / mm_ut
+        dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido)
+
+        cursor.execute("""
+            UPDATE llantas_maestro SET
+                estado_garantia = ?,
+                valor_reconocido_garantia = ?,
+                mm_perdidos_fvu = ?,
+                dinero_perdido_fvu = ?,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (nuevo_estado, val_reconocido, mm_perd, dinero_perd, ll['id']))
+
+        fecha_mov = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
+        cursor.execute("""
+            INSERT INTO kardex_movimientos_llanta (
+                fecha_movimiento, cliente, subcliente, numero_interno,
+                bodega_origen, bodega_destino, tipo_movimiento,
+                vida_ciclo, prof_min_mm, costo_asociado,
+                causal_o_motivo, usuario_registro
+            ) VALUES (?, ?, ?, ?, 'BODEGA_6_FVU', 'BODEGA_6_FVU', 'AJUSTE_GARANTIA', ?, ?, ?, ?, ?)
+        """, (
+            fecha_mov, cliente, ll.get('subcliente', ''), numero_interno,
+            ll.get('vida_actual', 'Original'), p_act, val_reconocido,
+            f"Garantía: {nuevo_estado} | Valor Reconocido: ${val_reconocido:,.0f}", user
+        ))
+
+        conn.commit()
+
+    return {
+        "ok": True,
+        "mensaje": f"Garantía de {numero_interno} actualizada a '{nuevo_estado}'",
+        "dinero_perdido_fvu": dinero_perd
+    }
+
+
+def obtener_kardex_llanta(cliente: str, numero_interno: str) -> dict:
+    """
+    Retorna la trazabilidad cronológica completa (Kardex) de una llanta específica.
+    """
+    cliente = str(cliente or '').strip().upper()
+    numero_interno = str(numero_interno or '').strip().upper()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM llantas_maestro WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?", (cliente, numero_interno))
+        cols_m = [d[0] for d in cursor.description]
+        row_m = cursor.fetchone()
+        llanta_info = dict(zip(cols_m, row_m)) if row_m else {}
+
+        cursor.execute("""
+            SELECT id, fecha_movimiento, bodega_origen, bodega_destino, tipo_movimiento,
+                   placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo, costo_asociado,
+                   proveedor, causal_o_motivo, documento_soporte, usuario_registro, fecha_creacion
+            FROM kardex_movimientos_llanta
+            WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?
+            ORDER BY fecha_movimiento DESC, id DESC
+        """, (cliente, numero_interno))
+        cols_k = [d[0] for d in cursor.description]
+        movimientos = [dict(zip(cols_k, r)) for r in cursor.fetchall()]
+
+    return {
+        "llanta": llanta_info,
+        "movimientos": movimientos,
+        "total_eventos": len(movimientos)
+    }
+
+
+def listar_inventario_bodegas(filtros: dict = None) -> dict:
+    """
+    Lista las llantas de `llantas_maestro` filtradas por cliente, subcliente, bodega, dimensión y búsqueda.
+    """
+    filtros = filtros or {}
+    cliente = str(filtros.get('cliente', '')).strip().upper()
+    subcliente = str(filtros.get('subcliente', '')).strip().upper()
+    ubicacion = str(filtros.get('ubicacion_bodega', '')).strip().upper()
+    dimension = str(filtros.get('dimension', '')).strip().upper()
+    q = str(filtros.get('q', '')).strip().upper()
+
+    query = "SELECT * FROM llantas_maestro WHERE 1=1"
+    params = []
+
+    if cliente and cliente != "TODOS":
+        query += " AND UPPER(cliente) = ?"
+        params.append(cliente)
+    if subcliente and subcliente != "TODOS":
+        query += " AND UPPER(subcliente) = ?"
+        params.append(subcliente)
+    if ubicacion and ubicacion != "TODAS":
+        query += " AND UPPER(ubicacion_bodega) = ?"
+        params.append(ubicacion)
+    if dimension and dimension != "TODAS":
+        query += " AND UPPER(dimension) = ?"
+        params.append(dimension)
+    if q:
+        query += " AND (UPPER(numero_interno) LIKE ? OR UPPER(marca) LIKE ? OR UPPER(placa_actual) LIKE ?)"
+        like_q = f"%{q}%"
+        params.extend([like_q, like_q, like_q])
+
+    query += " ORDER BY fecha_actualizacion DESC, id DESC"
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        cols = [d[0] for d in cursor.description]
+        llantas = [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+    return {
+        "total": len(llantas),
+        "llantas": llantas
+    }
+
+
+def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
+    """
+    Calcula el Balance Ejecutivo de las 7 Bodegas, Inventario Valorizado, Alertas
+    y la Matriz de Compras Sugeridas MRP (KPI 20).
+    Exclusivo de la licencia PRO.
+    """
+    filtros = filtros or {}
+    cliente = str(filtros.get('cliente', '')).strip().upper()
+    subcliente = str(filtros.get('subcliente', '')).strip().upper()
+    dimension_filtro = str(filtros.get('dimension', '')).strip().upper()
+
+    licencia = obtener_licencia_cliente(cliente)
+    cfg = obtener_configuracion_avanzada_cliente(cliente)
+
+    pct_aprob = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
+    stock_seg_def = to_int(cfg.get('stock_seguridad_default', 4), 4)
+    lim_dir = to_float(cfg.get('mm_retiro_direccional', 4.0), 4.0)
+    lim_trac = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+    dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
+
+    # Estructura base de bodegas
+    bodegas_resumen = {
+        'BODEGA_1_NUEVAS': {'nombre': 'Bodega 1: Llantas Nuevas', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#06B6D4'},
+        'BODEGA_2_RECAMBIO': {'nombre': 'Bodega 2: Recambio / Reutilizables', 'cantidad': 0, 'valor_cop': 0.0, 'libres': 0, 'reservadas': 0, 'color': '#10B981'},
+        'BODEGA_3_REENCAUCHE': {'nombre': 'Bodega 3: En Planta Reencauche', 'cantidad': 0, 'valor_cop': 0.0, 'alerta_mas_15_dias': 0, 'color': '#6366F1'},
+        'BODEGA_4_REENCAUCHADAS': {'nombre': 'Bodega 4: Reencauchadas Listas', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#0D9488'},
+        'BODEGA_5_REPARACION': {'nombre': 'Bodega 5: En Reparación Mayor', 'cantidad': 0, 'valor_cop': 0.0, 'costo_reparaciones_acum': 0.0, 'color': '#F59E0B'},
+        'BODEGA_6_FVU': {'nombre': 'Bodega 6: Pila Desecho / FVU', 'cantidad': 0, 'dinero_perdido_fvu': 0.0, 'posible_garantia_cnt': 0, 'valor_garantia_recuperado': 0.0, 'color': '#EF4444'},
+        'BODEGA_7_CHATARRIZADA': {'nombre': 'Bodega 7: Disposición Final', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#64748B'},
+        'MONTADA_OPERACION': {'nombre': 'En Operación (Rodando)', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#3B82F6'}
+    }
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        query_m = "SELECT * FROM llantas_maestro WHERE 1=1"
+        params_m = []
+        if cliente and cliente != "TODOS":
+            query_m += " AND UPPER(cliente) = ?"
+            params_m.append(cliente)
+        if subcliente and subcliente != "TODOS":
+            query_m += " AND UPPER(subcliente) = ?"
+            params_m.append(subcliente)
+
+        cursor.execute(query_m, params_m)
+        cols_m = [d[0] for d in cursor.description]
+        llantas_todas = [dict(zip(cols_m, r)) for r in cursor.fetchall()]
+
+    hoy = datetime.now(BOGOTA_TZ).date()
+
+    for ll in llantas_todas:
+        ubi = ll.get('ubicacion_bodega', 'BODEGA_1_NUEVAS')
+        if ubi not in bodegas_resumen:
+            continue
+
+        b_entry = bodegas_resumen[ubi]
+        b_entry['cantidad'] += 1
+
+        costo_c = to_float(ll.get('costo_ciclo_actual', 0.0))
+        costo_r = to_float(ll.get('costo_reparaciones_ciclo_actual', 0.0))
+        b_entry['valor_cop'] += (costo_c + costo_r)
+
+        if ubi == 'BODEGA_2_RECAMBIO':
+            if ll.get('reservada_para_placa'):
+                b_entry['reservadas'] += 1
+            else:
+                b_entry['libres'] += 1
+        elif ubi == 'BODEGA_3_REENCAUCHE':
+            f_env = ll.get('fecha_envio_planta')
+            if f_env:
+                try:
+                    f_dt = datetime.strptime(str(f_env)[:10], '%Y-%m-%d').date()
+                    if (hoy - f_dt).days > 15:
+                        b_entry['alerta_mas_15_dias'] += 1
+                except Exception:
+                    pass
+        elif ubi == 'BODEGA_5_REPARACION':
+            b_entry['costo_reparaciones_acum'] += costo_r
+        elif ubi == 'BODEGA_6_FVU':
+            b_entry['dinero_perdido_fvu'] += to_float(ll.get('dinero_perdido_fvu', 0.0))
+            if ll.get('estado_garantia') in ('Posible Garantía', 'En Reclamación'):
+                b_entry['posible_garantia_cnt'] += 1
+            b_entry['valor_garantia_recuperado'] += to_float(ll.get('valor_reconocido_garantia', 0.0))
+
+    # Matriz MRP por dimensión
+    dimensiones_set = sorted(list({ll.get('dimension', '295/80R22.5') for ll in llantas_todas if ll.get('dimension')}))
+    if not dimensiones_set:
+        dimensiones_set = ['295/80R22.5']
+    if dimension_filtro and dimension_filtro != 'TODAS':
+        dimensiones_set = [d for d in dimensiones_set if d.upper() == dimension_filtro.upper()] or [dimension_filtro]
+
+    matriz_mrp = []
+
+    # Obtener últimas inspecciones por vehículo para evaluar demanda en patio
+    df_raw = obtener_todas_inspecciones()
+    if not df_raw.empty and cliente and cliente != "TODOS":
+        df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
+    if not df_raw.empty and subcliente and subcliente != "TODOS":
+        df_raw = df_raw[df_raw['subcliente'].astype(str).str.upper().str.strip() == subcliente]
+
+    # Agrupar última inspección por placa
+    df_patio = pd.DataFrame()
+    if not df_raw.empty:
+        corte_vehiculos = []
+        for _, grp in df_raw.groupby('placa'):
+            f_max = grp['fecha'].astype(str).max()
+            g_f = grp[grp['fecha'].astype(str) == f_max]
+            corte_vehiculos.append(g_f)
+        if corte_vehiculos:
+            df_patio = pd.concat(corte_vehiculos, ignore_index=True)
+
+    for dim in dimensiones_set:
+        # 1. Demanda en patio por límite de retiro y par direccional
+        demanda_dir = 0
+        demanda_trac = 0
+
+        if not df_patio.empty:
+            df_dim = df_patio[df_patio['dimension'].astype(str).str.upper().str.strip() == dim.upper()]
+            for placa_v, grp_p in df_dim.groupby('placa'):
+                pos_list = [to_int(p) for p in grp_p['posicion']]
+                # Evaluar par direccional (pos 1 y 2)
+                p1 = grp_p[grp_p['posicion'] == 1]
+                p2 = grp_p[grp_p['posicion'] == 2]
+
+                p1_ret = False
+                p2_ret = False
+                p1_min = 99.0
+                p2_min = 99.0
+                p1_ini = 18.0
+                p2_ini = 18.0
+
+                if not p1.empty:
+                    pe = to_float(p1['prof_ext'].values[0])
+                    pc = to_float(p1['prof_cent'].values[0])
+                    pi = to_float(p1['prof_int'].values[0])
+                    p1_ini = to_float(p1['prof_inicial'].values[0], 18.0)
+                    vals = [x for x in (pe, pc, pi) if x > 0]
+                    p1_min = min(vals) if vals else 0.0
+                    p1_ret = (p1_min <= lim_dir)
+
+                if not p2.empty:
+                    pe = to_float(p2['prof_ext'].values[0])
+                    pc = to_float(p2['prof_cent'].values[0])
+                    pi = to_float(p2['prof_int'].values[0])
+                    p2_ini = to_float(p2['prof_inicial'].values[0], 18.0)
+                    vals = [x for x in (pe, pc, pi) if x > 0]
+                    p2_min = min(vals) if vals else 0.0
+                    p2_ret = (p2_min <= lim_dir)
+
+                # Si ambas están en retiro
+                if p1_ret and p2_ret:
+                    demanda_dir += 2
+                # Si exactamente 1 está en retiro: regla de ajuste par direccional
+                elif p1_ret and not p2_ret:
+                    demanda_dir += 1
+                    if (p2_ini - p2_min) > dif_par_dir:
+                        demanda_dir += 1  # Ajuste par direccional
+                elif p2_ret and not p1_ret:
+                    demanda_dir += 1
+                    if (p1_ini - p1_min) > dif_par_dir:
+                        demanda_dir += 1  # Ajuste par direccional
+
+                # Posiciones de tracción / arrastre (pos > 2)
+                for _, row_tr in grp_p[grp_p['posicion'] > 2].iterrows():
+                    pe = to_float(row_tr['prof_ext'])
+                    pc = to_float(row_tr['prof_cent'])
+                    pi = to_float(row_tr['prof_int'])
+                    vals = [x for x in (pe, pc, pi) if x > 0]
+                    p_m = min(vals) if vals else 0.0
+                    if p_m <= lim_trac:
+                        demanda_trac += 1
+
+        demanda_flota = demanda_dir + demanda_trac
+
+        # 2. Bajas FVU de esta dimensión
+        ll_dim_fvu = [ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_6_FVU']
+        bajas_fvu = len(ll_dim_fvu)
+
+        # 3. Stock de seguridad
+        stock_seg = stock_seg_def
+
+        # 4. Necesidad Bruta
+        necesidad_bruta = demanda_flota + bajas_fvu + stock_seg
+
+        # 5. Disponibilidad en Bodegas
+        b1_nuevas = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_1_NUEVAS'])
+        b2_recambio_libres = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')])
+        b3_planta = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_3_REENCAUCHE'])
+        b4_reenc_listas = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_4_REENCAUCHADAS'])
+        b5_reparacion = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_5_REPARACION'])
+
+        retorno_planta_estimado = int(math.floor(b3_planta * (pct_aprob / 100.0)))
+        stock_disponible_util = b1_nuevas + b2_recambio_libres + b4_reenc_listas + retorno_planta_estimado + b5_reparacion
+
+        # 6. Compra Neta Sugerida
+        compra_neta = max(0, necesidad_bruta - stock_disponible_util)
+        compra_nuevas_dir = max(0, demanda_dir - b1_nuevas)
+        compra_adicional_reenc = max(0, compra_neta - compra_nuevas_dir)
+
+        matriz_mrp.append({
+            'dimension': dim,
+            'demanda_flota': demanda_flota,
+            'demanda_direccional': demanda_dir,
+            'demanda_traccion': demanda_trac,
+            'reposicion_bajas_fvu': bajas_fvu,
+            'stock_seguridad': stock_seg,
+            'necesidad_bruta': necesidad_bruta,
+            'b1_nuevas': b1_nuevas,
+            'b2_recambio_libres': b2_recambio_libres,
+            'b3_planta': b3_planta,
+            'retorno_planta_estimado': retorno_planta_estimado,
+            'b4_reenc_listas': b4_reenc_listas,
+            'b5_reparacion': b5_reparacion,
+            'stock_disponible_util': stock_disponible_util,
+            'compra_neta_sugerida': compra_neta,
+            'compra_nuevas_direccional': compra_nuevas_dir,
+            'compra_adicional_reencauche': compra_adicional_reenc
+        })
+
+    return {
+        "licencia": licencia,
+        "disponible_en_licencia": (licencia == 'PRO'),
+        "bodegas": bodegas_resumen,
+        "matriz_mrp": matriz_mrp,
+        "total_carcasas_inventario": len(llantas_todas)
+    }
 
 

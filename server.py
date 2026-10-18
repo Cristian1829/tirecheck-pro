@@ -1234,7 +1234,148 @@ def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
         raise HTTPException(status_code=500, detail=f"Error al restaurar semilla: {str(e)}")
 
 # ==========================================
+# MÓDULO DE LAS 7 BODEGAS, KARDEX Y BALANCE MRP (KPI 20)
+# ==========================================
 
+class AltaLlantaBodegaItem(BaseModel):
+    cliente: str
+    subcliente: str = ""
+    numero_interno: str
+    ubicacion_bodega: str = "BODEGA_1_NUEVAS"
+    marca: str
+    diseno: str = ""
+    dimension: str = "295/80R22.5"
+    vida_actual: str = "Original"
+    banda_reen: str = ""
+    prof_inicial: float = 18.0
+    prof_actual_min: float = 18.0
+    costo_compra: float = 1450000.0
+    proveedor_actual: str = ""
+    observaciones: str = ""
+
+class MovimientoBodegaItem(BaseModel):
+    cliente: str
+    numero_interno: str
+    bodega_destino: str
+    fecha_movimiento: str = ""
+    placa: str = ""
+    posicion: int = 0
+    prof_min_mm: Optional[float] = None
+    nueva_prof_inicial: Optional[float] = None
+    banda_reen: str = ""
+    km_vehiculo: float = 0.0
+    costo_asociado: float = 0.0
+    proveedor: str = ""
+    causal_o_motivo: str = ""
+    documento_soporte: str = ""
+
+class GestionGarantiaItem(BaseModel):
+    cliente: str
+    numero_interno: str
+    estado_garantia: str  # 'Posible Garantía', 'En Reclamación', 'Nota Crédito Reconocida', 'Rechazada'
+    valor_reconocido_garantia: float = 0.0
+    observaciones: str = ""
+
+@app.get("/api/bodegas/resumen-mrp")
+def api_bodegas_resumen_mrp(
+    cliente: str = "",
+    subcliente: str = "",
+    dimension: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and (not cliente or cliente == "Todos"):
+            cliente = clis[0]
+        elif clis and cliente and cliente != "Todos":
+            if not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver las bodegas de este cliente")
+
+    filtros = {
+        "cliente": "" if cliente == "Todos" else cliente,
+        "subcliente": "" if subcliente == "Todos" else subcliente,
+        "dimension": "" if dimension == "Todos" else dimension
+    }
+    return sanitizar_nativos(database.obtener_balance_bodegas_mrp(filtros))
+
+@app.get("/api/bodegas/inventario")
+def api_bodegas_inventario(
+    cliente: str = "",
+    subcliente: str = "",
+    ubicacion_bodega: str = "",
+    dimension: str = "",
+    q: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and (not cliente or cliente == "Todos"):
+            cliente = clis[0]
+        elif clis and cliente and cliente != "Todos":
+            if not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver el inventario de este cliente")
+
+    filtros = {
+        "cliente": "" if cliente == "Todos" else cliente,
+        "subcliente": "" if subcliente == "Todos" else subcliente,
+        "ubicacion_bodega": "" if ubicacion_bodega == "Todas" else ubicacion_bodega,
+        "dimension": "" if dimension == "Todas" else dimension,
+        "q": q
+    }
+    return sanitizar_nativos(database.listar_inventario_bodegas(filtros))
+
+@app.post("/api/bodegas/alta")
+def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    datos = item.model_dump()
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["usuario_registro"] = usuario_actual.get("username", "admin")
+    res = database.crear_llanta_en_bodega(datos)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("mensaje", "Error al dar de alta la llanta"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/bodegas/movimiento")
+def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    datos = item.model_dump()
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["usuario_registro"] = usuario_actual.get("username", "admin")
+    res = database.registrar_movimiento_bodega(datos)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("mensaje", "Movimiento de bodega inválido"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/bodegas/garantia")
+def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    datos = item.model_dump()
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["usuario_registro"] = usuario_actual.get("username", "admin")
+    res = database.actualizar_garantia_llanta(datos)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("mensaje", "No se pudo actualizar la garantía"))
+    return sanitizar_nativos(res)
+
+@app.get("/api/bodegas/kardex")
+def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
+
+# ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
 

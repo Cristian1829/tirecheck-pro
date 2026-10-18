@@ -336,6 +336,11 @@
           <i style="--c:#a78bfa"></i>
           <span>Trazabilidad &amp; KPIs</span>
         </button>
+        <button type="button" onclick="navegarTab('bodegas')" id="nav-btn-bodegas" class="nav-tab-btn">
+          <i style="--c:#10b981"></i>
+          <span>Las 7 Bodegas &amp; MRP</span>
+          <span id="badgeNavBodegasPro" class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30">PRO</span>
+        </button>
         <button type="button" onclick="navegarTab('catalogos')" id="nav-btn-catalogos" class="nav-tab-btn">
           <i style="--c:#22d3ee"></i>
           <span>Catálogos &amp; Ajustes</span>
@@ -1973,9 +1978,598 @@
     </div>
   </section>
 
+  <!-- ============================================================== -->
+  <!-- VISTA 6: LAS 7 BODEGAS, KARDEX Y BALANCE MRP (KPI 20) - [PRO]   -->
+  <!-- ============================================================== -->
+  <section id="vista-bodegas" class="hidden max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
 
+    <!-- Banner de Licencia LIGHT vs PRO -->
+    <div id="bannerLicenciaBodegasLight" class="hidden bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-xs">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-lg shadow-md shrink-0">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-black text-slate-900">Módulo Avanzado: Las 7 Bodegas, Kardex y Balance MRP (KPI 20)</h4>
+          <p class="text-xs text-slate-600">Este módulo avanzado pertenece a la <strong class="text-amber-700">Licencia PRO</strong>. Permite rastrear carcasas, vulcanizadora, planta de reencauche, reclamación de garantías y balance inteligente de compras.</p>
+        </div>
+      </div>
+      <button type="button" onclick="cambiarModoLicenciaDashboard('PRO'); cargarModuloBodegasMRP();" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 shrink-0">
+        <i class="fa-solid fa-unlock-keyhole"></i>
+        <span>Desbloquear Vista PRO (Demostración)</span>
+      </button>
+    </div>
+
+    <!-- Contenedor Principal de Bodegas -->
+    <div class="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-5">
+      
+      <!-- Toolbar Superior: Título, Filtro Cliente, Dimensión y Botones de Acción -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-warehouse"></i>
+            </span>
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                <span>Las 7 Bodegas, Kardex y Balance MRP</span>
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">KPI 20 PRO</span>
+              </h2>
+              <p class="text-xs text-slate-500">Gestión de ciclo de vida de carcasas, vulcanizadora, reencauche, garantías y abastecimiento inteligente</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Selector Cliente -->
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
+            <i class="fa-solid fa-building text-slate-400 text-xs mr-2"></i>
+            <select id="selBodegaCliente" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+              <option value="">Todos los Clientes</option>
+            </select>
+          </div>
+
+          <!-- Selector Dimensión -->
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
+            <i class="fa-solid fa-ruler-combined text-slate-400 text-xs mr-2"></i>
+            <select id="selBodegaDimension" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+              <option value="">Todas las Dimensiones</option>
+            </select>
+          </div>
+
+          <!-- Botón Dar de Alta Llanta/Carcasa -->
+          <button type="button" onclick="abrirModalAltaBodega()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>+ Dar de Alta Llanta</span>
+          </button>
+
+          <!-- Botón Refrescar -->
+          <button type="button" onclick="cargarModuloBodegasMRP()" title="Recargar Información" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">
+            <i class="fa-solid fa-arrows-rotate"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Alertas Inteligentes de Bodegas (Planta, Garantías, Abastecimiento) -->
+      <div id="contenedorAlertasBodegas" class="space-y-2"></div>
+
+      <!-- Cuadrícula de las 7 Bodegas (+ En Operación) para Filtrado Rápido en 1 Clic -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <i class="fa-solid fa-boxes-stacked text-slate-400"></i>
+            <span>Estado de Inventario en las 7 Bodegas (Clic para filtrar)</span>
+          </h3>
+          <button type="button" onclick="filtrarInventarioPorBodega('')" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            <span>Ver Todas</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" id="gridCardsBodegas">
+          <!-- B1: Nuevas -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_1_NUEVAS')" id="cardBodega_BODEGA_1_NUEVAS" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-sky-200 bg-sky-50/50 hover:bg-sky-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-sky-800 mb-1">
+              <span>B1: Nuevas</span>
+              <i class="fa-solid fa-star text-sky-500"></i>
+            </div>
+            <div class="text-xl font-black text-sky-950" id="cardCant_B1">0</div>
+            <div class="text-[10px] text-sky-700/80 font-semibold truncate" id="cardSub_B1">$ 0 COP</div>
+          </div>
+
+          <!-- B2: Recambio / Reutilizables -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_2_RECAMBIO')" id="cardBodega_BODEGA_2_RECAMBIO" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-emerald-800 mb-1">
+              <span>B2: Recambio</span>
+              <i class="fa-solid fa-arrows-split-up-and-left text-emerald-500"></i>
+            </div>
+            <div class="text-xl font-black text-emerald-950" id="cardCant_B2">0</div>
+            <div class="text-[10px] text-emerald-700/80 font-semibold truncate" id="cardSub_B2">0 libres / 0 dual</div>
+          </div>
+
+          <!-- B3: Planta Reencauche -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_3_REENCAUCHE')" id="cardBodega_BODEGA_3_REENCAUCHE" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-indigo-800 mb-1">
+              <span>B3: En Planta</span>
+              <i class="fa-solid fa-industry text-indigo-500"></i>
+            </div>
+            <div class="text-xl font-black text-indigo-950" id="cardCant_B3">0</div>
+            <div class="text-[10px] text-indigo-700/80 font-semibold truncate" id="cardSub_B3">0 en planta</div>
+          </div>
+
+          <!-- B4: Reencauchadas Listas -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_4_REENCAUCHADAS')" id="cardBodega_BODEGA_4_REENCAUCHADAS" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-teal-200 bg-teal-50/50 hover:bg-teal-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-teal-800 mb-1">
+              <span>B4: Reencauch.</span>
+              <i class="fa-solid fa-circle-check text-teal-500"></i>
+            </div>
+            <div class="text-xl font-black text-teal-950" id="cardCant_B4">0</div>
+            <div class="text-[10px] text-teal-700/80 font-semibold truncate" id="cardSub_B4">Listas para patio</div>
+          </div>
+
+          <!-- B5: Reparación Mayor -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_5_REPARACION')" id="cardBodega_BODEGA_5_REPARACION" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-amber-200 bg-amber-50/50 hover:bg-amber-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-amber-800 mb-1">
+              <span>B5: Vulcaniz.</span>
+              <i class="fa-solid fa-wrench text-amber-500"></i>
+            </div>
+            <div class="text-xl font-black text-amber-950" id="cardCant_B5">0</div>
+            <div class="text-[10px] text-amber-700/80 font-semibold truncate" id="cardSub_B5">Rep: $ 0</div>
+          </div>
+
+          <!-- B6: Desecho FVU -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_6_FVU')" id="cardBodega_BODEGA_6_FVU" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-rose-200 bg-rose-50/50 hover:bg-rose-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-rose-800 mb-1">
+              <span>B6: Desecho FVU</span>
+              <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+            </div>
+            <div class="text-xl font-black text-rose-950" id="cardCant_B6">0</div>
+            <div class="text-[10px] text-rose-700/80 font-semibold truncate" id="cardSub_B6">Pérdida: $ 0</div>
+          </div>
+
+          <!-- B7: Chatarrizadas -->
+          <div onclick="filtrarInventarioPorBodega('BODEGA_7_CHATARRIZADA')" id="cardBodega_BODEGA_7_CHATARRIZADA" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-slate-300 bg-slate-100 hover:bg-slate-200/70 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
+              <span>B7: Chatarra</span>
+              <i class="fa-solid fa-recycle text-slate-500"></i>
+            </div>
+            <div class="text-xl font-black text-slate-900" id="cardCant_B7">0</div>
+            <div class="text-[10px] text-slate-600 font-semibold truncate" id="cardSub_B7">Acta Ambiental</div>
+          </div>
+
+          <!-- Montadas en Operación -->
+          <div onclick="filtrarInventarioPorBodega('MONTADA_OPERACION')" id="cardBodega_MONTADA_OPERACION" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-blue-200 bg-blue-50/50 hover:bg-blue-50 hover:shadow-md transition-all">
+            <div class="flex items-center justify-between text-[11px] font-bold text-blue-800 mb-1">
+              <span>En Operación</span>
+              <i class="fa-solid fa-truck-moving text-blue-500"></i>
+            </div>
+            <div class="text-xl font-black text-blue-950" id="cardCant_MONTADA">0</div>
+            <div class="text-[10px] text-blue-700/80 font-semibold truncate" id="cardSub_MONTADA">Rodando en Flota</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN MRP KPI 20: BALANCE DE COMPRAS Y ABASTECIMIENTO -->
+      <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-scale-balanced text-blue-600"></i>
+              <span>KPI 20: Matriz MRP y Balance Sugerido de Compras</span>
+            </h3>
+            <p class="text-xs text-slate-500">
+              Compra Neta = [Demanda Flota + Par Direccional (KPI 05) + Bajas FVU + Stock Seguridad] − [B1 + B2 libres (KPI 08) + B4 + ⌊B3 × % Aprob⌋ + B5]
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-bold bg-white px-3 py-1 rounded-xl border border-slate-200 text-slate-700 shadow-2xs">
+              Aprob. Reencauche: <strong id="lblPorcentajeAprobReen" class="text-blue-700">85%</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Gráfico Comparativo Chart.js -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs">
+          <div class="h-64 sm:h-72 w-full relative">
+            <canvas id="chartMrpBodegas"></canvas>
+          </div>
+        </div>
+
+        <!-- Tabla Ejecutiva de la Matriz MRP por Dimensión -->
+        <div class="overflow-x-auto custom-scroll rounded-2xl border border-slate-200 bg-white shadow-2xs">
+          <table class="w-full text-xs text-left text-slate-700">
+            <thead class="bg-slate-900 text-white font-bold text-[11px] uppercase tracking-wider">
+              <tr>
+                <th class="p-3">Dimensión</th>
+                <th class="p-3 text-center bg-rose-950/40" title="Retiros programados + Ajuste Par Direccional">Demanda Retiros</th>
+                <th class="p-3 text-center bg-rose-950/40">Bajas FVU</th>
+                <th class="p-3 text-center bg-rose-950/40">Stock Seg.</th>
+                <th class="p-3 text-center font-black bg-rose-900/60 text-rose-200">Necesidad Bruta</th>
+                <th class="p-3 text-center bg-emerald-950/30">B1 Nuevas</th>
+                <th class="p-3 text-center bg-emerald-950/30">B2 Recambio</th>
+                <th class="p-3 text-center bg-emerald-950/30">B3 Planta (Pond)</th>
+                <th class="p-3 text-center bg-emerald-950/30">B4 Reenc.</th>
+                <th class="p-3 text-center bg-emerald-950/30">B5 Repar.</th>
+                <th class="p-3 text-center font-black bg-emerald-900/60 text-emerald-200">Stock Útil Total</th>
+                <th class="p-3 text-center font-black bg-blue-900 text-amber-300">Compra Sugerida</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMatrizMrp" class="divide-y divide-slate-100 font-medium">
+              <tr>
+                <td colspan="12" class="p-6 text-center text-slate-400 italic">Cargando balance MRP...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- INVENTARIO DETALLADO DE CARCASAS / LLANTAS EN BODEGAS -->
+      <div class="space-y-3 pt-2">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center space-x-2">
+            <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-slate-700"></i>
+              <span>Inventario de Carcasas y Llantas</span>
+            </h3>
+            <span id="badgeTotalInventarioBodegas" class="text-xs bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-full border border-slate-200">0 registros</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Buscador Rápido -->
+            <div class="relative">
+              <i class="fa-solid fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+              <input type="text" id="filtroTextoInventarioBodegas" oninput="filtrarTablaInventarioEnVivo()" placeholder="Buscar serie, placa, marca..." class="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-blue-500 w-48 sm:w-64">
+            </div>
+
+            <!-- Filtro Específico por Bodega en Dropdown -->
+            <select id="selFiltroUbicacionBodega" onchange="cambiarFiltroDropdownBodega(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none">
+              <option value="">Todas las Ubicaciones</option>
+              <option value="BODEGA_1_NUEVAS">Bodega 1: Nuevas</option>
+              <option value="BODEGA_2_RECAMBIO">Bodega 2: Recambio</option>
+              <option value="BODEGA_3_REENCAUCHE">Bodega 3: Planta Reencauche</option>
+              <option value="BODEGA_4_REENCAUCHADAS">Bodega 4: Reencauchadas Listas</option>
+              <option value="BODEGA_5_REPARACION">Bodega 5: Reparación</option>
+              <option value="BODEGA_6_FVU">Bodega 6: Desecho FVU</option>
+              <option value="BODEGA_7_CHATARRIZADA">Bodega 7: Chatarrizada</option>
+              <option value="MONTADA_OPERACION">Montada en Operación</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tabla de Inventario de Llantas -->
+        <div class="overflow-x-auto custom-scroll rounded-2xl border border-slate-200 bg-white shadow-2xs">
+          <table class="w-full text-xs text-left text-slate-700">
+            <thead class="bg-slate-100 text-slate-700 font-bold text-[11px] uppercase tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="p-3">N° Interno / Serie</th>
+                <th class="p-3">Ubicación / Bodega</th>
+                <th class="p-3">Marca / Diseño</th>
+                <th class="p-3">Dimensión</th>
+                <th class="p-3 text-center">Vida</th>
+                <th class="p-3 text-center">Prof. Mín</th>
+                <th class="p-3">Vehículo / Detalle</th>
+                <th class="p-3 text-right">Costo Acum. ($)</th>
+                <th class="p-3 text-center">Garantía</th>
+                <th class="p-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyInventarioBodegas" class="divide-y divide-slate-100 font-medium">
+              <tr>
+                <td colspan="10" class="p-6 text-center text-slate-400 italic">Cargando inventario de llantas...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
 
   <!-- ============================================================== -->
+  <!-- MODALES EXCLUSIVOS DEL MÓDULO BODEGAS & MRP                      -->
+  <!-- ============================================================== -->
+
+  <!-- 1. MODAL: DAR DE ALTA LLANTA EN BODEGA -->
+  <div id="modalAltaLlantaBodega" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-plus"></i>
+          </span>
+          <div>
+            <h3 class="text-sm font-black text-slate-900">Dar de Alta Llanta o Carcasa en Bodega</h3>
+            <p class="text-[11px] text-slate-500">Registra una llanta nueva o carcasa reutilizable en inventario</p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalAltaBodega()" class="text-slate-400 hover:text-slate-700">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formAltaLlantaBodega" onsubmit="guardarAltaLlantaBodega(event)" class="space-y-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
+            <input type="text" id="alta_cliente" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">N° Interno / Serie *</label>
+            <input type="text" id="alta_numero_interno" required placeholder="ej. LL-9021" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Bodega Inicial *</label>
+            <select id="alta_bodega_inicial" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+              <option value="BODEGA_1_NUEVAS">Bodega 1: Nuevas (0 KM)</option>
+              <option value="BODEGA_2_RECAMBIO">Bodega 2: Recambio / Reutilizable</option>
+              <option value="BODEGA_4_REENCAUCHADAS">Bodega 4: Reencauchada Lista</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Dimensión *</label>
+            <input type="text" id="alta_dimension" required value="295/80R22.5" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Marca *</label>
+            <input type="text" id="alta_marca" required placeholder="ej. MICHELIN, GOODYEAR" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Diseño *</label>
+            <input type="text" id="alta_diseno" required placeholder="ej. X MULTI Z" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Vida Actual</label>
+            <select id="alta_vida_actual" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+              <option value="Original">Original</option>
+              <option value="R1">R1 (1er Reencauche)</option>
+              <option value="R2">R2 (2do Reencauche)</option>
+              <option value="R3">R3 (3er Reencauche)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Banda Reencauche (Opcional)</label>
+            <input type="text" id="alta_banda_reen" placeholder="ej. BDM, RINGTREAD" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Profundidad Inicial (mm) *</label>
+            <input type="number" step="0.1" id="alta_prof_inicial" required value="18.0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP) *</label>
+            <input type="number" step="1000" id="alta_costo_compra" required value="1450000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Factura</label>
+            <input type="text" id="alta_proveedor" placeholder="ej. Distribuidora Llantera SAS - Fact # 1042" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones</label>
+            <textarea id="alta_observaciones" rows="2" placeholder="Notas adicionales de ingreso a bodega..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="cerrarModalAltaBodega()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow">Guardar Alta en Bodega</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MODAL: MOVER LLANTA DE BODEGA / MONTAR -->
+  <div id="modalMoverBodega" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-arrows-turn-to-dots"></i>
+          </span>
+          <div>
+            <h3 class="text-sm font-black text-slate-900">Mover Llanta / Carcasa entre Bodegas</h3>
+            <p class="text-[11px] text-slate-500" id="lblMoverDetalleLlanta">Llanta N° Interno</p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalMoverBodega()" class="text-slate-400 hover:text-slate-700">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formMoverBodega" onsubmit="guardarMovimientoBodega(event)" class="space-y-3.5">
+        <input type="hidden" id="mover_cliente">
+        <input type="hidden" id="mover_numero_interno">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Destino del Movimiento *</label>
+          <select id="mover_bodega_destino" onchange="adaptarCamposModalMover(this.value)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900">
+            <option value="MONTADA_OPERACION">🚚 Montar en Vehículo (Operación)</option>
+            <option value="BODEGA_2_RECAMBIO">🔄 Bodega 2: Recambio / Reutilizable en Patio</option>
+            <option value="BODEGA_3_REENCAUCHE">🏭 Bodega 3: Enviar a Planta de Reencauche</option>
+            <option value="BODEGA_4_REENCAUCHADAS">✨ Bodega 4: Retorno de Reencauche Lista</option>
+            <option value="BODEGA_5_REPARACION">🔧 Bodega 5: Enviar a Taller / Vulcanizadora</option>
+            <option value="BODEGA_6_FVU">⚠️ Bodega 6: Dar de Baja (Desecho FVU Prematuro)</option>
+            <option value="BODEGA_7_CHATARRIZADA">♻️ Bodega 7: Chatarrización / Acta Ambiental</option>
+          </select>
+        </div>
+
+        <!-- Campos para MONTAJE EN VEHÍCULO -->
+        <div id="boxMoverMontaje" class="grid grid-cols-2 gap-3 p-3 bg-blue-50/60 rounded-xl border border-blue-200">
+          <div>
+            <label class="block text-xs font-bold text-blue-900 mb-1">Placa Vehículo *</label>
+            <input type="text" id="mover_placa" placeholder="ej. TRK-900" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-slate-900 uppercase">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-blue-900 mb-1">Posición en Chasis (1-24) *</label>
+            <input type="number" min="1" max="24" id="mover_posicion" placeholder="ej. 3" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-slate-900">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-bold text-blue-900 mb-1">Odómetro / Km Vehículo</label>
+            <input type="number" id="mover_km_vehiculo" placeholder="ej. 125400" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- Campos para RETORNO DE REENCAUCHE (B4) -->
+        <div id="boxMoverReencauche" class="hidden grid grid-cols-2 gap-3 p-3 bg-teal-50/60 rounded-xl border border-teal-200">
+          <div>
+            <label class="block text-xs font-bold text-teal-900 mb-1">Nueva Prof. Inicial (mm) *</label>
+            <input type="number" step="0.1" id="mover_nueva_prof" value="20.0" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-teal-900 mb-1">Banda Reencauche</label>
+            <input type="text" id="mover_banda_reen" placeholder="ej. BDM, RINGTREAD" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900 uppercase">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-bold text-teal-900 mb-1">Costo Facturado Reencauche ($ COP) *</label>
+            <input type="number" step="1000" id="mover_costo_reencauche" placeholder="ej. 650000" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- Campos para REPARACIÓN (B5) -->
+        <div id="boxMoverReparacion" class="hidden p-3 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2">
+          <div>
+            <label class="block text-xs font-bold text-amber-900 mb-1">Costo Reparación / Vulcanizadora ($ COP)</label>
+            <input type="number" step="1000" id="mover_costo_reparacion" placeholder="ej. 85000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- Campos para BAJA FVU (B6) -->
+        <div id="boxMoverFVU" class="hidden p-3 bg-rose-50/60 rounded-xl border border-rose-200 space-y-2">
+          <div>
+            <label class="block text-xs font-bold text-rose-900 mb-1">Causal de Daño / Desecho Prematuro *</label>
+            <select id="mover_causal_fvu" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-900">
+              <option value="Corte en costado">Corte en costado</option>
+              <option value="Estallido">Estallido</option>
+              <option value="Separación de banda">Separación de banda</option>
+              <option value="Rotura de carcasa / impacto">Rotura de carcasa / impacto</option>
+              <option value="Pinchazo no reparable">Pinchazo no reparable</option>
+              <option value="Falla de talón / ceja">Falla de talón / ceja</option>
+              <option value="Desgaste irregular severo">Desgaste irregular severo</option>
+              <option value="Desgaste total normal">Desgaste total normal (≤ límite)</option>
+              <option value="Otro">Otro motivo</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-rose-900 mb-1">Profundidad al Momento del Desecho (mm) *</label>
+            <input type="number" step="0.1" id="mover_prof_fvu" value="3.0" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- Campos para CHATARRIZACIÓN (B7) -->
+        <div id="boxMoverChatarra" class="hidden p-3 bg-slate-100 rounded-xl border border-slate-300 space-y-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-800 mb-1">N° Acta Ambiental / Certificado Disposición</label>
+            <input type="text" id="mover_acta_ambiental" placeholder="ej. ACTA-DISP-2026-088" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900">
+          </div>
+        </div>
+
+        <!-- Campos Generales -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Fecha Movimiento</label>
+            <input type="date" id="mover_fecha" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Taller</label>
+            <input type="text" id="mover_proveedor" placeholder="ej. Planta Bandag SAS" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Documento Soporte / Remisión</label>
+            <input type="text" id="mover_soporte" placeholder="ej. Remisión # 4591" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="cerrarModalMoverBodega()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow">Ejecutar Movimiento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. MODAL: GESTIÓN DE GARANTÍA -->
+  <div id="modalGarantiaLlanta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-shield-halved"></i>
+          </span>
+          <div>
+            <h3 class="text-sm font-black text-slate-900">Gestión de Garantía y Reclamación</h3>
+            <p class="text-[11px] text-slate-500" id="lblGarantiaDetalleLlanta">Llanta N° Interno</p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalGarantia()" class="text-slate-400 hover:text-slate-700">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formGarantiaLlanta" onsubmit="guardarGarantiaLlanta(event)" class="space-y-3.5">
+        <input type="hidden" id="garantia_cliente">
+        <input type="hidden" id="garantia_numero_interno">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Estado de la Garantía *</label>
+          <select id="garantia_estado" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900">
+            <option value="Posible Garantía">🟡 Posible Garantía (Desgaste &lt; 30% en B6)</option>
+            <option value="En Reclamación">🔵 En Reclamación con Proveedor / Planta</option>
+            <option value="Nota Crédito Reconocida">🟢 Nota Crédito Reconocida (Reembolso $)</option>
+            <option value="Rechazada">🔴 Rechazada por Fábrica</option>
+            <option value="No Aplica">⚪ No Aplica</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Valor Reconocido por Proveedor ($ COP)</label>
+          <input type="number" step="1000" id="garantia_valor_reconocido" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-emerald-700">
+          <p class="text-[10px] text-slate-400 mt-1">Este valor reduce automáticamente el dinero perdido por fin de vida útil prematura.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones / N° Reclamación</label>
+          <textarea id="garantia_observaciones" rows="3" placeholder="ej. NC-4581 emitida por Michelin por defecto en hombro..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="cerrarModalGarantia()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow">Guardar Garantía</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. MODAL: KARDEX HISTÓRICO Y LÍNEA DE TIEMPO DE LA CARCASA -->
+  <div id="modalKardexLlanta" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-timeline"></i>
+          </span>
+          <div>
+            <h3 class="text-sm font-black text-slate-900">Kardex y Hoja de Vida de la Carcasa</h3>
+            <p class="text-[11px] text-slate-500" id="lblKardexTitulo">Trazabilidad histórica completa</p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-slate-700">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Resumen de la Llanta en la Cabecera del Kardex -->
+      <div id="boxKardexResumenLlanta" class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs"></div>
+
+      <!-- Contenedor Timeline Vertical del Kardex -->
+      <div class="max-h-96 overflow-y-auto custom-scroll pr-1">
+        <div id="timelineKardexEventos" class="relative pl-6 border-l-2 border-slate-200 space-y-4 py-2">
+          <!-- Eventos dinámicos inyectados por JS -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-3 border-t border-slate-100">
+        <button type="button" onclick="cerrarModalKardex()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl">Cerrar Kardex</button>
+      </div>
+    </div>
+  </div>
   <!-- MODALES DE OPERACIÓN (EDITAR, IMPORTAR EXCEL, NUEVO MODELO, ETC)-->
   <!-- ============================================================== -->
 
@@ -2976,7 +3570,7 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis'] : ['patio', 'diagnostico', 'kpis', 'catalogos']);
+          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'bodegas', 'catalogos']);
         }
         if (!vistasPermitidas.includes(tabId)) {
           mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
@@ -2984,7 +3578,7 @@
         }
       }
 
-      const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
+      const tabs = ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'];
       tabs.forEach(t => {
         const elVista = document.getElementById(`vista-${t}`);
         const elBtn = document.getElementById(`nav-btn-${t}`);
@@ -3010,6 +3604,11 @@
       else if (tabId === 'basedatos') cargarBaseInspecciones();
       else if (tabId === 'diagnostico') cargarDiagnostico();
       else if (tabId === 'kpis') cargarKpis();
+      else if (tabId === 'bodegas') {
+        if (typeof cargarModuloBodegasMRP === 'function') {
+          cargarModuloBodegasMRP();
+        }
+      }
       else if (tabId === 'catalogos') {
         if (!esAdminOJefatura()) {
           mostrarSubtabCat('operaciones');
@@ -3140,7 +3739,7 @@
 
       let vistasPermitidas = [];
       if (esAdmin) {
-        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
+        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'];
       } else {
         const rawV = usuarioActual.vistas_permitidas;
         if (Array.isArray(rawV)) {
@@ -3148,11 +3747,11 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis'] : ['patio', 'diagnostico', 'kpis', 'catalogos']);
+          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'bodegas', 'catalogos']);
         }
       }
 
-      ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'].forEach(tab => {
+      ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
         if (btnNav) {
           // REGLA: inspectores no pueden ver la pestaña base de inspecciones
@@ -10119,6 +10718,862 @@
 
     function sincronizarSlotEspecificaciones() {
       // Orden de patio: 1. Cliente -> 2. Diagrama Chasis -> 3. Especificaciones de Llanta -> 4. Mediciones
+    }
+
+    // ==============================================================
+    // MÓDULO: LAS 7 BODEGAS, KARDEX Y BALANCE MRP (KPI 20) [PRO]
+    // ==============================================================
+    let cacheInventarioBodegas = [];
+    let cacheResumenMrp = null;
+    let chartMrpInstancia = null;
+    let bodegaFiltroActiva = '';
+
+    function formatearPesosBodega(val) {
+      const num = Number(val) || 0;
+      return '$ ' + num.toLocaleString('es-CO');
+    }
+
+    async function cargarModuloBodegasMRP() {
+      // 1. Control de Licencia LIGHT vs PRO
+      const bannerLic = document.getElementById('bannerLicenciaBodegasLight');
+      if (bannerLic) {
+        if (typeof modoLicenciaGraficos !== 'undefined' && modoLicenciaGraficos === 'LIGHT') {
+          bannerLic.classList.remove('hidden');
+        } else {
+          bannerLic.classList.add('hidden');
+        }
+      }
+
+      // 2. Poblar clientes en el selector si está vacío
+      const selCli = document.getElementById('selBodegaCliente');
+      if (selCli && selCli.options.length <= 1) {
+        let clientes = [];
+        if (typeof obtenerClientesDisponiblesUsuario === 'function') {
+          clientes = obtenerClientesDisponiblesUsuario();
+        } else if (usuarioActual?.cliente_asignado) {
+          clientes = [usuarioActual.cliente_asignado];
+        }
+        if (!clientes || clientes.length === 0) {
+          const selPatio = document.getElementById('cliente');
+          if (selPatio && selPatio.options.length > 1) {
+            clientes = Array.from(selPatio.options).map(o => o.value).filter(Boolean);
+          }
+        }
+        clientes.forEach(c => {
+          if (!Array.from(selCli.options).some(o => o.value === c)) {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            selCli.appendChild(opt);
+          }
+        });
+        if (usuarioActual?.rol !== 'admin' && usuarioActual?.cliente_asignado) {
+          selCli.value = usuarioActual.cliente_asignado;
+          selCli.disabled = true;
+        }
+      }
+
+      const clienteSel = selCli ? selCli.value : '';
+      const dimSel = document.getElementById('selBodegaDimension') ? document.getElementById('selBodegaDimension').value : '';
+
+      // 3. Consultar Resumen MRP y Estado de las 7 Bodegas
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const urlMrp = `/api/bodegas/resumen-mrp?cliente=${encodeURIComponent(clienteSel)}&dimension=${encodeURIComponent(dimSel)}`;
+        const res = await fetch(urlMrp, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          cacheResumenMrp = data;
+          
+          // Actualizar porcentaje de aprobación de reencauche
+          const lblAprob = document.getElementById('lblPorcentajeAprobReen');
+          if (lblAprob) {
+            lblAprob.textContent = ((data.configuracion?.porcentaje_aprobacion_reencauche != null) ? data.configuracion.porcentaje_aprobacion_reencauche : 85) + '%';
+          }
+
+          // Actualizar dimensiones disponibles en el selector
+          const selDim = document.getElementById('selBodegaDimension');
+          if (selDim && data.resumen_mrp) {
+            const dims = data.resumen_mrp.map(r => r.dimension).filter(Boolean);
+            dims.forEach(d => {
+              if (!Array.from(selDim.options).some(o => o.value === d)) {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                selDim.appendChild(opt);
+              }
+            });
+          }
+
+          renderizarTarjetasBodegas(data.bodegas || {}, data.alertas || []);
+          renderizarGraficoMrp(data.resumen_mrp || []);
+          renderizarTablaMrp(data.resumen_mrp || []);
+        } else {
+          console.error('Error al cargar balance MRP de bodegas:', await res.text());
+        }
+      } catch (err) {
+        console.error('Excepción al cargar balance MRP:', err);
+      }
+
+      // 4. Cargar inventario detallado de llantas
+      await cargarInventarioBodegas();
+    }
+
+    function renderizarTarjetasBodegas(b, alertas) {
+      // B1 Nuevas
+      const b1 = b.BODEGA_1_NUEVAS || { total: 0, valor_libros: 0 };
+      const elB1 = document.getElementById('cardCant_B1');
+      if (elB1) elB1.textContent = b1.total;
+      const elSubB1 = document.getElementById('cardSub_B1');
+      if (elSubB1) elSubB1.textContent = formatearPesosBodega(b1.valor_libros);
+
+      // B2 Recambio
+      const b2 = b.BODEGA_2_RECAMBIO || { total: 0, libres: 0, reservadas_dual: 0 };
+      const elB2 = document.getElementById('cardCant_B2');
+      if (elB2) elB2.textContent = b2.total;
+      const elSubB2 = document.getElementById('cardSub_B2');
+      if (elSubB2) elSubB2.textContent = `${b2.libres || 0} libres / ${b2.reservadas_dual || 0} dual`;
+
+      // B3 Reencauche
+      const b3 = b.BODEGA_3_REENCAUCHE || { total: 0, alerta_mas_15_dias: 0 };
+      const elB3 = document.getElementById('cardCant_B3');
+      if (elB3) elB3.textContent = b3.total;
+      const elSubB3 = document.getElementById('cardSub_B3');
+      if (elSubB3) {
+        elSubB3.textContent = b3.alerta_mas_15_dias > 0 ? `⚠️ ${b3.alerta_mas_15_dias} con >15 días` : 'En planta a tiempo';
+        if (b3.alerta_mas_15_dias > 0) elSubB3.classList.add('text-rose-600', 'font-black');
+        else elSubB3.classList.remove('text-rose-600', 'font-black');
+      }
+
+      // B4 Reencauchadas Listas
+      const b4 = b.BODEGA_4_REENCAUCHADAS || { total: 0 };
+      const elB4 = document.getElementById('cardCant_B4');
+      if (elB4) elB4.textContent = b4.total;
+
+      // B5 Reparación
+      const b5 = b.BODEGA_5_REPARACION || { total: 0, costo_reparaciones_acum: 0 };
+      const elB5 = document.getElementById('cardCant_B5');
+      if (elB5) elB5.textContent = b5.total;
+      const elSubB5 = document.getElementById('cardSub_B5');
+      if (elSubB5) elSubB5.textContent = `Rep: ${formatearPesosBodega(b5.costo_reparaciones_acum || 0)}`;
+
+      // B6 FVU Desecho
+      const b6 = b.BODEGA_6_FVU || { total: 0, dinero_perdido_fvu: 0, con_garantia_pendiente: 0 };
+      const elB6 = document.getElementById('cardCant_B6');
+      if (elB6) elB6.textContent = b6.total;
+      const elSubB6 = document.getElementById('cardSub_B6');
+      if (elSubB6) {
+        elSubB6.textContent = `Pérdida: ${formatearPesosBodega(b6.dinero_perdido_fvu || 0)}`;
+      }
+
+      // B7 Chatarrizada
+      const b7 = b.BODEGA_7_CHATARRIZADA || { total: 0 };
+      const elB7 = document.getElementById('cardCant_B7');
+      if (elB7) elB7.textContent = b7.total;
+
+      // Montadas Operación
+      const mo = b.MONTADA_OPERACION || { total: 0 };
+      const elMo = document.getElementById('cardCant_MONTADA');
+      if (elMo) elMo.textContent = mo.total;
+
+      // Alertas Inteligentes
+      const contAlertas = document.getElementById('contenedorAlertasBodegas');
+      if (contAlertas) {
+        contAlertas.innerHTML = '';
+        if (alertas && alertas.length > 0) {
+          alertas.forEach(al => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center space-x-2 bg-amber-50 border border-amber-300 text-amber-900 px-3.5 py-2 rounded-xl text-xs font-bold shadow-2xs';
+            div.innerHTML = `<i class="fa-solid fa-bell text-amber-600 text-sm"></i><span>${al}</span>`;
+            contAlertas.appendChild(div);
+          });
+        }
+      }
+    }
+
+    function renderizarGraficoMrp(resumenMrp) {
+      const ctx = document.getElementById('chartMrpBodegas');
+      if (!ctx) return;
+
+      if (chartMrpInstancia) {
+        chartMrpInstancia.destroy();
+        chartMrpInstancia = null;
+      }
+
+      if (!resumenMrp || resumenMrp.length === 0) {
+        return;
+      }
+
+      const labels = resumenMrp.map(r => r.dimension);
+      const dataBruta = resumenMrp.map(r => r.necesidad_bruta);
+      const dataStock = resumenMrp.map(r => r.stock_util_total);
+      const dataCompra = resumenMrp.map(r => r.compra_neta_sugerida);
+
+      chartMrpInstancia = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '1. Necesidad Bruta (Demanda + Par Dir. + FVU + Stock Seg.)',
+              data: dataBruta,
+              backgroundColor: 'rgba(239, 68, 68, 0.85)',
+              borderColor: '#dc2626',
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: '2. Stock Disponible Útil (B1 + B2 + B4 + ⌊B3×%⌋ + B5)',
+              data: dataStock,
+              backgroundColor: 'rgba(16, 185, 129, 0.85)',
+              borderColor: '#059669',
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: '3. Compra Neta Sugerida (KPI 20)',
+              data: dataCompra,
+              backgroundColor: 'rgba(37, 99, 235, 0.95)',
+              borderColor: '#1d4ed8',
+              borderWidth: 1,
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { size: 11, weight: 'bold' }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleFont: { size: 12, weight: 'bold' },
+              bodyFont: { size: 11 }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderizarTablaMrp(resumenMrp) {
+      const tbody = document.getElementById('tbodyMatrizMrp');
+      if (!tbody) return;
+
+      if (!resumenMrp || resumenMrp.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="p-6 text-center text-slate-400 italic">No hay datos de flota para calcular el balance MRP con los filtros seleccionados.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      resumenMrp.forEach(r => {
+        const parDirBadge = r.demanda_par_direccional > 0 
+          ? `<span class="block text-[9px] text-amber-700 font-bold">(+${r.demanda_par_direccional} Par Dir. KPI 05)</span>` 
+          : '';
+
+        const compraColor = r.compra_neta_sugerida > 0 
+          ? 'bg-blue-600 text-white font-black px-2.5 py-1 rounded-xl shadow-xs' 
+          : 'bg-emerald-100 text-emerald-800 font-black px-2.5 py-1 rounded-xl';
+
+        const desgloseCompra = r.compra_neta_sugerida > 0
+          ? `<div class="text-[10px] text-slate-500 mt-1">
+               <span class="text-blue-700 font-bold">${r.sugerencia_compra_nuevas} Nuevas Dir.</span> | 
+               <span class="text-emerald-700 font-bold">${r.sugerencia_reencauche_o_traccion} Reenc./Trac.</span>
+             </div>`
+          : '<span class="text-[10px] text-emerald-600 block mt-0.5">Stock Cubierto</span>';
+
+        html += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-3 font-black text-slate-900">${r.dimension}</td>
+            <td class="p-3 text-center bg-rose-50/30">
+              <span class="font-bold">${r.demanda_retiro_flota + r.demanda_par_direccional}</span>
+              ${parDirBadge}
+            </td>
+            <td class="p-3 text-center bg-rose-50/30 font-bold">${r.bajas_fvu}</td>
+            <td class="p-3 text-center bg-rose-50/30 font-bold">${r.stock_seguridad}</td>
+            <td class="p-3 text-center font-black bg-rose-100/60 text-rose-950">${r.necesidad_bruta}</td>
+            <td class="p-3 text-center bg-emerald-50/30 font-bold">${r.stock_b1_nuevas}</td>
+            <td class="p-3 text-center bg-emerald-50/30 font-bold" title="Libres para apareo dual">${r.stock_b2_recambio}</td>
+            <td class="p-3 text-center bg-emerald-50/30 font-bold" title="${r.stock_b3_planta_real} en planta real">${r.stock_b3_planta_ponderado}</td>
+            <td class="p-3 text-center bg-emerald-50/30 font-bold">${r.stock_b4_reencauchadas}</td>
+            <td class="p-3 text-center bg-emerald-50/30 font-bold">${r.stock_b5_reparacion}</td>
+            <td class="p-3 text-center font-black bg-emerald-100/60 text-emerald-950">${r.stock_util_total}</td>
+            <td class="p-3 text-center">
+              <span class="${compraColor}">${r.compra_neta_sugerida} uds</span>
+              ${desgloseCompra}
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    async function cargarInventarioBodegas(bodega = bodegaFiltroActiva) {
+      const tbody = document.getElementById('tbodyInventarioBodegas');
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400 italic">Cargando llantas en inventario...</td></tr>`;
+      }
+
+      const clienteSel = document.getElementById('selBodegaCliente')?.value || '';
+      const dimSel = document.getElementById('selBodegaDimension')?.value || '';
+      const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+      const urlInv = `/api/bodegas/inventario?cliente=${encodeURIComponent(clienteSel)}&dimension=${encodeURIComponent(dimSel)}&ubicacion_bodega=${encodeURIComponent(bodega)}`;
+      try {
+        const res = await fetch(urlInv, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          cacheInventarioBodegas = data.llantas || [];
+          const badgeCant = document.getElementById('badgeTotalInventarioBodegas');
+          if (badgeCant) badgeCant.textContent = `${cacheInventarioBodegas.length} llantas`;
+          renderizarTablaInventario(cacheInventarioBodegas);
+        } else {
+          if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-rose-500 font-bold">Error cargando inventario.</td></tr>`;
+        }
+      } catch (err) {
+        console.error('Error al cargar inventario de bodegas:', err);
+      }
+    }
+
+    function filtrarInventarioPorBodega(bodega) {
+      bodegaFiltroActiva = bodega;
+
+      // Actualizar estilo de las tarjetas de las 7 bodegas
+      document.querySelectorAll('.card-bodega').forEach(el => {
+        el.classList.remove('ring-4', 'ring-blue-500', 'shadow-lg');
+      });
+
+      if (bodega) {
+        const targetCard = document.getElementById(`cardBodega_${bodega}`);
+        if (targetCard) {
+          targetCard.classList.add('ring-4', 'ring-blue-500', 'shadow-lg');
+        }
+      }
+
+      // Sincronizar el dropdown selector de bodega
+      const selUbicacion = document.getElementById('selFiltroUbicacionBodega');
+      if (selUbicacion) selUbicacion.value = bodega;
+
+      // Limpiar filtro de texto al cambiar de bodega
+      const inputTxt = document.getElementById('filtroTextoInventarioBodegas');
+      if (inputTxt) inputTxt.value = '';
+
+      cargarInventarioBodegas(bodega);
+    }
+
+    function cambiarFiltroDropdownBodega(bodega) {
+      filtrarInventarioPorBodega(bodega);
+    }
+
+    function filtrarTablaInventarioEnVivo() {
+      const q = (document.getElementById('filtroTextoInventarioBodegas')?.value || '').toLowerCase().trim();
+      if (!q) {
+        renderizarTablaInventario(cacheInventarioBodegas);
+        return;
+      }
+      const filtradas = cacheInventarioBodegas.filter(item => {
+        return (item.numero_interno || '').toLowerCase().includes(q) ||
+               (item.marca || '').toLowerCase().includes(q) ||
+               (item.diseno || '').toLowerCase().includes(q) ||
+               (item.placa_actual || '').toLowerCase().includes(q) ||
+               (item.proveedor_actual || '').toLowerCase().includes(q);
+      });
+      renderizarTablaInventario(filtradas);
+    }
+
+    function renderizarBadgeUbicacionBodega(ubicacion) {
+      switch (ubicacion) {
+        case 'BODEGA_1_NUEVAS':
+          return `<span class="bg-sky-100 text-sky-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-sky-300">B1: Nuevas</span>`;
+        case 'BODEGA_2_RECAMBIO':
+          return `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-300">B2: Recambio</span>`;
+        case 'BODEGA_3_REENCAUCHE':
+          return `<span class="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-indigo-300">B3: En Planta</span>`;
+        case 'BODEGA_4_REENCAUCHADAS':
+          return `<span class="bg-teal-100 text-teal-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-teal-300">B4: Reencauchada</span>`;
+        case 'BODEGA_5_REPARACION':
+          return `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">B5: Vulcanizadora</span>`;
+        case 'BODEGA_6_FVU':
+          return `<span class="bg-rose-100 text-rose-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-rose-300">B6: Desecho FVU</span>`;
+        case 'BODEGA_7_CHATARRIZADA':
+          return `<span class="bg-slate-200 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300">B7: Chatarrizada</span>`;
+        case 'MONTADA_OPERACION':
+          return `<span class="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-300">En Operación</span>`;
+        default:
+          return `<span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">${ubicacion || 'Bodega'}</span>`;
+      }
+    }
+
+    function renderizarBadgeGarantia(estado) {
+      if (!estado || estado === 'No Aplica') {
+        return `<span class="text-slate-400 text-[10px]">No Aplica</span>`;
+      }
+      switch (estado) {
+        case 'Posible Garantía':
+          return `<span class="bg-amber-100 text-amber-800 font-black text-[10px] px-2 py-0.5 rounded-full border border-amber-300">🟡 Posible</span>`;
+        case 'En Reclamación':
+          return `<span class="bg-sky-100 text-sky-800 font-black text-[10px] px-2 py-0.5 rounded-full border border-sky-300">🔵 En Trámite</span>`;
+        case 'Nota Crédito Reconocida':
+          return `<span class="bg-emerald-100 text-emerald-800 font-black text-[10px] px-2 py-0.5 rounded-full border border-emerald-300">🟢 NC Aprobada</span>`;
+        case 'Rechazada':
+          return `<span class="bg-rose-100 text-rose-800 font-black text-[10px] px-2 py-0.5 rounded-full border border-rose-300">🔴 Rechazada</span>`;
+        default:
+          return `<span class="text-slate-500 text-[10px] font-semibold">${estado}</span>`;
+      }
+    }
+
+    function renderizarTablaInventario(lista) {
+      const tbody = document.getElementById('tbodyInventarioBodegas');
+      if (!tbody) return;
+
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400 italic">No se encontraron llantas en esta bodega o criterio de búsqueda.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      lista.forEach(ll => {
+        let detalleVehiculo = '-';
+        if (ll.ubicacion_bodega === 'MONTADA_OPERACION' && ll.placa_actual) {
+          detalleVehiculo = `<span class="font-black text-blue-900">${ll.placa_actual}</span> <span class="text-slate-500 text-[10px]">Pos ${ll.posicion_actual || '-'}</span>`;
+        } else if (ll.ubicacion_bodega === 'BODEGA_3_REENCAUCHE') {
+          detalleVehiculo = `<span class="font-medium text-slate-700">${ll.proveedor_actual || 'En planta'}</span> ${ll.dias_en_planta > 0 ? `<span class="text-[10px] text-amber-700 font-bold">(${ll.dias_en_planta} d)</span>` : ''}`;
+        } else if (ll.ubicacion_bodega === 'BODEGA_2_RECAMBIO' && ll.reservada_para_dual) {
+          detalleVehiculo = `<span class="text-emerald-700 font-bold text-[10px]">Reservada para Dual (KPI 08)</span>`;
+        } else if (ll.ubicacion_bodega === 'BODEGA_6_FVU') {
+          detalleVehiculo = `<span class="text-rose-700 font-bold text-[10px]">${ll.causal_baja_fvu || 'Baja Prematura'}</span>`;
+        } else if (ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
+          detalleVehiculo = `<span class="text-slate-500 text-[10px]">${ll.numero_acta_ambiental || 'Acta Ambiental'}</span>`;
+        } else if (ll.proveedor_actual) {
+          detalleVehiculo = `<span class="text-slate-600 text-[10px]">${ll.proveedor_actual}</span>`;
+        }
+
+        const costoTotalFormateado = formatearPesosBodega(ll.costo_acumulado_total || ll.costo_ciclo_actual || 0);
+
+        html += `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-3 font-black text-slate-900 flex items-center space-x-1.5">
+              <span>${ll.numero_interno}</span>
+            </td>
+            <td class="p-3">${renderizarBadgeUbicacionBodega(ll.ubicacion_bodega)}</td>
+            <td class="p-3">
+              <div class="font-bold text-slate-800">${ll.marca || ''}</div>
+              <div class="text-[10px] text-slate-400 uppercase">${ll.diseno || ''}</div>
+            </td>
+            <td class="p-3 font-semibold text-slate-700">${ll.dimension || '-'}</td>
+            <td class="p-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${ll.vida_actual === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
+                ${ll.vida_actual || 'Original'}
+              </span>
+            </td>
+            <td class="p-3 text-center font-black ${ll.prof_actual_min <= 3.0 ? 'text-rose-600' : 'text-slate-800'}">
+              ${ll.prof_actual_min != null ? Number(ll.prof_actual_min).toFixed(1) + ' mm' : '-'}
+            </td>
+            <td class="p-3">${detalleVehiculo}</td>
+            <td class="p-3 text-right font-bold text-slate-800">${costoTotalFormateado}</td>
+            <td class="p-3 text-center">${renderizarBadgeGarantia(ll.estado_garantia)}</td>
+            <td class="p-3 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                <button type="button" onclick="abrirModalMoverBodega('${ll.numero_interno}')" title="Mover a otra bodega o vehículo" class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200">
+                  <i class="fa-solid fa-arrows-turn-to-dots"></i>
+                </button>
+                <button type="button" onclick="abrirModalGarantia('${ll.numero_interno}')" title="Gestionar Garantía" class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </button>
+                <button type="button" onclick="abrirModalKardex('${ll.numero_interno}')" title="Ver Kardex y Hoja de Vida" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300">
+                  <i class="fa-solid fa-timeline"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    // ==========================================
+    // OPERACIONES DE MODALES (ALTA, MOVER, GARANTÍA, KARDEX)
+    // ==========================================
+
+    function abrirModalAltaBodega() {
+      const cliSel = document.getElementById('selBodegaCliente')?.value || '';
+      document.getElementById('alta_cliente').value = cliSel || (usuarioActual?.cliente_asignado || '');
+      document.getElementById('alta_numero_interno').value = '';
+      document.getElementById('alta_marca').value = '';
+      document.getElementById('alta_diseno').value = '';
+      document.getElementById('alta_proveedor').value = '';
+      document.getElementById('alta_observaciones').value = '';
+      document.getElementById('modalAltaLlantaBodega').classList.remove('hidden');
+      document.getElementById('modalAltaLlantaBodega').classList.add('flex');
+    }
+
+    function cerrarModalAltaBodega() {
+      document.getElementById('modalAltaLlantaBodega').classList.add('hidden');
+      document.getElementById('modalAltaLlantaBodega').classList.remove('flex');
+    }
+
+    async function guardarAltaLlantaBodega(e) {
+      e.preventDefault();
+      const payload = {
+        cliente: document.getElementById('alta_cliente').value.trim(),
+        numero_interno: document.getElementById('alta_numero_interno').value.trim().toUpperCase(),
+        bodega_inicial: document.getElementById('alta_bodega_inicial').value,
+        dimension: document.getElementById('alta_dimension').value.trim(),
+        marca: document.getElementById('alta_marca').value.trim().toUpperCase(),
+        diseno: document.getElementById('alta_diseno').value.trim().toUpperCase(),
+        vida_actual: document.getElementById('alta_vida_actual').value,
+        banda_reen: document.getElementById('alta_banda_reen').value.trim().toUpperCase(),
+        prof_inicial: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
+        prof_actual_min: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
+        costo_compra: parseFloat(document.getElementById('alta_costo_compra').value) || 1450000.0,
+        proveedor_actual: document.getElementById('alta_proveedor').value.trim(),
+        observaciones: document.getElementById('alta_observaciones').value.trim()
+      };
+
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        const res = await fetch('/api/bodegas/alta', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const resp = await res.json();
+        if (res.ok && resp.ok) {
+          mostrarToast('✅ Llanta dada de alta en bodega exitosamente');
+          cerrarModalAltaBodega();
+          cargarModuloBodegasMRP();
+        } else {
+          mostrarToast('❌ Error: ' + (resp.detail || resp.mensaje || 'No se pudo dar de alta'), true);
+        }
+      } catch (err) {
+        console.error('Error al dar de alta llanta:', err);
+        mostrarToast('❌ Error de comunicación con el servidor', true);
+      }
+    }
+
+    function abrirModalMoverBodega(numeroInterno) {
+      const llanta = cacheInventarioBodegas.find(l => l.numero_interno === numeroInterno);
+      if (!llanta) {
+        mostrarToast('❌ Llanta no encontrada en inventario', true);
+        return;
+      }
+
+      document.getElementById('mover_cliente').value = llanta.cliente;
+      document.getElementById('mover_numero_interno').value = llanta.numero_interno;
+      document.getElementById('lblMoverDetalleLlanta').textContent = `${llanta.numero_interno} (${llanta.marca} ${llanta.diseno} - ${llanta.dimension}) | Ubicación actual: ${llanta.ubicacion_bodega}`;
+
+      // Configurar fecha de hoy
+      document.getElementById('mover_fecha').value = new Date().toISOString().split('T')[0];
+
+      // Resetear campos
+      document.getElementById('mover_placa').value = llanta.placa_actual || '';
+      document.getElementById('mover_posicion').value = llanta.posicion_actual || '';
+      document.getElementById('mover_proveedor').value = llanta.proveedor_actual || '';
+      document.getElementById('mover_soporte').value = '';
+
+      // Adaptar según destino por defecto
+      document.getElementById('mover_bodega_destino').value = 'BODEGA_2_RECAMBIO';
+      adaptarCamposModalMover('BODEGA_2_RECAMBIO');
+
+      document.getElementById('modalMoverBodega').classList.remove('hidden');
+      document.getElementById('modalMoverBodega').classList.add('flex');
+    }
+
+    function cerrarModalMoverBodega() {
+      document.getElementById('modalMoverBodega').classList.add('hidden');
+      document.getElementById('modalMoverBodega').classList.remove('flex');
+    }
+
+    function adaptarCamposModalMover(destino) {
+      document.getElementById('boxMoverMontaje').classList.toggle('hidden', destino !== 'MONTADA_OPERACION');
+      document.getElementById('boxMoverReencauche').classList.toggle('hidden', destino !== 'BODEGA_4_REENCAUCHADAS');
+      document.getElementById('boxMoverReparacion').classList.toggle('hidden', destino !== 'BODEGA_5_REPARACION');
+      document.getElementById('boxMoverFVU').classList.toggle('hidden', destino !== 'BODEGA_6_FVU');
+      document.getElementById('boxMoverChatarra').classList.toggle('hidden', destino !== 'BODEGA_7_CHATARRIZADA');
+    }
+
+    async function guardarMovimientoBodega(e) {
+      e.preventDefault();
+      const destino = document.getElementById('mover_bodega_destino').value;
+      const payload = {
+        cliente: document.getElementById('mover_cliente').value,
+        numero_interno: document.getElementById('mover_numero_interno').value,
+        bodega_destino: destino,
+        fecha_movimiento: document.getElementById('mover_fecha').value,
+        proveedor: document.getElementById('mover_proveedor').value.trim(),
+        documento_soporte: document.getElementById('mover_soporte').value.trim(),
+        placa: '',
+        posicion: 0,
+        km_vehiculo: 0,
+        costo_asociado: 0,
+        banda_reen: '',
+        causal_o_motivo: ''
+      };
+
+      if (destino === 'MONTADA_OPERACION') {
+        payload.placa = document.getElementById('mover_placa').value.trim().toUpperCase();
+        payload.posicion = parseInt(document.getElementById('mover_posicion').value) || 0;
+        payload.km_vehiculo = parseFloat(document.getElementById('mover_km_vehiculo').value) || 0.0;
+        if (!payload.placa || payload.posicion <= 0) {
+          mostrarToast('⚠️ Para montar llanta debes ingresar placa y posición', true);
+          return;
+        }
+      } else if (destino === 'BODEGA_4_REENCAUCHADAS') {
+        payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof').value) || 20.0;
+        payload.banda_reen = document.getElementById('mover_banda_reen').value.trim().toUpperCase();
+        payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reencauche').value) || 0.0;
+      } else if (destino === 'BODEGA_5_REPARACION') {
+        payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reparacion').value) || 0.0;
+      } else if (destino === 'BODEGA_6_FVU') {
+        payload.causal_o_motivo = document.getElementById('mover_causal_fvu').value;
+        payload.prof_min_mm = parseFloat(document.getElementById('mover_prof_fvu').value) || 0.0;
+      } else if (destino === 'BODEGA_7_CHATARRIZADA') {
+        payload.documento_soporte = document.getElementById('mover_acta_ambiental').value.trim() || payload.documento_soporte;
+      }
+
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        const res = await fetch('/api/bodegas/movimiento', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const resp = await res.json();
+        if (res.ok && resp.ok) {
+          mostrarToast('✅ Movimiento registrado en Kardex exitosamente');
+          cerrarModalMoverBodega();
+          cargarModuloBodegasMRP();
+        } else {
+          mostrarToast('❌ Error: ' + (resp.detail || resp.mensaje || 'No se pudo mover la llanta'), true);
+        }
+      } catch (err) {
+        console.error('Error al mover llanta:', err);
+        mostrarToast('❌ Error de comunicación con el servidor', true);
+      }
+    }
+
+    function abrirModalGarantia(numeroInterno) {
+      const llanta = cacheInventarioBodegas.find(l => l.numero_interno === numeroInterno);
+      if (!llanta) {
+        mostrarToast('❌ Llanta no encontrada', true);
+        return;
+      }
+
+      document.getElementById('garantia_cliente').value = llanta.cliente;
+      document.getElementById('garantia_numero_interno').value = llanta.numero_interno;
+      document.getElementById('lblGarantiaDetalleLlanta').textContent = `${llanta.numero_interno} (${llanta.marca} ${llanta.dimension}) | Estado actual: ${llanta.estado_garantia || 'No Aplica'}`;
+
+      document.getElementById('garantia_estado').value = (llanta.estado_garantia && llanta.estado_garantia !== 'No Aplica') ? llanta.estado_garantia : 'Posible Garantía';
+      document.getElementById('garantia_valor_reconocido').value = llanta.valor_reconocido_garantia || 0;
+      document.getElementById('garantia_observaciones').value = llanta.observaciones || '';
+
+      document.getElementById('modalGarantiaLlanta').classList.remove('hidden');
+      document.getElementById('modalGarantiaLlanta').classList.add('flex');
+    }
+
+    function cerrarModalGarantia() {
+      document.getElementById('modalGarantiaLlanta').classList.add('hidden');
+      document.getElementById('modalGarantiaLlanta').classList.remove('flex');
+    }
+
+    async function guardarGarantiaLlanta(e) {
+      e.preventDefault();
+      const payload = {
+        cliente: document.getElementById('garantia_cliente').value,
+        numero_interno: document.getElementById('garantia_numero_interno').value,
+        estado_garantia: document.getElementById('garantia_estado').value,
+        valor_reconocido_garantia: parseFloat(document.getElementById('garantia_valor_reconocido').value) || 0.0,
+        observaciones: document.getElementById('garantia_observaciones').value.trim()
+      };
+
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        const res = await fetch('/api/bodegas/garantia', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const resp = await res.json();
+        if (res.ok && resp.ok) {
+          mostrarToast('✅ Garantía actualizada y pérdida recalculará');
+          cerrarModalGarantia();
+          cargarModuloBodegasMRP();
+        } else {
+          mostrarToast('❌ Error: ' + (resp.detail || resp.mensaje || 'No se pudo actualizar garantía'), true);
+        }
+      } catch (err) {
+        console.error('Error al actualizar garantía:', err);
+        mostrarToast('❌ Error al conectar con el servidor', true);
+      }
+    }
+
+    async function abrirModalKardex(numeroInterno) {
+      const llanta = cacheInventarioBodegas.find(l => l.numero_interno === numeroInterno);
+      const cliente = llanta ? llanta.cliente : (document.getElementById('selBodegaCliente')?.value || '');
+      
+      document.getElementById('lblKardexTitulo').textContent = `Trazabilidad completa: Llanta ${numeroInterno}`;
+      
+      const boxResumen = document.getElementById('boxKardexResumenLlanta');
+      if (boxResumen && llanta) {
+        boxResumen.innerHTML = `
+          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca} ${llanta.dimension}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual} (${llanta.ubicacion_bodega})</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? Number(llanta.prof_actual_min).toFixed(1) + ' mm' : '-'}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Costo Total Acum.:</span><strong class="text-emerald-700">${formatearPesosBodega(llanta.costo_acumulado_total || 0)}</strong></div>
+        `;
+      }
+
+      const timeline = document.getElementById('timelineKardexEventos');
+      if (timeline) {
+        timeline.innerHTML = `<div class="text-slate-400 italic text-xs">Cargando eventos del Kardex...</div>`;
+      }
+
+      document.getElementById('modalKardexLlanta').classList.remove('hidden');
+      document.getElementById('modalKardexLlanta').classList.add('flex');
+
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch(`/api/bodegas/kardex?cliente=${encodeURIComponent(cliente)}&numero_interno=${encodeURIComponent(numeroInterno)}`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          renderizarEventosKardex(data.kardex || []);
+        } else {
+          if (timeline) timeline.innerHTML = `<div class="text-rose-500 font-bold text-xs">No se pudo cargar el Kardex de esta llanta.</div>`;
+        }
+      } catch (err) {
+        console.error('Error al cargar kardex:', err);
+      }
+    }
+
+    function cerrarModalKardex() {
+      document.getElementById('modalKardexLlanta').classList.add('hidden');
+      document.getElementById('modalKardexLlanta').classList.remove('flex');
+    }
+
+    function renderizarEventosKardex(eventos) {
+      const timeline = document.getElementById('timelineKardexEventos');
+      if (!timeline) return;
+
+      if (!eventos || eventos.length === 0) {
+        timeline.innerHTML = `<div class="text-slate-400 italic text-xs">Esta llanta no tiene registros de movimientos previos en el Kardex.</div>`;
+        return;
+      }
+
+      let html = '';
+      eventos.forEach(ev => {
+        let iconClass = 'fa-arrow-right text-blue-600 bg-blue-100';
+        let titulo = ev.tipo_movimiento;
+
+        switch (ev.tipo_movimiento) {
+          case 'ALTA_NUEVA':
+            iconClass = 'fa-plus text-emerald-600 bg-emerald-100';
+            titulo = 'Ingreso a Bodega (Alta Nueva)';
+            break;
+          case 'MONTAJE':
+            iconClass = 'fa-truck text-sky-600 bg-sky-100';
+            titulo = `Montaje en Vehículo ${ev.placa || ''} Pos ${ev.posicion || ''}`;
+            break;
+          case 'DESMONTE_RECAMBIO':
+            iconClass = 'fa-arrows-turn-to-dots text-emerald-600 bg-emerald-100';
+            titulo = 'Desmonte a Bodega de Recambio';
+            break;
+          case 'ENVIO_REENCAUCHE':
+            iconClass = 'fa-industry text-indigo-600 bg-indigo-100';
+            titulo = `Envío a Planta de Reencauche (${ev.proveedor || 'Planta'})`;
+            break;
+          case 'RETORNO_REENCAUCHE':
+            iconClass = 'fa-circle-check text-teal-600 bg-teal-100';
+            titulo = `Retorno de Reencauche (${ev.vida_ciclo || 'R1'})`;
+            break;
+          case 'ENVIO_REPARACION':
+            iconClass = 'fa-wrench text-amber-600 bg-amber-100';
+            titulo = `Envío a Vulcanizadora / Taller (${ev.proveedor || 'Taller'})`;
+            break;
+          case 'RETORNO_REPARACION':
+            iconClass = 'fa-circle-check text-amber-600 bg-amber-100';
+            titulo = 'Retorno de Vulcanizadora Reparada';
+            break;
+          case 'BAJA_FVU':
+            iconClass = 'fa-triangle-exclamation text-rose-600 bg-rose-100';
+            titulo = `Baja por Fin de Vida Útil (${ev.causal_o_motivo || 'Prematura'})`;
+            break;
+          case 'CHATARRIZACION':
+            iconClass = 'fa-recycle text-slate-600 bg-slate-200';
+            titulo = `Chatarrización y Disposición Ambiental (${ev.documento_soporte || 'Acta'})`;
+            break;
+          case 'AJUSTE_GARANTIA':
+            iconClass = 'fa-shield-halved text-purple-600 bg-purple-100';
+            titulo = 'Reconocimiento de Garantía / Nota Crédito';
+            break;
+        }
+
+        const detalleCosto = ev.costo_asociado > 0 
+          ? `<span class="text-amber-700 font-bold ml-2">Costo: ${formatearPesosBodega(ev.costo_asociado)}</span>` 
+          : '';
+
+        const detalleProf = ev.prof_min_mm > 0 
+          ? `<span class="text-slate-500 ml-2">Prof: ${Number(ev.prof_min_mm).toFixed(1)} mm</span>` 
+          : '';
+
+        html += `
+          <div class="relative group">
+            <span class="absolute -left-[35px] top-1 w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-xs ${iconClass}">
+              <i class="fa-solid ${iconClass.split(' ')[0]}"></i>
+            </span>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+              <div class="flex items-center justify-between text-xs font-black text-slate-800">
+                <span>${titulo}</span>
+                <span class="text-[10px] text-slate-400 font-semibold">${ev.fecha_movimiento || ''}</span>
+              </div>
+              <div class="text-[11px] text-slate-600 mt-1 flex flex-wrap items-center">
+                <span>De: <strong>${ev.bodega_origen || '-'}</strong> → A: <strong>${ev.bodega_destino || '-'}</strong></span>
+                ${detalleProf}
+                ${detalleCosto}
+              </div>
+              ${ev.causal_o_motivo || ev.documento_soporte ? `
+                <div class="text-[10px] text-slate-500 italic mt-1 bg-slate-50 px-2 py-1 rounded-lg">
+                  ${ev.causal_o_motivo ? `Motivo: ${ev.causal_o_motivo} ` : ''}
+                  ${ev.documento_soporte ? `Soporte: ${ev.documento_soporte}` : ''}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      timeline.innerHTML = html;
     }
 
     // Inicialización al cargar DOM
