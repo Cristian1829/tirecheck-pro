@@ -812,6 +812,24 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
                         ))
 
                 if ubi != 'MONTADA_OPERACION':
+                    # Si la llanta ya está chatarrizada, nunca vuelve a operación
+                    if ubi == 'BODEGA_7_CHATARRIZADA':
+                        continue
+
+                    # Consultar fecha del último movimiento registrado en Kardex
+                    c.execute("""
+                        SELECT fecha_movimiento, id FROM kardex_movimientos_llanta
+                        WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?
+                        ORDER BY fecha_movimiento DESC, id DESC LIMIT 1
+                    """, (cli, serial))
+                    row_k = c.fetchone()
+                    fecha_ult_k = str(row_k[0])[:10] if (row_k and row_k[0]) else ''
+                    fecha_insp_s = str(fecha_insp)[:10]
+
+                    # Corrección 4: Si la llanta está en bodega física, solo cambiar a MONTADA_OPERACION si la fecha es estrictamente posterior
+                    if row_k and fecha_ult_k and fecha_insp_s <= fecha_ult_k:
+                        continue
+
                     # Transición automática: llanta de bodega que fue montada en patio
                     c.execute("""
                         UPDATE llantas_maestro SET
@@ -1711,6 +1729,7 @@ def analizar_inspecciones_df(df_inspecciones):
 
     resultados = []
     resolver_limite = _construir_cache_limites_retiro()
+    llantas_b2_usadas = set()
     
     for placa, group in df.groupby('placa'):
         if 'fecha' in group.columns and not group['fecha'].dropna().empty:
@@ -1803,10 +1822,18 @@ def analizar_inspecciones_df(df_inspecciones):
                                   AND ubicacion_bodega = 'BODEGA_2_RECAMBIO'
                                   AND (reservada_para_placa IS NULL OR reservada_para_placa = '' OR reservada_para_placa = ?)
                                   AND UPPER(dimension) = ?
+                                  AND prof_actual_min > (? + 1.5)
                                   AND ABS(prof_actual_min - ?) <= 1.5
-                                ORDER BY ABS(prof_actual_min - ?) ASC LIMIT 1
-                            """, (cliente, placa, dim_dual.upper(), mm_alta, mm_alta))
-                            cand_b2 = cur_b2.fetchone()
+                                ORDER BY ABS(prof_actual_min - ?) ASC
+                            """, (cliente, placa, dim_dual.upper(), limite_cambio_cliente, mm_alta, mm_alta))
+                            candidatas_b2 = cur_b2.fetchall()
+                            cand_b2 = None
+                            for c_cand in candidatas_b2:
+                                if c_cand[0] not in llantas_b2_usadas:
+                                    cand_b2 = c_cand
+                                    llantas_b2_usadas.add(c_cand[0])
+                                    break
+
                             if cand_b2:
                                 recomendaciones_dual.append(
                                     f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f}mm) y MONTAR llanta N° {cand_b2[0]} ({cand_b2[1]:.1f}mm) disponible en Bodega 2 (Recambio)."
@@ -4456,6 +4483,17 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         bodega_origen = cur['ubicacion_bodega']
         subcliente = cur.get('subcliente', '')
 
+        # Corrección 3: Máquina de Estados Estricta (Bloquear Transiciones Absurdas entre Bodegas)
+        if bodega_origen == 'BODEGA_7_CHATARRIZADA':
+            return {"ok": False, "mensaje": "⛔ Una carcasa chatarrizada con acta ambiental tiene baja definitiva y no puede reingresar al inventario."}
+
+        if bodega_origen == bodega_destino:
+            if bodega_destino != 'MONTADA_OPERACION' or (placa == cur.get('placa_actual', '') and posicion == to_int(cur.get('posicion_actual', 0))):
+                return {"ok": False, "mensaje": "La llanta ya se encuentra en esa bodega o posición."}
+
+        if bodega_origen == 'BODEGA_1_NUEVAS' and bodega_destino == 'BODEGA_3_REENCAUCHE':
+            return {"ok": False, "mensaje": "⛔ Una llanta nueva sin rodar no puede ser enviada a reencauche."}
+
         # Variables mutables
         num_reen = to_int(cur.get('num_reencauches', 0))
         vida_act = str(cur.get('vida_actual', 'Original'))
@@ -4474,6 +4512,27 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         val_gar = to_float(cur.get('valor_reconocido_garantia', 0.0))
         acta_amb = cur.get('numero_acta_ambiental', '')
         f_disp = cur.get('fecha_disposicion')
+
+        placa_origen = cur.get('placa_actual', '')
+        pos_origen = to_int(cur.get('posicion_actual', 0))
+
+        # Corrección 3: No enviar a Bodega 2 si la profundidad está en o por debajo del límite de retiro
+        if bodega_destino == 'BODEGA_2_RECAMBIO':
+            cfg = obtener_configuracion_avanzada_cliente(cliente)
+            lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+            p_eval = to_float(prof_min_in) if prof_min_in is not None else p_act
+            if p_eval <= lim_ret:
+                return {"ok": False, "mensaje": f"⛔ No se puede enviar a Bodega 2 de Recambio: la profundidad ({p_eval:.1f} mm) está en o por debajo del límite de retiro ({lim_ret:.1f} mm). Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU)."}
+
+        # Corrección 2: Candado de Seguridad Vial al Montar desde Bodega hacia un Vehículo (MONTADA_OPERACION)
+        if bodega_destino == 'MONTADA_OPERACION':
+            if not placa or posicion < 1:
+                return {"ok": False, "mensaje": "Para montar en operación se requiere placa válida y posición >= 1."}
+            perfil_v = obtener_perfil_vehiculo(placa)
+            tipologia_v = perfil_v.get('tipologia', '')
+            if es_posicion_direccional(tipologia_v, posicion):
+                if vida_act.upper() != 'ORIGINAL' or bodega_origen == 'BODEGA_4_REENCAUCHADAS':
+                    return {"ok": False, "mensaje": "⛔ CANDADO VIAL: No se puede montar una llanta reencauchada en posición direccional."}
 
         placa_act = cur.get('placa_actual', '')
         pos_act = to_int(cur.get('posicion_actual', 0))
@@ -4505,7 +4564,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             if prof_min_in is not None:
                 p_act = to_float(prof_min_in)
 
-        # 3. Envío o Retorno de Reparación Mayor (Bodega 5)
+        # 3. Envío o Retorno de Reparación Mayor (Bodega 5) (Corrección 5: No Duplicar Costo)
         elif bodega_destino == 'BODEGA_5_REPARACION':
             tipo_mov = 'ENVIO_REPARACION'
             placa_act = ''
@@ -4517,11 +4576,27 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
                 costo_acum += costo_asoc
         elif bodega_origen == 'BODEGA_5_REPARACION':
             tipo_mov = 'RETORNO_REPARACION'
+            if prof_min_in is not None:
+                p_act = to_float(prof_min_in)
+            # Evitar duplicar costo si ya se sumó en la entrada a Bodega 5
+            cursor.execute("""
+                SELECT costo_asociado FROM kardex_movimientos_llanta
+                WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ?
+                  AND bodega_destino = 'BODEGA_5_REPARACION'
+                ORDER BY id DESC LIMIT 1
+            """, (cliente, numero_interno))
+            row_prev_b5 = cursor.fetchone()
+            costo_prev_b5 = to_float(row_prev_b5[0]) if row_prev_b5 else 0.0
             if costo_asoc > 0:
-                costo_rep_ciclo += costo_asoc
-                costo_acum += costo_asoc
+                if costo_prev_b5 == 0.0:
+                    costo_rep_ciclo += costo_asoc
+                    costo_acum += costo_asoc
+                elif costo_asoc > costo_prev_b5:
+                    delta = costo_asoc - costo_prev_b5
+                    costo_rep_ciclo += delta
+                    costo_acum += delta
 
-        # 4. Envío a Pila de Desecho / Fin de Vida Útil (Bodega 6 FVU)
+        # 4. Envío a Pila de Desecho / Fin de Vida Útil (Bodega 6 FVU) (Corrección 7)
         elif bodega_destino == 'BODEGA_6_FVU':
             tipo_mov = 'BAJA_FVU'
             causal_baja = causal or 'Fin de Vida Útil'
@@ -4530,17 +4605,20 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             if prof_min_in is not None:
                 p_act = to_float(prof_min_in)
 
-            # Límite de retiro
             cfg = obtener_configuracion_avanzada_cliente(cliente)
             lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
-            mm_ut = max(1.0, p_ini - lim_ret)
-            mm_perd = max(0.0, p_act - lim_ret)
-            costo_mm = (costo_ciclo + costo_rep_ciclo) / mm_ut
-            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar)
-
-            pct_desgaste = max(0.0, (p_ini - p_act) / mm_ut) * 100.0
-            if pct_desgaste < 30.0 and estado_gar == 'No Aplica':
-                estado_gar = 'Posible Garantía'
+            if p_act <= lim_ret:
+                mm_perd = 0.0
+                dinero_perd = 0.0
+                estado_gar = 'No Aplica (Vida Cumplida)'
+            else:
+                mm_perd = p_act - lim_ret
+                mm_ut = max(1.0, p_ini - lim_ret)
+                costo_mm = (costo_ciclo + costo_rep_ciclo) / mm_ut
+                dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar)
+                pct_desgaste = max(0.0, (p_ini - p_act) / mm_ut) * 100.0
+                if pct_desgaste < 30.0 and estado_gar in ('No Aplica', ''):
+                    estado_gar = 'Posible Garantía'
 
         # 5. Chatarrización / Disposición Final Ambiental (Bodega 7)
         elif bodega_destino == 'BODEGA_7_CHATARRIZADA':
@@ -4607,6 +4685,15 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
 
         estado_nuevo = estados_nombre.get(bodega_destino, 'En Stock')
 
+        # Corrección 4: Limpieza estricta de placa y posición si no está montada en operación
+        if bodega_destino != 'MONTADA_OPERACION':
+            placa_act = ''
+            pos_act = 0
+
+        # Para el Kardex: registrar placa y posición de destino o de origen
+        k_placa = placa_act if bodega_destino == 'MONTADA_OPERACION' else (placa or placa_origen)
+        k_pos = pos_act if bodega_destino == 'MONTADA_OPERACION' else (posicion if posicion > 0 else pos_origen)
+
         # Actualizar llantas_maestro
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -4659,7 +4746,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         """, (
             fecha_mov, cliente, subcliente, numero_interno,
             bodega_origen, bodega_destino, tipo_mov,
-            placa_act, pos_act, vida_act, p_act, km_veh,
+            k_placa, k_pos, vida_act, p_act, km_veh,
             costo_asoc, proveedor_act, causal, doc_soporte, user
         ))
 
@@ -4701,10 +4788,15 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
 
         cfg = obtener_configuracion_avanzada_cliente(cliente)
         lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
-        mm_ut = max(1.0, p_ini - lim_ret)
-        mm_perd = max(0.0, p_act - lim_ret)
-        costo_mm = (c_ciclo + c_rep) / mm_ut
-        dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido)
+        if p_act <= lim_ret:
+            mm_perd = 0.0
+            dinero_perd = 0.0
+            nuevo_estado = 'No Aplica (Vida Cumplida)'
+        else:
+            mm_ut = max(1.0, p_ini - lim_ret)
+            mm_perd = max(0.0, p_act - lim_ret)
+            costo_mm = (c_ciclo + c_rep) / mm_ut
+            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido)
 
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -4855,7 +4947,7 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
         'BODEGA_3_REENCAUCHE': {'nombre': 'Bodega 3: En Planta Reencauche', 'cantidad': 0, 'valor_cop': 0.0, 'alerta_mas_15_dias': 0, 'color': '#6366F1'},
         'BODEGA_4_REENCAUCHADAS': {'nombre': 'Bodega 4: Reencauchadas Listas', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#0D9488'},
         'BODEGA_5_REPARACION': {'nombre': 'Bodega 5: En Reparación Mayor', 'cantidad': 0, 'valor_cop': 0.0, 'costo_reparaciones_acum': 0.0, 'color': '#F59E0B'},
-        'BODEGA_6_FVU': {'nombre': 'Bodega 6: Pila Desecho / FVU', 'cantidad': 0, 'dinero_perdido_fvu': 0.0, 'posible_garantia_cnt': 0, 'valor_garantia_recuperado': 0.0, 'color': '#EF4444'},
+        'BODEGA_6_FVU': {'nombre': 'Bodega 6: Pila Desecho / FVU', 'cantidad': 0, 'valor_cop': 0.0, 'dinero_perdido_fvu': 0.0, 'posible_garantia_cnt': 0, 'valor_garantia_recuperado': 0.0, 'color': '#EF4444'},
         'BODEGA_7_CHATARRIZADA': {'nombre': 'Bodega 7: Disposición Final', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#64748B'},
         'MONTADA_OPERACION': {'nombre': 'En Operación (Rodando)', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#3B82F6'}
     }
@@ -5014,17 +5106,25 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
         # 5. Disponibilidad en Bodegas
         b1_nuevas = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_1_NUEVAS'])
         b2_recambio_libres = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')])
+        b2_recambio_libres_utiles = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa') and to_float(ll.get('prof_actual_min', 0.0)) > lim_trac])
         b3_planta = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_3_REENCAUCHE'])
         b4_reenc_listas = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_4_REENCAUCHADAS'])
         b5_reparacion = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_5_REPARACION'])
 
         retorno_planta_estimado = int(math.floor(b3_planta * (pct_aprob / 100.0)))
-        stock_disponible_util = b1_nuevas + b2_recambio_libres + b4_reenc_listas + retorno_planta_estimado + b5_reparacion
 
-        # 6. Compra Neta Sugerida
-        compra_neta = max(0, necesidad_bruta - stock_disponible_util)
+        # Balance de Eje Direccional (Corrección 1: Prohibido cubrir Demanda Direccional con Reencauches)
         compra_nuevas_dir = max(0, demanda_dir - b1_nuevas)
-        compra_adicional_reenc = max(0, compra_neta - compra_nuevas_dir)
+        b1_restante = max(0, b1_nuevas - demanda_dir)
+
+        # Balance de Tracción / Arrastre + Stock de Seguridad + Reposición FVU
+        necesidad_no_dir = demanda_trac + bajas_fvu + stock_seg
+        stock_util_no_dir = b1_restante + b2_recambio_libres_utiles + b4_reenc_listas + retorno_planta_estimado + b5_reparacion
+        compra_adicional_reenc = max(0, necesidad_no_dir - stock_util_no_dir)
+
+        # Compra Neta Total Sugerida (KPI 20)
+        compra_neta = compra_nuevas_dir + compra_adicional_reenc
+        stock_disponible_util = b1_nuevas + b2_recambio_libres_utiles + b4_reenc_listas + retorno_planta_estimado + b5_reparacion
 
         matriz_mrp.append({
             'dimension': dim,
@@ -5035,12 +5135,15 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
             'stock_seguridad': stock_seg,
             'necesidad_bruta': necesidad_bruta,
             'b1_nuevas': b1_nuevas,
+            'b1_restante': b1_restante,
             'b2_recambio_libres': b2_recambio_libres,
+            'b2_recambio_libres_utiles': b2_recambio_libres_utiles,
             'b3_planta': b3_planta,
             'retorno_planta_estimado': retorno_planta_estimado,
             'b4_reenc_listas': b4_reenc_listas,
             'b5_reparacion': b5_reparacion,
             'stock_disponible_util': stock_disponible_util,
+            'stock_util_no_direccional': stock_util_no_dir,
             'compra_neta_sugerida': compra_neta,
             'compra_nuevas_direccional': compra_nuevas_dir,
             'compra_adicional_reencauche': compra_adicional_reenc

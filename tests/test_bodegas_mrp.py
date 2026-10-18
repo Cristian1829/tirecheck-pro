@@ -255,8 +255,8 @@ def test_calculo_mrp_kpi20_y_par_direccional(test_db, auth_client):
     # Stock disponible útil = B1 (1) + Retorno planta (8) = 9
     assert item_mrp["stock_disponible_util"] == 9
 
-    # Compra neta sugerida = max(0, Necesidad Bruta (6) - Stock Disponible Útil (9)) = 0
-    assert item_mrp["compra_neta_sugerida"] == 0
+    # Compra neta sugerida (KPI 20): compra_nuevas_direccional (1) + compra_adicional_reencauche (0) = 1
+    assert item_mrp["compra_neta_sugerida"] == 1
 
     # Compra nuevas direccional = max(0, Demanda Dir (2) - B1 Nuevas (1)) = 1
     assert item_mrp["compra_nuevas_direccional"] == 1
@@ -371,7 +371,7 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
         "prof_inicial": 21.0,
         "numero_interno": serial,
         "kilometraje": 45000.0,
-        "fecha": "2026-10-17"
+        "fecha": "2026-10-25"
     })
 
     # 3. Verificar que llantas_maestro se actualizó a MONTADA_OPERACION
