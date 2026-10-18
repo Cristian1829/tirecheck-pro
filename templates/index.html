@@ -1131,47 +1131,118 @@
   <!-- ============================================================== -->
   <!-- VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO DE FLOTA                -->
   <!-- ============================================================== -->
-  <section id="vista-diagnostico" class="hidden max-w-7xl mx-auto px-4 py-4 space-y-4">
+  <section id="vista-diagnostico" class="hidden max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
     
-    <!-- 5 Tarjetas Métricas de Diagnóstico -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-      <div id="cardBoxTotal" onclick="filtrarDiagnosticoPorCard('Todos')" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Ver todos los vehículos de la flota filtrada">
-        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Vehículos</span>
-        <span id="cardDiagTotal" class="text-2xl font-black text-slate-900 block mt-1">0</span>
+    <!-- 1. Encabezado y Filtros Globales de Diagnóstico (Al Inicio) -->
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3.5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
+            <i class="fa-solid fa-stethoscope text-blue-600"></i>
+            <span>Diagnóstico Técnico y Acciones de Mantenimiento</span>
+          </h2>
+          <p class="text-xs text-slate-500">Evaluación automática de alineación direccional, dualidad y umbrales de retiro</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="cargarDiagnostico()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Recalcular</span>
+          </button>
+          <button type="button" onclick="exportarDiagnosticoExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-file-excel"></i>
+            <span>Exportar Diagnóstico</span>
+          </button>
+          <button id="btnConsolidadoDiag" type="button" onclick="descargarConsolidadoDesdeDiagnostico()" title="Generar consolidado de flota para el cliente filtrado" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span id="lblConsolidadoDiag">Consolidado Flota PDF</span>
+          </button>
+        </div>
       </div>
-      <div id="cardBoxCambio" onclick="filtrarDiagnosticoPorCard('Cambio')" class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos con sugerencia de cambio">
-        <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider block">Sugerencia Cambio</span>
-        <span id="cardDiagCambio" class="text-2xl font-black text-rose-600 block mt-1">0</span>
-      </div>
-      <div id="cardBoxAlineacion" onclick="filtrarDiagnosticoPorCard('Alineacion')" class="bg-white p-4 rounded-2xl border border-red-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos con plan de alineación">
-        <span class="text-[11px] font-bold text-red-600 uppercase tracking-wider block">Plan Alineación</span>
-        <span id="cardDiagAlineacion" class="text-2xl font-black text-red-600 block mt-1">0</span>
-      </div>
-      <div id="cardBoxDual" onclick="filtrarDiagnosticoPorCard('Dual')" class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos con dual mal apareado">
-        <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">Dual Mal Apareado</span>
-        <span id="cardDiagDual" class="text-2xl font-black text-amber-600 block mt-1">0</span>
-      </div>
-      <div id="cardBoxOK" onclick="filtrarDiagnosticoPorCard('OK')" class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm cursor-pointer hover:shadow-md transition-all" title="Filtrar vehículos sin novedades (OK)">
-        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Sin Novedades (OK)</span>
-        <span id="cardDiagOK" class="text-2xl font-black text-emerald-600 block mt-1">0</span>
+
+      <!-- Filtros de Diagnóstico -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs items-end bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
+          <select id="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+            <option value="Todos">Todos los Clientes</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Sede:</label>
+          <select id="filtroDiagSede" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+            <option value="Todos">Todas las Sedes</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Operación:</label>
+          <select id="filtroDiagOperacion" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+            <option value="Todos">Todas las Operaciones</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Alerta:</label>
+          <select id="filtroDiagAlerta" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+            <option value="Todos">Todas las Alertas</option>
+            <option value="Cambio">Sugerencia Cambio (Críticas)</option>
+            <option value="Alineacion">Solo Plan Alineación</option>
+            <option value="Dual">Solo Dual Mal Apareado</option>
+            <option value="Alerta">Cualquier Alerta</option>
+            <option value="OK">Sin Novedad (OK)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Buscar Placa:</label>
+          <input type="text" id="filtroDiagPlaca" oninput="filtrarTablaDiagnostico()" placeholder="ej. ABC123..." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-800 focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="flex items-center space-x-2">
+          <button type="button" onclick="limpiarFiltrosDiagnostico()" class="w-full py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-95">
+            <i class="fa-solid fa-rotate-left text-slate-400"></i>
+            <span>Limpiar</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- PANEL DE INTELIGENCIA DE NEGOCIOS Y GRÁFICOS ANIMADOS (LIGHT vs PRO) -->
+    <!-- 2. 5 Tarjetas Métricas de Diagnóstico (Reactiva según filtros) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+      <div id="cardBoxTotal" onclick="filtrarDiagnosticoPorCard('Todos')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:shadow-md transition-all active:scale-95" title="Ver todos los vehículos de la flota filtrada">
+        <span class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Vehículos</span>
+        <span id="cardDiagTotal" class="text-xl sm:text-2xl font-black text-slate-900 block mt-1">0</span>
+      </div>
+      <div id="cardBoxCambio" onclick="filtrarDiagnosticoPorCard('Cambio')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-rose-200 shadow-xs cursor-pointer hover:shadow-md transition-all active:scale-95" title="Filtrar vehículos con sugerencia de cambio">
+        <span class="text-[10px] sm:text-[11px] font-bold text-rose-600 uppercase tracking-wider block">Sugerencia Cambio</span>
+        <span id="cardDiagCambio" class="text-xl sm:text-2xl font-black text-rose-600 block mt-1">0</span>
+      </div>
+      <div id="cardBoxAlineacion" onclick="filtrarDiagnosticoPorCard('Alineacion')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-red-200 shadow-xs cursor-pointer hover:shadow-md transition-all active:scale-95" title="Filtrar vehículos con plan de alineación">
+        <span class="text-[10px] sm:text-[11px] font-bold text-red-600 uppercase tracking-wider block">Plan Alineación</span>
+        <span id="cardDiagAlineacion" class="text-xl sm:text-2xl font-black text-red-600 block mt-1">0</span>
+      </div>
+      <div id="cardBoxDual" onclick="filtrarDiagnosticoPorCard('Dual')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-amber-200 shadow-xs cursor-pointer hover:shadow-md transition-all active:scale-95" title="Filtrar vehículos con dual mal apareado">
+        <span class="text-[10px] sm:text-[11px] font-bold text-amber-600 uppercase tracking-wider block">Dual Mal Apareado</span>
+        <span id="cardDiagDual" class="text-xl sm:text-2xl font-black text-amber-600 block mt-1">0</span>
+      </div>
+      <div id="cardBoxOK" onclick="filtrarDiagnosticoPorCard('OK')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-emerald-200 shadow-xs cursor-pointer hover:shadow-md transition-all active:scale-95 col-span-2 sm:col-span-1" title="Filtrar vehículos sin novedades (OK)">
+        <span class="text-[10px] sm:text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Sin Novedades (OK)</span>
+        <span id="cardDiagOK" class="text-xl sm:text-2xl font-black text-emerald-600 block mt-1">0</span>
+      </div>
+    </div>
+
+    <!-- PANEL DE INTELIGENCIA DE NEGOCIOS Y GRÁFICOS (LIGHT vs PRO) -->
     <div id="seccionDashboardGraficosDiag" class="space-y-4">
 
-      <!-- Barra de Control: Licencia LIGHT vs PRO + Conmutador de Eje Temporal + Re-animar -->
+      <!-- Barra de Control: Licencia LIGHT vs PRO + Conmutador de Eje Temporal -->
       <div class="bg-slate-900 text-white rounded-3xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-slate-800">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shrink-0">
             <i class="fa-solid fa-chart-simple text-lg"></i>
           </div>
           <div>
-            <div class="flex items-center space-x-2">
+            <div class="flex flex-wrap items-center gap-1.5">
               <h3 class="text-sm font-black tracking-tight">Tablero Analítico de Flota & Proyecciones</h3>
               <span id="badgeLicenciaActiva" class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/40">LICENCIA PRO</span>
             </div>
-            <p class="text-[11px] text-slate-400">Gráficos interactivos con animación a 60 FPS y selección personalizada de visibilidad</p>
+            <p class="text-[11px] text-slate-400">Gráficos interactivos y selección personalizada de visibilidad</p>
           </div>
         </div>
 
@@ -1180,10 +1251,10 @@
           <div id="boxSwitchLicenciaDemo" class="flex items-center bg-slate-800 border border-slate-700 rounded-xl p-1 text-xs">
             <span class="px-2 text-slate-400 font-bold text-[11px]">Nivel:</span>
             <button type="button" id="btnModoLight" onclick="cambiarModoLicenciaDashboard('LIGHT')" class="px-2.5 py-1 rounded-lg font-bold text-slate-300 hover:text-white transition-all">
-              LIGHT (Operativo)
+              LIGHT
             </button>
             <button type="button" id="btnModoPro" onclick="cambiarModoLicenciaDashboard('PRO')" class="px-2.5 py-1 rounded-lg font-extrabold bg-blue-600 text-white shadow transition-all">
-              PRO (Integral + CPK)
+              PRO
             </button>
           </div>
 
@@ -1192,11 +1263,6 @@
             <option value="mes">Eje: Por Mes de Inspección</option>
             <option value="insp">Eje: Por Corte (INSP 1..N)</option>
           </select>
-
-          <button type="button" onclick="reanimarGraficosDiagnostico()" class="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>Re-animar</span>
-          </button>
         </div>
       </div>
 
@@ -1505,73 +1571,15 @@
       </div>
     </div>
 
-    <!-- Panel de Control y Filtros de Diagnóstico -->
-    <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+    <!-- Tabla de Diagnóstico Detallado -->
+    <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
         <div>
-          <h2 class="text-base md:text-lg font-black text-slate-900 flex items-center space-x-2">
-            <i class="fa-solid fa-stethoscope text-blue-600"></i>
-            <span>Diagnóstico Técnico y Acciones de Mantenimiento</span>
-          </h2>
-          <p class="text-xs text-slate-500">Evaluación automática de alineación direccional, dualidad y umbrales de retiro</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="cargarDiagnostico()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
-            <i class="fa-solid fa-arrows-rotate"></i>
-            <span>Recalcular</span>
-          </button>
-          <button type="button" onclick="exportarDiagnosticoExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5">
-            <i class="fa-solid fa-file-excel"></i>
-            <span>Exportar Diagnóstico</span>
-          </button>
-          <button id="btnConsolidadoDiag" type="button" onclick="descargarConsolidadoDesdeDiagnostico()" title="Generar consolidado de flota para el cliente filtrado" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all">
-            <i class="fa-solid fa-file-pdf"></i>
-            <span id="lblConsolidadoDiag">Consolidado Flota PDF</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Filtros de Diagnóstico -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs items-end bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
-          <select id="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-            <option value="Todos">Todos los Clientes</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Sede:</label>
-          <select id="filtroDiagSede" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-            <option value="Todos">Todas las Sedes</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Operación:</label>
-          <select id="filtroDiagOperacion" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-            <option value="Todos">Todas las Operaciones</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Alerta:</label>
-          <select id="filtroDiagAlerta" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500">
-            <option value="Todos">Todas las Alertas</option>
-            <option value="Cambio">Sugerencia Cambio (Críticas)</option>
-            <option value="Alineacion">Solo Plan Alineación</option>
-            <option value="Dual">Solo Dual Mal Apareado</option>
-            <option value="Alerta">Cualquier Alerta</option>
-            <option value="OK">Sin Novedad (OK)</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Buscar Placa:</label>
-          <input type="text" id="filtroDiagPlaca" oninput="filtrarTablaDiagnostico()" placeholder="ej. ABC123..." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-800 focus:outline-none focus:border-blue-500">
-        </div>
-        <div class="flex items-center space-x-2">
-          <button type="button" onclick="limpiarFiltrosDiagnostico()" class="w-full py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center space-x-1.5 transition-all shadow-xs">
-            <i class="fa-solid fa-rotate-left text-slate-400"></i>
-            <span>Limpiar</span>
-          </button>
+          <h3 class="text-sm font-black text-slate-900 flex items-center space-x-2">
+            <i class="fa-solid fa-list-check text-blue-600"></i>
+            <span>Detalle de Vehículos y Planes de Acción</span>
+          </h3>
+          <p class="text-xs text-slate-500">Listado interactivo de vehículos según los filtros seleccionados</p>
         </div>
       </div>
 
@@ -4997,11 +5005,12 @@
       if (!selSede) return;
 
       const valCli = selCli ? (selCli.value || 'Todos') : 'Todos';
+      const valCliNorm = valCli.trim().toUpperCase();
       const valSedeActual = selSede.value || 'Todos';
 
       const sedes = Array.from(new Set(
         cacheDiagnostico
-          .filter(r => (valCli === 'Todos' || r.Cliente === valCli))
+          .filter(r => (valCliNorm === 'TODOS' || String(r.Cliente || '').trim().toUpperCase() === valCliNorm))
           .map(r => r.Subcliente)
           .filter(Boolean)
       )).sort();
@@ -5009,11 +5018,16 @@
       selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
         sedes.map(s => `<option value="${s}">${s}</option>`).join('');
 
-      if (sedes.includes(valSedeActual)) {
+      if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
         selSede.value = valSedeActual;
       } else {
         selSede.value = 'Todos';
       }
+    }
+
+    function onCambioFiltrosDiagnostico() {
+      filtrarTablaDiagnostico();
+      cargarDatosGraficosDiagnostico();
     }
 
     function onCambioFiltroDiagCliente() {
@@ -5056,11 +5070,15 @@
         }
       }
 
+      const cliNorm = String(cli || 'Todos').trim().toUpperCase();
+      const sedeNorm = String(sede || 'Todos').trim().toUpperCase();
+      const opNorm = String(op || 'Todos').trim().toUpperCase();
+
       // 1. Filtrar por ámbito de flota (Cliente, Sede, Operación y Placa)
       const flotaFiltrada = cacheDiagnostico.filter(r => {
-        if (cli !== 'Todos' && r.Cliente !== cli) return false;
-        if (sede !== 'Todos' && r.Subcliente !== sede) return false;
-        if (op !== 'Todos' && r.Operación !== op) return false;
+        if (cliNorm !== 'TODOS' && String(r.Cliente || '').trim().toUpperCase() !== cliNorm) return false;
+        if (sedeNorm !== 'TODOS' && String(r.Subcliente || '').trim().toUpperCase() !== sedeNorm) return false;
+        if (opNorm !== 'TODOS' && String(r.Operación || '').trim().toUpperCase() !== opNorm) return false;
         if (placa && !(r['Vehículo/Placa'] || '').toLowerCase().includes(placa)) return false;
         return true;
       });

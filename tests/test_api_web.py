@@ -36,6 +36,13 @@ def test_index_page_loads_all_views():
     # Verificar filtros clave de base de datos
     assert "filtroBDSede" in html
     assert "filtroBDCliente" in html
+    # Verificar filtros de diagnóstico al inicio y eliminación de Re-animar
+    assert "filtroDiagCliente" in html
+    assert "filtroDiagSede" in html
+    assert "filtroDiagOperacion" in html
+    assert "filtroDiagAlerta" in html
+    assert "filtroDiagPlaca" in html
+    assert "Re-animar" not in html
 
 def test_seguridad_rechazo_sin_autenticacion(test_db):
     # 1. Petición sin token a /api/inspecciones debe dar 401
