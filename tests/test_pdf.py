@@ -74,3 +74,61 @@ def test_generar_pdf_consolidado_cliente_y_sede(test_db):
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b'%PDF-')
 
+
+def test_generar_pdf_consolidado_con_alertas_multiples(test_db):
+    # Vehículo 1: tiene cambio, alineación y dual simultáneamente (debe contar como 1 vehículo con alerta, no como 3)
+    # Posición 1 y 2 para dual y alineación
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'Flota Test Alertas',
+        'subcliente': 'Sede Principal',
+        'tipo_operacion': 'Ruta',
+        'placa': 'V-CRITICO',
+        'posicion': 1,
+        'kilometraje': 50000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 2.0,  # <= 3.0 mm (retiro) y diferencia >= 2.0 (alineación)
+        'prof_cent': 5.0,
+        'prof_int': 6.0,
+        'psi': 100.0
+    })
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'Flota Test Alertas',
+        'subcliente': 'Sede Principal',
+        'tipo_operacion': 'Ruta',
+        'placa': 'V-CRITICO',
+        'posicion': 2,
+        'kilometraje': 50000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0,
+        'psi': 100.0
+    })
+
+    # Vehículo 2: completamente sano (0 alertas)
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': 'Flota Test Alertas',
+        'subcliente': 'Sede Principal',
+        'tipo_operacion': 'Ruta',
+        'placa': 'V-OPTIMO',
+        'posicion': 1,
+        'kilometraje': 20000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'psi': 110.0
+    })
+
+    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Test Alertas')
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 1000
+    assert pdf_bytes.startswith(b'%PDF-')
+
+

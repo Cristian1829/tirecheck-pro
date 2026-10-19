@@ -979,6 +979,14 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     veh_rot_esc = len(df_analisis[df_analisis.get('Plan_Rotacion_Escalonado', 'NO') == 'SÍ']) if not df_analisis.empty else 0
     veh_psi = len(df_analisis[df_analisis.get('Plan_Calibracion_PSI', 'NO') == 'SÍ']) if not df_analisis.empty else 0
 
+    # Vehículos únicos que presentan al menos una alerta crítica (Cambio, Alineación o Dual)
+    cond_alerta_critica = (
+        (df_analisis['Plan_Cambio_Llanta'] == 'SÍ') |
+        (df_analisis['Plan_Alineacion'] == 'SÍ') |
+        (df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ')
+    ) if not df_analisis.empty else []
+    veh_con_alerta = int(df_analisis[cond_alerta_critica]['Vehículo/Placa'].nunique()) if not df_analisis.empty else 0
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -1019,7 +1027,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph(f"<b>Vehículos Inspeccionados:</b> <font color='#2563eb' size=10><b>{total_vehiculos}</b></font>", style_subtitulo),
             Paragraph(f"<b>Total Llantas Medidas:</b> <font color='#2563eb' size=10><b>{total_llantas}</b></font>", style_subtitulo),
-            Paragraph(f"<b>Vehículos con Alerta:</b> <font color='#b91c1c' size=10><b>{veh_cambio + veh_ali + veh_dual}</b></font>", style_subtitulo)
+            Paragraph(f"<b>Vehículos con Alerta:</b> <font color='#b91c1c' size=10><b>{veh_con_alerta}</b></font>", style_subtitulo)
         ]
     ]
     t_res = Table(res_box, colWidths=[180, 180, 180])
@@ -1155,6 +1163,24 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
             alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
 
+        det_rot = []
+        d_irr = r.get('Detalle_Rotacion_Irregular', '')
+        d_esc = r.get('Detalle_Rotacion_Escalonado', '')
+        if r.get('Plan_Rotacion_Irregular') == 'SÍ' and d_irr and d_irr != 'OK':
+            det_rot.append(f"Rotación irr: {d_irr}")
+        if r.get('Plan_Rotacion_Escalonado') == 'SÍ' and d_esc and d_esc != 'OK':
+            det_rot.append(f"Rotación esc: {d_esc}")
+
+        if alertas_txt:
+            texto_detalle = "; ".join(alertas_txt)
+            style_detalle = style_cell_alert
+        elif det_rot:
+            texto_detalle = "Preventivo: " + "; ".join(det_rot)
+            style_detalle = style_cell_body
+        else:
+            texto_detalle = "Sin novedades críticas"
+            style_detalle = style_cell_body
+
         sede_val = str(r.get('Subcliente', '') or '').strip()
         op_val = str(r.get('Operación', '') or '').strip()
         sede_op_parts = []
@@ -1172,7 +1198,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             Paragraph(f"<b>{p_ali}</b>", style_cell_alert if p_ali == 'SÍ' else style_cell_body),
             Paragraph(f"<b>{p_du}</b>", style_cell_alert if p_du == 'SÍ' else style_cell_body),
             Paragraph(f"<b>{p_rot}</b>", style_cell_alert if p_rot == 'SÍ' else style_cell_body),
-            Paragraph("; ".join(alertas_txt) if alertas_txt else "Sin novedades críticas", style_cell_alert if alertas_txt else style_cell_body)
+            Paragraph(texto_detalle, style_detalle)
         ])
 
     t_matriz = Table(matriz_data, colWidths=[55, 65, 38, 42, 42, 38, 45, 215])
