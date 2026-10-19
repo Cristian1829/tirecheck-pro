@@ -20,19 +20,33 @@ TUBO, TUBO_BORDE, CUBO = _c("#CBD5E1"), _c("#94A3B8"), _c("#94A3B8")
 
 # ------------------------------------------------------------------ geometría (puntos)
 TIRE_W, TIRE_H = 18.0, 26.0
-GAP_TIRE_BADGE = 4.0           # llanta -> medallón
+GAP_TIRE_BADGE = 3.5           # llanta -> medallón
 BADGE_R = 5.0                  # radio del medallón
-GAP_BADGE_ROL = 3.5            # medallón -> rol
+GAP_BADGE_ROL = 2.5            # medallón -> rol
 ROL_FS, ROL_CAP = 5.6, 4.0     # tamaño y altura de mayúscula del rol
-GAP_ROL_VAL = 3.0              # rol -> valor
+GAP_ROL_VAL = 2.2              # rol -> valor
 VAL_FS, VAL_CAP, VAL_DESC = 7.0, 5.0, 1.6
 PILA_H = (TIRE_H + GAP_TIRE_BADGE + 2 * BADGE_R + GAP_BADGE_ROL + ROL_CAP
           + GAP_ROL_VAL + VAL_CAP + VAL_DESC)          # alto real de una llanta con sus datos
-PITCH = round(PILA_H + 8.0)    # alto de fila = pila + 8 pt de aire (≈ 64 pt)
-HEADER_H, LEGEND_H = 26.0, 32.0
+PITCH = round(PILA_H + 3.0)    # alto de fila compactado (~15% ahorro vertical)
+HEADER_H, LEGEND_H = 23.0, 28.0
 # distancia horizontal de cada llanta al centro del vehículo
 X_SEN, X_INT, X_EXT = 111.0, 98.0, 124.0               # duales: centros separados 26 pt (hueco de 8 pt)
 MARGEN_X = 14.0
+
+def es_novedad_alerta(texto: str) -> bool:
+    """Retorna False si el texto está vacío o coincide con observaciones benignas."""
+    if not texto or not isinstance(texto, str):
+        return False
+    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
+    if not limpio:
+        return False
+    frases_benignas = {
+        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
+        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
+        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
+    }
+    return limpio not in frases_benignas
 
 def profundidad_minima(fila):
     """Única definición de profundidad mínima (úsala también en KPIs y tabla)."""
@@ -80,19 +94,36 @@ def _llantas_del_eje(eje):
     return res
 
 def _estado(info, limite):
-    """Prioridad: bajo límite (rojo) > novedad (ámbar) > registrada (verde) > pendiente (gris)."""
+    """Prioridad: bajo límite (rojo) > desalineación / novedad (ámbar) > registrada (verde) > pendiente (gris)."""
     if not info.get("registrada"): return "pend", PEND
     pm = info.get("p_min")
     if pm is not None and pm <= limite: return "critico", CRITICO
-    if info.get("novedades"): return "aviso", AVISO
+    
+    # Desgaste irregular por alineación (abs(prof_ext - prof_int) >= 2.0 mm)
+    p_ext = info.get("prof_ext")
+    p_int = info.get("prof_int")
+    if p_ext is not None and p_int is not None:
+        try:
+            if abs(float(p_ext) - float(p_int)) >= 2.0:
+                return "aviso", AVISO
+        except (ValueError, TypeError):
+            pass
+            
+    nov = info.get("novedades")
+    if nov and es_novedad_alerta(nov): return "aviso", AVISO
     return "ok", OK
 
 def _dibujar_llanta(d, x, y_top, pos, rol, info, limite):
     estado, color = _estado(info, limite)
     yb = y_top - TIRE_H
-    d.add(Rect(x - TIRE_W / 2, yb, TIRE_W, TIRE_H, rx=3, ry=3, fillColor=LLANTA, strokeColor=LLANTA_BORDE, strokeWidth=.8))
+    es_pend = (estado == "pend")
+    fill_llanta = _c("#F1F5F9") if es_pend else LLANTA
+    stroke_llanta = _c("#94A3B8") if es_pend else LLANTA_BORDE
+    stroke_surco = _c("#CBD5E1") if es_pend else SURCO
+
+    d.add(Rect(x - TIRE_W / 2, yb, TIRE_W, TIRE_H, rx=3, ry=3, fillColor=fill_llanta, strokeColor=stroke_llanta, strokeWidth=.8))
     for gx in (x - TIRE_W / 2 + 5.5, x + TIRE_W / 2 - 5.5):
-        d.add(Line(gx, yb + 3, gx, y_top - 3, strokeColor=SURCO, strokeWidth=.6))
+        d.add(Line(gx, yb + 3, gx, y_top - 3, strokeColor=stroke_surco, strokeWidth=.6))
     cy = yb - GAP_TIRE_BADGE - BADGE_R                                   # medallón
     d.add(Circle(x, cy, BADGE_R, fillColor=colors.white if estado in ("ok", "pend") else (_c("#FEE2E2") if estado == "critico" else _c("#FEF3C7")),
                  strokeColor=color, strokeWidth=1.1))
@@ -111,7 +142,14 @@ def dibujar_diagrama_chasis(esquema, filas, limite_retiro=3.0, width=540):
     info = {}
     for f in filas:
         p = int(f.get("posicion", 0))
-        info[p] = {"registrada": True, "p_min": profundidad_minima(f), "novedades": str(f.get("novedades") or "").strip()}
+        nov = str(f.get("novedades") or "").strip()
+        info[p] = {
+            "registrada": True,
+            "p_min": profundidad_minima(f),
+            "prof_ext": f.get("prof_ext"),
+            "prof_int": f.get("prof_int"),
+            "novedades": nov
+        }
     rodantes = [e for e in esquema if e.get("eje") != 99 and str(e.get("tipo", "")).lower() != "repuesto"]
     repuestos = [e for e in esquema if e.get("eje") == 99 or str(e.get("tipo", "")).lower() == "repuesto"]
     filas_dib = len(rodantes) + (1 if repuestos else 0)

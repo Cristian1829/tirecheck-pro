@@ -1,6 +1,7 @@
 import html
 import io
 import os
+import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import pandas as pd
@@ -20,6 +21,23 @@ BOGOTA_TZ = ZoneInfo("America/Bogota")
 
 def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
+
+def es_novedad_alerta(texto: str) -> bool:
+    """
+    Retorna False si el texto está vacío o coincide con observaciones benignas
+    o estados normales ('ok', 'normal', 'desgaste normal y parejo').
+    """
+    if not texto or not isinstance(texto, str):
+        return False
+    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
+    if not limpio:
+        return False
+    frases_benignas = {
+        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
+        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
+        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
+    }
+    return limpio not in frases_benignas
 
 def formatear_fecha_ddmmyyyy(f_str):
     if not f_str:
@@ -267,10 +285,18 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         raise ValueError(f"No se encontraron registros de inspección para el vehículo con placa {placa_limpia}")
 
     primera = filas[0]
-    cliente = primera.get('cliente', 'No Especificado')
-    subcliente = primera.get('subcliente', 'General')
-    operacion = primera.get('tipo_operacion', 'General')
-    tipologia = primera.get('tipologia', 'Vehículo')
+    cliente_raw = str(primera.get('cliente') or '').strip()
+    cliente = 'General' if not cliente_raw or cliente_raw.upper() in ('NAN', 'NONE', 'NO ESPECIFICADO') else cliente_raw
+
+    subcliente_raw = str(primera.get('subcliente') or '').strip()
+    subcliente = 'General' if not subcliente_raw or subcliente_raw.upper() in ('NAN', 'NONE') else subcliente_raw
+
+    operacion_raw = str(primera.get('tipo_operacion') or '').strip()
+    operacion = 'General' if not operacion_raw or operacion_raw.upper() in ('NAN', 'NONE') else operacion_raw
+
+    tipologia_raw = str(primera.get('tipologia') or '').strip()
+    tipologia = 'Estándar' if not tipologia_raw or tipologia_raw.upper() in ('NAN', 'NONE') else tipologia_raw
+
     km_actual = float(primera.get('kilometraje') or 0)
     fecha_insp = primera.get('fecha', ahora_bogota().strftime('%Y-%m-%d'))
     fecha_insp_fmt = formatear_fecha_ddmmyyyy(fecha_insp)
@@ -307,6 +333,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             posiciones_esquema.append(p.get('pos'))
     total_posiciones = len(posiciones_esquema) if posiciones_esquema else len(filas)
     total_auditadas = len(filas)
+    posiciones_pendientes = [p for p in posiciones_esquema if p not in [int(f.get('posicion', 0)) for f in filas]]
 
     valid_pmins = [f['p_min'] for f in filas if f.get('p_min') is not None]
     if valid_pmins:
@@ -318,19 +345,36 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         pos_min_global = '-'
         p_prom_global = None
 
-    # Alertas completas (sin limitar a [:4])
+    # Alertas completas
     alertas_lista = []
 
     # 1. Alertas de Cambio (Profundidad <= Límite de Retiro)
+    llantas_cambio = []
     for f in filas:
         p = int(f.get('posicion', 0))
         p_m = f.get('p_min')
         if p_m is not None and p_m <= limite_retiro:
+            llantas_cambio.append((p, p_m))
+    n_cambios = len(llantas_cambio)
+
+    if n_cambios > 3:
+        # Agrupación inteligente de alertas de cambio cuando son más de 3
+        pos_cambio_str = ", ".join(str(p) for p, _ in llantas_cambio)
+        pos_detalles = ", ".join(f"Posición {p}" for p, _ in llantas_cambio)
+        alertas_lista.append({
+            'tipo': 'Cambio',
+            'tipo_color': '#DC2626',
+            'posicion': pos_cambio_str,
+            'detalle': f"Retirar llantas en {pos_detalles} (remanente <= {format_num_es(limite_retiro)} mm de límite).",
+            'accion': 'Retirar las llantas de estas posiciones y programar su cambio.'
+        })
+    else:
+        for p, p_m in llantas_cambio:
             alertas_lista.append({
                 'tipo': 'Cambio',
                 'tipo_color': '#DC2626',
                 'posicion': str(p),
-                'detalle': f"Retirar llanta en posición {p} (remanente {format_num_es(p_m)} mm <= {format_num_es(limite_retiro)} mm de límite).",
+                'detalle': f"Retirar llanta en Posición {p} (remanente {format_num_es(p_m)} mm <= {format_num_es(limite_retiro)} mm de límite).",
                 'accion': 'Retirar la llanta y programar su cambio.'
             })
 
@@ -338,11 +382,24 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     if not df_analisis.empty:
         r_an = df_analisis.iloc[0]
         if r_an.get('Plan_Alineacion') == 'SÍ':
+            det_ali = str(r_an.get('Detalle_Alineacion', 'Diferencia excesiva entre directores.'))
+            pos_mencionadas = re.findall(r'(?:pos(?:ición)?|pos)\s*(\d+)', det_ali, re.IGNORECASE)
+            if pos_mencionadas:
+                pos_unicas = list(dict.fromkeys(pos_mencionadas))
+                if len(pos_unicas) == 1:
+                    pos_ali = pos_unicas[0]
+                elif len(pos_unicas) == 2:
+                    pos_ali = f"{pos_unicas[0]} y {pos_unicas[1]}"
+                else:
+                    pos_ali = ", ".join(pos_unicas[:-1]) + f" y {pos_unicas[-1]}"
+            else:
+                pos_ali = '1 y 2'
+
             alertas_lista.append({
                 'tipo': 'Alineación',
                 'tipo_color': '#D97706',
-                'posicion': '1 y 2',
-                'detalle': str(r_an.get('Detalle_Alineacion', 'Diferencia excesiva entre directores.')),
+                'posicion': pos_ali,
+                'detalle': det_ali,
                 'accion': 'Alinear y balancear.'
             })
         if r_an.get('Plan_Dual_Mal_Apareado') == 'SÍ':
@@ -354,10 +411,10 @@ def construir_datos_informe(placa, fecha=None) -> dict:
                 'accion': 'Rotar y aparear.'
             })
 
-    # 3. Novedades mecánicas registradas
+    # 3. Novedades mecánicas registradas (filtrando observaciones benignas)
     for f in filas:
         nov = str(f.get('novedades') or '').strip()
-        if nov:
+        if es_novedad_alerta(nov):
             alertas_lista.append({
                 'tipo': 'Novedad mecánica',
                 'tipo_color': '#D97706',
@@ -366,7 +423,6 @@ def construir_datos_informe(placa, fecha=None) -> dict:
                 'accion': 'Revisar componente y corregir condición.'
             })
 
-    n_cambios = sum(1 for a in alertas_lista if a['tipo'] == 'Cambio')
     n_ali = sum(1 for a in alertas_lista if a['tipo'] == 'Alineación')
     n_duales = sum(1 for a in alertas_lista if a['tipo'] == 'Dual mal apareado')
     n_nov = sum(1 for a in alertas_lista if a['tipo'] == 'Novedad mecánica')
@@ -387,6 +443,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'filas': filas,
         'total_auditadas': total_auditadas,
         'total_posiciones': total_posiciones,
+        'posiciones_pendientes': posiciones_pendientes,
         'p_min_global': p_min_global,
         'pos_min_global': pos_min_global,
         'p_prom_global': p_prom_global,
@@ -438,7 +495,7 @@ def renderizar_informe(datos) -> bytes:
 
     styles = getSampleStyleSheet()
     style_ficha_tit = ParagraphStyle('FichaTit', fontName='Helvetica-Bold', fontSize=8.5, leading=10, textColor=colors.HexColor('#0F172A'), spaceBefore=2, spaceAfter=4)
-    style_sec_tit = ParagraphStyle('SecTit', fontName='Helvetica-Bold', fontSize=10.0, leading=13, textColor=colors.HexColor('#0F172A'), spaceBefore=8, spaceAfter=4)
+    style_sec_tit = ParagraphStyle('SecTit', fontName='Helvetica-Bold', fontSize=10.0, leading=13, textColor=colors.HexColor('#0F172A'), spaceBefore=8, spaceAfter=4, keepWithNext=True)
     style_kpi_num = ParagraphStyle('KpiNum', fontName='Helvetica-Bold', fontSize=13, leading=15, alignment=1)
     style_kpi_lbl = ParagraphStyle('KpiLbl', fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#64748B'), alignment=1)
     style_cell_head = ParagraphStyle('CellH', fontName='Helvetica-Bold', fontSize=6.5, leading=8.5, textColor=colors.white, alignment=0)
@@ -449,7 +506,10 @@ def renderizar_informe(datos) -> bytes:
     # =========================================================================
     # SECCIÓN 1: ENCABEZADO Y FICHA TÉCNICA
     # =========================================================================
-    elements.append(Paragraph(f"<b>FICHA TÉCNICA Y RESUMEN OPERATIVO · VEHÍCULO {html.escape(placa)} ({html.escape(tipologia)})</b>", style_ficha_tit))
+    tipo_limpio = tipologia.strip('() ').strip() if tipologia else 'Estándar'
+    if not tipo_limpio or tipo_limpio.upper() in ('NAN', 'NONE'):
+        tipo_limpio = 'Estándar'
+    elements.append(Paragraph(f"<b>FICHA TÉCNICA Y RESUMEN OPERATIVO · VEHÍCULO {html.escape(placa)} ({html.escape(tipo_limpio)})</b>", style_ficha_tit))
 
     style_lbl_meta = ParagraphStyle('MetaLbl', fontName='Helvetica-Bold', fontSize=5.5, leading=7, textColor=colors.HexColor('#64748B'))
     style_val_meta = ParagraphStyle('MetaVal', fontName='Helvetica-Bold', fontSize=8.0, leading=10, textColor=colors.HexColor('#0F172A'))
@@ -538,10 +598,16 @@ def renderizar_informe(datos) -> bytes:
             ])
     else:
         style_ok = ParagraphStyle('TipoOk', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor('#16A34A'))
+        pos_diag = "Todas"
+        det_diag = f"Todas las llantas están sobre el límite de retiro ({format_num_es(limite_retiro)} mm) y sin alertas configuradas."
+        pos_pendientes = datos.get('posiciones_pendientes', [])
+        if total_auditadas < total_posiciones:
+            pos_diag = f"{total_auditadas} de {total_posiciones} eval."
+            det_diag = f"Las {total_auditadas} llantas evaluadas están sobre el límite de retiro ({format_num_es(limite_retiro)} mm). Quedan {len(pos_pendientes)} posiciones pendientes por registrar."
         data_diag.append([
             Paragraph("Sin alertas", style_ok),
-            Paragraph("Todas", style_cell_body),
-            Paragraph(f"Todas las llantas están sobre el límite de retiro ({format_num_es(limite_retiro)} mm) y sin alertas configuradas.", style_cell_body),
+            Paragraph(pos_diag, style_cell_body),
+            Paragraph(det_diag, style_cell_body),
             Paragraph("Operación normal y próxima inspección periódica.", style_cell_body)
         ])
 
@@ -562,10 +628,9 @@ def renderizar_informe(datos) -> bytes:
     # =========================================================================
     # SECCIÓN 4: DISTRIBUCIÓN POR EJES (DIAGRAMA CHASIS VECTORIAL)
     # =========================================================================
-    elements.append(Paragraph("Distribución por ejes", style_sec_tit))
+    tit_chasis = Paragraph("Distribución por ejes", style_sec_tit)
     drawing_chasis = dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=limite_retiro, width=540)
-    elements.append(drawing_chasis)
-    elements.append(Spacer(1, 6))
+    elements.append(KeepTogether([tit_chasis, drawing_chasis, Spacer(1, 4)]))
 
     # =========================================================================
     # SECCIÓN 5: DETALLE POR LLANTA
@@ -610,7 +675,7 @@ def renderizar_informe(datos) -> bytes:
             for p in e.get('posiciones', []):
                 p_n = p.get('pos')
                 pos_to_eje[p_n] = t_lbl
-                lado = 'Izq.' if p.get('lado') == 'izq' else 'Der.' if p.get('lado') == 'der' else ''
+                lado = 'Izq' if p.get('lado') == 'izq' else 'Der' if p.get('lado') == 'der' else ''
                 rol_str = normalizar_rol_pdf(p.get('rol'))
                 pos_to_rol_desc[p_n] = f"{lado} · {rol_str}".strip(' ·')
                 pos_to_info_esq[p_n] = {
@@ -643,11 +708,12 @@ def renderizar_informe(datos) -> bytes:
 
             es_cambio = (p_min is not None and p_min <= limite_retiro)
             novedad_texto = str(f.get('novedades') or '').strip()
+            tiene_novedad_real = es_novedad_alerta(novedad_texto)
 
             if es_cambio:
                 estado_txt = "Cambio sugerido"
                 col_est = '#DC2626'
-            elif novedad_texto:
+            elif tiene_novedad_real:
                 estado_txt = "Con novedad"
                 col_est = '#D97706'
             elif p_min is not None:
@@ -661,7 +727,10 @@ def renderizar_informe(datos) -> bytes:
                                      textColor=colors.HexColor('#DC2626' if es_cambio else ('#64748B' if p_min is None else '#0F172A')))
             st_estado = ParagraphStyle('EstCell', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor(col_est))
 
-            marca_dis = f"{f.get('marca', '')} {f.get('diseno', '')}".strip() or '-'
+            marca_dis = f"{f.get('marca', '')} {f.get('diseno', '')}".strip()
+            if not marca_dis or marca_dis.upper() in ('-', 'NAN', 'NONE'):
+                marca_dis = "—"
+
             rol_lbl = pos_to_rol_desc.get(p_n, normalizar_rol_pdf(f.get('rol', '')))
 
             try:
@@ -683,16 +752,29 @@ def renderizar_informe(datos) -> bytes:
             txt_min = format_num_es(p_min)
 
             try:
-                psi_val = f"{float(f.get('psi') or 0):.0f}" if f.get('psi') is not None else "—"
+                psi_raw = f.get('psi')
+                if psi_raw is None or str(psi_raw).strip() == '':
+                    psi_val = "—"
+                else:
+                    psi_flt = float(psi_raw)
+                    psi_val = f"{psi_flt:.0f}" if psi_flt > 0 else "—"
             except Exception:
                 psi_val = "—"
+
+            dim_txt = str(f.get('dimension') or '').strip()
+            if not dim_txt or dim_txt.upper() in ('-', 'NAN', 'NONE'):
+                dim_txt = "—"
+
+            num_int_txt = str(f.get('numero_interno') or '').strip()
+            if not num_int_txt or num_int_txt.upper() in ('-', 'NAN', 'NONE'):
+                num_int_txt = "—"
 
             data_llantas.append([
                 Paragraph(f"<b>{p_n}</b>", style_cell_body),
                 Paragraph(html.escape(rol_lbl), style_cell_body),
                 Paragraph(html.escape(marca_dis), style_cell_body),
-                Paragraph(html.escape(str(f.get('dimension') or '-')), style_cell_body),
-                Paragraph(html.escape(str(f.get('numero_interno') or '-')), style_cell_body),
+                Paragraph(html.escape(dim_txt), style_cell_body),
+                Paragraph(html.escape(num_int_txt), style_cell_body),
                 Paragraph(html.escape(str(f.get('vida') or 'Orig')), style_cell_body),
                 Paragraph(txt_ext, style_cell_body),
                 Paragraph(txt_cen, style_cell_body),
@@ -732,7 +814,7 @@ def renderizar_informe(datos) -> bytes:
     # SECCIÓN 6: NOVEDADES REGISTRADAS
     # =========================================================================
     elements.append(Paragraph("Novedades registradas", style_sec_tit))
-    filas_con_nov = [f for f in filas if str(f.get('novedades') or '').strip()]
+    filas_con_nov = [f for f in filas if es_novedad_alerta(str(f.get('novedades') or '').strip())]
     data_nov = [
         [
             Paragraph("<b>POS.</b>", style_cell_head),
@@ -751,18 +833,19 @@ def renderizar_informe(datos) -> bytes:
             Paragraph("No se registraron novedades o anomalías mecánicas en las llantas inspeccionadas.", style_cell_body)
         ])
 
+    pad_nov = 2.0 if not filas_con_nov else 2.5
     t_nov = Table(data_nov, colWidths=[40, 500], repeatRows=1)
     t_nov.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
         ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#CBD5E1')),
         ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#E2E8F0')),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('TOPPADDING', (0,0), (-1,-1), pad_nov),
+        ('BOTTOMPADDING', (0,0), (-1,-1), pad_nov),
         ('LEFTPADDING', (0,0), (-1,-1), 4),
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_nov)
-    elements.append(Spacer(1, 4))
+    elements.append(Spacer(1, 3 if not filas_con_nov else 4))
 
     # =========================================================================
     # SECCIÓN 7: EVIDENCIA FOTOGRÁFICA

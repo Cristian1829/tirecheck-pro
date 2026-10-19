@@ -2053,6 +2053,24 @@ def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', toda
 
         return [v for v in valores_insp if v and str(v).strip()]
 
+def es_novedad_alerta(texto: str) -> bool:
+    """
+    Determina si una observación o novedad reportada corresponde a una alerta mecánica real.
+    Retorna False si el texto está vacío o si coincide con descripciones benignas
+    o estados normales (ej. 'ok', 'normal', 'desgaste normal y parejo').
+    """
+    if not texto or not isinstance(texto, str):
+        return False
+    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
+    if not limpio:
+        return False
+    frases_benignas = {
+        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
+        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
+        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
+    }
+    return limpio not in frases_benignas
+
 def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
     """
     Retorna información detallada de las posiciones inspeccionadas para una placa:
@@ -2085,7 +2103,7 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
                 if p not in posiciones:
                     posiciones.append(p)
                 nov = str(r[1] or '').strip()
-                if nov and nov.lower() not in ['sin novedad', 'ninguna', 'ok', 'normal']:
+                if es_novedad_alerta(nov):
                     if p not in posiciones_con_novedad:
                         posiciones_con_novedad.append(p)
                     novedades_map[p] = nov

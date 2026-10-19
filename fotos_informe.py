@@ -312,7 +312,7 @@ def seccion_fotos(llantas: List[Dict[str, Any]]) -> List[Any]:
 
     if filas_tabla:
         t_fotos = Table(filas_tabla, colWidths=[ancho_col, ancho_col])
-        t_fotos.setStyle(TableStyle([
+        tstyle = [
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
             ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#F1F5F9')),
@@ -321,7 +321,16 @@ def seccion_fotos(llantas: List[Dict[str, Any]]) -> List[Any]:
             ('LEFTPADDING', (0, 0), (-1, -1), 5),
             ('RIGHTPADDING', (0, 0), (-1, -1), 5),
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#FAFAFA')),
-        ]))
+        ]
+        if len(celdas) % 2 != 0:
+            # Celda impar vacía (columna 1, última fila): sin fondo gris ni bordes
+            tstyle.extend([
+                ('BACKGROUND', (1, -1), (1, -1), colors.white),
+                ('LINEBELOW', (1, -1), (1, -1), 0.6, colors.white),
+                ('LINEAFTER', (1, -1), (1, -1), 0.6, colors.white),
+                ('LINEABOVE', (1, -1), (1, -1), 0.6, colors.white),
+            ])
+        t_fotos.setStyle(TableStyle(tstyle))
         elements.append(t_fotos)
         elements.append(Spacer(1, 4))
 
