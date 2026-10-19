@@ -395,12 +395,17 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             else:
                 pos_ali = '1 y 2'
 
+            es_trailer_tip = ('trailer' in tipologia.lower() or 'remolque' in tipologia.lower() or 'semirremolque' in tipologia.lower())
+            tipo_ali = 'Alineación (Trailer / Eje libre)' if es_trailer_tip else 'Alineación Direccional'
+            accion_ali = 'Alinear ejes de remolque y verificar bujes/tensores de suspensión.' if es_trailer_tip else 'Alinear y balancear eje direccional.'
+            detalle_ali_fmt = f"{det_ali} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
+
             alertas_lista.append({
-                'tipo': 'Alineación',
+                'tipo': tipo_ali,
                 'tipo_color': '#D97706',
                 'posicion': pos_ali,
-                'detalle': det_ali,
-                'accion': 'Alinear y balancear.'
+                'detalle': detalle_ali_fmt,
+                'accion': accion_ali
             })
         if r_an.get('Plan_Dual_Mal_Apareado') == 'SÍ':
             alertas_lista.append({
@@ -442,7 +447,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             'accion': 'Estandarizar todas las posiciones a una sola dimensión homologada según ficha técnica.'
         })
 
-    n_ali = sum(1 for a in alertas_lista if a['tipo'] == 'Alineación')
+    n_ali = sum(1 for a in alertas_lista if 'Alineación' in a['tipo'])
     n_duales = sum(1 for a in alertas_lista if a['tipo'] == 'Dual mal apareado')
     n_nov = sum(1 for a in alertas_lista if a['tipo'] == 'Novedad mecánica')
     n_dims = sum(1 for a in alertas_lista if a['tipo'] == 'Dimensiones mixtas')
@@ -899,7 +904,11 @@ def renderizar_informe(datos) -> bytes:
         pos_cambios = [str(a['posicion']) for a in alertas_lista if a['tipo'] == 'Cambio']
         obs_lines.append(f"Se recomienda programar el retiro de la(s) llanta(s) en posición {', '.join(pos_cambios)} por encontrarse en o por debajo del límite de retiro ({format_num_es(limite_retiro)} mm).")
     if n_ali > 0:
-        obs_lines.append("En el eje direccional se observa una diferencia de desgaste entre directores; se sugiere revisar alineación y balanceo preventivo.")
+        es_trailer_tip = ('trailer' in tipologia.lower() or 'remolque' in tipologia.lower() or 'semirremolque' in tipologia.lower())
+        if es_trailer_tip:
+            obs_lines.append("En los ejes del trailer / eje libre se observa una diferencia de desgaste irregular entre hombros (exterior/interior); se sugiere alinear ejes del remolque y verificar bujes y tensores de suspensión.")
+        else:
+            obs_lines.append("En el eje direccional se observa una diferencia de desgaste entre directores; se sugiere revisar alineación y balanceo preventivo.")
     if n_duales > 0:
         obs_lines.append("En los conjuntos duales se recomienda rotar o aparear llantas para evitar fatiga prematura por diferencia de radio rodante.")
     if n_nov > 0:
@@ -920,7 +929,7 @@ def renderizar_informe(datos) -> bytes:
     elements.append(Paragraph("Criterios de diagnóstico aplicados", style_sec_tit))
     criterios_html = f"""
     <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({format_num_es(limite_retiro)} mm).<br/>
-    <b>Alineación:</b> diferencia de 2,0 mm o más entre la profundidad mínima de las llantas direccionales izquierda y derecha.<br/>
+    <b>Alineación y geometría de ejes:</b> diferencia de 2,0 mm o más entre la profundidad exterior e interior en llantas direccionales o en ejes de trailer / eje libre.<br/>
     <b>Dual mal apareado:</b> diferencia de 2,0 mm o más entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
     <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
     La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
@@ -1127,9 +1136,9 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             Paragraph(f"Vehículos con al menos una llanta en o por debajo de {limite_def:.1f} mm.", style_cell_body)
         ],
         [
-            Paragraph("<b>Alineación y Geometría Direccional</b>", style_cell_body),
+            Paragraph("<b>Alineación y Geometría de Ejes</b>", style_cell_body),
             Paragraph(f"<b>{veh_ali}</b>", style_cell_alert if veh_ali > 0 else style_cell_body),
-            Paragraph("Vehículos con diferencia entre exterior e interior >= 2.0 mm en llantas direccionales.", style_cell_body)
+            Paragraph("Vehículos con diferencia entre exterior e interior >= 2.0 mm en llantas direccionales o en ejes de trailer / eje libre.", style_cell_body)
         ],
         [
             Paragraph("<b>Emparejamiento / Dual Mal Apareado</b>", style_cell_body),
@@ -1191,9 +1200,13 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         p_dims = r.get('Plan_Dimensiones_Heterogeneas', 'NO')
         p_rot = "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO"
 
+        tipo_v = str(r.get('Tipo', '')).lower()
+        is_trailer_v = ('trailer' in tipo_v or 'remolque' in tipo_v or 'semirremolque' in tipo_v)
+        lbl_ali = "Alinear (Trailer/Eje libre)" if is_trailer_v else "Alinear (Direccional)"
+
         alertas_txt = []
         if p_cambio == 'SÍ': alertas_txt.append(f"Cambio: {r.get('Detalle_Cambio', '')}")
-        if p_ali == 'SÍ': alertas_txt.append(f"Alinear: {r.get('Detalle_Alineacion', '')}")
+        if p_ali == 'SÍ': alertas_txt.append(f"{lbl_ali}: {r.get('Detalle_Alineacion', '')}")
         if p_du == 'SÍ': alertas_txt.append(f"Dual: {r.get('Detalle_Dual', '')}")
         if p_dims == 'SÍ': alertas_txt.append(f"Dims mixtas: {r.get('Detalle_Dimensiones_Heterogeneas', 'No recomendado mezclar dimensiones en la unidad')}")
         if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
