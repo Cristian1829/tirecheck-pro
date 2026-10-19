@@ -32,6 +32,13 @@ import pdf_generator
 
 app = FastAPI(title="TireAnalyze Pro - Sistema Integral Web & Móvil")
 
+@app.on_event("startup")
+def startup_migracion_produccion():
+    try:
+        database.migrar_pepsico_a_tellantas()
+    except Exception as e:
+        print(f"[STARTUP] Error ejecutando migración: {e}")
+
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -1233,6 +1240,12 @@ def api_guardar_licencia_cliente(item: ConfigLicenciaClienteItem, admin: dict = 
     if not ok:
         raise HTTPException(status_code=400, detail="Error al guardar la configuración de licencia")
     return sanitizar_nativos({"status": "ok"})
+
+@app.post("/api/admin/migrar-pepsico-tellantas")
+@app.get("/api/admin/migrar-pepsico-tellantas")
+def api_migrar_pepsico_tellantas(usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    res = database.migrar_pepsico_a_tellantas()
+    return sanitizar_nativos(res)
 
 @app.get("/api/valores-campo")
 def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", todas: bool = False, usuario_actual: dict = Depends(obtener_usuario_actual)):

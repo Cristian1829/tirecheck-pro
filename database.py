@@ -625,6 +625,9 @@ def inicializar_bd():
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
 
+        # Migración automática producción: PEPSICO FUNZA -> Cliente TELLANTAS, Sede PEPSICO FUNZA
+        migrar_pepsico_a_tellantas(conn)
+
         # Sincronización automática inicial (Backfill) de llantas_maestro desde inspecciones históricas
         sincronizar_maestro_desde_inspecciones(conn)
 
@@ -710,6 +713,212 @@ def normalizar_clientes_mayusculas(conn):
         """)
     except Exception:
         pass
+
+
+def migrar_pepsico_a_tellantas(conn=None):
+    """
+    Migración automática para Producción:
+    Todo registro donde el cliente sea 'PEPSICO FUNZA' (o variaciones de PEPSICO con FUNZA)
+    se actualiza para que:
+      - cliente = 'TELLANTAS'
+      - subcliente / sede = 'PEPSICO FUNZA'
+    Afecta todas las tablas operativas, catálogos, configuraciones y usuarios asignados.
+    """
+    if conn is None:
+        with get_connection() as c_auto:
+            return migrar_pepsico_a_tellantas(c_auto)
+
+    try:
+        cur = conn.cursor()
+
+        # 1. Tabla inspecciones
+        cur.execute("""
+            UPDATE inspecciones
+            SET cliente = 'TELLANTAS', subcliente = 'PEPSICO FUNZA'
+            WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+               OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+               OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+        """)
+        insps_afectadas = cur.rowcount
+
+        # 2. Tabla catalogo_vehiculos
+        cur.execute("""
+            UPDATE catalogo_vehiculos
+            SET cliente = 'TELLANTAS', subcliente = 'PEPSICO FUNZA'
+            WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+               OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+               OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+        """)
+        vehs_afectados = cur.rowcount
+
+        # 3. Tabla llantas_maestro
+        try:
+            cur.execute("""
+                UPDATE llantas_maestro
+                SET cliente = 'TELLANTAS', subcliente = 'PEPSICO FUNZA'
+                WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                   OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                   OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+            """)
+        except Exception:
+            pass
+
+        # 4. Tabla kardex_movimientos_llanta
+        try:
+            cur.execute("""
+                UPDATE kardex_movimientos_llanta
+                SET cliente = 'TELLANTAS', subcliente = 'PEPSICO FUNZA'
+                WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                   OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                   OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+            """)
+        except Exception:
+            pass
+
+        # 5. Tabla padron_vehiculos_cliente
+        try:
+            cur.execute("""
+                UPDATE padron_vehiculos_cliente
+                SET cliente = 'TELLANTAS', subcliente = 'PEPSICO FUNZA'
+                WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                   OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                   OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+            """)
+        except Exception:
+            pass
+
+        # 6. Tabla configuracion_limites_retiro (UNIQUE cliente, subcliente, eje)
+        try:
+            cur.execute("""
+                SELECT id, cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion
+                FROM configuracion_limites_retiro
+                WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                   OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                   OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+            """)
+            for rid, cli, sub, eje, lim, obs, f_act in cur.fetchall():
+                cur.execute("DELETE FROM configuracion_limites_retiro WHERE id = ?", (rid,))
+                cur.execute("""
+                    INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+                    VALUES ('TELLANTAS', 'PEPSICO FUNZA', ?, ?, ?, ?)
+                """, (eje or 'TODOS', lim, obs, f_act))
+        except Exception:
+            pass
+
+        # 7. Tabla configuracion_marcas_cliente (PRIMARY KEY cliente)
+        try:
+            cur.execute("""
+                SELECT cliente, marcas_habituales FROM configuracion_marcas_cliente
+                WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                   OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+            """)
+            marcas_pepsico = cur.fetchall()
+            for cli_p, m_hab in marcas_pepsico:
+                cur.execute("DELETE FROM configuracion_marcas_cliente WHERE cliente = ?", (cli_p,))
+                cur.execute("SELECT marcas_habituales FROM configuracion_marcas_cliente WHERE cliente = 'TELLANTAS'")
+                row_t = cur.fetchone()
+                if row_t:
+                    m_prev = [x.strip() for x in (row_t[0] or '').split(',') if x.strip()]
+                    m_new = [x.strip() for x in (m_hab or '').split(',') if x.strip()]
+                    m_fusion = list(dict.fromkeys(m_prev + m_new))
+                    cur.execute("UPDATE configuracion_marcas_cliente SET marcas_habituales = ? WHERE cliente = 'TELLANTAS'", (', '.join(m_fusion),))
+                else:
+                    cur.execute("INSERT OR REPLACE INTO configuracion_marcas_cliente (cliente, marcas_habituales) VALUES ('TELLANTAS', ?)", (m_hab,))
+        except Exception:
+            pass
+
+        # 8. Tabla configuracion_clientes (PRIMARY KEY cliente)
+        try:
+            cur.execute("SELECT limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA' OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'")
+            row_cfg = cur.fetchone()
+            if row_cfg:
+                cur.execute("DELETE FROM configuracion_clientes WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA' OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'")
+                cur.execute("INSERT OR IGNORE INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion) VALUES ('TELLANTAS', ?, ?, ?)", (row_cfg[0], row_cfg[1], row_cfg[2]))
+            else:
+                cur.execute("INSERT OR IGNORE INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion) VALUES ('TELLANTAS', 3.0, 'Configuración cliente TELLANTAS', CURRENT_TIMESTAMP)")
+        except Exception:
+            pass
+
+        # 9. Tabla configuracion_avanzada_cliente (PRIMARY KEY cliente)
+        try:
+            cur.execute("SELECT tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA' OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'")
+            row_av = cur.fetchone()
+            if row_av:
+                cur.execute("DELETE FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA' OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'")
+                cur.execute("INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion) VALUES ('TELLANTAS', ?, ?, ?, ?, ?)", row_av)
+            else:
+                cur.execute("INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion) VALUES ('TELLANTAS', 'PRO', 4.0, 3.0, 3.0, CURRENT_TIMESTAMP)")
+        except Exception:
+            pass
+
+        # 10. Tabla usuarios (cliente_asignado)
+        try:
+            cur.execute("SELECT id, cliente_asignado FROM usuarios WHERE cliente_asignado IS NOT NULL AND cliente_asignado != ''")
+            for uid, c_asig in cur.fetchall():
+                if not c_asig:
+                    continue
+                clis = [c.strip().upper() for c in str(c_asig).split(',') if c.strip()]
+                tiene_pepsico = any('PEPSICO' in c and 'FUNZA' in c for c in clis) or any(c == 'PEPSICO FUNZA' for c in clis)
+                if tiene_pepsico:
+                    nuevos = []
+                    for c in clis:
+                        if ('PEPSICO' in c and 'FUNZA' in c) or c == 'PEPSICO FUNZA':
+                            if 'TELLANTAS' not in nuevos:
+                                nuevos.append('TELLANTAS')
+                        else:
+                            if c not in nuevos:
+                                nuevos.append(c)
+                    nuevo_str = ', '.join(nuevos)
+                    cur.execute("UPDATE usuarios SET cliente_asignado = ? WHERE id = ?", (nuevo_str, uid))
+        except Exception:
+            pass
+
+        # 11. Búsqueda y actualización dinámica en cualquier otra tabla que exista en la BD
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        todas_tablas = [r[0] for r in cur.fetchall()]
+        tablas_gestionadas = {'inspecciones', 'catalogo_vehiculos', 'llantas_maestro', 'kardex_movimientos_llanta', 'padron_vehiculos_cliente', 'configuracion_limites_retiro', 'configuracion_marcas_cliente', 'configuracion_clientes', 'configuracion_avanzada_cliente', 'usuarios'}
+        for t in todas_tablas:
+            if t.startswith('sqlite_') or t in tablas_gestionadas:
+                continue
+            try:
+                cur.execute(f"PRAGMA table_info({t})")
+                cols = [c[1].lower() for c in cur.fetchall()]
+                if 'cliente' in cols and 'subcliente' in cols:
+                    cur.execute(f"""
+                        UPDATE {t}
+                        SET cliente = 'TELLANTAS', subcliente = 'PEPSICO FUNZA'
+                        WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                           OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                           OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(subcliente, ''))) LIKE '%FUNZA%')
+                    """)
+                elif 'cliente' in cols and 'sede' in cols:
+                    cur.execute(f"""
+                        UPDATE {t}
+                        SET cliente = 'TELLANTAS', sede = 'PEPSICO FUNZA'
+                        WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                           OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                           OR (UPPER(TRIM(cliente)) = 'PEPSICO' AND UPPER(TRIM(IFNULL(sede, ''))) LIKE '%FUNZA%')
+                    """)
+                elif 'cliente' in cols:
+                    cur.execute(f"""
+                        UPDATE {t}
+                        SET cliente = 'TELLANTAS'
+                        WHERE UPPER(TRIM(cliente)) = 'PEPSICO FUNZA'
+                           OR UPPER(TRIM(cliente)) LIKE 'PEPSICO%FUNZA%'
+                    """)
+            except Exception:
+                pass
+
+        conn.commit()
+        print(f"[MIGRACION PRODUCCION] [OK] Migracion PEPSICO FUNZA -> TELLANTAS ejecutada. Inspecciones: {insps_afectadas}, Vehiculos: {vehs_afectados}")
+        return {
+            "status": "ok",
+            "inspecciones_actualizadas": insps_afectadas,
+            "vehiculos_actualizados": vehs_afectados
+        }
+    except Exception as e:
+        print(f"[MIGRACION PRODUCCION] [ALERTA] Error en migracion: {e}")
+        return {"status": "error", "error": str(e)}
 
 
 def sincronizar_maestro_desde_inspecciones(conn=None):
