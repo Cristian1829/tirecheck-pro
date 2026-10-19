@@ -688,6 +688,29 @@ def normalizar_clientes_mayusculas(conn):
     # 6. Tabla configuracion_marcas_cliente
     cursor.execute("UPDATE configuracion_marcas_cliente SET cliente = UPPER(TRIM(cliente)) WHERE cliente IS NOT NULL AND cliente != UPPER(TRIM(cliente))")
 
+    # 7. Sincronización automática de clientes detectados a configuracion_clientes y configuracion_avanzada_cliente
+    try:
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='llantas_maestro'")
+        tiene_maestro = cursor.fetchone() is not None
+        union_maestro = "UNION SELECT cliente FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''" if tiene_maestro else ""
+        cursor.execute(f"""
+            INSERT OR IGNORE INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+            SELECT DISTINCT UPPER(TRIM(cliente)), 3.0, 'Cliente migrado automáticamente', CURRENT_TIMESTAMP
+            FROM (
+                SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                {union_maestro}
+            )
+        """)
+        cursor.execute("""
+            INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+            SELECT DISTINCT UPPER(TRIM(cliente)), 'PRO', 4.0, 3.0, 3.0, CURRENT_TIMESTAMP
+            FROM configuracion_clientes
+        """)
+    except Exception:
+        pass
+
 
 def sincronizar_maestro_desde_inspecciones(conn=None):
     """
@@ -2569,10 +2592,220 @@ def obtener_lista_clientes_unicos():
                 UNION
                 SELECT cliente FROM configuracion_clientes
                 UNION
+                SELECT cliente FROM configuracion_avanzada_cliente
+                UNION
                 SELECT cliente FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
             ) ORDER BY 1 ASC
         ''')
         return [r[0] for r in cursor.fetchall() if r[0]]
+
+def obtener_directorio_clientes() -> list:
+    """
+    Retorna el directorio maestro consolidado de clientes y flotas con métricas operativas:
+    - Cliente / Razón Social
+    - Tipo de Licencia (PRO / LIGHT)
+    - Límite de retiro base (mm)
+    - Sedes / Subclientes
+    - N° Vehículos asociados
+    - N° Inspecciones históricas
+    - N° Llantas registradas en bodegas
+    - N° Marcas habituales parametrizadas
+    - Observaciones y fecha de actualización
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 1. Lista de todos los clientes únicos registrados
+        cursor.execute('''
+            SELECT DISTINCT UPPER(TRIM(cliente)) FROM (
+                SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_clientes WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_avanzada_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                UNION
+                SELECT cliente FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            ) ORDER BY 1 ASC
+        ''')
+        clientes_unicos = [r[0] for r in cursor.fetchall() if r[0]]
+
+        # 2. Diccionario de configuracion_clientes
+        cursor.execute("SELECT UPPER(TRIM(cliente)), limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes")
+        cfg_cli = {r[0]: {"limite": to_float(r[1], 3.0), "obs": r[2] or "", "fecha": str(r[3] or "")} for r in cursor.fetchall() if r[0]}
+
+        # 3. Diccionario de configuracion_avanzada_cliente
+        cursor.execute("SELECT UPPER(TRIM(cliente)), tipo_licencia, fecha_actualizacion FROM configuracion_avanzada_cliente")
+        cfg_adv = {r[0]: {"licencia": str(r[1] or "PRO").upper(), "fecha": str(r[2] or "")} for r in cursor.fetchall() if r[0]}
+
+        # 4. Sedes / subclientes por cliente
+        cursor.execute('''
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente))
+            FROM (
+                SELECT cliente, subcliente FROM inspecciones WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
+                UNION
+                SELECT cliente, subcliente FROM configuracion_limites_retiro WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
+                UNION
+                SELECT cliente, subcliente FROM llantas_maestro WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
+            )
+        ''')
+        subclientes_map = {}
+        for c, sub in cursor.fetchall():
+            if c and sub:
+                subclientes_map.setdefault(c, []).append(sub)
+
+        # 5. Cantidad de vehículos (padrón + inspecciones)
+        cursor.execute('''
+            SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT UPPER(TRIM(placa)))
+            FROM (
+                SELECT cliente, placa FROM inspecciones WHERE placa IS NOT NULL AND TRIM(placa) != ''
+                UNION
+                SELECT cliente, placa FROM padron_vehiculos_cliente WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            ) GROUP BY 1
+        ''')
+        vehiculos_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
+
+        # 6. Cantidad de inspecciones registradas
+        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(*) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
+        inspecciones_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
+
+        # 7. Cantidad de llantas registradas en bodegas
+        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(*) FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
+        llantas_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
+
+        # 8. Cantidad de marcas habituales asociadas
+        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT marca) FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
+        marcas_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
+
+        directorio = []
+        for c in clientes_unicos:
+            lic = cfg_adv.get(c, {}).get("licencia", "PRO")
+            lim = cfg_cli.get(c, {}).get("limite", 3.0)
+            obs = cfg_cli.get(c, {}).get("obs", "")
+            fecha = cfg_cli.get(c, {}).get("fecha") or cfg_adv.get(c, {}).get("fecha") or ""
+            subs = sorted(list(set(subclientes_map.get(c, []))))
+
+            directorio.append({
+                "cliente": c,
+                "tipo_licencia": lic,
+                "limite_retiro_mm": lim,
+                "subclientes": subs,
+                "subclientes_str": ", ".join(subs) if subs else "Principal",
+                "vehiculos_count": vehiculos_map.get(c, 0),
+                "inspecciones_count": inspecciones_map.get(c, 0),
+                "llantas_count": llantas_map.get(c, 0),
+                "marcas_count": marcas_map.get(c, 0),
+                "observaciones": obs,
+                "fecha_actualizacion": fecha
+            })
+
+        return directorio
+
+def crear_o_actualizar_cliente(datos: dict) -> dict:
+    """
+    Crea o actualiza un cliente / flota en el sistema:
+    - Normaliza nombre en mayúsculas
+    - Configura tipo de licencia (PRO / LIGHT)
+    - Configura límite de retiro por defecto
+    - Crea reglas base en configuracion_limites_retiro y sedes/subclientes
+    """
+    c = str(datos.get('cliente') or '').strip().upper()
+    if not c or c in ('NAN', 'NONE', 'NULL'):
+        raise ValueError("El nombre o razón social del cliente es obligatorio.")
+
+    lic = str(datos.get('tipo_licencia') or 'PRO').strip().upper()
+    if lic not in ('PRO', 'LIGHT'):
+        lic = 'PRO'
+
+    lim = to_float(datos.get('limite_retiro_mm'), 3.0)
+    obs = str(datos.get('observaciones') or '').strip()
+    subclientes_input = datos.get('subclientes') or ''
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 1. configuracion_clientes
+        cursor.execute('''
+            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                limite_retiro_mm = excluded.limite_retiro_mm,
+                observaciones = CASE WHEN excluded.observaciones != '' THEN excluded.observaciones ELSE configuracion_clientes.observaciones END,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        ''', (c, lim, obs))
+
+        # 2. configuracion_avanzada_cliente
+        cursor.execute('''
+            INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                tipo_licencia = excluded.tipo_licencia,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        ''', (c, lic, lim, lim, lim))
+
+        # 3. Regla por defecto en configuracion_limites_retiro
+        cursor.execute('''
+            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, 'TODOS', 'TODOS', ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente, subcliente, eje) DO UPDATE SET
+                limite_retiro_mm = excluded.limite_retiro_mm,
+                observaciones = excluded.observaciones,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        ''', (c, lim, obs))
+
+        # 4. Sedes / subclientes si se proporcionaron
+        if subclientes_input:
+            if isinstance(subclientes_input, str):
+                subs_list = [s.strip().upper() for s in subclientes_input.replace(';', ',').split(',') if s.strip()]
+            else:
+                subs_list = [str(s).strip().upper() for s in subclientes_input if str(s).strip()]
+
+            for sub in subs_list:
+                if sub and sub not in ('TODOS', 'NAN', 'NONE'):
+                    cursor.execute('''
+                        INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+                        VALUES (?, ?, 'TODOS', ?, ?, CURRENT_TIMESTAMP)
+                    ''', (c, sub, lim, f"Sede {sub} de {c}"))
+
+        conn.commit()
+
+    return {"ok": True, "cliente": c, "mensaje": f"Cliente '{c}' guardado exitosamente."}
+
+def eliminar_cliente_directorio(cliente: str) -> dict:
+    """
+    Elimina un cliente del directorio si no tiene historial de inspecciones o llantas en bodega.
+    """
+    c = str(cliente or '').strip().upper()
+    if not c:
+        raise ValueError("Nombre de cliente inválido.")
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # Validar si tiene inspecciones
+        cursor.execute("SELECT COUNT(*) FROM inspecciones WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        cnt_insp = cursor.fetchone()[0]
+        if cnt_insp > 0:
+            return {"ok": False, "mensaje": f"No se puede eliminar el cliente '{c}' porque tiene {cnt_insp} inspecciones registradas en el historial."}
+
+        cursor.execute("SELECT COUNT(*) FROM llantas_maestro WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        cnt_ll = cursor.fetchone()[0]
+        if cnt_ll > 0:
+            return {"ok": False, "mensaje": f"No se puede eliminar el cliente '{c}' porque tiene {cnt_ll} llantas en inventario de bodegas."}
+
+        cursor.execute("DELETE FROM configuracion_clientes WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        cursor.execute("DELETE FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        cursor.execute("DELETE FROM configuracion_limites_retiro WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        cursor.execute("DELETE FROM configuracion_marcas_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        cursor.execute("DELETE FROM padron_vehiculos_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
+        conn.commit()
+
+    return {"ok": True, "cliente": c, "mensaje": f"Cliente '{c}' eliminado exitosamente."}
 
 # ==========================================
 # CONFIGURACIÓN DE MARCAS POR CLIENTE
@@ -5155,6 +5388,294 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
         "bodegas": bodegas_resumen,
         "matriz_mrp": matriz_mrp,
         "total_carcasas_inventario": len(llantas_todas)
+    }
+
+
+def obtener_directorio_clientes():
+    """
+    Retorna la lista completa y consolidada de clientes/flotas registrados en el sistema,
+    cruzando la configuración general, plan de licenciamiento (LIGHT vs PRO),
+    límites de retiro base, sedes/subclientes, conteo de vehículos en padrón,
+    inspecciones históricas, llantas en las 7 bodegas y marcas habituales asignadas.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 1. Base de clientes desde configuracion_clientes
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), limite_retiro_mm, IFNULL(observaciones, ''), fecha_actualizacion
+            FROM configuracion_clientes
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            ORDER BY cliente ASC
+        """)
+        clientes_cfg = {
+            r[0]: {
+                "cliente": r[0],
+                "limite_retiro_mm": to_float(r[1], 3.0),
+                "observaciones": r[2] or "",
+                "fecha_actualizacion": str(r[3] or "")
+            }
+            for r in cursor.fetchall()
+        }
+
+        # Asegurar clientes que pudieran estar en otras tablas pero no en configuracion_clientes
+        cursor.execute("SELECT DISTINCT UPPER(TRIM(cliente)) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''")
+        for (c,) in cursor.fetchall():
+            if c and c not in clientes_cfg:
+                clientes_cfg[c] = {
+                    "cliente": c,
+                    "limite_retiro_mm": 3.0,
+                    "observaciones": "Detectado desde historial de inspecciones",
+                    "fecha_actualizacion": ""
+                }
+
+        cursor.execute("SELECT DISTINCT UPPER(TRIM(cliente)) FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''")
+        for (c,) in cursor.fetchall():
+            if c and c not in clientes_cfg:
+                clientes_cfg[c] = {
+                    "cliente": c,
+                    "limite_retiro_mm": 3.0,
+                    "observaciones": "Detectado desde límites de retiro",
+                    "fecha_actualizacion": ""
+                }
+
+        # 2. Licenciamiento avanzado (LIGHT vs PRO)
+        cursor.execute("SELECT UPPER(TRIM(cliente)), tipo_licencia FROM configuracion_avanzada_cliente")
+        licencias = {r[0]: (r[1] or 'PRO').upper() for r in cursor.fetchall()}
+
+        # 3. Sedes / Subclientes únicos detectados
+        subclientes_dict = {}
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente))
+            FROM configuracion_limites_retiro
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) != 'TODOS'
+        """)
+        for c, s in cursor.fetchall():
+            subclientes_dict.setdefault(c, set()).add(s)
+
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente))
+            FROM inspecciones
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) != 'TODOS'
+        """)
+        for c, s in cursor.fetchall():
+            subclientes_dict.setdefault(c, set()).add(s)
+
+        # 4. Conteo de vehículos por cliente
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT placa)
+            FROM padron_vehiculos_cliente
+            WHERE activo = 1 AND cliente IS NOT NULL AND TRIM(cliente) != ''
+            GROUP BY UPPER(TRIM(cliente))
+        """)
+        vehiculos_padron = {r[0]: r[1] for r in cursor.fetchall()}
+
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT placa)
+            FROM catalogo_vehiculos
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            GROUP BY UPPER(TRIM(cliente))
+        """)
+        vehiculos_cat = {r[0]: r[1] for r in cursor.fetchall()}
+
+        # 5. Conteo de inspecciones históricas
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), COUNT(*)
+            FROM inspecciones
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            GROUP BY UPPER(TRIM(cliente))
+        """)
+        inspecciones_conteo = {r[0]: r[1] for r in cursor.fetchall()}
+
+        # 6. Conteo de llantas en inventario / bodegas
+        try:
+            cursor.execute("""
+                SELECT UPPER(TRIM(cliente)), COUNT(*)
+                FROM llantas_maestro
+                WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                GROUP BY UPPER(TRIM(cliente))
+            """)
+            llantas_conteo = {r[0]: r[1] for r in cursor.fetchall()}
+        except Exception:
+            llantas_conteo = {}
+
+        # 7. Marcas habituales asignadas
+        marcas_dict = {}
+        try:
+            cursor.execute("""
+                SELECT UPPER(TRIM(cliente)), UPPER(TRIM(marca))
+                FROM configuracion_marcas_cliente
+                WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+                  AND marca IS NOT NULL AND TRIM(marca) != ''
+                ORDER BY marca ASC
+            """)
+            for c, m in cursor.fetchall():
+                marcas_dict.setdefault(c, []).append(m)
+        except Exception:
+            marcas_dict = {}
+
+        # Ensamblar resultado consolidado
+        resultado = []
+        for c_nombre, item in sorted(clientes_cfg.items(), key=lambda x: x[0]):
+            sub_list = sorted(list(subclientes_dict.get(c_nombre, set())))
+            v_cnt = max(vehiculos_padron.get(c_nombre, 0), vehiculos_cat.get(c_nombre, 0))
+            insp_cnt = inspecciones_conteo.get(c_nombre, 0)
+            ll_cnt = llantas_conteo.get(c_nombre, 0)
+            m_list = marcas_dict.get(c_nombre, [])
+
+            # Puede eliminarse solo si no tiene historial operativo de inspecciones ni llantas
+            puede_eliminar = (insp_cnt == 0 and ll_cnt == 0)
+
+            resultado.append({
+                "cliente": c_nombre,
+                "tipo_licencia": licencias.get(c_nombre, "PRO"),
+                "limite_retiro_mm": item["limite_retiro_mm"],
+                "observaciones": item["observaciones"],
+                "fecha_actualizacion": item["fecha_actualizacion"],
+                "subclientes": sub_list,
+                "cant_vehiculos": v_cnt,
+                "vehiculos_count": v_cnt,
+                "cant_inspecciones": insp_cnt,
+                "inspecciones_count": insp_cnt,
+                "cant_llantas": ll_cnt,
+                "llantas_count": ll_cnt,
+                "marcas": m_list,
+                "marcas_count": len(m_list),
+                "puede_eliminar": puede_eliminar
+            })
+
+        return resultado
+
+
+def crear_o_actualizar_cliente(datos: dict):
+    """
+    Crea o actualiza un cliente/flota en el sistema garantizando integridad y normalización en mayúsculas:
+    - Inserta/actualiza en configuracion_clientes (límite base y observaciones).
+    - Inserta/actualiza en configuracion_avanzada_cliente (licencia PRO/LIGHT).
+    - Registra la regla base en configuracion_limites_retiro (TODOS/TODOS).
+    - Si se especifican sedes/subclientes, registra sus reglas correspondientes.
+    """
+    raw_cliente = str(datos.get("cliente", "")).strip().upper()
+    if not raw_cliente:
+        return {"ok": False, "mensaje": "El nombre del cliente o razón social es obligatorio."}
+
+    tipo_licencia = str(datos.get("tipo_licencia", "PRO")).strip().upper()
+    if tipo_licencia not in ("PRO", "LIGHT"):
+        tipo_licencia = "PRO"
+
+    limite_retiro_mm = to_float(datos.get("limite_retiro_mm", 3.0), 3.0)
+    if limite_retiro_mm <= 0:
+        limite_retiro_mm = 3.0
+
+    observaciones = str(datos.get("observaciones", "")).strip()
+
+    # Procesar subclientes / sedes
+    subclientes_input = datos.get("subclientes", "")
+    subclientes_lista = []
+    if isinstance(subclientes_input, list):
+        subclientes_lista = [str(s).strip().upper() for s in subclientes_input if str(s).strip()]
+    elif isinstance(subclientes_input, str) and subclientes_input.strip():
+        partes = [p.strip().upper() for p in re.split(r'[,;\n]+', subclientes_input)]
+        subclientes_lista = [p for p in partes if p and p != 'TODOS']
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 1. Guardar en configuracion_clientes
+        cursor.execute("""
+            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                limite_retiro_mm = excluded.limite_retiro_mm,
+                observaciones = excluded.observaciones,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """, (raw_cliente, limite_retiro_mm, observaciones))
+
+        # 2. Guardar en configuracion_avanzada_cliente
+        cursor.execute("""
+            INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, fecha_actualizacion)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                tipo_licencia = excluded.tipo_licencia,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """, (raw_cliente, tipo_licencia))
+
+        # 3. Regla global por defecto en configuracion_limites_retiro
+        cursor.execute("""
+            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES (?, 'TODOS', 'TODOS', ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente, subcliente, eje) DO UPDATE SET
+                limite_retiro_mm = excluded.limite_retiro_mm,
+                observaciones = excluded.observaciones,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """, (raw_cliente, limite_retiro_mm, observaciones))
+
+        # 4. Insertar subclientes/sedes si fueron indicados
+        for sub in subclientes_lista:
+            cursor.execute("""
+                INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+                VALUES (?, ?, 'TODOS', ?, ?, CURRENT_TIMESTAMP)
+            """, (raw_cliente, sub, limite_retiro_mm, f"Sede registrada: {sub}"))
+
+        conn.commit()
+
+    return {
+        "ok": True,
+        "cliente": raw_cliente,
+        "mensaje": f"Cliente '{raw_cliente}' guardado exitosamente con licencia {tipo_licencia}."
+    }
+
+
+def eliminar_cliente_directorio(cliente: str):
+    """
+    Elimina un cliente del sistema aplicando un candado de seguridad estricto:
+    No se permite eliminar clientes que ya tengan inspecciones registradas o
+    llantas en inventario / bodegas para preservar la trazabilidad histórica y auditoría contable.
+    """
+    raw_cliente = str(cliente).strip().upper()
+    if not raw_cliente:
+        return {"ok": False, "mensaje": "Nombre de cliente inválido."}
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # Candado 1: Inspecciones
+        cursor.execute("SELECT COUNT(*) FROM inspecciones WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+        cnt_insp = cursor.fetchone()[0]
+        if cnt_insp > 0:
+            return {
+                "ok": False,
+                "mensaje": f"No se puede eliminar el cliente '{raw_cliente}' porque tiene {cnt_insp} inspecciones registradas en el historial."
+            }
+
+        # Candado 2: Llantas en bodegas
+        try:
+            cursor.execute("SELECT COUNT(*) FROM llantas_maestro WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+            cnt_ll = cursor.fetchone()[0]
+            if cnt_ll > 0:
+                return {
+                    "ok": False,
+                    "mensaje": f"No se puede eliminar el cliente '{raw_cliente}' porque tiene {cnt_ll} llantas registradas en inventario / bodegas."
+                }
+        except Exception:
+            pass
+
+        # Eliminar de tablas de configuración y catálogos asociados
+        cursor.execute("DELETE FROM configuracion_clientes WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+        cursor.execute("DELETE FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+        cursor.execute("DELETE FROM configuracion_limites_retiro WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+        cursor.execute("DELETE FROM configuracion_marcas_cliente WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+        cursor.execute("DELETE FROM padron_vehiculos_cliente WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+        cursor.execute("DELETE FROM catalogo_vehiculos WHERE UPPER(TRIM(cliente)) = ?", (raw_cliente,))
+
+        conn.commit()
+
+    return {
+        "ok": True,
+        "cliente": raw_cliente,
+        "mensaje": f"Cliente '{raw_cliente}' eliminado exitosamente del catálogo."
     }
 
 

@@ -166,6 +166,13 @@ class MarcaClienteItem(BaseModel):
     cliente: str
     marca: str
 
+class ClienteDirectorioItem(BaseModel):
+    cliente: str
+    tipo_licencia: Optional[str] = "PRO"
+    limite_retiro_mm: Optional[float] = 3.0
+    subclientes: Optional[str] = ""
+    observaciones: Optional[str] = ""
+
 # ==========================================
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
 # ==========================================
@@ -909,6 +916,46 @@ def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "
 @app.get("/api/buscar-modelos")
 def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.buscar_modelos_llantas_filtro(query)
+
+@app.get("/api/clientes-directorio")
+def api_clientes_directorio(usuario_actual: dict = Depends(obtener_usuario_actual)):
+    directorio = database.obtener_directorio_clientes()
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        clis = database.parsear_clientes_asignados(usuario_actual["cliente_asignado"])
+        directorio = [c for c in directorio if c["cliente"] in clis]
+    return sanitizar_nativos(directorio)
+
+@app.post("/api/clientes-directorio")
+def api_crear_cliente_directorio(item: ClienteDirectorioItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    try:
+        res = database.crear_o_actualizar_cliente(item.model_dump())
+        if not res.get("ok"):
+            raise HTTPException(status_code=400, detail=res.get("mensaje", "Error al procesar el cliente"))
+        return sanitizar_nativos({
+            "status": "ok",
+            "ok": True,
+            "cliente": res.get("cliente"),
+            "mensaje": res.get("mensaje")
+        })
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar cliente: {str(e)}")
+
+@app.delete("/api/clientes-directorio/{cliente}")
+def api_eliminar_cliente_directorio(cliente: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+    res = database.eliminar_cliente_directorio(cliente)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("mensaje", "No se pudo eliminar el cliente"))
+    return sanitizar_nativos({
+        "status": "ok",
+        "ok": True,
+        "mensaje": res.get("mensaje")
+    })
 
 @app.get("/api/configuraciones-clientes")
 def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin_o_jefatura)):
