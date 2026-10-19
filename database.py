@@ -2175,6 +2175,20 @@ def analizar_inspecciones_df(df_inspecciones):
                 plan_calibracion_psi = True
                 detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI)")
 
+        # d. Detección de Dimensiones Heterogéneas en la misma unidad (No recomendado)
+        dims_map = {}
+        for _, r in group.iterrows():
+            pos_i = int(r['posicion'])
+            dim_i = str(r.get('dimension', '') or '').strip().upper()
+            if dim_i and dim_i not in ('NAN', 'NONE', '-', 'NULL', '0'):
+                dims_map.setdefault(dim_i, []).append(pos_i)
+
+        plan_dims_heterogeneas = len(dims_map) > 1
+        detalles_dims_heterogeneas = []
+        if plan_dims_heterogeneas:
+            partes_dims = [f"{d} (Pos {', '.join(str(p) for p in sorted(pos_list))})" for d, pos_list in sorted(dims_map.items())]
+            detalles_dims_heterogeneas.append(f"Dimensiones mixtas ({'; '.join(partes_dims)} - No recomendado mezclar)")
+
         resultados.append({
             'Vehículo/Placa': placa,
             'Fecha': group['fecha'].max() if 'fecha' in group and not group['fecha'].dropna().empty else '',
@@ -2192,12 +2206,14 @@ def analizar_inspecciones_df(df_inspecciones):
             'Plan_Rotacion_Irregular': "SÍ" if plan_rotacion_irregular else "NO",
             'Plan_Rotacion_Escalonado': "SÍ" if plan_rotacion_escalonado else "NO",
             'Plan_Calibracion_PSI': "SÍ" if plan_calibracion_psi else "NO",
+            'Plan_Dimensiones_Heterogeneas': "SÍ" if plan_dims_heterogeneas else "NO",
             'Detalle_Alineacion': "; ".join(detalles_alineacion) if detalles_alineacion else "OK",
             'Detalle_Dual': "; ".join(detalles_dual) if detalles_dual else "OK",
             'Detalle_Cambio': "; ".join(detalles_cambio) if detalles_cambio else "OK",
             'Detalle_Rotacion_Irregular': "; ".join(detalles_rot_irregular) if detalles_rot_irregular else "OK",
             'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
             'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",
+            'Detalle_Dimensiones_Heterogeneas': "; ".join(detalles_dims_heterogeneas) if detalles_dims_heterogeneas else "OK",
             'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK"
         })
         

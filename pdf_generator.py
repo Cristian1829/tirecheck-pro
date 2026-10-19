@@ -423,10 +423,30 @@ def construir_datos_informe(placa, fecha=None) -> dict:
                 'accion': 'Revisar componente y corregir condición.'
             })
 
+    # 4. Alerta de Dimensiones Heterogéneas en el Vehículo (No recomendado)
+    dims_map = {}
+    for f in filas:
+        p_n = int(f.get('posicion', 0))
+        d_val = str(f.get('dimension') or '').strip().upper()
+        if d_val and d_val not in ('NAN', 'NONE', '-', 'NULL', '0'):
+            dims_map.setdefault(d_val, []).append(p_n)
+
+    tiene_dims_distintas = len(dims_map) > 1
+    if tiene_dims_distintas:
+        partes_d = [f"{dim} (Pos {', '.join(str(p) for p in sorted(pos_list))})" for dim, pos_list in sorted(dims_map.items())]
+        alertas_lista.append({
+            'tipo': 'Dimensiones mixtas',
+            'tipo_color': '#DC2626',
+            'posicion': 'Vehículo',
+            'detalle': f"El vehículo monta llantas con diferentes dimensiones instaladas: {'; '.join(partes_d)}. No es recomendado mezclar dimensiones en una misma unidad ya que altera los radios de giro, desbalancea la carga y desgasta prematuramente componentes mecánicos.",
+            'accion': 'Estandarizar todas las posiciones a una sola dimensión homologada según ficha técnica.'
+        })
+
     n_ali = sum(1 for a in alertas_lista if a['tipo'] == 'Alineación')
     n_duales = sum(1 for a in alertas_lista if a['tipo'] == 'Dual mal apareado')
     n_nov = sum(1 for a in alertas_lista if a['tipo'] == 'Novedad mecánica')
-    total_alertas = n_cambios + n_ali + n_duales + n_nov
+    n_dims = sum(1 for a in alertas_lista if a['tipo'] == 'Dimensiones mixtas')
+    total_alertas = n_cambios + n_ali + n_duales + n_nov + n_dims
 
     return {
         'placa': placa_limpia,
@@ -452,6 +472,9 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'n_ali': n_ali,
         'n_duales': n_duales,
         'n_nov': n_nov,
+        'n_dims': n_dims,
+        'tiene_dims_distintas': tiene_dims_distintas,
+        'dims_map': dims_map,
         'total_alertas': total_alertas,
         'df_analisis': df_analisis
     }
@@ -881,6 +904,9 @@ def renderizar_informe(datos) -> bytes:
         obs_lines.append("En los conjuntos duales se recomienda rotar o aparear llantas para evitar fatiga prematura por diferencia de radio rodante.")
     if n_nov > 0:
         obs_lines.append("Se identificaron novedades mecánicas reportadas; verificar componentes mecánicos asociados.")
+    if datos.get('tiene_dims_distintas'):
+        dims_str = "; ".join(f"{d} en Pos {', '.join(str(p) for p in sorted(ps))}" for d, ps in sorted(datos.get('dims_map', {}).items()))
+        obs_lines.append(f"Se identificó que el vehículo monta llantas con diferentes dimensiones ({dims_str}); esto NO es recomendado técnicamente por los fabricantes, ya que altera las relaciones de giro, sobrecarga componentes de transmisión y suspensión, y provoca desgaste acelerado e irregular. Se sugiere unificar a una única medida homologada.")
     if not obs_lines:
         obs_lines.append("No se detectaron alertas de diagnóstico con las reglas configuradas.")
 
@@ -895,7 +921,8 @@ def renderizar_informe(datos) -> bytes:
     criterios_html = f"""
     <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({format_num_es(limite_retiro)} mm).<br/>
     <b>Alineación:</b> diferencia de 2,0 mm o más entre la profundidad mínima de las llantas direccionales izquierda y derecha.<br/>
-    <b>Dual mal apareado:</b> diferencia de 2,0 mm o más entre la profundidad mínima de la llanta interior y la exterior del mismo lado.<br/>
+    <b>Dual mal apareado:</b> diferencia de 2,0 mm o más entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
+    <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
     La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
     """
     style_crit = ParagraphStyle('CritPar', fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#475569'))
@@ -975,15 +1002,17 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     veh_cambio = len(df_analisis[df_analisis['Plan_Cambio_Llanta'] == 'SÍ']) if not df_analisis.empty else 0
     veh_ali = len(df_analisis[df_analisis['Plan_Alineacion'] == 'SÍ']) if not df_analisis.empty else 0
     veh_dual = len(df_analisis[df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ']) if not df_analisis.empty else 0
+    veh_dims = len(df_analisis[df_analisis.get('Plan_Dimensiones_Heterogeneas', 'NO') == 'SÍ']) if not df_analisis.empty else 0
     veh_rot_irr = len(df_analisis[df_analisis.get('Plan_Rotacion_Irregular', 'NO') == 'SÍ']) if not df_analisis.empty else 0
     veh_rot_esc = len(df_analisis[df_analisis.get('Plan_Rotacion_Escalonado', 'NO') == 'SÍ']) if not df_analisis.empty else 0
     veh_psi = len(df_analisis[df_analisis.get('Plan_Calibracion_PSI', 'NO') == 'SÍ']) if not df_analisis.empty else 0
 
-    # Vehículos únicos que presentan al menos una alerta crítica (Cambio, Alineación o Dual)
+    # Vehículos únicos que presentan al menos una alerta crítica (Cambio, Alineación, Dual o Dimensiones heterogéneas)
     cond_alerta_critica = (
         (df_analisis['Plan_Cambio_Llanta'] == 'SÍ') |
         (df_analisis['Plan_Alineacion'] == 'SÍ') |
-        (df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ')
+        (df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ') |
+        (df_analisis.get('Plan_Dimensiones_Heterogeneas', 'NO') == 'SÍ')
     ) if not df_analisis.empty else []
     veh_con_alerta = int(df_analisis[cond_alerta_critica]['Vehículo/Placa'].nunique()) if not df_analisis.empty else 0
 
@@ -1108,6 +1137,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             Paragraph("Vehículos con duales que superan 2.0 mm de diferencia o dimensiones heterogéneas.", style_cell_body)
         ],
         [
+            Paragraph("<b>Dimensiones Heterogéneas en Unidad</b>", style_cell_body),
+            Paragraph(f"<b>{veh_dims}</b>", style_cell_alert if veh_dims > 0 else style_cell_body),
+            Paragraph("Vehículos con diferentes dimensiones de llantas montadas en la misma unidad (no recomendado).", style_cell_body)
+        ],
+        [
             Paragraph("<b>Rotación por Desgaste Irregular</b>", style_cell_body),
             Paragraph(f"<b>{veh_rot_irr}</b>", style_cell_alert if veh_rot_irr > 0 else style_cell_body),
             Paragraph("Llantas en tracción o eje libre con desgaste irregular o disparejo.", style_cell_body)
@@ -1154,12 +1188,14 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         p_cambio = r.get('Plan_Cambio_Llanta', 'NO')
         p_ali = r.get('Plan_Alineacion', 'NO')
         p_du = r.get('Plan_Dual_Mal_Apareado', 'NO')
+        p_dims = r.get('Plan_Dimensiones_Heterogeneas', 'NO')
         p_rot = "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO"
 
         alertas_txt = []
         if p_cambio == 'SÍ': alertas_txt.append(f"Cambio: {r.get('Detalle_Cambio', '')}")
         if p_ali == 'SÍ': alertas_txt.append(f"Alinear: {r.get('Detalle_Alineacion', '')}")
         if p_du == 'SÍ': alertas_txt.append(f"Dual: {r.get('Detalle_Dual', '')}")
+        if p_dims == 'SÍ': alertas_txt.append(f"Dims mixtas: {r.get('Detalle_Dimensiones_Heterogeneas', 'No recomendado mezclar dimensiones en la unidad')}")
         if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
             alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
 
