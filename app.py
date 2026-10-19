@@ -440,6 +440,7 @@ class AppInspeccionLlantas(tk.Tk):
             self.lbl_chasis_pos_pc.config(text=f'Posición: {pos}')
         self.verificar_llanta_previa_pc()
         self.renderizar_chasis_pc()
+        self.auto_completar_prof_pc(forzar=True)
 
     def renderizar_chasis_pc(self):
         if not hasattr(self, 'frame_ejes_pc'):
@@ -616,20 +617,22 @@ class AppInspeccionLlantas(tk.Tk):
         if prev.get('cliente') and not self.form_vars['cliente'].get(): self.form_vars['cliente'].set(prev['cliente'])
         if prev.get('subcliente') and not self.form_vars['subcliente'].get(): self.form_vars['subcliente'].set(prev['subcliente'])
         if prev.get('tipo_operacion') and not self.form_vars['tipo_operacion'].get(): self.form_vars['tipo_operacion'].set(prev['tipo_operacion'])
+        self.auto_completar_prof_pc(forzar=True)
         if avisar:
             msg_txt = "Datos de inspección anterior cargados.\nNo. Interno: " + str(prev.get("numero_interno", "S/N")) + "\nÚltimas Profs: " + str(prev.get("prof_ext", 0)) + "/" + str(prev.get("prof_cent", 0)) + "/" + str(prev.get("prof_int", 0)) + " mm"
             messagebox.showinfo('Éxito', msg_txt)
 
-    def auto_completar_prof_pc(self):
+    def auto_completar_prof_pc(self, forzar=False):
         m = self.form_vars['marca'].get().strip()
         d = self.form_vars['diseno'].get().strip()
         dim = self.form_vars['dimension'].get().strip()
         v = self.form_vars['vida'].get().strip()
-        if m or d:
-            prof = database.buscar_profundidad_inicial(m, d, dim, v)
+        banda = self.form_vars['banda_reen'].get().strip() if hasattr(self, 'form_vars') and 'banda_reen' in self.form_vars else ''
+        if m or d or banda:
+            prof = database.buscar_profundidad_inicial(m, d, dim, v, banda=banda)
             if prof > 0:
                 p_actual = self.form_vars['prof_inicial'].get()
-                if not p_actual or p_actual == '0':
+                if forzar or not p_actual or p_actual == '0':
                     self.form_vars['prof_inicial'].set(str(prof))
 
     def on_cambio_tipologia_pc(self, event=None):

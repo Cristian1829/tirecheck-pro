@@ -1073,8 +1073,8 @@ def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_ad
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/profundidad-inicial")
-def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida)
+def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original", banda: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida, banda=banda)
     return {"prof_inicial": prof}
 
 @app.get("/api/buscar-modelos")

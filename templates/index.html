@@ -9718,7 +9718,7 @@
     /**
      * Selecciona una posición de neumático, actualiza el formulario y sincroniza el chasis.
      */
-    function seleccionarPosicion(p) {
+    async function seleccionarPosicion(p) {
       // Capturar la dimensión ingresada en la primera llanta antes de cambiar si aún no se había fijado
       const dimActual = (document.getElementById('dimension')?.value || '').trim();
       if (dimActual && dimActual !== '__nuevo__' && (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 0)) {
@@ -9746,7 +9746,8 @@
       // Candado UI: En eje direccional solo se permite condición Original
       aplicarRestriccionEjeDireccional(p);
 
-      verificarInspeccionAnterior();
+      await verificarInspeccionAnterior();
+      await autoCompletarProfInicial();
     }
 
     /**
@@ -9978,6 +9979,7 @@
             if (lt.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
               document.getElementById('prof_inicial').value = lt.prof_inicial;
             }
+            await autoCompletarProfInicial();
             if (lt.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
               document.getElementById('precio').value = lt.precio;
             }
@@ -10012,7 +10014,7 @@
           const d = await res.json();
           if (token !== idInspeccionActiva) return;
 
-          // Si esta posición ya fue inspeccionada en la sesión actual, no sobreescribir con la anterior
+          // Si esta posición ya fue inspeccionada en la sesión actual
           const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos);
 
           if (d.encontrado && d.datos) {
@@ -10023,8 +10025,48 @@
               badgeHist.innerHTML = '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
             }
 
-            // Precargar automáticamente todas las Especificaciones de la Llanta con las que se registró en la anterior inspección
-            if (!yaInspeccionadaHoy) {
+            if (yaInspeccionadaHoy) {
+              // Cargar datos actuales de la inspección de hoy para esta posición
+              if (d.datos.numero_interno) {
+                const inpNum = document.getElementById('numero_interno');
+                if (inpNum) inpNum.value = d.datos.numero_interno;
+              }
+              if (d.datos.marca) {
+                asignarValorSelect('marca', d.datos.marca);
+                await alCambiarMarcaMobile();
+              }
+              if (d.datos.diseno) {
+                asignarValorSelect('diseno', d.datos.diseno);
+              }
+              if (d.datos.dimension) {
+                asignarValorSelect('dimension', d.datos.dimension);
+              }
+              if (d.datos.vida) {
+                asignarValorSelect('vida', d.datos.vida);
+              }
+              if (d.datos.banda_reen) {
+                asignarValorSelect('banda_reen', d.datos.banda_reen);
+              }
+              if (d.datos.precio) {
+                const inpPrecio = document.getElementById('precio');
+                if (inpPrecio) inpPrecio.value = d.datos.precio;
+              }
+              if (d.datos.km_montaje) {
+                const inpKmMont = document.getElementById('km_montaje');
+                if (inpKmMont) inpKmMont.value = d.datos.km_montaje;
+              }
+              validarVida();
+              await autoCompletarProfInicial();
+              if (d.datos.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
+                document.getElementById('prof_inicial').value = d.datos.prof_inicial;
+              }
+              if (d.datos.prof_ext !== undefined && d.datos.prof_ext !== null) document.getElementById('prof_ext').value = d.datos.prof_ext;
+              if (d.datos.prof_cent !== undefined && d.datos.prof_cent !== null) document.getElementById('prof_cent').value = d.datos.prof_cent;
+              if (d.datos.prof_int !== undefined && d.datos.prof_int !== null) document.getElementById('prof_int').value = d.datos.prof_int;
+              if (d.datos.psi) document.getElementById('psi').value = d.datos.psi;
+              if (d.datos.novedades) document.getElementById('novedades').value = d.datos.novedades;
+            } else {
+              // Precargar automáticamente todas las Especificaciones de la Llanta con las que se registró en la anterior inspección
               // 1. Número Interno
               const inpNum = document.getElementById('numero_interno');
               if (inpNum) inpNum.value = d.datos.numero_interno || '';
@@ -10050,7 +10092,7 @@
                 }
               }
 
-              // 5. Profundidad Inicial
+              // 5. Profundidad Inicial (asignación previa como fallback, pero recalculada inmediatamente con catálogo)
               const inpProfIni = document.getElementById('prof_inicial');
               if (inpProfIni) {
                 inpProfIni.value = (d.datos.prof_inicial !== null && d.datos.prof_inicial !== undefined && d.datos.prof_inicial !== '') ? d.datos.prof_inicial : '';
@@ -10091,6 +10133,9 @@
 
               aplicarRestriccionEjeDireccional(pos);
               validarVida();
+
+              // RECALCULAR PROFUNDIDAD INICIAL DESDE EL CATÁLOGO SEGÚN MARCA Y MODELO/DISEÑO
+              await autoCompletarProfInicial();
 
               const bCli = document.getElementById('badgeLlantaCliente');
               if (bCli) {
@@ -10225,10 +10270,11 @@
     }
 
     async function alCambiarMarcaMobile() {
-      const m = document.getElementById('marca').value.trim();
-      if (m && m !== '__nuevo__') {
+      const m = (document.getElementById('marca')?.value || '').trim();
+      if (m && m !== '__nuevo__' && !m.includes('(Seleccionar')) {
         await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, 'ej. X Multi Z (Seleccionar diseño)');
       }
+      await autoCompletarProfInicial();
     }
 
     function alCambiarDimensionMobile() {
@@ -10242,18 +10288,36 @@
     }
 
     async function autoCompletarProfInicial() {
-      const m = document.getElementById('marca').value.trim();
-      const d = document.getElementById('diseno').value.trim();
-      const dim = document.getElementById('dimension').value.trim();
-      const vida = document.getElementById('vida').value;
-      if (!m || !d || m === '__nuevo__' || d === '__nuevo__') return;
+      const m = (document.getElementById('marca')?.value || '').trim();
+      const d = (document.getElementById('diseno')?.value || '').trim();
+      const dim = (document.getElementById('dimension')?.value || '').trim();
+      const vida = document.getElementById('vida')?.value || 'Original';
+      const banda = (document.getElementById('banda_reen')?.value || '').trim();
 
-      const res = await fetch(`/api/profundidad-inicial?marca=${encodeURIComponent(m)}&diseno=${encodeURIComponent(d)}&dimension=${encodeURIComponent(dim)}&vida=${encodeURIComponent(vida)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.prof_inicial > 0) {
-          document.getElementById('prof_inicial').value = data.prof_inicial;
+      const mValida = m && m !== '__nuevo__' && !m.includes('(Seleccionar');
+      const dValida = d && d !== '__nuevo__' && !d.includes('(Seleccionar');
+      const bValida = banda && banda !== '__nuevo__' && !banda.includes('(Seleccionar');
+
+      // Si no hay diseño/modelo ni banda válida seleccionada, no consultar
+      if (!dValida && !bValida) return;
+
+      try {
+        let url = `/api/profundidad-inicial?marca=${encodeURIComponent(mValida ? m : '')}&diseno=${encodeURIComponent(dValida ? d : '')}&dimension=${encodeURIComponent(dim)}&vida=${encodeURIComponent(vida)}`;
+        if (bValida) {
+          url += `&banda=${encodeURIComponent(banda)}`;
         }
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.prof_inicial > 0) {
+            const inp = document.getElementById('prof_inicial');
+            if (inp) {
+              inp.value = data.prof_inicial;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Error al autocompletar prof_inicial:', err);
       }
     }
 

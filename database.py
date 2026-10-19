@@ -3344,25 +3344,100 @@ def obtener_catalogo_modelos():
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
-def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original'):
-    m = (marca or '').strip().lower()
-    d = (diseno or '').strip().lower()
-    dim = (dimension or '').strip().lower()
-    tipo = 'Reencauche' if str(vida).strip().lower() == 'reencauche' else 'Nueva'
+def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original', banda=''):
+    m = (marca or '').strip()
+    d = (diseno or '').strip()
+    dim = (dimension or '').strip()
+    b = (banda or '').strip()
+    es_reencauche = str(vida).strip().lower() == 'reencauche'
+    tipo = 'Reencauche' if es_reencauche else 'Nueva'
+
+    # Evitar textos placeholder de interfaz
+    if '(seleccionar' in m.lower(): m = ''
+    if '(seleccionar' in d.lower(): d = ''
+    if '(seleccionar' in b.lower(): b = ''
+
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND LOWER(dimension) = LOWER(?) LIMIT 1', (tipo, m, d, dim))
-        r = cursor.fetchone()
-        if r:
-            return r[0]
-        cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (tipo, m, d))
-        r = cursor.fetchone()
-        if r:
-            return r[0]
-        cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (tipo, d))
-        r = cursor.fetchone()
-        if r:
-            return r[0]
+
+        # 1. Si es Reencauche y se proporcionó una banda, buscar prioritariamente la banda en catálogo
+        if es_reencauche and b:
+            if dim:
+                cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = "reencauche" AND LOWER(diseno) = LOWER(?) AND LOWER(dimension) = LOWER(?) LIMIT 1', (b, dim))
+                r = cursor.fetchone()
+                if r and r[0] > 0:
+                    return r[0]
+            cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = "reencauche" AND LOWER(diseno) = LOWER(?) LIMIT 1', (b,))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+            cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = "reencauche" AND (LOWER(marca || " " || diseno) LIKE ? OR LOWER(diseno) LIKE ?) LIMIT 1', (f"%{b.lower()}%", f"%{b.lower()}%"))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
+        # 2. Búsqueda directa en catálogo con tipo de llanta (Nueva / Reencauche)
+        if m and d:
+            if dim:
+                cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND LOWER(dimension) = LOWER(?) LIMIT 1', (tipo, m, d, dim))
+                r = cursor.fetchone()
+                if r and r[0] > 0:
+                    return r[0]
+            cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (tipo, m, d))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
+        if d:
+            if dim:
+                cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND LOWER(dimension) = LOWER(?) LIMIT 1', (tipo, d, dim))
+                r = cursor.fetchone()
+                if r and r[0] > 0:
+                    return r[0]
+            cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(tipo_llanta) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (tipo, d))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
+        # 3. Fallback en catálogo sin filtro de tipo_llanta
+        if m and d:
+            if dim:
+                cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND LOWER(dimension) = LOWER(?) LIMIT 1', (m, d, dim))
+                r = cursor.fetchone()
+                if r and r[0] > 0:
+                    return r[0]
+            cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) LIMIT 1', (m, d))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
+        if d:
+            cursor.execute('SELECT prof_inicial FROM catalogo_modelos_llantas WHERE LOWER(diseno) = LOWER(?) LIMIT 1', (d,))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
+        # 4. Fallback en historial de inspecciones previas
+        if m and d:
+            cursor.execute('''
+                SELECT prof_inicial FROM inspecciones
+                WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND prof_inicial > 0
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            ''', (m, d))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
+        if d:
+            cursor.execute('''
+                SELECT prof_inicial FROM inspecciones
+                WHERE LOWER(diseno) = LOWER(?) AND prof_inicial > 0
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            ''', (d,))
+            r = cursor.fetchone()
+            if r and r[0] > 0:
+                return r[0]
+
     return 0.0
 
 def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion=''):

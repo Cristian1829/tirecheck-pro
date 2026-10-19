@@ -364,3 +364,102 @@ def test_dimension_habitual_en_todas_las_llantas_vehiculo(test_db, auth_client):
     assert lt1['dimension'] == '315/80R22.5'
     assert lt2['dimension'] == '315/80R22.5'
 
+def test_recalculo_prof_inicial_catalogo_al_cambiar_posicion(test_db, auth_client):
+    """
+    Verifica que según la marca y modelo/diseño seleccionados en cada posición,
+    el catálogo recalcula la profundidad inicial correspondiente.
+    """
+    # 1. Registrar modelo en catálogo si no existe
+    database.guardar_modelo_llanta('Nueva', 'Michelin', 'X Multi Z', '295/80R22.5', 16.5, 'Direccional')
+    database.guardar_modelo_llanta('Nueva', 'Michelin', 'X Multi D', '295/80R22.5', 21.5, 'Tracción')
+    database.guardar_modelo_llanta('Reencauche', 'Bandag', 'BDM', '295/80R22.5', 21.0, 'Tracción Reencauche')
+
+    # 2. Registrar inspección previa de un vehículo con distintas marcas/modelos por posición
+    # Posición 1 (Direccional): Michelin X Multi Z (16.5 mm)
+    database.insertar_inspeccion({
+        'fecha': '2026-10-10',
+        'cliente': 'Logística Central',
+        'subcliente': 'Bogotá',
+        'tipo_operacion': 'Carga',
+        'placa': 'CAT-123',
+        'posicion': 1,
+        'kilometraje': 50000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_inicial': 16.5,
+        'prof_ext': 14.0, 'prof_cent': 14.0, 'prof_int': 14.0,
+        'numero_interno': 'CAT-P1'
+    })
+
+    # Posición 3 (Tracción): Michelin X Multi D (21.5 mm)
+    database.insertar_inspeccion({
+        'fecha': '2026-10-10',
+        'cliente': 'Logística Central',
+        'subcliente': 'Bogotá',
+        'tipo_operacion': 'Carga',
+        'placa': 'CAT-123',
+        'posicion': 3,
+        'kilometraje': 50000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multi D',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'prof_inicial': 21.5,
+        'prof_ext': 18.0, 'prof_cent': 18.0, 'prof_int': 18.0,
+        'numero_interno': 'CAT-P3'
+    })
+
+    # Posición 5 (Reencauche): Bandag BDM (21.0 mm)
+    database.insertar_inspeccion({
+        'fecha': '2026-10-10',
+        'cliente': 'Logística Central',
+        'subcliente': 'Bogotá',
+        'tipo_operacion': 'Carga',
+        'placa': 'CAT-123',
+        'posicion': 5,
+        'kilometraje': 50000,
+        'tipologia': 'Cabezote (6x4)',
+        'marca': 'Bandag',
+        'diseno': 'BDM',
+        'dimension': '295/80R22.5',
+        'vida': 'Reencauche',
+        'banda_reen': 'BDM',
+        'prof_inicial': 21.0,
+        'prof_ext': 17.0, 'prof_cent': 17.0, 'prof_int': 17.0,
+        'numero_interno': 'CAT-P5'
+    })
+
+    # 3. Al cambiar a Posición 1: la API de inspección anterior debe devolver X Multi Z
+    resp_p1 = auth_client.get('/api/inspeccion-anterior?placa=CAT-123&posicion=1')
+    assert resp_p1.status_code == 200
+    datos_p1 = resp_p1.json()['datos']
+    assert datos_p1['marca'] == 'MICHELIN'
+    assert datos_p1['diseno'] == 'X MULTI Z'
+    # Recálculo de prof_inicial desde el catálogo para Pos 1
+    prof_p1 = auth_client.get(f"/api/profundidad-inicial?marca={datos_p1['marca']}&diseno={datos_p1['diseno']}&dimension={datos_p1['dimension']}&vida={datos_p1['vida']}").json()
+    assert prof_p1['prof_inicial'] == 16.5
+
+    # 4. Al cambiar a Posición 3: la API de inspección anterior debe devolver X Multi D
+    resp_p3 = auth_client.get('/api/inspeccion-anterior?placa=CAT-123&posicion=3')
+    assert resp_p3.status_code == 200
+    datos_p3 = resp_p3.json()['datos']
+    assert datos_p3['marca'] == 'MICHELIN'
+    assert datos_p3['diseno'] == 'X MULTI D'
+    # Recálculo de prof_inicial desde el catálogo para Pos 3 (debe ser 21.5, cambiando respecto a Pos 1)
+    prof_p3 = auth_client.get(f"/api/profundidad-inicial?marca={datos_p3['marca']}&diseno={datos_p3['diseno']}&dimension={datos_p3['dimension']}&vida={datos_p3['vida']}").json()
+    assert prof_p3['prof_inicial'] == 21.5
+
+    # 5. Al cambiar a Posición 5: Reencauche Bandag BDM
+    resp_p5 = auth_client.get('/api/inspeccion-anterior?placa=CAT-123&posicion=5')
+    assert resp_p5.status_code == 200
+    datos_p5 = resp_p5.json()['datos']
+    assert datos_p5['marca'] == 'BANDAG'
+    assert datos_p5['diseno'] == 'BDM'
+    prof_p5 = auth_client.get(f"/api/profundidad-inicial?marca={datos_p5['marca']}&diseno={datos_p5['diseno']}&dimension={datos_p5['dimension']}&vida={datos_p5['vida']}&banda={datos_p5.get('banda_reen','')}").json()
+    assert prof_p5['prof_inicial'] == 21.0
+
+
