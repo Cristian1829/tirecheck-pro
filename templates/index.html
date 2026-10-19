@@ -1149,17 +1149,16 @@
           <p class="text-xs text-slate-500">Evaluación automática de alineación direccional, dualidad y umbrales de retiro</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          <button type="button" onclick="cargarDiagnostico()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer" title="Recalcular análisis y actualizar gráficos">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="cargarDiagnostico()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
             <i class="fa-solid fa-arrows-rotate"></i>
             <span>Recalcular</span>
           </button>
-          <button id="btnExportarDiagExcel" type="button" onclick="exportarDiagnosticoExcel()" title="Exportar diagnóstico en Excel (.xlsx) con los filtros actuales" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 active:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow border border-emerald-500/40 flex items-center space-x-2 transition-all active:scale-95 cursor-pointer">
-            <i class="fa-solid fa-file-excel text-emerald-100 text-sm"></i>
+          <button id="btnExportarDiagExcel" type="button" onclick="exportarDiagnosticoExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-file-excel"></i>
             <span id="lblExportarDiagExcel">Exportar Diagnóstico</span>
-            <span id="badgeFiltrosActivosExcel" class="hidden text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-950/40 text-emerald-100 border border-emerald-300/30">Filtrado</span>
           </button>
-          <button id="btnConsolidadoDiag" type="button" onclick="descargarConsolidadoDesdeDiagnostico()" title="Generar consolidado de flota para el cliente filtrado" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer">
+          <button id="btnConsolidadoDiag" type="button" onclick="descargarConsolidadoDesdeDiagnostico()" title="Generar consolidado de flota para el cliente filtrado" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
             <i class="fa-solid fa-file-pdf"></i>
             <span id="lblConsolidadoDiag">Consolidado Flota PDF</span>
           </button>
@@ -1586,13 +1585,6 @@
             <span>Detalle de Vehículos y Planes de Acción</span>
           </h3>
           <p class="text-xs text-slate-500">Listado interactivo de vehículos según los filtros seleccionados</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="badgeConteoVehiculosTabla" class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200">0 vehículos</span>
-          <button type="button" onclick="exportarDiagnosticoExcel()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 active:bg-emerald-200 font-bold text-xs rounded-xl border border-emerald-200 transition-all shadow-2xs active:scale-95 cursor-pointer" title="Exportar la tabla con los filtros seleccionados a Excel">
-            <i class="fa-solid fa-file-excel text-emerald-600"></i>
-            <span>Exportar Tabla Excel</span>
-          </button>
         </div>
       </div>
 
@@ -5898,27 +5890,13 @@
         if (el) el.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
       }
 
-      // Sincronizar badges y tooltips de exportación de diagnóstico a Excel
+      // Sincronizar tooltip de exportación de diagnóstico a Excel
       const btnExp = document.getElementById('btnExportarDiagExcel');
-      const badgeExp = document.getElementById('badgeFiltrosActivosExcel');
-      const badgeTabla = document.getElementById('badgeConteoVehiculosTabla');
       const hayFiltros = (cliNorm !== 'TODOS' || sedeNorm !== 'TODOS' || opNorm !== 'TODOS' || (alerta && alerta !== 'Todos') || Boolean(placa));
-
-      if (badgeExp) {
-        if (hayFiltros) {
-          badgeExp.classList.remove('hidden');
-          badgeExp.textContent = (alerta && alerta !== 'Todos') ? alerta : 'Filtrado';
-        } else {
-          badgeExp.classList.add('hidden');
-        }
-      }
       if (btnExp) {
         btnExp.title = hayFiltros 
           ? `Exportar reporte Excel aplicando los filtros activos (${filtradas.length} vehículos)` 
           : `Exportar diagnóstico completo de flota en Excel (${tot} vehículos)`;
-      }
-      if (badgeTabla) {
-        badgeTabla.textContent = `${filtradas.length} de ${tot} vehículos`;
       }
 
       if (filtradas.length === 0) {
