@@ -173,10 +173,21 @@ def test_api_exportar_excel(test_db, auth_client):
     assert res_bd.status_code == 200
     assert len(res_bd.content) > 1000
 
-    # Exportar Diagnóstico
+    # Exportar Diagnóstico (Sin filtros y con filtros)
     res_diag = auth_client.get("/api/diagnostico/exportar-excel")
     assert res_diag.status_code == 200
     assert len(res_diag.content) > 1000
+
+    # Exportar Diagnóstico con Filtro de Cliente y Alerta
+    res_diag_filt = auth_client.get("/api/diagnostico/exportar-excel?cliente=LA%20SIERRA&alerta=Cambio")
+    assert res_diag_filt.status_code == 200
+    assert "attachment; filename=Diagnostico" in res_diag_filt.headers.get("content-disposition", "")
+    assert len(res_diag_filt.content) > 1000
+
+    # Exportar Diagnóstico con Filtro de Placa
+    res_diag_placa = auth_client.get("/api/diagnostico/exportar-excel?placa=AAA123")
+    assert res_diag_placa.status_code == 200
+    assert len(res_diag_placa.content) > 1000
 
     # Exportar KPIs
     res_kpis = auth_client.get("/api/kpis-llantas/exportar-excel")

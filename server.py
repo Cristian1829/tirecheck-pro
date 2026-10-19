@@ -623,18 +623,182 @@ def api_diagnostico_graficos(
         raise HTTPException(status_code=500, detail=f"Error al calcular gráficos de diagnóstico: {str(e)}")
 
 
+def _estilizar_hoja_excel(ws, color_header="0F172A"):
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    thin_border = Border(
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1')
+    )
+    header_font = Font(name='Segoe UI', size=10, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color=color_header, end_color=color_header, fill_type='solid')
+    header_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    body_font = Font(name='Segoe UI', size=9, color='1E293B')
+    zebra_fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
+
+    alerta_roja_fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
+    alerta_roja_font = Font(name='Segoe UI', size=9, bold=True, color='991B1B')
+
+    alerta_ambar_fill = PatternFill(start_color='FEF3C7', end_color='FEF3C7', fill_type='solid')
+    alerta_ambar_font = Font(name='Segoe UI', size=9, bold=True, color='92400E')
+
+    ws.freeze_panes = 'A2'
+    if ws.max_row >= 1 and ws.max_column >= 1:
+        ws.auto_filter.ref = ws.dimensions
+        ws.row_dimensions[1].height = 28
+
+        for col_idx in range(1, ws.max_column + 1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_align
+            cell.border = thin_border
+
+        for row_idx in range(2, ws.max_row + 1):
+            ws.row_dimensions[row_idx].height = 20
+            is_even = (row_idx % 2 == 0)
+            for col_idx in range(1, ws.max_column + 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                val = cell.value
+                cell.border = thin_border
+                cell.font = body_font
+
+                if is_even:
+                    cell.fill = zebra_fill
+
+                val_str = str(val or '').strip().upper()
+                if val_str == 'SÍ':
+                    col_name = str(ws.cell(row=1, column=col_idx).value or '').upper()
+                    if 'CAMBIO' in col_name:
+                        cell.fill = alerta_roja_fill
+                        cell.font = alerta_roja_font
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                    elif any(k in col_name for k in ['ALINEACION', 'ALINEACIÓN', 'DUAL']):
+                        cell.fill = alerta_ambar_fill
+                        cell.font = alerta_ambar_font
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                    else:
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                elif val_str in ('NO', 'OK'):
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        for col in ws.columns:
+            col_letter = get_column_letter(col[0].column)
+            max_len = 0
+            for cell in col:
+                v = str(cell.value or '')
+                if '\n' in v:
+                    v = max(v.split('\n'), key=len)
+                max_len = max(max_len, len(v))
+            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 11), 50)
+
+
 @app.get("/api/diagnostico/exportar-excel")
-def api_exportar_diagnostico_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_exportar_diagnostico_excel(
+    cliente: str = "",
+    subcliente: str = "",
+    tipo_operacion: str = "",
+    alerta: str = "",
+    placa: str = "",
+    usuario: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df_insp = database.obtener_todas_inspecciones(usuario=filtro_u)
+
+    # Validar permisos de asignación de cliente
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        clis_permitidos = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis_permitidos and not df_insp.empty:
+            df_insp = df_insp[df_insp['cliente'].astype(str).str.strip().str.lower().isin([c.lower() for c in clis_permitidos])]
+
+    # 1. Filtros sobre inspecciones
+    cli_limpio = str(cliente or '').strip()
+    if cli_limpio and cli_limpio.upper() != 'TODOS' and not df_insp.empty:
+        df_insp = df_insp[df_insp['cliente'].astype(str).str.upper().str.strip() == cli_limpio.upper()]
+
+    sede_limpia = str(subcliente or '').strip()
+    if sede_limpia and sede_limpia.upper() != 'TODOS' and not df_insp.empty:
+        df_insp = df_insp[df_insp['subcliente'].astype(str).str.upper().str.strip() == sede_limpia.upper()]
+
+    op_limpia = str(tipo_operacion or '').strip()
+    if op_limpia and op_limpia.upper() != 'TODOS' and not df_insp.empty:
+        df_insp = df_insp[df_insp['tipo_operacion'].astype(str).str.upper().str.strip() == op_limpia.upper()]
+
+    placa_limpia = str(placa or '').strip().upper()
+    if placa_limpia and not df_insp.empty:
+        df_insp = df_insp[df_insp['placa'].astype(str).str.upper().str.contains(placa_limpia, na=False)]
+
+    # 2. Análisis de diagnóstico
     df_analisis = database.analizar_inspecciones_df(df_insp)
+
+    # 3. Filtro por tipo de alerta sobre df_analisis
+    alerta_limpia = str(alerta or '').strip()
+    if alerta_limpia and alerta_limpia.upper() != 'TODOS' and not df_analisis.empty:
+        al_u = alerta_limpia.upper()
+        if al_u in ('CAMBIO', 'SUGERENCIA CAMBIO'):
+            df_analisis = df_analisis[df_analisis['Plan_Cambio_Llanta'] == 'SÍ']
+        elif al_u in ('ALINEACION', 'ALINEACIÓN', 'SOLO PLAN ALINEACIÓN'):
+            df_analisis = df_analisis[df_analisis['Plan_Alineacion'] == 'SÍ']
+        elif al_u in ('DUAL', 'SOLO DUAL MAL APAREADO'):
+            df_analisis = df_analisis[df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ']
+        elif al_u in ('ALERTA', 'CUALQUIER ALERTA'):
+            df_analisis = df_analisis[
+                (df_analisis['Plan_Cambio_Llanta'] == 'SÍ') |
+                (df_analisis['Plan_Alineacion'] == 'SÍ') |
+                (df_analisis['Plan_Dual_Mal_Apareado'] == 'SÍ')
+            ]
+        elif al_u in ('OK', 'SIN NOVEDAD', 'SIN NOVEDADES', 'SIN NOVEDAD (OK)'):
+            df_analisis = df_analisis[
+                (df_analisis['Plan_Cambio_Llanta'] != 'SÍ') &
+                (df_analisis['Plan_Alineacion'] != 'SÍ') &
+                (df_analisis['Plan_Dual_Mal_Apareado'] != 'SÍ')
+            ]
+
+    # Sincronizar df_insp con los vehículos resultantes en df_analisis
+    if not df_analisis.empty and not df_insp.empty:
+        placas_filtradas = set(df_analisis['Vehículo/Placa'].dropna().astype(str).str.upper().unique())
+        df_insp = df_insp[df_insp['placa'].astype(str).str.upper().isin(placas_filtradas)]
+    elif df_analisis.empty and not df_insp.empty and alerta_limpia and alerta_limpia.upper() != 'TODOS':
+        df_insp = df_insp.iloc[0:0]
+
+    # Resumen de filtros aplicados para la hoja de auditoría
+    df_resumen = pd.DataFrame([
+        {"Parámetro": "Fecha de Generación", "Valor": ahora_bogota().strftime("%d/%m/%Y %H:%M:%S")},
+        {"Parámetro": "Usuario Solicitante", "Valor": usuario_actual.get("username", "sistema")},
+        {"Parámetro": "Filtro Cliente", "Valor": cli_limpio or "Todos los Clientes"},
+        {"Parámetro": "Filtro Sede / Subcliente", "Valor": sede_limpia or "Todas las Sedes"},
+        {"Parámetro": "Filtro Operación", "Valor": op_limpia or "Todas las Operaciones"},
+        {"Parámetro": "Filtro Tipo Alerta", "Valor": alerta_limpia or "Todas las Alertas"},
+        {"Parámetro": "Filtro Búsqueda Placa", "Valor": placa_limpia or "Sin filtro de placa"},
+        {"Parámetro": "Total Vehículos en Diagnóstico", "Valor": len(df_analisis)},
+        {"Parámetro": "Total Registros de Inspección", "Valor": len(df_insp)}
+    ])
+
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df_analisis.to_excel(writer, sheet_name="Planes_Accion", index=False)
         if not df_insp.empty:
             df_insp.to_excel(writer, sheet_name="Detalle_Inspecciones", index=False)
+        df_resumen.to_excel(writer, sheet_name="Filtros_Aplicados", index=False)
+
+        wb = writer.book
+        if "Planes_Accion" in wb.sheetnames:
+            _estilizar_hoja_excel(wb["Planes_Accion"], color_header="0F172A")
+        if "Detalle_Inspecciones" in wb.sheetnames:
+            _estilizar_hoja_excel(wb["Detalle_Inspecciones"], color_header="1E293B")
+        if "Filtros_Aplicados" in wb.sheetnames:
+            _estilizar_hoja_excel(wb["Filtros_Aplicados"], color_header="047857")
+
     f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
-    filename = f"Diagnostico_Flota_{f_str}.xlsx"
+    tag_cli = f"_{cli_limpio.replace(' ', '_')}" if (cli_limpio and cli_limpio.upper() != 'TODOS') else ""
+    tag_alerta = f"_{alerta_limpia.replace(' ', '_')}" if (alerta_limpia and alerta_limpia.upper() != 'TODOS') else ""
+    filename = f"Diagnostico{tag_cli}{tag_alerta}_{f_str}.xlsx"
     return Response(
         content=buf.getvalue(),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
