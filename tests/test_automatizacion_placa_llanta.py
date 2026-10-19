@@ -36,6 +36,7 @@ def test_asociacion_fija_placa_esquema(test_db, auth_client):
     assert data['subcliente'] == 'BARRANQUILLA'
     assert data['tipo_operacion'] == 'REFRIGERADA'
     assert data['ultimo_km'] == 85400.0
+    assert data['dimension'] == '295/80R22.5'
     assert data['cant_llantas'] == 12
     assert len(data['posiciones']) == 12
     assert 12 in data['posiciones']
@@ -277,4 +278,89 @@ def test_recuperacion_datos_inspeccion_previa_vehiculo_y_posicion(test_db, auth_
     resp_pos4 = auth_client.get('/api/inspeccion-anterior?placa=PREV-01&posicion=4')
     assert resp_pos4.status_code == 200
     assert resp_pos4.json()['encontrado'] is False
+
+def test_perfil_vehiculo_dimension_habitual(test_db, auth_client):
+    # Registrar una inspección con dimensión 11R22.5
+    datos = {
+        'fecha': '2026-10-15',
+        'cliente': 'TransEspeciales',
+        'subcliente': 'Cali',
+        'tipo_operacion': 'Pasajeros',
+        'placa': 'BUS-555',
+        'posicion': 1,
+        'kilometraje': 45000,
+        'tipologia': 'Buseta / Microbús (4x2)',
+        'marca': 'Bridgestone',
+        'diseno': 'R268',
+        'dimension': '11R22.5',
+        'vida': 'Original',
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'prof_inicial': 15.0,
+        'numero_interno': 'BUS-01'
+    }
+    database.insertar_inspeccion(datos)
+
+    resp = auth_client.get('/api/vehiculo-perfil?placa=BUS-555')
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data['encontrado'] is True
+    assert data['dimension'] == '11R22.5'
+
+def test_dimension_habitual_en_todas_las_llantas_vehiculo(test_db, auth_client):
+    # Caso: Vehículo con dimensión 315/80R22.5 en la primera llanta
+    datos_pos1 = {
+        'fecha': '2026-10-18',
+        'cliente': 'Cootransur',
+        'subcliente': 'Pasto',
+        'tipo_operacion': 'Carga Pesada',
+        'placa': 'CTU-888',
+        'posicion': 1,
+        'kilometraje': 110000,
+        'tipologia': 'Tractocamión (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multiway 3D',
+        'dimension': '315/80R22.5',
+        'vida': 'Original',
+        'prof_ext': 15.0,
+        'prof_cent': 15.0,
+        'prof_int': 15.0,
+        'prof_inicial': 17.5,
+        'numero_interno': 'CTU-01'
+    }
+    database.insertar_inspeccion(datos_pos1)
+
+    # El perfil del vehículo debe reflejar 315/80R22.5
+    perfil = auth_client.get('/api/vehiculo-perfil?placa=CTU-888').json()
+    assert perfil['encontrado'] is True
+    assert perfil['dimension'] == '315/80R22.5'
+
+    # Al registrar la siguiente posición (Posición 2), se usa la misma dimensión
+    datos_pos2 = {
+        'fecha': '2026-10-18',
+        'cliente': 'Cootransur',
+        'subcliente': 'Pasto',
+        'tipo_operacion': 'Carga Pesada',
+        'placa': 'CTU-888',
+        'posicion': 2,
+        'kilometraje': 110000,
+        'tipologia': 'Tractocamión (6x4)',
+        'marca': 'Michelin',
+        'diseno': 'X Multiway 3D',
+        'dimension': perfil['dimension'],
+        'vida': 'Original',
+        'prof_ext': 14.5,
+        'prof_cent': 14.5,
+        'prof_int': 14.5,
+        'prof_inicial': 17.5,
+        'numero_interno': 'CTU-02'
+    }
+    database.insertar_inspeccion(datos_pos2)
+
+    # Validar que ambas llantas quedaron con 315/80R22.5
+    lt1 = database.obtener_ultima_inspeccion_posicion('CTU-888', 1)
+    lt2 = database.obtener_ultima_inspeccion_posicion('CTU-888', 2)
+    assert lt1['dimension'] == '315/80R22.5'
+    assert lt2['dimension'] == '315/80R22.5'
 

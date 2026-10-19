@@ -952,7 +952,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         cursor = conn.cursor()
         # 1. Buscar en la última inspección registrada previamente para esa placa
         cursor.execute("""
-            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+            SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje, dimension
             FROM inspecciones
             WHERE UPPER(TRIM(placa)) = ? AND tipologia IS NOT NULL AND TRIM(tipologia) != ''
             ORDER BY fecha DESC, id DESC LIMIT 1
@@ -967,7 +967,18 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 WHERE UPPER(TRIM(placa)) = ?
             """, (pl,))
             row = cursor.fetchone()
+            dim_vehiculo = ""
+            if row and row[0]:
+                cursor.execute("""
+                    SELECT dimension FROM inspecciones 
+                    WHERE UPPER(TRIM(placa)) = ? AND dimension IS NOT NULL AND TRIM(dimension) != ''
+                    ORDER BY fecha DESC, id DESC LIMIT 1
+                """, (pl,))
+                r_dim = cursor.fetchone()
+                if r_dim and r_dim[0]:
+                    dim_vehiculo = str(r_dim[0]).strip()
         else:
+            dim_vehiculo = str(row[6]).strip() if len(row) > 6 and row[6] else ""
             # Sincronizar catálogo con los datos de la última inspección
             sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
 
@@ -983,6 +994,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "subcliente": row[3] or "",
             "tipo_operacion": row[4] or "",
             "ultimo_km": to_float(row[5], 0.0),
+            "dimension": dim_vehiculo,
             "cant_llantas": len(posiciones),
             "esquema": esquema,
             "posiciones": posiciones

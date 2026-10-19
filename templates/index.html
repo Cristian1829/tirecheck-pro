@@ -670,7 +670,7 @@
 
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
-                  <select id="dimension" onchange="verificarOpcionNuevaSelect(this, 'dimensión'); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
+                  <select id="dimension" onchange="verificarOpcionNuevaSelect(this, 'dimensión'); alCambiarDimensionMobile(); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="295/80R22.5" selected>295/80R22.5</option>
                   </select>
                   <datalist id="dl_dimensiones"></datalist>
@@ -3679,6 +3679,7 @@
     let galeriaFotosActivas = [];
     let galeriaFotoIndexActual = 0;
     let ruedaSinRepuestoMarcada = false;
+    let dimensionPredeterminadaVehiculo = '';
     let usuarioActual = null;
     function esUsuarioAdmin() {
       if (!usuarioActual) return false;
@@ -7982,6 +7983,11 @@
             }
           }
           if (sel.id === 'cliente') alCambiarClienteMobile();
+          if (sel.id === 'dimension') {
+            if (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 0) {
+              dimensionPredeterminadaVehiculo = valLimpio;
+            }
+          }
           if (sel.id === 'diseno' || sel.id === 'dimension') autoCompletarProfInicial();
         } else {
           sel.value = '';
@@ -9713,6 +9719,12 @@
      * Selecciona una posición de neumático, actualiza el formulario y sincroniza el chasis.
      */
     function seleccionarPosicion(p) {
+      // Capturar la dimensión ingresada en la primera llanta antes de cambiar si aún no se había fijado
+      const dimActual = (document.getElementById('dimension')?.value || '').trim();
+      if (dimActual && dimActual !== '__nuevo__' && (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 0)) {
+        dimensionPredeterminadaVehiculo = dimActual;
+      }
+
       document.getElementById('posicion').value = p;
       const lblPos = document.getElementById('lblPosActualForm');
       if (lblPos) lblPos.textContent = p;
@@ -9809,6 +9821,9 @@
 
     async function consultarPerfilPlaca(placa) {
       if (!placa) return;
+      if (placa !== ultimaPlacaConsultadaPerfil) {
+        dimensionPredeterminadaVehiculo = '';
+      }
       ultimaPlacaConsultadaPerfil = placa;
 
       try {
@@ -9838,6 +9853,12 @@
 
             if (d.tipo_operacion && document.getElementById('tipo_operacion')) {
               asignarValorSelect('tipo_operacion', d.tipo_operacion);
+            }
+
+            // 2.1 Precargar dimensión histórica del vehículo si está disponible
+            if (d.dimension) {
+              dimensionPredeterminadaVehiculo = d.dimension;
+              asignarValorSelect('dimension', d.dimension);
             }
 
             // 3. Odómetro / Km si está disponible
@@ -9941,7 +9962,12 @@
               await alCambiarMarcaMobile();
             }
             if (lt.diseno) asignarValorSelect('diseno', lt.diseno);
-            if (lt.dimension) asignarValorSelect('dimension', lt.dimension);
+            if (lt.dimension) {
+              asignarValorSelect('dimension', lt.dimension);
+              if (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 0) {
+                dimensionPredeterminadaVehiculo = lt.dimension;
+              }
+            }
             if (lt.vida) {
               asignarValorSelect('vida', lt.vida);
               validarVida();
@@ -10014,9 +10040,14 @@
                 asignarValorSelect('diseno', d.datos.diseno);
               }
 
-              // 4. Dimensión
-              if (d.datos.dimension) {
-                asignarValorSelect('dimension', d.datos.dimension);
+              // 4. Dimensión: Prevalecer la dimensión fijada en la primera llanta para este vehículo,
+              // o cargar la dimensión histórica y fijarla como predeterminada del vehículo.
+              const dimParaCargar = dimensionPredeterminadaVehiculo || d.datos.dimension || '295/80R22.5';
+              if (dimParaCargar) {
+                asignarValorSelect('dimension', dimParaCargar);
+                if (!dimensionPredeterminadaVehiculo && d.datos.dimension) {
+                  dimensionPredeterminadaVehiculo = d.datos.dimension;
+                }
               }
 
               // 5. Profundidad Inicial
@@ -10094,7 +10125,10 @@
               }
 
               const selDim = document.getElementById('dimension');
-              if (selDim) selDim.value = '295/80R22.5';
+              const dimParaCargar = dimensionPredeterminadaVehiculo || '295/80R22.5';
+              if (selDim) {
+                asignarValorSelect('dimension', dimParaCargar);
+              }
 
               const selVida = document.getElementById('vida');
               if (selVida) selVida.value = 'Original';
@@ -10197,6 +10231,16 @@
       }
     }
 
+    function alCambiarDimensionMobile() {
+      const selDim = document.getElementById('dimension');
+      const val = selDim ? selDim.value.trim() : '';
+      if (val && val !== '__nuevo__') {
+        if (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 0) {
+          dimensionPredeterminadaVehiculo = val;
+        }
+      }
+    }
+
     async function autoCompletarProfInicial() {
       const m = document.getElementById('marca').value.trim();
       const d = document.getElementById('diseno').value.trim();
@@ -10247,6 +10291,9 @@
       await alCambiarMarcaMobile();
       asignarValorSelect('diseno', m.diseno);
       asignarValorSelect('dimension', m.dimension);
+      if (m.dimension && (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 0)) {
+        dimensionPredeterminadaVehiculo = m.dimension;
+      }
       document.getElementById('prof_inicial').value = m.prof_inicial;
       if (m.tipo_llanta === 'Reencauche') {
         document.getElementById('vida').value = 'Reencauche';
@@ -10288,7 +10335,10 @@
       }
 
       const selDim = document.getElementById('dimension');
-      if (selDim) selDim.value = '295/80R22.5';
+      const dimDefault = dimensionPredeterminadaVehiculo || '295/80R22.5';
+      if (selDim) {
+        asignarValorSelect('dimension', dimDefault);
+      }
 
       const selVida = document.getElementById('vida');
       if (selVida) {
@@ -10461,6 +10511,7 @@
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+      dimensionPredeterminadaVehiculo = '';
       const selDim = document.getElementById('dimension');
       if (selDim) selDim.value = '295/80R22.5';
       const selDis = document.getElementById('diseno');
@@ -11080,6 +11131,9 @@
         const result = await res.json();
         if (res.ok) {
           posicionesInspeccionadasPlaca.add(pos);
+          if (payload.dimension && (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 1)) {
+            dimensionPredeterminadaVehiculo = payload.dimension;
+          }
           if (payload.novedades && payload.novedades.trim().length > 0) {
             posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
           } else {

@@ -387,6 +387,8 @@ class AppInspeccionLlantas(tk.Tk):
                     self.form_vars['tipologia'].set(perfil['tipologia'])
                     if hasattr(self, 'on_cambio_tipologia_pc'):
                         self.on_cambio_tipologia_pc()
+                if perfil.get('dimension') and not self.form_vars['dimension'].get():
+                    self.form_vars['dimension'].set(perfil['dimension'])
 
             self.actualizar_estado_posiciones_inspeccionadas_pc()
             self.verificar_llanta_previa_pc()
