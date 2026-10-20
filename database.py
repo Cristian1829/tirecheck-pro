@@ -1762,7 +1762,7 @@ def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
 
     return date(año_sig, mes_sig, 20)
 
-def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
+def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_masivo=False):
     """
     Evalúa los candados de seguridad de inspección:
     1. Máximo 27 mm en llantas R22.5 o de carga pesada.
@@ -1774,6 +1774,9 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
     7. Kilometraje actual no puede ser menor al de la inspección anterior de la placa.
     8. La profundidad no puede subir entre inspecciones (desgaste negativo), con tolerancia máx 1 mm.
     """
+    if datos.get('_es_cargue_masivo'):
+        es_cargue_masivo = True
+
     placa = str(datos.get('placa', '')).strip().upper()
     if not placa:
         return {'valido': False, 'mensaje': 'Por favor ingresa la Placa del vehículo.'}
@@ -1896,87 +1899,91 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
             if f_nueva_str == f_ult_str:
                 # Misma fecha (misma jornada): verificar si esta posición específica ya fue inspeccionada
                 pos_ya_registradas = [r[1] for r in filas_ant if str(r[0]).strip()[:10] == f_ult_str]
-                if posicion in pos_ya_registradas:
+                if posicion in pos_ya_registradas and not es_cargue_masivo:
                     return {
                         'valido': False,
                         'alerta_mes': True,
                         'mensaje': f'⚠️ CANDADO DE SEGURIDAD: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} en la fecha {f_ult_str}.'
                     }
             elif f_nueva_str < f_ult_str:
-                return {
-                    'valido': False,
-                    'alerta_mes': True,
-                    'mensaje': f'⚠️ CANDADO DE FECHA: La fecha de inspección ({f_nueva_str}) no puede ser anterior a la última inspección registrada ({f_ult_str}).'
-                }
-            else:
-                # Fecha posterior: debe haber transcurrido el siguiente mes más 20 días
-                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
-                f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
-                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
-                if f_nueva < f_minima:
+                if not es_cargue_masivo:
                     return {
                         'valido': False,
                         'alerta_mes': True,
-                        'mensaje': (
-                            f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
-                            f'Una nueva inspección se habilita a partir del día 20 del mes siguiente ({f_minima.strftime("%Y-%m-%d")}).'
-                        )
+                        'mensaje': f'⚠️ CANDADO DE FECHA: La fecha de inspección ({f_nueva_str}) no puede ser anterior a la última inspección registrada ({f_ult_str}).'
+                    }
+            else:
+                # Fecha posterior: debe haber transcurrido el siguiente mes más 20 días (solo en captura en vivo)
+                if not es_cargue_masivo:
+                    f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
+                    f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
+                    f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
+                    if f_nueva < f_minima:
+                        return {
+                            'valido': False,
+                            'alerta_mes': True,
+                            'mensaje': (
+                                f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
+                                f'Una nueva inspección se habilita a partir del día 20 del mes siguiente ({f_minima.strftime("%Y-%m-%d")}).'
+                            )
+                        }
+
+        # Candado 3: Kilometraje actual no puede ser menor al de la última inspección (solo en captura secuencial)
+        if not es_cargue_masivo:
+            sql_km = """
+                SELECT kilometraje, fecha FROM inspecciones 
+                WHERE placa = ? AND kilometraje > 0
+            """
+            params_km = [placa]
+            if excluir_id is not None:
+                sql_km += " AND id != ?"
+                params_km.append(to_int(excluir_id))
+            sql_km += " ORDER BY fecha DESC, id DESC LIMIT 1"
+
+            cursor.execute(sql_km, tuple(params_km))
+            prev_km_row = cursor.fetchone()
+            if prev_km_row:
+                prev_km = prev_km_row[0]
+                if km_actual > 0 and km_actual < prev_km:
+                    return {
+                        'valido': False,
+                        'mensaje': f'⛔ CANDADO DE KILOMETRAJE: El kilometraje ({km_actual:,.0f} km) no puede ser menor al de la inspección anterior ({prev_km:,.0f} km el {prev_km_row[1]}).'
                     }
 
-        # Candado 3: Kilometraje actual no puede ser menor al de la última inspección
-        sql_km = """
-            SELECT kilometraje, fecha FROM inspecciones 
-            WHERE placa = ? AND kilometraje > 0
-        """
-        params_km = [placa]
-        if excluir_id is not None:
-            sql_km += " AND id != ?"
-            params_km.append(to_int(excluir_id))
-        sql_km += " ORDER BY fecha DESC, id DESC LIMIT 1"
+        # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm, solo en captura secuencial)
+        if not es_cargue_masivo:
+            sql_prof = """
+                SELECT prof_ext, prof_cent, prof_int, fecha FROM inspecciones 
+                WHERE placa = ? AND posicion = ?
+            """
+            params_prof = [placa, posicion]
+            if excluir_id is not None:
+                sql_prof += " AND id != ?"
+                params_prof.append(to_int(excluir_id))
+            sql_prof += " ORDER BY fecha DESC, id DESC LIMIT 1"
 
-        cursor.execute(sql_km, tuple(params_km))
-        prev_km_row = cursor.fetchone()
-        if prev_km_row:
-            prev_km = prev_km_row[0]
-            if km_actual > 0 and km_actual < prev_km:
-                return {
-                    'valido': False,
-                    'mensaje': f'⛔ CANDADO DE KILOMETRAJE: El kilometraje ({km_actual:,.0f} km) no puede ser menor al de la inspección anterior ({prev_km:,.0f} km el {prev_km_row[1]}).'
-                }
-
-        # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm)
-        sql_prof = """
-            SELECT prof_ext, prof_cent, prof_int, fecha FROM inspecciones 
-            WHERE placa = ? AND posicion = ?
-        """
-        params_prof = [placa, posicion]
-        if excluir_id is not None:
-            sql_prof += " AND id != ?"
-            params_prof.append(to_int(excluir_id))
-        sql_prof += " ORDER BY fecha DESC, id DESC LIMIT 1"
-
-        cursor.execute(sql_prof, tuple(params_prof))
-        prev_prof_row = cursor.fetchone()
-        if prev_prof_row:
-            prev_ext, prev_cent, prev_int, f_prev = prev_prof_row
-            max_subida_permitida = 1.0
-            
-            # Comparar el promedio o puntos si eran mayores a 0
-            if prev_ext > 0 and (p_ext - prev_ext) > max_subida_permitida:
-                return {
-                    'valido': False,
-                    'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Exterior subió de {prev_ext} mm a {p_ext} mm (Supera la tolerancia de 1.0 mm).'
-                }
-            if prev_cent > 0 and (p_cent - prev_cent) > max_subida_permitida:
-                return {
-                    'valido': False,
-                    'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Central subió de {prev_cent} mm a {p_cent} mm (Supera la tolerancia de 1.0 mm).'
-                }
-            if prev_int > 0 and (p_int - prev_int) > max_subida_permitida:
-                return {
-                    'valido': False,
-                    'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Interior subió de {prev_int} mm a {p_int} mm (Supera la tolerancia de 1.0 mm).'
-                }
+            cursor.execute(sql_prof, tuple(params_prof))
+            prev_prof_row = cursor.fetchone()
+            if prev_prof_row:
+                prev_ext, prev_cent, prev_int, f_prev = prev_prof_row
+                max_subida_permitida = 1.0
+                
+                # Comparar el promedio o puntos si eran mayores a 0
+                if prev_ext > 0 and (p_ext - prev_ext) > max_subida_permitida:
+                    return {
+                        'valido': False,
+                        'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Exterior subió de {prev_ext} mm a {p_ext} mm (Supera la tolerancia de 1.0 mm).'
+                    }
+                if prev_cent > 0 and (p_cent - prev_cent) > max_subida_permitida:
+                    return {
+                        'valido': False,
+                        'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Central subió de {prev_cent} mm a {p_cent} mm (Supera la tolerancia de 1.0 mm).'
+                    }
+                if prev_int > 0 and (p_int - prev_int) > max_subida_permitida:
+                    return {
+                        'valido': False,
+                        'mensaje': f'⛔ CANDADO DE DESGASTE: En Pos {posicion}, la Prof. Interior subió de {prev_int} mm a {p_int} mm (Supera la tolerancia de 1.0 mm).'
+                    }
 
         return {'valido': True, 'mensaje': 'Validaciones de seguridad aprobadas.'}
 
@@ -2211,7 +2218,7 @@ def cargar_excel_a_bd(file_path):
         'tipo_operacion': ['tipo operacion', 'operacion', 'tipo de operacion', 'servicio'],
         'placa': ['placa', 'vehiculo', 'vehículo', 'equipo'],
         'posicion': ['posicion', 'posición', 'posicion montaje', 'posición montaje', 'pos'],
-        'kilometraje': ['kilometraje', 'km', 'km actual', 'odometro'],
+        'kilometraje': ['kilometraje', 'kilometraje actual', 'km', 'km actual', 'km_actual', 'odometro'],
         'tipologia': ['tipologia', 'tipología', 'tipo', 'tipo vehiculo'],
         'marca': ['marca', 'marca llanta'],
         'diseno': ['diseno', 'diseño', 'dibujo', 'modelo'],
@@ -2291,11 +2298,12 @@ def cargar_excel_a_bd(file_path):
                 'km_montaje': to_float(row[col_encontradas['km_montaje']]) if 'km_montaje' in col_encontradas else 0.0,
                 'numero_interno': num_interno,
                 'usuario_registro': 'EXCEL_IMPORT',
-                'foto_novedad': ''
+                'foto_novedad': '',
+                '_es_cargue_masivo': True
             }
 
-            # Validar candados de seguridad por cada fila
-            val = validar_inspeccion_candados(datos, conn=conn)
+            # Validar candados de seguridad por cada fila (omitiendo candados secuenciales/fechas para cargue masivo histórico)
+            val = validar_inspeccion_candados(datos, conn=conn, es_cargue_masivo=True)
             if not val.get('valido', True):
                 raise ValueError(f"Fila {idx + 2} (Placa {placa}, Pos {pos}): {val.get('mensaje')}")
 
