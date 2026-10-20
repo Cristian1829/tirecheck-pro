@@ -171,3 +171,59 @@ def test_frontend_javascript_sintaxis_valida():
         capture_output=True
     )
     assert res.returncode == 0, f"Error de sintaxis en JavaScript de templates/index.html: {res.stderr}"
+
+def test_fecha_minima_permitida_exacta_dia_20_mes_siguiente():
+    """Verifica que la fecha mínima permitida para una inspección sea el día 20 del mes siguiente."""
+    # Caso puntual del usuario: última inspección 2026-10-20 -> debe ser 2026-11-20
+    f_min = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-20")
+    assert str(f_min) == "2026-11-20"
+
+    # Caso fin de año: 2026-12-05 -> debe ser 2027-01-20
+    f_min_diciembre = database.calcular_fecha_minima_siguiente_inspeccion("2026-12-05")
+    assert str(f_min_diciembre) == "2027-01-20"
+
+def test_subcliente_obligatorio_en_api():
+    """Valida que la Sede / Subcliente sea obligatoria al registrar inspecciones."""
+    import uuid
+    token = crear_token_acceso("admin", "admin")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    placa_base = f"S{uuid.uuid4().hex[:5].upper()}"
+    payload_sin_sub = {
+        "fecha": "2026-10-20",
+        "cliente": "CLIENTE PRUEBA SUB",
+        "subcliente": "",
+        "tipo_operacion": "CARGA",
+        "placa": placa_base,
+        "posicion": 1,
+        "kilometraje": 10000,
+        "tipologia": "CABEZOTE (6X4)",
+        "marca": "MICHELIN",
+        "diseno": "X MULTI",
+        "dimension": "295/80R22.5",
+        "prof_inicial": 16.0,
+        "prof_ext": 12.0,
+        "prof_cent": 12.0,
+        "prof_int": 12.0,
+        "psi": 110,
+        "vida": "Original"
+    }
+    # Con subcliente vacío debe dar 400
+    res_vacio = client.post("/api/inspecciones", json=payload_sin_sub, headers=headers)
+    assert res_vacio.status_code == 400
+    assert "subcliente" in res_vacio.json()["detail"].lower()
+
+    # Con placeholder de selección debe dar 400
+    payload_placeholder = dict(payload_sin_sub)
+    payload_placeholder["subcliente"] = "ej. Principal (Seleccionar sede)"
+    res_placeholder = client.post("/api/inspecciones", json=payload_placeholder, headers=headers)
+    assert res_placeholder.status_code == 400
+
+    # Con sede válida debe registrar exitosamente
+    placa_ok = f"K{uuid.uuid4().hex[:5].upper()}"
+    payload_valido = dict(payload_sin_sub)
+    payload_valido["placa"] = placa_ok
+    payload_valido["subcliente"] = "Sede Norte"
+    res_ok = client.post("/api/inspecciones", json=payload_valido, headers=headers)
+    assert res_ok.status_code == 200
+

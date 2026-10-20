@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 12:17:33`
+- **Fecha de Generación:** `2026-10-20 12:47:17`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,561` líneas
-- **Tamaño Total de Código Fuente:** `1904.4 KB` (`1,950,082` bytes)
+- **Líneas Totales de Código:** `33,588` líneas
+- **Tamaño Total de Código Fuente:** `1906.0 KB` (`1,951,766` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -334,8 +334,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1629 | 71.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 6318 | 299.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 1638 | 71.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 6313 | 299.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1399 | 65.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -345,7 +345,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12821 | 934.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12844 | 936.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2190,7 +2190,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 1629 líneas | 72,861 bytes (71.2 KB)
+- **Métricas:** 1638 líneas | 73,500 bytes (71.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2659,6 +2659,11 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
 
+    if "subcliente" in item.model_fields_set:
+        subcliente = str(datos.get("subcliente", "")).strip()
+        if not subcliente or subcliente.lower().startswith("ej.") or "seleccionar" in subcliente.lower():
+            raise HTTPException(status_code=400, detail="La Sede / Subcliente es un campo obligatorio.")
+
     # Aislamiento por rol y asignación de clientes
     if not es_rol_admin(rol, usuario_actual.get("username")):
         datos["usuario_registro"] = usuario_actual["username"]
@@ -2684,6 +2689,10 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
     if es_rol_gerencia(rol):
         raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede modificar inspecciones")
     datos = item.model_dump()
+    if "subcliente" in item.model_fields_set:
+        subcliente = str(datos.get("subcliente", "")).strip()
+        if not subcliente or subcliente.lower().startswith("ej.") or "seleccionar" in subcliente.lower():
+            raise HTTPException(status_code=400, detail="La Sede / Subcliente es un campo obligatorio.")
     
     # Validar permisos de asignación de cliente
     if not es_rol_admin(rol, usuario_actual.get("username")):
@@ -3831,7 +3840,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 6318 líneas | 306,536 bytes (299.4 KB)
+- **Métricas:** 6313 líneas | 306,293 bytes (299.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5529,12 +5538,10 @@ def es_posicion_direccional(tipologia, posicion):
 def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
     """
     Calcula la fecha mínima en la que se puede realizar una nueva inspección a un vehículo.
-    Regla: Requiere que transcurra el siguiente mes más 20 días calendario.
-    Si la inspección previa fue en fecha F (ej. 2026-10-01 o 2026-10-15):
-    - Mes siguiente: 2026-11.
-    - Se requiere que transcurra el mes y pasen 20 días (a partir del día 21 del mes siguiente: 2026-11-21).
-    O si la fecha base fue a finales de mes:
-    Garantiza que transcurra 1 mes calendario completo + 20 días.
+    Regla: La nueva inspección se habilita a partir del día 20 del mes siguiente a la inspección previa.
+    Ejemplo:
+    - Inspección previa: 2026-10-20 (Octubre) -> Nueva inspección permitida: 2026-11-20 (20 de Noviembre).
+    - Inspección previa: 2026-08-10 (Agosto)  -> Nueva inspección permitida: 2026-09-20 (20 de Septiembre).
     """
     if isinstance(fecha_base, str):
         fecha_base = datetime.strptime(str(fecha_base)[:10], '%Y-%m-%d').date()
@@ -5550,9 +5557,7 @@ def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
         año_sig = año
         mes_sig = mes + 1
 
-    fecha_dia_21_sig = date(año_sig, mes_sig, 21)
-    fecha_50_dias = fecha_base + timedelta(days=50)
-    return max(fecha_dia_21_sig, fecha_50_dias)
+    return date(año_sig, mes_sig, 20)
 
 def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
     """
@@ -5711,8 +5716,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
                         'alerta_mes': True,
                         'mensaje': (
                             f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
-                            f'Una nueva inspección requiere que transcurra el siguiente mes más 20 días '
-                            f'(disponible a partir del {f_minima.strftime("%Y-%m-%d")}).'
+                            f'Una nueva inspección se habilita a partir del día 20 del mes siguiente ({f_minima.strftime("%Y-%m-%d")}).'
                         )
                     }
 
@@ -14383,7 +14387,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 12821 líneas | 957,323 bytes (934.9 KB)
+- **Métricas:** 12844 líneas | 958,611 bytes (936.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -14804,11 +14808,15 @@ if __name__ == '__main__':
               </div>
 
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente</label>
-                <select id="subcliente" onchange="verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
-                  <option value="" selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente <span class="text-rose-500 font-black">*</span></label>
+                <select id="subcliente" required onchange="limpiarErrorCampo('subcliente'); verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+                  <option value="" disabled selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
                 </select>
                 <datalist id="dl_subclientes"></datalist>
+                <p id="err_subcliente" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
+                  <span>La sede / subcliente es obligatoria</span>
+                </p>
               </div>
             </div>
 
@@ -17112,7 +17120,7 @@ if __name__ == '__main__':
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           <div><label class="font-bold text-slate-600">Fecha</label><input type="date" id="edit_fecha" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Cliente</label><input type="text" id="edit_cliente" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Sede</label><input type="text" id="edit_subcliente" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label class="font-bold text-slate-600">Sede <span class="text-rose-500 font-bold">*</span></label><input type="text" id="edit_subcliente" required class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Operación</label><input type="text" id="edit_tipo_operacion" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Placa</label><input type="text" id="edit_placa" class="w-full p-2 bg-slate-50 border rounded-xl font-black uppercase"></div>
           <div><label class="font-bold text-slate-600">Posición</label><input type="number" id="edit_posicion" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
@@ -19029,6 +19037,12 @@ if __name__ == '__main__':
     async function guardarEdicionInspeccion(e) {
       e.preventDefault();
       const id = document.getElementById('edit_id').value;
+      const subVal = (document.getElementById('edit_subcliente')?.value || '').trim();
+      if (!subVal) {
+        mostrarToast('⚠️ La Sede / Subcliente es un campo obligatorio', true);
+        document.getElementById('edit_subcliente')?.focus();
+        return;
+      }
       const payload = {
         fecha: document.getElementById('edit_fecha').value,
         cliente: document.getElementById('edit_cliente').value,
@@ -25870,6 +25884,19 @@ if __name__ == '__main__':
         if (elPlaca) {
           elPlaca.scrollIntoView({ behavior: 'smooth', block: 'center' });
           setTimeout(() => elPlaca.focus(), 250);
+        }
+        hayErrores = true;
+      }
+
+      const subclienteVal = (document.getElementById('subcliente')?.value || '').trim();
+      if (!subclienteVal || subclienteVal.includes('(Seleccionar') || subclienteVal === '__nuevo__') {
+        marcarErrorCampo('subcliente', 'err_subcliente');
+        if (!hayErrores) {
+          const elSub = document.getElementById('subcliente');
+          if (elSub) {
+            elSub.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => elSub.focus(), 250);
+          }
         }
         hayErrores = true;
       }

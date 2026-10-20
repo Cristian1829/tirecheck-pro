@@ -1692,12 +1692,10 @@ def es_posicion_direccional(tipologia, posicion):
 def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
     """
     Calcula la fecha mínima en la que se puede realizar una nueva inspección a un vehículo.
-    Regla: Requiere que transcurra el siguiente mes más 20 días calendario.
-    Si la inspección previa fue en fecha F (ej. 2026-10-01 o 2026-10-15):
-    - Mes siguiente: 2026-11.
-    - Se requiere que transcurra el mes y pasen 20 días (a partir del día 21 del mes siguiente: 2026-11-21).
-    O si la fecha base fue a finales de mes:
-    Garantiza que transcurra 1 mes calendario completo + 20 días.
+    Regla: La nueva inspección se habilita a partir del día 20 del mes siguiente a la inspección previa.
+    Ejemplo:
+    - Inspección previa: 2026-10-20 (Octubre) -> Nueva inspección permitida: 2026-11-20 (20 de Noviembre).
+    - Inspección previa: 2026-08-10 (Agosto)  -> Nueva inspección permitida: 2026-09-20 (20 de Septiembre).
     """
     if isinstance(fecha_base, str):
         fecha_base = datetime.strptime(str(fecha_base)[:10], '%Y-%m-%d').date()
@@ -1713,9 +1711,7 @@ def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
         año_sig = año
         mes_sig = mes + 1
 
-    fecha_dia_21_sig = date(año_sig, mes_sig, 21)
-    fecha_50_dias = fecha_base + timedelta(days=50)
-    return max(fecha_dia_21_sig, fecha_50_dias)
+    return date(año_sig, mes_sig, 20)
 
 def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
     """
@@ -1874,8 +1870,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
                         'alerta_mes': True,
                         'mensaje': (
                             f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
-                            f'Una nueva inspección requiere que transcurra el siguiente mes más 20 días '
-                            f'(disponible a partir del {f_minima.strftime("%Y-%m-%d")}).'
+                            f'Una nueva inspección se habilita a partir del día 20 del mes siguiente ({f_minima.strftime("%Y-%m-%d")}).'
                         )
                     }
 

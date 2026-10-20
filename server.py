@@ -463,6 +463,11 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
     if not datos.get("fecha"):
         datos["fecha"] = ahora_bogota().strftime("%Y-%m-%d")
 
+    if "subcliente" in item.model_fields_set:
+        subcliente = str(datos.get("subcliente", "")).strip()
+        if not subcliente or subcliente.lower().startswith("ej.") or "seleccionar" in subcliente.lower():
+            raise HTTPException(status_code=400, detail="La Sede / Subcliente es un campo obligatorio.")
+
     # Aislamiento por rol y asignación de clientes
     if not es_rol_admin(rol, usuario_actual.get("username")):
         datos["usuario_registro"] = usuario_actual["username"]
@@ -488,6 +493,10 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
     if es_rol_gerencia(rol):
         raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede modificar inspecciones")
     datos = item.model_dump()
+    if "subcliente" in item.model_fields_set:
+        subcliente = str(datos.get("subcliente", "")).strip()
+        if not subcliente or subcliente.lower().startswith("ej.") or "seleccionar" in subcliente.lower():
+            raise HTTPException(status_code=400, detail="La Sede / Subcliente es un campo obligatorio.")
     
     # Validar permisos de asignación de cliente
     if not es_rol_admin(rol, usuario_actual.get("username")):
