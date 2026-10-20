@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 13:10:50`
+- **Fecha de Generación:** `2026-10-20 15:58:50`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,768` líneas
-- **Tamaño Total de Código Fuente:** `1914.4 KB` (`1,960,338` bytes)
+- **Líneas Totales de Código:** `33,769` líneas
+- **Tamaño Total de Código Fuente:** `1914.4 KB` (`1,960,380` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -311,7 +311,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [requirements.txt](#archivo-requirementstxt) | `text` | 12 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.) |
 | [.gitignore](#archivo-gitignore) | `gitignore` | 30 | 0.4 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
-| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 34 | 1.0 KB | Definición estandarizada del contenedor Docker para producción/cloud |
+| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 35 | 1.0 KB | Definición estandarizada del contenedor Docker para producción/cloud |
 | [render.yaml](#archivo-renderyaml) | `yaml` | 11 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
 | [INICIAR_TIRECHECK.bat](#archivo-iniciar-tirecheckbat) | `bat` | 23 | 0.7 KB | Script de arranque automático para Windows: verificación de entorno, servidor uvicorn y apertura de navegador |
 | [iniciar_app.bat](#archivo-iniciar-appbat) | `bat` | 9 | 0.2 KB | Script de arranque directo sin dependencias |
@@ -482,7 +482,7 @@ scripts/temp_*
 
 - **Ruta:** `Dockerfile`
 - **Descripción:** Definición estandarizada del contenedor Docker para producción/cloud
-- **Métricas:** 34 líneas | 983 bytes (1.0 KB)
+- **Métricas:** 35 líneas | 1,025 bytes (1.0 KB)
 - **Lenguaje:** `dockerfile`
 
 ```dockerfile
@@ -492,6 +492,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
+ENV APP_BUILD_ID=20261020-rebuild-railway
 
 WORKDIR /app
 
