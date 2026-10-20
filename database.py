@@ -173,6 +173,33 @@ def asegurar_columna_vistas_permitidas(conn):
     except Exception:
         pass
 
+def normalizar_vida_y_banda(vida_input, banda_input=''):
+    """
+    Normaliza de forma estricta y determinista los valores de Vida y Banda de Reencauche:
+    - Retorna tupla (vida_final, banda_final) con vida_final en ('ORIGINAL', 'REENCAUCHE').
+    - Si vida viene vacía, nula, '-' o inválida:
+        * Si tiene banda de reencauche especificada -> 'REENCAUCHE'.
+        * En cualquier otro caso -> 'ORIGINAL'.
+    - Si vida es 'ORIGINAL' -> banda_final siempre es '' (vacía).
+    - Si vida es 'REENCAUCHE' -> banda_final es la banda en mayúsculas limpia.
+    """
+    v_raw = str(vida_input or '').strip().upper()
+    b_raw = str(banda_input or '').strip().upper()
+    if b_raw in ('-', 'NONE', 'NAN', 'NULL', 'NO APLICA', 'N/A'):
+        b_raw = ''
+
+    if v_raw in ('ORIGINAL', 'ORIG', 'NUEVA') or 'ORIG' in v_raw:
+        vida_final = 'ORIGINAL'
+    elif v_raw in ('REENCAUCHE', 'REEN', 'RECAUCHE', 'R1', 'R2', 'R3', 'R4') or 'REEN' in v_raw:
+        vida_final = 'REENCAUCHE'
+    elif b_raw:
+        vida_final = 'REENCAUCHE'
+    else:
+        vida_final = 'ORIGINAL'
+
+    banda_final = b_raw if vida_final == 'REENCAUCHE' else ''
+    return vida_final, banda_final
+
 def inicializar_bd():
     verificar_y_poblar_seed()
     with get_connection() as conn:
@@ -191,7 +218,7 @@ def inicializar_bd():
                 marca TEXT,
                 diseno TEXT,
                 dimension TEXT,
-                vida TEXT,
+                vida TEXT NOT NULL DEFAULT 'ORIGINAL',
                 banda_reen TEXT,
                 prof_ext REAL,
                 prof_cent REAL,
@@ -717,6 +744,12 @@ def normalizar_clientes_mayusculas(conn):
     except Exception:
         pass
 
+    # 8. Migración y normalización preventiva de la columna 'vida'
+    try:
+        migrar_normalizar_vida_llantas(conn)
+    except Exception as e:
+        print(f"[INICIALIZAR_BD] Advertencia normalizando vida llantas: {e}")
+
 
 def migrar_pepsico_a_tellantas(conn=None):
     """
@@ -964,6 +997,92 @@ def migrar_kilometraje_placa_s87341(conn=None):
         }
     except Exception as e:
         print(f"[MIGRACION PRODUCCION] Error actualizando kilometraje S87341: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def migrar_normalizar_vida_llantas(conn=None):
+    """
+    Normalización y reparación preventiva de la columna 'vida' en inspecciones y tablas maestras:
+    1. Si 'vida' es nula, vacía o '-', y tiene banda de reencauche asignada, se establece 'REENCAUCHE'.
+    2. Si 'vida' es nula, vacía o '-', y NO tiene banda de reencauche, se establece 'ORIGINAL'.
+    3. Normaliza variantes ('ORIG', 'NUEVA', 'REEN', etc.) a mayúsculas estándar 'ORIGINAL' y 'REENCAUCHE'.
+    4. Garantiza que llantas_maestro y kardex_ciclo_vida tengan valores coherentes.
+    """
+    if conn is None:
+        with get_connection() as c_auto:
+            return migrar_normalizar_vida_llantas(c_auto)
+    try:
+        cur = conn.cursor()
+
+        # 1. Asignar REENCAUCHE a los que no tienen vida válida pero sí tienen banda registrada
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'REENCAUCHE'
+            WHERE (vida IS NULL OR TRIM(vida) = '' OR TRIM(vida) = '-' OR UPPER(TRIM(vida)) IN ('NONE', 'NAN', 'NULL'))
+              AND banda_reen IS NOT NULL
+              AND TRIM(banda_reen) != ''
+              AND TRIM(banda_reen) != '-'
+              AND UPPER(TRIM(banda_reen)) NOT IN ('NONE', 'NAN', 'NULL')
+        """)
+        reencauches_corregidos = cur.rowcount
+
+        # 2. Asignar ORIGINAL al resto de registros sin vida válida
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'ORIGINAL'
+            WHERE vida IS NULL
+               OR TRIM(vida) = ''
+               OR TRIM(vida) = '-'
+               OR UPPER(TRIM(vida)) IN ('NONE', 'NAN', 'NULL')
+        """)
+        originales_corregidos = cur.rowcount
+
+        # 3. Normalizar variantes a mayúsculas estándar
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'ORIGINAL'
+            WHERE UPPER(TRIM(vida)) IN ('ORIGINAL', 'ORIG', 'NUEVA', 'ORIGINAL (NUEVA)') AND vida != 'ORIGINAL'
+        """)
+
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'REENCAUCHE'
+            WHERE UPPER(TRIM(vida)) IN ('REENCAUCHE', 'REEN', 'RECAUCHE', 'R1', 'R2', 'R3', 'R4') AND vida != 'REENCAUCHE'
+        """)
+
+        # 4. Asegurar coherencia en llantas_maestro
+        try:
+            cur.execute("""
+                UPDATE llantas_maestro
+                SET vida_actual = 'Original'
+                WHERE vida_actual IS NULL OR TRIM(vida_actual) = '' OR TRIM(vida_actual) = '-' OR UPPER(TRIM(vida_actual)) IN ('NONE', 'NAN')
+            """)
+        except Exception:
+            pass
+
+        # 5. Asegurar coherencia en kardex_ciclo_vida
+        try:
+            cur.execute("""
+                UPDATE kardex_ciclo_vida
+                SET vida_ciclo = 'Original'
+                WHERE vida_ciclo IS NULL OR TRIM(vida_ciclo) = '' OR TRIM(vida_ciclo) = '-' OR UPPER(TRIM(vida_ciclo)) IN ('NONE', 'NAN')
+            """)
+        except Exception:
+            pass
+
+        conn.commit()
+        total_corregidos = reencauches_corregidos + originales_corregidos
+        if total_corregidos > 0:
+            print(f"[MIGRACION VIDA] Se corrigieron {total_corregidos} inspecciones sin vida registrada "
+                  f"({originales_corregidos} Originales, {reencauches_corregidos} Reencauches).")
+        return {
+            "status": "ok",
+            "originales_corregidos": originales_corregidos,
+            "reencauches_corregidos": reencauches_corregidos,
+            "total": total_corregidos
+        }
+    except Exception as e:
+        print(f"[MIGRACION VIDA ERROR] Error al normalizar vida de inspecciones: {e}")
         return {"status": "error", "error": str(e)}
 
 
@@ -1643,8 +1762,10 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
             }
 
     # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original)
-    vida_val = str(datos.get('vida', 'Original')).strip().capitalize()
-    if es_posicion_direccional(tipologia_val, posicion) and vida_val.lower() == 'reencauche':
+    vida_val, banda_val = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
+    datos['vida'] = vida_val
+    datos['banda_reen'] = banda_val
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val == 'REENCAUCHE':
         return {
             'valido': False,
             'mensaje': (
@@ -1827,6 +1948,7 @@ def insertar_inspeccion(datos):
         datos['numero_interno'] = generar_siguiente_numero_interno_temporal()
     else:
         datos['numero_interno'] = num_int_norm
+    vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -1847,8 +1969,8 @@ def insertar_inspeccion(datos):
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
             str(datos.get('dimension', '')).strip().upper(),
-            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
-            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
+            vida_final,
+            banda_final,
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
@@ -1905,6 +2027,7 @@ def actualizar_inspeccion(inspeccion_id, datos):
     Actualiza la información de una llanta o inspección específica por su ID.
     Todos los campos de texto se persisten en mayúsculas.
     """
+    vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -1927,8 +2050,8 @@ def actualizar_inspeccion(inspeccion_id, datos):
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
             str(datos.get('dimension', '')).strip().upper(),
-            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
-            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
+            vida_final,
+            banda_final,
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
@@ -1985,7 +2108,7 @@ def cargar_excel_a_bd(file_path):
         'marca': ['marca', 'marca llanta'],
         'diseno': ['diseno', 'diseño', 'dibujo', 'modelo'],
         'dimension': ['dimension', 'dimensión', 'medida', 'dim'],
-        'vida': ['vida', 'estado vida', 'condicion'],
+        'vida': ['vida', 'estado vida', 'condicion', 'condición', 'vida útil', 'vida util', 'tipo vida', 'condicion / vida', 'condición / vida', 'estado llanta'],
         'banda_reen': ['banda reen', 'banda reencauche', 'banda', 'marca banda'],
         'prof_ext': ['prof ext', 'prof. exterior', 'ult. prof exterior', 'prof exterior', 'exterior'],
         'prof_cent': ['prof cent', 'prof centro', 'prof. central', 'prof central', 'centro', 'central'],
@@ -2026,10 +2149,9 @@ def cargar_excel_a_bd(file_path):
                 fecha = fecha_dt.strftime('%Y-%m-%d')
 
             # Normalizar vida y banda
-            vida_raw = str(row[col_encontradas['vida']]).strip() if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else 'ORIGINAL'
-            vida = vida_raw.upper() if vida_raw and vida_raw.upper() != 'NAN' else 'ORIGINAL'
-            banda_raw = str(row[col_encontradas['banda_reen']]).strip() if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
-            banda = banda_raw.upper() if banda_raw and banda_raw.upper() != 'NAN' and vida == 'REENCAUCHE' else ''
+            vida_raw = row[col_encontradas['vida']] if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else ''
+            banda_raw = row[col_encontradas['banda_reen']] if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
+            vida, banda = normalizar_vida_y_banda(vida_raw, banda_raw)
 
             # Número interno con generación automática de consecutivo si viene vacío
             num_interno_raw = str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''

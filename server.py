@@ -42,6 +42,10 @@ def startup_migracion_produccion():
         database.migrar_kilometraje_placa_s87341()
     except Exception as e:
         print(f"[STARTUP] Error ejecutando actualización kilometraje S87341: {e}")
+    try:
+        database.migrar_normalizar_vida_llantas()
+    except Exception as e:
+        print(f"[STARTUP] Error ejecutando normalización vida llantas: {e}")
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)

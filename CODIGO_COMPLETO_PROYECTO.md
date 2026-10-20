@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 11:48:36`
+- **Fecha de Generación:** `2026-10-20 12:17:33`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,423` líneas
-- **Tamaño Total de Código Fuente:** `1898.2 KB` (`1,943,768` bytes)
+- **Líneas Totales de Código:** `33,561` líneas
+- **Tamaño Total de Código Fuente:** `1904.4 KB` (`1,950,082` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -334,8 +334,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1625 | 71.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 6196 | 294.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 1629 | 71.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 6318 | 299.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1399 | 65.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -345,7 +345,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12809 | 933.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12821 | 934.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2190,7 +2190,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 1625 líneas | 72,697 bytes (71.0 KB)
+- **Métricas:** 1629 líneas | 72,861 bytes (71.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2238,6 +2238,10 @@ def startup_migracion_produccion():
         database.migrar_kilometraje_placa_s87341()
     except Exception as e:
         print(f"[STARTUP] Error ejecutando actualización kilometraje S87341: {e}")
+    try:
+        database.migrar_normalizar_vida_llantas()
+    except Exception as e:
+        print(f"[STARTUP] Error ejecutando normalización vida llantas: {e}")
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
@@ -3827,7 +3831,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 6196 líneas | 301,415 bytes (294.4 KB)
+- **Métricas:** 6318 líneas | 306,536 bytes (299.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4006,6 +4010,33 @@ def asegurar_columna_vistas_permitidas(conn):
     except Exception:
         pass
 
+def normalizar_vida_y_banda(vida_input, banda_input=''):
+    """
+    Normaliza de forma estricta y determinista los valores de Vida y Banda de Reencauche:
+    - Retorna tupla (vida_final, banda_final) con vida_final en ('ORIGINAL', 'REENCAUCHE').
+    - Si vida viene vacía, nula, '-' o inválida:
+        * Si tiene banda de reencauche especificada -> 'REENCAUCHE'.
+        * En cualquier otro caso -> 'ORIGINAL'.
+    - Si vida es 'ORIGINAL' -> banda_final siempre es '' (vacía).
+    - Si vida es 'REENCAUCHE' -> banda_final es la banda en mayúsculas limpia.
+    """
+    v_raw = str(vida_input or '').strip().upper()
+    b_raw = str(banda_input or '').strip().upper()
+    if b_raw in ('-', 'NONE', 'NAN', 'NULL', 'NO APLICA', 'N/A'):
+        b_raw = ''
+
+    if v_raw in ('ORIGINAL', 'ORIG', 'NUEVA') or 'ORIG' in v_raw:
+        vida_final = 'ORIGINAL'
+    elif v_raw in ('REENCAUCHE', 'REEN', 'RECAUCHE', 'R1', 'R2', 'R3', 'R4') or 'REEN' in v_raw:
+        vida_final = 'REENCAUCHE'
+    elif b_raw:
+        vida_final = 'REENCAUCHE'
+    else:
+        vida_final = 'ORIGINAL'
+
+    banda_final = b_raw if vida_final == 'REENCAUCHE' else ''
+    return vida_final, banda_final
+
 def inicializar_bd():
     verificar_y_poblar_seed()
     with get_connection() as conn:
@@ -4024,7 +4055,7 @@ def inicializar_bd():
                 marca TEXT,
                 diseno TEXT,
                 dimension TEXT,
-                vida TEXT,
+                vida TEXT NOT NULL DEFAULT 'ORIGINAL',
                 banda_reen TEXT,
                 prof_ext REAL,
                 prof_cent REAL,
@@ -4550,6 +4581,12 @@ def normalizar_clientes_mayusculas(conn):
     except Exception:
         pass
 
+    # 8. Migración y normalización preventiva de la columna 'vida'
+    try:
+        migrar_normalizar_vida_llantas(conn)
+    except Exception as e:
+        print(f"[INICIALIZAR_BD] Advertencia normalizando vida llantas: {e}")
+
 
 def migrar_pepsico_a_tellantas(conn=None):
     """
@@ -4797,6 +4834,92 @@ def migrar_kilometraje_placa_s87341(conn=None):
         }
     except Exception as e:
         print(f"[MIGRACION PRODUCCION] Error actualizando kilometraje S87341: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def migrar_normalizar_vida_llantas(conn=None):
+    """
+    Normalización y reparación preventiva de la columna 'vida' en inspecciones y tablas maestras:
+    1. Si 'vida' es nula, vacía o '-', y tiene banda de reencauche asignada, se establece 'REENCAUCHE'.
+    2. Si 'vida' es nula, vacía o '-', y NO tiene banda de reencauche, se establece 'ORIGINAL'.
+    3. Normaliza variantes ('ORIG', 'NUEVA', 'REEN', etc.) a mayúsculas estándar 'ORIGINAL' y 'REENCAUCHE'.
+    4. Garantiza que llantas_maestro y kardex_ciclo_vida tengan valores coherentes.
+    """
+    if conn is None:
+        with get_connection() as c_auto:
+            return migrar_normalizar_vida_llantas(c_auto)
+    try:
+        cur = conn.cursor()
+
+        # 1. Asignar REENCAUCHE a los que no tienen vida válida pero sí tienen banda registrada
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'REENCAUCHE'
+            WHERE (vida IS NULL OR TRIM(vida) = '' OR TRIM(vida) = '-' OR UPPER(TRIM(vida)) IN ('NONE', 'NAN', 'NULL'))
+              AND banda_reen IS NOT NULL
+              AND TRIM(banda_reen) != ''
+              AND TRIM(banda_reen) != '-'
+              AND UPPER(TRIM(banda_reen)) NOT IN ('NONE', 'NAN', 'NULL')
+        """)
+        reencauches_corregidos = cur.rowcount
+
+        # 2. Asignar ORIGINAL al resto de registros sin vida válida
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'ORIGINAL'
+            WHERE vida IS NULL
+               OR TRIM(vida) = ''
+               OR TRIM(vida) = '-'
+               OR UPPER(TRIM(vida)) IN ('NONE', 'NAN', 'NULL')
+        """)
+        originales_corregidos = cur.rowcount
+
+        # 3. Normalizar variantes a mayúsculas estándar
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'ORIGINAL'
+            WHERE UPPER(TRIM(vida)) IN ('ORIGINAL', 'ORIG', 'NUEVA', 'ORIGINAL (NUEVA)') AND vida != 'ORIGINAL'
+        """)
+
+        cur.execute("""
+            UPDATE inspecciones
+            SET vida = 'REENCAUCHE'
+            WHERE UPPER(TRIM(vida)) IN ('REENCAUCHE', 'REEN', 'RECAUCHE', 'R1', 'R2', 'R3', 'R4') AND vida != 'REENCAUCHE'
+        """)
+
+        # 4. Asegurar coherencia en llantas_maestro
+        try:
+            cur.execute("""
+                UPDATE llantas_maestro
+                SET vida_actual = 'Original'
+                WHERE vida_actual IS NULL OR TRIM(vida_actual) = '' OR TRIM(vida_actual) = '-' OR UPPER(TRIM(vida_actual)) IN ('NONE', 'NAN')
+            """)
+        except Exception:
+            pass
+
+        # 5. Asegurar coherencia en kardex_ciclo_vida
+        try:
+            cur.execute("""
+                UPDATE kardex_ciclo_vida
+                SET vida_ciclo = 'Original'
+                WHERE vida_ciclo IS NULL OR TRIM(vida_ciclo) = '' OR TRIM(vida_ciclo) = '-' OR UPPER(TRIM(vida_ciclo)) IN ('NONE', 'NAN')
+            """)
+        except Exception:
+            pass
+
+        conn.commit()
+        total_corregidos = reencauches_corregidos + originales_corregidos
+        if total_corregidos > 0:
+            print(f"[MIGRACION VIDA] Se corrigieron {total_corregidos} inspecciones sin vida registrada "
+                  f"({originales_corregidos} Originales, {reencauches_corregidos} Reencauches).")
+        return {
+            "status": "ok",
+            "originales_corregidos": originales_corregidos,
+            "reencauches_corregidos": reencauches_corregidos,
+            "total": total_corregidos
+        }
+    except Exception as e:
+        print(f"[MIGRACION VIDA ERROR] Error al normalizar vida de inspecciones: {e}")
         return {"status": "error", "error": str(e)}
 
 
@@ -5476,8 +5599,10 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
             }
 
     # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original)
-    vida_val = str(datos.get('vida', 'Original')).strip().capitalize()
-    if es_posicion_direccional(tipologia_val, posicion) and vida_val.lower() == 'reencauche':
+    vida_val, banda_val = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
+    datos['vida'] = vida_val
+    datos['banda_reen'] = banda_val
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val == 'REENCAUCHE':
         return {
             'valido': False,
             'mensaje': (
@@ -5660,6 +5785,7 @@ def insertar_inspeccion(datos):
         datos['numero_interno'] = generar_siguiente_numero_interno_temporal()
     else:
         datos['numero_interno'] = num_int_norm
+    vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -5680,8 +5806,8 @@ def insertar_inspeccion(datos):
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
             str(datos.get('dimension', '')).strip().upper(),
-            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
-            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
+            vida_final,
+            banda_final,
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
@@ -5738,6 +5864,7 @@ def actualizar_inspeccion(inspeccion_id, datos):
     Actualiza la información de una llanta o inspección específica por su ID.
     Todos los campos de texto se persisten en mayúsculas.
     """
+    vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -5760,8 +5887,8 @@ def actualizar_inspeccion(inspeccion_id, datos):
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
             str(datos.get('dimension', '')).strip().upper(),
-            str(datos.get('vida', 'ORIGINAL')).strip().upper(),
-            str(datos.get('banda_reen', '')).strip().upper() if str(datos.get('vida', '')).strip().upper() == 'REENCAUCHE' else '',
+            vida_final,
+            banda_final,
             to_float(datos.get('prof_ext', 0)),
             to_float(datos.get('prof_cent', 0)),
             to_float(datos.get('prof_int', 0)),
@@ -5818,7 +5945,7 @@ def cargar_excel_a_bd(file_path):
         'marca': ['marca', 'marca llanta'],
         'diseno': ['diseno', 'diseño', 'dibujo', 'modelo'],
         'dimension': ['dimension', 'dimensión', 'medida', 'dim'],
-        'vida': ['vida', 'estado vida', 'condicion'],
+        'vida': ['vida', 'estado vida', 'condicion', 'condición', 'vida útil', 'vida util', 'tipo vida', 'condicion / vida', 'condición / vida', 'estado llanta'],
         'banda_reen': ['banda reen', 'banda reencauche', 'banda', 'marca banda'],
         'prof_ext': ['prof ext', 'prof. exterior', 'ult. prof exterior', 'prof exterior', 'exterior'],
         'prof_cent': ['prof cent', 'prof centro', 'prof. central', 'prof central', 'centro', 'central'],
@@ -5859,10 +5986,9 @@ def cargar_excel_a_bd(file_path):
                 fecha = fecha_dt.strftime('%Y-%m-%d')
 
             # Normalizar vida y banda
-            vida_raw = str(row[col_encontradas['vida']]).strip() if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else 'ORIGINAL'
-            vida = vida_raw.upper() if vida_raw and vida_raw.upper() != 'NAN' else 'ORIGINAL'
-            banda_raw = str(row[col_encontradas['banda_reen']]).strip() if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
-            banda = banda_raw.upper() if banda_raw and banda_raw.upper() != 'NAN' and vida == 'REENCAUCHE' else ''
+            vida_raw = row[col_encontradas['vida']] if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else ''
+            banda_raw = row[col_encontradas['banda_reen']] if 'banda_reen' in col_encontradas and not pd.isna(row[col_encontradas['banda_reen']]) else ''
+            vida, banda = normalizar_vida_y_banda(vida_raw, banda_raw)
 
             # Número interno con generación automática de consecutivo si viene vacío
             num_interno_raw = str(row[col_encontradas['numero_interno']]).strip().upper() if 'numero_interno' in col_encontradas and not pd.isna(row[col_encontradas['numero_interno']]) else ''
@@ -14257,7 +14383,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 12809 líneas | 956,294 bytes (933.9 KB)
+- **Métricas:** 12821 líneas | 957,323 bytes (934.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -18685,9 +18811,11 @@ if __name__ == '__main__':
             <td class="p-2.5 font-mono text-[11px]">${r.dimension || '-'}</td>
             <td class="p-2.5">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${
-                (r.vida || '').toLowerCase().includes('orig') ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
+                (r.vida || '').toLowerCase().includes('reen') || (r.banda_reen && r.banda_reen !== '-') 
+                  ? 'bg-purple-50 text-purple-700' 
+                  : 'bg-blue-50 text-blue-700'
               }">
-                ${r.vida || '-'}
+                ${(r.vida && r.vida !== '-') ? r.vida : (r.banda_reen && r.banda_reen !== '-' ? 'REENCAUCHE' : 'ORIGINAL')}
               </span>
             </td>
             <td class="p-2.5 text-slate-500">${r.banda_reen || '-'}</td>
@@ -18867,7 +18995,11 @@ if __name__ == '__main__':
         document.getElementById('edit_marca').value = d.marca || '';
         document.getElementById('edit_diseno').value = d.diseno || '';
         document.getElementById('edit_dimension').value = d.dimension || '';
-        document.getElementById('edit_vida').value = d.vida || 'Original';
+        const vEd = String(d.vida || 'Original').trim();
+        const selEditVida = document.getElementById('edit_vida');
+        if (selEditVida) {
+          selEditVida.value = vEd.toLowerCase().includes('reen') ? 'Reencauche' : 'Original';
+        }
         document.getElementById('edit_banda_reen').value = d.banda_reen || '';
         document.getElementById('edit_psi').value = d.psi || 100;
         document.getElementById('edit_prof_ext').value = d.prof_ext || 0;
@@ -18911,7 +19043,7 @@ if __name__ == '__main__':
         marca: document.getElementById('edit_marca').value,
         diseno: document.getElementById('edit_diseno').value,
         dimension: document.getElementById('edit_dimension').value,
-        vida: document.getElementById('edit_vida').value,
+        vida: (document.getElementById('edit_vida')?.value || 'Original').trim() || 'Original',
         banda_reen: document.getElementById('edit_banda_reen').value,
         psi: parseFloat(document.getElementById('edit_psi').value) || 100,
         prof_ext: parseFloat(document.getElementById('edit_prof_ext').value) || 0,
@@ -24602,13 +24734,13 @@ if __name__ == '__main__':
                 dimensionPredeterminadaVehiculo = lt.dimension;
               }
             }
-            if (lt.vida) {
-              asignarValorSelect('vida', lt.vida);
-              validarVida();
-            }
-            if (lt.banda_reen && lt.vida === 'Reencauche') {
+            const vLt = String(lt.vida || 'Original').trim();
+            const esReenLt = vLt.toLowerCase().includes('reen') || Boolean(lt.banda_reen);
+            asignarValorSelect('vida', esReenLt ? 'Reencauche' : 'Original');
+            if (lt.banda_reen && esReenLt) {
               asignarValorSelect('banda_reen', lt.banda_reen);
             }
+            validarVida();
             if (lt.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
               document.getElementById('prof_inicial').value = lt.prof_inicial;
             }
@@ -24677,10 +24809,10 @@ if __name__ == '__main__':
               if (d.datos.dimension) {
                 asignarValorSelect('dimension', d.datos.dimension);
               }
-              if (d.datos.vida) {
-                asignarValorSelect('vida', d.datos.vida);
-              }
-              if (d.datos.banda_reen) {
+              const vDato = String(d.datos.vida || 'Original').trim();
+              const esReenDato = vDato.toLowerCase().includes('reen') || Boolean(d.datos.banda_reen);
+              asignarValorSelect('vida', esReenDato ? 'Reencauche' : 'Original');
+              if (d.datos.banda_reen && esReenDato) {
                 asignarValorSelect('banda_reen', d.datos.banda_reen);
               }
               if (d.datos.precio) {
@@ -24754,9 +24886,10 @@ if __name__ == '__main__':
                 if (selBanda) selBanda.value = '';
                 if (boxBanda) boxBanda.classList.add('hidden');
               } else {
-                const vidaVal = d.datos.vida || 'Original';
-                asignarValorSelect('vida', vidaVal);
-                if (vidaVal === 'Reencauche') {
+                const vDatoPos = String(d.datos.vida || 'Original').trim();
+                const esReenPos = vDatoPos.toLowerCase().includes('reen') || Boolean(d.datos.banda_reen);
+                asignarValorSelect('vida', esReenPos ? 'Reencauche' : 'Original');
+                if (esReenPos) {
                   if (boxBanda) boxBanda.classList.remove('hidden');
                   if (d.datos.banda_reen) {
                     asignarValorSelect('banda_reen', d.datos.banda_reen);
@@ -24889,9 +25022,14 @@ if __name__ == '__main__':
     function validarVida() {
       const pos = parseInt(document.getElementById('posicion')?.value) || 1;
       const selVida = document.getElementById('vida');
-      if (selVida && selVida.value === 'Reencauche' && esPosicionDireccionalActual(pos)) {
-        selVida.value = 'Original';
-        mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
+      if (selVida) {
+        if (!selVida.value || (selVida.value !== 'Original' && selVida.value !== 'Reencauche')) {
+          selVida.value = 'Original';
+        }
+        if (selVida.value === 'Reencauche' && esPosicionDireccionalActual(pos)) {
+          selVida.value = 'Original';
+          mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
+        }
       }
       const vida = selVida ? selVida.value : 'Original';
       const boxBanda = document.getElementById('box_banda');
@@ -25805,7 +25943,7 @@ if __name__ == '__main__':
         marca: document.getElementById('marca').value,
         diseno: document.getElementById('diseno').value,
         dimension: dimension,
-        vida: document.getElementById('vida').value,
+        vida: (document.getElementById('vida')?.value || 'Original').trim() || 'Original',
         banda_reen: document.getElementById('banda_reen').value,
         prof_ext: p_ext,
         prof_cent: p_cent,
