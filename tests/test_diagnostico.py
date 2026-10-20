@@ -137,3 +137,56 @@ def test_diagnostico_ignora_inspecciones_meses_anteriores(test_db):
     assert fila['Plan_Cambio_Llanta'] == 'NO'
     assert fila['Fecha'] == '2026-10-01'
 
+def test_diagnostico_orden_fecha_mas_reciente_a_mas_antigua():
+    # Verifica que analizar_inspecciones_df ordene de la inspección más reciente a la más antigua
+    datos = [
+        {
+            'placa': 'AAA100',
+            'posicion': 1,
+            'fecha': '2026-01-15',
+            'tipologia': 'Camión Sencillo (4x2)',
+            'prof_int': 8.0,
+            'prof_cent': 8.0,
+            'prof_ext': 8.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 10000
+        },
+        {
+            'placa': 'ZZZ999',
+            'posicion': 1,
+            'fecha': '2026-10-20',
+            'tipologia': 'Camión Sencillo (4x2)',
+            'prof_int': 9.0,
+            'prof_cent': 9.0,
+            'prof_ext': 9.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 20000
+        },
+        {
+            'placa': 'MMM500',
+            'posicion': 1,
+            'fecha': '2026-05-10',
+            'tipologia': 'Camión Sencillo (4x2)',
+            'prof_int': 7.0,
+            'prof_cent': 7.0,
+            'prof_ext': 7.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 15000
+        }
+    ]
+    df = pd.DataFrame(datos)
+    res = database.analizar_inspecciones_df(df)
+    assert len(res) == 3
+    # ZZZ999 tiene fecha 2026-10-20 (más reciente)
+    assert res.iloc[0]['Vehículo/Placa'] == 'ZZZ999'
+    assert res.iloc[0]['Fecha'] == '2026-10-20'
+    # MMM500 tiene fecha 2026-05-10
+    assert res.iloc[1]['Vehículo/Placa'] == 'MMM500'
+    assert res.iloc[1]['Fecha'] == '2026-05-10'
+    # AAA100 tiene fecha 2026-01-15 (más antigua)
+    assert res.iloc[2]['Vehículo/Placa'] == 'AAA100'
+    assert res.iloc[2]['Fecha'] == '2026-01-15'
+

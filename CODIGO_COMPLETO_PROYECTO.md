@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 08:57:19`
+- **Fecha de Generación:** `2026-10-20 10:29:00`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `32,832` líneas
-- **Tamaño Total de Código Fuente:** `1871.0 KB` (`1,915,872` bytes)
+- **Líneas Totales de Código:** `33,074` líneas
+- **Tamaño Total de Código Fuente:** `1881.8 KB` (`1,926,936` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -335,7 +335,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 1616 | 70.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 6035 | 288.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 6044 | 288.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1399 | 65.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -345,7 +345,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12441 | 915.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12621 | 923.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -356,7 +356,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 879 | 33.5 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 454 | 14.4 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
-| [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 139 | 4.2 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
+| [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 184 | 5.8 KB | Pruebas de generación y estructura de informes técnicos PDF |
@@ -3818,7 +3818,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 6035 líneas | 295,031 bytes (288.1 KB)
+- **Métricas:** 6044 líneas | 295,447 bytes (288.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6065,7 +6065,16 @@ def analizar_inspecciones_df(df_inspecciones):
             'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK"
         })
         
-    return pd.DataFrame(resultados)
+    df_res = pd.DataFrame(resultados)
+    if not df_res.empty and 'Fecha' in df_res.columns:
+        fecha_sort = pd.to_datetime(df_res['Fecha'], errors='coerce')
+        df_res['_sort_fecha'] = fecha_sort
+        df_res = df_res.sort_values(
+            by=['_sort_fecha', 'Vehículo/Placa'],
+            ascending=[False, True],
+            na_position='last'
+        ).drop(columns=['_sort_fecha']).reset_index(drop=True)
+    return df_res
 
 if "pytest" not in sys.modules and not os.environ.get("PYTEST_CURRENT_TEST"):
     inicializar_bd()
@@ -14087,7 +14096,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 12441 líneas | 937,037 bytes (915.1 KB)
+- **Métricas:** 12621 líneas | 945,859 bytes (923.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -15682,7 +15691,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- Tabla de Diagnóstico Detallado -->
-      <div class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
+      <div id="contenedorTablaDiagnostico" class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
             <tr>
@@ -15709,6 +15718,23 @@ if __name__ == '__main__':
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Barra de Paginación Diagnóstico (25 resultados por página) -->
+      <div id="contenedorPaginacionDiag" class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-xs">
+        <div class="text-xs text-slate-500 font-medium flex items-center space-x-1.5">
+          <span>Mostrando</span>
+          <span id="pagInicioDiag" class="font-bold text-slate-800">0</span>
+          <span>-</span>
+          <span id="pagFinDiag" class="font-bold text-slate-800">0</span>
+          <span>de</span>
+          <span id="pagTotalDiag" class="font-bold text-blue-600">0</span>
+          <span>vehículos</span>
+          <span class="text-slate-400 font-normal hidden sm:inline">(25 por página)</span>
+        </div>
+        <div class="flex items-center space-x-1" id="controlesPaginacionDiag">
+          <!-- Botones de páginas inyectados dinámicamente -->
+        </div>
       </div>
     </div>
 
@@ -19796,6 +19822,10 @@ if __name__ == '__main__':
     // ==========================================
     // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
     // ==========================================
+    let paginaActualDiag = 1;
+    const ITEMS_POR_PAGINA_DIAG = 25;
+    let cacheFiltradasDiag = [];
+
     async function cargarDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
       const tbodyMat = document.getElementById('tbodyMatrizSemaforos');
@@ -19901,8 +19931,16 @@ if __name__ == '__main__':
       }
     }
 
+    function cambiarPaginaDiag(nuevaPagina) {
+      const totalPaginas = Math.ceil(cacheFiltradasDiag.length / ITEMS_POR_PAGINA_DIAG) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualDiag = nuevaPagina;
+      renderizarTablaDiagnostico();
+      const contTabla = document.getElementById('contenedorTablaDiagnostico');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
     function filtrarTablaDiagnostico() {
-      const tbody = document.getElementById('tbodyDiagnostico');
       const cli = document.getElementById('filtroDiagCliente')?.value || 'Todos';
       const sede = document.getElementById('filtroDiagSede')?.value || 'Todos';
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
@@ -19960,6 +19998,16 @@ if __name__ == '__main__':
         return true;
       });
 
+      // Ordenar de la inspección más reciente a la más antigua (y secundariamente por placa)
+      filtradas.sort((a, b) => {
+        const fechaA = String(a.Fecha || '').trim();
+        const fechaB = String(b.Fecha || '').trim();
+        if (fechaA !== fechaB) {
+          return fechaB.localeCompare(fechaA); // Descendente: más reciente primero
+        }
+        return String(a['Vehículo/Placa'] || '').localeCompare(String(b['Vehículo/Placa'] || ''));
+      });
+
       // Actualizar tarjetas métricas
       document.getElementById('cardDiagTotal').textContent = tot;
       document.getElementById('cardDiagCambio').textContent = cambio;
@@ -19994,36 +20042,177 @@ if __name__ == '__main__':
           : `Exportar diagnóstico completo de flota en Excel (${tot} vehículos)`;
       }
 
-      if (filtradas.length === 0) {
+      // Asignar a la caché de diagnóstico filtrado y renderizar página 1
+      cacheFiltradasDiag = filtradas;
+      paginaActualDiag = 1;
+      renderizarTablaDiagnostico();
+
+      // Actualizar automáticamente la Matriz de Semáforos por Posición
+      renderizarMatrizSemaforos(cli, sede, op, placa);
+    }
+
+    function renderizarTablaDiagnostico() {
+      const tbody = document.getElementById('tbodyDiagnostico');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionDiag');
+      if (!tbody) return;
+
+      if (!cacheFiltradasDiag || cacheFiltradasDiag.length === 0) {
         tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-400">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
-      } else {
-        tbody.innerHTML = filtradas.map(r => {
-          const bgRow = r.Plan_Cambio_Llanta === 'SÍ' ? 'bg-rose-50/60' : (r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ') ? 'bg-amber-50/50' : '';
-          return `
-            <tr class="${bgRow} hover:bg-slate-100 transition-colors">
-              <td class="p-2.5 font-black text-slate-900">${r['Vehículo/Placa']}</td>
-              <td class="p-2.5 font-bold">${r.Cliente || '-'}</td>
-              <td class="p-2.5">${r.Subcliente || '-'}</td>
-              <td class="p-2.5">${r.Operación || '-'}</td>
-              <td class="p-2.5">${r.Tipo || '-'}</td>
-              <td class="p-2.5 text-right font-mono">${(r.Km || 0).toLocaleString()}</td>
-              <td class="p-2.5 text-center font-bold">${r['Llantas Inspeccionadas']}</td>
-              <td class="p-2.5 text-center font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
-              <td class="p-2.5 text-center">${r.Plan_Cambio_Llanta === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-              <td class="p-2.5 text-center">${r.Plan_Alineacion === 'SÍ' ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-              <td class="p-2.5 text-center">${r.Plan_Dual_Mal_Apareado === 'SÍ' ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-              <td class="p-2.5 max-w-xs truncate font-medium text-rose-700" title="${r.Detalle_Cambio || ''}">${r.Detalle_Cambio || 'OK'}</td>
-              <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
-              <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
-              <td class="p-2.5 text-center">
-                <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
-                  <i class="fa-solid fa-file-pdf"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        return;
       }
+
+      // Cálculo de Paginación de 25 registros
+      const totalRegistros = cacheFiltradasDiag.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_DIAG) || 1;
+      if (paginaActualDiag > totalPaginas) paginaActualDiag = totalPaginas;
+      if (paginaActualDiag < 1) paginaActualDiag = 1;
+
+      const inicio = (paginaActualDiag - 1) * ITEMS_POR_PAGINA_DIAG;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_DIAG, totalRegistros);
+      const paginaItems = cacheFiltradasDiag.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(r => {
+        const bgRow = r.Plan_Cambio_Llanta === 'SÍ' ? 'bg-rose-50/60' : (r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ') ? 'bg-amber-50/50' : '';
+        return `
+          <tr class="${bgRow} hover:bg-slate-100 transition-colors">
+            <td class="p-2.5 font-black text-slate-900">
+              <div>${r['Vehículo/Placa']}</div>
+              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${r.Fecha}</div>` : ''}
+            </td>
+            <td class="p-2.5 font-bold">${r.Cliente || '-'}</td>
+            <td class="p-2.5">${r.Subcliente || '-'}</td>
+            <td class="p-2.5">${r.Operación || '-'}</td>
+            <td class="p-2.5">${r.Tipo || '-'}</td>
+            <td class="p-2.5 text-right font-mono">${(r.Km || 0).toLocaleString()}</td>
+            <td class="p-2.5 text-center font-bold">${r['Llantas Inspeccionadas']}</td>
+            <td class="p-2.5 text-center font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
+            <td class="p-2.5 text-center">${r.Plan_Cambio_Llanta === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+            <td class="p-2.5 text-center">${r.Plan_Alineacion === 'SÍ' ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+            <td class="p-2.5 text-center">${r.Plan_Dual_Mal_Apareado === 'SÍ' ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+            <td class="p-2.5 max-w-xs truncate font-medium text-rose-700" title="${r.Detalle_Cambio || ''}">${r.Detalle_Cambio || 'OK'}</td>
+            <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
+            <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
+            <td class="p-2.5 text-center">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
+                <i class="fa-solid fa-file-pdf"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin);
+    }
+
+    function actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionDiag');
+      const spanInicio = document.getElementById('pagInicioDiag');
+      const spanFin = document.getElementById('pagFinDiag');
+      const spanTotal = document.getElementById('pagTotalDiag');
+      const controles = document.getElementById('controlesPaginacionDiag');
+
+      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
+
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+      contenedor.classList.remove('hidden');
+
+      spanInicio.textContent = (inicio + 1).toLocaleString();
+      spanFin.textContent = fin.toLocaleString();
+      spanTotal.textContent = totalRegistros.toLocaleString();
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualDiag <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualDiag <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualDiag - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualDiag + 1);
+
+        if (paginaActualDiag <= 3) {
+          end = 4;
+        } else if (paginaActualDiag >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualDiag) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaDiag(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualDiag >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualDiag >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
 
       // Actualizar automáticamente la Matriz de Semáforos por Posición
       renderizarMatrizSemaforos(cli, sede, op, placa);
@@ -29783,7 +29972,7 @@ def test_obtener_llanta_por_cliente_ignora_sn(test_db):
 
 - **Ruta:** `tests/test_diagnostico.py`
 - **Descripción:** Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro)
-- **Métricas:** 139 líneas | 4,306 bytes (4.2 KB)
+- **Métricas:** 192 líneas | 6,132 bytes (6.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -29925,6 +30114,59 @@ def test_diagnostico_ignora_inspecciones_meses_anteriores(test_db):
     assert fila['Llantas Inspeccionadas'] == 1
     assert fila['Plan_Cambio_Llanta'] == 'NO'
     assert fila['Fecha'] == '2026-10-01'
+
+def test_diagnostico_orden_fecha_mas_reciente_a_mas_antigua():
+    # Verifica que analizar_inspecciones_df ordene de la inspección más reciente a la más antigua
+    datos = [
+        {
+            'placa': 'AAA100',
+            'posicion': 1,
+            'fecha': '2026-01-15',
+            'tipologia': 'Camión Sencillo (4x2)',
+            'prof_int': 8.0,
+            'prof_cent': 8.0,
+            'prof_ext': 8.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 10000
+        },
+        {
+            'placa': 'ZZZ999',
+            'posicion': 1,
+            'fecha': '2026-10-20',
+            'tipologia': 'Camión Sencillo (4x2)',
+            'prof_int': 9.0,
+            'prof_cent': 9.0,
+            'prof_ext': 9.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 20000
+        },
+        {
+            'placa': 'MMM500',
+            'posicion': 1,
+            'fecha': '2026-05-10',
+            'tipologia': 'Camión Sencillo (4x2)',
+            'prof_int': 7.0,
+            'prof_cent': 7.0,
+            'prof_ext': 7.0,
+            'dimension': '295/80R22.5',
+            'cliente': 'Test Cliente',
+            'kilometraje': 15000
+        }
+    ]
+    df = pd.DataFrame(datos)
+    res = database.analizar_inspecciones_df(df)
+    assert len(res) == 3
+    # ZZZ999 tiene fecha 2026-10-20 (más reciente)
+    assert res.iloc[0]['Vehículo/Placa'] == 'ZZZ999'
+    assert res.iloc[0]['Fecha'] == '2026-10-20'
+    # MMM500 tiene fecha 2026-05-10
+    assert res.iloc[1]['Vehículo/Placa'] == 'MMM500'
+    assert res.iloc[1]['Fecha'] == '2026-05-10'
+    # AAA100 tiene fecha 2026-01-15 (más antigua)
+    assert res.iloc[2]['Vehículo/Placa'] == 'AAA100'
+    assert res.iloc[2]['Fecha'] == '2026-01-15'
 ```
 
 ---

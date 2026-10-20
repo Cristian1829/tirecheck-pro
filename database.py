@@ -2241,7 +2241,16 @@ def analizar_inspecciones_df(df_inspecciones):
             'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK"
         })
         
-    return pd.DataFrame(resultados)
+    df_res = pd.DataFrame(resultados)
+    if not df_res.empty and 'Fecha' in df_res.columns:
+        fecha_sort = pd.to_datetime(df_res['Fecha'], errors='coerce')
+        df_res['_sort_fecha'] = fecha_sort
+        df_res = df_res.sort_values(
+            by=['_sort_fecha', 'Vehículo/Placa'],
+            ascending=[False, True],
+            na_position='last'
+        ).drop(columns=['_sort_fecha']).reset_index(drop=True)
+    return df_res
 
 if "pytest" not in sys.modules and not os.environ.get("PYTEST_CURRENT_TEST"):
     inicializar_bd()

@@ -1589,7 +1589,7 @@
       </div>
 
       <!-- Tabla de Diagnóstico Detallado -->
-      <div class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
+      <div id="contenedorTablaDiagnostico" class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
             <tr>
@@ -1616,6 +1616,23 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Barra de Paginación Diagnóstico (25 resultados por página) -->
+      <div id="contenedorPaginacionDiag" class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-xs">
+        <div class="text-xs text-slate-500 font-medium flex items-center space-x-1.5">
+          <span>Mostrando</span>
+          <span id="pagInicioDiag" class="font-bold text-slate-800">0</span>
+          <span>-</span>
+          <span id="pagFinDiag" class="font-bold text-slate-800">0</span>
+          <span>de</span>
+          <span id="pagTotalDiag" class="font-bold text-blue-600">0</span>
+          <span>vehículos</span>
+          <span class="text-slate-400 font-normal hidden sm:inline">(25 por página)</span>
+        </div>
+        <div class="flex items-center space-x-1" id="controlesPaginacionDiag">
+          <!-- Botones de páginas inyectados dinámicamente -->
+        </div>
       </div>
     </div>
 
@@ -5703,6 +5720,10 @@
     // ==========================================
     // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
     // ==========================================
+    let paginaActualDiag = 1;
+    const ITEMS_POR_PAGINA_DIAG = 25;
+    let cacheFiltradasDiag = [];
+
     async function cargarDiagnostico() {
       const tbody = document.getElementById('tbodyDiagnostico');
       const tbodyMat = document.getElementById('tbodyMatrizSemaforos');
@@ -5808,8 +5829,16 @@
       }
     }
 
+    function cambiarPaginaDiag(nuevaPagina) {
+      const totalPaginas = Math.ceil(cacheFiltradasDiag.length / ITEMS_POR_PAGINA_DIAG) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualDiag = nuevaPagina;
+      renderizarTablaDiagnostico();
+      const contTabla = document.getElementById('contenedorTablaDiagnostico');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
     function filtrarTablaDiagnostico() {
-      const tbody = document.getElementById('tbodyDiagnostico');
       const cli = document.getElementById('filtroDiagCliente')?.value || 'Todos';
       const sede = document.getElementById('filtroDiagSede')?.value || 'Todos';
       const op = document.getElementById('filtroDiagOperacion')?.value || 'Todos';
@@ -5867,6 +5896,16 @@
         return true;
       });
 
+      // Ordenar de la inspección más reciente a la más antigua (y secundariamente por placa)
+      filtradas.sort((a, b) => {
+        const fechaA = String(a.Fecha || '').trim();
+        const fechaB = String(b.Fecha || '').trim();
+        if (fechaA !== fechaB) {
+          return fechaB.localeCompare(fechaA); // Descendente: más reciente primero
+        }
+        return String(a['Vehículo/Placa'] || '').localeCompare(String(b['Vehículo/Placa'] || ''));
+      });
+
       // Actualizar tarjetas métricas
       document.getElementById('cardDiagTotal').textContent = tot;
       document.getElementById('cardDiagCambio').textContent = cambio;
@@ -5901,36 +5940,177 @@
           : `Exportar diagnóstico completo de flota en Excel (${tot} vehículos)`;
       }
 
-      if (filtradas.length === 0) {
+      // Asignar a la caché de diagnóstico filtrado y renderizar página 1
+      cacheFiltradasDiag = filtradas;
+      paginaActualDiag = 1;
+      renderizarTablaDiagnostico();
+
+      // Actualizar automáticamente la Matriz de Semáforos por Posición
+      renderizarMatrizSemaforos(cli, sede, op, placa);
+    }
+
+    function renderizarTablaDiagnostico() {
+      const tbody = document.getElementById('tbodyDiagnostico');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionDiag');
+      if (!tbody) return;
+
+      if (!cacheFiltradasDiag || cacheFiltradasDiag.length === 0) {
         tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-400">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
-      } else {
-        tbody.innerHTML = filtradas.map(r => {
-          const bgRow = r.Plan_Cambio_Llanta === 'SÍ' ? 'bg-rose-50/60' : (r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ') ? 'bg-amber-50/50' : '';
-          return `
-            <tr class="${bgRow} hover:bg-slate-100 transition-colors">
-              <td class="p-2.5 font-black text-slate-900">${r['Vehículo/Placa']}</td>
-              <td class="p-2.5 font-bold">${r.Cliente || '-'}</td>
-              <td class="p-2.5">${r.Subcliente || '-'}</td>
-              <td class="p-2.5">${r.Operación || '-'}</td>
-              <td class="p-2.5">${r.Tipo || '-'}</td>
-              <td class="p-2.5 text-right font-mono">${(r.Km || 0).toLocaleString()}</td>
-              <td class="p-2.5 text-center font-bold">${r['Llantas Inspeccionadas']}</td>
-              <td class="p-2.5 text-center font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
-              <td class="p-2.5 text-center">${r.Plan_Cambio_Llanta === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-              <td class="p-2.5 text-center">${r.Plan_Alineacion === 'SÍ' ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-              <td class="p-2.5 text-center">${r.Plan_Dual_Mal_Apareado === 'SÍ' ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
-              <td class="p-2.5 max-w-xs truncate font-medium text-rose-700" title="${r.Detalle_Cambio || ''}">${r.Detalle_Cambio || 'OK'}</td>
-              <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
-              <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
-              <td class="p-2.5 text-center">
-                <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
-                  <i class="fa-solid fa-file-pdf"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        return;
       }
+
+      // Cálculo de Paginación de 25 registros
+      const totalRegistros = cacheFiltradasDiag.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_DIAG) || 1;
+      if (paginaActualDiag > totalPaginas) paginaActualDiag = totalPaginas;
+      if (paginaActualDiag < 1) paginaActualDiag = 1;
+
+      const inicio = (paginaActualDiag - 1) * ITEMS_POR_PAGINA_DIAG;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_DIAG, totalRegistros);
+      const paginaItems = cacheFiltradasDiag.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(r => {
+        const bgRow = r.Plan_Cambio_Llanta === 'SÍ' ? 'bg-rose-50/60' : (r.Plan_Alineacion === 'SÍ' || r.Plan_Dual_Mal_Apareado === 'SÍ') ? 'bg-amber-50/50' : '';
+        return `
+          <tr class="${bgRow} hover:bg-slate-100 transition-colors">
+            <td class="p-2.5 font-black text-slate-900">
+              <div>${r['Vehículo/Placa']}</div>
+              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${r.Fecha}</div>` : ''}
+            </td>
+            <td class="p-2.5 font-bold">${r.Cliente || '-'}</td>
+            <td class="p-2.5">${r.Subcliente || '-'}</td>
+            <td class="p-2.5">${r.Operación || '-'}</td>
+            <td class="p-2.5">${r.Tipo || '-'}</td>
+            <td class="p-2.5 text-right font-mono">${(r.Km || 0).toLocaleString()}</td>
+            <td class="p-2.5 text-center font-bold">${r['Llantas Inspeccionadas']}</td>
+            <td class="p-2.5 text-center font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
+            <td class="p-2.5 text-center">${r.Plan_Cambio_Llanta === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+            <td class="p-2.5 text-center">${r.Plan_Alineacion === 'SÍ' ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+            <td class="p-2.5 text-center">${r.Plan_Dual_Mal_Apareado === 'SÍ' ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' : '<span class="text-slate-400">NO</span>'}</td>
+            <td class="p-2.5 max-w-xs truncate font-medium text-rose-700" title="${r.Detalle_Cambio || ''}">${r.Detalle_Cambio || 'OK'}</td>
+            <td class="p-2.5 max-w-xs truncate font-medium text-red-700" title="${r.Detalle_Alineacion || ''}">${r.Detalle_Alineacion || 'OK'}</td>
+            <td class="p-2.5 max-w-xs truncate font-medium text-amber-700" title="${r.Detalle_Dual || ''}">${r.Detalle_Dual || 'OK'}</td>
+            <td class="p-2.5 text-center">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs" title="Ver Plan de Mantenimiento">
+                <i class="fa-solid fa-file-pdf"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin);
+    }
+
+    function actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionDiag');
+      const spanInicio = document.getElementById('pagInicioDiag');
+      const spanFin = document.getElementById('pagFinDiag');
+      const spanTotal = document.getElementById('pagTotalDiag');
+      const controles = document.getElementById('controlesPaginacionDiag');
+
+      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
+
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+      contenedor.classList.remove('hidden');
+
+      spanInicio.textContent = (inicio + 1).toLocaleString();
+      spanFin.textContent = fin.toLocaleString();
+      spanTotal.textContent = totalRegistros.toLocaleString();
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualDiag <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualDiag <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualDiag - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualDiag + 1);
+
+        if (paginaActualDiag <= 3) {
+          end = 4;
+        } else if (paginaActualDiag >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualDiag) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaDiag(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualDiag >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualDiag >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
 
       // Actualizar automáticamente la Matriz de Semáforos por Posición
       renderizarMatrizSemaforos(cli, sede, op, placa);
