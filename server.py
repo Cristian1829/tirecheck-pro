@@ -415,6 +415,11 @@ async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict 
             except Exception:
                 pass
 
+@app.get("/api/inspecciones/ultima-marca-diseno")
+def api_inspecciones_ultima_marca_diseno(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    res = database.obtener_ultima_marca_diseno_vehiculo(placa)
+    return sanitizar_nativos(res)
+
 @app.get("/api/inspecciones/{inspeccion_id}")
 def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     with database.get_connection() as conn:

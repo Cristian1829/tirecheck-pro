@@ -1153,14 +1153,100 @@ def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', t
             cursor.execute(sql, params)
             c.commit()
 
-def obtener_perfil_vehiculo(placa: str) -> dict:
+def obtener_ultima_marca_diseno_vehiculo(placa: str) -> dict:
     pl = str(placa or '').strip().upper()
     if not pl:
         return {"encontrado": False, "placa": ""}
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT marca, diseno, dimension, prof_inicial, fecha, posicion
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ? AND marca IS NOT NULL AND TRIM(marca) != ''
+            ORDER BY fecha DESC, id DESC LIMIT 1
+        """, (pl,))
+        r = cursor.fetchone()
+        if r:
+            return {
+                "encontrado": True,
+                "placa": pl,
+                "marca": r[0] or "",
+                "diseno": r[1] or "",
+                "dimension": r[2] or "",
+                "prof_inicial": to_float(r[3], 0.0),
+                "fecha": str(r[4])[:10] if r[4] else "",
+                "posicion": r[5]
+            }
+    return {"encontrado": False, "placa": pl}
+
+def obtener_perfil_vehiculo(placa: str) -> dict:
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return {
+            "encontrado": False,
+            "placa": "",
+            "ultima_fecha_inspeccion": "",
+            "fecha_minima_permitida": "",
+            "en_periodo_restringido": False,
+            "dias_para_nueva_inspeccion": 0,
+            "inspeccion_hoy": False,
+            "ultima_marca": "",
+            "ultimo_diseno": ""
+        }
     
     with get_connection() as conn:
         cursor = conn.cursor()
-        # 1. Buscar en la última inspección registrada previamente para esa placa
+
+        # 0. Consultar la última inspección registrada de esta placa (para frecuencia, marca y diseño)
+        cursor.execute("""
+            SELECT fecha, marca, diseno, dimension, kilometraje, posicion
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ?
+            ORDER BY fecha DESC, id DESC LIMIT 1
+        """, (pl,))
+        row_ult = cursor.fetchone()
+
+        f_ult_str = ""
+        marca_ult = ""
+        diseno_ult = ""
+        dim_ult = ""
+        f_minima_str = ""
+        en_periodo_restringido = False
+        dias_restantes = 0
+        inspeccion_hoy = False
+        cant_pos_ult_fecha = 0
+
+        if row_ult and row_ult[0]:
+            f_ult_str = str(row_ult[0]).strip()[:10]
+            marca_ult = str(row_ult[1] or "").strip()
+            diseno_ult = str(row_ult[2] or "").strip()
+            dim_ult = str(row_ult[3] or "").strip()
+
+            try:
+                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
+                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
+                f_minima_str = f_minima.strftime('%Y-%m-%d')
+                hoy = date.today()
+                en_periodo_restringido = (hoy < f_minima)
+                dias_restantes = max(0, (f_minima - hoy).days) if en_periodo_restringido else 0
+                inspeccion_hoy = (f_ult_str == hoy.strftime('%Y-%m-%d'))
+            except Exception:
+                f_minima_str = ""
+                en_periodo_restringido = False
+                dias_restantes = 0
+                inspeccion_hoy = False
+
+            try:
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT posicion) FROM inspecciones
+                    WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ?
+                """, (pl, f_ult_str))
+                r_cnt = cursor.fetchone()
+                cant_pos_ult_fecha = r_cnt[0] if r_cnt else 0
+            except Exception:
+                cant_pos_ult_fecha = 0
+
+        # 1. Buscar en la última inspección registrada previamente para esa placa con tipología
         cursor.execute("""
             SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje, dimension
             FROM inspecciones
@@ -1169,7 +1255,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         """, (pl,))
         row = cursor.fetchone()
         
-        # 2. Si no ha tenido inspección previa, consultar el catálogo de vehículos
+        # 2. Si no ha tenido inspección previa con tipología, consultar el catálogo de vehículos
         if not row or not row[1]:
             cursor.execute("""
                 SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
@@ -1177,8 +1263,8 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 WHERE UPPER(TRIM(placa)) = ?
             """, (pl,))
             row = cursor.fetchone()
-            dim_vehiculo = ""
-            if row and row[0]:
+            dim_vehiculo = dim_ult
+            if not dim_vehiculo and row and row[0]:
                 cursor.execute("""
                     SELECT dimension FROM inspecciones 
                     WHERE UPPER(TRIM(placa)) = ? AND dimension IS NOT NULL AND TRIM(dimension) != ''
@@ -1188,7 +1274,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 if r_dim and r_dim[0]:
                     dim_vehiculo = str(r_dim[0]).strip()
         else:
-            dim_vehiculo = str(row[6]).strip() if len(row) > 6 and row[6] else ""
+            dim_vehiculo = str(row[6]).strip() if len(row) > 6 and row[6] else dim_ult
             # Sincronizar catálogo con los datos de la última inspección
             sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
 
@@ -1207,10 +1293,30 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "dimension": dim_vehiculo,
             "cant_llantas": len(posiciones),
             "esquema": esquema,
-            "posiciones": posiciones
+            "posiciones": posiciones,
+            # Control de frecuencia técnica e historial de inspección
+            "ultima_fecha_inspeccion": f_ult_str,
+            "fecha_minima_permitida": f_minima_str,
+            "en_periodo_restringido": en_periodo_restringido,
+            "dias_para_nueva_inspeccion": dias_restantes,
+            "inspeccion_hoy": inspeccion_hoy,
+            "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
+            "ultima_marca": marca_ult,
+            "ultimo_diseno": diseno_ult
         }
     
-    return {"encontrado": False, "placa": pl}
+    return {
+        "encontrado": False,
+        "placa": pl,
+        "ultima_fecha_inspeccion": f_ult_str,
+        "fecha_minima_permitida": f_minima_str,
+        "en_periodo_restringido": en_periodo_restringido,
+        "dias_para_nueva_inspeccion": dias_restantes,
+        "inspeccion_hoy": inspeccion_hoy,
+        "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
+        "ultima_marca": marca_ult,
+        "ultimo_diseno": diseno_ult
+    }
 
 def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "") -> dict | None:
     num_norm = str(numero_interno or '').strip().upper()

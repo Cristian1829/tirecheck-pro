@@ -632,9 +632,15 @@
                   </div>
                   <span class="text-xs sm:text-sm font-extrabold">Especificaciones de la Llanta (Posición: <b id="lblPosActualEspecificaciones" class="text-blue-600 font-mono font-black">1</b>)</span>
                 </div>
-                <span id="badgeHistorialPrevia" class="hidden text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
-                  <i class="fa-solid fa-clock-rotate-left mr-1"></i>Precargados
-                </span>
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" id="btnCopiarMarcaDisenoAnt" onclick="copiarMarcaDisenoAnterior()" class="text-[11px] px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold flex items-center space-x-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer" title="Traer la misma marca y diseño de la anterior inspección o llanta previa">
+                    <i class="fa-solid fa-clone text-[10px]"></i>
+                    <span>Copiar Marca/Diseño</span>
+                  </button>
+                  <span id="badgeHistorialPrevia" class="hidden text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i>Precargados
+                  </span>
+                </div>
               </div>
 
               <div class="grid grid-cols-2 gap-2.5">
@@ -652,7 +658,13 @@
                 <div>
                   <div class="flex items-center justify-between mb-1">
                     <label class="block text-xs font-bold text-slate-600">Marca</label>
-                    <span id="badgeMarcasModo" class="text-[10px] text-slate-500 font-bold hidden"></span>
+                    <div class="flex items-center space-x-1.5">
+                      <button type="button" onclick="copiarMarcaDisenoAnterior()" class="text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1 cursor-pointer" title="Copiar marca y diseño de la anterior inspección">
+                        <i class="fa-solid fa-copy text-[9px]"></i>
+                        <span>Misma marca/diseño</span>
+                      </button>
+                      <span id="badgeMarcasModo" class="text-[10px] text-slate-500 font-bold hidden"></span>
+                    </div>
                   </div>
                   <select id="marca" onchange="verificarOpcionNuevaSelect(this, 'marca'); alCambiarMarcaMobile();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected class="text-slate-400 font-normal">ej. Michelin (Seleccionar marca)</option>
@@ -2932,6 +2944,65 @@
           <button type="button" onclick="cerrarModalNuevoModelo()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoModelo()" id="btnGuardarModelo" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition-all"><span id="btnGuardarModeloTexto">Guardar</span></button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADVERTENCIA VEHÍCULO YA INSPECCIONADO EN EL PERÍODO PERMITIDO -->
+  <div id="modalVehiculoYaInspeccionado" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-amber-200">
+      <div class="flex items-start space-x-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+              Control de Frecuencia Técnica
+            </span>
+            <button type="button" onclick="cerrarModalVehiculoYaInspeccionado()" class="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer" title="Cerrar advertencia">
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+          <h3 class="text-base font-black text-slate-900 mt-1">Vehículo Ya Inspeccionado</h3>
+          <p class="text-xs text-slate-500">Este vehículo cuenta con una inspección registrada dentro del período de vigencia.</p>
+        </div>
+      </div>
+
+      <!-- Tarjeta informativa con Placa y Fechas -->
+      <div class="bg-amber-50/70 border border-amber-200/90 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
+          <span class="text-xs font-bold text-slate-600">Placa del Vehículo:</span>
+          <span id="popup_placa_vehiculo" class="text-sm font-black font-mono text-slate-900 bg-white px-2.5 py-0.5 rounded-lg border border-amber-200 shadow-2xs">-</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar-check text-amber-600 text-[11px]"></i>
+            <span>Última Inspección:</span>
+          </span>
+          <span id="popup_fecha_ultima_inspeccion" class="text-xs font-black text-slate-800 font-mono">-</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-white/90 p-2.5 rounded-xl border border-amber-300">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar-plus text-amber-600 text-[11px]"></i>
+            <span>Nueva Inspección Permitida:</span>
+          </span>
+          <span id="popup_fecha_permitida_inspeccion" class="text-xs font-black text-blue-700 font-mono">-</span>
+        </div>
+
+        <div id="boxPopupDiasRestantes" class="text-[11px] text-amber-800 font-medium flex items-center gap-1.5 pt-0.5">
+          <i class="fa-solid fa-circle-info text-amber-600 text-[11px] shrink-0"></i>
+          <span id="popup_dias_restantes_texto">Requiere el cumplimiento del ciclo técnico para una nueva inspección completa.</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-1">
+        <button type="button" onclick="cerrarModalVehiculoYaInspeccionado()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer">
+          <i class="fa-solid fa-check"></i>
+          <span>Entendido</span>
+        </button>
       </div>
     </div>
   </div>
@@ -9983,6 +10054,11 @@
     // ==========================================
     let timerPlacaDebounce = null;
     let ultimaPlacaConsultadaPerfil = '';
+    let ultimaPlacaPopupAlerta = '';
+    let perfilVehiculoActual = null;
+    let cacheUltimaMarcaVehiculo = '';
+    let cacheUltimoDisenoVehiculo = '';
+    let cacheUltimaDimensionVehiculo = '';
 
     function onInputPlacaDebounced() {
       clearTimeout(timerPlacaDebounce);
@@ -10015,6 +10091,17 @@
           const d = await res.json();
           const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
           if (placaActual !== placa) return;
+
+          perfilVehiculoActual = d;
+          if (d.ultima_marca) cacheUltimaMarcaVehiculo = d.ultima_marca;
+          if (d.ultimo_diseno) cacheUltimoDisenoVehiculo = d.ultimo_diseno;
+          if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
+
+          // Alerta si el vehículo ya fue inspeccionado dentro del período de vigencia técnica
+          if (d.en_periodo_restringido && ultimaPlacaPopupAlerta !== placa) {
+            mostrarModalVehiculoYaInspeccionado(d);
+            ultimaPlacaPopupAlerta = placa;
+          }
 
           if (d.encontrado) {
             // 1. Mostrar badge de tipología fija vinculada al historial
@@ -10080,6 +10167,100 @@
       } catch (err) {
         console.warn('Error al consultar perfil del vehículo:', err);
       }
+    }
+
+    function mostrarModalVehiculoYaInspeccionado(d) {
+      const modal = document.getElementById('modalVehiculoYaInspeccionado');
+      if (!modal) return;
+
+      const placaVal = d.placa || (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const elPlaca = document.getElementById('popup_placa_vehiculo');
+      if (elPlaca) elPlaca.textContent = placaVal || '-';
+
+      const elFUlt = document.getElementById('popup_fecha_ultima_inspeccion');
+      if (elFUlt) elFUlt.textContent = d.ultima_fecha_inspeccion || 'Previa registrada';
+
+      const elFMin = document.getElementById('popup_fecha_permitida_inspeccion');
+      if (elFMin) elFMin.textContent = d.fecha_minima_permitida || 'No determinada';
+
+      const elDias = document.getElementById('popup_dias_restantes_texto');
+      if (elDias) {
+        if (d.inspeccion_hoy) {
+          elDias.textContent = 'Este vehículo ya registra inspección en la fecha de hoy. Se encuentra en período de vigencia técnica.';
+        } else if (d.dias_para_nueva_inspeccion > 0) {
+          elDias.textContent = `Faltan ${d.dias_para_nueva_inspeccion} días para habilitar la próxima inspección periódica (ciclo técnico: mes siguiente + 20 días).`;
+        } else {
+          elDias.textContent = `Inspección periódica vigente. Próxima inspección habilitada a partir del ${d.fecha_minima_permitida || 'siguiente ciclo'}.`;
+        }
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalVehiculoYaInspeccionado() {
+      const modal = document.getElementById('modalVehiculoYaInspeccionado');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    async function copiarMarcaDisenoAnterior() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (!placa) {
+        mostrarToast('⚠️ Por favor ingresa primero la placa del vehículo', true);
+        return;
+      }
+
+      let marca = cacheUltimaMarcaVehiculo || (typeof datosInspeccionAnterior !== 'undefined' ? datosInspeccionAnterior?.marca : '') || perfilVehiculoActual?.ultima_marca || '';
+      let diseno = cacheUltimoDisenoVehiculo || (typeof datosInspeccionAnterior !== 'undefined' ? datosInspeccionAnterior?.diseno : '') || perfilVehiculoActual?.ultimo_diseno || '';
+      let dimension = cacheUltimaDimensionVehiculo || (typeof datosInspeccionAnterior !== 'undefined' ? datosInspeccionAnterior?.dimension : '') || perfilVehiculoActual?.dimension || '';
+
+      if (!marca || !diseno) {
+        try {
+          const resp = await fetch(`/api/inspecciones/ultima-marca-diseno?placa=${encodeURIComponent(placa)}`);
+          if (resp.ok) {
+            const d = await resp.json();
+            if (d.encontrado) {
+              marca = d.marca || marca;
+              diseno = d.diseno || diseno;
+              dimension = d.dimension || dimension;
+              if (d.marca) cacheUltimaMarcaVehiculo = d.marca;
+              if (d.diseno) cacheUltimoDisenoVehiculo = d.diseno;
+              if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
+            }
+          }
+        } catch (err) {
+          console.warn('Error consultando última marca y diseño:', err);
+        }
+      }
+
+      if (!marca) {
+        mostrarToast('ℹ️ No hay marca y diseño registrados en la inspección anterior de este vehículo.', false);
+        return;
+      }
+
+      // 1. Asignar marca en select
+      asignarValorSelect('marca', marca);
+      // Disparar carga reactiva de modelos asociados a la marca
+      await alCambiarMarcaMobile();
+
+      // 2. Asignar diseño en select
+      if (diseno) {
+        asignarValorSelect('diseno', diseno);
+      }
+
+      // 3. Asignar dimensión si está disponible
+      if (dimension && document.getElementById('dimension')) {
+        asignarValorSelect('dimension', dimension);
+      }
+
+      // 4. Autocompletar profundidad inicial según catálogo
+      await autoCompletarProfInicial();
+
+      // 5. Toast de confirmación al usuario
+      mostrarToast(`✅ Marca y diseño copiados: ${marca} ${diseno ? '- ' + diseno : ''}`, false);
     }
 
     function desbloquearTipologia() {
@@ -10208,6 +10389,9 @@
 
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
+            if (d.datos.marca) cacheUltimaMarcaVehiculo = d.datos.marca;
+            if (d.datos.diseno) cacheUltimoDisenoVehiculo = d.datos.diseno;
+            if (d.datos.dimension) cacheUltimaDimensionVehiculo = d.datos.dimension;
             const badgeHist = document.getElementById('badgeHistorialPrevia');
             if (badgeHist) {
               badgeHist.classList.remove('hidden');
@@ -10765,6 +10949,11 @@
         if (el) el.value = '';
       });
       dimensionPredeterminadaVehiculo = '';
+      perfilVehiculoActual = null;
+      ultimaPlacaPopupAlerta = '';
+      cacheUltimaMarcaVehiculo = '';
+      cacheUltimoDisenoVehiculo = '';
+      cacheUltimaDimensionVehiculo = '';
       const selDim = document.getElementById('dimension');
       if (selDim) selDim.value = '295/80R22.5';
       const selDis = document.getElementById('diseno');
@@ -11394,6 +11583,9 @@
             posicionesConNovedadPlaca.delete(pos);
           }
           actualizarBarraPosicionMobile(pos);
+          if (payload.marca) cacheUltimaMarcaVehiculo = payload.marca;
+          if (payload.diseno) cacheUltimoDisenoVehiculo = payload.diseno;
+          if (payload.dimension) cacheUltimaDimensionVehiculo = payload.dimension;
           mostrarToast(`✅ Guardada llanta Posición ${payload.posicion} de ${placa}`);
           const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
           if (pendientes.length === 0) {

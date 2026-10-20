@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 10:54:20`
+- **Fecha de Generación:** `2026-10-20 11:35:48`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,070` líneas
-- **Tamaño Total de Código Fuente:** `1881.6 KB` (`1,926,795` bytes)
+- **Líneas Totales de Código:** `33,373` líneas
+- **Tamaño Total de Código Fuente:** `1896.4 KB` (`1,941,938` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -334,8 +334,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1616 | 70.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 6044 | 288.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 1621 | 70.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 6150 | 292.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1399 | 65.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -345,7 +345,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12617 | 923.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12809 | 933.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2190,7 +2190,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 1616 líneas | 72,268 bytes (70.6 KB)
+- **Métricas:** 1621 líneas | 72,526 bytes (70.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2610,6 +2610,11 @@ async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict 
                 os.remove(tmp_path)
             except Exception:
                 pass
+
+@app.get("/api/inspecciones/ultima-marca-diseno")
+def api_inspecciones_ultima_marca_diseno(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    res = database.obtener_ultima_marca_diseno_vehiculo(placa)
+    return sanitizar_nativos(res)
 
 @app.get("/api/inspecciones/{inspeccion_id}")
 def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -3818,7 +3823,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 6044 líneas | 295,447 bytes (288.5 KB)
+- **Métricas:** 6150 líneas | 299,756 bytes (292.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4977,14 +4982,100 @@ def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', t
             cursor.execute(sql, params)
             c.commit()
 
-def obtener_perfil_vehiculo(placa: str) -> dict:
+def obtener_ultima_marca_diseno_vehiculo(placa: str) -> dict:
     pl = str(placa or '').strip().upper()
     if not pl:
         return {"encontrado": False, "placa": ""}
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT marca, diseno, dimension, prof_inicial, fecha, posicion
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ? AND marca IS NOT NULL AND TRIM(marca) != ''
+            ORDER BY fecha DESC, id DESC LIMIT 1
+        """, (pl,))
+        r = cursor.fetchone()
+        if r:
+            return {
+                "encontrado": True,
+                "placa": pl,
+                "marca": r[0] or "",
+                "diseno": r[1] or "",
+                "dimension": r[2] or "",
+                "prof_inicial": to_float(r[3], 0.0),
+                "fecha": str(r[4])[:10] if r[4] else "",
+                "posicion": r[5]
+            }
+    return {"encontrado": False, "placa": pl}
+
+def obtener_perfil_vehiculo(placa: str) -> dict:
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return {
+            "encontrado": False,
+            "placa": "",
+            "ultima_fecha_inspeccion": "",
+            "fecha_minima_permitida": "",
+            "en_periodo_restringido": False,
+            "dias_para_nueva_inspeccion": 0,
+            "inspeccion_hoy": False,
+            "ultima_marca": "",
+            "ultimo_diseno": ""
+        }
     
     with get_connection() as conn:
         cursor = conn.cursor()
-        # 1. Buscar en la última inspección registrada previamente para esa placa
+
+        # 0. Consultar la última inspección registrada de esta placa (para frecuencia, marca y diseño)
+        cursor.execute("""
+            SELECT fecha, marca, diseno, dimension, kilometraje, posicion
+            FROM inspecciones
+            WHERE UPPER(TRIM(placa)) = ?
+            ORDER BY fecha DESC, id DESC LIMIT 1
+        """, (pl,))
+        row_ult = cursor.fetchone()
+
+        f_ult_str = ""
+        marca_ult = ""
+        diseno_ult = ""
+        dim_ult = ""
+        f_minima_str = ""
+        en_periodo_restringido = False
+        dias_restantes = 0
+        inspeccion_hoy = False
+        cant_pos_ult_fecha = 0
+
+        if row_ult and row_ult[0]:
+            f_ult_str = str(row_ult[0]).strip()[:10]
+            marca_ult = str(row_ult[1] or "").strip()
+            diseno_ult = str(row_ult[2] or "").strip()
+            dim_ult = str(row_ult[3] or "").strip()
+
+            try:
+                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
+                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
+                f_minima_str = f_minima.strftime('%Y-%m-%d')
+                hoy = date.today()
+                en_periodo_restringido = (hoy < f_minima)
+                dias_restantes = max(0, (f_minima - hoy).days) if en_periodo_restringido else 0
+                inspeccion_hoy = (f_ult_str == hoy.strftime('%Y-%m-%d'))
+            except Exception:
+                f_minima_str = ""
+                en_periodo_restringido = False
+                dias_restantes = 0
+                inspeccion_hoy = False
+
+            try:
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT posicion) FROM inspecciones
+                    WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ?
+                """, (pl, f_ult_str))
+                r_cnt = cursor.fetchone()
+                cant_pos_ult_fecha = r_cnt[0] if r_cnt else 0
+            except Exception:
+                cant_pos_ult_fecha = 0
+
+        # 1. Buscar en la última inspección registrada previamente para esa placa con tipología
         cursor.execute("""
             SELECT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje, dimension
             FROM inspecciones
@@ -4993,7 +5084,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         """, (pl,))
         row = cursor.fetchone()
         
-        # 2. Si no ha tenido inspección previa, consultar el catálogo de vehículos
+        # 2. Si no ha tenido inspección previa con tipología, consultar el catálogo de vehículos
         if not row or not row[1]:
             cursor.execute("""
                 SELECT placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km
@@ -5001,8 +5092,8 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 WHERE UPPER(TRIM(placa)) = ?
             """, (pl,))
             row = cursor.fetchone()
-            dim_vehiculo = ""
-            if row and row[0]:
+            dim_vehiculo = dim_ult
+            if not dim_vehiculo and row and row[0]:
                 cursor.execute("""
                     SELECT dimension FROM inspecciones 
                     WHERE UPPER(TRIM(placa)) = ? AND dimension IS NOT NULL AND TRIM(dimension) != ''
@@ -5012,7 +5103,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 if r_dim and r_dim[0]:
                     dim_vehiculo = str(r_dim[0]).strip()
         else:
-            dim_vehiculo = str(row[6]).strip() if len(row) > 6 and row[6] else ""
+            dim_vehiculo = str(row[6]).strip() if len(row) > 6 and row[6] else dim_ult
             # Sincronizar catálogo con los datos de la última inspección
             sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
 
@@ -5031,10 +5122,30 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "dimension": dim_vehiculo,
             "cant_llantas": len(posiciones),
             "esquema": esquema,
-            "posiciones": posiciones
+            "posiciones": posiciones,
+            # Control de frecuencia técnica e historial de inspección
+            "ultima_fecha_inspeccion": f_ult_str,
+            "fecha_minima_permitida": f_minima_str,
+            "en_periodo_restringido": en_periodo_restringido,
+            "dias_para_nueva_inspeccion": dias_restantes,
+            "inspeccion_hoy": inspeccion_hoy,
+            "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
+            "ultima_marca": marca_ult,
+            "ultimo_diseno": diseno_ult
         }
     
-    return {"encontrado": False, "placa": pl}
+    return {
+        "encontrado": False,
+        "placa": pl,
+        "ultima_fecha_inspeccion": f_ult_str,
+        "fecha_minima_permitida": f_minima_str,
+        "en_periodo_restringido": en_periodo_restringido,
+        "dias_para_nueva_inspeccion": dias_restantes,
+        "inspeccion_hoy": inspeccion_hoy,
+        "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
+        "ultima_marca": marca_ult,
+        "ultimo_diseno": diseno_ult
+    }
 
 def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "") -> dict | None:
     num_norm = str(numero_interno or '').strip().upper()
@@ -14096,7 +14207,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 12617 líneas | 945,718 bytes (923.6 KB)
+- **Métricas:** 12809 líneas | 956,294 bytes (933.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -14734,9 +14845,15 @@ if __name__ == '__main__':
                   </div>
                   <span class="text-xs sm:text-sm font-extrabold">Especificaciones de la Llanta (Posición: <b id="lblPosActualEspecificaciones" class="text-blue-600 font-mono font-black">1</b>)</span>
                 </div>
-                <span id="badgeHistorialPrevia" class="hidden text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
-                  <i class="fa-solid fa-clock-rotate-left mr-1"></i>Precargados
-                </span>
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" id="btnCopiarMarcaDisenoAnt" onclick="copiarMarcaDisenoAnterior()" class="text-[11px] px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold flex items-center space-x-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer" title="Traer la misma marca y diseño de la anterior inspección o llanta previa">
+                    <i class="fa-solid fa-clone text-[10px]"></i>
+                    <span>Copiar Marca/Diseño</span>
+                  </button>
+                  <span id="badgeHistorialPrevia" class="hidden text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+                    <i class="fa-solid fa-clock-rotate-left mr-1"></i>Precargados
+                  </span>
+                </div>
               </div>
 
               <div class="grid grid-cols-2 gap-2.5">
@@ -14754,7 +14871,13 @@ if __name__ == '__main__':
                 <div>
                   <div class="flex items-center justify-between mb-1">
                     <label class="block text-xs font-bold text-slate-600">Marca</label>
-                    <span id="badgeMarcasModo" class="text-[10px] text-slate-500 font-bold hidden"></span>
+                    <div class="flex items-center space-x-1.5">
+                      <button type="button" onclick="copiarMarcaDisenoAnterior()" class="text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1 cursor-pointer" title="Copiar marca y diseño de la anterior inspección">
+                        <i class="fa-solid fa-copy text-[9px]"></i>
+                        <span>Misma marca/diseño</span>
+                      </button>
+                      <span id="badgeMarcasModo" class="text-[10px] text-slate-500 font-bold hidden"></span>
+                    </div>
                   </div>
                   <select id="marca" onchange="verificarOpcionNuevaSelect(this, 'marca'); alCambiarMarcaMobile();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected class="text-slate-400 font-normal">ej. Michelin (Seleccionar marca)</option>
@@ -17034,6 +17157,65 @@ if __name__ == '__main__':
           <button type="button" onclick="cerrarModalNuevoModelo()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoModelo()" id="btnGuardarModelo" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition-all"><span id="btnGuardarModeloTexto">Guardar</span></button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADVERTENCIA VEHÍCULO YA INSPECCIONADO EN EL PERÍODO PERMITIDO -->
+  <div id="modalVehiculoYaInspeccionado" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-amber-200">
+      <div class="flex items-start space-x-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+              Control de Frecuencia Técnica
+            </span>
+            <button type="button" onclick="cerrarModalVehiculoYaInspeccionado()" class="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer" title="Cerrar advertencia">
+              <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+          <h3 class="text-base font-black text-slate-900 mt-1">Vehículo Ya Inspeccionado</h3>
+          <p class="text-xs text-slate-500">Este vehículo cuenta con una inspección registrada dentro del período de vigencia.</p>
+        </div>
+      </div>
+
+      <!-- Tarjeta informativa con Placa y Fechas -->
+      <div class="bg-amber-50/70 border border-amber-200/90 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-amber-200/60 pb-2">
+          <span class="text-xs font-bold text-slate-600">Placa del Vehículo:</span>
+          <span id="popup_placa_vehiculo" class="text-sm font-black font-mono text-slate-900 bg-white px-2.5 py-0.5 rounded-lg border border-amber-200 shadow-2xs">-</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar-check text-amber-600 text-[11px]"></i>
+            <span>Última Inspección:</span>
+          </span>
+          <span id="popup_fecha_ultima_inspeccion" class="text-xs font-black text-slate-800 font-mono">-</span>
+        </div>
+
+        <div class="flex items-center justify-between bg-white/90 p-2.5 rounded-xl border border-amber-300">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar-plus text-amber-600 text-[11px]"></i>
+            <span>Nueva Inspección Permitida:</span>
+          </span>
+          <span id="popup_fecha_permitida_inspeccion" class="text-xs font-black text-blue-700 font-mono">-</span>
+        </div>
+
+        <div id="boxPopupDiasRestantes" class="text-[11px] text-amber-800 font-medium flex items-center gap-1.5 pt-0.5">
+          <i class="fa-solid fa-circle-info text-amber-600 text-[11px] shrink-0"></i>
+          <span id="popup_dias_restantes_texto">Requiere el cumplimiento del ciclo técnico para una nueva inspección completa.</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-1">
+        <button type="button" onclick="cerrarModalVehiculoYaInspeccionado()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer">
+          <i class="fa-solid fa-check"></i>
+          <span>Entendido</span>
+        </button>
       </div>
     </div>
   </div>
@@ -24085,6 +24267,11 @@ if __name__ == '__main__':
     // ==========================================
     let timerPlacaDebounce = null;
     let ultimaPlacaConsultadaPerfil = '';
+    let ultimaPlacaPopupAlerta = '';
+    let perfilVehiculoActual = null;
+    let cacheUltimaMarcaVehiculo = '';
+    let cacheUltimoDisenoVehiculo = '';
+    let cacheUltimaDimensionVehiculo = '';
 
     function onInputPlacaDebounced() {
       clearTimeout(timerPlacaDebounce);
@@ -24117,6 +24304,17 @@ if __name__ == '__main__':
           const d = await res.json();
           const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
           if (placaActual !== placa) return;
+
+          perfilVehiculoActual = d;
+          if (d.ultima_marca) cacheUltimaMarcaVehiculo = d.ultima_marca;
+          if (d.ultimo_diseno) cacheUltimoDisenoVehiculo = d.ultimo_diseno;
+          if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
+
+          // Alerta si el vehículo ya fue inspeccionado dentro del período de vigencia técnica
+          if (d.en_periodo_restringido && ultimaPlacaPopupAlerta !== placa) {
+            mostrarModalVehiculoYaInspeccionado(d);
+            ultimaPlacaPopupAlerta = placa;
+          }
 
           if (d.encontrado) {
             // 1. Mostrar badge de tipología fija vinculada al historial
@@ -24182,6 +24380,100 @@ if __name__ == '__main__':
       } catch (err) {
         console.warn('Error al consultar perfil del vehículo:', err);
       }
+    }
+
+    function mostrarModalVehiculoYaInspeccionado(d) {
+      const modal = document.getElementById('modalVehiculoYaInspeccionado');
+      if (!modal) return;
+
+      const placaVal = d.placa || (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const elPlaca = document.getElementById('popup_placa_vehiculo');
+      if (elPlaca) elPlaca.textContent = placaVal || '-';
+
+      const elFUlt = document.getElementById('popup_fecha_ultima_inspeccion');
+      if (elFUlt) elFUlt.textContent = d.ultima_fecha_inspeccion || 'Previa registrada';
+
+      const elFMin = document.getElementById('popup_fecha_permitida_inspeccion');
+      if (elFMin) elFMin.textContent = d.fecha_minima_permitida || 'No determinada';
+
+      const elDias = document.getElementById('popup_dias_restantes_texto');
+      if (elDias) {
+        if (d.inspeccion_hoy) {
+          elDias.textContent = 'Este vehículo ya registra inspección en la fecha de hoy. Se encuentra en período de vigencia técnica.';
+        } else if (d.dias_para_nueva_inspeccion > 0) {
+          elDias.textContent = `Faltan ${d.dias_para_nueva_inspeccion} días para habilitar la próxima inspección periódica (ciclo técnico: mes siguiente + 20 días).`;
+        } else {
+          elDias.textContent = `Inspección periódica vigente. Próxima inspección habilitada a partir del ${d.fecha_minima_permitida || 'siguiente ciclo'}.`;
+        }
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalVehiculoYaInspeccionado() {
+      const modal = document.getElementById('modalVehiculoYaInspeccionado');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    async function copiarMarcaDisenoAnterior() {
+      const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (!placa) {
+        mostrarToast('⚠️ Por favor ingresa primero la placa del vehículo', true);
+        return;
+      }
+
+      let marca = cacheUltimaMarcaVehiculo || (typeof datosInspeccionAnterior !== 'undefined' ? datosInspeccionAnterior?.marca : '') || perfilVehiculoActual?.ultima_marca || '';
+      let diseno = cacheUltimoDisenoVehiculo || (typeof datosInspeccionAnterior !== 'undefined' ? datosInspeccionAnterior?.diseno : '') || perfilVehiculoActual?.ultimo_diseno || '';
+      let dimension = cacheUltimaDimensionVehiculo || (typeof datosInspeccionAnterior !== 'undefined' ? datosInspeccionAnterior?.dimension : '') || perfilVehiculoActual?.dimension || '';
+
+      if (!marca || !diseno) {
+        try {
+          const resp = await fetch(`/api/inspecciones/ultima-marca-diseno?placa=${encodeURIComponent(placa)}`);
+          if (resp.ok) {
+            const d = await resp.json();
+            if (d.encontrado) {
+              marca = d.marca || marca;
+              diseno = d.diseno || diseno;
+              dimension = d.dimension || dimension;
+              if (d.marca) cacheUltimaMarcaVehiculo = d.marca;
+              if (d.diseno) cacheUltimoDisenoVehiculo = d.diseno;
+              if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
+            }
+          }
+        } catch (err) {
+          console.warn('Error consultando última marca y diseño:', err);
+        }
+      }
+
+      if (!marca) {
+        mostrarToast('ℹ️ No hay marca y diseño registrados en la inspección anterior de este vehículo.', false);
+        return;
+      }
+
+      // 1. Asignar marca en select
+      asignarValorSelect('marca', marca);
+      // Disparar carga reactiva de modelos asociados a la marca
+      await alCambiarMarcaMobile();
+
+      // 2. Asignar diseño en select
+      if (diseno) {
+        asignarValorSelect('diseno', diseno);
+      }
+
+      // 3. Asignar dimensión si está disponible
+      if (dimension && document.getElementById('dimension')) {
+        asignarValorSelect('dimension', dimension);
+      }
+
+      // 4. Autocompletar profundidad inicial según catálogo
+      await autoCompletarProfInicial();
+
+      // 5. Toast de confirmación al usuario
+      mostrarToast(`✅ Marca y diseño copiados: ${marca} ${diseno ? '- ' + diseno : ''}`, false);
     }
 
     function desbloquearTipologia() {
@@ -24310,6 +24602,9 @@ if __name__ == '__main__':
 
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
+            if (d.datos.marca) cacheUltimaMarcaVehiculo = d.datos.marca;
+            if (d.datos.diseno) cacheUltimoDisenoVehiculo = d.datos.diseno;
+            if (d.datos.dimension) cacheUltimaDimensionVehiculo = d.datos.dimension;
             const badgeHist = document.getElementById('badgeHistorialPrevia');
             if (badgeHist) {
               badgeHist.classList.remove('hidden');
@@ -24867,6 +25162,11 @@ if __name__ == '__main__':
         if (el) el.value = '';
       });
       dimensionPredeterminadaVehiculo = '';
+      perfilVehiculoActual = null;
+      ultimaPlacaPopupAlerta = '';
+      cacheUltimaMarcaVehiculo = '';
+      cacheUltimoDisenoVehiculo = '';
+      cacheUltimaDimensionVehiculo = '';
       const selDim = document.getElementById('dimension');
       if (selDim) selDim.value = '295/80R22.5';
       const selDis = document.getElementById('diseno');
@@ -25496,6 +25796,9 @@ if __name__ == '__main__':
             posicionesConNovedadPlaca.delete(pos);
           }
           actualizarBarraPosicionMobile(pos);
+          if (payload.marca) cacheUltimaMarcaVehiculo = payload.marca;
+          if (payload.diseno) cacheUltimoDisenoVehiculo = payload.diseno;
+          if (payload.dimension) cacheUltimaDimensionVehiculo = payload.dimension;
           mostrarToast(`✅ Guardada llanta Posición ${payload.posicion} de ${placa}`);
           const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
           if (pendientes.length === 0) {
