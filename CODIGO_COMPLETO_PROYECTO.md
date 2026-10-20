@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 11:35:48`
+- **Fecha de Generación:** `2026-10-20 11:48:36`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,373` líneas
-- **Tamaño Total de Código Fuente:** `1896.4 KB` (`1,941,938` bytes)
+- **Líneas Totales de Código:** `33,423` líneas
+- **Tamaño Total de Código Fuente:** `1898.2 KB` (`1,943,768` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -334,8 +334,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1621 | 70.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 6150 | 292.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 1625 | 71.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 6196 | 294.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1399 | 65.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -2190,7 +2190,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 1621 líneas | 72,526 bytes (70.8 KB)
+- **Métricas:** 1625 líneas | 72,697 bytes (71.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2234,6 +2234,10 @@ def startup_migracion_produccion():
         database.migrar_pepsico_a_tellantas()
     except Exception as e:
         print(f"[STARTUP] Error ejecutando migración: {e}")
+    try:
+        database.migrar_kilometraje_placa_s87341()
+    except Exception as e:
+        print(f"[STARTUP] Error ejecutando actualización kilometraje S87341: {e}")
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
@@ -3823,7 +3827,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 6150 líneas | 299,756 bytes (292.7 KB)
+- **Métricas:** 6196 líneas | 301,415 bytes (294.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4457,6 +4461,9 @@ def inicializar_bd():
         # Migración automática producción: PEPSICO FUNZA -> Cliente TELLANTAS, Sede PEPSICO FUNZA
         migrar_pepsico_a_tellantas(conn)
 
+        # Ajuste de kilometraje específico para la placa S87341 solicitada para producción
+        migrar_kilometraje_placa_s87341(conn)
+
         # Sincronización automática inicial (Backfill) de llantas_maestro desde inspecciones históricas
         sincronizar_maestro_desde_inspecciones(conn)
 
@@ -4747,6 +4754,49 @@ def migrar_pepsico_a_tellantas(conn=None):
         }
     except Exception as e:
         print(f"[MIGRACION PRODUCCION] [ALERTA] Error en migracion: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def migrar_kilometraje_placa_s87341(conn=None):
+    """
+    Actualización directa en producción para la placa S87341:
+    Ajusta el kilometraje a 23589 para todos los registros de la placa S87341,
+    tanto en la tabla inspecciones como en catalogo_vehiculos.
+    """
+    if conn is None:
+        with get_connection() as c_auto:
+            return migrar_kilometraje_placa_s87341(c_auto)
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE inspecciones 
+            SET kilometraje = 23589 
+            WHERE UPPER(TRIM(placa)) = 'S87341'
+        """)
+        insps = cur.rowcount
+
+        try:
+            cur.execute("""
+                UPDATE catalogo_vehiculos 
+                SET ultimo_km = 23589 
+                WHERE UPPER(TRIM(placa)) = 'S87341'
+            """)
+            vehs = cur.rowcount
+        except Exception:
+            vehs = 0
+
+        conn.commit()
+        if insps > 0 or vehs > 0:
+            print(f"[MIGRACION PRODUCCION] Placa S87341 actualizada a 23589 km exitosamente ({insps} inspecciones, {vehs} vehículos en catálogo).")
+        return {
+            "status": "ok",
+            "placa": "S87341",
+            "nuevo_kilometraje": 23589,
+            "inspecciones_actualizadas": insps,
+            "vehiculos_actualizados": vehs
+        }
+    except Exception as e:
+        print(f"[MIGRACION PRODUCCION] Error actualizando kilometraje S87341: {e}")
         return {"status": "error", "error": str(e)}
 
 

@@ -628,6 +628,9 @@ def inicializar_bd():
         # Migración automática producción: PEPSICO FUNZA -> Cliente TELLANTAS, Sede PEPSICO FUNZA
         migrar_pepsico_a_tellantas(conn)
 
+        # Ajuste de kilometraje específico para la placa S87341 solicitada para producción
+        migrar_kilometraje_placa_s87341(conn)
+
         # Sincronización automática inicial (Backfill) de llantas_maestro desde inspecciones históricas
         sincronizar_maestro_desde_inspecciones(conn)
 
@@ -918,6 +921,49 @@ def migrar_pepsico_a_tellantas(conn=None):
         }
     except Exception as e:
         print(f"[MIGRACION PRODUCCION] [ALERTA] Error en migracion: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+def migrar_kilometraje_placa_s87341(conn=None):
+    """
+    Actualización directa en producción para la placa S87341:
+    Ajusta el kilometraje a 23589 para todos los registros de la placa S87341,
+    tanto en la tabla inspecciones como en catalogo_vehiculos.
+    """
+    if conn is None:
+        with get_connection() as c_auto:
+            return migrar_kilometraje_placa_s87341(c_auto)
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE inspecciones 
+            SET kilometraje = 23589 
+            WHERE UPPER(TRIM(placa)) = 'S87341'
+        """)
+        insps = cur.rowcount
+
+        try:
+            cur.execute("""
+                UPDATE catalogo_vehiculos 
+                SET ultimo_km = 23589 
+                WHERE UPPER(TRIM(placa)) = 'S87341'
+            """)
+            vehs = cur.rowcount
+        except Exception:
+            vehs = 0
+
+        conn.commit()
+        if insps > 0 or vehs > 0:
+            print(f"[MIGRACION PRODUCCION] Placa S87341 actualizada a 23589 km exitosamente ({insps} inspecciones, {vehs} vehículos en catálogo).")
+        return {
+            "status": "ok",
+            "placa": "S87341",
+            "nuevo_kilometraje": 23589,
+            "inspecciones_actualizadas": insps,
+            "vehiculos_actualizados": vehs
+        }
+    except Exception as e:
+        print(f"[MIGRACION PRODUCCION] Error actualizando kilometraje S87341: {e}")
         return {"status": "error", "error": str(e)}
 
 
