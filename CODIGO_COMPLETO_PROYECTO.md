@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 10:29:00`
+- **Fecha de Generación:** `2026-10-20 10:44:00`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,074` líneas
-- **Tamaño Total de Código Fuente:** `1881.8 KB` (`1,926,936` bytes)
+- **Líneas Totales de Código:** `33,070` líneas
+- **Tamaño Total de Código Fuente:** `1881.6 KB` (`1,926,795` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -345,7 +345,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12621 | 923.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12617 | 923.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -14096,7 +14096,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 12621 líneas | 945,859 bytes (923.7 KB)
+- **Métricas:** 12617 líneas | 945,718 bytes (923.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -20212,10 +20212,6 @@ if __name__ == '__main__':
       `;
 
       controles.innerHTML = html;
-    }
-
-      // Actualizar automáticamente la Matriz de Semáforos por Posición
-      renderizarMatrizSemaforos(cli, sede, op, placa);
     }
 
     function renderizarMatrizSemaforos(cli, sede, op, placa) {
