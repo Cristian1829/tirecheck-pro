@@ -1086,6 +1086,49 @@ def migrar_normalizar_vida_llantas(conn=None):
         return {"status": "error", "error": str(e)}
 
 
+def sincronizar_kilometraje_por_vehiculo_y_fecha(conn=None):
+    """
+    Sincroniza y propaga el kilometraje de cada inspección a todas las llantas del mismo vehículo
+    en la misma fecha de inspección. Si una llanta tiene kilometraje > 0, todas las demás llantas
+    de esa misma placa y fecha deben tener exactamente ese mismo kilometraje.
+    """
+    def _ejecutar(c):
+        cur = c.cursor()
+        cur.execute("""
+            SELECT UPPER(TRIM(placa)), SUBSTR(fecha, 1, 10), MAX(kilometraje)
+            FROM inspecciones
+            WHERE kilometraje > 0 AND placa IS NOT NULL AND TRIM(placa) != ''
+            GROUP BY UPPER(TRIM(placa)), SUBSTR(fecha, 1, 10)
+        """)
+        grupos = cur.fetchall()
+        actualizados = 0
+        for pl, f_dia, max_km in grupos:
+            if max_km and max_km > 0:
+                cur.execute("""
+                    UPDATE inspecciones
+                    SET kilometraje = ?
+                    WHERE UPPER(TRIM(placa)) = ?
+                      AND SUBSTR(fecha, 1, 10) = ?
+                      AND (kilometraje != ? OR kilometraje IS NULL OR kilometraje = 0)
+                """, (max_km, pl, f_dia, max_km))
+                actualizados += cur.rowcount
+                cur.execute("""
+                    UPDATE catalogo_vehiculos
+                    SET ultimo_km = MAX(COALESCE(ultimo_km, 0), ?)
+                    WHERE UPPER(TRIM(placa)) = ?
+                """, (max_km, pl))
+        if actualizados > 0:
+            print(f"[SINCRONIZAR KM] Se unificó el kilometraje en {actualizados} llantas de inspecciones previas.")
+        return actualizados
+
+    if conn is not None:
+        return _ejecutar(conn)
+    with get_connection() as c:
+        res = _ejecutar(c)
+        c.commit()
+        return res
+
+
 def sincronizar_maestro_desde_inspecciones(conn=None):
     """
     Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
@@ -1447,6 +1490,12 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         tip = row[1]
         posiciones = obtener_posiciones_por_tipologia(tip)
         esquema = obtener_esquema_tipologia(tip)
+        ultimo_km_val = to_float(row[5], 0.0)
+        if ultimo_km_val <= 0:
+            cursor.execute("SELECT MAX(kilometraje) FROM inspecciones WHERE UPPER(TRIM(placa)) = ?", (pl,))
+            r_max_km = cursor.fetchone()
+            if r_max_km and r_max_km[0]:
+                ultimo_km_val = to_float(r_max_km[0], 0.0)
         return {
             "encontrado": True,
             "placa": row[0],
@@ -1454,7 +1503,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "cliente": row[2] or "",
             "subcliente": row[3] or "",
             "tipo_operacion": row[4] or "",
-            "ultimo_km": to_float(row[5], 0.0),
+            "ultimo_km": ultimo_km_val,
             "dimension": dim_vehiculo,
             "cant_llantas": len(posiciones),
             "esquema": esquema,
@@ -1944,8 +1993,25 @@ def insertar_inspeccion(datos):
     else:
         datos['numero_interno'] = num_int_norm
     vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
+    placa_norm = str(datos.get('placa', '')).strip().upper()
+    fecha_norm = str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))).strip()
+    fecha_dia = fecha_norm[:10]
+    km_final = to_float(datos.get('kilometraje', 0))
+
     with get_connection() as conn:
         cursor = conn.cursor()
+        # Si kilometraje viene en 0, buscar si otra llanta de este vehículo en la misma fecha ya tiene kilometraje
+        if km_final <= 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                SELECT kilometraje FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ? AND kilometraje > 0
+                ORDER BY id DESC LIMIT 1
+            """, (placa_norm, fecha_dia))
+            r_km_prev = cursor.fetchone()
+            if r_km_prev and r_km_prev[0] and r_km_prev[0] > 0:
+                km_final = to_float(r_km_prev[0])
+                datos['kilometraje'] = km_final
+
         cursor.execute("""
             INSERT INTO inspecciones (
                 fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
@@ -1953,13 +2019,13 @@ def insertar_inspeccion(datos):
                 prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))),
+            fecha_norm,
             str(datos.get('cliente', '')).strip().upper(),
             str(datos.get('subcliente', '')).strip().upper(),
             str(datos.get('tipo_operacion', '')).strip().upper(),
-            str(datos.get('placa', '')).strip().upper(),
+            placa_norm,
             to_int(datos.get('posicion', 1)),
-            to_float(datos.get('kilometraje', 0)),
+            km_final,
             str(datos.get('tipologia', '')).strip().upper(),
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
@@ -1978,8 +2044,23 @@ def insertar_inspeccion(datos):
             str(datos.get('usuario_registro', '')).strip().upper(),
             str(datos.get('foto_novedad', '')).strip()
         ))
-        conn.commit()
         last_id = cursor.lastrowid
+
+        # Si el kilometraje registrado es > 0, sincronizar y propagar a TODAS las llantas de este vehículo en esta fecha
+        if km_final > 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                UPDATE inspecciones
+                SET kilometraje = ?
+                WHERE UPPER(TRIM(placa)) = ?
+                  AND SUBSTR(fecha, 1, 10) = ?
+                  AND (kilometraje != ? OR kilometraje IS NULL OR kilometraje = 0)
+            """, (km_final, placa_norm, fecha_dia, km_final))
+            cursor.execute("""
+                UPDATE catalogo_vehiculos
+                SET ultimo_km = MAX(COALESCE(ultimo_km, 0), ?)
+                WHERE UPPER(TRIM(placa)) = ?
+            """, (km_final, placa_norm))
+        conn.commit()
     sincronizar_vehiculo_catalogo(
         datos.get('placa'),
         datos.get('tipologia'),
@@ -2023,8 +2104,25 @@ def actualizar_inspeccion(inspeccion_id, datos):
     Todos los campos de texto se persisten en mayúsculas.
     """
     vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
+    placa_norm = str(datos.get('placa', '')).strip().upper()
+    fecha_norm = str(datos.get('fecha', '')).strip()
+    fecha_dia = fecha_norm[:10]
+    km_final = to_float(datos.get('kilometraje', 0))
+
     with get_connection() as conn:
         cursor = conn.cursor()
+        # Si kilometraje viene en 0, heredar de otra llanta de este vehículo en la misma fecha si existe
+        if km_final <= 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                SELECT kilometraje FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ? AND kilometraje > 0 AND id != ?
+                ORDER BY id DESC LIMIT 1
+            """, (placa_norm, fecha_dia, inspeccion_id))
+            r_km_prev = cursor.fetchone()
+            if r_km_prev and r_km_prev[0] and r_km_prev[0] > 0:
+                km_final = to_float(r_km_prev[0])
+                datos['kilometraje'] = km_final
+
         cursor.execute("""
             UPDATE inspecciones SET
                 fecha = ?, cliente = ?, subcliente = ?, tipo_operacion = ?, placa = ?,
@@ -2034,13 +2132,13 @@ def actualizar_inspeccion(inspeccion_id, datos):
                 km_montaje = ?, numero_interno = ?, foto_novedad = ?
             WHERE id = ?
         """, (
-            str(datos.get('fecha', '')),
+            fecha_norm,
             str(datos.get('cliente', '')).strip().upper(),
             str(datos.get('subcliente', '')).strip().upper(),
             str(datos.get('tipo_operacion', '')).strip().upper(),
-            str(datos.get('placa', '')).strip().upper(),
+            placa_norm,
             to_int(datos.get('posicion', 1)),
-            to_float(datos.get('kilometraje', 0)),
+            km_final,
             str(datos.get('tipologia', '')).strip().upper(),
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
@@ -2059,8 +2157,23 @@ def actualizar_inspeccion(inspeccion_id, datos):
             str(datos.get('foto_novedad', '')).strip(),
             inspeccion_id
         ))
-        conn.commit()
         ok = cursor.rowcount > 0
+
+        # Si el kilometraje registrado es > 0, sincronizar y propagar a TODAS las llantas de este vehículo en esta fecha
+        if km_final > 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                UPDATE inspecciones
+                SET kilometraje = ?
+                WHERE UPPER(TRIM(placa)) = ?
+                  AND SUBSTR(fecha, 1, 10) = ?
+                  AND (kilometraje != ? OR kilometraje IS NULL OR kilometraje = 0)
+            """, (km_final, placa_norm, fecha_dia, km_final))
+            cursor.execute("""
+                UPDATE catalogo_vehiculos
+                SET ultimo_km = MAX(COALESCE(ultimo_km, 0), ?)
+                WHERE UPPER(TRIM(placa)) = ?
+            """, (km_final, placa_norm))
+        conn.commit()
     if ok:
         sincronizar_vehiculo_catalogo(
             datos.get('placa'),
@@ -2688,7 +2801,18 @@ def obtener_ultima_inspeccion_posicion(placa, posicion):
             'prof_ext', 'prof_cent', 'prof_int', 'psi', 'novedades', 'precio', 'prof_inicial',
             'km_montaje', 'numero_interno'
         ]
-        return dict(zip(cols, row))
+        d_res = dict(zip(cols, row))
+        if to_float(d_res.get('kilometraje', 0)) <= 0 and d_res.get('fecha'):
+            f_dia = str(d_res['fecha'])[:10]
+            cursor.execute("""
+                SELECT kilometraje FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ? AND kilometraje > 0
+                ORDER BY id DESC LIMIT 1
+            """, (pl, f_dia))
+            r_km = cursor.fetchone()
+            if r_km and r_km[0] and r_km[0] > 0:
+                d_res['kilometraje'] = to_float(r_km[0])
+        return d_res
 
 def buscar_modelos_llantas_filtro(termino=''):
     t = f"%{str(termino or '').strip().lower()}%"

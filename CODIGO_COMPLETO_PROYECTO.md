@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-20 12:47:17`
+- **Fecha de Generación:** `2026-10-20 13:10:50`
 - **Total de Archivos Incluidos:** `47` archivos de código y documentación
-- **Líneas Totales de Código:** `33,588` líneas
-- **Tamaño Total de Código Fuente:** `1906.0 KB` (`1,951,766` bytes)
+- **Líneas Totales de Código:** `33,768` líneas
+- **Tamaño Total de Código Fuente:** `1914.4 KB` (`1,960,338` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -334,8 +334,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1638 | 71.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 6313 | 299.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 1642 | 72.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 6437 | 304.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1399 | 65.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
@@ -345,7 +345,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12844 | 936.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 12896 | 938.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -2190,7 +2190,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático
-- **Métricas:** 1638 líneas | 73,500 bytes (71.8 KB)
+- **Métricas:** 1642 líneas | 73,681 bytes (72.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -2242,6 +2242,10 @@ def startup_migracion_produccion():
         database.migrar_normalizar_vida_llantas()
     except Exception as e:
         print(f"[STARTUP] Error ejecutando normalización vida llantas: {e}")
+    try:
+        database.sincronizar_kilometraje_por_vehiculo_y_fecha()
+    except Exception as e:
+        print(f"[STARTUP] Error sincronizando kilometraje de inspecciones: {e}")
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
@@ -3840,7 +3844,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos
-- **Métricas:** 6313 líneas | 306,293 bytes (299.1 KB)
+- **Métricas:** 6437 líneas | 312,059 bytes (304.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4932,6 +4936,49 @@ def migrar_normalizar_vida_llantas(conn=None):
         return {"status": "error", "error": str(e)}
 
 
+def sincronizar_kilometraje_por_vehiculo_y_fecha(conn=None):
+    """
+    Sincroniza y propaga el kilometraje de cada inspección a todas las llantas del mismo vehículo
+    en la misma fecha de inspección. Si una llanta tiene kilometraje > 0, todas las demás llantas
+    de esa misma placa y fecha deben tener exactamente ese mismo kilometraje.
+    """
+    def _ejecutar(c):
+        cur = c.cursor()
+        cur.execute("""
+            SELECT UPPER(TRIM(placa)), SUBSTR(fecha, 1, 10), MAX(kilometraje)
+            FROM inspecciones
+            WHERE kilometraje > 0 AND placa IS NOT NULL AND TRIM(placa) != ''
+            GROUP BY UPPER(TRIM(placa)), SUBSTR(fecha, 1, 10)
+        """)
+        grupos = cur.fetchall()
+        actualizados = 0
+        for pl, f_dia, max_km in grupos:
+            if max_km and max_km > 0:
+                cur.execute("""
+                    UPDATE inspecciones
+                    SET kilometraje = ?
+                    WHERE UPPER(TRIM(placa)) = ?
+                      AND SUBSTR(fecha, 1, 10) = ?
+                      AND (kilometraje != ? OR kilometraje IS NULL OR kilometraje = 0)
+                """, (max_km, pl, f_dia, max_km))
+                actualizados += cur.rowcount
+                cur.execute("""
+                    UPDATE catalogo_vehiculos
+                    SET ultimo_km = MAX(COALESCE(ultimo_km, 0), ?)
+                    WHERE UPPER(TRIM(placa)) = ?
+                """, (max_km, pl))
+        if actualizados > 0:
+            print(f"[SINCRONIZAR KM] Se unificó el kilometraje en {actualizados} llantas de inspecciones previas.")
+        return actualizados
+
+    if conn is not None:
+        return _ejecutar(conn)
+    with get_connection() as c:
+        res = _ejecutar(c)
+        c.commit()
+        return res
+
+
 def sincronizar_maestro_desde_inspecciones(conn=None):
     """
     Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
@@ -5293,6 +5340,12 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         tip = row[1]
         posiciones = obtener_posiciones_por_tipologia(tip)
         esquema = obtener_esquema_tipologia(tip)
+        ultimo_km_val = to_float(row[5], 0.0)
+        if ultimo_km_val <= 0:
+            cursor.execute("SELECT MAX(kilometraje) FROM inspecciones WHERE UPPER(TRIM(placa)) = ?", (pl,))
+            r_max_km = cursor.fetchone()
+            if r_max_km and r_max_km[0]:
+                ultimo_km_val = to_float(r_max_km[0], 0.0)
         return {
             "encontrado": True,
             "placa": row[0],
@@ -5300,7 +5353,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "cliente": row[2] or "",
             "subcliente": row[3] or "",
             "tipo_operacion": row[4] or "",
-            "ultimo_km": to_float(row[5], 0.0),
+            "ultimo_km": ultimo_km_val,
             "dimension": dim_vehiculo,
             "cant_llantas": len(posiciones),
             "esquema": esquema,
@@ -5790,8 +5843,25 @@ def insertar_inspeccion(datos):
     else:
         datos['numero_interno'] = num_int_norm
     vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
+    placa_norm = str(datos.get('placa', '')).strip().upper()
+    fecha_norm = str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))).strip()
+    fecha_dia = fecha_norm[:10]
+    km_final = to_float(datos.get('kilometraje', 0))
+
     with get_connection() as conn:
         cursor = conn.cursor()
+        # Si kilometraje viene en 0, buscar si otra llanta de este vehículo en la misma fecha ya tiene kilometraje
+        if km_final <= 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                SELECT kilometraje FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ? AND kilometraje > 0
+                ORDER BY id DESC LIMIT 1
+            """, (placa_norm, fecha_dia))
+            r_km_prev = cursor.fetchone()
+            if r_km_prev and r_km_prev[0] and r_km_prev[0] > 0:
+                km_final = to_float(r_km_prev[0])
+                datos['kilometraje'] = km_final
+
         cursor.execute("""
             INSERT INTO inspecciones (
                 fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
@@ -5799,13 +5869,13 @@ def insertar_inspeccion(datos):
                 prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))),
+            fecha_norm,
             str(datos.get('cliente', '')).strip().upper(),
             str(datos.get('subcliente', '')).strip().upper(),
             str(datos.get('tipo_operacion', '')).strip().upper(),
-            str(datos.get('placa', '')).strip().upper(),
+            placa_norm,
             to_int(datos.get('posicion', 1)),
-            to_float(datos.get('kilometraje', 0)),
+            km_final,
             str(datos.get('tipologia', '')).strip().upper(),
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
@@ -5824,8 +5894,23 @@ def insertar_inspeccion(datos):
             str(datos.get('usuario_registro', '')).strip().upper(),
             str(datos.get('foto_novedad', '')).strip()
         ))
-        conn.commit()
         last_id = cursor.lastrowid
+
+        # Si el kilometraje registrado es > 0, sincronizar y propagar a TODAS las llantas de este vehículo en esta fecha
+        if km_final > 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                UPDATE inspecciones
+                SET kilometraje = ?
+                WHERE UPPER(TRIM(placa)) = ?
+                  AND SUBSTR(fecha, 1, 10) = ?
+                  AND (kilometraje != ? OR kilometraje IS NULL OR kilometraje = 0)
+            """, (km_final, placa_norm, fecha_dia, km_final))
+            cursor.execute("""
+                UPDATE catalogo_vehiculos
+                SET ultimo_km = MAX(COALESCE(ultimo_km, 0), ?)
+                WHERE UPPER(TRIM(placa)) = ?
+            """, (km_final, placa_norm))
+        conn.commit()
     sincronizar_vehiculo_catalogo(
         datos.get('placa'),
         datos.get('tipologia'),
@@ -5869,8 +5954,25 @@ def actualizar_inspeccion(inspeccion_id, datos):
     Todos los campos de texto se persisten en mayúsculas.
     """
     vida_final, banda_final = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
+    placa_norm = str(datos.get('placa', '')).strip().upper()
+    fecha_norm = str(datos.get('fecha', '')).strip()
+    fecha_dia = fecha_norm[:10]
+    km_final = to_float(datos.get('kilometraje', 0))
+
     with get_connection() as conn:
         cursor = conn.cursor()
+        # Si kilometraje viene en 0, heredar de otra llanta de este vehículo en la misma fecha si existe
+        if km_final <= 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                SELECT kilometraje FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ? AND kilometraje > 0 AND id != ?
+                ORDER BY id DESC LIMIT 1
+            """, (placa_norm, fecha_dia, inspeccion_id))
+            r_km_prev = cursor.fetchone()
+            if r_km_prev and r_km_prev[0] and r_km_prev[0] > 0:
+                km_final = to_float(r_km_prev[0])
+                datos['kilometraje'] = km_final
+
         cursor.execute("""
             UPDATE inspecciones SET
                 fecha = ?, cliente = ?, subcliente = ?, tipo_operacion = ?, placa = ?,
@@ -5880,13 +5982,13 @@ def actualizar_inspeccion(inspeccion_id, datos):
                 km_montaje = ?, numero_interno = ?, foto_novedad = ?
             WHERE id = ?
         """, (
-            str(datos.get('fecha', '')),
+            fecha_norm,
             str(datos.get('cliente', '')).strip().upper(),
             str(datos.get('subcliente', '')).strip().upper(),
             str(datos.get('tipo_operacion', '')).strip().upper(),
-            str(datos.get('placa', '')).strip().upper(),
+            placa_norm,
             to_int(datos.get('posicion', 1)),
-            to_float(datos.get('kilometraje', 0)),
+            km_final,
             str(datos.get('tipologia', '')).strip().upper(),
             str(datos.get('marca', '')).strip().upper(),
             str(datos.get('diseno', '')).strip().upper(),
@@ -5905,8 +6007,23 @@ def actualizar_inspeccion(inspeccion_id, datos):
             str(datos.get('foto_novedad', '')).strip(),
             inspeccion_id
         ))
-        conn.commit()
         ok = cursor.rowcount > 0
+
+        # Si el kilometraje registrado es > 0, sincronizar y propagar a TODAS las llantas de este vehículo en esta fecha
+        if km_final > 0 and placa_norm and fecha_dia:
+            cursor.execute("""
+                UPDATE inspecciones
+                SET kilometraje = ?
+                WHERE UPPER(TRIM(placa)) = ?
+                  AND SUBSTR(fecha, 1, 10) = ?
+                  AND (kilometraje != ? OR kilometraje IS NULL OR kilometraje = 0)
+            """, (km_final, placa_norm, fecha_dia, km_final))
+            cursor.execute("""
+                UPDATE catalogo_vehiculos
+                SET ultimo_km = MAX(COALESCE(ultimo_km, 0), ?)
+                WHERE UPPER(TRIM(placa)) = ?
+            """, (km_final, placa_norm))
+        conn.commit()
     if ok:
         sincronizar_vehiculo_catalogo(
             datos.get('placa'),
@@ -6534,7 +6651,18 @@ def obtener_ultima_inspeccion_posicion(placa, posicion):
             'prof_ext', 'prof_cent', 'prof_int', 'psi', 'novedades', 'precio', 'prof_inicial',
             'km_montaje', 'numero_interno'
         ]
-        return dict(zip(cols, row))
+        d_res = dict(zip(cols, row))
+        if to_float(d_res.get('kilometraje', 0)) <= 0 and d_res.get('fecha'):
+            f_dia = str(d_res['fecha'])[:10]
+            cursor.execute("""
+                SELECT kilometraje FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND SUBSTR(fecha, 1, 10) = ? AND kilometraje > 0
+                ORDER BY id DESC LIMIT 1
+            """, (pl, f_dia))
+            r_km = cursor.fetchone()
+            if r_km and r_km[0] and r_km[0] > 0:
+                d_res['kilometraje'] = to_float(r_km[0])
+        return d_res
 
 def buscar_modelos_llantas_filtro(termino=''):
     t = f"%{str(termino or '').strip().lower()}%"
@@ -14387,7 +14515,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)
-- **Métricas:** 12844 líneas | 958,611 bytes (936.1 KB)
+- **Métricas:** 12896 líneas | 961,236 bytes (938.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -14858,7 +14986,7 @@ if __name__ == '__main__':
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
-                <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+                <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
               </div>
 
               <div>
@@ -18165,6 +18293,14 @@ if __name__ == '__main__':
     let galeriaFotoIndexActual = 0;
     let ruedaSinRepuestoMarcada = false;
     let dimensionPredeterminadaVehiculo = '';
+    let kilometrajeInspeccionActual = null;
+    function alCambiarKilometrajeInput() {
+      const v = parseFloat(document.getElementById('kilometraje')?.value) || 0;
+      if (v > 0) {
+        kilometrajeInspeccionActual = v;
+        actualizarResumenVehiculoMobile();
+      }
+    }
     let usuarioActual = null;
     function esUsuarioAdmin() {
       if (!usuarioActual) return false;
@@ -24387,6 +24523,15 @@ if __name__ == '__main__':
         dimensionPredeterminadaVehiculo = dimActual;
       }
 
+      // Si el usuario ingresó un kilometraje en cualquier llanta, conservarlo y reflejarlo en todas las llantas
+      const kmActual = parseFloat(document.getElementById('kilometraje')?.value) || 0;
+      if (kmActual > 0) {
+        kilometrajeInspeccionActual = kmActual;
+      } else if (kilometrajeInspeccionActual > 0) {
+        const inpKm = document.getElementById('kilometraje');
+        if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+      }
+
       document.getElementById('posicion').value = p;
       const lblPos = document.getElementById('lblPosActualForm');
       if (lblPos) lblPos.textContent = p;
@@ -24542,8 +24687,11 @@ if __name__ == '__main__':
 
             // 3. Odómetro / Km si está disponible
             const inputKm = document.getElementById('kilometraje');
-            if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
-              inputKm.value = Math.round(d.ultimo_km);
+            if (d.ultimo_km > 0) {
+              kilometrajeInspeccionActual = d.ultimo_km;
+              if (inputKm) inputKm.value = Math.round(d.ultimo_km);
+            } else if (kilometrajeInspeccionActual > 0 && inputKm) {
+              inputKm.value = Math.round(kilometrajeInspeccionActual);
             }
 
             // 4. Seleccionar Tipología y BLOQUEARLA estrictamente (un vehículo no cambia de tipología)
@@ -24837,6 +24985,16 @@ if __name__ == '__main__':
                 const inpKmMont = document.getElementById('km_montaje');
                 if (inpKmMont) inpKmMont.value = d.datos.km_montaje;
               }
+              if (d.datos.kilometraje && parseFloat(d.datos.kilometraje) > 0) {
+                kilometrajeInspeccionActual = parseFloat(d.datos.kilometraje);
+                const inpKm = document.getElementById('kilometraje');
+                if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+              } else if (kilometrajeInspeccionActual > 0) {
+                const inpKm = document.getElementById('kilometraje');
+                if (inpKm && (!inpKm.value || inpKm.value === '0')) {
+                  inpKm.value = Math.round(kilometrajeInspeccionActual);
+                }
+              }
               validarVida();
               await autoCompletarProfInicial();
               if (d.datos.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
@@ -24928,12 +25086,25 @@ if __name__ == '__main__':
                   bCli.classList.add('hidden');
                 }
               }
+              if (kilometrajeInspeccionActual > 0) {
+                const inpKm = document.getElementById('kilometraje');
+                if (inpKm && (!inpKm.value || inpKm.value === '0')) {
+                  inpKm.value = Math.round(kilometrajeInspeccionActual);
+                }
+              }
             }
           } else {
             // Posición sin registro previo
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             document.getElementById('badgeLlantaCliente')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+
+            if (kilometrajeInspeccionActual > 0) {
+              const inpKm = document.getElementById('kilometraje');
+              if (inpKm && (!inpKm.value || inpKm.value === '0')) {
+                inpKm.value = Math.round(kilometrajeInspeccionActual);
+              }
+            }
 
             // Si aún no se ha inspeccionado hoy, limpiar las especificaciones para ingresar llanta nueva
             if (!yaInspeccionadaHoy) {
@@ -25364,6 +25535,7 @@ if __name__ == '__main__':
         if (el) el.value = '';
       });
       dimensionPredeterminadaVehiculo = '';
+      kilometrajeInspeccionActual = null;
       perfilVehiculoActual = null;
       ultimaPlacaPopupAlerta = '';
       cacheUltimaMarcaVehiculo = '';
@@ -25965,7 +26137,11 @@ if __name__ == '__main__':
         tipo_operacion: document.getElementById('tipo_operacion').value,
         placa: placa,
         posicion: pos,
-        kilometraje: parseFloat(document.getElementById('kilometraje').value) || 0,
+        kilometraje: (() => {
+          const k = parseFloat(document.getElementById('kilometraje').value) || 0;
+          if (k > 0) kilometrajeInspeccionActual = k;
+          return k > 0 ? k : (kilometrajeInspeccionActual || 0);
+        })(),
         tipologia: document.getElementById('tipologia').value,
         marca: document.getElementById('marca').value,
         diseno: document.getElementById('diseno').value,
@@ -26028,6 +26204,10 @@ if __name__ == '__main__':
           } else {
             limpiarSoloMedicionesCaptura();
             avanzarSiguientePosicion(pos);
+            if (kilometrajeInspeccionActual > 0) {
+              const inpKm = document.getElementById('kilometraje');
+              if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+            }
 
             // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
             if (window.innerWidth < 1024) {

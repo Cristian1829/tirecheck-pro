@@ -465,7 +465,7 @@
             <div class="grid grid-cols-2 gap-2.5">
               <div>
                 <label class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
-                <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+                <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
               </div>
 
               <div>
@@ -3772,6 +3772,14 @@
     let galeriaFotoIndexActual = 0;
     let ruedaSinRepuestoMarcada = false;
     let dimensionPredeterminadaVehiculo = '';
+    let kilometrajeInspeccionActual = null;
+    function alCambiarKilometrajeInput() {
+      const v = parseFloat(document.getElementById('kilometraje')?.value) || 0;
+      if (v > 0) {
+        kilometrajeInspeccionActual = v;
+        actualizarResumenVehiculoMobile();
+      }
+    }
     let usuarioActual = null;
     function esUsuarioAdmin() {
       if (!usuarioActual) return false;
@@ -9994,6 +10002,15 @@
         dimensionPredeterminadaVehiculo = dimActual;
       }
 
+      // Si el usuario ingresó un kilometraje en cualquier llanta, conservarlo y reflejarlo en todas las llantas
+      const kmActual = parseFloat(document.getElementById('kilometraje')?.value) || 0;
+      if (kmActual > 0) {
+        kilometrajeInspeccionActual = kmActual;
+      } else if (kilometrajeInspeccionActual > 0) {
+        const inpKm = document.getElementById('kilometraje');
+        if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+      }
+
       document.getElementById('posicion').value = p;
       const lblPos = document.getElementById('lblPosActualForm');
       if (lblPos) lblPos.textContent = p;
@@ -10149,8 +10166,11 @@
 
             // 3. Odómetro / Km si está disponible
             const inputKm = document.getElementById('kilometraje');
-            if (inputKm && (!inputKm.value || inputKm.value === '0') && d.ultimo_km > 0) {
-              inputKm.value = Math.round(d.ultimo_km);
+            if (d.ultimo_km > 0) {
+              kilometrajeInspeccionActual = d.ultimo_km;
+              if (inputKm) inputKm.value = Math.round(d.ultimo_km);
+            } else if (kilometrajeInspeccionActual > 0 && inputKm) {
+              inputKm.value = Math.round(kilometrajeInspeccionActual);
             }
 
             // 4. Seleccionar Tipología y BLOQUEARLA estrictamente (un vehículo no cambia de tipología)
@@ -10444,6 +10464,16 @@
                 const inpKmMont = document.getElementById('km_montaje');
                 if (inpKmMont) inpKmMont.value = d.datos.km_montaje;
               }
+              if (d.datos.kilometraje && parseFloat(d.datos.kilometraje) > 0) {
+                kilometrajeInspeccionActual = parseFloat(d.datos.kilometraje);
+                const inpKm = document.getElementById('kilometraje');
+                if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+              } else if (kilometrajeInspeccionActual > 0) {
+                const inpKm = document.getElementById('kilometraje');
+                if (inpKm && (!inpKm.value || inpKm.value === '0')) {
+                  inpKm.value = Math.round(kilometrajeInspeccionActual);
+                }
+              }
               validarVida();
               await autoCompletarProfInicial();
               if (d.datos.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
@@ -10535,12 +10565,25 @@
                   bCli.classList.add('hidden');
                 }
               }
+              if (kilometrajeInspeccionActual > 0) {
+                const inpKm = document.getElementById('kilometraje');
+                if (inpKm && (!inpKm.value || inpKm.value === '0')) {
+                  inpKm.value = Math.round(kilometrajeInspeccionActual);
+                }
+              }
             }
           } else {
             // Posición sin registro previo
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             document.getElementById('badgeLlantaCliente')?.classList.add('hidden');
             datosInspeccionAnterior = null;
+
+            if (kilometrajeInspeccionActual > 0) {
+              const inpKm = document.getElementById('kilometraje');
+              if (inpKm && (!inpKm.value || inpKm.value === '0')) {
+                inpKm.value = Math.round(kilometrajeInspeccionActual);
+              }
+            }
 
             // Si aún no se ha inspeccionado hoy, limpiar las especificaciones para ingresar llanta nueva
             if (!yaInspeccionadaHoy) {
@@ -10971,6 +11014,7 @@
         if (el) el.value = '';
       });
       dimensionPredeterminadaVehiculo = '';
+      kilometrajeInspeccionActual = null;
       perfilVehiculoActual = null;
       ultimaPlacaPopupAlerta = '';
       cacheUltimaMarcaVehiculo = '';
@@ -11572,7 +11616,11 @@
         tipo_operacion: document.getElementById('tipo_operacion').value,
         placa: placa,
         posicion: pos,
-        kilometraje: parseFloat(document.getElementById('kilometraje').value) || 0,
+        kilometraje: (() => {
+          const k = parseFloat(document.getElementById('kilometraje').value) || 0;
+          if (k > 0) kilometrajeInspeccionActual = k;
+          return k > 0 ? k : (kilometrajeInspeccionActual || 0);
+        })(),
         tipologia: document.getElementById('tipologia').value,
         marca: document.getElementById('marca').value,
         diseno: document.getElementById('diseno').value,
@@ -11635,6 +11683,10 @@
           } else {
             limpiarSoloMedicionesCaptura();
             avanzarSiguientePosicion(pos);
+            if (kilometrajeInspeccionActual > 0) {
+              const inpKm = document.getElementById('kilometraje');
+              if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+            }
 
             // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
             if (window.innerWidth < 1024) {
