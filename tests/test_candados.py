@@ -270,3 +270,185 @@ def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
     datos3['fecha'] = '2026-10-01'
     val_perm = database.validar_inspeccion_candados(datos3)
     assert val_perm['valido'] is True
+
+
+def test_numero_interno_sn_permitido_multiples_veces_en_version_light(test_db):
+    """
+    Validar que para la versión LIGHT se permite ingresar las veces que sea necesario
+    la palabra 'SN', y que si se ingresa en minúscula ('sn') se convierte directamente a mayúscula ('SN').
+    """
+    cliente = "Flota Distribucion Light"
+    database.guardar_licencia_cliente(cliente, "LIGHT")
+
+    # 1. Registrar primera llanta en vehículo LT01 Pos 1 con 'sn' en minúscula
+    datos1 = {
+        'fecha': '2026-10-01',
+        'cliente': cliente,
+        'subcliente': 'Sede Principal',
+        'placa': 'LT01',
+        'posicion': 1,
+        'kilometraje': 40000,
+        'numero_interno': 'sn',  # minúscula
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    }
+    val1 = database.validar_inspeccion_candados(datos1)
+    assert val1['valido'] is True
+    assert datos1['numero_interno'] == 'SN'  # convertido directamente a mayúsculas
+    database.insertar_inspeccion(datos1)
+
+    # 2. Registrar segunda llanta en el MISMO vehículo LT01 Pos 2 con 'SN' en el mismo mes
+    datos2 = {
+        'fecha': '2026-10-01',
+        'cliente': cliente,
+        'subcliente': 'Sede Principal',
+        'placa': 'LT01',
+        'posicion': 2,
+        'kilometraje': 40000,
+        'numero_interno': 'SN',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 13.0,
+        'prof_cent': 13.0,
+        'prof_int': 13.0
+    }
+    val2 = database.validar_inspeccion_candados(datos2)
+    assert val2['valido'] is True, f"Fallo al validar segunda llanta SN en version LIGHT: {val2.get('mensaje')}"
+    database.insertar_inspeccion(datos2)
+
+    # 3. Registrar tercera llanta en OTRO vehículo LT02 Pos 1 también con 'sn' en el mismo mes
+    datos3 = {
+        'fecha': '2026-10-02',
+        'cliente': cliente,
+        'subcliente': 'Sede Principal',
+        'placa': 'LT02',
+        'posicion': 1,
+        'kilometraje': 30000,
+        'numero_interno': 'sn',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0
+    }
+    val3 = database.validar_inspeccion_candados(datos3)
+    assert val3['valido'] is True, f"Fallo al validar tercera llanta sn en version LIGHT: {val3.get('mensaje')}"
+    assert datos3['numero_interno'] == 'SN'
+    database.insertar_inspeccion(datos3)
+
+
+def test_numero_interno_sn_bloqueado_duplicado_en_version_pro(test_db):
+    """
+    Validar que en la versión PRO, 'SN' NO está exonerado del candado de duplicidad
+    (solo se permite ingresar múltiples veces 'SN' en la versión LIGHT).
+    """
+    cliente = "Flota Operativa Pro"
+    database.guardar_licencia_cliente(cliente, "PRO")
+
+    datos1 = {
+        'fecha': '2026-10-01',
+        'cliente': cliente,
+        'placa': 'PRO01',
+        'posicion': 1,
+        'kilometraje': 80000,
+        'numero_interno': 'SN',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    }
+    val1 = database.validar_inspeccion_candados(datos1)
+    assert val1['valido'] is True
+    database.insertar_inspeccion(datos1)
+
+    # En versión PRO, intentar ingresar otro 'SN' para el mismo cliente en el mismo mes debe ser bloqueado
+    datos2 = {
+        'fecha': '2026-10-02',
+        'cliente': cliente,
+        'placa': 'PRO02',
+        'posicion': 1,
+        'kilometraje': 75000,
+        'numero_interno': 'sn',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 11.0,
+        'prof_cent': 11.0,
+        'prof_int': 11.0
+    }
+    val2 = database.validar_inspeccion_candados(datos2)
+    assert val2['valido'] is False
+    assert 'CANDADO DE NÚMERO INTERNO' in val2['mensaje']
+
+
+def test_numero_interno_no_sn_sigue_bloqueado_en_version_light(test_db):
+    """
+    Validar que en la versión LIGHT, si se ingresa un número de llanta real (ej. 'LL-500'),
+    la protección de no duplicidad sigue activa; la excepción de duplicidad aplica únicamente para 'SN'.
+    """
+    cliente = "Flota Mixta Light"
+    database.guardar_licencia_cliente(cliente, "LIGHT")
+
+    datos1 = {
+        'fecha': '2026-10-01',
+        'cliente': cliente,
+        'placa': 'MIX01',
+        'posicion': 1,
+        'kilometraje': 60000,
+        'numero_interno': 'LL-500',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    }
+    database.insertar_inspeccion(datos1)
+
+    datos2 = {
+        'fecha': '2026-10-02',
+        'cliente': cliente,
+        'placa': 'MIX02',
+        'posicion': 2,
+        'kilometraje': 55000,
+        'numero_interno': 'll-500',  # minúscula
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    }
+    val2 = database.validar_inspeccion_candados(datos2)
+    assert val2['valido'] is False
+    assert 'CANDADO DE NÚMERO INTERNO' in val2['mensaje']
+
+
+def test_obtener_llanta_por_cliente_ignora_sn(test_db):
+    """
+    Validar que 'SN' (y 'sn') no se confundan con una llanta única persistida,
+    evitando falsos autocompletados.
+    """
+    cliente = "Flota Pruebas SN"
+    database.guardar_licencia_cliente(cliente, "LIGHT")
+
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': cliente,
+        'placa': 'SN01',
+        'posicion': 1,
+        'kilometraje': 10000,
+        'numero_interno': 'SN',
+        'marca': 'Michelin',
+        'diseno': 'X Multi Z',
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0
+    })
+
+    assert database.obtener_llanta_por_cliente(cliente, 'SN') is None
+    assert database.obtener_llanta_por_cliente(cliente, 'sn') is None
+

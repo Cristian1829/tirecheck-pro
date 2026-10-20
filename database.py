@@ -935,6 +935,7 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
                    precio, prof_inicial, subcliente, tipo_operacion, fecha, id
             FROM inspecciones
             WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
+              AND UPPER(TRIM(numero_interno)) != 'SN'
               AND cliente IS NOT NULL AND TRIM(cliente) != ''
             ORDER BY fecha ASC, id ASC
         """)
@@ -1216,7 +1217,7 @@ def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "
     cli_norm = str(cliente or '').strip()
     pl_norm = str(placa or '').strip().upper()
     
-    if not num_norm:
+    if not num_norm or num_norm == 'SN':
         return None
     
     # Si no se pasó cliente pero sí placa, intentar inferir cliente
@@ -1501,9 +1502,12 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
         }
 
     # Asignación automática de número consecutivo TMP-001 si viene vacío
+    # Si viene en minúsculas (ej. 'sn'), se normaliza directamente a mayúsculas ('SN')
     num_interno = str(datos.get('numero_interno', '')).strip().upper()
     if not num_interno:
         num_interno = generar_siguiente_numero_interno_temporal(conn=conn)
+        datos['numero_interno'] = num_interno
+    else:
         datos['numero_interno'] = num_interno
 
     # Consultar historial previo de esta placa
@@ -1513,9 +1517,26 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
         mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
 
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
+        # En la versión LIGHT se permite ingresar las veces que sea necesario la palabra "SN" (Sin Número).
         cliente_val = str(datos.get('cliente', '')).strip()
         subcliente_val = str(datos.get('subcliente', '')).strip()
-        if num_interno and cliente_val:
+
+        licencia = str(datos.get('tipo_licencia') or '').strip().upper()
+        if not licencia and cliente_val:
+            cursor.execute(
+                "SELECT tipo_licencia FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))",
+                (cliente_val,)
+            )
+            row_lic = cursor.fetchone()
+            if row_lic and row_lic[0]:
+                licencia = str(row_lic[0]).strip().upper()
+        if not licencia:
+            licencia = 'PRO'
+
+        es_version_light = (licencia == 'LIGHT')
+        permitir_sn_repetido = (es_version_light and num_interno == 'SN')
+
+        if num_interno and cliente_val and not permitir_sn_repetido:
             sql_dup = '''
                 SELECT placa, posicion, cliente, subcliente, fecha, id FROM inspecciones
                 WHERE UPPER(TRIM(numero_interno)) = ?
@@ -1649,8 +1670,11 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None):
             return _ejecutar_consultas(c)
 
 def insertar_inspeccion(datos):
-    if not str(datos.get('numero_interno', '')).strip():
+    num_int_norm = str(datos.get('numero_interno', '')).strip().upper()
+    if not num_int_norm:
         datos['numero_interno'] = generar_siguiente_numero_interno_temporal()
+    else:
+        datos['numero_interno'] = num_int_norm
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""

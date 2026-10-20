@@ -646,7 +646,7 @@
                       <span>Reconocida</span>
                     </span>
                   </div>
-                  <input type="text" id="numero_interno" placeholder="ej. LL-042" oninput="this.value = this.value.toUpperCase(); onInputNumeroInternoDebounced();" onblur="consultarLlantaPorCliente(this.value);" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 uppercase placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <input type="text" id="numero_interno" placeholder="ej. LL-042 o SN" oninput="this.value = this.value.toUpperCase(); onInputNumeroInternoDebounced();" onblur="this.value = this.value.trim().toUpperCase(); consultarLlantaPorCliente(this.value);" onchange="this.value = this.value.trim().toUpperCase();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 uppercase placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div>
@@ -2698,7 +2698,7 @@
           <div><label class="font-bold text-slate-600">Operación</label><input type="text" id="edit_tipo_operacion" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Placa</label><input type="text" id="edit_placa" class="w-full p-2 bg-slate-50 border rounded-xl font-black uppercase"></div>
           <div><label class="font-bold text-slate-600">Posición</label><input type="number" id="edit_posicion" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-          <div><label class="font-bold text-slate-600">No. Interno</label><input type="text" id="edit_numero_interno" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
+          <div><label class="font-bold text-slate-600">No. Interno</label><input type="text" id="edit_numero_interno" oninput="this.value = this.value.toUpperCase();" onblur="this.value = this.value.trim().toUpperCase();" onchange="this.value = this.value.trim().toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
           <div><label class="font-bold text-slate-600">Kilometraje</label><input type="number" id="edit_kilometraje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
           <div><label class="font-bold text-slate-600">Tipología</label><input type="text" id="edit_tipologia" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Marca</label><input type="text" id="edit_marca" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
@@ -4554,6 +4554,7 @@
         placa: document.getElementById('edit_placa').value.trim().toUpperCase(),
         posicion: parseInt(document.getElementById('edit_posicion').value) || 1,
         numero_interno: document.getElementById('edit_numero_interno').value.trim().toUpperCase(),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
         kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
         tipologia: document.getElementById('edit_tipologia').value,
         marca: document.getElementById('edit_marca').value,
@@ -8165,6 +8166,8 @@
       }
     }
 
+    let clienteLicenciaCaptura = 'PRO';
+
     async function actualizarLimiteCliente() {
       const cli = document.getElementById('cliente').value.trim();
       const res = await fetch(`/api/limite-cliente?cliente=${encodeURIComponent(cli)}`);
@@ -8173,6 +8176,9 @@
         const mm = d.limite_retiro_mm || 3.0;
         document.getElementById('lblMmRetiroCliente').textContent = mm.toFixed(1);
         document.getElementById('lblMmAlerta').textContent = mm.toFixed(1);
+        if (d.tipo_licencia) {
+          clienteLicenciaCaptura = d.tipo_licencia;
+        }
       }
     }
 
@@ -9922,15 +9928,22 @@
       clearTimeout(timerNumeroInternoDebounce);
       timerNumeroInternoDebounce = setTimeout(() => {
         const num = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
-        if (num) {
+        if (num && num !== 'SN') {
           consultarLlantaPorCliente(num);
+        } else if (num === 'SN') {
+          const bLlanta = document.getElementById('badgeLlantaCliente');
+          if (bLlanta) bLlanta.classList.add('hidden');
         }
       }, 350);
     }
 
     async function consultarLlantaPorCliente(numInterno) {
       const num = (numInterno || document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
-      if (!num) return;
+      if (!num || num === 'SN') {
+        const bLlanta = document.getElementById('badgeLlantaCliente');
+        if (bLlanta) bLlanta.classList.add('hidden');
+        return;
+      }
 
       const cli = (document.getElementById('cliente')?.value || '').trim();
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
@@ -11176,6 +11189,7 @@
         prof_inicial: prof_inicial_num,
         km_montaje: parseFloat(document.getElementById('km_montaje').value) || 0,
         numero_interno: document.getElementById('numero_interno').value.trim().toUpperCase(),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
         usuario_registro: usuarioActual ? usuarioActual.username : ''
       };
 

@@ -101,6 +101,7 @@ class InspeccionItem(BaseModel):
     numero_interno: str = ""
     usuario_registro: str = ""
     foto_novedad: str = ""
+    tipo_licencia: Optional[str] = None
 
 class NuevaOperacionItem(BaseModel):
     nombre: str
@@ -1135,7 +1136,8 @@ def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin_o_
 @app.get("/api/limite-cliente")
 def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje: str = "TODOS", usuario_actual: dict = Depends(obtener_usuario_actual)):
     lim = database.obtener_limite_retiro_cliente(cliente, subcliente, eje)
-    return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim}
+    lic = database.obtener_licencia_cliente(cliente)
+    return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim, "tipo_licencia": lic}
 
 @app.post("/api/configuraciones-clientes")
 def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):

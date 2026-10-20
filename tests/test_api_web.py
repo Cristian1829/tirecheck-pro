@@ -807,6 +807,72 @@ def test_configuracion_licencia_light_vs_pro(test_db, auth_client):
     assert res_get_pro.json()["licencia"] == "PRO"
 
 
+def test_api_inspecciones_sn_light_vs_pro(test_db, auth_client):
+    cliente_light = "CLIENTE API LIGHT TEST"
+    # Configurar licencia LIGHT
+    auth_client.post("/api/configuraciones-clientes/licencia", json={
+        "cliente": cliente_light,
+        "tipo_licencia": "LIGHT"
+    })
+
+    # 1. Crear primera inspección con "sn" en minúscula
+    payload1 = {
+        "fecha": "2026-10-01",
+        "cliente": cliente_light,
+        "placa": "LGT-001",
+        "posicion": 1,
+        "kilometraje": 20000.0,
+        "numero_interno": "sn",
+        "prof_inicial": 16.0,
+        "prof_ext": 12.0,
+        "prof_cent": 12.0,
+        "prof_int": 12.0
+    }
+    r1 = auth_client.post("/api/inspecciones", json=payload1)
+    assert r1.status_code == 200
+    id1 = r1.json()["id"]
+
+    # Verificar que en la base de datos se guardó como mayúscula "SN"
+    insp1 = auth_client.get(f"/api/inspecciones/{id1}").json()
+    assert insp1["numero_interno"] == "SN"
+
+    # 2. Crear segunda inspección en el mismo mes con "SN" para otra posición en LIGHT -> Debe ser 200 OK
+    payload2 = {
+        "fecha": "2026-10-01",
+        "cliente": cliente_light,
+        "placa": "LGT-001",
+        "posicion": 2,
+        "kilometraje": 20000.0,
+        "numero_interno": "SN",
+        "prof_inicial": 16.0,
+        "prof_ext": 11.0,
+        "prof_cent": 11.0,
+        "prof_int": 11.0
+    }
+    r2 = auth_client.post("/api/inspecciones", json=payload2)
+    assert r2.status_code == 200
+
+    # 3. Consultar /api/llanta-por-cliente para "sn" o "SN" -> Debe retornar encontrado: false
+    r_llanta = auth_client.get(f"/api/llanta-por-cliente?cliente={cliente_light}&numero_interno=sn")
+    assert r_llanta.status_code == 200
+    assert r_llanta.json()["encontrado"] is False
+
+    # 4. Probar en cliente PRO: segundo 'sn' duplicado en el mismo mes debe ser rechazado con 400
+    cliente_pro = "CLIENTE API PRO TEST"
+    auth_client.post("/api/configuraciones-clientes/licencia", json={
+        "cliente": cliente_pro,
+        "tipo_licencia": "PRO"
+    })
+    p_pro1 = dict(payload1, cliente=cliente_pro, placa="PRO-001")
+    assert auth_client.post("/api/inspecciones", json=p_pro1).status_code == 200
+
+    p_pro2 = dict(payload2, cliente=cliente_pro, placa="PRO-002", posicion=1)
+    r_pro2 = auth_client.post("/api/inspecciones", json=p_pro2)
+    assert r_pro2.status_code == 400
+    assert "CANDADO DE NÚMERO INTERNO" in r_pro2.json()["detail"]
+
+
+
 
 
 

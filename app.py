@@ -229,6 +229,7 @@ class AppInspeccionLlantas(tk.Tk):
         self.ent_numero_interno_pc = ttk.Entry(sec2, textvariable=self.form_vars['numero_interno'], width=10)
         self.ent_numero_interno_pc.grid(row=1, column=5, padx=(80, 5), pady=4)
         self.ent_numero_interno_pc.bind('<FocusOut>', self.al_perder_foco_numero_interno_pc)
+        self.ent_numero_interno_pc.bind('<KeyRelease>', lambda e: self.form_vars['numero_interno'].set(self.form_vars['numero_interno'].get().upper()))
 
         sec3 = ttk.LabelFrame(card, text='3. Especificaciones de Llanta & 3 Profundidades', padding=8)
         sec3.grid(row=3, column=0, columnspan=6, sticky='ew', pady=(0, 8))
@@ -398,6 +399,8 @@ class AppInspeccionLlantas(tk.Tk):
         if not num_int:
             return
         self.form_vars['numero_interno'].set(num_int)
+        if num_int == 'SN':
+            return
         cli = self.form_vars['cliente'].get().strip()
         placa = self.form_vars['placa'].get().strip().upper()
         lt = database.obtener_llanta_por_cliente(cliente=cli, numero_interno=num_int, placa=placa)
@@ -1174,7 +1177,9 @@ class AppInspeccionLlantas(tk.Tk):
         # Fila 2: No. Interno, Kilometraje, Tipología
         ttk.Label(body, text='No. Interno:').grid(row=2, column=0, sticky='w', padx=4, pady=4)
         campos_vars['numero_interno'] = tk.StringVar(value=str(datos_actuales.get('numero_interno', '')))
-        ttk.Entry(body, textvariable=campos_vars['numero_interno'], width=14).grid(row=2, column=1, padx=4, pady=4)
+        ent_edit_num = ttk.Entry(body, textvariable=campos_vars['numero_interno'], width=14)
+        ent_edit_num.grid(row=2, column=1, padx=4, pady=4)
+        ent_edit_num.bind('<KeyRelease>', lambda e: campos_vars['numero_interno'].set(campos_vars['numero_interno'].get().upper()))
 
         ttk.Label(body, text='Kilometraje:').grid(row=2, column=2, sticky='w', padx=4, pady=4)
         campos_vars['kilometraje'] = tk.StringVar(value=str(datos_actuales.get('kilometraje', '0')))
