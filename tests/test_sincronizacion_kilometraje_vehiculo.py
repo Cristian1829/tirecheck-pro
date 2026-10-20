@@ -168,3 +168,19 @@ def test_frontend_sincronizacion_kilometraje_dom_y_js():
         capture_output=True
     )
     assert res.returncode == 0, f"Error de sintaxis JavaScript: {res.stderr}"
+
+def test_boton_limpiador_y_unico_boton_copiar_marca_diseno():
+    """Valida que el limpiador ejecute limpiarTodoParaNuevaInspeccion() y que exista un único botón de copiar marca/diseño."""
+    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "index.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # 1. El botón de borrador en el formulario debe limpiar TODO para una nueva inspección y ser diciente
+    assert 'onclick="limpiarTodoParaNuevaInspeccion()"' in html
+    assert 'Limpiar Todo' in html
+    assert 'id="btnLimpiarTodoDesk"' in html
+
+    # 2. Solo debe existir 1 botón en el formulario de captura que llame a copiarMarcaDisenoAnterior()
+    matches = re.findall(r'onclick=["\']copiarMarcaDisenoAnterior\(\)["\']', html)
+    assert len(matches) == 1, f"Se esperaba 1 solo botón de copiar marca/diseño pero se encontraron {len(matches)}"
+    assert 'id="btnCopiarMarcaDisenoAnt"' in html
