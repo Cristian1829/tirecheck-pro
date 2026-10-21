@@ -4,7 +4,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
-ENV APP_BUILD_ID=20261021-frecuencia-parametrizable-cliente
+ENV APP_BUILD_ID=20261021-redeploy-railway-v2
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Asegurar que el archivo seed_inspecciones.db exista en la raíz del contenedor (fuera del punto de montaje del volumen)
-RUN cp -n data/inspecciones.db /app/seed_inspecciones.db 2>/dev/null || true
+RUN cp -f data/inspecciones.db /app/seed_inspecciones.db 2>/dev/null || true
 
 # Asegurar existencia y permisos del directorio data para SQLite
 RUN mkdir -p /app/data && chmod 777 /app/data
