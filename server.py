@@ -58,6 +58,11 @@ def startup_migracion_produccion():
         database.migrar_normalizar_cliente_ciudad_limpia_bogota()
     except Exception as e:
         print(f"[STARTUP] Error normalizando cliente Ciudad Limpia: {e}")
+    try:
+        database.migrar_limite_ciudad_limpia_4mm()
+    except Exception as e:
+        print(f"[STARTUP] Error ajustando límite 4mm Ciudad Limpia: {e}")
+
 
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
@@ -1295,6 +1300,13 @@ def api_migrar_restar_pext_ciudad_limpia(forzar: bool = False, usuario_actual: d
 def api_migrar_normalizar_cliente_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
     res = database.migrar_normalizar_cliente_ciudad_limpia_bogota(forzar=forzar)
     return sanitizar_nativos(res)
+
+@app.post("/api/admin/migrar-limite-ciudad-limpia-4mm")
+@app.get("/api/admin/migrar-limite-ciudad-limpia-4mm")
+def api_migrar_limite_ciudad_limpia_4mm(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    res = database.migrar_limite_ciudad_limpia_4mm(forzar=forzar)
+    return sanitizar_nativos(res)
+
 
 
 

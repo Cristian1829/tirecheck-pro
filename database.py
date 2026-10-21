@@ -1394,6 +1394,77 @@ def migrar_normalizar_cliente_ciudad_limpia_bogota(conn=None, forzar=False):
         return res
 
 
+def migrar_limite_ciudad_limpia_4mm(conn=None, forzar=False):
+    """
+    Ajuste en producción para CIUDAD LIMPIA:
+    Configura el límite de cambio/retiro en 4.0 mm para todos los registros,
+    posiciones y ejes en configuracion_limites_retiro, configuracion_clientes
+    y configuracion_avanzada_cliente.
+    Garantiza que cualquier ajuste posterior en el catálogo recalcule
+    dinámicamente las proyecciones, semáforos e indicadores.
+    """
+    def _ejecutar(c):
+        cur = c.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS _control_migraciones (
+                nombre TEXT PRIMARY KEY,
+                fecha_ejecucion TEXT,
+                filas_afectadas INTEGER
+            )
+        """)
+        if not forzar:
+            cur.execute("SELECT filas_afectadas FROM _control_migraciones WHERE nombre = 'limite_ciudad_limpia_4mm_v1'")
+            ya_ejecutado = cur.fetchone()
+            if ya_ejecutado is not None:
+                return {"status": "already_applied", "filas_afectadas": ya_ejecutado[0]}
+
+        cur.execute("DELETE FROM configuracion_limites_retiro WHERE UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA'")
+        cur.execute("""
+            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES ('CIUDAD LIMPIA', 'TODOS', 'TODOS', 4.0, 'POLITICA 4MM TODAS LAS POSICIONES', CURRENT_TIMESTAMP)
+        """)
+
+        cur.execute("""
+            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+            VALUES ('CIUDAD LIMPIA', 4.0, 'POLITICA 4MM TODAS LAS POSICIONES', CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                limite_retiro_mm = 4.0,
+                observaciones = 'POLITICA 4MM TODAS LAS POSICIONES',
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """)
+
+        cur.execute("""
+            INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+            VALUES ('CIUDAD LIMPIA', 4.0, 4.0, 4.0, CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente) DO UPDATE SET
+                mm_retiro_direccional = 4.0,
+                mm_retiro_traccion = 4.0,
+                mm_retiro_arrastre = 4.0,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """)
+
+        cur.execute("""
+            INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas)
+            VALUES ('limite_ciudad_limpia_4mm_v1', datetime('now'), 1)
+            ON CONFLICT(nombre) DO UPDATE SET fecha_ejecucion = datetime('now'), filas_afectadas = 1
+        """)
+
+
+        print("[MIGRACION PRODUCCION] Cliente CIUDAD LIMPIA configurado con límite universal de retiro de 4.0 mm.")
+        return {
+            "status": "ok",
+            "reglas_configuradas": 1,
+            "limite_retiro_mm": 4.0
+        }
+
+    if conn is not None:
+        return _ejecutar(conn)
+    with get_connection() as c:
+        res = _ejecutar(c)
+        c.commit()
+        return res
+
+
 
 def sincronizar_maestro_desde_inspecciones(conn=None):
     """
@@ -3462,7 +3533,7 @@ def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', s
                 observaciones = excluded.observaciones,
                 fecha_actualizacion = CURRENT_TIMESTAMP
         ''', (c, sub, e, lim, obs))
-        if sub == 'TODOS' and e == 'TODOS':
+        if (sub in ('TODOS', 'BOGOTA', '') or True) and e == 'TODOS':
             cursor.execute('''
                 INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)
@@ -3471,6 +3542,31 @@ def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', s
                     observaciones = excluded.observaciones,
                     fecha_actualizacion = CURRENT_TIMESTAMP
             ''', (c, lim, obs))
+            cursor.execute('''
+                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente) DO UPDATE SET
+                    mm_retiro_direccional = excluded.mm_retiro_direccional,
+                    mm_retiro_traccion = excluded.mm_retiro_traccion,
+                    mm_retiro_arrastre = excluded.mm_retiro_arrastre,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+            ''', (c, lim, lim, lim))
+        elif 'DIR' in e:
+            cursor.execute('''
+                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, fecha_actualizacion)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente) DO UPDATE SET
+                    mm_retiro_direccional = excluded.mm_retiro_direccional,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+            ''', (c, lim))
+        elif 'TRAC' in e:
+            cursor.execute('''
+                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_traccion, fecha_actualizacion)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente) DO UPDATE SET
+                    mm_retiro_traccion = excluded.mm_retiro_traccion,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+            ''', (c, lim))
         conn.commit()
     return True
 
@@ -3524,7 +3620,7 @@ def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, obser
         if cursor.rowcount == 0:
             guardar_limite_retiro_cliente(c, lim, obs, sub, e)
         else:
-            if sub == 'TODOS' and e == 'TODOS':
+            if (sub in ('TODOS', 'BOGOTA', '') or True) and e == 'TODOS':
                 cursor.execute('''
                     INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
@@ -3533,8 +3629,34 @@ def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, obser
                         observaciones = excluded.observaciones,
                         fecha_actualizacion = CURRENT_TIMESTAMP
                 ''', (c, lim, obs))
+                cursor.execute('''
+                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(cliente) DO UPDATE SET
+                        mm_retiro_direccional = excluded.mm_retiro_direccional,
+                        mm_retiro_traccion = excluded.mm_retiro_traccion,
+                        mm_retiro_arrastre = excluded.mm_retiro_arrastre,
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                ''', (c, lim, lim, lim))
+            elif 'DIR' in e:
+                cursor.execute('''
+                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, fecha_actualizacion)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(cliente) DO UPDATE SET
+                        mm_retiro_direccional = excluded.mm_retiro_direccional,
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                ''', (c, lim))
+            elif 'TRAC' in e:
+                cursor.execute('''
+                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_traccion, fecha_actualizacion)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(cliente) DO UPDATE SET
+                        mm_retiro_traccion = excluded.mm_retiro_traccion,
+                        fecha_actualizacion = CURRENT_TIMESTAMP
+                ''', (c, lim))
         conn.commit()
     return True
+
 
 def obtener_lista_clientes_unicos():
     with get_connection() as conn:
@@ -5181,6 +5303,9 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         estado_psi_col = []
         es_reencauche_col = []
 
+        resolver_limite = _construir_cache_limites_retiro()
+        mapa_tips = _cargar_mapa_tipologias_ejes()
+
         for idx in range(n_rows):
             pos = pos_list[idx]
             es_dir = (pos in (1, 2))
@@ -5194,12 +5319,19 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             p_min = min(positivos) if positivos else 0.0
             p_min_col.append(p_min)
 
-            # 2. Profundidad inicial y límite de retiro
+            # 2. Profundidad inicial y límite de retiro dinámico desde el catálogo
             p_ini = pini_list[idx] if pini_list[idx] > 0 else (16.0 if es_dir else 18.0)
             p_ini_col.append(p_ini)
 
-            lim_ret = mm_retiro_dir if es_dir else mm_retiro_trac
+            cli_row = str(df['cliente'].iloc[idx] if 'cliente' in df else cliente or '').strip().upper()
+            sub_row = str(df['subcliente'].iloc[idx] if 'subcliente' in df else subcliente or '').strip().upper()
+            tip_row = str(df['tipologia'].iloc[idx] if 'tipologia' in df else '').strip()
+            eje_tipo = obtener_tipo_eje_posicion(tip_row, pos, mapa_tipologias=mapa_tips)
+            lim_ret = resolver_limite(cli_row, sub_row, eje_tipo)
+            if lim_ret <= 0:
+                lim_ret = mm_retiro_dir if es_dir else mm_retiro_trac
             lim_retiro_col.append(lim_ret)
+
 
             mm_ut = max(1.0, p_ini - lim_ret)
             mm_utiles_col.append(mm_ut)

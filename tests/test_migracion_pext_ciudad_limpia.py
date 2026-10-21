@@ -155,3 +155,59 @@ def test_migrar_normalizar_cliente_ciudad_limpia_bogota(tmp_path, monkeypatch):
     res2 = database.migrar_normalizar_cliente_ciudad_limpia_bogota()
     assert res2["status"] == "already_applied"
 
+
+def test_migrar_limite_ciudad_limpia_4mm_y_recalculo_dinamico(tmp_path, monkeypatch):
+    test_db = str(tmp_path / "test_lim_cl.db")
+    monkeypatch.setattr(database, "DB_PATH", test_db)
+    
+    conn = sqlite3.connect(test_db)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE configuracion_limites_retiro (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente TEXT NOT NULL,
+            subcliente TEXT NOT NULL DEFAULT 'TODOS',
+            eje TEXT NOT NULL DEFAULT 'TODOS',
+            limite_retiro_mm REAL NOT NULL DEFAULT 3.0,
+            observaciones TEXT DEFAULT '',
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(cliente, subcliente, eje)
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE configuracion_clientes (
+            cliente TEXT PRIMARY KEY,
+            limite_retiro_mm REAL DEFAULT 3.0,
+            observaciones TEXT,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE configuracion_avanzada_cliente (
+            cliente TEXT PRIMARY KEY,
+            tipo_licencia TEXT DEFAULT 'PRO',
+            mm_retiro_direccional REAL DEFAULT 4.0,
+            mm_retiro_traccion REAL DEFAULT 3.0,
+            mm_retiro_arrastre REAL DEFAULT 3.0,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+    res = database.migrar_limite_ciudad_limpia_4mm()
+    assert res["status"] == "ok"
+    assert res["limite_retiro_mm"] == 4.0
+
+    # Verificar que aplica 4.0 mm en direccional y tracción
+    lim_dir = database.obtener_limite_retiro_cliente("CIUDAD LIMPIA", "BOGOTA", "DIRECCIONAL")
+    lim_trac = database.obtener_limite_retiro_cliente("CIUDAD LIMPIA", "BOGOTA", "TRACCIÓN")
+    assert lim_dir == 4.0
+    assert lim_trac == 4.0
+
+    # Recálculo dinámico: Si el usuario ajusta en el catálogo a 4.5 mm
+    database.guardar_limite_retiro_cliente("CIUDAD LIMPIA", 4.5, "AJUSTE DINAMICO", "TODOS", "TODOS")
+    assert database.obtener_limite_retiro_cliente("CIUDAD LIMPIA", "BOGOTA", "TRACCIÓN") == 4.5
+    assert database.obtener_limite_retiro_cliente("CIUDAD LIMPIA", "BOGOTA", "DIRECCIONAL") == 4.5
+
+
