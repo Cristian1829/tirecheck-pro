@@ -54,6 +54,11 @@ def startup_migracion_produccion():
         database.migrar_restar_pext_ciudad_limpia()
     except Exception as e:
         print(f"[STARTUP] Error ejecutando ajuste P.Ext Ciudad Limpia: {e}")
+    try:
+        database.migrar_normalizar_cliente_ciudad_limpia_bogota()
+    except Exception as e:
+        print(f"[STARTUP] Error normalizando cliente Ciudad Limpia: {e}")
+
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
@@ -1284,6 +1289,13 @@ def api_migrar_pepsico_tellantas(usuario_actual: dict = Depends(requerir_admin_o
 def api_migrar_restar_pext_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
     res = database.migrar_restar_pext_ciudad_limpia(forzar=forzar)
     return sanitizar_nativos(res)
+
+@app.post("/api/admin/migrar-normalizar-cliente-ciudad-limpia")
+@app.get("/api/admin/migrar-normalizar-cliente-ciudad-limpia")
+def api_migrar_normalizar_cliente_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    res = database.migrar_normalizar_cliente_ciudad_limpia_bogota(forzar=forzar)
+    return sanitizar_nativos(res)
+
 
 
 @app.get("/api/valores-campo")

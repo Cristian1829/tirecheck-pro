@@ -1211,6 +1211,190 @@ def migrar_restar_pext_ciudad_limpia(conn=None, forzar=False):
         return res
 
 
+def migrar_normalizar_cliente_ciudad_limpia_bogota(conn=None, forzar=False):
+    """
+    Ajuste en producción para CIUDAD LIMPIA BOGOTA:
+    Normaliza el nombre del cliente para que sea únicamente 'CIUDAD LIMPIA'
+    y la sede/subcliente sea únicamente 'BOGOTA' en todos los registros.
+    Garantiza idempotencia a través de _control_migraciones.
+    """
+    def _ejecutar(c):
+        cur = c.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS _control_migraciones (
+                nombre TEXT PRIMARY KEY,
+                fecha_ejecucion TEXT,
+                filas_afectadas INTEGER
+            )
+        """)
+        if not forzar:
+            cur.execute("SELECT filas_afectadas FROM _control_migraciones WHERE nombre = 'normalizar_cliente_ciudad_limpia_bogota_v1'")
+            ya_ejecutado = cur.fetchone()
+            if ya_ejecutado is not None:
+                return {"status": "already_applied", "filas_afectadas": ya_ejecutado[0]}
+
+        # 1. Actualizar inspecciones
+        cur.execute("""
+            UPDATE inspecciones
+            SET cliente = 'CIUDAD LIMPIA',
+                subcliente = 'BOGOTA'
+            WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                   OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTÁ' 
+                   OR UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%'
+                   OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA')
+              AND (cliente != 'CIUDAD LIMPIA' OR IFNULL(subcliente, '') != 'BOGOTA')
+        """)
+        insps_afectadas = cur.rowcount
+
+        # 2. Actualizar llantas_maestro
+        maestro_afectadas = 0
+        try:
+            cur.execute("""
+                UPDATE llantas_maestro
+                SET cliente = 'CIUDAD LIMPIA',
+                    subcliente = 'BOGOTA'
+                WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTÁ' 
+                       OR UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%'
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA')
+                  AND (cliente != 'CIUDAD LIMPIA' OR IFNULL(subcliente, '') != 'BOGOTA')
+            """)
+            maestro_afectadas = cur.rowcount
+        except Exception as e_m:
+            print(f"[MIGRACION CLIENTE/SEDE] Nota en llantas_maestro: {e_m}")
+
+        # 3. Actualizar kardex_movimientos_llanta
+        kardex_afectadas = 0
+        try:
+            cur.execute("""
+                UPDATE kardex_movimientos_llanta
+                SET cliente = 'CIUDAD LIMPIA',
+                    subcliente = 'BOGOTA'
+                WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTÁ' 
+                       OR UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%'
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA')
+                  AND (cliente != 'CIUDAD LIMPIA' OR IFNULL(subcliente, '') != 'BOGOTA')
+            """)
+            kardex_afectadas = cur.rowcount
+        except Exception as e_k:
+            print(f"[MIGRACION CLIENTE/SEDE] Nota en kardex: {e_k}")
+
+        # 4. Actualizar padron_vehiculos_cliente
+        padron_afectadas = 0
+        try:
+            cur.execute("""
+                UPDATE OR IGNORE padron_vehiculos_cliente
+                SET cliente = 'CIUDAD LIMPIA',
+                    subcliente = 'BOGOTA'
+                WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTÁ' 
+                       OR UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%')
+                  AND (cliente != 'CIUDAD LIMPIA' OR IFNULL(subcliente, '') != 'BOGOTA')
+            """)
+            padron_afectadas = cur.rowcount
+            cur.execute("""
+                DELETE FROM padron_vehiculos_cliente
+                WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTÁ' 
+                       OR (UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'))
+            """)
+        except Exception as e_p:
+            print(f"[MIGRACION CLIENTE/SEDE] Nota en padron: {e_p}")
+
+        # 5. Tablas de configuración
+        try:
+            cur.execute("""
+                INSERT OR IGNORE INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
+                SELECT 'CIUDAD LIMPIA', limite_retiro_mm, observaciones, fecha_actualizacion
+                FROM configuracion_clientes
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'
+            """)
+            cur.execute("""
+                DELETE FROM configuracion_clientes
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'
+            """)
+        except Exception:
+            pass
+
+        try:
+            cur.execute("""
+                INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
+                SELECT 'CIUDAD LIMPIA', 'BOGOTA', eje, limite_retiro_mm, observaciones, fecha_actualizacion
+                FROM configuracion_limites_retiro
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND (cliente != 'CIUDAD LIMPIA' OR subcliente != 'BOGOTA')
+            """)
+            cur.execute("""
+                DELETE FROM configuracion_limites_retiro
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND (cliente != 'CIUDAD LIMPIA' OR subcliente != 'BOGOTA')
+            """)
+        except Exception:
+            pass
+
+        try:
+            cur.execute("""
+                INSERT OR IGNORE INTO configuracion_marcas_cliente (cliente, marca, fecha_actualizacion)
+                SELECT 'CIUDAD LIMPIA', marca, fecha_actualizacion
+                FROM configuracion_marcas_cliente
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'
+            """)
+            cur.execute("""
+                DELETE FROM configuracion_marcas_cliente
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'
+            """)
+        except Exception:
+            pass
+
+        try:
+            cur.execute("""
+                INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, rango_semaforo_amarillo_mm, criterio_profundidad_calculo, psi_objetivo_direccional, psi_objetivo_traccion, psi_objetivo_arrastre, tolerancia_psi_baja_pct, tolerancia_psi_alta_pct, tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm, tolerancia_busqueda_recambio_mm, tolerancia_simetria_eje_opuesto_mm, margen_envio_reencauche_desmonte_mm, umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm, modo_rotacion_ejes, porcentaje_aprobacion_reencauche, stock_seguridad_default, plantilla_kpis_json, fecha_actualizacion)
+                SELECT 'CIUDAD LIMPIA', tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, rango_semaforo_amarillo_mm, criterio_profundidad_calculo, psi_objetivo_direccional, psi_objetivo_traccion, psi_objetivo_arrastre, tolerancia_psi_baja_pct, tolerancia_psi_alta_pct, tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm, tolerancia_busqueda_recambio_mm, tolerancia_simetria_eje_opuesto_mm, margen_envio_reencauche_desmonte_mm, umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm, modo_rotacion_ejes, porcentaje_aprobacion_reencauche, stock_seguridad_default, plantilla_kpis_json, fecha_actualizacion
+                FROM configuracion_avanzada_cliente
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'
+            """)
+            cur.execute("""
+                DELETE FROM configuracion_avanzada_cliente
+                WHERE UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%' AND cliente != 'CIUDAD LIMPIA'
+            """)
+        except Exception:
+            pass
+
+        try:
+            cur.execute("""
+                UPDATE usuarios
+                SET cliente_asignado = REPLACE(REPLACE(cliente_asignado, 'CIUDAD LIMPIA BOGOTA', 'CIUDAD LIMPIA'), 'CIUDAD LIMPIA BOGOTÁ', 'CIUDAD LIMPIA')
+                WHERE UPPER(cliente_asignado) LIKE '%CIUDAD LIMPIA BOGOTA%' OR UPPER(cliente_asignado) LIKE '%CIUDAD LIMPIA BOGOTÁ%'
+            """)
+        except Exception:
+            pass
+
+        total = insps_afectadas + maestro_afectadas + kardex_afectadas + padron_afectadas
+        cur.execute("""
+            INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas)
+            VALUES ('normalizar_cliente_ciudad_limpia_bogota_v1', datetime('now'), ?)
+            ON CONFLICT(nombre) DO UPDATE SET fecha_ejecucion = datetime('now'), filas_afectadas = ?
+        """, (total, total))
+
+        if total > 0:
+            print(f"[MIGRACION PRODUCCION] Cliente CIUDAD LIMPIA normalizado a sede BOGOTA en {insps_afectadas} inspecciones, {maestro_afectadas} llantas, {kardex_afectadas} kardex, {padron_afectadas} padrón.")
+        return {
+            "status": "ok",
+            "inspecciones_actualizadas": insps_afectadas,
+            "maestro_actualizadas": maestro_afectadas,
+            "kardex_actualizadas": kardex_afectadas,
+            "padron_actualizadas": padron_afectadas,
+            "total_afectadas": total
+        }
+
+    if conn is not None:
+        return _ejecutar(conn)
+    with get_connection() as c:
+        res = _ejecutar(c)
+        c.commit()
+        return res
+
+
+
 def sincronizar_maestro_desde_inspecciones(conn=None):
     """
     Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
