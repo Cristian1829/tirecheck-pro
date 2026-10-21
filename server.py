@@ -50,6 +50,10 @@ def startup_migracion_produccion():
         database.sincronizar_kilometraje_por_vehiculo_y_fecha()
     except Exception as e:
         print(f"[STARTUP] Error sincronizando kilometraje de inspecciones: {e}")
+    try:
+        database.migrar_restar_pext_ciudad_limpia()
+    except Exception as e:
+        print(f"[STARTUP] Error ejecutando ajuste P.Ext Ciudad Limpia: {e}")
 
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
@@ -1274,6 +1278,13 @@ def api_guardar_licencia_cliente(item: ConfigLicenciaClienteItem, admin: dict = 
 def api_migrar_pepsico_tellantas(usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
     res = database.migrar_pepsico_a_tellantas()
     return sanitizar_nativos(res)
+
+@app.post("/api/admin/migrar-restar-pext-ciudad-limpia")
+@app.get("/api/admin/migrar-restar-pext-ciudad-limpia")
+def api_migrar_restar_pext_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    res = database.migrar_restar_pext_ciudad_limpia(forzar=forzar)
+    return sanitizar_nativos(res)
+
 
 @app.get("/api/valores-campo")
 def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: str = "", todas: bool = False, usuario_actual: dict = Depends(obtener_usuario_actual)):

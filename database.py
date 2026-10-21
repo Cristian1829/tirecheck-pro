@@ -1129,6 +1129,88 @@ def sincronizar_kilometraje_por_vehiculo_y_fecha(conn=None):
         return res
 
 
+def migrar_restar_pext_ciudad_limpia(conn=None, forzar=False):
+    """
+    Ajuste en producción para el cliente CIUDAD LIMPIA BOGOTA:
+    Resta 1 al campo prof_ext (P.Ext) de todos los registros de inspecciones y llantas_maestro.
+    Ejemplo: si prof_ext es 18, queda en 17.
+    Usa la tabla _control_migraciones para garantizar ejecución idempotente (exactamente una vez),
+    a menos que se invoque con forzar=True.
+    """
+    def _ejecutar(c):
+        cur = c.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS _control_migraciones (
+                nombre TEXT PRIMARY KEY,
+                fecha_ejecucion TEXT,
+                filas_afectadas INTEGER
+            )
+        """)
+        if not forzar:
+            cur.execute("SELECT filas_afectadas FROM _control_migraciones WHERE nombre = 'restar_pext_ciudad_limpia_v1'")
+            ya_ejecutado = cur.fetchone()
+            if ya_ejecutado is not None:
+                return {"status": "already_applied", "filas_afectadas": ya_ejecutado[0]}
+
+        cur.execute("""
+            UPDATE inspecciones
+            SET prof_ext = CASE 
+                WHEN CAST(prof_ext AS REAL) > 0 THEN ROUND(CAST(prof_ext AS REAL) - 1, 2)
+                ELSE 0 
+            END
+            WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                   OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA' 
+                   OR UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%')
+              AND prof_ext IS NOT NULL
+        """)
+        insps_afectadas = cur.rowcount
+
+        maestro_afectadas = 0
+        try:
+            cur.execute("""
+                UPDATE llantas_maestro
+                SET prof_ext = CASE 
+                    WHEN CAST(prof_ext AS REAL) > 0 THEN ROUND(CAST(prof_ext AS REAL) - 1, 2)
+                    ELSE 0 
+                END,
+                prof_actual_min = MIN(
+                    CASE WHEN CAST(prof_ext AS REAL) > 0 THEN ROUND(CAST(prof_ext AS REAL) - 1, 2) ELSE 0 END,
+                    IFNULL(prof_cent, 999),
+                    IFNULL(prof_int, 999)
+                )
+                WHERE (UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA BOGOTA' 
+                       OR UPPER(TRIM(cliente)) = 'CIUDAD LIMPIA' 
+                       OR UPPER(TRIM(cliente)) LIKE 'CIUDAD LIMPIA%')
+                  AND prof_ext IS NOT NULL
+            """)
+            maestro_afectadas = cur.rowcount
+        except Exception as e_m:
+            print(f"[MIGRACION P.EXT] Nota en llantas_maestro: {e_m}")
+
+        total = insps_afectadas + maestro_afectadas
+        cur.execute("""
+            INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas)
+            VALUES ('restar_pext_ciudad_limpia_v1', datetime('now'), ?)
+            ON CONFLICT(nombre) DO UPDATE SET fecha_ejecucion = datetime('now'), filas_afectadas = ?
+        """, (total, total))
+
+        if insps_afectadas > 0 or maestro_afectadas > 0:
+            print(f"[MIGRACION PRODUCCION] Cliente CIUDAD LIMPIA: Restado 1 a P.Ext en {insps_afectadas} inspecciones y {maestro_afectadas} llantas en maestro.")
+        return {
+            "status": "ok",
+            "inspecciones_actualizadas": insps_afectadas,
+            "maestro_actualizadas": maestro_afectadas,
+            "total_afectadas": total
+        }
+
+    if conn is not None:
+        return _ejecutar(conn)
+    with get_connection() as c:
+        res = _ejecutar(c)
+        c.commit()
+        return res
+
+
 def sincronizar_maestro_desde_inspecciones(conn=None):
     """
     Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
