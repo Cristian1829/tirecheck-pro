@@ -316,9 +316,19 @@ def inicializar_bd():
                 cliente TEXT PRIMARY KEY,
                 limite_retiro_mm REAL DEFAULT 3.0,
                 observaciones TEXT,
+                dias_espera_inspeccion INTEGER DEFAULT 20,
+                requiere_mes_siguiente INTEGER DEFAULT 1,
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migración automática de columnas para configuracion_clientes
+        cursor.execute("PRAGMA table_info(configuracion_clientes)")
+        cols_cli_existentes = [row[1] for row in cursor.fetchall()]
+        if "dias_espera_inspeccion" not in cols_cli_existentes:
+            cursor.execute("ALTER TABLE configuracion_clientes ADD COLUMN dias_espera_inspeccion INTEGER DEFAULT 20")
+        if "requiere_mes_siguiente" not in cols_cli_existentes:
+            cursor.execute("ALTER TABLE configuracion_clientes ADD COLUMN requiere_mes_siguiente INTEGER DEFAULT 1")
 
         # Tabla de Configuración de Límites de Retiro Granular por Cliente, Subcliente y Eje
         conn.execute("""
@@ -412,6 +422,8 @@ def inicializar_bd():
                 modo_rotacion_ejes TEXT DEFAULT 'ESTANDAR_FIJO',
                 porcentaje_aprobacion_reencauche REAL DEFAULT 85.0,
                 stock_seguridad_default INTEGER DEFAULT 4,
+                dias_espera_inspeccion INTEGER DEFAULT 20,
+                requiere_mes_siguiente INTEGER DEFAULT 1,
                 plantilla_kpis_json TEXT DEFAULT '{}',
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -426,11 +438,26 @@ def inicializar_bd():
             ("margen_envio_reencauche_desmonte_mm", "REAL DEFAULT 1.5"),
             ("modo_rotacion_ejes", "TEXT DEFAULT 'ESTANDAR_FIJO'"),
             ("porcentaje_aprobacion_reencauche", "REAL DEFAULT 85.0"),
-            ("stock_seguridad_default", "INTEGER DEFAULT 4")
+            ("stock_seguridad_default", "INTEGER DEFAULT 4"),
+            ("dias_espera_inspeccion", "INTEGER DEFAULT 20"),
+            ("requiere_mes_siguiente", "INTEGER DEFAULT 1")
         ]
         for col_n, col_t in cols_nuevas_cfg:
             if col_n not in cols_cfg:
                 cursor.execute(f"ALTER TABLE configuracion_avanzada_cliente ADD COLUMN {col_n} {col_t}")
+
+        # Parametrización inicial según regla de negocio:
+        # CIUDAD LIMPIA: 20 días corridos desde última inspección (requiere_mes_siguiente = 0)
+        cursor.execute("""
+            UPDATE configuracion_clientes 
+            SET dias_espera_inspeccion = 20, requiere_mes_siguiente = 0 
+            WHERE UPPER(TRIM(cliente)) LIKE '%CIUDAD%LIMPIA%' AND (requiere_mes_siguiente IS NULL OR requiere_mes_siguiente = 1)
+        """)
+        cursor.execute("""
+            UPDATE configuracion_avanzada_cliente 
+            SET dias_espera_inspeccion = 20, requiere_mes_siguiente = 0 
+            WHERE UPPER(TRIM(cliente)) LIKE '%CIUDAD%LIMPIA%' AND (requiere_mes_siguiente IS NULL OR requiere_mes_siguiente = 1)
+        """)
 
         # Poblar configuración inicial PRO para clientes existentes
         cursor.execute("""
@@ -1724,6 +1751,100 @@ def obtener_ultima_marca_diseno_vehiculo(placa: str) -> dict:
             }
     return {"encontrado": False, "placa": pl}
 
+def obtener_regla_frecuencia_cliente(cliente: str = "") -> dict:
+    """
+    Retorna la regla de frecuencia técnica de inspección para el cliente:
+    - dias_espera: int (ej. 20)
+    - requiere_mes_siguiente: bool (True si exige esperar al mes siguiente y N días; False si solo N días corridos)
+    - regla_texto: str (descripción técnica legible)
+    """
+    c_norm = str(cliente or "").strip().upper()
+    es_ciudad_limpia = ('CIUDAD LIMPIA' in c_norm) if c_norm else False
+
+    dias_def = 20
+    req_mes_def = False if es_ciudad_limpia else True
+
+    if not c_norm:
+        return {
+            "dias_espera": dias_def,
+            "requiere_mes_siguiente": req_mes_def,
+            "regla_texto": f"{dias_def} días corridos" if not req_mes_def else f"Mes siguiente + {dias_def} días"
+        }
+
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT dias_espera_inspeccion, requiere_mes_siguiente 
+                FROM configuracion_clientes 
+                WHERE UPPER(TRIM(cliente)) = ?
+            """, (c_norm,))
+            row = cursor.fetchone()
+            if not row or row[0] is None:
+                cursor.execute("""
+                    SELECT dias_espera_inspeccion, requiere_mes_siguiente 
+                    FROM configuracion_avanzada_cliente 
+                    WHERE UPPER(TRIM(cliente)) = ?
+                """, (c_norm,))
+                row = cursor.fetchone()
+
+            if row and row[0] is not None:
+                dias = to_int(row[0], dias_def)
+                req_val = row[1]
+                req_mes = bool(to_int(req_val, 1 if req_mes_def else 0)) if req_val is not None else req_mes_def
+                return {
+                    "dias_espera": max(1, dias),
+                    "requiere_mes_siguiente": req_mes,
+                    "regla_texto": f"Mes siguiente + {dias} días" if req_mes else f"{dias} días corridos"
+                }
+    except Exception:
+        pass
+
+    return {
+        "dias_espera": dias_def,
+        "requiere_mes_siguiente": req_mes_def,
+        "regla_texto": f"{dias_def} días corridos" if not req_mes_def else f"Mes siguiente + {dias_def} días"
+    }
+
+def calcular_fecha_minima_siguiente_inspeccion(fecha_base, cliente: str = None, dias: int = None, requiere_mes_siguiente: bool = None) -> date:
+    """
+    Calcula la fecha mínima en la que se puede realizar una nueva inspección a un vehículo,
+    parametrizable por cliente:
+    - Para CIUDAD LIMPIA (o clientes con requiere_mes_siguiente = 0): habilita la inspección N días después de la última inspección.
+    - Para los demás clientes (requiere_mes_siguiente = 1): primero que sea el siguiente mes y que pasen N días desde la última inspección.
+    """
+    if isinstance(fecha_base, str):
+        fecha_base = datetime.strptime(str(fecha_base)[:10], '%Y-%m-%d').date()
+    elif isinstance(fecha_base, datetime):
+        fecha_base = fecha_base.date()
+
+    if dias is None or requiere_mes_siguiente is None:
+        cfg = obtener_regla_frecuencia_cliente(cliente)
+        if dias is None:
+            dias = cfg["dias_espera"]
+        if requiere_mes_siguiente is None:
+            requiere_mes_siguiente = cfg["requiere_mes_siguiente"]
+
+    dias = max(1, int(dias or 20))
+
+    if not requiere_mes_siguiente:
+        # Modo días corridos: habilitar N días después desde la última inspección
+        return fecha_base + timedelta(days=dias)
+    else:
+        # Modo estándar: primero que sea siguiente mes y que pasen N días desde la última inspección
+        año = fecha_base.year
+        mes = fecha_base.month
+        if mes == 12:
+            año_sig = año + 1
+            mes_sig = 1
+        else:
+            año_sig = año
+            mes_sig = mes + 1
+
+        primer_dia_mes_sig = date(año_sig, mes_sig, 1)
+        fecha_tras_dias = fecha_base + timedelta(days=dias)
+        return max(primer_dia_mes_sig, fecha_tras_dias)
+
 def obtener_perfil_vehiculo(placa: str) -> dict:
     pl = str(placa or '').strip().upper()
     if not pl:
@@ -1736,7 +1857,10 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "dias_para_nueva_inspeccion": 0,
             "inspeccion_hoy": False,
             "ultima_marca": "",
-            "ultimo_diseno": ""
+            "ultimo_diseno": "",
+            "regla_frecuencia_texto": "",
+            "dias_espera_inspeccion": 20,
+            "requiere_mes_siguiente": True
         }
     
     with get_connection() as conn:
@@ -1744,7 +1868,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
 
         # 0. Consultar la última inspección registrada de esta placa (para frecuencia, marca y diseño)
         cursor.execute("""
-            SELECT fecha, marca, diseno, dimension, kilometraje, posicion
+            SELECT fecha, marca, diseno, dimension, kilometraje, posicion, cliente
             FROM inspecciones
             WHERE UPPER(TRIM(placa)) = ?
             ORDER BY fecha DESC, id DESC LIMIT 1
@@ -1755,6 +1879,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         marca_ult = ""
         diseno_ult = ""
         dim_ult = ""
+        cliente_placa = ""
         f_minima_str = ""
         en_periodo_restringido = False
         dias_restantes = 0
@@ -1766,20 +1891,8 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             marca_ult = str(row_ult[1] or "").strip()
             diseno_ult = str(row_ult[2] or "").strip()
             dim_ult = str(row_ult[3] or "").strip()
-
-            try:
-                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
-                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
-                f_minima_str = f_minima.strftime('%Y-%m-%d')
-                hoy = date.today()
-                en_periodo_restringido = (hoy < f_minima)
-                dias_restantes = max(0, (f_minima - hoy).days) if en_periodo_restringido else 0
-                inspeccion_hoy = (f_ult_str == hoy.strftime('%Y-%m-%d'))
-            except Exception:
-                f_minima_str = ""
-                en_periodo_restringido = False
-                dias_restantes = 0
-                inspeccion_hoy = False
+            if len(row_ult) > 6 and row_ult[6]:
+                cliente_placa = str(row_ult[6]).strip()
 
             try:
                 cursor.execute("""
@@ -1790,6 +1903,36 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 cant_pos_ult_fecha = r_cnt[0] if r_cnt else 0
             except Exception:
                 cant_pos_ult_fecha = 0
+
+        # Si aún no tenemos cliente, buscar en catálogo de vehículos o padrón
+        if not cliente_placa:
+            cursor.execute("SELECT cliente FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ? LIMIT 1", (pl,))
+            r_cat = cursor.fetchone()
+            if r_cat and r_cat[0]:
+                cliente_placa = str(r_cat[0]).strip()
+            else:
+                cursor.execute("SELECT cliente FROM padron_vehiculos_cliente WHERE UPPER(TRIM(placa)) = ? LIMIT 1", (pl,))
+                r_pad = cursor.fetchone()
+                if r_pad and r_pad[0]:
+                    cliente_placa = str(r_pad[0]).strip()
+
+        regla_cfg = obtener_regla_frecuencia_cliente(cliente_placa)
+        regla_freq_texto = regla_cfg.get("regla_texto", "")
+
+        if f_ult_str:
+            try:
+                f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
+                f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base, cliente=cliente_placa)
+                f_minima_str = f_minima.strftime('%Y-%m-%d')
+                hoy = date.today()
+                en_periodo_restringido = (hoy < f_minima)
+                dias_restantes = max(0, (f_minima - hoy).days) if en_periodo_restringido else 0
+                inspeccion_hoy = (f_ult_str == hoy.strftime('%Y-%m-%d'))
+            except Exception:
+                f_minima_str = ""
+                en_periodo_restringido = False
+                dias_restantes = 0
+                inspeccion_hoy = False
 
         # 1. Buscar en la última inspección registrada previamente para esa placa con tipología
         cursor.execute("""
@@ -1837,7 +1980,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "encontrado": True,
             "placa": row[0],
             "tipologia": tip,
-            "cliente": row[2] or "",
+            "cliente": row[2] or cliente_placa or "",
             "subcliente": row[3] or "",
             "tipo_operacion": row[4] or "",
             "ultimo_km": ultimo_km_val,
@@ -1853,12 +1996,16 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
             "inspeccion_hoy": inspeccion_hoy,
             "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
             "ultima_marca": marca_ult,
-            "ultimo_diseno": diseno_ult
+            "ultimo_diseno": diseno_ult,
+            "regla_frecuencia_texto": regla_freq_texto,
+            "dias_espera_inspeccion": regla_cfg.get("dias_espera", 20),
+            "requiere_mes_siguiente": regla_cfg.get("requiere_mes_siguiente", True)
         }
     
     return {
         "encontrado": False,
         "placa": pl,
+        "cliente": cliente_placa,
         "ultima_fecha_inspeccion": f_ult_str,
         "fecha_minima_permitida": f_minima_str,
         "en_periodo_restringido": en_periodo_restringido,
@@ -1866,7 +2013,10 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
         "inspeccion_hoy": inspeccion_hoy,
         "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
         "ultima_marca": marca_ult,
-        "ultimo_diseno": diseno_ult
+        "ultimo_diseno": diseno_ult,
+        "regla_frecuencia_texto": regla_freq_texto,
+        "dias_espera_inspeccion": regla_cfg.get("dias_espera", 20),
+        "requiere_mes_siguiente": regla_cfg.get("requiere_mes_siguiente", True)
     }
 
 def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "") -> dict | None:
@@ -2075,30 +2225,6 @@ def es_posicion_direccional(tipologia, posicion):
         return pos in [1, 2, 3, 4]
     return pos in [1, 2]
 
-def calcular_fecha_minima_siguiente_inspeccion(fecha_base):
-    """
-    Calcula la fecha mínima en la que se puede realizar una nueva inspección a un vehículo.
-    Regla: La nueva inspección se habilita a partir del día 20 del mes siguiente a la inspección previa.
-    Ejemplo:
-    - Inspección previa: 2026-10-20 (Octubre) -> Nueva inspección permitida: 2026-11-20 (20 de Noviembre).
-    - Inspección previa: 2026-08-10 (Agosto)  -> Nueva inspección permitida: 2026-09-20 (20 de Septiembre).
-    """
-    if isinstance(fecha_base, str):
-        fecha_base = datetime.strptime(str(fecha_base)[:10], '%Y-%m-%d').date()
-    elif isinstance(fecha_base, datetime):
-        fecha_base = fecha_base.date()
-
-    año = fecha_base.year
-    mes = fecha_base.month
-    if mes == 12:
-        año_sig = año + 1
-        mes_sig = 1
-    else:
-        año_sig = año
-        mes_sig = mes + 1
-
-    return date(año_sig, mes_sig, 20)
-
 def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_masivo=False):
     """
     Evalúa los candados de seguridad de inspección:
@@ -2250,18 +2376,20 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                         'mensaje': f'⚠️ CANDADO DE FECHA: La fecha de inspección ({f_nueva_str}) no puede ser anterior a la última inspección registrada ({f_ult_str}).'
                     }
             else:
-                # Fecha posterior: debe haber transcurrido el siguiente mes más 20 días (solo en captura en vivo)
+                # Fecha posterior: debe haber transcurrido la frecuencia configurada por cliente
                 if not es_cargue_masivo:
                     f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
                     f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
-                    f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base)
+                    f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base, cliente=cliente_val)
                     if f_nueva < f_minima:
+                        cfg_cli = obtener_regla_frecuencia_cliente(cliente_val)
                         return {
                             'valido': False,
                             'alerta_mes': True,
                             'mensaje': (
                                 f'⚠️ CANDADO DE FRECUENCIA: El vehículo {placa} ya fue inspeccionado en la Posición {posicion} el {f_ult_str}. '
-                                f'Una nueva inspección se habilita a partir del día 20 del mes siguiente ({f_minima.strftime("%Y-%m-%d")}).'
+                                f'Una nueva inspección para {cliente_val or "este cliente"} se habilita a partir del {f_minima.strftime("%Y-%m-%d")} '
+                                f'({cfg_cli.get("regla_texto", "ciclo técnico")}).'
                             )
                         }
 
@@ -5129,6 +5257,8 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
         "tolerancia_mal_apareo_pacha_mm": 2.5,
         "umbral_diferencia_rotacion_ejes_mm": 3.0,
         "diferencia_minima_par_direccional_mm": 3.0,
+        "dias_espera_inspeccion": 20,
+        "requiere_mes_siguiente": False if 'CIUDAD LIMPIA' in str(cliente).upper() else True,
         "plantilla_kpis_json": "{}"
     }
     if not cliente or str(cliente).strip().upper() == 'TODOS':
@@ -5143,6 +5273,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                        tolerancia_psi_baja_pct, tolerancia_psi_alta_pct,
                        tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm,
                        umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm,
+                       dias_espera_inspeccion, requiere_mes_siguiente,
                        plantilla_kpis_json
                 FROM configuracion_avanzada_cliente
                 WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))
@@ -5156,10 +5287,17 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                     "tolerancia_psi_baja_pct", "tolerancia_psi_alta_pct",
                     "tolerancia_desalineacion_hombros_mm", "tolerancia_mal_apareo_pacha_mm",
                     "umbral_diferencia_rotacion_ejes_mm", "diferencia_minima_par_direccional_mm",
+                    "dias_espera_inspeccion", "requiere_mes_siguiente",
                     "plantilla_kpis_json"
                 ]
                 d = dict(zip(cols, row))
                 d["cliente"] = cliente
+                if d.get("dias_espera_inspeccion") is None:
+                    d["dias_espera_inspeccion"] = defaults["dias_espera_inspeccion"]
+                if d.get("requiere_mes_siguiente") is None:
+                    d["requiere_mes_siguiente"] = defaults["requiere_mes_siguiente"]
+                else:
+                    d["requiere_mes_siguiente"] = bool(d["requiere_mes_siguiente"])
                 return d
     except Exception:
         pass
@@ -6565,40 +6703,52 @@ def obtener_directorio_clientes():
 
         # 1. Base de clientes desde configuracion_clientes
         cursor.execute("""
-            SELECT UPPER(TRIM(cliente)), limite_retiro_mm, IFNULL(observaciones, ''), fecha_actualizacion
+            SELECT UPPER(TRIM(cliente)), limite_retiro_mm, IFNULL(observaciones, ''), fecha_actualizacion,
+                   dias_espera_inspeccion, requiere_mes_siguiente
             FROM configuracion_clientes
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
             ORDER BY cliente ASC
         """)
-        clientes_cfg = {
-            r[0]: {
-                "cliente": r[0],
+        clientes_cfg = {}
+        for r in cursor.fetchall():
+            c_nom = r[0]
+            es_cl = ('CIUDAD LIMPIA' in c_nom)
+            dias_val = to_int(r[4], 20)
+            req_mes_val = bool(to_int(r[5], 0 if es_cl else 1)) if r[5] is not None else (not es_cl)
+            clientes_cfg[c_nom] = {
+                "cliente": c_nom,
                 "limite_retiro_mm": to_float(r[1], 3.0),
                 "observaciones": r[2] or "",
-                "fecha_actualizacion": str(r[3] or "")
+                "fecha_actualizacion": str(r[3] or ""),
+                "dias_espera_inspeccion": dias_val,
+                "requiere_mes_siguiente": req_mes_val
             }
-            for r in cursor.fetchall()
-        }
 
         # Asegurar clientes que pudieran estar en otras tablas pero no en configuracion_clientes
         cursor.execute("SELECT DISTINCT UPPER(TRIM(cliente)) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''")
         for (c,) in cursor.fetchall():
             if c and c not in clientes_cfg:
+                es_cl = ('CIUDAD LIMPIA' in c)
                 clientes_cfg[c] = {
                     "cliente": c,
                     "limite_retiro_mm": 3.0,
                     "observaciones": "Detectado desde historial de inspecciones",
-                    "fecha_actualizacion": ""
+                    "fecha_actualizacion": "",
+                    "dias_espera_inspeccion": 20,
+                    "requiere_mes_siguiente": not es_cl
                 }
 
         cursor.execute("SELECT DISTINCT UPPER(TRIM(cliente)) FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''")
         for (c,) in cursor.fetchall():
             if c and c not in clientes_cfg:
+                es_cl = ('CIUDAD LIMPIA' in c)
                 clientes_cfg[c] = {
                     "cliente": c,
                     "limite_retiro_mm": 3.0,
                     "observaciones": "Detectado desde límites de retiro",
-                    "fecha_actualizacion": ""
+                    "fecha_actualizacion": "",
+                    "dias_espera_inspeccion": 20,
+                    "requiere_mes_siguiente": not es_cl
                 }
 
         # 2. Licenciamiento avanzado (LIGHT vs PRO)
@@ -6687,6 +6837,10 @@ def obtener_directorio_clientes():
             ll_cnt = llantas_conteo.get(c_nombre, 0)
             m_list = marcas_dict.get(c_nombre, [])
 
+            dias_val = item.get("dias_espera_inspeccion", 20)
+            req_mes_val = item.get("requiere_mes_siguiente", False if 'CIUDAD LIMPIA' in c_nombre else True)
+            regla_desc = f"Mes siguiente + {dias_val}d" if req_mes_val else f"{dias_val}d corridos"
+
             # Puede eliminarse solo si no tiene historial operativo de inspecciones ni llantas
             puede_eliminar = (insp_cnt == 0 and ll_cnt == 0)
 
@@ -6696,6 +6850,9 @@ def obtener_directorio_clientes():
                 "limite_retiro_mm": item["limite_retiro_mm"],
                 "observaciones": item["observaciones"],
                 "fecha_actualizacion": item["fecha_actualizacion"],
+                "dias_espera_inspeccion": dias_val,
+                "requiere_mes_siguiente": req_mes_val,
+                "regla_frecuencia_texto": regla_desc,
                 "subclientes": sub_list,
                 "cant_vehiculos": v_cnt,
                 "vehiculos_count": v_cnt,
@@ -6714,8 +6871,8 @@ def obtener_directorio_clientes():
 def crear_o_actualizar_cliente(datos: dict):
     """
     Crea o actualiza un cliente/flota en el sistema garantizando integridad y normalización en mayúsculas:
-    - Inserta/actualiza en configuracion_clientes (límite base y observaciones).
-    - Inserta/actualiza en configuracion_avanzada_cliente (licencia PRO/LIGHT).
+    - Inserta/actualiza en configuracion_clientes (límite base, observaciones, dias_espera_inspeccion, requiere_mes_siguiente).
+    - Inserta/actualiza en configuracion_avanzada_cliente (licencia PRO/LIGHT, parametros de frecuencia).
     - Registra la regla base en configuracion_limites_retiro (TODOS/TODOS).
     - Si se especifican sedes/subclientes, registra sus reglas correspondientes.
     """
@@ -6733,6 +6890,17 @@ def crear_o_actualizar_cliente(datos: dict):
 
     observaciones = str(datos.get("observaciones", "")).strip()
 
+    dias_esp = to_int(datos.get("dias_espera_inspeccion", 20), 20)
+    if dias_esp <= 0:
+        dias_esp = 20
+
+    es_cl = ('CIUDAD LIMPIA' in raw_cliente)
+    if "requiere_mes_siguiente" in datos:
+        raw_req = datos.get("requiere_mes_siguiente")
+        req_mes = 1 if raw_req in (True, 1, '1', 'true', 'True', 'mes_siguiente') else 0
+    else:
+        req_mes = 0 if es_cl else 1
+
     # Procesar subclientes / sedes
     subclientes_input = datos.get("subclientes", "")
     subclientes_lista = []
@@ -6747,22 +6915,26 @@ def crear_o_actualizar_cliente(datos: dict):
 
         # 1. Guardar en configuracion_clientes
         cursor.execute("""
-            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, dias_espera_inspeccion, requiere_mes_siguiente, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(cliente) DO UPDATE SET
                 limite_retiro_mm = excluded.limite_retiro_mm,
                 observaciones = excluded.observaciones,
+                dias_espera_inspeccion = excluded.dias_espera_inspeccion,
+                requiere_mes_siguiente = excluded.requiere_mes_siguiente,
                 fecha_actualizacion = CURRENT_TIMESTAMP
-        """, (raw_cliente, limite_retiro_mm, observaciones))
+        """, (raw_cliente, limite_retiro_mm, observaciones, dias_esp, req_mes))
 
         # 2. Guardar en configuracion_avanzada_cliente
         cursor.execute("""
-            INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, fecha_actualizacion)
-            VALUES (?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, dias_espera_inspeccion, requiere_mes_siguiente, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(cliente) DO UPDATE SET
                 tipo_licencia = excluded.tipo_licencia,
+                dias_espera_inspeccion = excluded.dias_espera_inspeccion,
+                requiere_mes_siguiente = excluded.requiere_mes_siguiente,
                 fecha_actualizacion = CURRENT_TIMESTAMP
-        """, (raw_cliente, tipo_licencia))
+        """, (raw_cliente, tipo_licencia, dias_esp, req_mes))
 
         # 3. Regla global por defecto en configuracion_limites_retiro
         cursor.execute("""
@@ -6783,10 +6955,14 @@ def crear_o_actualizar_cliente(datos: dict):
 
         conn.commit()
 
+    regla_desc = f"Mes siguiente + {dias_esp}d" if req_mes else f"{dias_esp}d corridos"
     return {
         "ok": True,
         "cliente": raw_cliente,
-        "mensaje": f"Cliente '{raw_cliente}' guardado exitosamente con licencia {tipo_licencia}."
+        "dias_espera_inspeccion": dias_esp,
+        "requiere_mes_siguiente": bool(req_mes),
+        "regla_frecuencia_texto": regla_desc,
+        "mensaje": f"Cliente '{raw_cliente}' guardado exitosamente con licencia {tipo_licencia} y regla de frecuencia ({regla_desc})."
     }
 
 

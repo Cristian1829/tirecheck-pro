@@ -235,9 +235,9 @@ def test_candado_eje_direccional_solo_original(test_db):
     assert val_ok['valido'] is True
 
 def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
-    # Vehículo inspeccionado el 2026-08-10
+    # Vehículo inspeccionado el 2026-08-25
     datos1 = {
-        'fecha': '2026-08-10',
+        'fecha': '2026-08-25',
         'placa': 'FREQ01',
         'posicion': 1,
         'kilometraje': 50000,
@@ -249,9 +249,16 @@ def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
     }
     database.insertar_inspeccion(datos1)
 
-    # Intentar nueva inspección el 2026-09-15 (aún en el siguiente mes pero antes de los 20 días calculados) debe fallar
+    # 1. Intentar el 2026-08-28 (mismo mes) debe fallar porque requiere siguiente mes
+    datos_mismo_mes = dict(datos1)
+    datos_mismo_mes['fecha'] = '2026-08-28'
+    val_mismo = database.validar_inspeccion_candados(datos_mismo_mes)
+    assert not val_mismo['valido']
+    assert 'frecuencia' in val_mismo['mensaje'].lower()
+
+    # 2. Intentar nueva inspección el 2026-09-05 (es el siguiente mes, pero solo van 11 días < 20 días) debe fallar
     datos2 = {
-        'fecha': '2026-09-15',
+        'fecha': '2026-09-05',
         'placa': 'FREQ01',
         'posicion': 1,
         'kilometraje': 51000,
@@ -265,9 +272,9 @@ def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
     assert not val_bloq['valido']
     assert 'frecuencia' in val_bloq['mensaje'].lower()
 
-    # Una vez transcurrido el siguiente mes más 20 días (ej. 2026-10-01), debe ser permitida
+    # 3. Una vez transcurrido el siguiente mes y pasados 20 días (ej. 2026-09-15 -> 21 días después), debe ser permitida
     datos3 = dict(datos2)
-    datos3['fecha'] = '2026-10-01'
+    datos3['fecha'] = '2026-09-15'
     val_perm = database.validar_inspeccion_candados(datos3)
     assert val_perm['valido'] is True
 

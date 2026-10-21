@@ -206,6 +206,8 @@ class ClienteDirectorioItem(BaseModel):
     limite_retiro_mm: Optional[float] = 3.0
     subclientes: Optional[str] = ""
     observaciones: Optional[str] = ""
+    dias_espera_inspeccion: Optional[int] = 20
+    requiere_mes_siguiente: Optional[bool] = True
 
 # ==========================================
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)

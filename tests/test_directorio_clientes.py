@@ -39,16 +39,20 @@ def test_directorio_clientes_crud_y_seguridad(auth_client, inspector_token):
     assert alfa is not None
     assert alfa["tipo_licencia"] == "PRO"
     assert alfa["limite_retiro_mm"] == 3.5
+    assert alfa["dias_espera_inspeccion"] == 20
+    assert alfa["requiere_mes_siguiente"] is True
     assert "BOGOTA" in alfa["subclientes"]
     assert "MEDELLIN" in alfa["subclientes"]
 
-    # 5. Modificar cliente existente
+    # 5. Modificar cliente existente con parámetros de frecuencia personalizados
     payload_editar = {
         "cliente": "TRANSPORTES ALFA SAS",
         "tipo_licencia": "LIGHT",
         "limite_retiro_mm": 2.8,
+        "dias_espera_inspeccion": 15,
+        "requiere_mes_siguiente": False,
         "subclientes": "BOGOTA, CALI",
-        "observaciones": "Actualizado a plan Light"
+        "observaciones": "Actualizado a plan Light y 15 días corridos"
     }
     resp_edit = auth_client.post("/api/clientes-directorio", json=payload_editar)
     assert resp_edit.status_code == 200
@@ -57,6 +61,9 @@ def test_directorio_clientes_crud_y_seguridad(auth_client, inspector_token):
     alfa_edit = next((c for c in resp_list2.json() if c["cliente"] == "TRANSPORTES ALFA SAS"), None)
     assert alfa_edit["tipo_licencia"] == "LIGHT"
     assert alfa_edit["limite_retiro_mm"] == 2.8
+    assert alfa_edit["dias_espera_inspeccion"] == 15
+    assert alfa_edit["requiere_mes_siguiente"] is False
+    assert "15d corridos" in alfa_edit["regla_frecuencia_texto"]
     assert "CALI" in alfa_edit["subclientes"]
 
     # 6. Eliminar cliente que no tiene historial operativo

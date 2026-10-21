@@ -172,15 +172,45 @@ def test_frontend_javascript_sintaxis_valida():
     )
     assert res.returncode == 0, f"Error de sintaxis en JavaScript de templates/index.html: {res.stderr}"
 
-def test_fecha_minima_permitida_exacta_dia_20_mes_siguiente():
-    """Verifica que la fecha mínima permitida para una inspección sea el día 20 del mes siguiente."""
-    # Caso puntual del usuario: última inspección 2026-10-20 -> debe ser 2026-11-20
-    f_min = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-20")
-    assert str(f_min) == "2026-11-20"
+def test_fecha_minima_permitida_parametrizable_por_cliente():
+    """
+    Verifica que la fecha mínima permitida para inspección sea parametrizable por cliente:
+    - Para CIUDAD LIMPIA: habilita la inspección 20 días después desde la última inspección (días corridos).
+    - Para los demás clientes: primero que sea el siguiente mes y que pasen 20 días desde la última inspección.
+    """
+    # 1. Caso CIUDAD LIMPIA: 20 días corridos desde última inspección
+    f_cl = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-20", cliente="CIUDAD LIMPIA")
+    assert str(f_cl) == "2026-11-09"
 
-    # Caso fin de año: 2026-12-05 -> debe ser 2027-01-20
-    f_min_diciembre = database.calcular_fecha_minima_siguiente_inspeccion("2026-12-05")
-    assert str(f_min_diciembre) == "2027-01-20"
+    # Inspección a inicio de mes: se habilita en el mismo mes tras 20 días
+    f_cl_mismo_mes = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-02", cliente="CIUDAD LIMPIA BOGOTA")
+    assert str(f_cl_mismo_mes) == "2026-10-22"
+
+    # 2. Caso demás clientes: siguiente mes Y que pasen 20 días desde la última inspección
+    # Última inspección a inicio de mes (2026-10-02): 20 días después es 2026-10-22, pero exige siguiente mes -> 2026-11-01
+    f_otro_inicio = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-02", cliente="TRANSCARGA NACIONAL")
+    assert str(f_otro_inicio) == "2026-11-01"
+
+    # Última inspección el 20 del mes (2026-10-20): siguiente mes (2026-11-01) y 20 días después (2026-11-09) -> 2026-11-09
+    f_otro_20 = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-20", cliente="TRANSCARGA NACIONAL")
+    assert str(f_otro_20) == "2026-11-09"
+
+    # Última inspección a fin de mes (2026-10-25): siguiente mes (2026-11-01) y 20 días después (2026-11-14) -> 2026-11-14
+    f_otro_fin = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-25", cliente="TRANSCARGA NACIONAL")
+    assert str(f_otro_fin) == "2026-11-14"
+
+    # Caso fin de año: 2026-12-05 -> siguiente mes es enero 2027 (2027-01-01) y 20 días (2026-12-25) -> 2027-01-01
+    f_min_diciembre = database.calcular_fecha_minima_siguiente_inspeccion("2026-12-05", cliente="TRANSCARGA NACIONAL")
+    assert str(f_min_diciembre) == "2027-01-01"
+
+    # 3. Parametrización personalizada por cliente (ej. 15 días corridos)
+    database.crear_o_actualizar_cliente({
+        "cliente": "CLIENTE FLOTA RAPIDA",
+        "dias_espera_inspeccion": 15,
+        "requiere_mes_siguiente": False
+    })
+    f_personalizada = database.calcular_fecha_minima_siguiente_inspeccion("2026-10-10", cliente="CLIENTE FLOTA RAPIDA")
+    assert str(f_personalizada) == "2026-10-25"
 
 def test_subcliente_obligatorio_en_api():
     """Valida que la Sede / Subcliente sea obligatoria al registrar inspecciones."""
