@@ -81,6 +81,7 @@ FILES_SPEC = [
     ("tests/test_diagrama_chasis.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas del generador vectorial de diagramas de chasis en PDF"),
     ("tests/test_kpis.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK"),
     ("tests/test_pdf.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de generación y estructura de informes técnicos PDF"),
+    ("tests/test_seguridad_y_rendimiento.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de aislamiento multi-tenant IDOR, rate limiting, descarga segura de PDF y rendimiento base64 incremental"),
 
     # 6. Scripts de Auditoría, Pruebas y Diagnóstico
     ("scripts/README.md", "6. Scripts de Auditoría, Soporte y Diagnóstico", "markdown", "Documentación del directorio de scripts auxiliares"),

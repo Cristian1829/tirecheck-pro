@@ -4653,6 +4653,10 @@
               <input type="checkbox" id="usr_vista_kpis" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Trazabilidad &amp; KPIs</span>
             </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_composicion" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Composición de Flota</span>
+            </label>
             <label id="lbl_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
                 <input type="checkbox" id="usr_vista_basedatos" class="rounded text-indigo-600" disabled>
@@ -4746,6 +4750,10 @@
             <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
               <input type="checkbox" id="edit_usr_vista_kpis" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Trazabilidad &amp; KPIs</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_composicion" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Composición de Flota</span>
             </label>
             <label id="lbl_edit_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
@@ -5991,7 +5999,7 @@
 
       let vistasPermitidas = [];
       if (esAdmin) {
-        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'];
+        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
       } else {
         const rawV = usuarioActual.vistas_permitidas;
         if (Array.isArray(rawV)) {
@@ -5999,11 +6007,11 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'bodegas', 'catalogos']);
+          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']);
         }
       }
 
-      ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'].forEach(tab => {
+      ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
         if (btnNav) {
           // REGLA: inspectores no pueden ver la pestaña base de inspecciones
@@ -11960,18 +11968,20 @@
       } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
         vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       } else {
-        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
-        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis'];
-        else vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
+        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'];
+        else vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
       }
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
       if (vistas.includes('basedatos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Base Datos</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
       if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      if (vistas.includes('composicion')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Composición Flota</span>');
+      if (vistas.includes('bodegas')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Bodegas MRP</span>');
       if (vistas.includes('catalogos')) {
         const catText = (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') ? 'Catálogos & Límites' : 'Catálogos (Lectura)';
-        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">${catText}</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-50 text-slate-700 border border-slate-200">${catText}</span>`);
       }
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
@@ -12107,14 +12117,16 @@
       const chkPatio = document.getElementById(`${pfx}vista_patio`);
       const chkDiag = document.getElementById(`${pfx}vista_diagnostico`);
       const chkKpis = document.getElementById(`${pfx}vista_kpis`);
+      const chkComp = document.getElementById(`${pfx}vista_composicion`);
       const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
       const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
 
       if (rol === 'admin') {
-        // Para admin: acceso total a las 5 vistas
+        // Para admin: acceso total a las vistas
         if (chkPatio) chkPatio.checked = true;
         if (chkDiag) chkDiag.checked = true;
         if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
         if (lblBD) {
@@ -12123,10 +12135,11 @@
         }
         if (badgeBD) badgeBD.classList.add('hidden');
       } else if (rol === 'jefatura') {
-        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Catálogos)
+        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Composición, Catálogos)
         if (chkPatio) chkPatio.checked = true;
         if (chkDiag) chkDiag.checked = true;
         if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
         if (lblBD) {
@@ -12135,10 +12148,11 @@
         }
         if (badgeBD) badgeBD.classList.add('hidden');
       } else if (rol === 'gerencia') {
-        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs)
+        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs, Composición)
         if (chkPatio) chkPatio.checked = false;
         if (chkDiag) chkDiag.checked = true;
         if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = false; chkCat.disabled = false; }
         if (lblBD) {
@@ -12147,7 +12161,7 @@
         }
         if (badgeBD) badgeBD.classList.add('hidden');
       } else {
-        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos
+        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos y composición
         if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
         if (lblBD) {
           lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
@@ -12155,7 +12169,7 @@
         }
         if (badgeBD) badgeBD.classList.remove('hidden');
 
-        // Catálogos disponible para inspector (solo consulta)
+        // Catálogos y Composición disponible para inspector
         if (chkCat) { chkCat.disabled = false; }
       }
     }
@@ -12241,13 +12255,14 @@
       const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
       const rol = document.getElementById(`${pfx}rol`).value;
       if (rol === 'admin') {
-        return 'patio,basedatos,diagnostico,kpis,catalogos';
+        return 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos';
       }
       const vistas = [];
       if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
       if (document.getElementById(`${pfx}vista_basedatos`)?.checked && (rol === 'jefatura' || rol === 'gerencia')) vistas.push('basedatos');
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
+      if (document.getElementById(`${pfx}vista_composicion`)?.checked) vistas.push('composicion');
       if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
       // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
       if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
@@ -12356,6 +12371,7 @@
       document.getElementById('usr_vista_patio').checked = true;
       document.getElementById('usr_vista_diagnostico').checked = true;
       document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_vista_composicion').checked = true;
       document.getElementById('usr_vista_catalogos').checked = true;
       document.getElementById('usr_todas_flotas').checked = true;
       document.getElementById('usr_cliente_custom_nuevo').value = '';
@@ -12458,7 +12474,7 @@
       } else if (typeof u.vistas_permitidas === 'string' && u.vistas_permitidas.trim()) {
         vistas = u.vistas_permitidas.split(',').map(s => s.trim().toLowerCase());
       } else {
-        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'catalogos'];
       }
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
       if (document.getElementById('edit_usr_vista_basedatos')) {
@@ -12466,6 +12482,9 @@
       }
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+      if (document.getElementById('edit_usr_vista_composicion')) {
+        document.getElementById('edit_usr_vista_composicion').checked = vistas.includes('composicion');
+      }
       document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
 
       // Clientes asignados

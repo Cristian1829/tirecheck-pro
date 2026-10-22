@@ -84,7 +84,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
-    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis"
+    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis,composicion"
 
 class EditarUsuarioItem(BaseModel):
     nombre_completo: Optional[str] = None

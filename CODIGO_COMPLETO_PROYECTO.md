@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-22 18:02:31`
-- **Total de Archivos Incluidos:** `78` archivos de código y documentación
-- **Líneas Totales de Código:** `51,786` líneas
-- **Tamaño Total de Código Fuente:** `2539.8 KB` (`2,600,765` bytes)
+- **Fecha de Generación:** `2026-10-22 18:54:53`
+- **Total de Archivos Incluidos:** `79` archivos de código y documentación
+- **Líneas Totales de Código:** `52,042` líneas
+- **Tamaño Total de Código Fuente:** `2551.3 KB` (`2,612,497` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,7 +432,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2037 | 89.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 8803 | 420.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 8804 | 420.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1846 | 85.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18247 | 965.3 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18266 | 967.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -475,6 +475,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
 | [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 258 | 8.4 KB | Pruebas de generación y estructura de informes técnicos PDF |
+| [tests/test_seguridad_y_rendimiento.py](#archivo-teststest-seguridad-y-rendimientopy) | `python` | 236 | 9.3 KB | Pruebas de aislamiento multi-tenant IDOR, rate limiting, descarga segura de PDF y rendimiento base64 incremental |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
 
@@ -3538,7 +3539,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2037 líneas | 91,628 bytes (89.5 KB)
+- **Métricas:** 2037 líneas | 91,640 bytes (89.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3628,7 +3629,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
-    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis"
+    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis,composicion"
 
 class EditarUsuarioItem(BaseModel):
     nombre_completo: Optional[str] = None
@@ -5587,7 +5588,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 8803 líneas | 430,252 bytes (420.2 KB)
+- **Métricas:** 8804 líneas | 430,663 bytes (420.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5766,7 +5767,7 @@ def asegurar_columna_vistas_permitidas(conn):
         cursor.execute("PRAGMA table_info(usuarios)")
         cols_usr = [r[1] for r in cursor.fetchall()]
         if cols_usr and 'vistas_permitidas' not in cols_usr:
-            cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis,composicion'")
             conn.commit()
     except Exception:
         pass
@@ -5858,7 +5859,7 @@ def inicializar_bd():
                 nombre_completo TEXT NOT NULL,
                 rol TEXT NOT NULL DEFAULT 'inspector', -- 'admin', 'inspector'
                 cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo, varios separados por comas, o vacío para todos
-                vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', -- Vistas autorizadas (basedatos y catalogos solo admin)
+                vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis,composicion', -- Vistas autorizadas (basedatos solo admin, jefatura, gerencia)
                 activo INTEGER DEFAULT 1,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -5872,19 +5873,19 @@ def inicializar_bd():
         if cursor.fetchone()[0] == 0:
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,catalogos')
+                VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,composicion,catalogos')
             """, (hash_password('admin123'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,catalogos')
+                VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,composicion,catalogos')
             """, (hash_password('1234'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis')
+                VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis,composicion')
             """, (hash_password('1234'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis')
+                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis,composicion')
             """, (hash_password('1234'),))
         else:
             # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
@@ -10743,29 +10744,30 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
     Retorna la lista de vistas autorizadas según el rol:
-    - admin: Todas las 5 vistas ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos').
-    - jefatura: Por defecto todas ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos') o las asignadas.
-    - gerencia: Por defecto ('basedatos', 'diagnostico', 'kpis'). Opcionalmente 'patio' o 'catalogos'.
-    - inspector: 'patio', 'diagnostico', 'kpis', 'catalogos' (REGLA: NUNCA 'basedatos').
+    - admin: Todas las vistas ('patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos').
+    - jefatura: Por defecto todas ('patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos') o las asignadas.
+    - gerencia: Por defecto ('basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'). Opcionalmente 'patio' o 'catalogos'.
+    - inspector: 'patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos' (REGLA: NUNCA 'basedatos').
     """
     rol_clean = str(rol).strip().lower()
+    todas_vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
     if rol_clean in ('admin', 'administrador'):
-        return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+        return todas_vistas
 
     if not vistas:
         if rol_clean in ('jefatura', 'jefe', 'jefe_llantas'):
-            return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+            return ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
         elif rol_clean in ('gerencia', 'gerente'):
-            return ['basedatos', 'diagnostico', 'kpis']
+            return ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas']
         else:
-            return ['patio', 'diagnostico', 'kpis', 'catalogos']
+            return ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
 
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
     if rol_clean in ('jefatura', 'jefe', 'jefe_llantas', 'gerencia', 'gerente'):
-        permitidas = [v for v in raw if v in ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos')]
+        permitidas = [v for v in raw if v in ('patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos')]
     else:
         # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos
-        permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'catalogos')]
+        permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos')]
     return permitidas if permitidas else ['patio']
 
 def autenticar_usuario(username, password):
@@ -10868,7 +10870,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
     
     # Resolver vistas autorizadas según rol
     if r == 'admin':
-        vistas_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+        vistas_str = 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos'
     else:
         vistas_limpias = parsear_vistas_permitidas(vistas_permitidas, r)
         vistas_str = ','.join(vistas_limpias)
@@ -10918,7 +10920,7 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
 
         if vistas_permitidas is not None:
             if rol_final == 'admin':
-                v_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+                v_str = 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos'
             else:
                 v_limpias = parsear_vistas_permitidas(vistas_permitidas, rol_final)
                 v_str = ','.join(v_limpias)
@@ -20807,7 +20809,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 18247 líneas | 988,455 bytes (965.3 KB)
+- **Métricas:** 18266 líneas | 990,207 bytes (967.0 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -25466,6 +25468,10 @@ if __name__ == '__main__':
               <input type="checkbox" id="usr_vista_kpis" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Trazabilidad &amp; KPIs</span>
             </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_composicion" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Composición de Flota</span>
+            </label>
             <label id="lbl_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
                 <input type="checkbox" id="usr_vista_basedatos" class="rounded text-indigo-600" disabled>
@@ -25559,6 +25565,10 @@ if __name__ == '__main__':
             <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
               <input type="checkbox" id="edit_usr_vista_kpis" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Trazabilidad &amp; KPIs</span>
+            </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_composicion" class="rounded text-indigo-600" checked>
+              <span class="font-semibold">Composición de Flota</span>
             </label>
             <label id="lbl_edit_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
@@ -26804,7 +26814,7 @@ if __name__ == '__main__':
 
       let vistasPermitidas = [];
       if (esAdmin) {
-        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'];
+        vistasPermitidas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
       } else {
         const rawV = usuarioActual.vistas_permitidas;
         if (Array.isArray(rawV)) {
@@ -26812,11 +26822,11 @@ if __name__ == '__main__':
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'bodegas', 'catalogos']);
+          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']);
         }
       }
 
-      ['patio', 'basedatos', 'diagnostico', 'kpis', 'bodegas', 'catalogos'].forEach(tab => {
+      ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'].forEach(tab => {
         const btnNav = document.getElementById(`nav-btn-${tab}`);
         if (btnNav) {
           // REGLA: inspectores no pueden ver la pestaña base de inspecciones
@@ -32773,18 +32783,20 @@ if __name__ == '__main__':
       } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
         vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       } else {
-        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos'];
-        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis'];
-        else vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
+        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'];
+        else vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
       }
       const badges = [];
       if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
       if (vistas.includes('basedatos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Base Datos</span>');
       if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
       if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      if (vistas.includes('composicion')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Composición Flota</span>');
+      if (vistas.includes('bodegas')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Bodegas MRP</span>');
       if (vistas.includes('catalogos')) {
         const catText = (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') ? 'Catálogos & Límites' : 'Catálogos (Lectura)';
-        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">${catText}</span>`);
+        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-50 text-slate-700 border border-slate-200">${catText}</span>`);
       }
       return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
     }
@@ -32920,14 +32932,16 @@ if __name__ == '__main__':
       const chkPatio = document.getElementById(`${pfx}vista_patio`);
       const chkDiag = document.getElementById(`${pfx}vista_diagnostico`);
       const chkKpis = document.getElementById(`${pfx}vista_kpis`);
+      const chkComp = document.getElementById(`${pfx}vista_composicion`);
       const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
       const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
 
       if (rol === 'admin') {
-        // Para admin: acceso total a las 5 vistas
+        // Para admin: acceso total a las vistas
         if (chkPatio) chkPatio.checked = true;
         if (chkDiag) chkDiag.checked = true;
         if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
         if (lblBD) {
@@ -32936,10 +32950,11 @@ if __name__ == '__main__':
         }
         if (badgeBD) badgeBD.classList.add('hidden');
       } else if (rol === 'jefatura') {
-        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Catálogos)
+        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Composición, Catálogos)
         if (chkPatio) chkPatio.checked = true;
         if (chkDiag) chkDiag.checked = true;
         if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
         if (lblBD) {
@@ -32948,10 +32963,11 @@ if __name__ == '__main__':
         }
         if (badgeBD) badgeBD.classList.add('hidden');
       } else if (rol === 'gerencia') {
-        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs)
+        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs, Composición)
         if (chkPatio) chkPatio.checked = false;
         if (chkDiag) chkDiag.checked = true;
         if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
         if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
         if (chkCat) { chkCat.checked = false; chkCat.disabled = false; }
         if (lblBD) {
@@ -32960,7 +32976,7 @@ if __name__ == '__main__':
         }
         if (badgeBD) badgeBD.classList.add('hidden');
       } else {
-        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos
+        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos y composición
         if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
         if (lblBD) {
           lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
@@ -32968,7 +32984,7 @@ if __name__ == '__main__':
         }
         if (badgeBD) badgeBD.classList.remove('hidden');
 
-        // Catálogos disponible para inspector (solo consulta)
+        // Catálogos y Composición disponible para inspector
         if (chkCat) { chkCat.disabled = false; }
       }
     }
@@ -33054,13 +33070,14 @@ if __name__ == '__main__':
       const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
       const rol = document.getElementById(`${pfx}rol`).value;
       if (rol === 'admin') {
-        return 'patio,basedatos,diagnostico,kpis,catalogos';
+        return 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos';
       }
       const vistas = [];
       if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
       if (document.getElementById(`${pfx}vista_basedatos`)?.checked && (rol === 'jefatura' || rol === 'gerencia')) vistas.push('basedatos');
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
+      if (document.getElementById(`${pfx}vista_composicion`)?.checked) vistas.push('composicion');
       if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
       // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
       if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
@@ -33169,6 +33186,7 @@ if __name__ == '__main__':
       document.getElementById('usr_vista_patio').checked = true;
       document.getElementById('usr_vista_diagnostico').checked = true;
       document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_vista_composicion').checked = true;
       document.getElementById('usr_vista_catalogos').checked = true;
       document.getElementById('usr_todas_flotas').checked = true;
       document.getElementById('usr_cliente_custom_nuevo').value = '';
@@ -33271,7 +33289,7 @@ if __name__ == '__main__':
       } else if (typeof u.vistas_permitidas === 'string' && u.vistas_permitidas.trim()) {
         vistas = u.vistas_permitidas.split(',').map(s => s.trim().toLowerCase());
       } else {
-        vistas = ['patio', 'diagnostico', 'kpis', 'catalogos'];
+        vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'catalogos'];
       }
       document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
       if (document.getElementById('edit_usr_vista_basedatos')) {
@@ -33279,6 +33297,9 @@ if __name__ == '__main__':
       }
       document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
       document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+      if (document.getElementById('edit_usr_vista_composicion')) {
+        document.getElementById('edit_usr_vista_composicion').checked = vistas.includes('composicion');
+      }
       document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
 
       // Clientes asignados
@@ -48326,6 +48347,254 @@ def test_api_pdf_consolidado_con_rango_fechas(test_db, auth_client):
     assert res.status_code == 200
     assert res.headers["content-type"] == "application/pdf"
     assert res.content.startswith(b"%PDF-")
+```
+
+---
+
+## Archivo: tests/test_seguridad_y_rendimiento.py
+
+- **Ruta:** `tests/test_seguridad_y_rendimiento.py`
+- **Descripción:** Pruebas de aislamiento multi-tenant IDOR, rate limiting, descarga segura de PDF y rendimiento base64 incremental
+- **Métricas:** 236 líneas | 9,557 bytes (9.3 KB)
+- **Lenguaje:** `python`
+
+```python
+import os
+import sys
+import pytest
+from fastapi.testclient import TestClient
+
+# Asegurar path de importación
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import database
+import server
+import modulo_bodegas_taller
+
+
+def test_aislamiento_multitenant_bodegas_mismo_numero_interno(test_db):
+    """
+    Verifica que llantas con el mismo número interno pertenecientes a clientes distintos
+    tengan un ciclo de vida, inventario y hoja de vida completamente aislados (prevención IDOR).
+    """
+    # 1. Crear llanta LL-001 para CLIENTE_A
+    res_a = database.crear_llanta_en_bodega({
+        "cliente": "CLIENTE_A",
+        "numero_interno": "LL-001",
+        "ubicacion_bodega": "BODEGA_1_NUEVAS",
+        "marca": "GOODYEAR",
+        "diseno": "KMAX",
+        "dimension": "295/80R22.5",
+        "prof_inicial": 18.0,
+        "costo_compra": 1200000.0,
+        "usuario_registro": "admin"
+    })
+    assert res_a.get("ok"), f"Fallo al crear llanta en CLIENTE_A: {res_a}"
+
+    # 2. Crear llanta con el MISMO número interno LL-001 para CLIENTE_B
+    res_b = database.crear_llanta_en_bodega({
+        "cliente": "CLIENTE_B",
+        "numero_interno": "LL-001",
+        "ubicacion_bodega": "BODEGA_1_NUEVAS",
+        "marca": "MICHELIN",
+        "diseno": "XZE",
+        "dimension": "295/80R22.5",
+        "prof_inicial": 19.0,
+        "costo_compra": 1500000.0,
+        "usuario_registro": "admin"
+    })
+    assert res_b.get("ok"), f"Fallo al crear llanta en CLIENTE_B: {res_b}"
+
+    # 3. Trasladar la llanta de CLIENTE_A a BODEGA_2_RECAMBIO
+    mov_a = database.registrar_movimiento_bodega({
+        "cliente": "CLIENTE_A",
+        "numero_interno": "LL-001",
+        "tipo_movimiento": "TRASLADO_INTERNO",
+        "bodega_origen": "BODEGA_1_NUEVAS",
+        "bodega_destino": "BODEGA_2_RECAMBIO",
+        "usuario_registro": "inspector_a"
+    })
+    assert mov_a.get("ok"), f"Fallo movimiento en CLIENTE_A: {mov_a}"
+
+    # 4. Despachar a planta de reencauche la llanta LL-001 de CLIENTE_A
+    desp_a = database.despachar_lote_planta_reencauche({
+        "cliente_propietario": "CLIENTE_A",
+        "numeros_internos": ["LL-001"],
+        "guia_remision_planta": "GUIA-101",
+        "proveedor_planta": "Renovadora X",
+        "usuario_responsable": "inspector_a"
+    })
+    assert desp_a.get("ok"), f"Fallo despacho en CLIENTE_A: {desp_a}"
+
+    # 5. Consultar Hoja de Vida de LL-001 en CLIENTE_A -> Debe estar en Bodega_4_EnPlanta
+    hv_a = database.obtener_hoja_vida_llanta("LL-001", "CLIENTE_A")
+    assert hv_a.get("ok")
+    assert hv_a["ficha_tecnica"]["marca"] == "GOODYEAR"
+    assert hv_a["ficha_tecnica"]["cliente"] == "CLIENTE_A"
+    assert hv_a["estado_actual"]["estado"] == "Bodega_4_EnPlanta"
+
+    # 6. Consultar Hoja de Vida de LL-001 en CLIENTE_B -> DEBE SEGUIR INTACTA en En Stock - Nueva / BODEGA_1_NUEVAS
+    hv_b = database.obtener_hoja_vida_llanta("LL-001", "CLIENTE_B")
+    assert hv_b.get("ok")
+    assert hv_b["ficha_tecnica"]["marca"] == "MICHELIN"
+    assert hv_b["ficha_tecnica"]["cliente"] == "CLIENTE_B"
+    assert hv_b["estado_actual"]["estado"] == "En Stock - Nueva"
+    assert hv_b["estado_actual"]["ubicacion_bodega"] in ("BODEGA_1_NUEVAS", "Bodega_1_Nuevas")
+
+
+def test_bloqueo_descarga_pdf_placa_otro_cliente(test_db):
+    """
+    Verifica que un usuario asignado a CLIENTE_A no pueda descargar el PDF de informe
+    técnico de un vehículo perteneciente a CLIENTE_B (HTTP 403 Forbidden).
+    """
+    # 1. Crear usuario inspector asignado exclusivamente a CLIENTE_A
+    ok_user = database.crear_usuario(
+        username="inspector_a",
+        password="Password123*",
+        nombre_completo="Inspector Flota A",
+        rol="inspector",
+        cliente_asignado="CLIENTE_A"
+    )
+    assert ok_user
+    token_inspector_a = server.crear_token_acceso("inspector_a", "inspector")
+
+    # 2. Registrar inspección del vehículo XYZ999 para CLIENTE_B
+    database.insertar_inspeccion({
+        "fecha": "2026-10-20",
+        "cliente": "CLIENTE_B",
+        "placa": "XYZ999",
+        "posicion": 1,
+        "kilometraje": 45000.0,
+        "marca": "BRIDGESTONE",
+        "diseno": "R268",
+        "dimension": "295/80R22.5",
+        "prof_ext": 9.0,
+        "prof_cent": 9.0,
+        "prof_int": 9.0,
+        "psi": 105.0,
+        "usuario_registro": "admin"
+    })
+
+    client = TestClient(server.app)
+
+    # 3. Intentar descargar el PDF con el token del inspector de CLIENTE_A -> HTTP 403
+    res_bloqueo = client.get(
+        "/api/informe-pdf/XYZ999",
+        headers={"Authorization": f"Bearer {token_inspector_a}"}
+    )
+    assert res_bloqueo.status_code == 403
+    assert "No tiene permisos para descargar el informe de este vehículo" in res_bloqueo.json()["detail"]
+
+    # 4. El usuario admin sí debe poder acceder
+    token_admin = server.crear_token_acceso("admin", "admin")
+    res_admin = client.get(
+        "/api/informe-pdf/XYZ999",
+        headers={"Authorization": f"Bearer {token_admin}"}
+    )
+    assert res_admin.status_code == 200
+    assert res_admin.headers["content-type"] == "application/pdf"
+
+
+def test_rendimiento_exclusiones_base64_y_sincronizacion_incremental(test_db):
+    """
+    Verifica que obtener_todas_inspecciones(incluir_fotos=False) no retorne las cadenas
+    Base64 pesadas en memoria, que la bandera tiene_foto funcione y que la sincronización
+    incremental funcione de manera específica y eficiente.
+    """
+    # 1. Insertar inspección con foto Base64 pesada (>10KB)
+    foto_pesada = "data:image/jpeg;base64," + ("A" * 12000)
+    insp_id = database.insertar_inspeccion({
+        "fecha": "2026-10-22",
+        "cliente": "FLOTA_DEMO",
+        "subcliente": "BOGOTA",
+        "tipo_operacion": "URBANO",
+        "placa": "DEM123",
+        "posicion": 1,
+        "kilometraje": 30000.0,
+        "marca": "PIRELLI",
+        "diseno": "FG01",
+        "dimension": "295/80R22.5",
+        "prof_ext": 11.0,
+        "prof_cent": 11.0,
+        "prof_int": 11.0,
+        "psi": 110.0,
+        "numero_interno": "INT-555",
+        "foto_novedad": foto_pesada,
+        "novedades": "Desgaste parejo",
+        "usuario_registro": "admin"
+    })
+    assert insp_id > 0
+
+    # 2. Consultar sin fotos: el campo foto_novedad debe estar vacío y tiene_foto debe ser '1'
+    df_sin_fotos = database.obtener_todas_inspecciones(incluir_fotos=False)
+    assert not df_sin_fotos.empty
+    reg_sin = df_sin_fotos[df_sin_fotos["id"] == insp_id].iloc[0]
+    assert reg_sin["foto_novedad"] == ""
+    assert str(reg_sin["tiene_foto"]).strip() == "1"
+
+    # 3. Consultar con fotos: el campo foto_novedad debe contener la imagen Base64 completa
+    df_con_fotos = database.obtener_todas_inspecciones(incluir_fotos=True)
+    reg_con = df_con_fotos[df_con_fotos["id"] == insp_id].iloc[0]
+    assert reg_con["foto_novedad"] == foto_pesada
+
+    # 4. Probar sincronización incremental O(1) para ese cliente y número interno
+    sincronizadas = database.sincronizar_maestro_desde_inspecciones(
+        cliente_filtro="FLOTA_DEMO",
+        numero_interno_filtro="INT-555"
+    )
+    assert sincronizadas >= 1
+
+    # Verificar que se creó/actualizó en llantas_maestro
+    with database.get_connection() as conn:
+        c = conn.cursor()
+        c.execute("""
+            SELECT cliente, numero_interno, marca, placa_actual, posicion_actual 
+            FROM llantas_maestro 
+            WHERE UPPER(TRIM(cliente)) = 'FLOTA_DEMO' AND UPPER(TRIM(numero_interno)) = 'INT-555'
+        """)
+        row_m = c.fetchone()
+        assert row_m is not None
+        assert row_m[0] == "FLOTA_DEMO"
+        assert row_m[1] == "INT-555"
+        assert row_m[2] == "PIRELLI"
+        assert row_m[3] == "DEM123"
+        assert row_m[4] == 1
+
+    # 5. Verificar que analizar_inspecciones_df procesa correctamente con Bodega 2 precargada
+    analisis = database.analizar_inspecciones_df(df_sin_fotos)
+    assert not analisis.empty
+    assert "Plan_Dual_Mal_Apareado" in analisis.columns
+    assert "Recomendaciones_Dual" in analisis.columns
+
+
+def test_rate_limiting_login_fuerza_bruta(test_db):
+    """
+    Verifica que tras 8 intentos fallidos consecutivos de login en menos de 60 segundos,
+    el endpoint /api/login bloquee las siguientes peticiones con HTTP 429 Too Many Requests.
+    """
+    server._login_attempts.clear()
+    client = TestClient(server.app)
+
+    # 8 intentos con credenciales incorrectas deben responder con 401
+    for intento in range(1, 9):
+        resp = client.post("/api/login", json={"username": "admin", "password": f"wrong_{intento}"})
+        assert resp.status_code == 401, f"El intento {intento} debió retornar 401"
+        assert resp.json()["detail"] == "Usuario o contraseña incorrectos"
+
+    # El 9no intento debe ser bloqueado con HTTP 429
+    resp_bloqueada = client.post("/api/login", json={"username": "admin", "password": "wrong_password"})
+    assert resp_bloqueada.status_code == 429
+    assert "Demasiados intentos fallidos. Intente de nuevo en 60 segundos." in resp_bloqueada.json()["detail"]
+
+    # Incluso un intento con la contraseña correcta debe permanecer bloqueado
+    resp_correcta_bloqueada = client.post("/api/login", json={"username": "admin", "password": "admin123"})
+    assert resp_correcta_bloqueada.status_code == 429
+
+    # Limpiar el registro de rate limit y verificar que el login exitoso funcione y restablezca
+    server._login_attempts.clear()
+    resp_ok = client.post("/api/login", json={"username": "admin", "password": "admin123"})
+    assert resp_ok.status_code == 200
+    assert "token" in resp_ok.json()
 ```
 
 ---

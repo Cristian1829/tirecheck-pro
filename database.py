@@ -173,7 +173,7 @@ def asegurar_columna_vistas_permitidas(conn):
         cursor.execute("PRAGMA table_info(usuarios)")
         cols_usr = [r[1] for r in cursor.fetchall()]
         if cols_usr and 'vistas_permitidas' not in cols_usr:
-            cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis'")
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis,composicion'")
             conn.commit()
     except Exception:
         pass
@@ -265,7 +265,7 @@ def inicializar_bd():
                 nombre_completo TEXT NOT NULL,
                 rol TEXT NOT NULL DEFAULT 'inspector', -- 'admin', 'inspector'
                 cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo, varios separados por comas, o vacío para todos
-                vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', -- Vistas autorizadas (basedatos y catalogos solo admin)
+                vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis,composicion', -- Vistas autorizadas (basedatos solo admin, jefatura, gerencia)
                 activo INTEGER DEFAULT 1,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -279,19 +279,19 @@ def inicializar_bd():
         if cursor.fetchone()[0] == 0:
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,catalogos')
+                VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,composicion,catalogos')
             """, (hash_password('admin123'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,catalogos')
+                VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,composicion,catalogos')
             """, (hash_password('1234'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis')
+                VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis,composicion')
             """, (hash_password('1234'),))
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis')
+                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis,composicion')
             """, (hash_password('1234'),))
         else:
             # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
@@ -5150,29 +5150,30 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
     Retorna la lista de vistas autorizadas según el rol:
-    - admin: Todas las 5 vistas ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos').
-    - jefatura: Por defecto todas ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos') o las asignadas.
-    - gerencia: Por defecto ('basedatos', 'diagnostico', 'kpis'). Opcionalmente 'patio' o 'catalogos'.
-    - inspector: 'patio', 'diagnostico', 'kpis', 'catalogos' (REGLA: NUNCA 'basedatos').
+    - admin: Todas las vistas ('patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos').
+    - jefatura: Por defecto todas ('patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos') o las asignadas.
+    - gerencia: Por defecto ('basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'). Opcionalmente 'patio' o 'catalogos'.
+    - inspector: 'patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos' (REGLA: NUNCA 'basedatos').
     """
     rol_clean = str(rol).strip().lower()
+    todas_vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
     if rol_clean in ('admin', 'administrador'):
-        return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+        return todas_vistas
 
     if not vistas:
         if rol_clean in ('jefatura', 'jefe', 'jefe_llantas'):
-            return ['patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos']
+            return ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
         elif rol_clean in ('gerencia', 'gerente'):
-            return ['basedatos', 'diagnostico', 'kpis']
+            return ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas']
         else:
-            return ['patio', 'diagnostico', 'kpis', 'catalogos']
+            return ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
 
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
     if rol_clean in ('jefatura', 'jefe', 'jefe_llantas', 'gerencia', 'gerente'):
-        permitidas = [v for v in raw if v in ('patio', 'basedatos', 'diagnostico', 'kpis', 'catalogos')]
+        permitidas = [v for v in raw if v in ('patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos')]
     else:
         # Filtrar estrictamente: inspectores nunca pueden acceder a basedatos
-        permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'catalogos')]
+        permitidas = [v for v in raw if v in ('patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos')]
     return permitidas if permitidas else ['patio']
 
 def autenticar_usuario(username, password):
@@ -5275,7 +5276,7 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
     
     # Resolver vistas autorizadas según rol
     if r == 'admin':
-        vistas_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+        vistas_str = 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos'
     else:
         vistas_limpias = parsear_vistas_permitidas(vistas_permitidas, r)
         vistas_str = ','.join(vistas_limpias)
@@ -5325,7 +5326,7 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
 
         if vistas_permitidas is not None:
             if rol_final == 'admin':
-                v_str = 'patio,basedatos,diagnostico,kpis,catalogos'
+                v_str = 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos'
             else:
                 v_limpias = parsear_vistas_permitidas(vistas_permitidas, rol_final)
                 v_str = ','.join(v_limpias)
