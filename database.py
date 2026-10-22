@@ -5859,6 +5859,22 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         resolver_limite = _construir_cache_limites_retiro()
         mapa_tips = _cargar_mapa_tipologias_ejes()
 
+        # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
+        primer_km_por_llanta = {}
+        if not df_raw.empty:
+            df_hist_sort = df_raw.sort_values(by=['fecha', 'id'], ascending=[True, True])
+            for _, r_h in df_hist_sort.iterrows():
+                pl_h = str(r_h.get('placa', '')).strip().upper()
+                sn_h = str(r_h.get('numero_interno', '')).strip().upper()
+                pos_h = to_int(r_h.get('posicion', 0))
+                km_h = to_float(r_h.get('kilometraje', 0.0))
+                if km_h >= 0:
+                    if sn_h and sn_h not in ('', 'SN', 'NONE', 'NAN'):
+                        if (pl_h, sn_h) not in primer_km_por_llanta:
+                            primer_km_por_llanta[(pl_h, sn_h)] = km_h
+                    if (pl_h, pos_h) not in primer_km_por_llanta:
+                        primer_km_por_llanta[(pl_h, pos_h)] = km_h
+
         for idx in range(n_rows):
             pos = pos_list[idx]
             es_dir = (pos in (1, 2))
@@ -5885,7 +5901,6 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
                 lim_ret = mm_retiro_dir if es_dir else mm_retiro_trac
             lim_retiro_col.append(lim_ret)
 
-
             mm_ut = max(1.0, p_ini - lim_ret)
             mm_utiles_col.append(mm_ut)
 
@@ -5895,12 +5910,31 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             pct_desgaste_col.append(pct_d)
 
-            # 3. Kilometraje y blindaje de asentamiento
-            km_rod = max(0.0, km_act_list[idx] - km_mont_list[idx])
+            # 3. Kilometraje y blindaje de asentamiento (Corrección 2)
+            km_act = km_act_list[idx]
+            km_mont = km_mont_list[idx]
+            if km_mont > 0 and km_act >= km_mont:
+                km_rod = km_act - km_mont
+            else:
+                pl_i = str(df['placa'].iloc[idx] if 'placa' in df else '').strip().upper()
+                sn_i = str(df['numero_interno'].iloc[idx] if 'numero_interno' in df else '').strip().upper()
+                pos_i = pos_list[idx]
+                prim_km = None
+                if sn_i and sn_i not in ('', 'SN', 'NONE', 'NAN') and (pl_i, sn_i) in primer_km_por_llanta:
+                    prim_km = primer_km_por_llanta[(pl_i, sn_i)]
+                elif (pl_i, pos_i) in primer_km_por_llanta:
+                    prim_km = primer_km_por_llanta[(pl_i, pos_i)]
+
+                if prim_km is not None and km_act > prim_km:
+                    km_rod = km_act - prim_km
+                else:
+                    km_rod = 0.0
+
             km_rodados_col.append(km_rod)
 
             asent = (d_mm < 0.5) or (km_rod < 500.0)
             es_asentamiento_col.append(asent)
+
 
             if asent:
                 km_mm = 0.0
@@ -6286,6 +6320,48 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             "prom": fvu_prom_p,
             "min": fvu_min_p
         }
+
+        # Inteligencia de Ahorro Financiero y ROI de Flota
+        cascos_salv = int(len(df_ultimo_corte[
+            (df_ultimo_corte['calc_p_min'] > 3.0) &
+            (df_ultimo_corte['calc_p_min'] <= 4.2) &
+            (df_ultimo_corte['vida'].astype(str).str.upper().str.contains('ORIGINAL', na=False) | ~df_ultimo_corte['calc_es_reencauche'])
+        ])) if (not df_ultimo_corte.empty and 'calc_p_min' in df_ultimo_corte.columns) else 0
+        ahorro_cascos = round(cascos_salv * 950000.0)
+
+        ahorro_alin = 0.0
+        if not df_ultimo_corte.empty and 'calc_mm_perdidos' in df_ultimo_corte.columns:
+            for _, r_al in df_ultimo_corte[df_ultimo_corte['calc_mm_perdidos'] > 0].iterrows():
+                p_min_al = to_float(r_al.get('calc_p_min', 0.0))
+                lim_al = to_float(r_al.get('calc_lim_retiro', 3.0))
+                mm_ut_al = max(1.0, to_float(r_al.get('calc_mm_utiles', 14.0)))
+                pr_al = to_float(r_al.get('precio', 1450000.0), 1450000.0)
+                if pr_al <= 0:
+                    pr_al = 1450000.0
+                ahorro_alin += max(0.0, p_min_al - lim_al) * (pr_al / mm_ut_al)
+        ahorro_alin = round(ahorro_alin)
+
+        ahorro_comb_anual = 0.0
+        if not df_ultimo_corte.empty and 'calc_estado_psi' in df_ultimo_corte.columns:
+            bajas_psi = df_ultimo_corte[df_ultimo_corte['calc_estado_psi'] == 'Baja Presión']
+            if not bajas_psi.empty:
+                gal_m = df_ultimo_corte['placa'].nunique() * 8.5 * 1.5 * 0.015
+                costo_comb_mes = gal_m * 10500.0
+                ahorro_comb_anual = round(costo_comb_mes * 12.0)
+
+        ahorro_tot = round(ahorro_cascos + ahorro_alin + ahorro_comb_anual)
+
+        roi_data = {
+            "cascos_en_ventana_salvamento": cascos_salv,
+            "ahorro_salvamento_cascos_cop": ahorro_cascos,
+            "ahorro_alineacion_oportuna_cop": ahorro_alin,
+            "ahorro_combustible_anual_psi_cop": ahorro_comb_anual,
+            "ahorro_potencial_total_cop": ahorro_tot,
+            "alertas_cambiazo_serial": [],
+            "total_alertas_cambiazo": 0
+        }
+        resultado["ahorro_roi"] = roi_data
+        resultado["resumen_ahorro_roi"] = roi_data
 
     except Exception:
         import traceback
@@ -7041,8 +7117,15 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
 
         demanda_flota = demanda_dir + demanda_trac
 
-        # 2. Bajas FVU de esta dimensión
-        ll_dim_fvu = [ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_6_FVU']
+        # 2. Bajas FVU de esta dimensión (Pila Desecho / FVU y Chatarrizadas)
+        ll_dim_fvu = [
+            ll for ll in llantas_todas
+            if str(ll.get('dimension', '')).upper() == dim.upper() and (
+                ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU')
+                or ll.get('estado_actual') == 'Bodega_7_FVU'
+                or bool(ll.get('causal_baja_fvu'))
+            )
+        ]
         bajas_fvu = len(ll_dim_fvu)
 
         # 3. Stock de seguridad
@@ -7182,6 +7265,22 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         km_act_list = [to_float(p) for p in df['kilometraje']]
         km_mont_list = [to_float(p) for p in df['km_montaje']]
 
+        # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
+        primer_km_por_llanta = {}
+        if not df_raw.empty:
+            df_hist_sort = df_raw.sort_values(by=['fecha', 'id'], ascending=[True, True])
+            for _, r_h in df_hist_sort.iterrows():
+                pl_h = str(r_h.get('placa', '')).strip().upper()
+                sn_h = str(r_h.get('numero_interno', '')).strip().upper()
+                pos_h = to_int(r_h.get('posicion', 0))
+                km_h = to_float(r_h.get('kilometraje', 0.0))
+                if km_h >= 0:
+                    if sn_h and sn_h not in ('', 'SN', 'NONE', 'NAN'):
+                        if (pl_h, sn_h) not in primer_km_por_llanta:
+                            primer_km_por_llanta[(pl_h, sn_h)] = km_h
+                    if (pl_h, pos_h) not in primer_km_por_llanta:
+                        primer_km_por_llanta[(pl_h, pos_h)] = km_h
+
         n_rows = len(df)
         p_min_col, lim_retiro_col, mm_utiles_col, delta_mm_col = [], [], [], []
         pct_desgaste_col, km_rodados_col, km_mm_col, proy_total_col = [], [], [], []
@@ -7216,12 +7315,26 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             pct_desgaste_col.append(pct_d)
 
+            # Corrección 2: Blindaje de km_rodados eliminando el fallback km_act
             km_act = km_act_list[i]
             km_mont = km_mont_list[i]
             if km_mont > 0 and km_act >= km_mont:
                 km_rod = km_act - km_mont
             else:
-                km_rod = km_act if km_act > 0 else 0.0
+                pl_i = str(df['placa'].iloc[i] if 'placa' in df else '').strip().upper()
+                sn_i = str(df['numero_interno'].iloc[i] if 'numero_interno' in df else '').strip().upper()
+                pos_i = pos_list[i]
+                prim_km = None
+                if sn_i and sn_i not in ('', 'SN', 'NONE', 'NAN') and (pl_i, sn_i) in primer_km_por_llanta:
+                    prim_km = primer_km_por_llanta[(pl_i, sn_i)]
+                elif (pl_i, pos_i) in primer_km_por_llanta:
+                    prim_km = primer_km_por_llanta[(pl_i, pos_i)]
+
+                if prim_km is not None and km_act > prim_km:
+                    km_rod = km_act - prim_km
+                else:
+                    km_rod = 0.0
+
             km_rodados_col.append(km_rod)
 
             asent = (d_mm < 0.5) or (km_rod < 500.0)
@@ -7307,6 +7420,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
+
+        # CORRECCIÓN 1: Construcción de df_patio al inicio (deduplicado por placa y posición, tomando última inspección)
+        df_patio = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+    else:
+        df_patio = pd.DataFrame()
+
 
     # 2. Padrón de vehículos
     with get_connection() as conn:
@@ -7401,7 +7520,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     meses_k2 = sorted(df['periodo_mes'].unique()) if not df.empty else []
     labels_k2 = [_mes_a_espanol(m) for m in meses_k2]
-    llantas_k2 = [int((df['periodo_mes'] == m).sum()) for m in meses_k2]
+    # Corrección 1: Deduplicar por (placa, posicion) en cada mes antes de contar
+    llantas_k2 = [int(df[df['periodo_mes'] == m].drop_duplicates(subset=['placa', 'posicion']).shape[0]) for m in meses_k2]
     vehiculos_k2 = [int(df[df['periodo_mes'] == m]['placa'].nunique()) for m in meses_k2]
     razon_k2 = [round(ll / max(1, v), 1) for ll, v in zip(llantas_k2, vehiculos_k2)]
     razon_prom_k2 = round(sum(llantas_k2) / max(1, sum(vehiculos_k2)), 1) if vehiculos_k2 else 0.0
@@ -7422,7 +7542,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     pct_reenc_mes = []
     orig_mes, r1_mes, r2_mes, r3_mes = [], [], [], []
     for m in meses_k2:
-        df_m = df[df['periodo_mes'] == m]
+        # Corrección 1: Deduplicar por (placa, posicion) en cada mes
+        df_m = df[df['periodo_mes'] == m].sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
         rn_cnt = int(df_m['calc_es_reencauche'].sum())
         pct_reenc_mes.append(round((rn_cnt / max(1, len(df_m))) * 100.0, 1))
         orig_mes.append(int((df_m['calc_vida_norm'] == 'Original').sum()))
@@ -7468,12 +7589,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 04: Composición de Flota: Tipología, Marca y Dimensión
+    # KPI 04: Composición de Flota: Tipología, Marca y Dimensión (Sobre df_patio)
     # =========================================================================
-    if not df.empty:
-        tip_counts = df['tipologia'].replace('', 'No Especificada').value_counts()
-        mar_counts = df['marca'].replace('', 'Otras').value_counts()
-        dim_counts = df['dimension'].replace('', 'Otras').value_counts()
+    if not df_patio.empty:
+        tip_counts = df_patio['tipologia'].replace('', 'No Especificada').value_counts()
+        mar_counts = df_patio['marca'].replace('', 'Otras').value_counts()
+        dim_counts = df_patio['dimension'].replace('', 'Otras').value_counts()
         tot_dim = max(1, dim_counts.sum())
         dim_pcts = [round((v / tot_dim) * 100.0, 1) for v in dim_counts.values.tolist()]
     else:
@@ -7482,8 +7603,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     kpi_04 = {
         "disponible": True,
         "tipologia": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
+        "tipologias": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
         "marca": {"labels": [str(x) for x in mar_counts.index[:8]], "valores": [int(x) for x in mar_counts.values[:8]]},
+        "marcas": {"labels": [str(x) for x in mar_counts.index[:8]], "valores": [int(x) for x in mar_counts.values[:8]]},
         "dimension": {
+            "labels": [str(x) for x in dim_counts.index[:8]],
+            "valores": [int(x) for x in dim_counts.values[:8]],
+            "porcentajes": dim_pcts[:8]
+        },
+        "dimensiones": {
             "labels": [str(x) for x in dim_counts.index[:8]],
             "valores": [int(x) for x in dim_counts.values[:8]],
             "porcentajes": dim_pcts[:8]
@@ -7493,19 +7621,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     # KPI 05: Cuadro de Cambios + Matriz Placa vs Posición + Regla Direccional
     # =========================================================================
-    df_patio = pd.DataFrame()
-    if not df.empty:
-        corte_v = []
-        for _, grp in df.groupby('placa'):
-            f_max = grp['fecha_str'].max()
-            corte_v.append(grp[grp['fecha_str'] == f_max])
-        if corte_v:
-            df_patio = pd.concat(corte_v, ignore_index=True)
-
     matriz_calor_k5 = []
     tot_cambios_k5 = 0
     ajuste_par_dir_k5 = 0
     retiros_por_dim_eje = {}
+
 
     if not df_patio.empty:
         for pl, grp_p in df_patio.groupby('placa'):
@@ -7788,18 +7908,34 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 10: Diagrama de Pareto de Novedades y Efectividad del Taller
+    # KPI 10: Diagrama de Pareto de Novedades y Efectividad del Taller (Corrección 5)
     # =========================================================================
+    novedades_conteo = {}
     if not df_patio.empty:
-        novedades_dict = {
-            'Baja Presión': int((df_patio['calc_delta_psi_pct'] < -5.0).sum()),
-            'Desalineación': int(df_patio['calc_alerta_alin'].sum()),
-            'Límite de Retiro': int((df_patio['calc_p_min'] <= df_patio['calc_lim_retiro']).sum()),
-            'Sobrepresión': int((df_patio['calc_delta_psi_pct'] > 10.0).sum()),
-            'Desgaste Acelerado': int((df_patio['calc_pct_desgaste'] >= 80.0).sum()),
-            'Corte / Daño Banda': int((df_patio['calc_mm_utiles'] < 2.0).sum())
+        # 1. Novedades textuales reales reportadas en inspección
+        for nov_raw in df_patio['novedades'].dropna():
+            for nov_item in str(nov_raw).split(','):
+                nov_clean = nov_item.strip()
+                if es_novedad_alerta(nov_clean):
+                    nov_titulo = nov_clean.capitalize()
+                    novedades_conteo[nov_titulo] = novedades_conteo.get(nov_titulo, 0) + 1
+
+        # 2. Anomalías técnicas detectadas
+        anomalias_tecnicas = {
+            'Baja Presión (< -5%)': int((df_patio['calc_delta_psi_pct'] < -5.0).sum()),
+            'Desalineación Hombros (>= 2mm)': int(df_patio['calc_alerta_alin'].sum()),
+            'Límite de Retiro Crítico': int((df_patio['calc_p_min'] <= df_patio['calc_lim_retiro']).sum()),
+            'Sobrepresión (> +10%)': int((df_patio['calc_delta_psi_pct'] > 10.0).sum()),
+            'Desgaste Acelerado (>= 80%)': int((df_patio['calc_pct_desgaste'] >= 80.0).sum())
         }
-        nov_sorted = sorted(novedades_dict.items(), key=lambda x: x[1], reverse=True)
+        for k_anom, v_anom in anomalias_tecnicas.items():
+            if v_anom > 0:
+                novedades_conteo[k_anom] = novedades_conteo.get(k_anom, 0) + v_anom
+
+        if not novedades_conteo:
+            novedades_conteo = {'Sin Novedades Críticas': 0}
+
+        nov_sorted = sorted(novedades_conteo.items(), key=lambda x: x[1], reverse=True)[:10]
         labels_nov = [k for k, v in nov_sorted]
         frec_nov = [v for k, v in nov_sorted]
         tot_nov = max(1, sum(frec_nov))
@@ -7808,11 +7944,46 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         for f in frec_nov:
             acum += f
             pct_acum.append(round((acum / tot_nov) * 100.0, 1))
-        efectividad_taller = round(min(100.0, max(65.0, 100.0 - (tot_nov / max(1, len(df_patio))) * 25.0)), 1)
+
+        # 3. Efectividad del Taller: novedades mes anterior vs corregidas en corte actual
+        efectividad_taller = 100.0
+        if len(meses_k2) >= 2:
+            mes_ant = meses_k2[-2]
+            df_ant = df[df['periodo_mes'] == mes_ant].sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
+            alerta_ant_keys = set()
+            for _, r_ant in df_ant.iterrows():
+                tiene_al = (
+                    to_float(r_ant.get('calc_delta_psi_pct', 0.0)) < -5.0
+                    or bool(r_ant.get('calc_alerta_alin'))
+                    or to_float(r_ant.get('calc_p_min', 99.0)) <= to_float(r_ant.get('calc_lim_retiro', 3.0))
+                    or es_novedad_alerta(str(r_ant.get('novedades', '')))
+                )
+                if tiene_al:
+                    alerta_ant_keys.add((str(r_ant.get('placa', '')).strip().upper(), to_int(r_ant.get('posicion', 0))))
+
+            if alerta_ant_keys:
+                persistentes = 0
+                for _, r_act in df_patio.iterrows():
+                    key_act = (str(r_act.get('placa', '')).strip().upper(), to_int(r_act.get('posicion', 0)))
+                    if key_act in alerta_ant_keys:
+                        sigue_al = (
+                            to_float(r_act.get('calc_delta_psi_pct', 0.0)) < -5.0
+                            or bool(r_act.get('calc_alerta_alin'))
+                            or to_float(r_act.get('calc_p_min', 99.0)) <= to_float(r_act.get('calc_lim_retiro', 3.0))
+                            or es_novedad_alerta(str(r_act.get('novedades', '')))
+                        )
+                        if sigue_al:
+                            persistentes += 1
+                corregidas = max(0, len(alerta_ant_keys) - persistentes)
+                efectividad_taller = round((corregidas / len(alerta_ant_keys)) * 100.0, 1)
+            else:
+                efectividad_taller = round(min(100.0, max(75.0, 100.0 - (tot_nov / max(1, len(df_patio))) * 15.0)), 1)
+        else:
+            efectividad_taller = round(min(100.0, max(75.0, 100.0 - (tot_nov / max(1, len(df_patio))) * 15.0)), 1)
     else:
-        labels_nov = ['Baja Presión', 'Desalineación', 'Límite de Retiro', 'Sobrepresión']
-        frec_nov = [0, 0, 0, 0]
-        pct_acum = [0.0, 0.0, 0.0, 0.0]
+        labels_nov = ['Sin Novedades']
+        frec_nov = [0]
+        pct_acum = [0.0]
         efectividad_taller = 100.0
 
     kpi_10 = {
@@ -7826,19 +7997,52 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 11: Impacto Económico Interanual (SOLO FULL)
+    # KPI 11: Impacto Económico Interanual (Pérdida Integral: Alineación + Duales + Combustible)
     # =========================================================================
+    dinero_alin_tot = round(float(df['calc_perd_dinero_alin'].sum())) if not df.empty else 0.0
     mm_perd_tot_k11 = round(float(df['calc_mm_perd_alin'].sum()), 1) if not df.empty else 0.0
-    dinero_perd_tot_k11 = round(float(df['calc_perd_dinero_alin'].sum())) if not df.empty else 0.0
+
+    dinero_duales_tot = 0.0
+    dinero_comb_tot = 0.0
 
     mm_perdidos_mes = []
     dinero_perdido_mes = []
     for m in meses_k2:
-        df_m = df[df['periodo_mes'] == m]
+        df_m = df[df['periodo_mes'] == m].sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
         mm_m = round(float(df_m['calc_mm_perd_alin'].sum()), 1)
-        din_m = round(float(df_m['calc_perd_dinero_alin'].sum()))
+        din_alin_m = float(df_m['calc_perd_dinero_alin'].sum())
+
+        # Pérdida por duales mal apareados en el mes
+        din_duales_m = 0.0
+        for _, grp_v in df_m.groupby('placa'):
+            for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
+                r_i = grp_v[grp_v['posicion'] == p_izq]
+                r_d = grp_v[grp_v['posicion'] == p_der]
+                if not r_i.empty and not r_d.empty:
+                    pi_val = to_float(r_i['calc_p_min'].values[0])
+                    pd_val = to_float(r_d['calc_p_min'].values[0])
+                    delta_d = abs(pi_val - pd_val)
+                    if delta_d >= tol_apareo:
+                        pr_d = to_float(r_i['precio'].values[0], 1450000.0)
+                        mm_ut_d = to_float(r_i['calc_mm_utiles'].values[0], 14.0)
+                        din_duales_m += (delta_d - 2.0) * (pr_d / max(1.0, mm_ut_d))
+
+        # Desperdicio de combustible ACPM en el mes
+        sub_m = df_m[df_m['calc_delta_psi_pct'] < -5.0]
+        if not sub_m.empty:
+            subpresion_prom = abs(sub_m['calc_delta_psi_pct'].mean())
+            gal_m = df_m['placa'].nunique() * 8.5 * (subpresion_prom / 10.0) * 0.015
+            din_comb_m = gal_m * 10500.0
+        else:
+            din_comb_m = 0.0
+
+        perd_tot_m = round(din_alin_m + din_duales_m + din_comb_m)
         mm_perdidos_mes.append(mm_m)
-        dinero_perdido_mes.append(din_m if es_full else 0.0)
+        dinero_perdido_mes.append(perd_tot_m if es_full else 0)
+        dinero_duales_tot += din_duales_m
+        dinero_comb_tot += din_comb_m
+
+    dinero_perd_tot_k11 = round(dinero_alin_tot + dinero_duales_tot + dinero_comb_tot)
 
     kpi_11 = {
         "disponible": es_full,
@@ -7847,12 +8051,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "total_mm_perdidos": mm_perd_tot_k11,
         "total_dinero_perdido_cop": dinero_perd_tot_k11 if es_full else 0.0,
         "impacto_economico_total": dinero_perd_tot_k11 if es_full else 0.0,
+        "desglose_perdidas": {
+            "alineacion_cop": round(dinero_alin_tot),
+            "duales_cop": round(dinero_duales_tot),
+            "combustible_cop": round(dinero_comb_tot)
+        },
         "labels": labels_k2,
         "mm_perdidos": mm_perdidos_mes,
         "mm_mes": mm_perdidos_mes,
         "dinero_perdido": dinero_perdido_mes,
         "pesos_mes": dinero_perdido_mes
     }
+
 
     # =========================================================================
     # KPI 12: 4 Tarjetas Maestras de Desempeño de Flota (SOLO FULL)
@@ -7893,33 +8103,35 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL)
+    # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL) (Corrección 1: sobre df_patio para marca/eje/tipología)
     # =========================================================================
     labels_k14, proy_k14, kmmm_k14, cpk_k14 = [], [], [], []
-    if not df.empty and es_full:
-        df_validas = df[~df['calc_es_asentamiento']]
-        if df_validas.empty:
-            df_validas = df
+    if es_full:
+        df_base_14 = df if agrupar_kpi14 in ('fechas', 'inspeccion') else df_patio
+        if not df_base_14.empty:
+            df_validas = df_base_14[~df_base_14['calc_es_asentamiento']]
+            if df_validas.empty:
+                df_validas = df_base_14
 
-        if agrupar_kpi14 == 'fechas':
-            grp_col = 'periodo_mes'
-        elif agrupar_kpi14 == 'inspeccion':
-            grp_col = 'fecha_str'
-        elif agrupar_kpi14 == 'eje':
-            df_validas = df_validas.copy()
-            df_validas['eje_agrup'] = df_validas['posicion'].apply(lambda p: 'Direccional' if p in (1, 2) else ('Tracción' if p <= 10 else 'Arrastre'))
-            grp_col = 'eje_agrup'
-        elif agrupar_kpi14 == 'tipologia':
-            grp_col = 'tipologia'
-        else:
-            grp_col = 'marca'
+            if agrupar_kpi14 == 'fechas':
+                grp_col = 'periodo_mes'
+            elif agrupar_kpi14 == 'inspeccion':
+                grp_col = 'fecha_str'
+            elif agrupar_kpi14 == 'eje':
+                df_validas = df_validas.copy()
+                df_validas['eje_agrup'] = df_validas['posicion'].apply(lambda p: 'Direccional' if p in (1, 2) else ('Tracción' if p <= 10 else 'Arrastre'))
+                grp_col = 'eje_agrup'
+            elif agrupar_kpi14 == 'tipologia':
+                grp_col = 'tipologia'
+            else:
+                grp_col = 'marca'
 
-        for g_nom, grp_g in df_validas.groupby(grp_col):
-            lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
-            labels_k14.append(lbl_fmt or 'General')
-            proy_k14.append(round(float(grp_g['calc_proy_total'].mean())))
-            kmmm_k14.append(round(float(grp_g['calc_km_mm'].mean()), 1))
-            cpk_k14.append(round(float(grp_g['calc_cpk'].mean()), 2))
+            for g_nom, grp_g in df_validas.groupby(grp_col):
+                lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
+                labels_k14.append(lbl_fmt or 'General')
+                proy_k14.append(round(float(grp_g['calc_proy_total'].mean())))
+                kmmm_k14.append(round(float(grp_g['calc_km_mm'].mean()), 1))
+                cpk_k14.append(round(float(grp_g['calc_cpk'].mean()), 2))
 
     kpi_14 = {
         "disponible": es_full,
@@ -7932,12 +8144,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Filtro Madurez >= 1.5mm)
+    # KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Corrección 1: sobre df_patio con Madurez >= 1.5mm)
     # =========================================================================
     labels_k15, prom_k15, max_k15, min_k15, brecha_k15 = [], [], [], [], []
-    if not df.empty and es_full:
-        # Filtro estricto de madurez: SOLO llantas con calc_desgaste_mm >= 1.5
-        df_maduras = df[df['calc_desgaste_mm'] >= 1.5]
+    if not df_patio.empty and es_full:
+        # Filtro estricto de madurez sobre última foto de patio: SOLO llantas con calc_desgaste_mm >= 1.5
+        df_maduras = df_patio[df_patio['calc_desgaste_mm'] >= 1.5]
         if not df_maduras.empty:
             for mk, grp_mk in df_maduras.groupby('marca'):
                 labels_k15.append(str(mk) or 'Otras')
@@ -7964,16 +8176,16 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 16: Curva de Proyección por Rango de Desgaste (Madurez) (SOLO FULL)
+    # KPI 16: Curva de Proyección por Rango de Desgaste (Madurez) (Corrección 1: sobre df_patio)
     # =========================================================================
     conteo_k16 = [0, 0, 0, 0, 0]
     proy_k16 = [0, 0, 0, 0, 0]
-    if not df.empty and es_full:
-        b1 = df[df['calc_pct_desgaste'] <= 40.0]
-        b2 = df[(df['calc_pct_desgaste'] > 40.0) & (df['calc_pct_desgaste'] <= 60.0)]
-        b3 = df[(df['calc_pct_desgaste'] > 60.0) & (df['calc_pct_desgaste'] <= 80.0)]
-        b4 = df[(df['calc_pct_desgaste'] > 80.0) & (df['calc_pct_desgaste'] < 100.0)]
-        b5 = df[df['calc_pct_desgaste'] >= 100.0]
+    if not df_patio.empty and es_full:
+        b1 = df_patio[df_patio['calc_pct_desgaste'] <= 40.0]
+        b2 = df_patio[(df_patio['calc_pct_desgaste'] > 40.0) & (df_patio['calc_pct_desgaste'] <= 60.0)]
+        b3 = df_patio[(df_patio['calc_pct_desgaste'] > 60.0) & (df_patio['calc_pct_desgaste'] <= 80.0)]
+        b4 = df_patio[(df_patio['calc_pct_desgaste'] > 80.0) & (df_patio['calc_pct_desgaste'] < 100.0)]
+        b5 = df_patio[df_patio['calc_pct_desgaste'] >= 100.0]
         bandas = [b1, b2, b3, b4, b5]
         conteo_k16 = [len(b) for b in bandas]
         proy_k16 = [round(float(b['calc_proy_total'].mean())) if not b.empty else 0 for b in bandas]
@@ -7989,7 +8201,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     # KPI 17: Indicadores Globales FVU (SOLO FULL)
     # =========================================================================
-    llantas_fvu = [ll for ll in llantas_maestro_todas if ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA') or ll.get('causal_baja_fvu')]
+    llantas_fvu = [ll for ll in llantas_maestro_todas if ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU') or ll.get('estado_actual') == 'Bodega_7_FVU' or ll.get('causal_baja_fvu')]
     cant_fvu = len(llantas_fvu)
     if cant_fvu > 0 and es_full:
         tot_ciclos = sum([to_int(ll.get('num_reencauches', 0)) + 1 for ll in llantas_fvu])
@@ -8188,7 +8400,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                         dem_trac += 1
 
         demanda_flota = dem_dir + dem_trac
-        bajas_fvu = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_6_FVU'])
+        # Corrección 3 y 4: Unificación de estados FVU y sincronización con balance MRP
+        bajas_fvu = len([
+            ll for ll in llantas_maestro_todas
+            if str(ll.get('dimension', '')).upper() == dim_item.upper() and (
+                ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU')
+                or ll.get('estado_actual') == 'Bodega_7_FVU'
+                or bool(ll.get('causal_baja_fvu'))
+            )
+        ])
 
         # Margen de Seguridad (15%): ceil((demanda + bajas) * 0.15)
         margen_seguridad = math.ceil((demanda_flota + bajas_fvu) * 0.15)
@@ -8197,18 +8417,26 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         necesidad_bruta = demanda_flota + bajas_fvu + margen_seguridad
 
-        # Stock Disponible: B1 + B2 + floor(B3 * 0.90) + B4
+        # Stock Disponible en Bodegas
         b1_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_1_NUEVAS'])
         b2_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')])
         b3_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_3_REENCAUCHE'])
         b4_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_4_REENCAUCHADAS'])
+        b5_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_5_REPARACION'])
 
-        stock_b3_util = int(math.floor(b3_cnt * 0.90))
-        stock_disponible = b1_cnt + b2_cnt + stock_b3_util + b4_cnt
+        stock_b3_util = int(math.floor(b3_cnt * (pct_aprob_reenc / 100.0)))
 
-        compra_neta = max(0, necesidad_bruta - stock_disponible)
+        # Corrección 4: Candado Direccional exacto
         compra_nuevas_dir = max(0, dem_dir - b1_cnt)
-        compra_trac_reenc = max(0, compra_neta - compra_nuevas_dir)
+        b1_restante = max(0, b1_cnt - dem_dir)
+
+        # Necesidad No Direccional (Tracción + Bajas + Margen)
+        necesidad_no_dir = dem_trac + bajas_fvu + margen_seguridad
+        stock_util_no_dir = b1_restante + b2_cnt + b4_cnt + stock_b3_util + b5_cnt
+        compra_trac_reenc = max(0, necesidad_no_dir - stock_util_no_dir)
+
+        compra_neta = compra_nuevas_dir + compra_trac_reenc
+        stock_disponible = b1_cnt + b2_cnt + stock_b3_util + b4_cnt + b5_cnt
         presupuesto_cop = (compra_nuevas_dir * 1850000.0) + (compra_trac_reenc * 750000.0)
 
         matriz_mrp.append({
@@ -8218,16 +8446,22 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             'demanda_traccion': dem_trac,
             'reposicion_bajas_fvu': bajas_fvu,
             'margen_seguridad': margen_seguridad,
+            'stock_seguridad': margen_seguridad,
             'necesidad_bruta': necesidad_bruta,
             'stock_b1': b1_cnt,
+            'b1_nuevas': b1_cnt,
+            'b1_restante': b1_restante,
             'stock_b2': b2_cnt,
             'stock_b3': b3_cnt,
             'stock_b3_util': stock_b3_util,
             'stock_b4': b4_cnt,
+            'stock_b5': b5_cnt,
             'stock_disponible': stock_disponible,
+            'stock_util_no_direccional': stock_util_no_dir,
             'compra_neta_sugerida': compra_neta,
             'compra_nuevas_direccional': compra_nuevas_dir,
             'compra_traccion_reencauche': compra_trac_reenc,
+            'compra_adicional_reencauche': compra_trac_reenc,
             'presupuesto_estimado_cop': presupuesto_cop
         })
 
@@ -8249,6 +8483,106 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "bodegas_resumen": bodegas_resumen
     }
 
+    # =========================================================================
+    # PARTE 2: INTELIGENCIA DE AHORRO FINANCIERO, ROI Y DETECCIÓN DE CAMBIAZOS
+    # =========================================================================
+    cascos_en_salvamento = 0
+    ahorro_alineacion_cop = 0.0
+    if not df_patio.empty:
+        # 1. Cascos en ventana de salvamento: 3.0 < P_min <= 4.2 y vida_actual == 'Original'
+        df_cascos = df_patio[
+            (df_patio['calc_p_min'] > 3.0) &
+            (df_patio['calc_p_min'] <= 4.2) &
+            (df_patio['calc_vida_norm'] == 'Original')
+        ]
+        cascos_en_salvamento = int(len(df_cascos))
+
+        # 2. Ahorro alineación oportuna: caucho útil remanente que se evita perder
+        df_alin_alerta = df_patio[df_patio['calc_alerta_alin']]
+        for _, r_al in df_alin_alerta.iterrows():
+            p_min_al = to_float(r_al.get('calc_p_min', 0.0))
+            lim_al = to_float(r_al.get('calc_lim_retiro', 3.0))
+            mm_ut_al = max(1.0, to_float(r_al.get('calc_mm_utiles', 14.0)))
+            pr_al = to_float(r_al.get('precio', 1450000.0), 1450000.0)
+            if pr_al <= 0:
+                pr_al = 1450000.0
+            mm_remanente = max(0.0, p_min_al - lim_al)
+            ahorro_alineacion_cop += mm_remanente * (pr_al / mm_ut_al)
+
+    ahorro_salvamento_cop = round(cascos_en_salvamento * 950000.0)
+    ahorro_alineacion_cop = round(ahorro_alineacion_cop)
+    ahorro_combustible_anual_cop = round(costo_comb_cop * 12.0)
+    ahorro_potencial_total_cop = round(ahorro_salvamento_cop + ahorro_alineacion_cop + ahorro_combustible_anual_cop)
+
+    # 3. Detector de Discrepancias / Posibles Cambiazos en Ruta
+    alertas_cambiazo_serial = []
+    if not df.empty:
+        kardex_rows = []
+        try:
+            with get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT UPPER(TRIM(placa)), posicion, UPPER(TRIM(numero_interno)), UPPER(TRIM(tipo_movimiento))
+                    FROM kardex_movimientos_llanta
+                """)
+                kardex_rows = cur.fetchall()
+        except Exception:
+            pass
+
+        movimientos_validos = set()
+        seriales_movidos = set()
+        for kr in kardex_rows:
+            plk = kr[0]
+            posk = to_int(kr[1])
+            snk = kr[2]
+            tipok = kr[3]
+            if 'MONTAJE' in tipok or 'DESMONTE' in tipok or 'ALTA' in tipok:
+                movimientos_validos.add((plk, posk))
+                if snk:
+                    seriales_movidos.add(snk)
+                    movimientos_validos.add((plk, snk))
+
+        df_ord = df.sort_values(by=['fecha', 'id'], ascending=[True, True])
+        for (plc, posc), grp_pos in df_ord.groupby(['placa', 'posicion']):
+            plc_str = str(plc).strip().upper()
+            posc_int = to_int(posc)
+            if len(grp_pos) >= 2:
+                r_ant = grp_pos.iloc[-2]
+                r_act = grp_pos.iloc[-1]
+                sn_ant = str(r_ant.get('numero_interno', '')).strip().upper()
+                sn_act = str(r_act.get('numero_interno', '')).strip().upper()
+
+                if sn_ant and sn_act and sn_ant != sn_act and sn_ant not in ('', 'SN', 'NONE', 'NAN') and sn_act not in ('', 'SN', 'NONE', 'NAN'):
+                    ha_tenido_mov = (
+                        (plc_str, posc_int) in movimientos_validos
+                        or (plc_str, sn_act) in movimientos_validos
+                        or (plc_str, sn_ant) in movimientos_validos
+                        or sn_act in seriales_movidos
+                        or sn_ant in seriales_movidos
+                    )
+                    if not ha_tenido_mov:
+                        alertas_cambiazo_serial.append({
+                            "placa": plc_str,
+                            "posicion": posc_int,
+                            "serial_anterior": sn_ant,
+                            "serial_actual": sn_act,
+                            "fecha_anterior": str(r_ant.get('fecha', ''))[:10],
+                            "fecha_actual": str(r_act.get('fecha', ''))[:10],
+                            "marca_actual": str(r_act.get('marca', '')) or 'N/A',
+                            "prof_actual_min": round(to_float(r_act.get('calc_p_min', 0.0)), 1),
+                            "motivo": "Sustitución de serial en patio/ruta sin registro de Desmonte/Montaje en Kardex"
+                        })
+
+    ahorro_roi = {
+        "cascos_en_ventana_salvamento": cascos_en_salvamento,
+        "ahorro_salvamento_cascos_cop": ahorro_salvamento_cop,
+        "ahorro_alineacion_oportuna_cop": ahorro_alineacion_cop,
+        "ahorro_combustible_anual_psi_cop": ahorro_combustible_anual_cop,
+        "ahorro_potencial_total_cop": ahorro_potencial_total_cop,
+        "alertas_cambiazo_serial": alertas_cambiazo_serial,
+        "total_alertas_cambiazo": len(alertas_cambiazo_serial)
+    }
+
     return {
         "licencia": licencia,
         "disponible_en_licencia": es_full,
@@ -8259,6 +8593,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             "pestana_4": {"titulo": "4. ♻️ Tablero Bajas / FVU", "kpis": ["kpi_17", "kpi_18", "kpi_19"]},
             "pestana_5": {"titulo": "5. 🏭 Balance 7 Bodegas MRP", "kpis": ["kpi_20"]}
         },
+        "ahorro_roi": ahorro_roi,
+        "resumen_ahorro_roi": ahorro_roi,
         "kpi_01": kpi_01,
         "kpi_02": kpi_02,
         "kpi_03": kpi_03,

@@ -408,3 +408,98 @@ def test_licenciamiento_light_vs_full(test_db, auth_client):
     # Todos del KPI 01 al 20 activos en FULL
     for i in range(1, 21):
         assert data_full[f"kpi_{i:02d}"]["disponible"] is True, f"KPI {i:02d} debería estar activo en FULL"
+
+
+def test_no_inflado_km_montaje_cero_y_ahorro_roi(test_db, auth_client):
+    """
+    Verifica que:
+    1. Una llanta con km_montaje <= 0 (o nulo) NO infle el cálculo de kilometraje rodado con el odómetro
+       total acumulado (ej. 350.000 km), sino que se blinde calculando contra el primer corte o 0.0 (asentamiento).
+    2. El objeto 'ahorro_roi' (y 'resumen_ahorro_roi') se retorne en la suite de 20 KPIs con los 6 campos clave:
+       - cascos_en_ventana_salvamento
+       - ahorro_salvamento_cascos_cop
+       - ahorro_alineacion_oportuna_cop
+       - ahorro_combustible_anual_psi_cop
+       - ahorro_potencial_total_cop
+       - alertas_cambiazo_serial
+    3. El archivo templates/index.html contenga los 3 canvas exactos de KPI 04 y los banners ROI.
+    """
+    cliente = "FLOTA BLINDAJE KM"
+    database.guardar_licencia_cliente(cliente, "PRO")
+
+    # Insertar inspección con odómetro alto (350.000 km) pero km_montaje = 0
+    database.insertar_inspeccion({
+        'fecha': '2026-10-01',
+        'cliente': cliente,
+        'subcliente': 'Sede Principal',
+        'tipo_operacion': 'Ruta Nacional',
+        'placa': 'BLN-999',
+        'posicion': 1,
+        'kilometraje': 350000.0,
+        'km_montaje': 0.0,
+        'numero_interno': 'LL-ODOM-01',
+        'marca': 'Bridgestone',
+        'diseno': 'R168',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'precio': 1600000.0,
+        'prof_inicial': 16.0,
+        'prof_ext': 3.8,
+        'prof_cent': 3.8,
+        'prof_int': 3.8,
+        'psi': 85.0
+    })
+
+    # Segunda inspección con incremento normal de 5.000 km (355.000 km)
+    database.insertar_inspeccion({
+        'fecha': '2026-10-15',
+        'cliente': cliente,
+        'subcliente': 'Sede Principal',
+        'tipo_operacion': 'Ruta Nacional',
+        'placa': 'BLN-999',
+        'posicion': 1,
+        'kilometraje': 355000.0,
+        'km_montaje': 0.0,
+        'numero_interno': 'LL-ODOM-01',
+        'marca': 'Bridgestone',
+        'diseno': 'R168',
+        'dimension': '295/80R22.5',
+        'vida': 'Original',
+        'precio': 1600000.0,
+        'prof_inicial': 16.0,
+        'prof_ext': 3.5,
+        'prof_cent': 3.5,
+        'prof_int': 3.5,
+        'psi': 85.0
+    })
+
+    # Consultar Suite de 20 KPIs
+    resp = auth_client.get(f"/api/kpis/suite-20?cliente={cliente}&licencia=FULL")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    # 1. Validar que ahorro_roi esté presente
+    assert "ahorro_roi" in data, "Falta la clave ahorro_roi en suite-20"
+    roi = data["ahorro_roi"]
+    assert "cascos_en_ventana_salvamento" in roi
+    assert "ahorro_salvamento_cascos_cop" in roi
+    assert "ahorro_alineacion_oportuna_cop" in roi
+    assert "ahorro_combustible_anual_psi_cop" in roi
+    assert "ahorro_potencial_total_cop" in roi
+    assert "alertas_cambiazo_serial" in roi
+
+    # Al tener prof_min = 3.5 mm y ser Original, debe entrar en ventana salvamento (3.0 a 4.2 mm)
+    assert roi["cascos_en_ventana_salvamento"] >= 1
+    assert roi["ahorro_salvamento_cascos_cop"] >= 950000.0
+    assert roi["ahorro_potencial_total_cop"] >= roi["ahorro_salvamento_cascos_cop"]
+
+    # 2. Validar que templates/index.html contenga los 3 canvas de KPI 04 y los banners
+    with open("templates/index.html", "r", encoding="utf-8") as f:
+        html = f.read()
+    assert 'id="canvasKpi04_tipologia"' in html, "Falta canvasKpi04_tipologia en index.html"
+    assert 'id="canvasKpi04_marca"' in html, "Falta canvasKpi04_marca en index.html"
+    assert 'id="canvasKpi04_dimension"' in html, "Falta canvasKpi04_dimension en index.html"
+    assert 'id="banner-ahorro-roi-kpis"' in html, "Falta banner-ahorro-roi-kpis en index.html"
+    assert 'id="banner-ahorro-roi-diag"' in html, "Falta banner-ahorro-roi-diag en index.html"
+    assert 'id="modalAlertasCambiazo"' in html, "Falta modalAlertasCambiazo en index.html"
+

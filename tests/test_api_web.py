@@ -727,17 +727,41 @@ def test_api_diagnostico_graficos_estructura_y_blindaje_matematico(test_db, auth
         "precio": 1500000.0
     })
 
-    # 2. Llanta madura: prof_inicial = 16.0, p_min = 11.5 (Delta mm = 4.5), km_rodados = 36000,
-    # desalineación p_ext = 14.0, p_cent = 13.0, p_int = 11.5 (|14.0 - 11.5| = 2.5 mm >= 2.0 mm),
-    # psi = 82 (objetivo tracción 100 psi, 82 < 90 psi -> Baja Presión)
+    # 2. Llanta madura: montaje inicial a km 0 el 1 de marzo, e inspección madura a km 36000 el 20 de marzo
     database.insertar_inspeccion({
         "fecha": "2026-03-01",
         "cliente": "FLOTA PRUEBA BLINDAJE",
         "subcliente": "BOGOTA",
         "placa": "MAD-002",
         "posicion": 3,
+        "kilometraje": 0,
+        "km_montaje": 0,
+        "numero_interno": "LL-MAD-02",
+        "tipologia": "Cabezote",
+        "marca": "GOODYEAR",
+        "diseno": "KMAX D",
+        "dimension": "295/80R22.5",
+        "vida": "Original",
+        "prof_inicial": 16.0,
+        "prof_ext": 16.0,
+        "prof_cent": 16.0,
+        "prof_int": 16.0,
+        "psi": 100.0,
+        "precio": 1450000.0
+    })
+
+    # Segunda inspección: prof_inicial = 16.0, p_min = 11.5 (Delta mm = 4.5), km_rodados = 36000,
+    # desalineación p_ext = 14.0, p_cent = 13.0, p_int = 11.5 (|14.0 - 11.5| = 2.5 mm >= 2.0 mm),
+    # psi = 82 (objetivo tracción 100 psi, 82 < 90 psi -> Baja Presión)
+    database.insertar_inspeccion({
+        "fecha": "2026-03-20",
+        "cliente": "FLOTA PRUEBA BLINDAJE",
+        "subcliente": "BOGOTA",
+        "placa": "MAD-002",
+        "posicion": 3,
         "kilometraje": 36000,
         "km_montaje": 0,
+        "numero_interno": "LL-MAD-02",
         "tipologia": "Cabezote",
         "marca": "GOODYEAR",
         "diseno": "KMAX D",

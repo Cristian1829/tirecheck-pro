@@ -398,7 +398,7 @@ def desmontar_llanta_taller(datos: dict) -> dict:
             'Bodega_4_EnPlanta': 'BODEGA_3_REENCAUCHE',
             'Bodega_5_Reparacion': 'BODEGA_5_REPARACION',
             'Bodega_6_Garantia': 'BODEGA_6_FVU',
-            'Bodega_7_FVU': 'BODEGA_7_CHATARRIZADA',
+            'Bodega_7_FVU': 'BODEGA_6_FVU',
             'Montada': 'MONTADA_OPERACION'
         }
         ubi_compat = map_ubi.get(bodega_destino, 'BODEGA_2_RECAMBIO')
@@ -663,6 +663,14 @@ def despachar_lote_planta_reencauche(datos: dict) -> dict:
                     bodega_origen, bodega_destino, motivo, usuario_responsable
                 ) VALUES (?, ?, ?, 'ENVIO_REENCAUCHE', 'Bodega_3_Reencauche', 'Bodega_4_EnPlanta', ?, ?)
             """, (hoy_ts, num, cliente, f"Despacho con Guía {guia} a {proveedor}", user))
+
+            cursor.execute("""
+                INSERT INTO kardex_movimientos_llanta (
+                    fecha_movimiento, cliente, subcliente, numero_interno,
+                    bodega_origen, bodega_destino, tipo_movimiento,
+                    causal_o_motivo, documento_soporte, proveedor, usuario_registro
+                ) VALUES (?, ?, 'Principal', ?, 'BODEGA_2_RECAMBIO', 'BODEGA_3_REENCAUCHE', 'ENVIO_REENCAUCHE', ?, ?, ?, ?)
+            """, (hoy_str, cliente, num, f"Despacho con Guía {guia}", guia, proveedor, user))
 
             despachadas.append(num)
         conn.commit()

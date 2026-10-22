@@ -1524,6 +1524,32 @@
             <option value="Presión">💨 Calibración Presión (PSI)</option>
           </select>
         </div>
+    </div>
+
+    <!-- BANNER RESUMEN: POTENCIAL DE AHORRO Y ROI (DIAGNÓSTICO) -->
+    <div id="banner-ahorro-roi-diag" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-indigo-500/30">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg shrink-0">
+            <i class="fa-solid fa-coins"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-black">💰 Potencial de Ahorro Identificado por TireAnalyze Pro</h3>
+              <span id="diag_badge_cambiazos" class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">0 Cambiazos</span>
+            </div>
+            <p class="text-xs text-slate-300">Resumen ejecutivo del plan correctivo: Carcasas + Geometría + Presión ACPM</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block uppercase font-bold">Ahorro Total Recuperable</span>
+            <span id="diag_ahorro_total_cop" class="text-lg sm:text-xl font-black text-emerald-400 font-mono">$0 COP</span>
+          </div>
+          <button type="button" onclick="irAVistaKpisTab(1)" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-pie"></i> Ver Suite KPIs
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1805,7 +1831,7 @@
       <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 border-b border-slate-100 text-xs font-bold">
         <button type="button" id="btnSubtabKpi1" onclick="cambiarSubpestanaKpis(1)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-900 text-white flex items-center space-x-2 shrink-0 transition-all">
           <i class="fa-solid fa-truck"></i>
-          <span>1. Inspección & Parque (KPI 01-03)</span>
+          <span>1. Inspección & Parque (KPI 01-04)</span>
         </button>
         <button type="button" id="btnSubtabKpi2" onclick="cambiarSubpestanaKpis(2)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center space-x-2 shrink-0 transition-all">
           <i class="fa-solid fa-wrench"></i>
@@ -1830,10 +1856,96 @@
     </div>
 
     <!-- ============================================================== -->
+    <!-- BANNER EJECUTIVO: INTELIGENCIA DE AHORRO FINANCIERO & ROI      -->
+    <!-- ============================================================== -->
+    <div id="banner-ahorro-roi-kpis" class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-indigo-500/30 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-900/50">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <i class="fa-solid fa-chart-line"></i> Auditoría Financiera
+            </span>
+            <span class="text-[10px] font-bold text-slate-400">Algoritmo Predictivo de Recuperación</span>
+          </div>
+          <h3 class="text-base sm:text-lg font-black tracking-tight mt-1 flex items-center gap-2">
+            <span>💰 Potencial de Ahorro Identificado por TireAnalyze Pro</span>
+          </h3>
+          <p class="text-xs text-slate-300">Recuperación estimada de capital mediante salvamento de cascos, corrección geométrica oportuna y calibración de presiones</p>
+        </div>
+        <div class="bg-emerald-500/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-emerald-500/30 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-sack-dollar"></i>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-300 block">Ahorro Potencial Total Recuperable</span>
+            <span id="banner_kpi_ahorro_total" class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">$0 COP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Pilares de Inteligencia Financiera -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <!-- Pilar 1: Salvamento de Carcasas -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-indigo-400"></i> Salvamento de Carcasas</span>
+              <span id="badge_cascos_salvamento" class="text-[10px] px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">0 Cascos</span>
+            </div>
+            <span id="banner_kpi_ahorro_cascos" class="text-lg font-black text-white font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Llantas originales en ventana crítica (3.0–4.2 mm) salvadas de fin de vida para reencauche</p>
+        </div>
+
+        <!-- Pilar 2: Geometría y Duales -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrows-split-up-and-left text-amber-400"></i> Geometría & Duales</span>
+              <span class="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold">Preventivo</span>
+            </div>
+            <span id="banner_kpi_ahorro_alineacion" class="text-lg font-black text-amber-300 font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Caucho útil remanente protegido al corregir desalineación y diferencias de apareo</p>
+        </div>
+
+        <!-- Pilar 3: Combustible ACPM Anual -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-gas-pump text-sky-400"></i> Ahorro Combustible (Anual)</span>
+              <span class="text-[10px] px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-bold">12 Meses</span>
+            </div>
+            <span id="banner_kpi_ahorro_combustible" class="text-lg font-black text-sky-300 font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Combustible ACPM ahorrado al calibrar neumáticos subinflados a su PSI objetivo</p>
+        </div>
+
+        <!-- Pilar 4: Detector de Cambiazos / Discrepancias -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Alerta Discrepancias / Cambiazos</span>
+              <span id="badge_cambiazos_total" class="text-[10px] px-2 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">0 Casos</span>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <span id="banner_kpi_cambiazos_num" class="text-lg font-black text-rose-400 font-mono">0 Casos</span>
+              <button type="button" onclick="abrirModalAlertasCambiazo()" class="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 flex items-center gap-1">
+                <i class="fa-solid fa-eye"></i> Ver Auditoría
+              </button>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Seriales modificados en patio/ruta sin registro de Desmonte/Montaje en Kardex</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
     <!-- 2. CONTENEDORES DE LAS 5 SUB-PESTAÑAS HOMOLOGADAS DE KPIS        -->
     <!-- ============================================================== -->
 
-    <!-- SUB-PESTAÑA 1: INSPECCIÓN GENERAL & PARQUE VEHICULAR (KPI 01 AL 03) -->
+    <!-- SUB-PESTAÑA 1: INSPECCIÓN GENERAL & PARQUE VEHICULAR (KPI 01 AL 04) -->
     <div id="subvista-kpi-1" class="space-y-4">
       <!-- KPI 01: Banner de Cumplimiento de Inspección vs Parque Vehicular -->
       <article class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-lg border border-indigo-900/40 relative overflow-hidden">
@@ -1925,6 +2037,59 @@
           </div>
         </article>
       </div>
+
+      <!-- Fila 2: KPI 04: Composición de Flota (Tipología, Marca y Dimensión) -->
+      <article class="col-span-12 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 04</span>
+              <h4 class="text-sm font-black text-slate-900">Composición de Flota (Tipología, Marca y Dimensión)</h4>
+            </div>
+            <p class="text-[11px] text-slate-400">Distribución fotográfica en patio por configuración vehicular, marca instalada y dimensión de neumático</p>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <button type="button" onclick="exportarGraficoPngHd('canvasKpi04_tipologia', 'KPI04_Tipologia')" title="Exportar Tipología PNG" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all">
+              <i class="fa-solid fa-truck"></i>
+            </button>
+            <button type="button" onclick="exportarGraficoPngHd('canvasKpi04_marca', 'KPI04_Marca')" title="Exportar Marca PNG" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all">
+              <i class="fa-solid fa-tag"></i>
+            </button>
+            <button type="button" onclick="exportarGraficoPngHd('canvasKpi04_dimension', 'KPI04_Dimension')" title="Exportar Dimensión PNG" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all">
+              <i class="fa-solid fa-chart-pie"></i>
+            </button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+          <!-- Columna A: Tipología Vehicular -->
+          <div class="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100 flex flex-col">
+            <span class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-truck text-indigo-500"></i> Tipología Vehicular
+            </span>
+            <div class="relative w-full h-[260px]">
+              <canvas id="canvasKpi04_tipologia"></canvas>
+            </div>
+          </div>
+          <!-- Columna B: Marcas de Llanta -->
+          <div class="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100 flex flex-col">
+            <span class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-tags text-sky-500"></i> Marcas Instaladas
+            </span>
+            <div class="relative w-full h-[260px]">
+              <canvas id="canvasKpi04_marca"></canvas>
+            </div>
+          </div>
+          <!-- Columna C: Dimensión y Medidas -->
+          <div class="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100 flex flex-col">
+            <span class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-ruler-combined text-emerald-500"></i> Dimensión de Llanta
+            </span>
+            <div class="relative w-full h-[260px]">
+              <canvas id="canvasKpi04_dimension"></canvas>
+            </div>
+          </div>
+        </div>
+      </article>
     </div>
 
     <!-- SUB-PESTAÑA 2: MANTENIMIENTO, ALINEACIÓN & PÉRDIDA (KPI 05 AL 11) -->
@@ -2560,6 +2725,53 @@
         </div>
         <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
           <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EMERGENTE: DETECTOR DE CAMBIAZOS Y DISCREPANCIAS DE SERIAL -->
+    <div id="modalAlertasCambiazo" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-rose-950 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-black">Detector de Cambiazos & Discrepancias de Serial</h3>
+              <p class="text-[11px] text-slate-300">Ruedas donde el número de serie cambió entre inspecciones consecutivas sin registro en Kardex</p>
+            </div>
+          </div>
+          <button type="button" onclick="cerrarModalAlertasCambiazo()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scroll flex-1">
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5">Placa</th>
+                  <th class="p-2.5 text-center">Posición</th>
+                  <th class="p-2.5">Serial Anterior</th>
+                  <th class="p-2.5">Serial Actual</th>
+                  <th class="p-2.5 text-right">Prof. Actual</th>
+                  <th class="p-2.5">Fecha Anterior</th>
+                  <th class="p-2.5">Fecha Actual</th>
+                  <th class="p-2.5 text-center">Auditoría</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAlertasCambiazo" class="divide-y divide-slate-100 font-medium">
+                <tr><td colspan="8" class="p-6 text-center text-slate-400">Sin discrepancias de serial detectadas en patio</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          <span id="lblTotalCambiazosModal" class="text-xs text-slate-500 font-bold">Total: 0 discrepancias detectadas</span>
+          <button type="button" onclick="cerrarModalAlertasCambiazo()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">
             Cerrar
           </button>
         </div>
@@ -6765,6 +6977,9 @@
     function renderizarTodaLaSuite20(data) {
       if (!data) return;
       sincronizarAvisosLicenciaSubpestanas();
+      if (data.ahorro_roi || data.resumen_ahorro_roi) {
+        renderizarBannerAhorroRoi(data.ahorro_roi || data.resumen_ahorro_roi);
+      }
       renderizarSubpestanaActiva(subpestanaKpiActiva, data);
     }
 
@@ -7058,16 +7273,20 @@
       destruirChartSuite('kpi04_dim');
       if (!ds) return;
 
+      const dsTip = ds.tipologias || ds.tipologia;
+      const dsMar = ds.marcas || ds.marca;
+      const dsDim = ds.dimensiones || ds.dimension;
+
       // Columna A: Tipología Vehicular (Barras Horizontales)
       const ctxTip = document.getElementById('canvasKpi04_tipologia');
-      if (ctxTip && ds.tipologias) {
+      if (ctxTip && dsTip) {
         instanciasChartsSuite['kpi04_tip'] = new Chart(ctxTip, {
           type: 'bar',
           data: {
-            labels: ds.tipologias.labels || [],
+            labels: dsTip.labels || [],
             datasets: [{
               label: 'Vehículos',
-              data: ds.tipologias.valores || [],
+              data: dsTip.valores || [],
               backgroundColor: '#6366f1',
               borderRadius: 6
             }]
@@ -7091,14 +7310,14 @@
 
       // Columna B: Marcas de Llanta (Barras Verticales)
       const ctxMar = document.getElementById('canvasKpi04_marca');
-      if (ctxMar && ds.marcas) {
+      if (ctxMar && dsMar) {
         instanciasChartsSuite['kpi04_mar'] = new Chart(ctxMar, {
           type: 'bar',
           data: {
-            labels: ds.marcas.labels || [],
+            labels: dsMar.labels || [],
             datasets: [{
               label: 'Llantas',
-              data: ds.marcas.valores || [],
+              data: dsMar.valores || [],
               backgroundColor: '#0ea5e9',
               borderRadius: 6
             }]
@@ -7122,13 +7341,13 @@
 
       // Columna C: Dimensión y Diseño (Donut)
       const ctxDim = document.getElementById('canvasKpi04_dimension');
-      if (ctxDim && ds.dimensiones) {
+      if (ctxDim && dsDim) {
         instanciasChartsSuite['kpi04_dim'] = new Chart(ctxDim, {
           type: 'doughnut',
           data: {
-            labels: ds.dimensiones.labels || [],
+            labels: dsDim.labels || [],
             datasets: [{
-              data: ds.dimensiones.valores || [],
+              data: dsDim.valores || [],
               backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b']
             }]
           },
@@ -7152,6 +7371,82 @@
             }
           }
         });
+      }
+    }
+
+    // ==========================================
+    // INTELIGENCIA DE AHORRO FINANCIERO & ROI (BANNER & MODAL CAMBIAZOS)
+    // ==========================================
+    let ultimasAlertasCambiazo = [];
+
+    function renderizarBannerAhorroRoi(ahorroData) {
+      if (!ahorroData) return;
+      ultimasAlertasCambiazo = ahorroData.alertas_cambiazo_serial || [];
+
+      const totalFmt = formatCO_Moneda(ahorroData.ahorro_potencial_total_cop || 0) + ' COP';
+      const cascosFmt = formatCO_Moneda(ahorroData.ahorro_salvamento_cascos_cop || 0) + ' COP';
+      const alinFmt = formatCO_Moneda(ahorroData.ahorro_alineacion_oportuna_cop || 0) + ' COP';
+      const combFmt = formatCO_Moneda(ahorroData.ahorro_combustible_anual_psi_cop || 0) + ' COP';
+      const cantCambiazos = ahorroData.total_alertas_cambiazo !== undefined ? ahorroData.total_alertas_cambiazo : (ultimasAlertasCambiazo.length || 0);
+      const cascosCant = ahorroData.cascos_en_ventana_salvamento || 0;
+
+      // Banner en Vista KPIs
+      const elTot = document.getElementById('banner_kpi_ahorro_total');
+      if (elTot) elTot.textContent = totalFmt;
+      const elCas = document.getElementById('banner_kpi_ahorro_cascos');
+      if (elCas) elCas.textContent = cascosFmt;
+      const elAlin = document.getElementById('banner_kpi_ahorro_alineacion');
+      if (elAlin) elAlin.textContent = alinFmt;
+      const elComb = document.getElementById('banner_kpi_ahorro_combustible');
+      if (elComb) elComb.textContent = combFmt;
+      const elNumC = document.getElementById('banner_kpi_cambiazos_num');
+      if (elNumC) elNumC.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Caso' : ' Casos');
+      const elBdgC = document.getElementById('badge_cambiazos_total');
+      if (elBdgC) elBdgC.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Caso' : ' Casos');
+      const elBdgS = document.getElementById('badge_cascos_salvamento');
+      if (elBdgS) elBdgS.textContent = cascosCant + (cascosCant === 1 ? ' Casco' : ' Cascos');
+
+      // Banner en Vista Diagnóstico
+      const elDiagTot = document.getElementById('diag_ahorro_total_cop');
+      if (elDiagTot) elDiagTot.textContent = totalFmt;
+      const elDiagBdg = document.getElementById('diag_badge_cambiazos');
+      if (elDiagBdg) elDiagBdg.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Cambiazo' : ' Cambiazos');
+    }
+
+    function abrirModalAlertasCambiazo() {
+      const modal = document.getElementById('modalAlertasCambiazo');
+      const tbody = document.getElementById('tbodyAlertasCambiazo');
+      const lblTotal = document.getElementById('lblTotalCambiazosModal');
+      if (!modal || !tbody) return;
+
+      if (!ultimasAlertasCambiazo || ultimasAlertasCambiazo.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-check text-emerald-500 mr-2 text-base"></i>No se detectaron discrepancias ni sustituciones no autorizadas de serial en la flota</td></tr>';
+        if (lblTotal) lblTotal.textContent = 'Total: 0 discrepancias detectadas';
+      } else {
+        tbody.innerHTML = ultimasAlertasCambiazo.map(a => `
+          <tr class="hover:bg-rose-50/50 transition-colors">
+            <td class="p-2.5 font-bold text-slate-900">${a.placa || ''}</td>
+            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${a.posicion || ''}</td>
+            <td class="p-2.5 font-mono text-slate-400 line-through">${a.serial_anterior || ''}</td>
+            <td class="p-2.5 font-mono font-bold text-rose-600">${a.serial_actual || ''}</td>
+            <td class="p-2.5 text-right font-mono font-bold">${a.prof_actual_min || 0} mm</td>
+            <td class="p-2.5 text-slate-400 text-xs">${a.fecha_anterior || ''}</td>
+            <td class="p-2.5 text-slate-700 font-semibold text-xs">${a.fecha_actual || ''}</td>
+            <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Sustitución sin Kardex</span></td>
+          </tr>
+        `).join('');
+        if (lblTotal) lblTotal.textContent = `Total: ${ultimasAlertasCambiazo.length} discrepancias detectadas`;
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalAlertasCambiazo() {
+      const modal = document.getElementById('modalAlertasCambiazo');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
       }
     }
 
@@ -8431,6 +8726,17 @@
         if (resMat.ok) {
           cacheMatrizSemaforos = await resMat.json();
         }
+
+        // Consultar indicadores de Ahorro ROI para el banner en diagnóstico
+        try {
+          const resGraf = await fetch(`/api/diagnostico/graficos${qs}`, { headers });
+          if (resGraf.ok) {
+            const dataGraf = await resGraf.json();
+            if (dataGraf.ahorro_roi || dataGraf.resumen_ahorro_roi) {
+              renderizarBannerAhorroRoi(dataGraf.ahorro_roi || dataGraf.resumen_ahorro_roi);
+            }
+          }
+        } catch (_) {}
         if (res.ok) {
           actualizarCombosFiltroDiagnostico();
           filtrarTablaDiagnostico();
