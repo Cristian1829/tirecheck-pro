@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-22 12:57:24`
+- **Fecha de Generación:** `2026-10-22 16:13:47`
 - **Total de Archivos Incluidos:** `78` archivos de código y documentación
-- **Líneas Totales de Código:** `51,809` líneas
-- **Tamaño Total de Código Fuente:** `2538.5 KB` (`2,599,449` bytes)
+- **Líneas Totales de Código:** `51,858` líneas
+- **Tamaño Total de Código Fuente:** `2542.6 KB` (`2,603,661` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18187 | 960.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18236 | 964.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -20891,7 +20891,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 18187 líneas | 983,802 bytes (960.7 KB)
+- **Métricas:** 18236 líneas | 988,014 bytes (964.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -22724,30 +22724,70 @@ if __name__ == '__main__':
         </div>
       </div>
 
-      <!-- Barra de las 5 Sub-Pestañas Homologadas -->
-      <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 border-b border-slate-100 text-xs font-bold">
-        <button type="button" id="btnSubtabKpi1" onclick="cambiarSubpestanaKpis(1)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-900 text-white flex items-center space-x-2 shrink-0 transition-all">
-          <i class="fa-solid fa-truck"></i>
-          <span>1. Inspección & Parque (KPI 01-04)</span>
+      <!-- Barra de las 5 Sub-Pestañas Homologadas (Segmented Pill Bar) -->
+      <div class="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <!-- 1. Inspección & Parque -->
+        <button type="button" id="btnSubtabKpi1" onclick="cambiarSubpestanaKpis(1)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-md shadow-indigo-950/20 flex items-center space-x-2.5 shrink-0 transition-all scale-[1.02] cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-truck"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <span class="block font-bold text-xs tracking-tight text-white">1. Inspección & Parque</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90">KPI 01-04</span>
+          </div>
         </button>
-        <button type="button" id="btnSubtabKpi2" onclick="cambiarSubpestanaKpis(2)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center space-x-2 shrink-0 transition-all">
-          <i class="fa-solid fa-wrench"></i>
-          <span>2. Mantenimiento & Pérdida (KPI 05-11)</span>
+
+        <!-- 2. Mantenimiento & Pérdida -->
+        <button type="button" id="btnSubtabKpi2" onclick="cambiarSubpestanaKpis(2)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-wrench"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <span class="block font-bold text-xs tracking-tight text-slate-700">2. Mantenimiento & Pérdida</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 05-11</span>
+          </div>
         </button>
-        <button type="button" id="btnSubtabKpi3" onclick="cambiarSubpestanaKpis(3)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center space-x-2 shrink-0 transition-all">
-          <i class="fa-solid fa-chart-line"></i>
-          <span>3. Producto & Proyecciones (KPI 12-16)</span>
-          <span class="subtab-kpi-pro-badge text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 ml-1">FULL</span>
+
+        <!-- 3. Producto & Proyecciones -->
+        <button type="button" id="btnSubtabKpi3" onclick="cambiarSubpestanaKpis(3)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <div class="flex items-center gap-1.5">
+              <span class="block font-bold text-xs tracking-tight text-slate-700">3. Producto & Proyecciones</span>
+              <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
+            </div>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 12-16</span>
+          </div>
         </button>
-        <button type="button" id="btnSubtabKpi4" onclick="cambiarSubpestanaKpis(4)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center space-x-2 shrink-0 transition-all">
-          <i class="fa-solid fa-recycle"></i>
-          <span>4. Tablero Bajas / FVU (KPI 17-19)</span>
-          <span class="subtab-kpi-pro-badge text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 ml-1">FULL</span>
+
+        <!-- 4. Tablero Bajas / FVU -->
+        <button type="button" id="btnSubtabKpi4" onclick="cambiarSubpestanaKpis(4)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-recycle"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <div class="flex items-center gap-1.5">
+              <span class="block font-bold text-xs tracking-tight text-slate-700">4. Tablero Bajas / FVU</span>
+              <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
+            </div>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 17-19</span>
+          </div>
         </button>
-        <button type="button" id="btnSubtabKpi5" onclick="cambiarSubpestanaKpis(5)" class="subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center space-x-2 shrink-0 transition-all">
-          <i class="fa-solid fa-boxes-stacked"></i>
-          <span>5. Balance 7 Bodegas MRP (KPI 20)</span>
-          <span class="subtab-kpi-pro-badge text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 ml-1">FULL</span>
+
+        <!-- 5. Balance 7 Bodegas MRP -->
+        <button type="button" id="btnSubtabKpi5" onclick="cambiarSubpestanaKpis(5)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <div class="flex items-center gap-1.5">
+              <span class="block font-bold text-xs tracking-tight text-slate-700">5. Balance 7 Bodegas MRP</span>
+              <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
+            </div>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 20</span>
+          </div>
         </button>
       </div>
     </div>
@@ -27750,10 +27790,19 @@ if __name__ == '__main__':
           else sub.classList.add('hidden');
         }
         if (btn) {
+          const iconBox = btn.querySelector('.subtab-icon-box');
+          const title = btn.querySelector('.text-left span:first-child');
+          const subTitle = btn.querySelector('.subtab-kpi-sub');
           if (i === num) {
-            btn.className = 'subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-900 text-white flex items-center space-x-2 shrink-0 shadow transition-all';
+            btn.className = 'subtab-kpi-btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-md shadow-indigo-950/20 flex items-center space-x-2.5 shrink-0 transition-all scale-[1.02] cursor-pointer';
+            if (iconBox) iconBox.className = 'subtab-icon-box w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs shrink-0 transition-colors';
+            if (title) title.className = 'block font-bold text-xs tracking-tight text-white';
+            if (subTitle) subTitle.className = 'subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90';
           } else {
-            btn.className = 'subtab-kpi-btn px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center space-x-2 shrink-0 transition-all';
+            btn.className = 'subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer';
+            if (iconBox) iconBox.className = 'subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors';
+            if (title) title.className = 'block font-bold text-xs tracking-tight text-slate-700';
+            if (subTitle) subTitle.className = 'subtab-kpi-sub block text-[9.5px] font-mono text-slate-400';
           }
         }
       }
