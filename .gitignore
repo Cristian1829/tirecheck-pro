@@ -29,3 +29,8 @@ desktop.ini
 /test_*.pdf
 tirecheck.db
 ~$*
+
+# Claves secretas y backups
+data/.secret_key
+data/backups/
+

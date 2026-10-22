@@ -8,6 +8,7 @@ import base64
 import json
 import hmac
 import hashlib
+import secrets
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
@@ -213,7 +214,28 @@ class ClienteDirectorioItem(BaseModel):
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
 # ==========================================
 
-SECRET_KEY = os.environ.get("TIREANALYZE_SECRET_KEY", os.environ.get("TIRECHECK_SECRET_KEY", "tireanalyze-pro-super-secret-key-2026-production"))
+def _obtener_o_crear_secret_key() -> str:
+    env_key = os.environ.get("TIREANALYZE_SECRET_KEY") or os.environ.get("TIRECHECK_SECRET_KEY")
+    if env_key and env_key.strip():
+        return env_key.strip()
+    
+    secret_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", ".secret_key")
+    try:
+        if os.path.exists(secret_file):
+            with open(secret_file, "r", encoding="utf-8") as f:
+                key = f.read().strip()
+                if key:
+                    return key
+        os.makedirs(os.path.dirname(secret_file), exist_ok=True)
+        nueva_key = secrets.token_hex(32)
+        with open(secret_file, "w", encoding="utf-8") as f:
+            f.write(nueva_key)
+        return nueva_key
+    except Exception as e:
+        print(f"[SECURITY] Advertencia: No se pudo persistir secret key en archivo ({e}), usando fallback.")
+        return "tireanalyze-pro-fallback-secret-key-2026-production"
+
+SECRET_KEY = _obtener_o_crear_secret_key()
 TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
 
 def crear_token_acceso(username: str, rol: str) -> str:
@@ -312,6 +334,30 @@ def resolver_filtro_usuario_inspecciones(usuario_actual: dict, usuario_param: st
         else:
             return None
     return usuario_actual["username"]
+ 
+def _resolver_cliente_usuario(usuario_actual: dict, cliente_solicitado: str = "") -> str:
+    """
+    Resuelve y valida el cliente asignado para operaciones de bodegas, taller y hoja de vida.
+    Si el usuario es admin, permite el cliente solicitado.
+    Si no es admin:
+      - Si se especifica cliente_solicitado (distinto de vacío o 'Todos'), valida que esté
+        dentro de sus clientes_asignados (HTTP 403 si no pertenece).
+      - Si no se especifica cliente_solicitado y tiene asignados, toma el primero.
+    """
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if es_rol_admin(rol, user):
+        return str(cliente_solicitado or "").strip()
+    
+    clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+    sol = str(cliente_solicitado or "").strip()
+    if sol and sol.lower() != "todos":
+        for c in clis:
+            if c.lower() == sol.lower():
+                return c
+        raise HTTPException(status_code=403, detail="No tiene permisos para operar sobre este cliente")
+    
+    return clis[0] if clis else sol
 
 
 # ==========================================
@@ -431,9 +477,15 @@ async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict 
         tmp.write(content)
         tmp_path = tmp.name
 
+    clientes_autorizados = None
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        clientes_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+
     try:
-        cant = database.cargar_excel_a_bd(tmp_path)
+        cant = database.cargar_excel_a_bd(tmp_path, clientes_autorizados=clientes_autorizados)
         return {"status": "ok", "registros_importados": cant, "message": f"Se importaron exitosamente {cant} registros a la base de datos."}
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al procesar el archivo Excel: {str(e)}")
     finally:
@@ -578,7 +630,7 @@ def api_diagnostico(
 ):
     try:
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
         if not df.empty and 'fecha' in df.columns:
             if fecha_desde and str(fecha_desde).strip():
                 df = df[df['fecha'].astype(str).str[:10] >= str(fecha_desde).strip()]
@@ -614,7 +666,7 @@ def api_diagnostico_matriz_semaforos(
                     raise HTTPException(status_code=403, detail="No tiene permisos para ver la matriz de este cliente")
 
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
         if df.empty:
             return {
                 "posiciones": [],
@@ -1056,6 +1108,15 @@ def api_exportar_kpis_excel(
 
 @app.get("/api/informe-pdf/{placa}")
 def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            perfil = database.obtener_perfil_vehiculo(placa)
+            cli_veh = (perfil.get("cliente") or "").strip().lower()
+            if cli_veh and not any(c.lower() == cli_veh for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para descargar el informe de este vehículo")
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
@@ -1065,6 +1126,8 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
             media_type="application/pdf",
             headers={"Content-Disposition": f"inline; filename={filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -1511,11 +1574,28 @@ def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: d
 # RUTAS DE AUTENTICACIÓN Y USUARIOS
 # ==========================================
 
+_login_attempts: dict = {}  # ip -> list of float timestamps
+
 @app.post("/api/login")
-def api_login(item: LoginItem, response: Response):
+def api_login(item: LoginItem, request: Request, response: Response):
+    ip = request.client.host if request.client else "127.0.0.1"
+    ahora = time.time()
+    intentos = [t for t in _login_attempts.get(ip, []) if ahora - t < 60.0]
+    _login_attempts[ip] = intentos
+    if len(intentos) >= 8:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiados intentos fallidos. Intente de nuevo en 60 segundos."
+        )
+
     usr = database.autenticar_usuario(item.username, item.password)
     if not usr:
+        _login_attempts[ip].append(ahora)
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+
+    if ip in _login_attempts:
+        _login_attempts[ip] = []
+
     token = crear_token_acceso(usr["username"], usr["rol"])
     response.set_cookie(
         key="tireanalyze_token",
@@ -1630,6 +1710,14 @@ def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
     if not seed_found:
         raise HTTPException(status_code=404, detail="No se encontró el archivo de semilla de la base de datos.")
     try:
+        # Backup automático previo en data/backups/
+        if os.path.exists(database.DB_PATH):
+            backups_dir = os.path.join(os.path.dirname(os.path.abspath(database.DB_PATH)), "backups")
+            os.makedirs(backups_dir, exist_ok=True)
+            timestamp_str = ahora_bogota().strftime("%Y%m%d_%H%M%S")
+            backup_path = os.path.join(backups_dir, f"inspecciones_backup_{timestamp_str}.db")
+            shutil.copy2(database.DB_PATH, backup_path)
+
         shutil.copy2(seed_found, database.DB_PATH)
         with database.get_connection() as conn:
             cur = conn.cursor()
@@ -1740,10 +1828,7 @@ def api_bodegas_inventario(
 @app.post("/api/bodegas/alta")
 def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
     datos["usuario_registro"] = usuario_actual.get("username", "admin")
     res = database.crear_llanta_en_bodega(datos)
     if not res.get("ok"):
@@ -1753,10 +1838,7 @@ def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(
 @app.post("/api/bodegas/movimiento")
 def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
     datos["usuario_registro"] = usuario_actual.get("username", "admin")
     res = database.registrar_movimiento_bodega(datos)
     if not res.get("ok"):
@@ -1766,10 +1848,7 @@ def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = De
 @app.post("/api/bodegas/garantia")
 def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
     datos["usuario_registro"] = usuario_actual.get("username", "admin")
     res = database.actualizar_garantia_llanta(datos)
     if not res.get("ok"):
@@ -1778,10 +1857,7 @@ def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depen
 
 @app.get("/api/bodegas/kardex")
 def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
 
 # ==========================================
@@ -1795,10 +1871,7 @@ def api_taller_posicion_info(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     return sanitizar_nativos(database.obtener_posicion_taller_info(placa, posicion, cliente))
 
 @app.post("/api/taller/desmontar")
@@ -1806,10 +1879,7 @@ def api_taller_desmontar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.desmontar_llanta_taller(item)
     if not res.get("ok"):
@@ -1821,10 +1891,7 @@ def api_taller_montar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.montar_llanta_taller(item)
     if not res.get("ok"):
@@ -1837,10 +1904,7 @@ def api_llantas_crear_stock(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.crear_llantas_stock(item)
     if not res.get("ok"):
@@ -1852,10 +1916,7 @@ def api_bodegas_despacho_planta(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.despachar_lote_planta_reencauche(item)
     if not res.get("ok"):
@@ -1867,10 +1928,7 @@ def api_bodegas_retorno_reencauche(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.recepcionar_llanta_reencauchada(item)
     if not res.get("ok"):
@@ -1882,10 +1940,7 @@ def api_bodegas_finalizar_reparacion(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.finalizar_reparacion_bodega5(item)
     if not res.get("ok"):
@@ -1897,10 +1952,7 @@ def api_bodegas_dictamen_garantia(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.procesar_dictamen_garantia_bodega6(item)
     if not res.get("ok"):
@@ -1913,10 +1965,7 @@ def api_llanta_hoja_vida(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     res = database.obtener_hoja_vida_llanta(numero_interno, cliente)
     if not res.get("ok"):
         raise HTTPException(status_code=404, detail=res.get("mensaje", "No se encontró la hoja de vida"))
@@ -1928,10 +1977,7 @@ def api_bodegas_pdf_despacho_planta(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
 
     inv = database.listar_inventario_bodegas_con_kpis({"cliente": cliente, "ubicacion_bodega": "Bodega_4_EnPlanta"})
     llantas = [ll for ll in inv.get("llantas", []) if not guia or str(ll.get("guia_remision_planta", "")).upper() == guia.strip().upper()]
@@ -1952,10 +1998,7 @@ def api_bodegas_pdf_acta_chatarrizacion(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
 
     hv = database.obtener_hoja_vida_llanta(numero_interno, cliente)
     if not hv.get("ok"):

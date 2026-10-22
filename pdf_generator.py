@@ -1067,7 +1067,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
     """
-    df_insp = database.obtener_todas_inspecciones(usuario=usuario)
+    df_insp = database.obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
     if df_insp.empty:
         raise ValueError("No existen inspecciones registradas en el sistema.")
 

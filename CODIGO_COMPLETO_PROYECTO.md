@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-22 16:13:47`
+- **Fecha de Generación:** `2026-10-22 18:02:31`
 - **Total de Archivos Incluidos:** `78` archivos de código y documentación
-- **Líneas Totales de Código:** `51,858` líneas
-- **Tamaño Total de Código Fuente:** `2542.6 KB` (`2,603,661` bytes)
+- **Líneas Totales de Código:** `51,786` líneas
+- **Tamaño Total de Código Fuente:** `2539.8 KB` (`2,600,765` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -397,11 +397,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [requirements.txt](#archivo-requirementstxt) | `text` | 13 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
-| [.gitignore](#archivo-gitignore) | `gitignore` | 31 | 0.4 KB | Reglas de exclusión de Git |
+| [.gitignore](#archivo-gitignore) | `gitignore` | 36 | 0.5 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
 | [Dockerfile](#archivo-dockerfile) | `dockerfile` | 35 | 1.0 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
 | [railway.json](#archivo-railwayjson) | `json` | 12 | 0.3 KB | Configuración de infraestructura y despliegue continuo en Railway (Builder DOCKERFILE) |
-| [render.yaml](#archivo-renderyaml) | `yaml` | 11 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
+| [render.yaml](#archivo-renderyaml) | `yaml` | 13 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
 | [Procfile](#archivo-procfile) | `text` | 1 | 0.0 KB | Comando de arranque estándar para plataformas PaaS |
 | [nixpacks.toml](#archivo-nixpackstoml) | `toml` | 5 | 0.1 KB | Definición de empaquetado alternativo Nixpacks |
 | [INICIAR_TIRECHECK.bat](#archivo-iniciar-tirecheckbat) | `bat` | 23 | 0.7 KB | Script de arranque automático para Windows: verificación de entorno, servidor uvicorn y apertura de navegador |
@@ -431,9 +431,9 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1994 | 88.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 8966 | 427.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
-| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1482 | 66.5 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
+| [server.py](#archivo-serverpy) | `python` | 2037 | 89.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 8803 | 420.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1846 | 85.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 201 | 10.7 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18236 | 964.9 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18247 | 965.3 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -534,7 +534,7 @@ pytz>=2024.1
 
 - **Ruta:** `.gitignore`
 - **Descripción:** Reglas de exclusión de Git
-- **Métricas:** 31 líneas | 417 bytes (0.4 KB)
+- **Métricas:** 36 líneas | 478 bytes (0.5 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -569,6 +569,10 @@ desktop.ini
 /test_*.pdf
 tirecheck.db
 ~$*
+
+# Claves secretas y backups
+data/.secret_key
+data/backups/
 ```
 
 ---
@@ -674,7 +678,7 @@ CMD ["python", "server.py"]
 
 - **Ruta:** `render.yaml`
 - **Descripción:** Blueprint de infraestructura como código para despliegue automático en Render.com
-- **Métricas:** 11 líneas | 280 bytes (0.3 KB)
+- **Métricas:** 13 líneas | 344 bytes (0.3 KB)
 - **Lenguaje:** `yaml`
 
 ```yaml
@@ -689,6 +693,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
+      - key: TIREANALYZE_SECRET_KEY
+        generateValue: true
 ```
 
 ---
@@ -3532,7 +3538,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 1994 líneas | 90,117 bytes (88.0 KB)
+- **Métricas:** 2037 líneas | 91,628 bytes (89.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3546,6 +3552,7 @@ import base64
 import json
 import hmac
 import hashlib
+import secrets
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Optional
@@ -3751,7 +3758,28 @@ class ClienteDirectorioItem(BaseModel):
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
 # ==========================================
 
-SECRET_KEY = os.environ.get("TIREANALYZE_SECRET_KEY", os.environ.get("TIRECHECK_SECRET_KEY", "tireanalyze-pro-super-secret-key-2026-production"))
+def _obtener_o_crear_secret_key() -> str:
+    env_key = os.environ.get("TIREANALYZE_SECRET_KEY") or os.environ.get("TIRECHECK_SECRET_KEY")
+    if env_key and env_key.strip():
+        return env_key.strip()
+    
+    secret_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", ".secret_key")
+    try:
+        if os.path.exists(secret_file):
+            with open(secret_file, "r", encoding="utf-8") as f:
+                key = f.read().strip()
+                if key:
+                    return key
+        os.makedirs(os.path.dirname(secret_file), exist_ok=True)
+        nueva_key = secrets.token_hex(32)
+        with open(secret_file, "w", encoding="utf-8") as f:
+            f.write(nueva_key)
+        return nueva_key
+    except Exception as e:
+        print(f"[SECURITY] Advertencia: No se pudo persistir secret key en archivo ({e}), usando fallback.")
+        return "tireanalyze-pro-fallback-secret-key-2026-production"
+
+SECRET_KEY = _obtener_o_crear_secret_key()
 TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
 
 def crear_token_acceso(username: str, rol: str) -> str:
@@ -3850,6 +3878,30 @@ def resolver_filtro_usuario_inspecciones(usuario_actual: dict, usuario_param: st
         else:
             return None
     return usuario_actual["username"]
+ 
+def _resolver_cliente_usuario(usuario_actual: dict, cliente_solicitado: str = "") -> str:
+    """
+    Resuelve y valida el cliente asignado para operaciones de bodegas, taller y hoja de vida.
+    Si el usuario es admin, permite el cliente solicitado.
+    Si no es admin:
+      - Si se especifica cliente_solicitado (distinto de vacío o 'Todos'), valida que esté
+        dentro de sus clientes_asignados (HTTP 403 si no pertenece).
+      - Si no se especifica cliente_solicitado y tiene asignados, toma el primero.
+    """
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if es_rol_admin(rol, user):
+        return str(cliente_solicitado or "").strip()
+    
+    clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+    sol = str(cliente_solicitado or "").strip()
+    if sol and sol.lower() != "todos":
+        for c in clis:
+            if c.lower() == sol.lower():
+                return c
+        raise HTTPException(status_code=403, detail="No tiene permisos para operar sobre este cliente")
+    
+    return clis[0] if clis else sol
 
 
 # ==========================================
@@ -3969,9 +4021,15 @@ async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict 
         tmp.write(content)
         tmp_path = tmp.name
 
+    clientes_autorizados = None
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        clientes_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+
     try:
-        cant = database.cargar_excel_a_bd(tmp_path)
+        cant = database.cargar_excel_a_bd(tmp_path, clientes_autorizados=clientes_autorizados)
         return {"status": "ok", "registros_importados": cant, "message": f"Se importaron exitosamente {cant} registros a la base de datos."}
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al procesar el archivo Excel: {str(e)}")
     finally:
@@ -4116,7 +4174,7 @@ def api_diagnostico(
 ):
     try:
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
         if not df.empty and 'fecha' in df.columns:
             if fecha_desde and str(fecha_desde).strip():
                 df = df[df['fecha'].astype(str).str[:10] >= str(fecha_desde).strip()]
@@ -4152,7 +4210,7 @@ def api_diagnostico_matriz_semaforos(
                     raise HTTPException(status_code=403, detail="No tiene permisos para ver la matriz de este cliente")
 
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-        df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
         if df.empty:
             return {
                 "posiciones": [],
@@ -4594,6 +4652,15 @@ def api_exportar_kpis_excel(
 
 @app.get("/api/informe-pdf/{placa}")
 def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            perfil = database.obtener_perfil_vehiculo(placa)
+            cli_veh = (perfil.get("cliente") or "").strip().lower()
+            if cli_veh and not any(c.lower() == cli_veh for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para descargar el informe de este vehículo")
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
@@ -4603,6 +4670,8 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
             media_type="application/pdf",
             headers={"Content-Disposition": f"inline; filename={filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -5049,11 +5118,28 @@ def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: d
 # RUTAS DE AUTENTICACIÓN Y USUARIOS
 # ==========================================
 
+_login_attempts: dict = {}  # ip -> list of float timestamps
+
 @app.post("/api/login")
-def api_login(item: LoginItem, response: Response):
+def api_login(item: LoginItem, request: Request, response: Response):
+    ip = request.client.host if request.client else "127.0.0.1"
+    ahora = time.time()
+    intentos = [t for t in _login_attempts.get(ip, []) if ahora - t < 60.0]
+    _login_attempts[ip] = intentos
+    if len(intentos) >= 8:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiados intentos fallidos. Intente de nuevo en 60 segundos."
+        )
+
     usr = database.autenticar_usuario(item.username, item.password)
     if not usr:
+        _login_attempts[ip].append(ahora)
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+
+    if ip in _login_attempts:
+        _login_attempts[ip] = []
+
     token = crear_token_acceso(usr["username"], usr["rol"])
     response.set_cookie(
         key="tireanalyze_token",
@@ -5168,6 +5254,14 @@ def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
     if not seed_found:
         raise HTTPException(status_code=404, detail="No se encontró el archivo de semilla de la base de datos.")
     try:
+        # Backup automático previo en data/backups/
+        if os.path.exists(database.DB_PATH):
+            backups_dir = os.path.join(os.path.dirname(os.path.abspath(database.DB_PATH)), "backups")
+            os.makedirs(backups_dir, exist_ok=True)
+            timestamp_str = ahora_bogota().strftime("%Y%m%d_%H%M%S")
+            backup_path = os.path.join(backups_dir, f"inspecciones_backup_{timestamp_str}.db")
+            shutil.copy2(database.DB_PATH, backup_path)
+
         shutil.copy2(seed_found, database.DB_PATH)
         with database.get_connection() as conn:
             cur = conn.cursor()
@@ -5278,10 +5372,7 @@ def api_bodegas_inventario(
 @app.post("/api/bodegas/alta")
 def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
     datos["usuario_registro"] = usuario_actual.get("username", "admin")
     res = database.crear_llanta_en_bodega(datos)
     if not res.get("ok"):
@@ -5291,10 +5382,7 @@ def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(
 @app.post("/api/bodegas/movimiento")
 def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
     datos["usuario_registro"] = usuario_actual.get("username", "admin")
     res = database.registrar_movimiento_bodega(datos)
     if not res.get("ok"):
@@ -5304,10 +5392,7 @@ def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = De
 @app.post("/api/bodegas/garantia")
 def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        datos["cliente"] = usuario_actual["cliente_asignado"]
+    datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
     datos["usuario_registro"] = usuario_actual.get("username", "admin")
     res = database.actualizar_garantia_llanta(datos)
     if not res.get("ok"):
@@ -5316,10 +5401,7 @@ def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depen
 
 @app.get("/api/bodegas/kardex")
 def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
 
 # ==========================================
@@ -5333,10 +5415,7 @@ def api_taller_posicion_info(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     return sanitizar_nativos(database.obtener_posicion_taller_info(placa, posicion, cliente))
 
 @app.post("/api/taller/desmontar")
@@ -5344,10 +5423,7 @@ def api_taller_desmontar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.desmontar_llanta_taller(item)
     if not res.get("ok"):
@@ -5359,10 +5435,7 @@ def api_taller_montar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.montar_llanta_taller(item)
     if not res.get("ok"):
@@ -5375,10 +5448,7 @@ def api_llantas_crear_stock(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.crear_llantas_stock(item)
     if not res.get("ok"):
@@ -5390,10 +5460,7 @@ def api_bodegas_despacho_planta(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.despachar_lote_planta_reencauche(item)
     if not res.get("ok"):
@@ -5405,10 +5472,7 @@ def api_bodegas_retorno_reencauche(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.recepcionar_llanta_reencauchada(item)
     if not res.get("ok"):
@@ -5420,10 +5484,7 @@ def api_bodegas_finalizar_reparacion(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.finalizar_reparacion_bodega5(item)
     if not res.get("ok"):
@@ -5435,10 +5496,7 @@ def api_bodegas_dictamen_garantia(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.procesar_dictamen_garantia_bodega6(item)
     if not res.get("ok"):
@@ -5451,10 +5509,7 @@ def api_llanta_hoja_vida(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     res = database.obtener_hoja_vida_llanta(numero_interno, cliente)
     if not res.get("ok"):
         raise HTTPException(status_code=404, detail=res.get("mensaje", "No se encontró la hoja de vida"))
@@ -5466,10 +5521,7 @@ def api_bodegas_pdf_despacho_planta(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
 
     inv = database.listar_inventario_bodegas_con_kpis({"cliente": cliente, "ubicacion_bodega": "Bodega_4_EnPlanta"})
     llantas = [ll for ll in inv.get("llantas", []) if not guia or str(ll.get("guia_remision_planta", "")).upper() == guia.strip().upper()]
@@ -5490,10 +5542,7 @@ def api_bodegas_pdf_acta_chatarrizacion(
     cliente: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-        cliente = usuario_actual["cliente_asignado"]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
 
     hv = database.obtener_hoja_vida_llanta(numero_interno, cliente)
     if not hv.get("ok"):
@@ -5538,7 +5587,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 8966 líneas | 438,111 bytes (427.8 KB)
+- **Métricas:** 8803 líneas | 430,252 bytes (420.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -7164,15 +7213,16 @@ def migrar_limite_ciudad_limpia_4mm(conn=None, forzar=False):
 
 
 
-def sincronizar_maestro_desde_inspecciones(conn=None):
+def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numero_interno_filtro=None):
     """
     Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
     Para cada combinación única de (cliente, numero_interno), toma el último estado registrado
     e inserta o actualiza la llanta en 'MONTADA_OPERACION' sin sobreescribir costos de reparaciones
     ni estados de garantía existentes.
+    Si se suministran cliente_filtro y numero_interno_filtro, opera en O(1) filtrando únicamente esa llanta.
     """
     def _ejecutar(c):
-        c.execute("""
+        query = """
             SELECT cliente, numero_interno, placa, posicion, tipologia, marca, diseno, dimension,
                    vida, banda_reen, prof_ext, prof_cent, prof_int, psi, kilometraje, km_montaje,
                    precio, prof_inicial, subcliente, tipo_operacion, fecha, id
@@ -7180,11 +7230,19 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
             WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
               AND UPPER(TRIM(numero_interno)) != 'SN'
               AND cliente IS NOT NULL AND TRIM(cliente) != ''
-            ORDER BY fecha ASC, id ASC
-        """)
+        """
+        params = []
+        if cliente_filtro and numero_interno_filtro:
+            c_f = str(cliente_filtro).strip().upper()
+            n_f = str(numero_interno_filtro).strip().upper()
+            if c_f and n_f and n_f != 'SN':
+                query += " AND UPPER(TRIM(cliente)) = ? AND UPPER(TRIM(numero_interno)) = ?"
+                params.extend([c_f, n_f])
+        query += " ORDER BY fecha ASC, id ASC"
+        c.execute(query, params)
         filas = c.fetchall()
         if not filas:
-            return
+            return 0
 
         # Quedarse con el último registro por (cliente, numero_interno)
         ultimos = {}
@@ -7352,13 +7410,15 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
                             fecha_actualizacion = CURRENT_TIMESTAMP
                         WHERE id = ?
                     """, (placa, pos, pe, pc, pi, p_min, psi, km_act, km_rod, row_m[0]))
+        return len(ultimos)
 
     if conn is not None:
-        _ejecutar(conn.cursor())
+        return _ejecutar(conn.cursor())
     else:
         with get_connection() as c_conn:
-            _ejecutar(c_conn.cursor())
+            res = _ejecutar(c_conn.cursor())
             c_conn.commit()
+            return res
 
 # ==========================================
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
@@ -8213,15 +8273,16 @@ def insertar_inspeccion(datos):
         datos.get('cliente'),
         datos.get('marca')
     )
-    sincronizar_maestro_desde_inspecciones()
+    sincronizar_maestro_desde_inspecciones(cliente_filtro=datos.get('cliente'), numero_interno_filtro=datos.get('numero_interno'))
     return last_id
 
-def obtener_todas_inspecciones(usuario=None):
+def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
     with get_connection() as conn:
-        query = """
+        col_foto = "foto_novedad" if incluir_fotos else "CASE WHEN foto_novedad IS NOT NULL AND TRIM(foto_novedad) != '' AND TRIM(foto_novedad) != '[]' THEN '1' ELSE '' END AS tiene_foto, '' AS foto_novedad"
+        query = f"""
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, {col_foto}
             FROM inspecciones
         """
         params = []
@@ -8327,7 +8388,7 @@ def actualizar_inspeccion(inspeccion_id, datos):
             datos.get('cliente'),
             datos.get('marca')
         )
-        sincronizar_maestro_desde_inspecciones()
+        sincronizar_maestro_desde_inspecciones(cliente_filtro=datos.get('cliente'), numero_interno_filtro=datos.get('numero_interno'))
     return ok
 
 def eliminar_inspeccion(inspeccion_id):
@@ -8340,7 +8401,7 @@ def vaciar_inspecciones():
         conn.execute("DELETE FROM inspecciones")
         conn.commit()
 
-def cargar_excel_a_bd(file_path):
+def cargar_excel_a_bd(file_path, clientes_autorizados=None):
     df = pd.read_excel(file_path, sheet_name=0)
     cols_norm_map = {normalizar_texto(c): c for c in df.columns}
     
@@ -8407,9 +8468,14 @@ def cargar_excel_a_bd(file_path):
             if not num_interno:
                 num_interno = generar_siguiente_numero_interno_temporal(conn=conn)
 
+            cli_fila = str(row[col_encontradas['cliente']]).strip().upper() if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) and str(row[col_encontradas['cliente']]).strip().upper() != 'NAN' else ''
+            if clientes_autorizados:
+                if not cli_fila or not any(c.strip().upper() == cli_fila for c in clientes_autorizados):
+                    raise PermissionError(f"Fila {idx + 2}: El cliente '{cli_fila}' no corresponde a sus flotas autorizadas ({', '.join(clientes_autorizados)})")
+
             datos = {
                 'fecha': fecha,
-                'cliente': str(row[col_encontradas['cliente']]).strip().upper() if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) and str(row[col_encontradas['cliente']]).strip().upper() != 'NAN' else '',
+                'cliente': cli_fila,
                 'subcliente': str(row[col_encontradas['subcliente']]).strip().upper() if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) and str(row[col_encontradas['subcliente']]).strip().upper() != 'NAN' else '',
                 'tipo_operacion': str(row[col_encontradas['tipo_operacion']]).strip().upper() if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) and str(row[col_encontradas['tipo_operacion']]).strip().upper() != 'NAN' else '',
                 'placa': placa,
@@ -8620,6 +8686,27 @@ def analizar_inspecciones_df(df_inspecciones):
     resolver_limite = _construir_cache_limites_retiro()
     llantas_b2_usadas = set()
 
+    # Precarga en memoria de llantas disponibles en BODEGA_2_RECAMBIO (Eliminación de N+1)
+    llantas_b2_disponibles = []
+    try:
+        with get_connection() as c_b2_preload:
+            cur_preload = c_b2_preload.cursor()
+            cur_preload.execute("""
+                SELECT UPPER(cliente), UPPER(dimension), numero_interno, prof_actual_min, reservada_para_placa
+                FROM llantas_maestro
+                WHERE ubicacion_bodega = 'BODEGA_2_RECAMBIO'
+            """)
+            for r_b2 in cur_preload.fetchall():
+                llantas_b2_disponibles.append({
+                    "cliente": str(r_b2[0] or "").strip().upper(),
+                    "dimension": str(r_b2[1] or "").strip().upper(),
+                    "numero_interno": str(r_b2[2] or "").strip(),
+                    "prof_actual_min": to_float(r_b2[3], 0.0),
+                    "reservada_para_placa": str(r_b2[4] or "").strip().upper()
+                })
+    except Exception:
+        llantas_b2_disponibles = []
+
     for placa, group in df.groupby('placa'):
         t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
@@ -8729,38 +8816,31 @@ def analizar_inspecciones_df(df_inspecciones):
                     plan_dual = True
                     detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
 
-                    # Cruce Inteligente con Bodega 2
+                    # Cruce Inteligente con Bodega 2 en memoria (O(1) amortizado sin N+1)
                     try:
                         mm_alta = max(pb_a, pb_b)
                         pos_alta = p_a if pb_a >= pb_b else p_b
                         mm_baja = min(pb_a, pb_b)
                         pos_baja = p_b if pb_a >= pb_b else p_a
-                        dim_dual = dim_a or dim_b
+                        dim_dual = (dim_a or dim_b).strip().upper()
 
-                        with get_connection() as c_b2:
-                            cur_b2 = c_b2.cursor()
-                            cur_b2.execute("""
-                                SELECT numero_interno, prof_actual_min FROM llantas_maestro
-                                WHERE UPPER(cliente) = ?
-                                  AND ubicacion_bodega = 'BODEGA_2_RECAMBIO'
-                                  AND (reservada_para_placa IS NULL OR reservada_para_placa = '' OR reservada_para_placa = ?)
-                                  AND UPPER(dimension) = ?
-                                  AND prof_actual_min > (? + 1.5)
-                                  AND ABS(prof_actual_min - ?) <= 1.5
-                                ORDER BY ABS(prof_actual_min - ?) ASC
-                            """, (cliente, placa, dim_dual.upper(), limite_cambio_cliente, mm_alta, mm_alta))
-                            candidatas_b2 = cur_b2.fetchall()
-                            cand_b2 = None
-                            for c_cand in candidatas_b2:
-                                if c_cand[0] not in llantas_b2_usadas:
-                                    cand_b2 = c_cand
-                                    llantas_b2_usadas.add(c_cand[0])
-                                    break
+                        candidatas_b2 = [
+                            ll for ll in llantas_b2_disponibles
+                            if ll["cliente"] == cliente
+                            and (not ll["reservada_para_placa"] or ll["reservada_para_placa"] == placa)
+                            and ll["dimension"] == dim_dual
+                            and ll["prof_actual_min"] > (limite_cambio_cliente + 1.5)
+                            and abs(ll["prof_actual_min"] - mm_alta) <= 1.5
+                            and ll["numero_interno"] not in llantas_b2_usadas
+                        ]
+                        candidatas_b2.sort(key=lambda x: abs(x["prof_actual_min"] - mm_alta))
 
-                            if cand_b2:
-                                recomendaciones_dual.append(
-                                    f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2[0]} ({cand_b2[1]:.1f} mm) disponible en Bodega 2 (Recambio)."
-                                )
+                        if candidatas_b2:
+                            cand_b2 = candidatas_b2[0]
+                            llantas_b2_usadas.add(cand_b2["numero_interno"])
+                            recomendaciones_dual.append(
+                                f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2['numero_interno']} ({cand_b2['prof_actual_min']:.1f} mm) disponible en Bodega 2 (Recambio)."
+                            )
                     except Exception:
                         pass
 
@@ -9691,212 +9771,6 @@ def obtener_lista_clientes_unicos():
             ) ORDER BY 1 ASC
         ''')
         return [r[0] for r in cursor.fetchall() if r[0]]
-
-def obtener_directorio_clientes() -> list:
-    """
-    Retorna el directorio maestro consolidado de clientes y flotas con métricas operativas:
-    - Cliente / Razón Social
-    - Tipo de Licencia (PRO / LIGHT)
-    - Límite de retiro base (mm)
-    - Sedes / Subclientes
-    - N° Vehículos asociados
-    - N° Inspecciones históricas
-    - N° Llantas registradas en bodegas
-    - N° Marcas habituales parametrizadas
-    - Observaciones y fecha de actualización
-    """
-    with get_connection() as conn:
-        cursor = conn.cursor()
-
-        # 1. Lista de todos los clientes únicos registrados
-        cursor.execute('''
-            SELECT DISTINCT UPPER(TRIM(cliente)) FROM (
-                SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_clientes WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_avanzada_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-            ) ORDER BY 1 ASC
-        ''')
-        clientes_unicos = [r[0] for r in cursor.fetchall() if r[0]]
-
-        # 2. Diccionario de configuracion_clientes
-        cursor.execute("SELECT UPPER(TRIM(cliente)), limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes")
-        cfg_cli = {r[0]: {"limite": to_float(r[1], 3.0), "obs": r[2] or "", "fecha": str(r[3] or "")} for r in cursor.fetchall() if r[0]}
-
-        # 3. Diccionario de configuracion_avanzada_cliente
-        cursor.execute("SELECT UPPER(TRIM(cliente)), tipo_licencia, fecha_actualizacion FROM configuracion_avanzada_cliente")
-        cfg_adv = {r[0]: {"licencia": str(r[1] or "PRO").upper(), "fecha": str(r[2] or "")} for r in cursor.fetchall() if r[0]}
-
-        # 4. Sedes / subclientes por cliente
-        cursor.execute('''
-            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente))
-            FROM (
-                SELECT cliente, subcliente FROM inspecciones WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
-                UNION
-                SELECT cliente, subcliente FROM configuracion_limites_retiro WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
-                UNION
-                SELECT cliente, subcliente FROM llantas_maestro WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
-            )
-        ''')
-        subclientes_map = {}
-        for c, sub in cursor.fetchall():
-            if c and sub:
-                subclientes_map.setdefault(c, []).append(sub)
-
-        # 5. Cantidad de vehículos (padrón + inspecciones)
-        cursor.execute('''
-            SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT UPPER(TRIM(placa)))
-            FROM (
-                SELECT cliente, placa FROM inspecciones WHERE placa IS NOT NULL AND TRIM(placa) != ''
-                UNION
-                SELECT cliente, placa FROM padron_vehiculos_cliente WHERE placa IS NOT NULL AND TRIM(placa) != ''
-            ) GROUP BY 1
-        ''')
-        vehiculos_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        # 6. Cantidad de inspecciones registradas
-        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(*) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
-        inspecciones_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        # 7. Cantidad de llantas registradas en bodegas
-        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(*) FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
-        llantas_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        # 8. Cantidad de marcas habituales asociadas
-        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT marca) FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
-        marcas_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        directorio = []
-        for c in clientes_unicos:
-            lic = cfg_adv.get(c, {}).get("licencia", "PRO")
-            lim = cfg_cli.get(c, {}).get("limite", 3.0)
-            obs = cfg_cli.get(c, {}).get("obs", "")
-            fecha = cfg_cli.get(c, {}).get("fecha") or cfg_adv.get(c, {}).get("fecha") or ""
-            subs = sorted(list(set(subclientes_map.get(c, []))))
-
-            directorio.append({
-                "cliente": c,
-                "tipo_licencia": lic,
-                "limite_retiro_mm": lim,
-                "subclientes": subs,
-                "subclientes_str": ", ".join(subs) if subs else "Principal",
-                "vehiculos_count": vehiculos_map.get(c, 0),
-                "inspecciones_count": inspecciones_map.get(c, 0),
-                "llantas_count": llantas_map.get(c, 0),
-                "marcas_count": marcas_map.get(c, 0),
-                "observaciones": obs,
-                "fecha_actualizacion": fecha
-            })
-
-        return directorio
-
-def crear_o_actualizar_cliente(datos: dict) -> dict:
-    """
-    Crea o actualiza un cliente / flota en el sistema:
-    - Normaliza nombre en mayúsculas
-    - Configura tipo de licencia (PRO / LIGHT)
-    - Configura límite de retiro por defecto
-    - Crea reglas base en configuracion_limites_retiro y sedes/subclientes
-    """
-    c = str(datos.get('cliente') or '').strip().upper()
-    if not c or c in ('NAN', 'NONE', 'NULL'):
-        raise ValueError("El nombre o razón social del cliente es obligatorio.")
-
-    lic = str(datos.get('tipo_licencia') or 'PRO').strip().upper()
-    if lic not in ('PRO', 'LIGHT'):
-        lic = 'PRO'
-
-    lim = to_float(datos.get('limite_retiro_mm'), 3.0)
-    obs = str(datos.get('observaciones') or '').strip()
-    subclientes_input = datos.get('subclientes') or ''
-
-    with get_connection() as conn:
-        cursor = conn.cursor()
-
-        # 1. configuracion_clientes
-        cursor.execute('''
-            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente) DO UPDATE SET
-                limite_retiro_mm = excluded.limite_retiro_mm,
-                observaciones = CASE WHEN excluded.observaciones != '' THEN excluded.observaciones ELSE configuracion_clientes.observaciones END,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lim, obs))
-
-        # 2. configuracion_avanzada_cliente
-        cursor.execute('''
-            INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente) DO UPDATE SET
-                tipo_licencia = excluded.tipo_licencia,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lic, lim, lim, lim))
-
-        # 3. Regla por defecto en configuracion_limites_retiro
-        cursor.execute('''
-            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, 'TODOS', 'TODOS', ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente, subcliente, eje) DO UPDATE SET
-                limite_retiro_mm = excluded.limite_retiro_mm,
-                observaciones = excluded.observaciones,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lim, obs))
-
-        # 4. Sedes / subclientes si se proporcionaron
-        if subclientes_input:
-            if isinstance(subclientes_input, str):
-                subs_list = [s.strip().upper() for s in subclientes_input.replace(';', ',').split(',') if s.strip()]
-            else:
-                subs_list = [str(s).strip().upper() for s in subclientes_input if str(s).strip()]
-
-            for sub in subs_list:
-                if sub and sub not in ('TODOS', 'NAN', 'NONE'):
-                    cursor.execute('''
-                        INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
-                        VALUES (?, ?, 'TODOS', ?, ?, CURRENT_TIMESTAMP)
-                    ''', (c, sub, lim, f"Sede {sub} de {c}"))
-
-        conn.commit()
-
-    return {"ok": True, "cliente": c, "mensaje": f"Cliente '{c}' guardado exitosamente."}
-
-def eliminar_cliente_directorio(cliente: str) -> dict:
-    """
-    Elimina un cliente del directorio si no tiene historial de inspecciones o llantas en bodega.
-    """
-    c = str(cliente or '').strip().upper()
-    if not c:
-        raise ValueError("Nombre de cliente inválido.")
-
-    with get_connection() as conn:
-        cursor = conn.cursor()
-
-        # Validar si tiene inspecciones
-        cursor.execute("SELECT COUNT(*) FROM inspecciones WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cnt_insp = cursor.fetchone()[0]
-        if cnt_insp > 0:
-            return {"ok": False, "mensaje": f"No se puede eliminar el cliente '{c}' porque tiene {cnt_insp} inspecciones registradas en el historial."}
-
-        cursor.execute("SELECT COUNT(*) FROM llantas_maestro WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cnt_ll = cursor.fetchone()[0]
-        if cnt_ll > 0:
-            return {"ok": False, "mensaje": f"No se puede eliminar el cliente '{c}' porque tiene {cnt_ll} llantas en inventario de bodegas."}
-
-        cursor.execute("DELETE FROM configuracion_clientes WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM configuracion_limites_retiro WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM configuracion_marcas_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM padron_vehiculos_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        conn.commit()
-
-    return {"ok": True, "cliente": c, "mensaje": f"Cliente '{c}' eliminado exitosamente."}
 
 # ==========================================
 # CONFIGURACIÓN DE MARCAS POR CLIENTE
@@ -11348,7 +11222,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
     }
 
     try:
-        df_raw = obtener_todas_inspecciones(usuario=usuario)
+        df_raw = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
         if df_raw.empty:
             return resultado
 
@@ -11383,6 +11257,11 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         km_mont_list = [to_float(p) for p in df['km_montaje']]
 
         n_rows = len(df)
+        cli_list = [str(x or '').strip().upper() for x in (df['cliente'].tolist() if 'cliente' in df else [cliente]*n_rows)]
+        sub_list = [str(x or '').strip().upper() for x in (df['subcliente'].tolist() if 'subcliente' in df else [subcliente]*n_rows)]
+        tip_list = [str(x or '').strip() for x in (df['tipologia'].tolist() if 'tipologia' in df else ['']*n_rows)]
+        placa_list = [str(x or '').strip().upper() for x in (df['placa'].tolist() if 'placa' in df else ['']*n_rows)]
+        sn_list = [str(x or '').strip().upper() for x in (df['numero_interno'].tolist() if 'numero_interno' in df else ['']*n_rows)]
         p_min_col = []
         p_ini_col = []
         lim_retiro_col = []
@@ -11436,9 +11315,9 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             p_ini = pini_list[idx] if pini_list[idx] > 0 else (16.0 if es_dir else 18.0)
             p_ini_col.append(p_ini)
 
-            cli_row = str(df['cliente'].iloc[idx] if 'cliente' in df else cliente or '').strip().upper()
-            sub_row = str(df['subcliente'].iloc[idx] if 'subcliente' in df else subcliente or '').strip().upper()
-            tip_row = str(df['tipologia'].iloc[idx] if 'tipologia' in df else '').strip()
+            cli_row = cli_list[idx] or cliente or ''
+            sub_row = sub_list[idx] or subcliente or ''
+            tip_row = tip_list[idx]
             eje_tipo = obtener_tipo_eje_posicion(tip_row, pos, mapa_tipologias=mapa_tips)
             lim_ret = resolver_limite(cli_row, sub_row, eje_tipo)
             if lim_ret <= 0:
@@ -11460,8 +11339,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             if km_mont > 0 and km_act >= km_mont:
                 km_rod = km_act - km_mont
             else:
-                pl_i = str(df['placa'].iloc[idx] if 'placa' in df else '').strip().upper()
-                sn_i = str(df['numero_interno'].iloc[idx] if 'numero_interno' in df else '').strip().upper()
+                pl_i = placa_list[idx]
+                sn_i = sn_list[idx]
                 pos_i = pos_list[idx]
                 prim_km = None
                 if sn_i and sn_i not in ('', 'SN', 'NONE', 'NAN') and (pl_i, sn_i) in primer_km_por_llanta:
@@ -12581,7 +12460,7 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     matriz_mrp = []
 
     # Obtener últimas inspecciones por vehículo para evaluar demanda en patio
-    df_raw = obtener_todas_inspecciones()
+    df_raw = obtener_todas_inspecciones(incluir_fotos=False)
     if not df_raw.empty and cliente and cliente != "TODOS":
         df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
     if not df_raw.empty and subcliente and subcliente != "TODOS":
@@ -12780,7 +12659,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     resolver_limite = _construir_cache_limites_retiro()
 
     # 1. Inspecciones históricas
-    df_raw = obtener_todas_inspecciones(usuario=usuario)
+    df_raw = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
     if not df_raw.empty:
         df = df_raw.copy()
         if cliente and cliente != "TODOS":
@@ -12809,6 +12688,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         km_act_list = [to_float(p) for p in df['kilometraje']]
         km_mont_list = [to_float(p) for p in df['km_montaje']]
 
+        n_rows = len(df)
+        cli_list = [str(x or '').strip().upper() for x in (df['cliente'].tolist() if 'cliente' in df else [cliente]*n_rows)]
+        sub_list = [str(x or '').strip().upper() for x in (df['subcliente'].tolist() if 'subcliente' in df else [subcliente]*n_rows)]
+        placa_list = [str(x or '').strip().upper() for x in (df['placa'].tolist() if 'placa' in df else ['']*n_rows)]
+        sn_list = [str(x or '').strip().upper() for x in (df['numero_interno'].tolist() if 'numero_interno' in df else ['']*n_rows)]
+        vida_list = [str(x or '').strip().upper() for x in (df['vida'].tolist() if 'vida' in df else ['']*n_rows)]
+        banda_list = [str(x or '').strip() for x in (df['banda_reen'].tolist() if 'banda_reen' in df else ['']*n_rows)]
+
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
         if not df_raw.empty:
@@ -12825,7 +12712,6 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                     if (pl_h, pos_h) not in primer_km_por_llanta:
                         primer_km_por_llanta[(pl_h, pos_h)] = km_h
 
-        n_rows = len(df)
         p_min_col, lim_retiro_col, mm_utiles_col, delta_mm_col = [], [], [], []
         pct_desgaste_col, km_rodados_col, km_mm_col, proy_total_col = [], [], [], []
         cpk_col, es_madura_col, es_asentamiento_col = [], [], []
@@ -12845,8 +12731,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             p_min_col.append(p_min)
 
             p_ini = pini_list[i] if pini_list[i] > 0 else (16.0 if es_dir else 18.0)
-            cli_r = str(df['cliente'].iloc[i] if 'cliente' in df else cliente).strip().upper()
-            sub_r = str(df['subcliente'].iloc[i] if 'subcliente' in df else subcliente).strip().upper()
+            cli_r = cli_list[i] or cliente or ''
+            sub_r = sub_list[i] or subcliente or ''
             lim_r = resolver_limite(cli_r, sub_r, pos)
             lim_retiro_col.append(lim_r)
 
@@ -12865,8 +12751,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if km_mont > 0 and km_act >= km_mont:
                 km_rod = km_act - km_mont
             else:
-                pl_i = str(df['placa'].iloc[i] if 'placa' in df else '').strip().upper()
-                sn_i = str(df['numero_interno'].iloc[i] if 'numero_interno' in df else '').strip().upper()
+                pl_i = placa_list[i]
+                sn_i = sn_list[i]
                 pos_i = pos_list[i]
                 prim_km = None
                 if sn_i and sn_i not in ('', 'SN', 'NONE', 'NAN') and (pl_i, sn_i) in primer_km_por_llanta:
@@ -12929,8 +12815,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             estado_psi_col.append(est_psi)
 
             # Vida / Reencauche
-            v_raw = str(df['vida'].iloc[i] if 'vida' in df else '').upper()
-            b_raw = str(df['banda_reen'].iloc[i] if 'banda_reen' in df else '').strip()
+            v_raw = vida_list[i]
+            b_raw = banda_list[i]
             es_rn = bool(re.search(r'REENC|R1|R2|R3|R4|R5', v_raw) or (b_raw and b_raw.lower() not in ('nan', 'none', '')))
             es_reencauche_col.append(es_rn)
             if re.search(r'R3|R4|R5', v_raw):
@@ -14514,7 +14400,7 @@ from modulo_bodegas_taller import (
 
 - **Ruta:** `modulo_bodegas_taller.py`
 - **Descripción:** Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)
-- **Métricas:** 1482 líneas | 68,114 bytes (66.5 KB)
+- **Métricas:** 1512 líneas | 70,979 bytes (69.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14887,8 +14773,9 @@ def desmontar_llanta_taller(datos: dict) -> dict:
             UPDATE llantas_ciclos SET
                 km_recorridos_ciclo = km_recorridos_ciclo + ?,
                 prof_final_ciclo = ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (delta_km, prof_momento, numero_interno, ciclo_act))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (delta_km, prof_momento, numero_interno, ciclo_act, cli_efectivo, cli_efectivo))
 
         # Variables FVU
         mm_desp = 0.0
@@ -14907,8 +14794,9 @@ def desmontar_llanta_taller(datos: dict) -> dict:
                     estado_ciclo = 'Desechado',
                     fecha_fin_ciclo = CURRENT_DATE,
                     prof_final_ciclo = ?
-                WHERE numero_interno = ? AND numero_ciclo = ?
-            """, (prof_momento, numero_interno, ciclo_act))
+                WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+                  AND (UPPER(cliente_propietario) = ? OR ? = '')
+            """, (prof_momento, numero_interno, ciclo_act, cli_efectivo, cli_efectivo))
 
         hoy_str = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
         hoy_ts = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d %H:%M:%S')
@@ -15010,7 +14898,11 @@ def montar_llanta_taller(datos: dict) -> dict:
         cursor = conn.cursor()
 
         # Si es nueva directa o no existe en llantas_maestro, dar de alta primero
-        cursor.execute("SELECT id FROM llantas_maestro WHERE UPPER(numero_interno) = ?", (numero_interno,))
+        cursor.execute("""
+            SELECT id FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row_check = cursor.fetchone()
         if not row_check or es_nueva_directa:
             if not row_check:
@@ -15033,7 +14925,8 @@ def montar_llanta_taller(datos: dict) -> dict:
                    prof_inicial_nueva, prof_actual_min, vida_actual, cliente_propietario, cliente
             FROM llantas_maestro
             WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+              AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row_ll = cursor.fetchone()
         if not row_ll:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -15058,7 +14951,8 @@ def montar_llanta_taller(datos: dict) -> dict:
             FROM llantas_maestro
             WHERE UPPER(placa_actual) = ? AND posicion_actual = ? AND UPPER(numero_interno) != ?
               AND estado_actual = 'Montada'
-        """, (placa, posicion, numero_interno))
+              AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (placa, posicion, numero_interno, cliente, cliente, cliente))
         ocupantes = cursor.fetchall()
 
         hoy_str = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
@@ -15074,12 +14968,13 @@ def montar_llanta_taller(datos: dict) -> dict:
                     posicion_actual = 0,
                     km_acumulados_total = km_acumulados_total + ?,
                     fecha_ultimo_movimiento = ?
-                WHERE id = ?
-            """, (delta_oc, hoy_str, oc_id))
+                WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+            """, (delta_oc, hoy_str, oc_id, cliente, cliente, cliente))
             cursor.execute("""
                 UPDATE llantas_ciclos SET km_recorridos_ciclo = km_recorridos_ciclo + ?
-                WHERE numero_interno = ? AND numero_ciclo = ?
-            """, (delta_oc, oc_serial, oc_ciclo))
+                WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+                  AND (UPPER(cliente_propietario) = ? OR ? = '')
+            """, (delta_oc, oc_serial, oc_ciclo, cli_efectivo, cli_efectivo))
             cursor.execute("""
                 INSERT INTO llantas_movimientos (
                     fecha_movimiento, numero_interno, cliente_propietario, tipo_movimiento,
@@ -15101,8 +14996,8 @@ def montar_llanta_taller(datos: dict) -> dict:
                 cliente_propietario = ?,
                 cliente = ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
-        """, (placa, posicion, odometro, odometro, cli_efectivo, cli_efectivo, hoy_str, ll_id))
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (placa, posicion, odometro, odometro, cli_efectivo, cli_efectivo, hoy_str, ll_id, cliente, cliente, cliente))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -15178,7 +15073,8 @@ def despachar_lote_planta_reencauche(datos: dict) -> dict:
                     fecha_compromiso_planta = ?,
                     fecha_ultimo_movimiento = ?
                 WHERE UPPER(numero_interno) = ?
-            """, (proveedor, guia, transportador, hoy_str, compromiso, hoy_str, num))
+                  AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+            """, (proveedor, guia, transportador, hoy_str, compromiso, hoy_str, num, cliente, cliente, cliente))
 
             cursor.execute("""
                 INSERT INTO llantas_movimientos (
@@ -15228,8 +15124,10 @@ def recepcionar_llanta_reencauchada(datos: dict) -> dict:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, ciclo_actual, costo_reencauches_total, costo_acumulado_total, cliente_propietario, cliente
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -15245,8 +15143,9 @@ def recepcionar_llanta_reencauchada(datos: dict) -> dict:
                 estado_ciclo = 'Cerrado_Por_Retiro',
                 fecha_fin_ciclo = ?,
                 cpk_ciclo = costo_ciclo / MAX(1.0, km_recorridos_ciclo)
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (hoy_str, numero_interno, ciclo_ant))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (hoy_str, numero_interno, ciclo_ant, cli_efectivo, cli_efectivo))
 
         # Crear nuevo ciclo
         cursor.execute("""
@@ -15283,12 +15182,12 @@ def recepcionar_llanta_reencauchada(datos: dict) -> dict:
                 fecha_envio_planta = NULL,
                 fecha_compromiso_planta = NULL,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
         """, (
             ciclo_nuevo, f"R{ciclo_ant}", banda_diseno, ciclo_ant,
             prof_nueva, prof_nueva, prof_nueva, prof_nueva, prof_nueva,
             costo_renovado, nuevo_costo_reen, nuevo_costo_acum,
-            hoy_str, ll_id
+            hoy_str, ll_id, cliente, cliente, cliente
         ))
 
         # Movimiento RETORNO_REENCAUCHE
@@ -15332,8 +15231,10 @@ def finalizar_reparacion_bodega5(datos: dict) -> dict:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, ciclo_actual, costo_reparaciones_total, costo_acumulado_total, cliente_propietario, cliente
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -15346,14 +15247,16 @@ def finalizar_reparacion_bodega5(datos: dict) -> dict:
             UPDATE llantas_novedades_registro
             SET estado_novedad = 'Reparada'
             WHERE UPPER(numero_interno) = ? AND estado_novedad = 'Activa'
-        """, (numero_interno,))
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cli_efectivo, cli_efectivo))
 
         # Sumar costo a ciclo activo
         cursor.execute("""
             UPDATE llantas_ciclos
             SET costo_ciclo = costo_ciclo + ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (costo_rep, numero_interno, ciclo_act or 1))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (costo_rep, numero_interno, ciclo_act or 1, cli_efectivo, cli_efectivo))
 
         # Actualizar llantas_maestro
         cursor.execute("""
@@ -15363,8 +15266,8 @@ def finalizar_reparacion_bodega5(datos: dict) -> dict:
                 costo_reparaciones_total = costo_reparaciones_total + ?,
                 costo_acumulado_total = costo_acumulado_total + ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
-        """, (costo_rep, costo_rep, hoy_str, ll_id))
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (costo_rep, costo_rep, hoy_str, ll_id, cliente, cliente, cliente))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -15401,8 +15304,10 @@ def procesar_dictamen_garantia_bodega6(datos: dict) -> dict:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, dinero_perdido_fvu, cliente_propietario, cliente, ciclo_actual
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -15422,16 +15327,18 @@ def procesar_dictamen_garantia_bodega6(datos: dict) -> dict:
                 fecha_baja = ?,
                 motivo_baja = ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
         """, (
             dictamen, pct_rec, valor_nc, nuevo_dinero_perd,
-            hoy_str, f"Garantía {dictamen} (NC: ${valor_nc:,.0f})", hoy_str, ll_id
+            hoy_str, f"Garantía {dictamen} (NC: ${valor_nc:,.0f})", hoy_str, ll_id,
+            cliente, cliente, cliente
         ))
 
         cursor.execute("""
             UPDATE llantas_ciclos SET estado_ciclo = 'Desechado', fecha_fin_ciclo = ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (hoy_str, numero_interno, ciclo_act or 1))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (hoy_str, numero_interno, ciclo_act or 1, cli_efectivo, cli_efectivo))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -15469,8 +15376,10 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
         cursor.execute("""
             SELECT id, prof_actual_min, prof_inicial_nueva, costo_ciclo_actual,
                    valor_reconocido_garantia, ciclo_actual, cliente_propietario, cliente
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -15495,8 +15404,9 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
                 estado_ciclo = 'Desechado',
                 fecha_fin_ciclo = ?,
                 prof_final_ciclo = ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (hoy_str, p_ret, numero_interno, ciclo_act or 1))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (hoy_str, p_ret, numero_interno, ciclo_act or 1, cli_efectivo, cli_efectivo))
 
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -15508,8 +15418,8 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
                 mm_desperdiciados_fvu = ?,
                 dinero_perdido_fvu = ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
-        """, (hoy_str, motivo, foto, mm_desperdiciados, dinero_perdido, hoy_str, ll_id))
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (hoy_str, motivo, foto, mm_desperdiciados, dinero_perdido, hoy_str, ll_id, cliente, cliente, cliente))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -15560,6 +15470,7 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                 return {"ok": False, "status": "error", "mensaje": f"No se encontró hoja de vida para {numero_interno}"}
 
         ll = dict(zip(cols_m, row_m))
+        cli_filtro = str(ll.get('cliente_propietario') or ll.get('cliente') or cliente or '').strip().upper()
 
         # Ciclos de vida
         cursor.execute("""
@@ -15568,8 +15479,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                    fecha_inicio_ciclo, fecha_fin_ciclo
             FROM llantas_ciclos
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
             ORDER BY numero_ciclo ASC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         cols_c = [d[0] for d in cursor.description]
         ciclos_raw = [dict(zip(cols_c, r)) for r in cursor.fetchall()]
 
@@ -15581,8 +15493,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                    motivo, usuario_responsable
             FROM llantas_movimientos
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
             ORDER BY fecha_movimiento DESC, id DESC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         cols_mov = [d[0] for d in cursor.description]
         movs_raw = [dict(zip(cols_mov, r)) for r in cursor.fetchall()]
 
@@ -15592,8 +15505,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                    placa, posicion, observacion, foto_url
             FROM llantas_novedades_registro
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
             ORDER BY fecha_deteccion DESC, id DESC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         cols_nov = [d[0] for d in cursor.description]
         novedades_raw = [dict(zip(cols_nov, r)) for r in cursor.fetchall()]
 
@@ -15602,8 +15516,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
             SELECT fecha, placa, posicion, kilometraje, prof_ext, prof_cent, prof_int, psi, novedades
             FROM inspecciones
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR ? = '')
             ORDER BY fecha ASC, id ASC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         insps = cursor.fetchall()
 
     # Consolidar métricas
@@ -15752,6 +15667,7 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
         },
         "estado_actual": {
             "estado": ll.get('estado_actual', 'Bodega_1_Nuevas'),
+            "ubicacion_bodega": ll.get('ubicacion_bodega') or ll.get('estado_actual', 'Bodega_1_Nuevas'),
             "placa": ll.get('placa_actual', ''),
             "posicion": ll.get('posicion_actual', 0),
             "tipo_eje": ll.get('tipo_eje_actual', ''),
@@ -16164,7 +16080,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1846 líneas | 87,267 bytes (85.2 KB)
+- **Métricas:** 1846 líneas | 87,288 bytes (85.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17237,7 +17153,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
     """
-    df_insp = database.obtener_todas_inspecciones(usuario=usuario)
+    df_insp = database.obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
     if df_insp.empty:
         raise ValueError("No existen inspecciones registradas en el sistema.")
 
@@ -20891,7 +20807,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 18236 líneas | 988,014 bytes (964.9 KB)
+- **Métricas:** 18247 líneas | 988,455 bytes (965.3 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -26553,6 +26469,17 @@ if __name__ == '__main__':
 
   <!-- JAVASCRIPT PRINCIPAL DE LA APLICACIÓN -->
   <script>
+    // Prevención de XSS: Sanitizador de cadenas HTML
+    function escapeHtml(val) {
+      if (val === null || val === undefined) return '';
+      return String(val)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // ==========================================
     // INTERCEPTOR GLOBAL DE FETCH (AUTENTICACIÓN & 401)
     // ==========================================
@@ -27322,8 +27249,8 @@ if __name__ == '__main__':
             <td class="p-2.5 text-center font-mono font-bold ${
               (parseFloat(r.psi) < 90 || parseFloat(r.psi) > 120) ? 'text-amber-600 bg-amber-50/60 rounded' : 'text-slate-700'
             }">${r.psi}</td>
-            <td class="p-2.5 max-w-xs truncate" title="${r.novedades || ''}">
-              ${r.novedades || '-'}
+            <td class="p-2.5 max-w-xs truncate" title="${escapeHtml(r.novedades || '')}">
+              ${escapeHtml(r.novedades) || '-'}
             </td>
             <td class="p-2.5 text-center whitespace-nowrap">
               ${htmlBotonFotos}
@@ -31940,7 +31867,7 @@ if __name__ == '__main__':
             <td class="p-3 text-center">
               <span class="font-bold text-slate-700">${c.marcas_count || 0}</span>
             </td>
-            <td class="p-3 text-slate-600 max-w-[180px] truncate" title="${c.observaciones || ''}">${c.observaciones || '-'}</td>
+            <td class="p-3 text-slate-600 max-w-[180px] truncate" title="${escapeHtml(c.observaciones || '')}">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-3 text-center">
               <div class="flex items-center justify-center space-x-1">
                 ${puedeEditar ? `
@@ -38406,11 +38333,11 @@ if __name__ == '__main__':
             break;
           case 'BAJA_FVU':
             iconClass = 'fa-triangle-exclamation text-rose-600 bg-rose-100';
-            titulo = `Baja por Fin de Vida Útil (${ev.causal_o_motivo || 'Prematura'})`;
+            titulo = `Baja por Fin de Vida Útil (${escapeHtml(ev.causal_o_motivo) || 'Prematura'})`;
             break;
           case 'CHATARRIZACION':
             iconClass = 'fa-recycle text-slate-600 bg-slate-200';
-            titulo = `Chatarrización y Disposición Ambiental (${ev.documento_soporte || 'Acta'})`;
+            titulo = `Chatarrización y Disposición Ambiental (${escapeHtml(ev.documento_soporte) || 'Acta'})`;
             break;
           case 'AJUSTE_GARANTIA':
             iconClass = 'fa-shield-halved text-purple-600 bg-purple-100';
@@ -38443,8 +38370,8 @@ if __name__ == '__main__':
               </div>
               ${ev.causal_o_motivo || ev.documento_soporte ? `
                 <div class="text-[10px] text-slate-500 italic mt-1 bg-slate-50 px-2 py-1 rounded-lg">
-                  ${ev.causal_o_motivo ? `Motivo: ${ev.causal_o_motivo} ` : ''}
-                  ${ev.documento_soporte ? `Soporte: ${ev.documento_soporte}` : ''}
+                  ${ev.causal_o_motivo ? `Motivo: ${escapeHtml(ev.causal_o_motivo)} ` : ''}
+                  ${ev.documento_soporte ? `Soporte: ${escapeHtml(ev.documento_soporte)}` : ''}
                 </div>
               ` : ''}
             </div>

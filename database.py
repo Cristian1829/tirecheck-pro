@@ -1620,15 +1620,16 @@ def migrar_limite_ciudad_limpia_4mm(conn=None, forzar=False):
 
 
 
-def sincronizar_maestro_desde_inspecciones(conn=None):
+def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numero_interno_filtro=None):
     """
     Sincroniza automáticamente la tabla `llantas_maestro` desde el historial de `inspecciones`.
     Para cada combinación única de (cliente, numero_interno), toma el último estado registrado
     e inserta o actualiza la llanta en 'MONTADA_OPERACION' sin sobreescribir costos de reparaciones
     ni estados de garantía existentes.
+    Si se suministran cliente_filtro y numero_interno_filtro, opera en O(1) filtrando únicamente esa llanta.
     """
     def _ejecutar(c):
-        c.execute("""
+        query = """
             SELECT cliente, numero_interno, placa, posicion, tipologia, marca, diseno, dimension,
                    vida, banda_reen, prof_ext, prof_cent, prof_int, psi, kilometraje, km_montaje,
                    precio, prof_inicial, subcliente, tipo_operacion, fecha, id
@@ -1636,11 +1637,19 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
             WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
               AND UPPER(TRIM(numero_interno)) != 'SN'
               AND cliente IS NOT NULL AND TRIM(cliente) != ''
-            ORDER BY fecha ASC, id ASC
-        """)
+        """
+        params = []
+        if cliente_filtro and numero_interno_filtro:
+            c_f = str(cliente_filtro).strip().upper()
+            n_f = str(numero_interno_filtro).strip().upper()
+            if c_f and n_f and n_f != 'SN':
+                query += " AND UPPER(TRIM(cliente)) = ? AND UPPER(TRIM(numero_interno)) = ?"
+                params.extend([c_f, n_f])
+        query += " ORDER BY fecha ASC, id ASC"
+        c.execute(query, params)
         filas = c.fetchall()
         if not filas:
-            return
+            return 0
 
         # Quedarse con el último registro por (cliente, numero_interno)
         ultimos = {}
@@ -1808,13 +1817,15 @@ def sincronizar_maestro_desde_inspecciones(conn=None):
                             fecha_actualizacion = CURRENT_TIMESTAMP
                         WHERE id = ?
                     """, (placa, pos, pe, pc, pi, p_min, psi, km_act, km_rod, row_m[0]))
+        return len(ultimos)
 
     if conn is not None:
-        _ejecutar(conn.cursor())
+        return _ejecutar(conn.cursor())
     else:
         with get_connection() as c_conn:
-            _ejecutar(c_conn.cursor())
+            res = _ejecutar(c_conn.cursor())
             c_conn.commit()
+            return res
 
 # ==========================================
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
@@ -2669,15 +2680,16 @@ def insertar_inspeccion(datos):
         datos.get('cliente'),
         datos.get('marca')
     )
-    sincronizar_maestro_desde_inspecciones()
+    sincronizar_maestro_desde_inspecciones(cliente_filtro=datos.get('cliente'), numero_interno_filtro=datos.get('numero_interno'))
     return last_id
 
-def obtener_todas_inspecciones(usuario=None):
+def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
     with get_connection() as conn:
-        query = """
+        col_foto = "foto_novedad" if incluir_fotos else "CASE WHEN foto_novedad IS NOT NULL AND TRIM(foto_novedad) != '' AND TRIM(foto_novedad) != '[]' THEN '1' ELSE '' END AS tiene_foto, '' AS foto_novedad"
+        query = f"""
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, {col_foto}
             FROM inspecciones
         """
         params = []
@@ -2783,7 +2795,7 @@ def actualizar_inspeccion(inspeccion_id, datos):
             datos.get('cliente'),
             datos.get('marca')
         )
-        sincronizar_maestro_desde_inspecciones()
+        sincronizar_maestro_desde_inspecciones(cliente_filtro=datos.get('cliente'), numero_interno_filtro=datos.get('numero_interno'))
     return ok
 
 def eliminar_inspeccion(inspeccion_id):
@@ -2796,7 +2808,7 @@ def vaciar_inspecciones():
         conn.execute("DELETE FROM inspecciones")
         conn.commit()
 
-def cargar_excel_a_bd(file_path):
+def cargar_excel_a_bd(file_path, clientes_autorizados=None):
     df = pd.read_excel(file_path, sheet_name=0)
     cols_norm_map = {normalizar_texto(c): c for c in df.columns}
     
@@ -2863,9 +2875,14 @@ def cargar_excel_a_bd(file_path):
             if not num_interno:
                 num_interno = generar_siguiente_numero_interno_temporal(conn=conn)
 
+            cli_fila = str(row[col_encontradas['cliente']]).strip().upper() if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) and str(row[col_encontradas['cliente']]).strip().upper() != 'NAN' else ''
+            if clientes_autorizados:
+                if not cli_fila or not any(c.strip().upper() == cli_fila for c in clientes_autorizados):
+                    raise PermissionError(f"Fila {idx + 2}: El cliente '{cli_fila}' no corresponde a sus flotas autorizadas ({', '.join(clientes_autorizados)})")
+
             datos = {
                 'fecha': fecha,
-                'cliente': str(row[col_encontradas['cliente']]).strip().upper() if 'cliente' in col_encontradas and not pd.isna(row[col_encontradas['cliente']]) and str(row[col_encontradas['cliente']]).strip().upper() != 'NAN' else '',
+                'cliente': cli_fila,
                 'subcliente': str(row[col_encontradas['subcliente']]).strip().upper() if 'subcliente' in col_encontradas and not pd.isna(row[col_encontradas['subcliente']]) and str(row[col_encontradas['subcliente']]).strip().upper() != 'NAN' else '',
                 'tipo_operacion': str(row[col_encontradas['tipo_operacion']]).strip().upper() if 'tipo_operacion' in col_encontradas and not pd.isna(row[col_encontradas['tipo_operacion']]) and str(row[col_encontradas['tipo_operacion']]).strip().upper() != 'NAN' else '',
                 'placa': placa,
@@ -3076,6 +3093,27 @@ def analizar_inspecciones_df(df_inspecciones):
     resolver_limite = _construir_cache_limites_retiro()
     llantas_b2_usadas = set()
 
+    # Precarga en memoria de llantas disponibles en BODEGA_2_RECAMBIO (Eliminación de N+1)
+    llantas_b2_disponibles = []
+    try:
+        with get_connection() as c_b2_preload:
+            cur_preload = c_b2_preload.cursor()
+            cur_preload.execute("""
+                SELECT UPPER(cliente), UPPER(dimension), numero_interno, prof_actual_min, reservada_para_placa
+                FROM llantas_maestro
+                WHERE ubicacion_bodega = 'BODEGA_2_RECAMBIO'
+            """)
+            for r_b2 in cur_preload.fetchall():
+                llantas_b2_disponibles.append({
+                    "cliente": str(r_b2[0] or "").strip().upper(),
+                    "dimension": str(r_b2[1] or "").strip().upper(),
+                    "numero_interno": str(r_b2[2] or "").strip(),
+                    "prof_actual_min": to_float(r_b2[3], 0.0),
+                    "reservada_para_placa": str(r_b2[4] or "").strip().upper()
+                })
+    except Exception:
+        llantas_b2_disponibles = []
+
     for placa, group in df.groupby('placa'):
         t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
@@ -3185,38 +3223,31 @@ def analizar_inspecciones_df(df_inspecciones):
                     plan_dual = True
                     detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
 
-                    # Cruce Inteligente con Bodega 2
+                    # Cruce Inteligente con Bodega 2 en memoria (O(1) amortizado sin N+1)
                     try:
                         mm_alta = max(pb_a, pb_b)
                         pos_alta = p_a if pb_a >= pb_b else p_b
                         mm_baja = min(pb_a, pb_b)
                         pos_baja = p_b if pb_a >= pb_b else p_a
-                        dim_dual = dim_a or dim_b
+                        dim_dual = (dim_a or dim_b).strip().upper()
 
-                        with get_connection() as c_b2:
-                            cur_b2 = c_b2.cursor()
-                            cur_b2.execute("""
-                                SELECT numero_interno, prof_actual_min FROM llantas_maestro
-                                WHERE UPPER(cliente) = ?
-                                  AND ubicacion_bodega = 'BODEGA_2_RECAMBIO'
-                                  AND (reservada_para_placa IS NULL OR reservada_para_placa = '' OR reservada_para_placa = ?)
-                                  AND UPPER(dimension) = ?
-                                  AND prof_actual_min > (? + 1.5)
-                                  AND ABS(prof_actual_min - ?) <= 1.5
-                                ORDER BY ABS(prof_actual_min - ?) ASC
-                            """, (cliente, placa, dim_dual.upper(), limite_cambio_cliente, mm_alta, mm_alta))
-                            candidatas_b2 = cur_b2.fetchall()
-                            cand_b2 = None
-                            for c_cand in candidatas_b2:
-                                if c_cand[0] not in llantas_b2_usadas:
-                                    cand_b2 = c_cand
-                                    llantas_b2_usadas.add(c_cand[0])
-                                    break
+                        candidatas_b2 = [
+                            ll for ll in llantas_b2_disponibles
+                            if ll["cliente"] == cliente
+                            and (not ll["reservada_para_placa"] or ll["reservada_para_placa"] == placa)
+                            and ll["dimension"] == dim_dual
+                            and ll["prof_actual_min"] > (limite_cambio_cliente + 1.5)
+                            and abs(ll["prof_actual_min"] - mm_alta) <= 1.5
+                            and ll["numero_interno"] not in llantas_b2_usadas
+                        ]
+                        candidatas_b2.sort(key=lambda x: abs(x["prof_actual_min"] - mm_alta))
 
-                            if cand_b2:
-                                recomendaciones_dual.append(
-                                    f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2[0]} ({cand_b2[1]:.1f} mm) disponible en Bodega 2 (Recambio)."
-                                )
+                        if candidatas_b2:
+                            cand_b2 = candidatas_b2[0]
+                            llantas_b2_usadas.add(cand_b2["numero_interno"])
+                            recomendaciones_dual.append(
+                                f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2['numero_interno']} ({cand_b2['prof_actual_min']:.1f} mm) disponible en Bodega 2 (Recambio)."
+                            )
                     except Exception:
                         pass
 
@@ -4147,212 +4178,6 @@ def obtener_lista_clientes_unicos():
             ) ORDER BY 1 ASC
         ''')
         return [r[0] for r in cursor.fetchall() if r[0]]
-
-def obtener_directorio_clientes() -> list:
-    """
-    Retorna el directorio maestro consolidado de clientes y flotas con métricas operativas:
-    - Cliente / Razón Social
-    - Tipo de Licencia (PRO / LIGHT)
-    - Límite de retiro base (mm)
-    - Sedes / Subclientes
-    - N° Vehículos asociados
-    - N° Inspecciones históricas
-    - N° Llantas registradas en bodegas
-    - N° Marcas habituales parametrizadas
-    - Observaciones y fecha de actualización
-    """
-    with get_connection() as conn:
-        cursor = conn.cursor()
-
-        # 1. Lista de todos los clientes únicos registrados
-        cursor.execute('''
-            SELECT DISTINCT UPPER(TRIM(cliente)) FROM (
-                SELECT cliente FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_limites_retiro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_clientes WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_avanzada_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-                UNION
-                SELECT cliente FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
-            ) ORDER BY 1 ASC
-        ''')
-        clientes_unicos = [r[0] for r in cursor.fetchall() if r[0]]
-
-        # 2. Diccionario de configuracion_clientes
-        cursor.execute("SELECT UPPER(TRIM(cliente)), limite_retiro_mm, observaciones, fecha_actualizacion FROM configuracion_clientes")
-        cfg_cli = {r[0]: {"limite": to_float(r[1], 3.0), "obs": r[2] or "", "fecha": str(r[3] or "")} for r in cursor.fetchall() if r[0]}
-
-        # 3. Diccionario de configuracion_avanzada_cliente
-        cursor.execute("SELECT UPPER(TRIM(cliente)), tipo_licencia, fecha_actualizacion FROM configuracion_avanzada_cliente")
-        cfg_adv = {r[0]: {"licencia": str(r[1] or "PRO").upper(), "fecha": str(r[2] or "")} for r in cursor.fetchall() if r[0]}
-
-        # 4. Sedes / subclientes por cliente
-        cursor.execute('''
-            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente))
-            FROM (
-                SELECT cliente, subcliente FROM inspecciones WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
-                UNION
-                SELECT cliente, subcliente FROM configuracion_limites_retiro WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
-                UNION
-                SELECT cliente, subcliente FROM llantas_maestro WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) NOT IN ('TODOS', 'NAN', 'NONE')
-            )
-        ''')
-        subclientes_map = {}
-        for c, sub in cursor.fetchall():
-            if c and sub:
-                subclientes_map.setdefault(c, []).append(sub)
-
-        # 5. Cantidad de vehículos (padrón + inspecciones)
-        cursor.execute('''
-            SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT UPPER(TRIM(placa)))
-            FROM (
-                SELECT cliente, placa FROM inspecciones WHERE placa IS NOT NULL AND TRIM(placa) != ''
-                UNION
-                SELECT cliente, placa FROM padron_vehiculos_cliente WHERE placa IS NOT NULL AND TRIM(placa) != ''
-            ) GROUP BY 1
-        ''')
-        vehiculos_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        # 6. Cantidad de inspecciones registradas
-        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(*) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
-        inspecciones_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        # 7. Cantidad de llantas registradas en bodegas
-        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(*) FROM llantas_maestro WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
-        llantas_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        # 8. Cantidad de marcas habituales asociadas
-        cursor.execute("SELECT UPPER(TRIM(cliente)), COUNT(DISTINCT marca) FROM configuracion_marcas_cliente WHERE cliente IS NOT NULL AND TRIM(cliente) != '' GROUP BY 1")
-        marcas_map = {r[0]: r[1] for r in cursor.fetchall() if r[0]}
-
-        directorio = []
-        for c in clientes_unicos:
-            lic = cfg_adv.get(c, {}).get("licencia", "PRO")
-            lim = cfg_cli.get(c, {}).get("limite", 3.0)
-            obs = cfg_cli.get(c, {}).get("obs", "")
-            fecha = cfg_cli.get(c, {}).get("fecha") or cfg_adv.get(c, {}).get("fecha") or ""
-            subs = sorted(list(set(subclientes_map.get(c, []))))
-
-            directorio.append({
-                "cliente": c,
-                "tipo_licencia": lic,
-                "limite_retiro_mm": lim,
-                "subclientes": subs,
-                "subclientes_str": ", ".join(subs) if subs else "Principal",
-                "vehiculos_count": vehiculos_map.get(c, 0),
-                "inspecciones_count": inspecciones_map.get(c, 0),
-                "llantas_count": llantas_map.get(c, 0),
-                "marcas_count": marcas_map.get(c, 0),
-                "observaciones": obs,
-                "fecha_actualizacion": fecha
-            })
-
-        return directorio
-
-def crear_o_actualizar_cliente(datos: dict) -> dict:
-    """
-    Crea o actualiza un cliente / flota en el sistema:
-    - Normaliza nombre en mayúsculas
-    - Configura tipo de licencia (PRO / LIGHT)
-    - Configura límite de retiro por defecto
-    - Crea reglas base en configuracion_limites_retiro y sedes/subclientes
-    """
-    c = str(datos.get('cliente') or '').strip().upper()
-    if not c or c in ('NAN', 'NONE', 'NULL'):
-        raise ValueError("El nombre o razón social del cliente es obligatorio.")
-
-    lic = str(datos.get('tipo_licencia') or 'PRO').strip().upper()
-    if lic not in ('PRO', 'LIGHT'):
-        lic = 'PRO'
-
-    lim = to_float(datos.get('limite_retiro_mm'), 3.0)
-    obs = str(datos.get('observaciones') or '').strip()
-    subclientes_input = datos.get('subclientes') or ''
-
-    with get_connection() as conn:
-        cursor = conn.cursor()
-
-        # 1. configuracion_clientes
-        cursor.execute('''
-            INSERT INTO configuracion_clientes (cliente, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente) DO UPDATE SET
-                limite_retiro_mm = excluded.limite_retiro_mm,
-                observaciones = CASE WHEN excluded.observaciones != '' THEN excluded.observaciones ELSE configuracion_clientes.observaciones END,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lim, obs))
-
-        # 2. configuracion_avanzada_cliente
-        cursor.execute('''
-            INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente) DO UPDATE SET
-                tipo_licencia = excluded.tipo_licencia,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lic, lim, lim, lim))
-
-        # 3. Regla por defecto en configuracion_limites_retiro
-        cursor.execute('''
-            INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
-            VALUES (?, 'TODOS', 'TODOS', ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(cliente, subcliente, eje) DO UPDATE SET
-                limite_retiro_mm = excluded.limite_retiro_mm,
-                observaciones = excluded.observaciones,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-        ''', (c, lim, obs))
-
-        # 4. Sedes / subclientes si se proporcionaron
-        if subclientes_input:
-            if isinstance(subclientes_input, str):
-                subs_list = [s.strip().upper() for s in subclientes_input.replace(';', ',').split(',') if s.strip()]
-            else:
-                subs_list = [str(s).strip().upper() for s in subclientes_input if str(s).strip()]
-
-            for sub in subs_list:
-                if sub and sub not in ('TODOS', 'NAN', 'NONE'):
-                    cursor.execute('''
-                        INSERT OR IGNORE INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm, observaciones, fecha_actualizacion)
-                        VALUES (?, ?, 'TODOS', ?, ?, CURRENT_TIMESTAMP)
-                    ''', (c, sub, lim, f"Sede {sub} de {c}"))
-
-        conn.commit()
-
-    return {"ok": True, "cliente": c, "mensaje": f"Cliente '{c}' guardado exitosamente."}
-
-def eliminar_cliente_directorio(cliente: str) -> dict:
-    """
-    Elimina un cliente del directorio si no tiene historial de inspecciones o llantas en bodega.
-    """
-    c = str(cliente or '').strip().upper()
-    if not c:
-        raise ValueError("Nombre de cliente inválido.")
-
-    with get_connection() as conn:
-        cursor = conn.cursor()
-
-        # Validar si tiene inspecciones
-        cursor.execute("SELECT COUNT(*) FROM inspecciones WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cnt_insp = cursor.fetchone()[0]
-        if cnt_insp > 0:
-            return {"ok": False, "mensaje": f"No se puede eliminar el cliente '{c}' porque tiene {cnt_insp} inspecciones registradas en el historial."}
-
-        cursor.execute("SELECT COUNT(*) FROM llantas_maestro WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cnt_ll = cursor.fetchone()[0]
-        if cnt_ll > 0:
-            return {"ok": False, "mensaje": f"No se puede eliminar el cliente '{c}' porque tiene {cnt_ll} llantas en inventario de bodegas."}
-
-        cursor.execute("DELETE FROM configuracion_clientes WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM configuracion_limites_retiro WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM configuracion_marcas_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        cursor.execute("DELETE FROM padron_vehiculos_cliente WHERE UPPER(TRIM(cliente)) = ?", (c,))
-        conn.commit()
-
-    return {"ok": True, "cliente": c, "mensaje": f"Cliente '{c}' eliminado exitosamente."}
 
 # ==========================================
 # CONFIGURACIÓN DE MARCAS POR CLIENTE
@@ -5804,7 +5629,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
     }
 
     try:
-        df_raw = obtener_todas_inspecciones(usuario=usuario)
+        df_raw = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
         if df_raw.empty:
             return resultado
 
@@ -5839,6 +5664,11 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         km_mont_list = [to_float(p) for p in df['km_montaje']]
 
         n_rows = len(df)
+        cli_list = [str(x or '').strip().upper() for x in (df['cliente'].tolist() if 'cliente' in df else [cliente]*n_rows)]
+        sub_list = [str(x or '').strip().upper() for x in (df['subcliente'].tolist() if 'subcliente' in df else [subcliente]*n_rows)]
+        tip_list = [str(x or '').strip() for x in (df['tipologia'].tolist() if 'tipologia' in df else ['']*n_rows)]
+        placa_list = [str(x or '').strip().upper() for x in (df['placa'].tolist() if 'placa' in df else ['']*n_rows)]
+        sn_list = [str(x or '').strip().upper() for x in (df['numero_interno'].tolist() if 'numero_interno' in df else ['']*n_rows)]
         p_min_col = []
         p_ini_col = []
         lim_retiro_col = []
@@ -5892,9 +5722,9 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             p_ini = pini_list[idx] if pini_list[idx] > 0 else (16.0 if es_dir else 18.0)
             p_ini_col.append(p_ini)
 
-            cli_row = str(df['cliente'].iloc[idx] if 'cliente' in df else cliente or '').strip().upper()
-            sub_row = str(df['subcliente'].iloc[idx] if 'subcliente' in df else subcliente or '').strip().upper()
-            tip_row = str(df['tipologia'].iloc[idx] if 'tipologia' in df else '').strip()
+            cli_row = cli_list[idx] or cliente or ''
+            sub_row = sub_list[idx] or subcliente or ''
+            tip_row = tip_list[idx]
             eje_tipo = obtener_tipo_eje_posicion(tip_row, pos, mapa_tipologias=mapa_tips)
             lim_ret = resolver_limite(cli_row, sub_row, eje_tipo)
             if lim_ret <= 0:
@@ -5916,8 +5746,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             if km_mont > 0 and km_act >= km_mont:
                 km_rod = km_act - km_mont
             else:
-                pl_i = str(df['placa'].iloc[idx] if 'placa' in df else '').strip().upper()
-                sn_i = str(df['numero_interno'].iloc[idx] if 'numero_interno' in df else '').strip().upper()
+                pl_i = placa_list[idx]
+                sn_i = sn_list[idx]
                 pos_i = pos_list[idx]
                 prim_km = None
                 if sn_i and sn_i not in ('', 'SN', 'NONE', 'NAN') and (pl_i, sn_i) in primer_km_por_llanta:
@@ -7037,7 +6867,7 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     matriz_mrp = []
 
     # Obtener últimas inspecciones por vehículo para evaluar demanda en patio
-    df_raw = obtener_todas_inspecciones()
+    df_raw = obtener_todas_inspecciones(incluir_fotos=False)
     if not df_raw.empty and cliente and cliente != "TODOS":
         df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
     if not df_raw.empty and subcliente and subcliente != "TODOS":
@@ -7236,7 +7066,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     resolver_limite = _construir_cache_limites_retiro()
 
     # 1. Inspecciones históricas
-    df_raw = obtener_todas_inspecciones(usuario=usuario)
+    df_raw = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
     if not df_raw.empty:
         df = df_raw.copy()
         if cliente and cliente != "TODOS":
@@ -7265,6 +7095,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         km_act_list = [to_float(p) for p in df['kilometraje']]
         km_mont_list = [to_float(p) for p in df['km_montaje']]
 
+        n_rows = len(df)
+        cli_list = [str(x or '').strip().upper() for x in (df['cliente'].tolist() if 'cliente' in df else [cliente]*n_rows)]
+        sub_list = [str(x or '').strip().upper() for x in (df['subcliente'].tolist() if 'subcliente' in df else [subcliente]*n_rows)]
+        placa_list = [str(x or '').strip().upper() for x in (df['placa'].tolist() if 'placa' in df else ['']*n_rows)]
+        sn_list = [str(x or '').strip().upper() for x in (df['numero_interno'].tolist() if 'numero_interno' in df else ['']*n_rows)]
+        vida_list = [str(x or '').strip().upper() for x in (df['vida'].tolist() if 'vida' in df else ['']*n_rows)]
+        banda_list = [str(x or '').strip() for x in (df['banda_reen'].tolist() if 'banda_reen' in df else ['']*n_rows)]
+
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
         if not df_raw.empty:
@@ -7281,7 +7119,6 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                     if (pl_h, pos_h) not in primer_km_por_llanta:
                         primer_km_por_llanta[(pl_h, pos_h)] = km_h
 
-        n_rows = len(df)
         p_min_col, lim_retiro_col, mm_utiles_col, delta_mm_col = [], [], [], []
         pct_desgaste_col, km_rodados_col, km_mm_col, proy_total_col = [], [], [], []
         cpk_col, es_madura_col, es_asentamiento_col = [], [], []
@@ -7301,8 +7138,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             p_min_col.append(p_min)
 
             p_ini = pini_list[i] if pini_list[i] > 0 else (16.0 if es_dir else 18.0)
-            cli_r = str(df['cliente'].iloc[i] if 'cliente' in df else cliente).strip().upper()
-            sub_r = str(df['subcliente'].iloc[i] if 'subcliente' in df else subcliente).strip().upper()
+            cli_r = cli_list[i] or cliente or ''
+            sub_r = sub_list[i] or subcliente or ''
             lim_r = resolver_limite(cli_r, sub_r, pos)
             lim_retiro_col.append(lim_r)
 
@@ -7321,8 +7158,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if km_mont > 0 and km_act >= km_mont:
                 km_rod = km_act - km_mont
             else:
-                pl_i = str(df['placa'].iloc[i] if 'placa' in df else '').strip().upper()
-                sn_i = str(df['numero_interno'].iloc[i] if 'numero_interno' in df else '').strip().upper()
+                pl_i = placa_list[i]
+                sn_i = sn_list[i]
                 pos_i = pos_list[i]
                 prim_km = None
                 if sn_i and sn_i not in ('', 'SN', 'NONE', 'NAN') and (pl_i, sn_i) in primer_km_por_llanta:
@@ -7385,8 +7222,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             estado_psi_col.append(est_psi)
 
             # Vida / Reencauche
-            v_raw = str(df['vida'].iloc[i] if 'vida' in df else '').upper()
-            b_raw = str(df['banda_reen'].iloc[i] if 'banda_reen' in df else '').strip()
+            v_raw = vida_list[i]
+            b_raw = banda_list[i]
             es_rn = bool(re.search(r'REENC|R1|R2|R3|R4|R5', v_raw) or (b_raw and b_raw.lower() not in ('nan', 'none', '')))
             es_reencauche_col.append(es_rn)
             if re.search(r'R3|R4|R5', v_raw):

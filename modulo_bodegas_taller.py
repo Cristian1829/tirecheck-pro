@@ -367,8 +367,9 @@ def desmontar_llanta_taller(datos: dict) -> dict:
             UPDATE llantas_ciclos SET
                 km_recorridos_ciclo = km_recorridos_ciclo + ?,
                 prof_final_ciclo = ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (delta_km, prof_momento, numero_interno, ciclo_act))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (delta_km, prof_momento, numero_interno, ciclo_act, cli_efectivo, cli_efectivo))
 
         # Variables FVU
         mm_desp = 0.0
@@ -387,8 +388,9 @@ def desmontar_llanta_taller(datos: dict) -> dict:
                     estado_ciclo = 'Desechado',
                     fecha_fin_ciclo = CURRENT_DATE,
                     prof_final_ciclo = ?
-                WHERE numero_interno = ? AND numero_ciclo = ?
-            """, (prof_momento, numero_interno, ciclo_act))
+                WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+                  AND (UPPER(cliente_propietario) = ? OR ? = '')
+            """, (prof_momento, numero_interno, ciclo_act, cli_efectivo, cli_efectivo))
 
         hoy_str = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
         hoy_ts = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d %H:%M:%S')
@@ -490,7 +492,11 @@ def montar_llanta_taller(datos: dict) -> dict:
         cursor = conn.cursor()
 
         # Si es nueva directa o no existe en llantas_maestro, dar de alta primero
-        cursor.execute("SELECT id FROM llantas_maestro WHERE UPPER(numero_interno) = ?", (numero_interno,))
+        cursor.execute("""
+            SELECT id FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row_check = cursor.fetchone()
         if not row_check or es_nueva_directa:
             if not row_check:
@@ -513,7 +519,8 @@ def montar_llanta_taller(datos: dict) -> dict:
                    prof_inicial_nueva, prof_actual_min, vida_actual, cliente_propietario, cliente
             FROM llantas_maestro
             WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+              AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row_ll = cursor.fetchone()
         if not row_ll:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -538,7 +545,8 @@ def montar_llanta_taller(datos: dict) -> dict:
             FROM llantas_maestro
             WHERE UPPER(placa_actual) = ? AND posicion_actual = ? AND UPPER(numero_interno) != ?
               AND estado_actual = 'Montada'
-        """, (placa, posicion, numero_interno))
+              AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (placa, posicion, numero_interno, cliente, cliente, cliente))
         ocupantes = cursor.fetchall()
 
         hoy_str = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
@@ -554,12 +562,13 @@ def montar_llanta_taller(datos: dict) -> dict:
                     posicion_actual = 0,
                     km_acumulados_total = km_acumulados_total + ?,
                     fecha_ultimo_movimiento = ?
-                WHERE id = ?
-            """, (delta_oc, hoy_str, oc_id))
+                WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+            """, (delta_oc, hoy_str, oc_id, cliente, cliente, cliente))
             cursor.execute("""
                 UPDATE llantas_ciclos SET km_recorridos_ciclo = km_recorridos_ciclo + ?
-                WHERE numero_interno = ? AND numero_ciclo = ?
-            """, (delta_oc, oc_serial, oc_ciclo))
+                WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+                  AND (UPPER(cliente_propietario) = ? OR ? = '')
+            """, (delta_oc, oc_serial, oc_ciclo, cli_efectivo, cli_efectivo))
             cursor.execute("""
                 INSERT INTO llantas_movimientos (
                     fecha_movimiento, numero_interno, cliente_propietario, tipo_movimiento,
@@ -581,8 +590,8 @@ def montar_llanta_taller(datos: dict) -> dict:
                 cliente_propietario = ?,
                 cliente = ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
-        """, (placa, posicion, odometro, odometro, cli_efectivo, cli_efectivo, hoy_str, ll_id))
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (placa, posicion, odometro, odometro, cli_efectivo, cli_efectivo, hoy_str, ll_id, cliente, cliente, cliente))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -658,7 +667,8 @@ def despachar_lote_planta_reencauche(datos: dict) -> dict:
                     fecha_compromiso_planta = ?,
                     fecha_ultimo_movimiento = ?
                 WHERE UPPER(numero_interno) = ?
-            """, (proveedor, guia, transportador, hoy_str, compromiso, hoy_str, num))
+                  AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+            """, (proveedor, guia, transportador, hoy_str, compromiso, hoy_str, num, cliente, cliente, cliente))
 
             cursor.execute("""
                 INSERT INTO llantas_movimientos (
@@ -708,8 +718,10 @@ def recepcionar_llanta_reencauchada(datos: dict) -> dict:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, ciclo_actual, costo_reencauches_total, costo_acumulado_total, cliente_propietario, cliente
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -725,8 +737,9 @@ def recepcionar_llanta_reencauchada(datos: dict) -> dict:
                 estado_ciclo = 'Cerrado_Por_Retiro',
                 fecha_fin_ciclo = ?,
                 cpk_ciclo = costo_ciclo / MAX(1.0, km_recorridos_ciclo)
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (hoy_str, numero_interno, ciclo_ant))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (hoy_str, numero_interno, ciclo_ant, cli_efectivo, cli_efectivo))
 
         # Crear nuevo ciclo
         cursor.execute("""
@@ -763,12 +776,12 @@ def recepcionar_llanta_reencauchada(datos: dict) -> dict:
                 fecha_envio_planta = NULL,
                 fecha_compromiso_planta = NULL,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
         """, (
             ciclo_nuevo, f"R{ciclo_ant}", banda_diseno, ciclo_ant,
             prof_nueva, prof_nueva, prof_nueva, prof_nueva, prof_nueva,
             costo_renovado, nuevo_costo_reen, nuevo_costo_acum,
-            hoy_str, ll_id
+            hoy_str, ll_id, cliente, cliente, cliente
         ))
 
         # Movimiento RETORNO_REENCAUCHE
@@ -812,8 +825,10 @@ def finalizar_reparacion_bodega5(datos: dict) -> dict:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, ciclo_actual, costo_reparaciones_total, costo_acumulado_total, cliente_propietario, cliente
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -826,14 +841,16 @@ def finalizar_reparacion_bodega5(datos: dict) -> dict:
             UPDATE llantas_novedades_registro
             SET estado_novedad = 'Reparada'
             WHERE UPPER(numero_interno) = ? AND estado_novedad = 'Activa'
-        """, (numero_interno,))
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cli_efectivo, cli_efectivo))
 
         # Sumar costo a ciclo activo
         cursor.execute("""
             UPDATE llantas_ciclos
             SET costo_ciclo = costo_ciclo + ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (costo_rep, numero_interno, ciclo_act or 1))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (costo_rep, numero_interno, ciclo_act or 1, cli_efectivo, cli_efectivo))
 
         # Actualizar llantas_maestro
         cursor.execute("""
@@ -843,8 +860,8 @@ def finalizar_reparacion_bodega5(datos: dict) -> dict:
                 costo_reparaciones_total = costo_reparaciones_total + ?,
                 costo_acumulado_total = costo_acumulado_total + ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
-        """, (costo_rep, costo_rep, hoy_str, ll_id))
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (costo_rep, costo_rep, hoy_str, ll_id, cliente, cliente, cliente))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -881,8 +898,10 @@ def procesar_dictamen_garantia_bodega6(datos: dict) -> dict:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, dinero_perdido_fvu, cliente_propietario, cliente, ciclo_actual
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -902,16 +921,18 @@ def procesar_dictamen_garantia_bodega6(datos: dict) -> dict:
                 fecha_baja = ?,
                 motivo_baja = ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
         """, (
             dictamen, pct_rec, valor_nc, nuevo_dinero_perd,
-            hoy_str, f"Garantía {dictamen} (NC: ${valor_nc:,.0f})", hoy_str, ll_id
+            hoy_str, f"Garantía {dictamen} (NC: ${valor_nc:,.0f})", hoy_str, ll_id,
+            cliente, cliente, cliente
         ))
 
         cursor.execute("""
             UPDATE llantas_ciclos SET estado_ciclo = 'Desechado', fecha_fin_ciclo = ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (hoy_str, numero_interno, ciclo_act or 1))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (hoy_str, numero_interno, ciclo_act or 1, cli_efectivo, cli_efectivo))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -949,8 +970,10 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
         cursor.execute("""
             SELECT id, prof_actual_min, prof_inicial_nueva, costo_ciclo_actual,
                    valor_reconocido_garantia, ciclo_actual, cliente_propietario, cliente
-            FROM llantas_maestro WHERE UPPER(numero_interno) = ?
-        """, (numero_interno,))
+            FROM llantas_maestro 
+            WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR UPPER(cliente_propietario) = ? OR ? = '')
+        """, (numero_interno, cliente, cliente, cliente))
         row = cursor.fetchone()
         if not row:
             return {"ok": False, "status": "error", "message": f"No se encontró la llanta {numero_interno}"}
@@ -975,8 +998,9 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
                 estado_ciclo = 'Desechado',
                 fecha_fin_ciclo = ?,
                 prof_final_ciclo = ?
-            WHERE numero_interno = ? AND numero_ciclo = ?
-        """, (hoy_str, p_ret, numero_interno, ciclo_act or 1))
+            WHERE UPPER(numero_interno) = ? AND numero_ciclo = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
+        """, (hoy_str, p_ret, numero_interno, ciclo_act or 1, cli_efectivo, cli_efectivo))
 
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -988,8 +1012,8 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
                 mm_desperdiciados_fvu = ?,
                 dinero_perdido_fvu = ?,
                 fecha_ultimo_movimiento = ?
-            WHERE id = ?
-        """, (hoy_str, motivo, foto, mm_desperdiciados, dinero_perdido, hoy_str, ll_id))
+            WHERE id = ? AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
+        """, (hoy_str, motivo, foto, mm_desperdiciados, dinero_perdido, hoy_str, ll_id, cliente, cliente, cliente))
 
         cursor.execute("""
             INSERT INTO llantas_movimientos (
@@ -1040,6 +1064,7 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                 return {"ok": False, "status": "error", "mensaje": f"No se encontró hoja de vida para {numero_interno}"}
 
         ll = dict(zip(cols_m, row_m))
+        cli_filtro = str(ll.get('cliente_propietario') or ll.get('cliente') or cliente or '').strip().upper()
 
         # Ciclos de vida
         cursor.execute("""
@@ -1048,8 +1073,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                    fecha_inicio_ciclo, fecha_fin_ciclo
             FROM llantas_ciclos
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
             ORDER BY numero_ciclo ASC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         cols_c = [d[0] for d in cursor.description]
         ciclos_raw = [dict(zip(cols_c, r)) for r in cursor.fetchall()]
 
@@ -1061,8 +1087,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                    motivo, usuario_responsable
             FROM llantas_movimientos
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
             ORDER BY fecha_movimiento DESC, id DESC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         cols_mov = [d[0] for d in cursor.description]
         movs_raw = [dict(zip(cols_mov, r)) for r in cursor.fetchall()]
 
@@ -1072,8 +1099,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                    placa, posicion, observacion, foto_url
             FROM llantas_novedades_registro
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente_propietario) = ? OR ? = '')
             ORDER BY fecha_deteccion DESC, id DESC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         cols_nov = [d[0] for d in cursor.description]
         novedades_raw = [dict(zip(cols_nov, r)) for r in cursor.fetchall()]
 
@@ -1082,8 +1110,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
             SELECT fecha, placa, posicion, kilometraje, prof_ext, prof_cent, prof_int, psi, novedades
             FROM inspecciones
             WHERE UPPER(numero_interno) = ?
+              AND (UPPER(cliente) = ? OR ? = '')
             ORDER BY fecha ASC, id ASC
-        """, (numero_interno,))
+        """, (numero_interno, cli_filtro, cli_filtro))
         insps = cursor.fetchall()
 
     # Consolidar métricas
@@ -1232,6 +1261,7 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
         },
         "estado_actual": {
             "estado": ll.get('estado_actual', 'Bodega_1_Nuevas'),
+            "ubicacion_bodega": ll.get('ubicacion_bodega') or ll.get('estado_actual', 'Bodega_1_Nuevas'),
             "placa": ll.get('placa_actual', ''),
             "posicion": ll.get('posicion_actual', 0),
             "tipo_eje": ll.get('tipo_eje_actual', ''),
