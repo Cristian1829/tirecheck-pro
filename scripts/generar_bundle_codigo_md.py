@@ -11,19 +11,29 @@ OUTPUT_FILE_1 = PROYECTO_DIR / "CODIGO_COMPLETO_PROYECTO.md"
 OUTPUT_FILE_2 = PROYECTO_DIR.parent / "CODIGO_COMPLETO_PROYECTO.md"
 
 # Lista canónica de los 40 archivos de código y documentación del proyecto
+# Lista canónica completa de archivos de código, pruebas y documentación del proyecto
 FILES_SPEC = [
     # 1. Configuración, Entorno y Despliegue en la Nube
-    ("requirements.txt", "1. Configuración, Entorno y Despliegue en la Nube", "text", "Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, etc.)"),
+    ("requirements.txt", "1. Configuración, Entorno y Despliegue en la Nube", "text", "Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.)"),
     (".gitignore", "1. Configuración, Entorno y Despliegue en la Nube", "gitignore", "Reglas de exclusión de Git"),
     (".dockerignore", "1. Configuración, Entorno y Despliegue en la Nube", "gitignore", "Reglas de exclusión para compilación de imagen Docker"),
-    ("Dockerfile", "1. Configuración, Entorno y Despliegue en la Nube", "dockerfile", "Definición estandarizada del contenedor Docker para producción/cloud"),
+    ("Dockerfile", "1. Configuración, Entorno y Despliegue en la Nube", "dockerfile", "Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID"),
+    ("railway.json", "1. Configuración, Entorno y Despliegue en la Nube", "json", "Configuración de infraestructura y despliegue continuo en Railway (Builder DOCKERFILE)"),
     ("render.yaml", "1. Configuración, Entorno y Despliegue en la Nube", "yaml", "Blueprint de infraestructura como código para despliegue automático en Render.com"),
+    ("Procfile", "1. Configuración, Entorno y Despliegue en la Nube", "text", "Comando de arranque estándar para plataformas PaaS"),
+    ("nixpacks.toml", "1. Configuración, Entorno y Despliegue en la Nube", "toml", "Definición de empaquetado alternativo Nixpacks"),
     ("INICIAR_TIRECHECK.bat", "1. Configuración, Entorno y Despliegue en la Nube", "bat", "Script de arranque automático para Windows: verificación de entorno, servidor uvicorn y apertura de navegador"),
+    ("INICIAR_TIREANALYZE.bat", "1. Configuración, Entorno y Despliegue en la Nube", "bat", "Script de inicio de servicio con launcher integrado"),
     ("iniciar_app.bat", "1. Configuración, Entorno y Despliegue en la Nube", "bat", "Script de arranque directo sin dependencias"),
 
     # 2. Documentación Técnica y Arquitectura
-    ("README.md", "2. Arquitectura y Documentación Técnica", "markdown", "Documento general del repositorio, resumen de arquitectura y guía de inicio"),
-    ("docs/GUIA_DESPLIEGUE_RENDER.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía paso a paso para desplegar TireAnalyze Pro en Render.com de forma 100% gratuita"),
+    ("README.md", "2. Arquitectura y Documentación Técnica", "markdown", "Documento general del repositorio, resumen de arquitectura, suite de 20 KPIs y guía de inicio"),
+    ("docs/implementar comp flota.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación técnica y funcional de Composición de Flota v3.5 Enterprise: 4 Reglas de Oro, 7 filtros, matriz de inventario y KPIs"),
+    ("docs/implementar kpis.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación técnica de la Suite Integral de 20 KPIs, pestañas analíticas y balance de compras MRP"),
+    ("docs/prompt_antigravity_ide_implementaci_n_de_las_7_bodegas_y_hoja_de_vida_de_neum_ticos.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía maestra del sistema de Las 7 Bodegas, Hoja de Vida, Kardex y Balance MRP"),
+    ("docs/detalle de vh.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación de ficha técnica vehicular y planes de mantenimiento preventivo y correctivo"),
+    ("evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md", "2. Arquitectura y Documentación Técnica", "markdown", "Evaluación técnica y reglas de automatización de placas, esquemas y llantas"),
+    ("docs/GUIA_DESPLIEGUE_RENDER.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía paso a paso para desplegar TireAnalyze Pro en Render.com de forma gratuita"),
     ("docs/AGENTS.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía especializada para Agentes de IA: invariantes del sistema, reglas críticas y no regresión"),
     ("docs/ARCHITECTURE.md", "2. Arquitectura y Documentación Técnica", "markdown", "Arquitectura en capas, diagrama C4, flujos de inspección y persistencia de datos"),
     ("docs/API_REFERENCE.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación técnica de los endpoints RESTful de FastAPI"),
@@ -33,19 +43,37 @@ FILES_SPEC = [
     ("docs/CONTRIBUTING.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía de contribución, buenas prácticas, PEP 8 y checklist de testing"),
 
     # 3. Núcleo Backend & API REST
-    ("server.py", "3. Núcleo Backend & API REST", "python", "Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok y serving estático"),
-    ("database.py", "3. Núcleo Backend & API REST", "python", "Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, KPIs y catálogos"),
+    ("server.py", "3. Núcleo Backend & API REST", "python", "Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático"),
+    ("database.py", "3. Núcleo Backend & API REST", "python", "Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos"),
+    ("modulo_bodegas_taller.py", "3. Núcleo Backend & API REST", "python", "Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)"),
     ("logica_inspeccion.py", "3. Núcleo Backend & API REST", "python", "Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados"),
     ("pdf_generator.py", "3. Núcleo Backend & API REST", "python", "Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias"),
+    ("diagrama_chasis_pdf.py", "3. Núcleo Backend & API REST", "python", "Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab"),
     ("fotos_informe.py", "3. Núcleo Backend & API REST", "python", "Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF"),
     ("app.py", "3. Núcleo Backend & API REST", "python", "Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario"),
 
     # 4. Frontend Web SPA & Plantillas
-    ("templates/index.html", "4. Frontend Web SPA & Plantillas", "html", "Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, KPIs, Catálogos, Modo Offline)"),
+    ("templates/index.html", "4. Frontend Web SPA & Plantillas", "html", "Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)"),
     ("templates/preview_chasis.html", "4. Frontend Web SPA & Plantillas", "html", "Visor interactivo y banco de pruebas de renderizado de tipologías de chasis"),
 
     # 5. Suite de Pruebas Automatizadas (Pytest)
     ("tests/conftest.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Configuración de fixtures y base de datos SQLite en memoria para tests aislados"),
+    ("tests/test_bodegas_hoja_vida.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas unitarias completas del módulo de 7 bodegas, kardex de carcasas, traslados y garantías"),
+    ("tests/test_bodegas_mrp.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de la lógica de balance MRP y compras sugeridas de bodegas"),
+    ("tests/test_auditoria_bodegas_sentido_negocio.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Auditoría de consistencia de negocio para bodegas y ciclo de vida"),
+    ("tests/test_composicion_flota.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario"),
+    ("tests/test_detalle_vehiculos_planes.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas del módulo de detalle vehicular y planes de mantenimiento"),
+    ("tests/test_suite_20_kpis_manual.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP"),
+    ("tests/test_matriz_semaforos.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de matriz de semáforos de desgaste por eje y flota"),
+    ("tests/test_migracion_pext_ciudad_limpia.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de migración y normalización para Ciudad Limpia"),
+    ("tests/test_precision_graficos_ground_truth.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de auditoría de gráficos ground truth y métricas matemáticas"),
+    ("tests/test_sincronizacion_kilometraje_vehiculo.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de sincronización y propagación de odómetro vehicular"),
+    ("tests/test_tipologia_mayusculas_limites.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de tipologías en mayúsculas y límites de retiro por cliente"),
+    ("tests/test_frecuencia_parametrizable_cliente.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de parametrización de frecuencia de inspección por cliente"),
+    ("tests/test_directorio_clientes.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas del directorio de clientes y sedes"),
+    ("tests/test_configuracion_marcas_cliente.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de configuración de marcas y catálogos por cliente"),
+    ("tests/test_login_seguridad_frontend.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de seguridad de sesión y permisos en frontend"),
+    ("tests/test_alerta_frecuencia_copiar_marca.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de alertas de frecuencia y copiado de marca/diseño"),
     ("tests/test_api_web.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de endpoints RESTful y respuestas HTTP de FastAPI"),
     ("tests/test_automatizacion_placa_llanta.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual"),
     ("tests/test_candados.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Pruebas unitarias de los 6 candados operativos de captura en patio"),
@@ -56,6 +84,10 @@ FILES_SPEC = [
 
     # 6. Scripts de Auditoría, Pruebas y Diagnóstico
     ("scripts/README.md", "6. Scripts de Auditoría, Soporte y Diagnóstico", "markdown", "Documentación del directorio de scripts auxiliares"),
+    ("scripts/auditar_modulo_bodegas_mrp.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Auditoría integral del módulo de 7 bodegas y fórmulas MRP"),
+    ("scripts/sembrar_flota_auditoria_qa.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Poblador de base de datos para pruebas de auditoría QA de flota"),
+    ("scripts/generar_excel_proyecciones.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Generador de cálculos de proyecciones y exportación Excel"),
+    ("scripts/check_ciudad_limpia.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Verificación y diagnóstico específico para cliente Ciudad Limpia"),
     ("scripts/evaluar_todos_chasis.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Auditoría exhaustiva de renderizado para todas las tipologías de vehículos"),
     ("scripts/probar_chasis_ee3123.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Validación específica para chasis de vehículo placa EE3123"),
     ("scripts/test_pdf_chasis.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Verificación de dibujo vectorial de chasis en el informe PDF"),
@@ -71,6 +103,7 @@ FILES_SPEC = [
     ("scripts/capturar_banners_hd.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Pipeline de auditoría y captura de pantalla en HD (Desktop, Tablet, Mobile) para el nuevo banner"),
     ("scripts/test_read.py", "6. Scripts de Auditoría, Soporte y Diagnóstico", "python", "Script básico de lectura y diagnóstico de datos")
 ]
+
 
 def obtener_esquema_db():
     db_path = PROYECTO_DIR / "data" / "inspecciones.db"
@@ -164,20 +197,31 @@ def generar_documento():
     md.append("   - Sin dependencias de frameworks pesados (Vanilla JS, CSS personalizado con estética Glassmorphism moderna y modo oscuro/claro).")
     md.append("   - Soporte Offline transparente mediante caché de navegador y cola de sincronización diferida hacia SQLite.")
     md.append("   - Mapeo interactivo visual del chasis (4x2, 6x4, 8x4, remolques) por ejes, posiciones y llanta de repuesto.")
-    md.append("   - Vistas integradas: Inspección de Patio, Base de Inspecciones, Diagnósticos & Planes de Acción, Trazabilidad & KPIs de Llantas, Catálogos & Configuración, y Módulo QR/Túnel Remoto.")
+    md.append("   - **Composición de Flota v3.5 Enterprise:** Auditoría de 4 Reglas de Oro técnicas (Diferencia de profundidad en eje <= 3mm, No mezclar marcas en mismo eje, No mezclar diseños en mismo eje, Llantas nuevas o R1 en eje direccional), 7 filtros en cascada, 6 KPIs de cabecera, 4 gráficos Chart.js HD y matriz de inventario exportable a Excel.")
+    md.append("   - **Módulo Integral de Las 7 Bodegas y Hoja de Vida:** 8 tarjetas de conteo físico y valorización en pesos (B1 Nueva, B2 Serviciable, B3 Reparación, B4 Reencauche, B5 En Planta, B6 Garantía, B7 Desecho y Llantas Montadas).")
+    md.append("   - **Suite Integral de 20 KPIs & Matriz MRP:** Estructurada en 5 pestañas analíticas y navbar responsivo optimizado. El KPI 20 (Matriz MRP y Balance Sugerido de Compras) se sitúa al final de la vista de bodegas con comparativa gráfica de demanda vs stock disponible.")
+    md.append("   - Sincronización y propagación automática de kilometraje/odómetro único vehicular en toda la jornada de inspección.")
     md.append("")
-    md.append("2. **Backend API REST (`server.py` & `database.py`):**")
-    md.append("   - Framework FastAPI de alto rendimiento con validación tipada.")
-    md.append("   - Persistencia relacional en SQLite con auto-migración de esquema (`data/inspecciones.db`).")
+    md.append("2. **Backend API REST (`server.py`, `database.py` y `modulo_bodegas_taller.py`):**")
+    md.append("   - Framework FastAPI de alto rendimiento con validación tipada y arquitectura modular.")
+    md.append("   - Módulo router especializado `modulo_bodegas_taller.py`: inventario multi-bodega, trazabilidad de ciclo de vida de carcasas (Original, R1, R2, R3), traslados entre bodegas, órdenes de despacho a planta, retorno de reencauche, finalización de reparaciones, actas ambientales de desecho y dictámenes de garantía.")
+    md.append("   - Capa de persistencia SQLite con auto-migración relacional de esquemas (`data/inspecciones.db`), límites de retiro dinámicos configurables por cliente (ej. 4mm Ciudad Limpia) y soporte multi-sede.")
     md.append("   - Integración nativa con `pyngrok` y generador de códigos QR para conectar dispositivos móviles en patio en segundos.")
     md.append("")
     md.append("3. **Motor de Diagnóstico y Reglas de Negocio (`logica_inspeccion.py`):**")
     md.append("   - **6 Candados de Seguridad Operativos:** límite de desgaste crítico, presiones anormales (baja/alta), diferencia entre duales, desgastes irregulares (alineación) y semáforo de estado.")
     md.append("   - Fórmulas predictivas de Costo por Kilómetro (CPK), rendimiento proyectado y fechas estimadas de retiro.")
+    md.append("   - Auditoría algorítmica de las 4 Reglas de Oro de distribución de flota.")
     md.append("")
-    md.append("4. **Motor de Generación de Informes PDF (`pdf_generator.py` & `fotos_informe.py`):**")
+    md.append("4. **Motor de Generación de Informes PDF (`pdf_generator.py`, `diagrama_chasis_pdf.py` & `fotos_informe.py`):**")
     md.append("   - Reportes ejecutivos a dos páginas con ReportLab: página 1 con resumen de flota, ficha vehicular, diagrama vectorial de chasis y tabla de mediciones; página 2 con cuadrícula simétrica de fotos de novedades con sellos de posición y observación.")
     md.append("")
+    md.append("5. **Infraestructura Cloud y Despliegue Continuo (Docker & Railway):**")
+    md.append("   - Contenedor Docker estandarizado (`Dockerfile`) con invalidación determinista de caché (`APP_BUILD_ID`).")
+    md.append("   - Configuración multi-plataforma (`railway.json`, `render.yaml`, `Procfile`, `nixpacks.toml`).")
+    md.append("   - Suite de 24 módulos de pruebas automatizadas con 160+ casos de test en Pytest.")
+    md.append("")
+
     md.append("---")
     md.append("")
 
