@@ -6,10 +6,13 @@ Implementación según especificación: docs/prompt_antigravity_ide_implementaci
 
 import os
 import math
-from datetime import datetime, date
-import pytz
+from datetime import datetime, date, timedelta, timezone
 
-BOGOTA_TZ = pytz.timezone('America/Bogota')
+try:
+    from zoneinfo import ZoneInfo
+    BOGOTA_TZ = ZoneInfo("America/Bogota")
+except Exception:
+    BOGOTA_TZ = timezone(timedelta(hours=-5))
 
 # Mapeo canónico de nombres de bodega y alias
 MAP_ESTADOS_CANONICOS = {

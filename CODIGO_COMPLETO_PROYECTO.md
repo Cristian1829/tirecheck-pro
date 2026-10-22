@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-22 11:54:29`
+- **Fecha de Generación:** `2026-10-22 12:01:55`
 - **Total de Archivos Incluidos:** `78` archivos de código y documentación
-- **Líneas Totales de Código:** `51,561` líneas
-- **Tamaño Total de Código Fuente:** `2526.0 KB` (`2,586,634` bytes)
+- **Líneas Totales de Código:** `51,565` líneas
+- **Tamaño Total de Código Fuente:** `2526.1 KB` (`2,586,758` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -396,7 +396,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [requirements.txt](#archivo-requirementstxt) | `text` | 12 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
+| [requirements.txt](#archivo-requirementstxt) | `text` | 13 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
 | [.gitignore](#archivo-gitignore) | `gitignore` | 31 | 0.4 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
 | [Dockerfile](#archivo-dockerfile) | `dockerfile` | 35 | 1.0 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
@@ -433,7 +433,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 1977 | 87.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 8966 | 427.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
-| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1479 | 66.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
+| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1482 | 66.5 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1720 | 77.6 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 201 | 10.7 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
@@ -510,7 +510,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 - **Ruta:** `requirements.txt`
 - **Descripción:** Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.)
-- **Métricas:** 12 líneas | 182 bytes (0.2 KB)
+- **Métricas:** 13 líneas | 195 bytes (0.2 KB)
 - **Lenguaje:** `text`
 
 ```text
@@ -525,6 +525,7 @@ jinja2>=3.1.0
 python-multipart>=0.0.9
 requests>=2.31.0
 tzdata>=2024.1
+pytz>=2024.1
 ```
 
 ---
@@ -14496,7 +14497,7 @@ from modulo_bodegas_taller import (
 
 - **Ruta:** `modulo_bodegas_taller.py`
 - **Descripción:** Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)
-- **Métricas:** 1479 líneas | 68,003 bytes (66.4 KB)
+- **Métricas:** 1482 líneas | 68,114 bytes (66.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14508,10 +14509,13 @@ Implementación según especificación: docs/prompt_antigravity_ide_implementaci
 
 import os
 import math
-from datetime import datetime, date
-import pytz
+from datetime import datetime, date, timedelta, timezone
 
-BOGOTA_TZ = pytz.timezone('America/Bogota')
+try:
+    from zoneinfo import ZoneInfo
+    BOGOTA_TZ = ZoneInfo("America/Bogota")
+except Exception:
+    BOGOTA_TZ = timezone(timedelta(hours=-5))
 
 # Mapeo canónico de nombres de bodega y alias
 MAP_ESTADOS_CANONICOS = {
