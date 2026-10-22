@@ -9125,7 +9125,7 @@
             <td class="p-2.5">${bloquesHtml}</td>
             <!-- 12. Plan PDF -->
             <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}', '${r.Cliente || ''}', '${r.Tipo || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
                 <i class="fa-solid fa-file-pdf mr-1"></i>PDF
               </button>
             </td>
@@ -15881,16 +15881,35 @@
       window.open(url, '_blank');
     }
     function descargarConsolidadoFlota() {
-      const cli = document.getElementById('cliente').value.trim();
-      const sub = document.getElementById('subcliente').value.trim();
-      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      let cli = (document.getElementById('cliente')?.value || getDiagVal('filtro_diag_cliente', 'filtroDiagCliente', '')).trim();
+      let sub = (document.getElementById('subcliente')?.value || getDiagVal('filtro_diag_subcliente', 'filtroDiagSede', '')).trim();
+      if (!cli || cli === 'Todos') {
+        mostrarToast('Por favor selecciona un Cliente para generar el informe consolidado.', true);
+        return;
+      }
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (sub && sub !== 'Todos') url += `&subcliente=${encodeURIComponent(sub)}`;
+      const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde', '').trim();
+      const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta', '').trim();
+      if (fDesde) url += `&fecha_desde=${encodeURIComponent(fDesde)}`;
+      if (fHasta) url += `&fecha_hasta=${encodeURIComponent(fHasta)}`;
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function descargarConsolidadoDesdeDiagnostico() {
-      const selectCliente = document.getElementById('filtroDiagCliente');
-      const cli = (selectCliente ? selectCliente.value : '').trim();
+      const selectCliente = getDiagEl('filtro_diag_cliente', 'filtroDiagCliente') || document.getElementById('cliente');
+      let cli = (selectCliente ? selectCliente.value : '').trim();
+
+      // Si el select está en 'Todos' o vacío, pero la vista filtrada corresponde a un cliente específico
+      if (!cli || cli === 'Todos') {
+        const clientesEnVista = Array.from(new Set((cacheFiltradasDiag || cacheDiagnostico || []).map(r => r.Cliente).filter(Boolean)));
+        if (clientesEnVista.length === 1) {
+          cli = clientesEnVista[0];
+          if (selectCliente) selectCliente.value = cli;
+        }
+      }
+
       if (!cli || cli === 'Todos') {
         mostrarToast('Por favor selecciona un Cliente en el filtro de diagnóstico para generar su informe consolidado.', true);
         if (selectCliente) {
@@ -15903,9 +15922,11 @@
         return;
       }
 
-      const selectSede = document.getElementById('filtroDiagSede');
+      const selectSede = getDiagEl('filtro_diag_subcliente', 'filtroDiagSede') || document.getElementById('subcliente');
       const sede = (selectSede ? selectSede.value : '').trim();
-      const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion', '').trim();
+      const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde', '').trim();
+      const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta', '').trim();
 
       let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
       if (sede && sede !== 'Todos') {
@@ -15913,6 +15934,12 @@
       }
       if (op && op !== 'Todos') {
         url += `&operacion=${encodeURIComponent(op)}`;
+      }
+      if (fDesde) {
+        url += `&fecha_desde=${encodeURIComponent(fDesde)}`;
+      }
+      if (fHasta) {
+        url += `&fecha_hasta=${encodeURIComponent(fHasta)}`;
       }
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) url += `&token=${encodeURIComponent(tok)}`;

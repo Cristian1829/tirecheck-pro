@@ -969,7 +969,7 @@ def generar_pdf_plan_mantenimiento(placa, fecha=None):
     """
     return renderizar_informe(construir_datos_informe(placa, fecha))
 
-def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None):
+def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None, fecha_desde=None, fecha_hasta=None):
     """
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
@@ -984,8 +984,13 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         df_insp = df_insp[df_insp['subcliente'].astype(str).str.upper().str.strip() == str(subcliente).upper().strip()]
     if operacion and operacion != 'Todos':
         df_insp = df_insp[df_insp['tipo_operacion'].astype(str).str.upper().str.strip() == str(operacion).upper().strip()]
-    if fecha:
+    if fecha and fecha != 'Todos':
         df_insp = df_insp[df_insp['fecha'].astype(str) == str(fecha)]
+    else:
+        if fecha_desde and fecha_desde != 'Todos':
+            df_insp = df_insp[df_insp['fecha'].astype(str).str.slice(0, 10) >= str(fecha_desde)]
+        if fecha_hasta and fecha_hasta != 'Todos':
+            df_insp = df_insp[df_insp['fecha'].astype(str).str.slice(0, 10) <= str(fecha_hasta)]
 
     if df_insp.empty:
         raise ValueError("No se encontraron inspecciones con los filtros seleccionados.")
@@ -1043,6 +1048,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     style_cell_header = ParagraphStyle('CellHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7.5, leading=10, textColor=colors.white, alignment=1)
     style_cell_body = ParagraphStyle('CellBody', parent=styles['Normal'], fontName='Helvetica', fontSize=7, leading=9, textColor=colors.HexColor('#1e293b'))
     style_cell_alert = ParagraphStyle('CellAlert', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, leading=9, textColor=colors.HexColor('#b91c1c'))
+    style_cell_center = ParagraphStyle('CellCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, alignment=1, textColor=colors.HexColor('#1e293b'))
+    style_cell_detalles = ParagraphStyle('CellDetalles', parent=styles['Normal'], fontName='Helvetica', fontSize=6, leading=7.5, textColor=colors.HexColor('#1e293b'))
 
     elements = []
     elements.append(Spacer(1, 2))
@@ -1054,6 +1061,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         partes_sede.append(f"Sede: {subcliente}")
     if operacion and operacion != 'Todos':
         partes_sede.append(f"Operación: {operacion}")
+    if fecha and fecha != 'Todos':
+        partes_sede.append(f"Fecha: {fecha}")
+    elif fecha_desde or fecha_hasta:
+        rango = f"{fecha_desde or 'Inicio'} al {fecha_hasta or 'Hoy'}"
+        partes_sede.append(f"Período: {rango}")
     sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las Sedes y Operaciones"
 
     res_box = [
@@ -1178,18 +1190,19 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(t_planes)
     elements.append(Spacer(1, 8))
 
-    # 3. LISTADO DETALLADO DE PLACAS A INTERVENIR
-    elements.append(Paragraph(f"3. Matriz de Vehículos Inspeccionados y Placas a Intervenir ({total_vehiculos} Vehículos)", style_seccion))
+    # 3. LISTADO DETALLADO DE VEHÍCULOS Y PLANES DE ACCIÓN
+    elements.append(Paragraph(f"3. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
     matriz_data = [
         [
-            Paragraph("Vehículo", style_cell_header),
-            Paragraph("Sede / Operación", style_cell_header),
-            Paragraph("Llantas", style_cell_header),
-            Paragraph("Cambio", style_cell_header),
-            Paragraph("Alinear", style_cell_header),
-            Paragraph("Dual", style_cell_header),
-            Paragraph("Rotación", style_cell_header),
-            Paragraph("Detalle de Alerta Principal", style_cell_header)
+            Paragraph("<b>Vehículo</b>", style_cell_header),
+            Paragraph("<b>Tipología / Sede</b>", style_cell_header),
+            Paragraph("<b>Llantas</b>", style_cell_header),
+            Paragraph("<b>Cambio YA</b>", style_cell_header),
+            Paragraph("<b>Próximas</b>", style_cell_header),
+            Paragraph("<b>Alinear</b>", style_cell_header),
+            Paragraph("<b>Dual</b>", style_cell_header),
+            Paragraph("<b>Rotación</b>", style_cell_header),
+            Paragraph("<b>Detalles & Recomendaciones Técnicas</b>", style_cell_header)
         ]
     ]
 
@@ -1198,67 +1211,150 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         p_ali = r.get('Plan_Alineacion', 'NO')
         p_du = r.get('Plan_Dual_Mal_Apareado', 'NO')
         p_dims = r.get('Plan_Dimensiones_Heterogeneas', 'NO')
-        p_rot = "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO"
+        p_rot = r.get('Plan_Rotacion', "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO")
+        badge_rot = r.get('Badge_Rotacion', 'SÍ' if p_rot == 'SÍ' else 'OK')
 
-        tipo_v = str(r.get('Tipo', '')).lower()
-        is_trailer_v = ('trailer' in tipo_v or 'remolque' in tipo_v or 'semirremolque' in tipo_v)
-        lbl_ali = "Alinear (Trailer/Eje libre)" if is_trailer_v else "Alinear (Direccional)"
+        cant_cambios = int(r.get('Cant_Cambios', 0) or (1 if p_cambio == 'SÍ' else 0))
+        cant_prox = int(r.get('Cant_Proximas', 0) or 0)
 
-        alertas_txt = []
-        if p_cambio == 'SÍ': alertas_txt.append(f"Cambio: {r.get('Detalle_Cambio', '')}")
-        if p_ali == 'SÍ': alertas_txt.append(f"{lbl_ali}: {r.get('Detalle_Alineacion', '')}")
-        if p_du == 'SÍ': alertas_txt.append(f"Dual: {r.get('Detalle_Dual', '')}")
-        if p_dims == 'SÍ': alertas_txt.append(f"Dims mixtas: {r.get('Detalle_Dimensiones_Heterogeneas', 'No recomendado mezclar dimensiones en la unidad')}")
-        if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
-            alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
+        tipo_v = str(r.get('Tipo', '') or '').strip()
+        is_trailer_v = ('trailer' in tipo_v.lower() or 'remolque' in tipo_v.lower() or 'semirremolque' in tipo_v.lower())
+        lbl_ali = "Alineación (Trailer/Eje libre)" if is_trailer_v else "Alineación Direccional"
 
-        det_rot = []
-        d_irr = r.get('Detalle_Rotacion_Irregular', '')
-        d_esc = r.get('Detalle_Rotacion_Escalonado', '')
+        detalles_bloques = []
+
+        # 1. Retiro Urgente / Límite
+        det_camb = str(r.get('Detalle_Cambio', '') or '').strip()
+        if p_cambio == 'SÍ' or (det_camb and det_camb != 'OK'):
+            txt_camb = det_camb if (det_camb and det_camb != 'OK') else f"Profundidad en o por debajo del límite ({limite_def:.1f} mm)"
+            detalles_bloques.append(f"• <font color='#b91c1c'><b>Retiro Urgente (≤ {limite_def:.1f}mm):</b> {txt_camb}</font>")
+
+        # 2. Próximas a cambio (+2.0 mm)
+        det_prox = str(r.get('Detalle_Proximas', '') or '').strip()
+        if cant_prox > 0 or (det_prox and det_prox != 'OK'):
+            txt_prox = det_prox if (det_prox and det_prox != 'OK') else f"{cant_prox} llantas en monitoreo (+2.0 mm)"
+            detalles_bloques.append(f"• <font color='#b45309'><b>Próxima a Cambio (+2mm):</b> {txt_prox}</font>")
+
+        # 3. Alineación
+        det_ali = str(r.get('Detalle_Alineacion', '') or '').strip()
+        if p_ali == 'SÍ' or (det_ali and det_ali != 'OK'):
+            txt_ali = det_ali if (det_ali and det_ali != 'OK') else "Diferencia exterior vs interior >= 2.0 mm"
+            detalles_bloques.append(f"• <font color='#c2410c'><b>{lbl_ali}:</b> {txt_ali}</font>")
+
+        # 4. Dual Mal Apareado
+        det_du = str(r.get('Detalle_Dual', '') or '').strip()
+        if p_du == 'SÍ' or (det_du and det_du != 'OK'):
+            txt_du = det_du if (det_du and det_du != 'OK') else "Diferencia entre gemelas >= 2.0 mm"
+            detalles_bloques.append(f"• <font color='#7e22ce'><b>Dual Mal Apareado:</b> {txt_du}</font>")
+
+        # 5. Auto-Ajuste Chasis
+        det_auto = str(r.get('Detalle_Auto_Ajuste', '') or '').strip()
+        if det_auto and det_auto != 'OK':
+            detalles_bloques.append(f"• <font color='#4338ca'><b>Auto-Ajuste Chasis:</b> {det_auto}</font>")
+
+        # 6. Rotación Preventiva (Irregular / Escalonado)
+        det_rot_list = []
+        d_irr = str(r.get('Detalle_Rotacion_Irregular', '') or '').strip()
+        d_esc = str(r.get('Detalle_Rotacion_Escalonado', '') or '').strip()
         if r.get('Plan_Rotacion_Irregular') == 'SÍ' and d_irr and d_irr != 'OK':
-            det_rot.append(f"Rotación irr: {d_irr}")
+            det_rot_list.append(f"Irregular ({d_irr})")
         if r.get('Plan_Rotacion_Escalonado') == 'SÍ' and d_esc and d_esc != 'OK':
-            det_rot.append(f"Rotación esc: {d_esc}")
+            det_rot_list.append(f"Escalonado ({d_esc})")
+        if det_rot_list:
+            detalles_bloques.append(f"• <font color='#2563eb'><b>Rotación Preventiva:</b> {'; '.join(det_rot_list)}</font>")
 
-        if alertas_txt:
-            texto_detalle = "; ".join(alertas_txt)
-            style_detalle = style_cell_alert
-        elif det_rot:
-            texto_detalle = "Preventivo: " + "; ".join(det_rot)
-            style_detalle = style_cell_body
-        else:
-            texto_detalle = "Sin novedades críticas"
-            style_detalle = style_cell_body
+        # 7. Calibración Presión PSI
+        det_psi = str(r.get('Detalle_Calibracion_PSI', '') or '').strip()
+        if r.get('Plan_Calibracion_PSI') == 'SÍ' or (det_psi and det_psi != 'OK'):
+            txt_psi = det_psi if (det_psi and det_psi != 'OK') else "Posiciones fuera de rango de calibración"
+            detalles_bloques.append(f"• <font color='#0284c7'><b>Calibración Presión PSI:</b> {txt_psi}</font>")
 
+        # 8. Dimensiones Heterogéneas
+        det_dims = str(r.get('Detalle_Dimensiones_Heterogeneas', '') or '').strip()
+        if p_dims == 'SÍ' or (det_dims and det_dims != 'OK'):
+            txt_dims = det_dims if (det_dims and det_dims != 'OK') else "Diferentes dimensiones montadas en la misma unidad"
+            detalles_bloques.append(f"• <font color='#d97706'><b>Dimensiones Heterogéneas:</b> {txt_dims}</font>")
+
+        # 9. Recomendaciones Duales adicionales
+        recom_du = str(r.get('Recomendaciones_Dual', '') or '').strip()
+        if recom_du and recom_du != 'OK':
+            detalles_bloques.append(f"• <font color='#6b21a8'><b>Recom. Dual:</b> {recom_du}</font>")
+
+        if not detalles_bloques:
+            detalles_bloques.append("• <font color='#15803d'><b>Vehículo OK:</b> Sin alertas activas en la inspección.</font>")
+
+        texto_detalles_html = "<br/>".join(detalles_bloques)
+
+        # Formateo Celda 1: Placa + Fecha + Km
+        placa_txt = str(r.get('Vehículo/Placa', '') or '')
+        fecha_txt = str(r.get('Fecha', '') or '')
+        km_val = r.get('Km', 0)
+        partes_veh = [f"<b>{placa_txt}</b>"]
+        if fecha_txt:
+            partes_veh.append(f"<font color='#64748b' size=5.5>{fecha_txt}</font>")
+        try:
+            km_num = float(km_val)
+            if km_num > 0:
+                partes_veh.append(f"<font color='#94a3b8' size=5.5>{km_num:,.0f} Km</font>")
+        except Exception:
+            pass
+        celda_veh_html = "<br/>".join(partes_veh)
+
+        # Formateo Celda 2: Tipología + Sede / Operación
         sede_val = str(r.get('Subcliente', '') or '').strip()
         op_val = str(r.get('Operación', '') or '').strip()
-        sede_op_parts = []
+        partes_tipo = []
+        if tipo_v and tipo_v.lower() not in ('nan', 'none', '-'):
+            partes_tipo.append(f"<b>{tipo_v}</b>")
         if sede_val and sede_val.lower() not in ('nan', 'none', '-'):
-            sede_op_parts.append(f"<b>{sede_val}</b>")
+            partes_tipo.append(f"<font color='#475569' size=5.5>{sede_val}</font>")
         if op_val and op_val.lower() not in ('nan', 'none', '-'):
-            sede_op_parts.append(f"<font color='#64748b'>{op_val}</font>")
-        sede_op_html = "<br/>".join(sede_op_parts) if sede_op_parts else "-"
+            partes_tipo.append(f"<font color='#94a3b8' size=5>{op_val}</font>")
+        celda_tipo_html = "<br/>".join(partes_tipo) if partes_tipo else "-"
+
+        # Formateo Celdas de Acción
+        llantas_num = str(r.get('Llantas Inspeccionadas', '') or '')
+        cambio_html = f"<font color='#b91c1c'><b>URGENTE<br/>({cant_cambios})</b></font>" if cant_cambios > 0 else "<font color='#15803d'>OK</font>"
+        proximas_html = f"<font color='#b45309'><b>PRÓXIMA<br/>({cant_prox})</b></font>" if cant_prox > 0 else "<font color='#94a3b8'>0</font>"
+        ali_html = "<font color='#c2410c'><b>SÍ</b></font>" if p_ali == 'SÍ' else "<font color='#15803d'>OK</font>"
+        dual_html = "<font color='#7e22ce'><b>SÍ</b></font>" if p_du == 'SÍ' else "<font color='#15803d'>OK</font>"
+        if badge_rot == 'AUTO-AJUSTE':
+            rot_html = "<font color='#4338ca'><b>AUTO-AJUSTE</b></font>"
+        elif p_rot == 'SÍ':
+            rot_html = "<font color='#1d4ed8'><b>SÍ</b></font>"
+        else:
+            rot_html = "<font color='#15803d'>OK</font>"
 
         matriz_data.append([
-            Paragraph(f"<b>{r.get('Vehículo/Placa', '')}</b>", style_cell_body),
-            Paragraph(sede_op_html, style_cell_body),
-            Paragraph(str(r.get('Llantas Inspeccionadas', '')), style_cell_body),
-            Paragraph(f"<b>{p_cambio}</b>", style_cell_alert if p_cambio == 'SÍ' else style_cell_body),
-            Paragraph(f"<b>{p_ali}</b>", style_cell_alert if p_ali == 'SÍ' else style_cell_body),
-            Paragraph(f"<b>{p_du}</b>", style_cell_alert if p_du == 'SÍ' else style_cell_body),
-            Paragraph(f"<b>{p_rot}</b>", style_cell_alert if p_rot == 'SÍ' else style_cell_body),
-            Paragraph(texto_detalle, style_detalle)
+            Paragraph(celda_veh_html, style_cell_body),
+            Paragraph(celda_tipo_html, style_cell_body),
+            Paragraph(f"<b>{llantas_num}</b>", style_cell_center),
+            Paragraph(cambio_html, style_cell_center),
+            Paragraph(proximas_html, style_cell_center),
+            Paragraph(ali_html, style_cell_center),
+            Paragraph(dual_html, style_cell_center),
+            Paragraph(rot_html, style_cell_center),
+            Paragraph(texto_detalles_html, style_cell_detalles)
         ])
 
-    t_matriz = Table(matriz_data, colWidths=[55, 65, 38, 42, 42, 38, 45, 215])
-    t_matriz.setStyle(TableStyle([
+    t_matriz = Table(matriz_data, colWidths=[50, 60, 24, 34, 34, 30, 28, 34, 246], repeatRows=1)
+    table_style_commands = [
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-    ]))
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]
+    for idx_fila, r in enumerate(df_analisis.to_dict('records'), start=1):
+        c_camb = int(r.get('Cant_Cambios', 0) or (1 if r.get('Plan_Cambio_Llanta') == 'SÍ' else 0))
+        if c_camb > 0:
+            table_style_commands.append(('BACKGROUND', (0, idx_fila), (-1, idx_fila), colors.HexColor('#fff1f2')))
+        elif idx_fila % 2 == 0:
+            table_style_commands.append(('BACKGROUND', (0, idx_fila), (-1, idx_fila), colors.HexColor('#f8fafc')))
+    t_matriz.setStyle(TableStyle(table_style_commands))
     elements.append(t_matriz)
     elements.append(Spacer(1, 14))
 

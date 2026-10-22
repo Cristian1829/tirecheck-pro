@@ -1069,7 +1069,15 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.get("/api/informe-pdf-consolidado")
-def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", operacion: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_descargar_pdf_consolidado(
+    cliente: str = "",
+    subcliente: str = "",
+    fecha: str = "",
+    fecha_desde: str = "",
+    fecha_hasta: str = "",
+    operacion: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     user = str(usuario_actual.get("username", "")).strip().lower()
     filtro_u = None
@@ -1087,6 +1095,8 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
             cliente=cliente if (cliente and cliente != "Todos") else None,
             subcliente=subcliente if (subcliente and subcliente != "Todos") else None,
             fecha=fecha if (fecha and fecha != "Todos") else None,
+            fecha_desde=fecha_desde if (fecha_desde and fecha_desde != "Todos") else None,
+            fecha_hasta=fecha_hasta if (fecha_hasta and fecha_hasta != "Todos") else None,
             operacion=operacion if (operacion and operacion != "Todos") else None,
             usuario=filtro_u
         )
@@ -1095,7 +1105,14 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
             c_tag += f"_{subcliente.replace(' ', '_')}"
         if operacion and operacion != "Todos":
             c_tag += f"_{operacion.replace(' ', '_')}"
-        f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
+        if fecha and fecha != "Todos":
+            f_tag = fecha.replace("-", "")
+        elif fecha_desde or fecha_hasta:
+            fd_clean = (fecha_desde or "").replace("-", "")
+            fh_clean = (fecha_hasta or "").replace("-", "")
+            f_tag = f"{fd_clean}_{fh_clean}" if (fd_clean and fh_clean) else (fd_clean or fh_clean)
+        else:
+            f_tag = ahora_bogota().strftime('%Y%m%d')
         filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
         return Response(
             content=pdf_bytes,

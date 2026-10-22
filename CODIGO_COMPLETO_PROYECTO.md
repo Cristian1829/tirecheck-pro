@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-22 12:01:55`
+- **Fecha de Generación:** `2026-10-22 12:43:58`
 - **Total de Archivos Incluidos:** `78` archivos de código y documentación
-- **Líneas Totales de Código:** `51,565` líneas
-- **Tamaño Total de Código Fuente:** `2526.1 KB` (`2,586,758` bytes)
+- **Líneas Totales de Código:** `51,779` líneas
+- **Tamaño Total de Código Fuente:** `2536.8 KB` (`2,597,665` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -431,11 +431,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 1977 | 87.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 1994 | 88.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 8966 | 427.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1482 | 66.5 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1720 | 77.6 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1816 | 83.5 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 201 | 10.7 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18160 | 959.1 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18187 | 960.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -474,7 +474,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
-| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 184 | 5.8 KB | Pruebas de generación y estructura de informes técnicos PDF |
+| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 258 | 8.4 KB | Pruebas de generación y estructura de informes técnicos PDF |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
 
@@ -3532,7 +3532,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 1977 líneas | 89,535 bytes (87.4 KB)
+- **Métricas:** 1994 líneas | 90,117 bytes (88.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4607,7 +4607,15 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.get("/api/informe-pdf-consolidado")
-def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha: str = "", operacion: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_descargar_pdf_consolidado(
+    cliente: str = "",
+    subcliente: str = "",
+    fecha: str = "",
+    fecha_desde: str = "",
+    fecha_hasta: str = "",
+    operacion: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     user = str(usuario_actual.get("username", "")).strip().lower()
     filtro_u = None
@@ -4625,6 +4633,8 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
             cliente=cliente if (cliente and cliente != "Todos") else None,
             subcliente=subcliente if (subcliente and subcliente != "Todos") else None,
             fecha=fecha if (fecha and fecha != "Todos") else None,
+            fecha_desde=fecha_desde if (fecha_desde and fecha_desde != "Todos") else None,
+            fecha_hasta=fecha_hasta if (fecha_hasta and fecha_hasta != "Todos") else None,
             operacion=operacion if (operacion and operacion != "Todos") else None,
             usuario=filtro_u
         )
@@ -4633,7 +4643,14 @@ def api_descargar_pdf_consolidado(cliente: str = "", subcliente: str = "", fecha
             c_tag += f"_{subcliente.replace(' ', '_')}"
         if operacion and operacion != "Todos":
             c_tag += f"_{operacion.replace(' ', '_')}"
-        f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
+        if fecha and fecha != "Todos":
+            f_tag = fecha.replace("-", "")
+        elif fecha_desde or fecha_hasta:
+            fd_clean = (fecha_desde or "").replace("-", "")
+            fh_clean = (fecha_hasta or "").replace("-", "")
+            f_tag = f"{fd_clean}_{fh_clean}" if (fd_clean and fh_clean) else (fd_clean or fh_clean)
+        else:
+            f_tag = ahora_bogota().strftime('%Y%m%d')
         filename = f"TireAnalyze_Consolidado_Flota_{c_tag}_{f_tag}.pdf"
         return Response(
             content=pdf_bytes,
@@ -16147,7 +16164,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1720 líneas | 79,429 bytes (77.6 KB)
+- **Métricas:** 1816 líneas | 85,483 bytes (83.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17122,7 +17139,7 @@ def generar_pdf_plan_mantenimiento(placa, fecha=None):
     """
     return renderizar_informe(construir_datos_informe(placa, fecha))
 
-def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None):
+def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None, fecha_desde=None, fecha_hasta=None):
     """
     Genera un informe PDF Consolidado de Flota con métricas globales, gráficos de resumen,
     estado de flota por eje y dimensión, y tabla de placas a intervenir.
@@ -17137,8 +17154,13 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         df_insp = df_insp[df_insp['subcliente'].astype(str).str.upper().str.strip() == str(subcliente).upper().strip()]
     if operacion and operacion != 'Todos':
         df_insp = df_insp[df_insp['tipo_operacion'].astype(str).str.upper().str.strip() == str(operacion).upper().strip()]
-    if fecha:
+    if fecha and fecha != 'Todos':
         df_insp = df_insp[df_insp['fecha'].astype(str) == str(fecha)]
+    else:
+        if fecha_desde and fecha_desde != 'Todos':
+            df_insp = df_insp[df_insp['fecha'].astype(str).str.slice(0, 10) >= str(fecha_desde)]
+        if fecha_hasta and fecha_hasta != 'Todos':
+            df_insp = df_insp[df_insp['fecha'].astype(str).str.slice(0, 10) <= str(fecha_hasta)]
 
     if df_insp.empty:
         raise ValueError("No se encontraron inspecciones con los filtros seleccionados.")
@@ -17196,6 +17218,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     style_cell_header = ParagraphStyle('CellHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7.5, leading=10, textColor=colors.white, alignment=1)
     style_cell_body = ParagraphStyle('CellBody', parent=styles['Normal'], fontName='Helvetica', fontSize=7, leading=9, textColor=colors.HexColor('#1e293b'))
     style_cell_alert = ParagraphStyle('CellAlert', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, leading=9, textColor=colors.HexColor('#b91c1c'))
+    style_cell_center = ParagraphStyle('CellCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, alignment=1, textColor=colors.HexColor('#1e293b'))
+    style_cell_detalles = ParagraphStyle('CellDetalles', parent=styles['Normal'], fontName='Helvetica', fontSize=6, leading=7.5, textColor=colors.HexColor('#1e293b'))
 
     elements = []
     elements.append(Spacer(1, 2))
@@ -17207,6 +17231,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         partes_sede.append(f"Sede: {subcliente}")
     if operacion and operacion != 'Todos':
         partes_sede.append(f"Operación: {operacion}")
+    if fecha and fecha != 'Todos':
+        partes_sede.append(f"Fecha: {fecha}")
+    elif fecha_desde or fecha_hasta:
+        rango = f"{fecha_desde or 'Inicio'} al {fecha_hasta or 'Hoy'}"
+        partes_sede.append(f"Período: {rango}")
     sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las Sedes y Operaciones"
 
     res_box = [
@@ -17331,18 +17360,19 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(t_planes)
     elements.append(Spacer(1, 8))
 
-    # 3. LISTADO DETALLADO DE PLACAS A INTERVENIR
-    elements.append(Paragraph(f"3. Matriz de Vehículos Inspeccionados y Placas a Intervenir ({total_vehiculos} Vehículos)", style_seccion))
+    # 3. LISTADO DETALLADO DE VEHÍCULOS Y PLANES DE ACCIÓN
+    elements.append(Paragraph(f"3. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
     matriz_data = [
         [
-            Paragraph("Vehículo", style_cell_header),
-            Paragraph("Sede / Operación", style_cell_header),
-            Paragraph("Llantas", style_cell_header),
-            Paragraph("Cambio", style_cell_header),
-            Paragraph("Alinear", style_cell_header),
-            Paragraph("Dual", style_cell_header),
-            Paragraph("Rotación", style_cell_header),
-            Paragraph("Detalle de Alerta Principal", style_cell_header)
+            Paragraph("<b>Vehículo</b>", style_cell_header),
+            Paragraph("<b>Tipología / Sede</b>", style_cell_header),
+            Paragraph("<b>Llantas</b>", style_cell_header),
+            Paragraph("<b>Cambio YA</b>", style_cell_header),
+            Paragraph("<b>Próximas</b>", style_cell_header),
+            Paragraph("<b>Alinear</b>", style_cell_header),
+            Paragraph("<b>Dual</b>", style_cell_header),
+            Paragraph("<b>Rotación</b>", style_cell_header),
+            Paragraph("<b>Detalles & Recomendaciones Técnicas</b>", style_cell_header)
         ]
     ]
 
@@ -17351,67 +17381,150 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         p_ali = r.get('Plan_Alineacion', 'NO')
         p_du = r.get('Plan_Dual_Mal_Apareado', 'NO')
         p_dims = r.get('Plan_Dimensiones_Heterogeneas', 'NO')
-        p_rot = "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO"
+        p_rot = r.get('Plan_Rotacion', "SÍ" if (r.get('Plan_Rotacion_Irregular') == 'SÍ' or r.get('Plan_Rotacion_Escalonado') == 'SÍ') else "NO")
+        badge_rot = r.get('Badge_Rotacion', 'SÍ' if p_rot == 'SÍ' else 'OK')
 
-        tipo_v = str(r.get('Tipo', '')).lower()
-        is_trailer_v = ('trailer' in tipo_v or 'remolque' in tipo_v or 'semirremolque' in tipo_v)
-        lbl_ali = "Alinear (Trailer/Eje libre)" if is_trailer_v else "Alinear (Direccional)"
+        cant_cambios = int(r.get('Cant_Cambios', 0) or (1 if p_cambio == 'SÍ' else 0))
+        cant_prox = int(r.get('Cant_Proximas', 0) or 0)
 
-        alertas_txt = []
-        if p_cambio == 'SÍ': alertas_txt.append(f"Cambio: {r.get('Detalle_Cambio', '')}")
-        if p_ali == 'SÍ': alertas_txt.append(f"{lbl_ali}: {r.get('Detalle_Alineacion', '')}")
-        if p_du == 'SÍ': alertas_txt.append(f"Dual: {r.get('Detalle_Dual', '')}")
-        if p_dims == 'SÍ': alertas_txt.append(f"Dims mixtas: {r.get('Detalle_Dimensiones_Heterogeneas', 'No recomendado mezclar dimensiones en la unidad')}")
-        if r.get('Recomendaciones_Dual') and r.get('Recomendaciones_Dual') != 'OK':
-            alertas_txt.append(f"Recom: {r.get('Recomendaciones_Dual')}")
+        tipo_v = str(r.get('Tipo', '') or '').strip()
+        is_trailer_v = ('trailer' in tipo_v.lower() or 'remolque' in tipo_v.lower() or 'semirremolque' in tipo_v.lower())
+        lbl_ali = "Alineación (Trailer/Eje libre)" if is_trailer_v else "Alineación Direccional"
 
-        det_rot = []
-        d_irr = r.get('Detalle_Rotacion_Irregular', '')
-        d_esc = r.get('Detalle_Rotacion_Escalonado', '')
+        detalles_bloques = []
+
+        # 1. Retiro Urgente / Límite
+        det_camb = str(r.get('Detalle_Cambio', '') or '').strip()
+        if p_cambio == 'SÍ' or (det_camb and det_camb != 'OK'):
+            txt_camb = det_camb if (det_camb and det_camb != 'OK') else f"Profundidad en o por debajo del límite ({limite_def:.1f} mm)"
+            detalles_bloques.append(f"• <font color='#b91c1c'><b>Retiro Urgente (≤ {limite_def:.1f}mm):</b> {txt_camb}</font>")
+
+        # 2. Próximas a cambio (+2.0 mm)
+        det_prox = str(r.get('Detalle_Proximas', '') or '').strip()
+        if cant_prox > 0 or (det_prox and det_prox != 'OK'):
+            txt_prox = det_prox if (det_prox and det_prox != 'OK') else f"{cant_prox} llantas en monitoreo (+2.0 mm)"
+            detalles_bloques.append(f"• <font color='#b45309'><b>Próxima a Cambio (+2mm):</b> {txt_prox}</font>")
+
+        # 3. Alineación
+        det_ali = str(r.get('Detalle_Alineacion', '') or '').strip()
+        if p_ali == 'SÍ' or (det_ali and det_ali != 'OK'):
+            txt_ali = det_ali if (det_ali and det_ali != 'OK') else "Diferencia exterior vs interior >= 2.0 mm"
+            detalles_bloques.append(f"• <font color='#c2410c'><b>{lbl_ali}:</b> {txt_ali}</font>")
+
+        # 4. Dual Mal Apareado
+        det_du = str(r.get('Detalle_Dual', '') or '').strip()
+        if p_du == 'SÍ' or (det_du and det_du != 'OK'):
+            txt_du = det_du if (det_du and det_du != 'OK') else "Diferencia entre gemelas >= 2.0 mm"
+            detalles_bloques.append(f"• <font color='#7e22ce'><b>Dual Mal Apareado:</b> {txt_du}</font>")
+
+        # 5. Auto-Ajuste Chasis
+        det_auto = str(r.get('Detalle_Auto_Ajuste', '') or '').strip()
+        if det_auto and det_auto != 'OK':
+            detalles_bloques.append(f"• <font color='#4338ca'><b>Auto-Ajuste Chasis:</b> {det_auto}</font>")
+
+        # 6. Rotación Preventiva (Irregular / Escalonado)
+        det_rot_list = []
+        d_irr = str(r.get('Detalle_Rotacion_Irregular', '') or '').strip()
+        d_esc = str(r.get('Detalle_Rotacion_Escalonado', '') or '').strip()
         if r.get('Plan_Rotacion_Irregular') == 'SÍ' and d_irr and d_irr != 'OK':
-            det_rot.append(f"Rotación irr: {d_irr}")
+            det_rot_list.append(f"Irregular ({d_irr})")
         if r.get('Plan_Rotacion_Escalonado') == 'SÍ' and d_esc and d_esc != 'OK':
-            det_rot.append(f"Rotación esc: {d_esc}")
+            det_rot_list.append(f"Escalonado ({d_esc})")
+        if det_rot_list:
+            detalles_bloques.append(f"• <font color='#2563eb'><b>Rotación Preventiva:</b> {'; '.join(det_rot_list)}</font>")
 
-        if alertas_txt:
-            texto_detalle = "; ".join(alertas_txt)
-            style_detalle = style_cell_alert
-        elif det_rot:
-            texto_detalle = "Preventivo: " + "; ".join(det_rot)
-            style_detalle = style_cell_body
-        else:
-            texto_detalle = "Sin novedades críticas"
-            style_detalle = style_cell_body
+        # 7. Calibración Presión PSI
+        det_psi = str(r.get('Detalle_Calibracion_PSI', '') or '').strip()
+        if r.get('Plan_Calibracion_PSI') == 'SÍ' or (det_psi and det_psi != 'OK'):
+            txt_psi = det_psi if (det_psi and det_psi != 'OK') else "Posiciones fuera de rango de calibración"
+            detalles_bloques.append(f"• <font color='#0284c7'><b>Calibración Presión PSI:</b> {txt_psi}</font>")
 
+        # 8. Dimensiones Heterogéneas
+        det_dims = str(r.get('Detalle_Dimensiones_Heterogeneas', '') or '').strip()
+        if p_dims == 'SÍ' or (det_dims and det_dims != 'OK'):
+            txt_dims = det_dims if (det_dims and det_dims != 'OK') else "Diferentes dimensiones montadas en la misma unidad"
+            detalles_bloques.append(f"• <font color='#d97706'><b>Dimensiones Heterogéneas:</b> {txt_dims}</font>")
+
+        # 9. Recomendaciones Duales adicionales
+        recom_du = str(r.get('Recomendaciones_Dual', '') or '').strip()
+        if recom_du and recom_du != 'OK':
+            detalles_bloques.append(f"• <font color='#6b21a8'><b>Recom. Dual:</b> {recom_du}</font>")
+
+        if not detalles_bloques:
+            detalles_bloques.append("• <font color='#15803d'><b>Vehículo OK:</b> Sin alertas activas en la inspección.</font>")
+
+        texto_detalles_html = "<br/>".join(detalles_bloques)
+
+        # Formateo Celda 1: Placa + Fecha + Km
+        placa_txt = str(r.get('Vehículo/Placa', '') or '')
+        fecha_txt = str(r.get('Fecha', '') or '')
+        km_val = r.get('Km', 0)
+        partes_veh = [f"<b>{placa_txt}</b>"]
+        if fecha_txt:
+            partes_veh.append(f"<font color='#64748b' size=5.5>{fecha_txt}</font>")
+        try:
+            km_num = float(km_val)
+            if km_num > 0:
+                partes_veh.append(f"<font color='#94a3b8' size=5.5>{km_num:,.0f} Km</font>")
+        except Exception:
+            pass
+        celda_veh_html = "<br/>".join(partes_veh)
+
+        # Formateo Celda 2: Tipología + Sede / Operación
         sede_val = str(r.get('Subcliente', '') or '').strip()
         op_val = str(r.get('Operación', '') or '').strip()
-        sede_op_parts = []
+        partes_tipo = []
+        if tipo_v and tipo_v.lower() not in ('nan', 'none', '-'):
+            partes_tipo.append(f"<b>{tipo_v}</b>")
         if sede_val and sede_val.lower() not in ('nan', 'none', '-'):
-            sede_op_parts.append(f"<b>{sede_val}</b>")
+            partes_tipo.append(f"<font color='#475569' size=5.5>{sede_val}</font>")
         if op_val and op_val.lower() not in ('nan', 'none', '-'):
-            sede_op_parts.append(f"<font color='#64748b'>{op_val}</font>")
-        sede_op_html = "<br/>".join(sede_op_parts) if sede_op_parts else "-"
+            partes_tipo.append(f"<font color='#94a3b8' size=5>{op_val}</font>")
+        celda_tipo_html = "<br/>".join(partes_tipo) if partes_tipo else "-"
+
+        # Formateo Celdas de Acción
+        llantas_num = str(r.get('Llantas Inspeccionadas', '') or '')
+        cambio_html = f"<font color='#b91c1c'><b>URGENTE<br/>({cant_cambios})</b></font>" if cant_cambios > 0 else "<font color='#15803d'>OK</font>"
+        proximas_html = f"<font color='#b45309'><b>PRÓXIMA<br/>({cant_prox})</b></font>" if cant_prox > 0 else "<font color='#94a3b8'>0</font>"
+        ali_html = "<font color='#c2410c'><b>SÍ</b></font>" if p_ali == 'SÍ' else "<font color='#15803d'>OK</font>"
+        dual_html = "<font color='#7e22ce'><b>SÍ</b></font>" if p_du == 'SÍ' else "<font color='#15803d'>OK</font>"
+        if badge_rot == 'AUTO-AJUSTE':
+            rot_html = "<font color='#4338ca'><b>AUTO-AJUSTE</b></font>"
+        elif p_rot == 'SÍ':
+            rot_html = "<font color='#1d4ed8'><b>SÍ</b></font>"
+        else:
+            rot_html = "<font color='#15803d'>OK</font>"
 
         matriz_data.append([
-            Paragraph(f"<b>{r.get('Vehículo/Placa', '')}</b>", style_cell_body),
-            Paragraph(sede_op_html, style_cell_body),
-            Paragraph(str(r.get('Llantas Inspeccionadas', '')), style_cell_body),
-            Paragraph(f"<b>{p_cambio}</b>", style_cell_alert if p_cambio == 'SÍ' else style_cell_body),
-            Paragraph(f"<b>{p_ali}</b>", style_cell_alert if p_ali == 'SÍ' else style_cell_body),
-            Paragraph(f"<b>{p_du}</b>", style_cell_alert if p_du == 'SÍ' else style_cell_body),
-            Paragraph(f"<b>{p_rot}</b>", style_cell_alert if p_rot == 'SÍ' else style_cell_body),
-            Paragraph(texto_detalle, style_detalle)
+            Paragraph(celda_veh_html, style_cell_body),
+            Paragraph(celda_tipo_html, style_cell_body),
+            Paragraph(f"<b>{llantas_num}</b>", style_cell_center),
+            Paragraph(cambio_html, style_cell_center),
+            Paragraph(proximas_html, style_cell_center),
+            Paragraph(ali_html, style_cell_center),
+            Paragraph(dual_html, style_cell_center),
+            Paragraph(rot_html, style_cell_center),
+            Paragraph(texto_detalles_html, style_cell_detalles)
         ])
 
-    t_matriz = Table(matriz_data, colWidths=[55, 65, 38, 42, 42, 38, 45, 215])
-    t_matriz.setStyle(TableStyle([
+    t_matriz = Table(matriz_data, colWidths=[50, 60, 24, 34, 34, 30, 28, 34, 246], repeatRows=1)
+    table_style_commands = [
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-    ]))
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]
+    for idx_fila, r in enumerate(df_analisis.to_dict('records'), start=1):
+        c_camb = int(r.get('Cant_Cambios', 0) or (1 if r.get('Plan_Cambio_Llanta') == 'SÍ' else 0))
+        if c_camb > 0:
+            table_style_commands.append(('BACKGROUND', (0, idx_fila), (-1, idx_fila), colors.HexColor('#fff1f2')))
+        elif idx_fila % 2 == 0:
+            table_style_commands.append(('BACKGROUND', (0, idx_fila), (-1, idx_fila), colors.HexColor('#f8fafc')))
+    t_matriz.setStyle(TableStyle(table_style_commands))
     elements.append(t_matriz)
     elements.append(Spacer(1, 14))
 
@@ -20748,7 +20861,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 18160 líneas | 982,164 bytes (959.1 KB)
+- **Métricas:** 18187 líneas | 983,802 bytes (960.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -29879,7 +29992,7 @@ if __name__ == '__main__':
             <td class="p-2.5">${bloquesHtml}</td>
             <!-- 12. Plan PDF -->
             <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}', '${r.Cliente || ''}', '${r.Tipo || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
                 <i class="fa-solid fa-file-pdf mr-1"></i>PDF
               </button>
             </td>
@@ -36635,16 +36748,35 @@ if __name__ == '__main__':
       window.open(url, '_blank');
     }
     function descargarConsolidadoFlota() {
-      const cli = document.getElementById('cliente').value.trim();
-      const sub = document.getElementById('subcliente').value.trim();
-      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}&subcliente=${encodeURIComponent(sub)}`;
+      let cli = (document.getElementById('cliente')?.value || getDiagVal('filtro_diag_cliente', 'filtroDiagCliente', '')).trim();
+      let sub = (document.getElementById('subcliente')?.value || getDiagVal('filtro_diag_subcliente', 'filtroDiagSede', '')).trim();
+      if (!cli || cli === 'Todos') {
+        mostrarToast('Por favor selecciona un Cliente para generar el informe consolidado.', true);
+        return;
+      }
+      let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
+      if (sub && sub !== 'Todos') url += `&subcliente=${encodeURIComponent(sub)}`;
+      const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde', '').trim();
+      const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta', '').trim();
+      if (fDesde) url += `&fecha_desde=${encodeURIComponent(fDesde)}`;
+      if (fHasta) url += `&fecha_hasta=${encodeURIComponent(fHasta)}`;
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
     function descargarConsolidadoDesdeDiagnostico() {
-      const selectCliente = document.getElementById('filtroDiagCliente');
-      const cli = (selectCliente ? selectCliente.value : '').trim();
+      const selectCliente = getDiagEl('filtro_diag_cliente', 'filtroDiagCliente') || document.getElementById('cliente');
+      let cli = (selectCliente ? selectCliente.value : '').trim();
+
+      // Si el select está en 'Todos' o vacío, pero la vista filtrada corresponde a un cliente específico
+      if (!cli || cli === 'Todos') {
+        const clientesEnVista = Array.from(new Set((cacheFiltradasDiag || cacheDiagnostico || []).map(r => r.Cliente).filter(Boolean)));
+        if (clientesEnVista.length === 1) {
+          cli = clientesEnVista[0];
+          if (selectCliente) selectCliente.value = cli;
+        }
+      }
+
       if (!cli || cli === 'Todos') {
         mostrarToast('Por favor selecciona un Cliente en el filtro de diagnóstico para generar su informe consolidado.', true);
         if (selectCliente) {
@@ -36657,9 +36789,11 @@ if __name__ == '__main__':
         return;
       }
 
-      const selectSede = document.getElementById('filtroDiagSede');
+      const selectSede = getDiagEl('filtro_diag_subcliente', 'filtroDiagSede') || document.getElementById('subcliente');
       const sede = (selectSede ? selectSede.value : '').trim();
-      const op = (document.getElementById('filtroDiagOperacion')?.value || '').trim();
+      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion', '').trim();
+      const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde', '').trim();
+      const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta', '').trim();
 
       let url = `/api/informe-pdf-consolidado?cliente=${encodeURIComponent(cli)}`;
       if (sede && sede !== 'Todos') {
@@ -36667,6 +36801,12 @@ if __name__ == '__main__':
       }
       if (op && op !== 'Todos') {
         url += `&operacion=${encodeURIComponent(op)}`;
+      }
+      if (fDesde) {
+        url += `&fecha_desde=${encodeURIComponent(fDesde)}`;
+      }
+      if (fHasta) {
+        url += `&fecha_hasta=${encodeURIComponent(fHasta)}`;
       }
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) url += `&token=${encodeURIComponent(tok)}`;
@@ -47922,7 +48062,7 @@ def test_kpis_permisos_inspector_flotas(test_db):
 
 - **Ruta:** `tests/test_pdf.py`
 - **Descripción:** Pruebas de generación y estructura de informes técnicos PDF
-- **Métricas:** 184 líneas | 5,972 bytes (5.8 KB)
+- **Métricas:** 258 líneas | 8,605 bytes (8.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -48107,6 +48247,79 @@ def test_pdf_tecnico_y_consolidado_dimensiones_mixtas(test_db):
     assert isinstance(pdf_consolidado, bytes)
     assert len(pdf_consolidado) > 1000
     assert pdf_consolidado.startswith(b'%PDF-')
+
+
+def test_generar_pdf_consolidado_rango_fechas(test_db):
+    # Insertar dos inspecciones en fechas distintas
+    database.insertar_inspeccion({
+        'fecha': '2026-05-10',
+        'cliente': 'Flota Fechas',
+        'subcliente': 'Sede A',
+        'tipo_operacion': 'Ruta',
+        'placa': 'V-MAYO',
+        'posicion': 1,
+        'kilometraje': 10000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'psi': 100.0
+    })
+    database.insertar_inspeccion({
+        'fecha': '2026-08-15',
+        'cliente': 'Flota Fechas',
+        'subcliente': 'Sede A',
+        'tipo_operacion': 'Ruta',
+        'placa': 'V-AGOSTO',
+        'posicion': 1,
+        'kilometraje': 12000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 2.5,  # Cambio urgente
+        'prof_cent': 2.5,
+        'prof_int': 2.5,
+        'psi': 95.0
+    })
+
+    # 1. Rango que cubre ambas
+    pdf_ambas = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-05-01', fecha_hasta='2026-08-31')
+    assert isinstance(pdf_ambas, bytes)
+    assert len(pdf_ambas) > 1000
+    assert pdf_ambas.startswith(b'%PDF-')
+
+    # 2. Rango que solo cubre la segunda
+    pdf_agosto = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-08-01', fecha_hasta='2026-08-31')
+    assert isinstance(pdf_agosto, bytes)
+    assert len(pdf_agosto) > 1000
+    assert pdf_agosto.startswith(b'%PDF-')
+
+    # 3. Rango sin coincidencias debe levantar ValueError
+    with pytest.raises(ValueError, match="No se encontraron inspecciones"):
+        pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-01-01', fecha_hasta='2026-01-31')
+
+
+def test_api_pdf_consolidado_con_rango_fechas(test_db, auth_client):
+    database.insertar_inspeccion({
+        'fecha': '2026-09-15',
+        'cliente': 'Cliente API PDF',
+        'subcliente': 'Sede Centro',
+        'tipo_operacion': 'Distribución',
+        'placa': 'API-PDF-01',
+        'posicion': 1,
+        'kilometraje': 25000.0,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 4.5,  # Próxima a cambio (+2.0 mm)
+        'prof_cent': 4.5,
+        'prof_int': 4.5,
+        'psi': 100.0
+    })
+
+    res = auth_client.get("/api/informe-pdf-consolidado?cliente=Cliente%20API%20PDF&fecha_desde=2026-09-01&fecha_hasta=2026-09-30")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/pdf"
+    assert res.content.startswith(b"%PDF-")
 ```
 
 ---
