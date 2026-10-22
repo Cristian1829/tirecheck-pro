@@ -570,10 +570,20 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
 # ==========================================
 
 @app.get("/api/diagnostico")
-def api_diagnostico(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_diagnostico(
+    usuario: str = "",
+    fecha_desde: str = "",
+    fecha_hasta: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
     try:
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
         df = database.obtener_todas_inspecciones(usuario=filtro_u)
+        if not df.empty and 'fecha' in df.columns:
+            if fecha_desde and str(fecha_desde).strip():
+                df = df[df['fecha'].astype(str).str[:10] >= str(fecha_desde).strip()]
+            if fecha_hasta and str(fecha_hasta).strip():
+                df = df[df['fecha'].astype(str).str[:10] <= str(fecha_hasta).strip()]
         analisis = database.analizar_inspecciones_df(df)
         analisis = analisis.fillna("")
         return sanitizar_nativos(analisis.to_dict(orient="records"))
@@ -589,6 +599,8 @@ def api_diagnostico_matriz_semaforos(
     subcliente: str = "",
     operacion: str = "",
     placa: str = "",
+    fecha_desde: str = "",
+    fecha_hasta: str = "",
     usuario: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
@@ -610,6 +622,12 @@ def api_diagnostico_matriz_semaforos(
                 "totales_posicion": {},
                 "resumen_global": {"total_vehiculos": 0, "total_llantas": 0, "rojo": 0, "amarillo": 0, "verde": 0, "gris": 0}
             }
+
+        if 'fecha' in df.columns:
+            if fecha_desde and str(fecha_desde).strip():
+                df = df[df['fecha'].astype(str).str[:10] >= str(fecha_desde).strip()]
+            if fecha_hasta and str(fecha_hasta).strip():
+                df = df[df['fecha'].astype(str).str[:10] <= str(fecha_hasta).strip()]
 
         if cliente and cliente != "Todos":
             df = df[df["cliente"].astype(str).str.upper().str.strip() == str(cliente).upper().strip()]
@@ -754,6 +772,8 @@ def api_exportar_diagnostico_excel(
     tipo_operacion: str = "",
     alerta: str = "",
     placa: str = "",
+    fecha_desde: str = "",
+    fecha_hasta: str = "",
     usuario: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
@@ -768,6 +788,12 @@ def api_exportar_diagnostico_excel(
             df_insp = df_insp[df_insp['cliente'].astype(str).str.strip().str.lower().isin([c.lower() for c in clis_permitidos])]
 
     # 1. Filtros sobre inspecciones
+    if not df_insp.empty and 'fecha' in df_insp.columns:
+        if fecha_desde and str(fecha_desde).strip():
+            df_insp = df_insp[df_insp['fecha'].astype(str).str[:10] >= str(fecha_desde).strip()]
+        if fecha_hasta and str(fecha_hasta).strip():
+            df_insp = df_insp[df_insp['fecha'].astype(str).str[:10] <= str(fecha_hasta).strip()]
+
     cli_limpio = str(cliente or '').strip()
     if cli_limpio and cli_limpio.upper() != 'TODOS' and not df_insp.empty:
         df_insp = df_insp[df_insp['cliente'].astype(str).str.upper().str.strip() == cli_limpio.upper()]
@@ -831,8 +857,13 @@ def api_exportar_diagnostico_excel(
     ])
 
     buf = io.BytesIO()
+    df_analisis_excel = df_analisis.copy()
+    for col in df_analisis_excel.columns:
+        if df_analisis_excel[col].apply(lambda x: isinstance(x, (dict, list))).any():
+            df_analisis_excel[col] = df_analisis_excel[col].apply(lambda x: json.dumps(x, ensure_ascii=False) if isinstance(x, (dict, list)) else x)
+
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df_analisis.to_excel(writer, sheet_name="Planes_Accion", index=False)
+        df_analisis_excel.to_excel(writer, sheet_name="Planes_Accion", index=False)
         if not df_insp.empty:
             df_insp.to_excel(writer, sheet_name="Detalle_Inspecciones", index=False)
         df_resumen.to_excel(writer, sheet_name="Filtros_Aplicados", index=False)
@@ -856,8 +887,80 @@ def api_exportar_diagnostico_excel(
     )
 
 # ==========================================
-# RUTAS DE TRAZABILIDAD Y KPIS DE LLANTAS
+# RUTAS DE TRAZABILIDAD Y KPIS DE LLANTAS (SUITE 20 KPIS)
 # ==========================================
+
+@app.get("/api/kpis/suite-20")
+def api_kpis_suite_20(
+    cliente: str = "",
+    subcliente: str = "",
+    tipo_operacion: str = "",
+    tipologia: str = "",
+    marca: str = "",
+    dimension: str = "",
+    eje_temporal: str = "mes",
+    agrupar_kpi14: str = "marca",
+    licencia: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    try:
+        rol = str(usuario_actual.get("rol", "")).strip().lower()
+        user = str(usuario_actual.get("username", "")).strip().lower()
+        if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+            if clis and (not cliente or cliente == "Todos"):
+                cliente = clis[0]
+            elif clis and cliente and cliente != "Todos":
+                if not any(c.lower() == cliente.strip().lower() for c in clis):
+                    raise HTTPException(status_code=403, detail="No tiene permisos para ver los KPIs de este cliente")
+
+        filtros = {
+            "cliente": "" if cliente == "Todos" else cliente,
+            "subcliente": "" if subcliente == "Todos" else subcliente,
+            "tipo_operacion": "" if tipo_operacion == "Todos" else tipo_operacion,
+            "tipologia": "" if tipologia == "Todos" else tipologia,
+            "marca": "" if marca == "Todos" else marca,
+            "dimension": "" if dimension == "Todos" else dimension,
+            "eje_temporal": eje_temporal,
+            "agrupar_kpi14": agrupar_kpi14,
+            "licencia": licencia,
+            "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
+        }
+        datos = database.obtener_suite_completa_20_kpis(filtros)
+        return sanitizar_nativos(datos)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al calcular Suite de 20 KPIs: {str(e)}")
+
+@app.get("/api/kpis/exportar-mrp-excel")
+def api_exportar_mrp_excel(
+    cliente: str = "",
+    subcliente: str = "",
+    dimension: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    filtros = {
+        "cliente": "" if cliente == "Todos" else cliente,
+        "subcliente": "" if subcliente == "Todos" else subcliente,
+        "dimension": "" if dimension == "Todos" else dimension
+    }
+    data = database.obtener_suite_completa_20_kpis(filtros)
+    mrp_items = data.get("kpi_20", {}).get("matriz_mrp", [])
+    df = pd.DataFrame(mrp_items)
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Orden_Compra_MRP", index=False)
+        wb = writer.book
+        if "Orden_Compra_MRP" in wb.sheetnames:
+            _estilizar_hoja_excel(wb["Orden_Compra_MRP"], color_header="312E81")
+    f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
+    filename = f"Orden_Compra_MRP_{f_str}.xlsx"
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 @app.get("/api/kpis-llantas")
 def api_kpis_llantas(
@@ -1611,11 +1714,11 @@ def api_bodegas_inventario(
     filtros = {
         "cliente": "" if cliente == "Todos" else cliente,
         "subcliente": "" if subcliente == "Todos" else subcliente,
-        "ubicacion_bodega": "" if ubicacion_bodega == "Todas" else ubicacion_bodega,
-        "dimension": "" if dimension == "Todas" else dimension,
+        "ubicacion_bodega": "" if ubicacion_bodega in ("Todas", "TODAS") else ubicacion_bodega,
+        "dimension": "" if dimension in ("Todas", "TODAS") else dimension,
         "q": q
     }
-    return sanitizar_nativos(database.listar_inventario_bodegas(filtros))
+    return sanitizar_nativos(database.listar_inventario_bodegas_con_kpis(filtros))
 
 @app.post("/api/bodegas/alta")
 def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -1665,6 +1768,201 @@ def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actu
     return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
 
 # ==========================================
+# ENDPOINTS TALLER EN PATIO Y 7 BODEGAS
+# ==========================================
+
+@app.get("/api/taller/posicion-info")
+def api_taller_posicion_info(
+    placa: str = "",
+    posicion: int = 0,
+    cliente: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    return sanitizar_nativos(database.obtener_posicion_taller_info(placa, posicion, cliente))
+
+@app.post("/api/taller/desmontar")
+def api_taller_desmontar(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.desmontar_llanta_taller(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al desmontar llanta"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/taller/montar")
+def api_taller_montar(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.montar_llanta_taller(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al montar llanta"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/llantas-crear-stock")
+@app.post("/api/bodegas/ingreso-compra")
+def api_llantas_crear_stock(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.crear_llantas_stock(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al crear llantas en stock"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/bodegas/despacho-planta")
+def api_bodegas_despacho_planta(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.despachar_lote_planta_reencauche(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al despachar a planta"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/bodegas/retorno-reencauche")
+def api_bodegas_retorno_reencauche(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.recepcionar_llanta_reencauchada(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al recepcionar reencauche"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/bodegas/finalizar-reparacion")
+def api_bodegas_finalizar_reparacion(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.finalizar_reparacion_bodega5(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al finalizar reparación"))
+    return sanitizar_nativos(res)
+
+@app.post("/api/bodegas/dictamen-garantia")
+def api_bodegas_dictamen_garantia(
+    item: dict,
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        item["cliente_propietario"] = usuario_actual["cliente_asignado"]
+    item["usuario_responsable"] = usuario_actual.get("username", "admin")
+    res = database.procesar_dictamen_garantia_bodega6(item)
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error en dictamen de garantía"))
+    return sanitizar_nativos(res)
+
+@app.get("/api/llanta/hoja-vida/{numero_interno}")
+def api_llanta_hoja_vida(
+    numero_interno: str,
+    cliente: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+    res = database.obtener_hoja_vida_llanta(numero_interno, cliente)
+    if not res.get("ok"):
+        raise HTTPException(status_code=404, detail=res.get("mensaje", "No se encontró la hoja de vida"))
+    return sanitizar_nativos(res)
+
+@app.get("/api/bodegas/pdf-despacho-planta")
+def api_bodegas_pdf_despacho_planta(
+    guia: str = "",
+    cliente: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+
+    inv = database.listar_inventario_bodegas_con_kpis({"cliente": cliente, "ubicacion_bodega": "Bodega_4_EnPlanta"})
+    llantas = [ll for ll in inv.get("llantas", []) if not guia or str(ll.get("guia_remision_planta", "")).upper() == guia.strip().upper()]
+    datos_pdf = {
+        "guia_remision": guia or "GUIA-PLANTA",
+        "cliente": cliente or "CLIENTE GENERAL",
+        "proveedor_planta": llantas[0].get("proveedor_planta", "Planta Renovadora") if llantas else "Planta Renovadora",
+        "transportador": llantas[0].get("transportador_planta", "Transporte Propio") if llantas else "Transporte Propio",
+        "fecha_envio": datetime.now(BOGOTA_TZ).strftime("%Y-%m-%d"),
+        "llantas": llantas
+    }
+    pdf_bytes = pdf_generator.generar_pdf_despacho_planta(datos_pdf)
+    return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename=despacho_{guia or 'lote'}.pdf"})
+
+@app.get("/api/bodegas/pdf-acta-chatarrizacion/{numero_interno}")
+def api_bodegas_pdf_acta_chatarrizacion(
+    numero_interno: str,
+    cliente: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        cliente = usuario_actual["cliente_asignado"]
+
+    hv = database.obtener_hoja_vida_llanta(numero_interno, cliente)
+    if not hv.get("ok"):
+        raise HTTPException(status_code=404, detail="No se encontró la llanta para generar acta")
+
+    ft = hv.get("ficha_tecnica", {})
+    ea = hv.get("estado_actual", {})
+    datos_pdf = {
+        "numero_interno": numero_interno,
+        "cliente": ft.get("cliente", cliente or "CLIENTE GENERAL"),
+        "marca": ft.get("marca", ""),
+        "diseno": ft.get("diseno", ""),
+        "dimension": ft.get("dimension", "295/80R22.5"),
+        "prof_retiro": ea.get("prof_min_actual", 0.0),
+        "limite_retiro": 3.0,
+        "mm_desperdiciados": max(0.0, ea.get("prof_min_actual", 0.0) - 3.0),
+        "dinero_perdido": 0.0,
+        "motivo_baja": "Fin de Vida Útil / Chatarrización"
+    }
+    pdf_bytes = pdf_generator.generar_pdf_acta_chatarrizacion(datos_pdf)
+    return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename=acta_fvu_{numero_interno}.pdf"})
+
+
+# ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
 
@@ -1675,5 +1973,5 @@ if __name__ == "__main__":
         puerto = int(raw_port)
     except (ValueError, TypeError):
         puerto = 8000
-    recarga = os.environ.get("ENV") != "production"
+    recarga = os.environ.get("RELOAD") == "1"
     uvicorn.run("server:app", host="0.0.0.0", port=puerto, reload=recarga)

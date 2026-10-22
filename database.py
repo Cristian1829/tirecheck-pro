@@ -151,8 +151,13 @@ def to_int(val, default=0):
 
 @contextmanager
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=15.0)
     conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")
+    conn.execute("PRAGMA busy_timeout = 10000")
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA cache_size = -32000")
+    conn.execute("PRAGMA temp_store = MEMORY")
     try:
         yield conn
         conn.commit()
@@ -545,6 +550,117 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_serial ON llantas_maestro (numero_interno, cliente)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_serial_cliente ON kardex_movimientos_llanta (cliente, numero_interno, fecha_movimiento DESC)")
 
+        # Migración automática de columnas para llantas_maestro según especificación de 7 Bodegas y Hoja de Vida
+        cursor.execute("PRAGMA table_info(llantas_maestro)")
+        cols_ll_m = [row[1] for row in cursor.fetchall()]
+        nuevas_cols_ll_m = [
+            ("cliente_propietario", "TEXT DEFAULT ''"),
+            ("subcliente_sede", "TEXT DEFAULT 'Principal'"),
+            ("numero_serie_dot", "TEXT DEFAULT ''"),
+            ("marca_origen", "TEXT DEFAULT ''"),
+            ("diseno_origen", "TEXT DEFAULT ''"),
+            ("tipo_construccion", "TEXT DEFAULT 'Radial'"),
+            ("indice_carga_velocidad", "TEXT DEFAULT ''"),
+            ("precio_compra_inicial", "REAL DEFAULT 0.0"),
+            ("prof_inicial_nueva", "REAL DEFAULT 16.0"),
+            ("proveedor_factura", "TEXT DEFAULT ''"),
+            ("tipo_eje_actual", "TEXT DEFAULT ''"),
+            ("km_montaje_actual", "REAL DEFAULT 0.0"),
+            ("proveedor_planta", "TEXT DEFAULT ''"),
+            ("guia_remision_planta", "TEXT DEFAULT ''"),
+            ("transportador_planta", "TEXT DEFAULT ''"),
+            ("fecha_compromiso_planta", "TEXT DEFAULT NULL"),
+            ("dictamen_garantia", "TEXT DEFAULT ''"),
+            ("pct_reconocido_garantia", "REAL DEFAULT 0.0"),
+            ("ciclo_actual", "INTEGER DEFAULT 1"),
+            ("costo_reencauches_total", "REAL DEFAULT 0.0"),
+            ("costo_reparaciones_total", "REAL DEFAULT 0.0"),
+            ("cpk_acumulado_global", "REAL DEFAULT 0.0"),
+            ("fecha_alta", "TEXT DEFAULT ''"),
+            ("fecha_ultimo_movimiento", "TEXT DEFAULT ''"),
+            ("fecha_baja", "TEXT DEFAULT NULL"),
+            ("motivo_baja", "TEXT DEFAULT NULL"),
+            ("foto_baja", "TEXT DEFAULT ''"),
+            ("mm_desperdiciados_fvu", "REAL DEFAULT 0.0"),
+            ("dinero_perdido_fvu", "REAL DEFAULT 0.0")
+        ]
+        for col_n, col_t in nuevas_cols_ll_m:
+            if col_n not in cols_ll_m:
+                try:
+                    cursor.execute(f"ALTER TABLE llantas_maestro ADD COLUMN {col_n} {col_t}")
+                except Exception:
+                    pass
+
+        # 2. TABLA DE HISTÓRICO DE CICLOS DE VIDA (ORIGINAL, R1, R2, R3...)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS llantas_ciclos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                numero_interno TEXT NOT NULL,
+                cliente_propietario TEXT NOT NULL DEFAULT '',
+                numero_ciclo INTEGER NOT NULL DEFAULT 1,
+                tipo_ciclo TEXT NOT NULL DEFAULT 'Original',
+                proveedor_banda TEXT DEFAULT '',
+                diseno_banda TEXT DEFAULT '',
+                prof_inicial_ciclo REAL NOT NULL DEFAULT 16.0,
+                prof_final_ciclo REAL DEFAULT NULL,
+                km_inicial_ciclo REAL DEFAULT 0.0,
+                km_final_ciclo REAL DEFAULT NULL,
+                km_recorridos_ciclo REAL DEFAULT 0.0,
+                costo_ciclo REAL DEFAULT 0.0,
+                cpk_ciclo REAL DEFAULT 0.0,
+                factura_renovado TEXT DEFAULT '',
+                fecha_inicio_ciclo TEXT DEFAULT CURRENT_DATE,
+                fecha_fin_ciclo TEXT DEFAULT NULL,
+                estado_ciclo TEXT DEFAULT 'En_Servicio'
+            )
+        """)
+
+        # 3. TABLA DE LOG DE MOVIMIENTOS Y TRANSACCIONES DE TALLER
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS llantas_movimientos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha_movimiento TEXT DEFAULT CURRENT_TIMESTAMP,
+                numero_interno TEXT NOT NULL,
+                cliente_propietario TEXT NOT NULL DEFAULT '',
+                tipo_movimiento TEXT NOT NULL,
+                bodega_origen TEXT DEFAULT '',
+                bodega_destino TEXT DEFAULT '',
+                placa_origen TEXT DEFAULT '',
+                posicion_origen INTEGER DEFAULT 0,
+                placa_destino TEXT DEFAULT '',
+                posicion_destino INTEGER DEFAULT 0,
+                odometro_vehiculo REAL DEFAULT 0.0,
+                profundidad_momento REAL DEFAULT 0.0,
+                psi_momento REAL DEFAULT 0.0,
+                costo_asociado REAL DEFAULT 0.0,
+                motivo TEXT DEFAULT '',
+                usuario_responsable TEXT NOT NULL DEFAULT 'admin'
+            )
+        """)
+
+        # 4. TABLA DE HISTÓRICO DE NOVEDADES FÍSICAS EN CARCASA
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS llantas_novedades_registro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha_deteccion TEXT DEFAULT CURRENT_DATE,
+                numero_interno TEXT NOT NULL,
+                cliente_propietario TEXT NOT NULL DEFAULT '',
+                tipo_novedad TEXT NOT NULL,
+                categoria_severidad TEXT DEFAULT 'Operativa',
+                estado_novedad TEXT DEFAULT 'Activa',
+                placa TEXT DEFAULT '',
+                posicion INTEGER DEFAULT 0,
+                observacion TEXT DEFAULT '',
+                foto_url TEXT DEFAULT ''
+            )
+        """)
+
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_num ON llantas_maestro(numero_interno, cliente_propietario)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_estado ON llantas_maestro(cliente_propietario, estado_actual)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_placa_pos ON llantas_maestro(placa_actual, posicion_actual, estado_actual)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_ciclos_num ON llantas_ciclos(numero_interno, numero_ciclo)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_mov_num ON llantas_movimientos(numero_interno, fecha_movimiento DESC)")
+
         # Tabla de Catálogo de Operaciones
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_operaciones (
@@ -675,6 +791,12 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_marcas_cliente ON configuracion_marcas_cliente (cliente)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_padron_cliente ON padron_vehiculos_cliente (cliente, activo)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_config_avanzada_cliente ON configuracion_avanzada_cliente (cliente)")
+        # Índices de optimización de alto rendimiento (ordenamiento DESC y consultas compuestas)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_fecha_desc ON inspecciones (fecha DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_fecha_desc ON inspecciones (cliente, fecha DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_placa ON inspecciones (cliente, placa)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_numero_interno_fecha ON kardex_movimientos_llanta (numero_interno, fecha_movimiento DESC)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_estado_act ON llantas_maestro (cliente, estado_actual)")
 
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
@@ -687,6 +809,11 @@ def inicializar_bd():
 
         # Sincronización automática inicial (Backfill) de llantas_maestro desde inspecciones históricas
         sincronizar_maestro_desde_inspecciones(conn)
+        try:
+            from modulo_bodegas_taller import sincronizar_hoja_vida_desde_inspecciones
+            sincronizar_hoja_vida_desde_inspecciones(conn)
+        except Exception as e_shv:
+            pass
 
         conn.commit()
 
@@ -1951,57 +2078,54 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 WHERE UPPER(TRIM(placa)) = ?
             """, (pl,))
             row = cursor.fetchone()
-            dim_vehiculo = dim_ult
-            if not dim_vehiculo and row and row[0]:
-                cursor.execute("""
-                    SELECT dimension FROM inspecciones 
-                    WHERE UPPER(TRIM(placa)) = ? AND dimension IS NOT NULL AND TRIM(dimension) != ''
-                    ORDER BY fecha DESC, id DESC LIMIT 1
-                """, (pl,))
-                r_dim = cursor.fetchone()
-                if r_dim and r_dim[0]:
-                    dim_vehiculo = str(r_dim[0]).strip()
-        else:
-            dim_vehiculo = str(row[6]).strip() if len(row) > 6 and row[6] else dim_ult
-            # Sincronizar catálogo con los datos de la última inspección
-            sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5])
 
-    if row and row[1]:
-        tip = row[1]
-        posiciones = obtener_posiciones_por_tipologia(tip)
-        esquema = obtener_esquema_tipologia(tip)
-        ultimo_km_val = to_float(row[5], 0.0)
-        if ultimo_km_val <= 0:
-            cursor.execute("SELECT MAX(kilometraje) FROM inspecciones WHERE UPPER(TRIM(placa)) = ?", (pl,))
-            r_max_km = cursor.fetchone()
-            if r_max_km and r_max_km[0]:
-                ultimo_km_val = to_float(r_max_km[0], 0.0)
-        return {
-            "encontrado": True,
-            "placa": row[0],
-            "tipologia": tip,
-            "cliente": row[2] or cliente_placa or "",
-            "subcliente": row[3] or "",
-            "tipo_operacion": row[4] or "",
-            "ultimo_km": ultimo_km_val,
-            "dimension": dim_vehiculo,
-            "cant_llantas": len(posiciones),
-            "esquema": esquema,
-            "posiciones": posiciones,
-            # Control de frecuencia técnica e historial de inspección
-            "ultima_fecha_inspeccion": f_ult_str,
-            "fecha_minima_permitida": f_minima_str,
-            "en_periodo_restringido": en_periodo_restringido,
-            "dias_para_nueva_inspeccion": dias_restantes,
-            "inspeccion_hoy": inspeccion_hoy,
-            "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
-            "ultima_marca": marca_ult,
-            "ultimo_diseno": diseno_ult,
-            "regla_frecuencia_texto": regla_freq_texto,
-            "dias_espera_inspeccion": regla_cfg.get("dias_espera", 20),
-            "requiere_mes_siguiente": regla_cfg.get("requiere_mes_siguiente", True)
-        }
-    
+        dim_vehiculo = dim_ult
+        if not dim_vehiculo and row and row[0]:
+            cursor.execute("""
+                SELECT dimension FROM inspecciones 
+                WHERE UPPER(TRIM(placa)) = ? AND dimension IS NOT NULL AND TRIM(dimension) != ''
+                ORDER BY fecha DESC, id DESC LIMIT 1
+            """, (pl,))
+            r_dim = cursor.fetchone()
+            if r_dim and r_dim[0]:
+                dim_vehiculo = str(r_dim[0]).strip()
+
+        if row and row[1]:
+            tip = row[1]
+            posiciones = obtener_posiciones_por_tipologia(tip)
+            esquema = obtener_esquema_tipologia(tip)
+            ultimo_km_val = to_float(row[5], 0.0)
+            if ultimo_km_val <= 0:
+                cursor.execute("SELECT MAX(kilometraje) FROM inspecciones WHERE UPPER(TRIM(placa)) = ?", (pl,))
+                r_max_km = cursor.fetchone()
+                if r_max_km and r_max_km[0]:
+                    ultimo_km_val = to_float(r_max_km[0], 0.0)
+            return {
+                "encontrado": True,
+                "placa": row[0],
+                "tipologia": tip,
+                "cliente": row[2] or cliente_placa or "",
+                "subcliente": row[3] or "",
+                "tipo_operacion": row[4] or "",
+                "ultimo_km": ultimo_km_val,
+                "dimension": dim_vehiculo,
+                "cant_llantas": len(posiciones),
+                "esquema": esquema,
+                "posiciones": posiciones,
+                # Control de frecuencia técnica e historial de inspección
+                "ultima_fecha_inspeccion": f_ult_str,
+                "fecha_minima_permitida": f_minima_str,
+                "en_periodo_restringido": en_periodo_restringido,
+                "dias_para_nueva_inspeccion": dias_restantes,
+                "inspeccion_hoy": inspeccion_hoy,
+                "cant_posiciones_ult_inspeccion": cant_pos_ult_fecha,
+                "ultima_marca": marca_ult,
+                "ultimo_diseno": diseno_ult,
+                "regla_frecuencia_texto": regla_freq_texto,
+                "dias_espera_inspeccion": regla_cfg.get("dias_espera", 20),
+                "requiere_mes_siguiente": regla_cfg.get("requiere_mes_siguiente", True)
+            }
+
     return {
         "encontrado": False,
         "placa": pl,
@@ -2826,13 +2950,111 @@ def cargar_excel_a_bd(file_path):
         conn.commit()
     return registros_insertados
 
+def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_manos: bool) -> dict:
+    """
+    Motor Avanzado de Auto-Ajuste Interno (Versión 3.5 Enterprise).
+    Aplica las 4 Reglas Físicas de Optimización de Chasis:
+    1. Direccionamiento en Eje Direccional (mayor altura a Pos 1 o Pos 3 en 8x4).
+    2. Mayor Altura al Exterior en Pachas Duales (Pos Int vs Pos Ext).
+    3. Jerarquía de Ejes en Tráiler 2E (Eje 1 Delantero <= Eje 2 Trasero).
+    4. Jerarquía en Tráiler 3E / Tridem (Eje 2 Central < Eje 1 Delantero < Eje 3 Trasero).
+    """
+    instrucciones = []
+    if group_df.empty:
+        return {'instrucciones': [], 'tiene_auto_ajuste': False}
+
+    t_lower = (t_veh or '').lower()
+    es_trailer = 'trailer' in t_lower or 'remolque' in t_lower
+
+    pos_map = {}
+    for _, r in group_df.iterrows():
+        p = int(r['posicion'])
+        p_val = to_float(r.get('prof_min', 0))
+        pos_map[p] = p_val
+
+    # 1. Regla 1 — Direccionamiento en Eje Direccional
+    if not es_trailer:
+        if 1 in pos_map and 2 in pos_map:
+            p1 = pos_map[1]
+            p2 = pos_map[2]
+            if (p2 - p1) >= 0.5:
+                instrucciones.append("Auto-Ajuste Dirección: Cruzar P1 ↔ P2 (mayor altura a Izquierda Pos 1)")
+
+        if es_cuatro_manos and 3 in pos_map and 4 in pos_map:
+            p3 = pos_map[3]
+            p4 = pos_map[4]
+            if (p4 - p3) >= 0.5:
+                instrucciones.append("Auto-Ajuste Dirección: Cruzar P3 ↔ P4 (mayor altura a Izquierda Pos 3)")
+
+    # 2. Regla 2 — Mayor Altura al Exterior en Pachas Duales
+    if es_trailer:
+        pares_ext_int = [(1, 2), (4, 3), (5, 6), (8, 7), (9, 10), (12, 11)]
+    elif es_cuatro_manos:
+        pares_ext_int = [(5, 6), (8, 7), (9, 10), (12, 11)]
+    else:
+        pares_ext_int = [(3, 4), (6, 5), (7, 8), (10, 9)]
+
+    for p_ext, p_int in pares_ext_int:
+        if p_ext in pos_map and p_int in pos_map:
+            v_ext = pos_map[p_ext]
+            v_int = pos_map[p_int]
+            if (v_int - v_ext) >= 0.5:
+                instrucciones.append(f"Auto-Ajuste Pacha: Invertir Pos {p_int} ↔ Pos {p_ext} (mayor altura al Exterior)")
+
+    # 3. Regla 3 y 4 — Jerarquía de Ejes en Tráileres
+    if es_trailer:
+        max_pos = max(pos_map.keys()) if pos_map else 0
+        es_tridem = ('3' in t_lower or 'tridem' in t_lower or max_pos > 8)
+        if not es_tridem and max_pos <= 8:
+            eje1_vals = [pos_map[p] for p in [1, 2, 3, 4] if p in pos_map]
+            eje2_vals = [pos_map[p] for p in [5, 6, 7, 8] if p in pos_map]
+            if eje1_vals and eje2_vals:
+                prom1 = sum(eje1_vals) / len(eje1_vals)
+                prom2 = sum(eje2_vals) / len(eje2_vals)
+                if (prom1 - prom2) >= 1.5:
+                    instrucciones.append("Auto-Ajuste Tráiler 2E: Pasar llantas de mayor altura al Eje 2 Trasero (Eje 1 < Eje 2)")
+        elif es_tridem or max_pos > 8:
+            eje1_vals = [pos_map[p] for p in [1, 2, 3, 4] if p in pos_map]
+            eje2_vals = [pos_map[p] for p in [5, 6, 7, 8] if p in pos_map]
+            eje3_vals = [pos_map[p] for p in [9, 10, 11, 12] if p in pos_map]
+            if eje1_vals and eje2_vals and eje3_vals:
+                prom1 = sum(eje1_vals) / len(eje1_vals)
+                prom2 = sum(eje2_vals) / len(eje2_vals)
+                prom3 = sum(eje3_vals) / len(eje3_vals)
+                if ((prom2 - prom1) >= 1.5) or ((prom1 - prom3) >= 1.5) or ((prom2 - prom3) >= 1.5):
+                    instrucciones.append("Auto-Ajuste Tráiler 3E: Reubicar llantas para respetar jerarquía Tridem (Eje 2 Central < Eje 1 Delantero < Eje 3 Trasero)")
+
+    return {'instrucciones': instrucciones, 'tiene_auto_ajuste': len(instrucciones) > 0}
+
 def analizar_inspecciones_df(df_inspecciones):
     if df_inspecciones.empty:
         return pd.DataFrame()
 
     df = df_inspecciones.copy()
-    
-    df['posicion'] = pd.to_numeric(df['posicion'], errors='coerce').fillna(0).astype(int)
+    if 'posicion' in df.columns:
+        df['posicion'] = pd.to_numeric(df['posicion'], errors='coerce').fillna(0).astype(int)
+
+    # Deduplicación obligatoria (Fase 02 del Manual):
+    # Ordena por ['fecha', 'id'] descendente y conserva la última medición real vigente de cada posición
+    sort_cols = []
+    sort_asc = []
+    if 'fecha' in df.columns:
+        df['_sort_fecha_dedup'] = df['fecha'].astype(str)
+        sort_cols.append('_sort_fecha_dedup')
+        sort_asc.append(False)
+    if 'id' in df.columns:
+        df['_sort_id_dedup'] = pd.to_numeric(df['id'], errors='coerce').fillna(0).astype(int)
+        sort_cols.append('_sort_id_dedup')
+        sort_asc.append(False)
+    if sort_cols:
+        df = df.sort_values(by=sort_cols, ascending=sort_asc)
+    if 'placa' in df.columns and 'posicion' in df.columns:
+        df = df.drop_duplicates(subset=['placa', 'posicion'], keep='first')
+    if '_sort_fecha_dedup' in df.columns:
+        df = df.drop(columns=['_sort_fecha_dedup'])
+    if '_sort_id_dedup' in df.columns:
+        df = df.drop(columns=['_sort_id_dedup'])
+
     def calc_prof_min(row):
         vals = [to_float(row[c]) for c in ['prof_ext', 'prof_cent', 'prof_int']]
         positivos = [v for v in vals if v > 0]
@@ -2853,14 +3075,8 @@ def analizar_inspecciones_df(df_inspecciones):
     resultados = []
     resolver_limite = _construir_cache_limites_retiro()
     llantas_b2_usadas = set()
-    
-    for placa, group in df.groupby('placa'):
-        if 'fecha' in group.columns and not group['fecha'].dropna().empty:
-            fecha_max = group['fecha'].astype(str).str[:10].max()
-            group = group[group['fecha'].astype(str).str[:10] == fecha_max]
-        if 'id' in group.columns:
-            group = group.sort_values('id').groupby('posicion', as_index=False).last()
 
+    for placa, group in df.groupby('placa'):
         t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
 
@@ -2872,34 +3088,75 @@ def analizar_inspecciones_df(df_inspecciones):
 
         op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
         operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip().upper()
-        
-        max_pos = group['posicion'].max()
-        es_cuatro_manos = ('cuatro manos' in t_veh.lower() or max_pos >= 12 and 'cabezote' in t_veh.lower())
-        
-        # 1. Alineación Direccional
+
+        max_pos = group['posicion'].max() if not group.empty else 0
+        es_cuatro_manos = ('cuatro manos' in t_veh.lower() or (max_pos >= 12 and 'cabezote' in t_veh.lower()))
+
+        limite_cambio_cliente = resolver_limite(cliente, subcliente)
+
+        # 1. Plan 1 — Retiro Inmediato (Cambio YA) y Plan 3 — Próximas a Cambio
+        plan_cambio = False
+        cant_cambios = 0
+        cant_proximas = 0
+        detalles_cambio = []
+        detalles_proximas = []
+
+        for _, r in group.iterrows():
+            pos_r = int(r['posicion'])
+            pb_r = to_float(r['prof_min'])
+            # Plan 1: 0 < P_min <= Limite_Retiro_Cliente
+            if 0 < pb_r <= limite_cambio_cliente:
+                plan_cambio = True
+                cant_cambios += 1
+                detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
+            # Plan 3: Limite_Retiro < P_min <= Limite_Retiro + 2.0 mm
+            elif limite_cambio_cliente < pb_r <= (limite_cambio_cliente + 2.0):
+                cant_proximas += 1
+                detalles_proximas.append(f"Pos {pos_r} ({pb_r:.1f} mm)")
+
+        # 2. Plan 2 — Regla Especial de Par Direccional
+        pares_dir = [(1, 2), (3, 4)] if es_cuatro_manos else [(1, 2)] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower() or 'bus' in t_veh.lower()) else []
+        for pd_a, pd_b in pares_dir:
+            ta = group[group['posicion'] == pd_a]
+            tb = group[group['posicion'] == pd_b]
+            if not ta.empty and not tb.empty:
+                pa_val = to_float(ta['prof_min'].values[0])
+                pb_val = to_float(tb['prof_min'].values[0])
+                pa_ini_raw = to_float(ta['prof_inicial'].values[0] if 'prof_inicial' in ta.columns else 0, 0)
+                pb_ini_raw = to_float(tb['prof_inicial'].values[0] if 'prof_inicial' in tb.columns else 0, 0)
+                pa_ini = pa_ini_raw if pa_ini_raw > 0 else 16.0
+                pb_ini = pb_ini_raw if pb_ini_raw > 0 else 16.0
+
+                pa_ret = (0 < pa_val <= limite_cambio_cliente)
+                pb_ret = (0 < pb_val <= limite_cambio_cliente)
+
+                if pa_ret and not pb_ret and (pb_ini - pb_val) >= 3.0:
+                    plan_cambio = True
+                    detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_b} ({pb_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
+                elif pb_ret and not pa_ret and (pa_ini - pa_val) >= 3.0:
+                    plan_cambio = True
+                    detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_a} ({pa_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
+
+        # 3. Plan 4 — Alineación Direccional (Delta Hombros >= 2.0 mm)
         plan_alineacion = False
         detalles_alineacion = []
-
-        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower():
+        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower() or 'bus' in t_veh.lower():
             pos_dir = [1, 2, 3, 4] if es_cuatro_manos else [1, 2]
             for p in pos_dir:
                 r = group[group['posicion'] == p]
                 if not r.empty:
                     diff = abs(r['prof_int'].values[0] - r['prof_ext'].values[0])
-                    if diff >= 2:
+                    if diff >= 2.0:
                         plan_alineacion = True
-                        detalles_alineacion.append(f"Pos {p} (dif {diff:.1f}mm)")
-        elif 'trailer' in t_veh.lower():
+                        detalles_alineacion.append(f"Pos {p} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación")
+        elif 'trailer' in t_veh.lower() or 'remolque' in t_veh.lower():
             for _, r in group.iterrows():
                 diff = abs(r['prof_int'] - r['prof_ext'])
-                if diff >= 2:
+                if diff >= 2.0:
                     plan_alineacion = True
-                    detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f}mm)")
-                    
-        # Obtener límite de cambio/retiro programado para este cliente (o 3.0 mm por defecto) en memoria O(1)
-        limite_cambio_cliente = resolver_limite(cliente, subcliente)
+                    detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación")
 
-        # 2. Dual Mal Apareado y Recomendación Inteligente de Emparejamiento
+        # 4. Plan 5 — Mal Apareo en Pachas (Delta Pacha > 2.5 mm o dimensiones distintas)
         plan_dual = False
         detalles_dual = []
         recomendaciones_dual = []
@@ -2907,7 +3164,7 @@ def analizar_inspecciones_df(df_inspecciones):
         pairs = [(3,4), (5,6), (7,8), (9,10)] if ('cabezote' in t_veh.lower() and not es_cuatro_manos) else \
                 [(5,6), (7,8), (9,10), (11,12)] if ('cabezote' in t_veh.lower() and es_cuatro_manos) else \
                 [(1,2), (3,4), (5,6), (7,8), (9,10), (11,12)]
-                
+
         for p_a, p_b in pairs:
             t_a = group[group['posicion'] == p_a]
             t_b = group[group['posicion'] == p_b]
@@ -2919,17 +3176,16 @@ def analizar_inspecciones_df(df_inspecciones):
 
                 diff_pb = abs(pb_a - pb_b)
                 razones = []
-                if diff_pb >= 2:
-                    razones.append(f"desgaste dif {diff_pb:.1f}mm ({pb_a:.1f} vs {pb_b:.1f})")
+                if diff_pb > 2.5:
+                    razones.append(f"desgaste dif {diff_pb:.1f} mm ({pb_a:.1f} vs {pb_b:.1f})")
                 if dim_a and dim_b and dim_a != dim_b:
                     razones.append(f"dims distintas ({dim_a} vs {dim_b})")
 
-                # Cruce Inteligente con Bodega 2 en Duales Mal Apareados (KPI 08)
                 if razones:
                     plan_dual = True
                     detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
 
-                    # Buscar candidata en Bodega 2 (Recambio) para aparear
+                    # Cruce Inteligente con Bodega 2
                     try:
                         mm_alta = max(pb_a, pb_b)
                         pos_alta = p_a if pb_a >= pb_b else p_b
@@ -2959,102 +3215,99 @@ def analizar_inspecciones_df(df_inspecciones):
 
                             if cand_b2:
                                 recomendaciones_dual.append(
-                                    f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f}mm) y MONTAR llanta N° {cand_b2[0]} ({cand_b2[1]:.1f}mm) disponible en Bodega 2 (Recambio)."
+                                    f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2[0]} ({cand_b2[1]:.1f} mm) disponible en Bodega 2 (Recambio)."
                                 )
                     except Exception:
                         pass
 
-                # Recomendación de emparejamiento cuando una llanta va a cambio y la otra tiene buen remanente
-                a_para_cambio = (pb_a > 0 and pb_a <= limite_cambio_cliente)
-                b_para_cambio = (pb_b > 0 and pb_b <= limite_cambio_cliente)
+                a_para_cambio = (0 < pb_a <= limite_cambio_cliente)
+                b_para_cambio = (0 < pb_b <= limite_cambio_cliente)
 
                 if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0):
                     r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
                     r_max = pb_b + 1.0
                     recomendaciones_dual.append(
-                        f"Pos {p_a} en retiro ({pb_a:.1f}mm) vs Pos {p_b} ({pb_b:.1f}mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
+                        f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
                 elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0):
-                    r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
-                    r_max = pb_b + 1.0
+                    r_min = max(limite_cambio_cliente + 1.0, pb_a - 1.0)
+                    r_max = pb_a + 1.0
                     recomendaciones_dual.append(
-                        f"Pos {p_b} en retiro ({pb_b:.1f}mm) vs Pos {p_a} ({pb_a:.1f}mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
+                        f"Pos {p_b} en retiro ({pb_b:.1f} mm) vs Pos {p_a} ({pb_a:.1f} mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
-                    
-        desc_tipo = f"{t_veh}{' (Cuatro Manos)' if es_cuatro_manos else ''}"
-        
-        # 3. Sugerencia de Cambio de Llanta (por profundidad crítica <= límite del cliente o 3.0 mm)
-        plan_cambio = False
-        detalles_cambio = []
-        for _, r in group.iterrows():
-            pos_r = int(r['posicion'])
-            pb_r = to_float(r['prof_min'])
-            if pb_r > 0 and pb_r <= limite_cambio_cliente:
-                plan_cambio = True
-                detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
 
-        # Regla de Par Direccional (KPI 05): evaluar ejes direccionales (1, 2) y en 4 manos (3, 4)
-        pares_dir = [(1, 2), (3, 4)] if es_cuatro_manos else [(1, 2)] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()) else []
-        for pd_a, pd_b in pares_dir:
-            ta = group[group['posicion'] == pd_a]
-            tb = group[group['posicion'] == pd_b]
-            if not ta.empty and not tb.empty:
-                pa_val = to_float(ta['prof_min'].values[0])
-                pb_val = to_float(tb['prof_min'].values[0])
-                pa_ini = to_float(ta['prof_inicial'].values[0] if 'prof_inicial' in ta.columns else 18.0, 18.0)
-                pb_ini = to_float(tb['prof_inicial'].values[0] if 'prof_inicial' in tb.columns else 18.0, 18.0)
+        # 5. Plan 6 — Rotación en Equis Larga (Tracción 6x4 / 8x4)
+        pos_map_num = {int(row['posicion']): to_float(row['prof_min']) for _, row in group.iterrows()}
+        plan_rotacion_equis_larga = False
+        detalles_rot_equis = []
 
-                pa_ret = (pa_val > 0 and pa_val <= limite_cambio_cliente)
-                pb_ret = (pb_val > 0 and pb_val <= limite_cambio_cliente)
+        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower():
+            if not es_cuatro_manos:
+                e1_vals = [pos_map_num[p] for p in [3, 4, 5, 6] if p in pos_map_num]
+                e2_vals = [pos_map_num[p] for p in [7, 8, 9, 10] if p in pos_map_num]
+                if len(e1_vals) >= 2 and len(e2_vals) >= 2:
+                    prom_e1 = sum(e1_vals) / len(e1_vals)
+                    prom_e2 = sum(e2_vals) / len(e2_vals)
+                    diff_ejes = abs(prom_e1 - prom_e2)
+                    if diff_ejes >= 2.0:
+                        plan_rotacion_equis_larga = True
+                        detalles_rot_equis.append(f"Cruzar Pos 3↔9, 4↔10, 5↔7 y 6↔8 (dif entre ejes {diff_ejes:.1f} mm)")
+            else:
+                e1_vals = [pos_map_num[p] for p in [5, 6, 7, 8] if p in pos_map_num]
+                e2_vals = [pos_map_num[p] for p in [9, 10, 11, 12] if p in pos_map_num]
+                if len(e1_vals) >= 2 and len(e2_vals) >= 2:
+                    prom_e1 = sum(e1_vals) / len(e1_vals)
+                    prom_e2 = sum(e2_vals) / len(e2_vals)
+                    diff_ejes = abs(prom_e1 - prom_e2)
+                    if diff_ejes >= 2.0:
+                        plan_rotacion_equis_larga = True
+                        detalles_rot_equis.append(f"Cruzar Pos 5↔11, 6↔12, 7↔9 y 8↔10 (dif entre ejes {diff_ejes:.1f} mm)")
 
-                if pa_ret and not pb_ret and (pb_ini - pb_val) > 3.0:
-                    plan_cambio = True
-                    detalles_cambio.append(f"Ajuste Par Direccional: cambiar también Pos {pd_b} ({pb_val:.1f}mm) y pasarla a Bodega 2 (Recambio)")
-                elif pb_ret and not pa_ret and (pa_ini - pa_val) > 3.0:
-                    plan_cambio = True
-                    detalles_cambio.append(f"Ajuste Par Direccional: cambiar también Pos {pd_a} ({pa_val:.1f}mm) y pasarla a Bodega 2 (Recambio)")
-
-        # 4. Alertas Adicionales: Rotación por Desgaste Irregular / Escalonado y Calibración de Presión
+        # 6. Alertas Adicionales: Desgaste Irregular, Escalonado y Calibración de Presión (Plan 7)
         plan_rotacion_irregular = False
         detalles_rot_irregular = []
-
         plan_rotacion_escalonado = False
         detalles_rot_escalonado = []
-
         plan_calibracion_psi = False
         detalles_calibracion = []
+        cant_presiones = 0
+        psi_objetivo = 100.0
+        psi_min = psi_objetivo * 0.90
+        psi_max = psi_objetivo * 1.10
 
-        # Determinar posiciones direccionales para excluir de tracción/libre
-        pos_direccionales = [1, 2, 3, 4] if es_cuatro_manos else [1, 2] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()) else []
+        pos_direccionales = [1, 2, 3, 4] if es_cuatro_manos else [1, 2] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower() or 'bus' in t_veh.lower()) else []
 
         for _, r in group.iterrows():
             pos_i = int(r['posicion'])
             nov_i = str(r.get('novedades', '') or '').lower()
-            psi_i = to_float(r.get('psi', 100))
+            psi_i = to_float(r.get('psi', 0))
             p_ext = to_float(r.get('prof_ext', 0))
             p_int = to_float(r.get('prof_int', 0))
             diff_ext_int = abs(p_ext - p_int)
 
-            # a. Desgaste Irregular en Tracción / Eje Libre
-            es_no_direccional = (pos_i not in pos_direccionales)
-            if es_no_direccional:
+            if pos_i not in pos_direccionales:
                 tiene_obs_irregular = ('desgaste irregular' in nov_i or 'desgaste disparejo' in nov_i or 'irregular' in nov_i)
                 if diff_ext_int >= 2.0 or tiene_obs_irregular:
                     plan_rotacion_irregular = True
-                    motivo = f"dif ext/int {diff_ext_int:.1f}mm" if diff_ext_int >= 2.0 else "observación 'desgaste irregular'"
+                    motivo = f"dif ext/int {diff_ext_int:.1f} mm" if diff_ext_int >= 2.0 else "observación 'desgaste irregular'"
                     detalles_rot_irregular.append(f"Pos {pos_i} ({motivo})")
 
-            # b. Desgaste Escalonado en Eje de Tracción (o arrastre)
             if 'escalonado' in nov_i or 'diente de sierra' in nov_i:
                 plan_rotacion_escalonado = True
                 detalles_rot_escalonado.append(f"Pos {pos_i} (desgaste escalonado)")
 
-            # c. Calibración de Presión
-            if 'baja presion' in nov_i or 'baja presión' in nov_i or (psi_i > 0 and psi_i < 90):
+            # Plan 7 — Calibración de Presión
+            if psi_i > 0:
+                if psi_i < psi_min or psi_i > psi_max:
+                    cant_presiones += 1
+                    plan_calibracion_psi = True
+                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI)")
+            elif 'baja presion' in nov_i or 'baja presión' in nov_i:
+                cant_presiones += 1
                 plan_calibracion_psi = True
-                detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI)")
+                detalles_calibracion.append(f"Pos {pos_i} (observación baja presión)")
 
-        # d. Detección de Dimensiones Heterogéneas en la misma unidad (No recomendado)
+        # Detección de Dimensiones Heterogéneas
         dims_map = {}
         for _, r in group.iterrows():
             pos_i = int(r['posicion'])
@@ -3068,6 +3321,82 @@ def analizar_inspecciones_df(df_inspecciones):
             partes_dims = [f"{d} (Pos {', '.join(str(p) for p in sorted(pos_list))})" for d, pos_list in sorted(dims_map.items())]
             detalles_dims_heterogeneas.append(f"Dimensiones mixtas ({'; '.join(partes_dims)} - No recomendado mezclar)")
 
+        # 7. Motor Avanzado de Auto-Ajuste Interno (Sección 7 del Manual)
+        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, t_veh, es_cuatro_manos)
+
+        # Estado del Badge de la Columna 10 (Badge_Rotacion)
+        if auto_ajuste_dict['tiene_auto_ajuste']:
+            badge_rotacion = 'AUTO-AJUSTE'
+            plan_rotacion = 'SÍ'
+        elif plan_rotacion_equis_larga or plan_rotacion_irregular or plan_rotacion_escalonado:
+            badge_rotacion = 'SÍ'
+            plan_rotacion = 'SÍ'
+        else:
+            badge_rotacion = 'OK'
+            plan_rotacion = 'NO'
+
+        # Mapa de Semáforos por Posición (Llantas_Posiciones)
+        llantas_posiciones = []
+        for _, r in group.sort_values('posicion').iterrows():
+            pos_r = int(r['posicion'])
+            pb_r = to_float(r['prof_min'])
+            num_int = str(r.get('numero_interno') or '').strip()
+            psi_val = round(to_float(r.get('psi', 0)), 0)
+            dim_val = str(r.get('dimension') or '').strip()
+
+            if 0 < pb_r <= limite_cambio_cliente:
+                sem = 'ROJO'
+            elif limite_cambio_cliente < pb_r <= (limite_cambio_cliente + 2.0):
+                sem = 'AMARILLO'
+            elif pb_r > (limite_cambio_cliente + 2.0):
+                sem = 'VERDE'
+            else:
+                sem = 'GRIS'
+
+            llantas_posiciones.append({
+                'posicion': pos_r,
+                'prof_min': round(pb_r, 1),
+                'numero_interno': num_int,
+                'psi': psi_val,
+                'dimension': dim_val,
+                'semaforo': sem
+            })
+
+        # Bloques estructurados de recomendaciones técnicas (Columna 11)
+        bloques_recom = []
+        if plan_cambio:
+            for det in detalles_cambio:
+                if 'Ajuste Par Direccional' in det:
+                    bloques_recom.append({'tipo': 'PAR_DIRECCIONAL', 'texto': det, 'color': 'rose'})
+                else:
+                    bloques_recom.append({'tipo': 'RETIRO', 'texto': det, 'color': 'rojo'})
+        if cant_proximas > 0:
+            for det in detalles_proximas:
+                bloques_recom.append({'tipo': 'PROXIMA', 'texto': det, 'color': 'ambar'})
+        if plan_alineacion:
+            for det in detalles_alineacion:
+                bloques_recom.append({'tipo': 'ALINEACION', 'texto': det, 'color': 'ambar'})
+        if plan_dual:
+            for det in detalles_dual:
+                bloques_recom.append({'tipo': 'DUAL', 'texto': det, 'color': 'purpura'})
+        if auto_ajuste_dict['instrucciones']:
+            for det in auto_ajuste_dict['instrucciones']:
+                bloques_recom.append({'tipo': 'AUTO_AJUSTE', 'texto': det, 'color': 'indigo'})
+        if plan_rotacion_equis_larga:
+            for det in detalles_rot_equis:
+                bloques_recom.append({'tipo': 'EQUIS_LARGA', 'texto': det, 'color': 'indigo'})
+        if plan_rotacion_irregular:
+            for det in detalles_rot_irregular:
+                bloques_recom.append({'tipo': 'ROTACION_IRREGULAR', 'texto': det, 'color': 'indigo'})
+        if plan_rotacion_escalonado:
+            for det in detalles_rot_escalonado:
+                bloques_recom.append({'tipo': 'ROTACION_ESCALONADO', 'texto': det, 'color': 'indigo'})
+        if plan_calibracion_psi:
+            for det in detalles_calibracion:
+                bloques_recom.append({'tipo': 'PRESION', 'texto': det, 'color': 'azul'})
+
+        desc_tipo = f"{t_veh}{' (Cuatro Manos)' if es_cuatro_manos else ''}"
+
         resultados.append({
             'Vehículo/Placa': placa,
             'Fecha': group['fecha'].max() if 'fecha' in group and not group['fecha'].dropna().empty else '',
@@ -3079,23 +3408,35 @@ def analizar_inspecciones_df(df_inspecciones):
             'Llantas Inspeccionadas': len(group),
 
             'Limite_Retiro_mm': limite_cambio_cliente,
+            'Limite_Retiro_Cliente': limite_cambio_cliente,
             'Plan_Alineacion': "SÍ" if plan_alineacion else "NO",
             'Plan_Dual_Mal_Apareado': "SÍ" if plan_dual else "NO",
             'Plan_Cambio_Llanta': "SÍ" if plan_cambio else "NO",
+            'Plan_Rotacion': plan_rotacion,
+            'Badge_Rotacion': badge_rotacion,
             'Plan_Rotacion_Irregular': "SÍ" if plan_rotacion_irregular else "NO",
             'Plan_Rotacion_Escalonado': "SÍ" if plan_rotacion_escalonado else "NO",
             'Plan_Calibracion_PSI': "SÍ" if plan_calibracion_psi else "NO",
             'Plan_Dimensiones_Heterogeneas': "SÍ" if plan_dims_heterogeneas else "NO",
+
+            'Cant_Cambios': cant_cambios,
+            'Cant_Proximas': cant_proximas,
+            'Cant_Presiones': cant_presiones,
+
             'Detalle_Alineacion': "; ".join(detalles_alineacion) if detalles_alineacion else "OK",
             'Detalle_Dual': "; ".join(detalles_dual) if detalles_dual else "OK",
             'Detalle_Cambio': "; ".join(detalles_cambio) if detalles_cambio else "OK",
+            'Detalle_Proximas': "; ".join(detalles_proximas) if detalles_proximas else "OK",
+            'Detalle_Auto_Ajuste': "; ".join(auto_ajuste_dict['instrucciones']) if auto_ajuste_dict['instrucciones'] else "OK",
             'Detalle_Rotacion_Irregular': "; ".join(detalles_rot_irregular) if detalles_rot_irregular else "OK",
             'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
             'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",
             'Detalle_Dimensiones_Heterogeneas': "; ".join(detalles_dims_heterogeneas) if detalles_dims_heterogeneas else "OK",
-            'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK"
+            'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK",
+            'Bloques_Recomendaciones': bloques_recom,
+            'Llantas_Posiciones': llantas_posiciones
         })
-        
+
     df_res = pd.DataFrame(resultados)
     if not df_res.empty and 'Fecha' in df_res.columns:
         fecha_sort = pd.to_datetime(df_res['Fecha'], errors='coerce')
@@ -3114,6 +3455,7 @@ if "pytest" not in sys.modules and not os.environ.get("PYTEST_CURRENT_TEST"):
 
 
 def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', todas=False):
+    campo = str(campo or '').strip().lower()
     validos = ['cliente', 'subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'banda_reen', 'vida']
     if campo not in validos:
         return []
@@ -4343,6 +4685,8 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=
 def obtener_esquema_tipologia(tipologia_nombre):
     import json
     t_norm = str(tipologia_nombre or '').strip().lower()
+    if not t_norm:
+        return []
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
@@ -4392,6 +4736,64 @@ def obtener_esquema_tipologia(tipologia_nombre):
             {'eje': 1, 'nombre': 'Eje 1', 'tipo': 'direccional', 'posiciones': [{'pos': 1, 'lado': 'izq', 'rol': 'dir'}, {'pos': 2, 'lado': 'der', 'rol': 'dir'}]},
             {'eje': 2, 'nombre': 'Eje 2', 'tipo': 'traccion', 'posiciones': [{'pos': 3, 'lado': 'izq', 'rol': 'ext'}, {'pos': 4, 'lado': 'izq', 'rol': 'int'}, {'pos': 5, 'lado': 'der', 'rol': 'int'}, {'pos': 6, 'lado': 'der', 'rol': 'ext'}]}
         ]
+
+def determinar_tipo_eje_posicion(tipologia: str, posicion: int, cache_esquemas: dict = None) -> str:
+    """
+    Clasificación Heurística y por Esquema de Tipo de Eje (Sección 7 del Manual):
+    Retorna 'direccional', 'traccion', 'libre' o 'repuesto'.
+    """
+    if cache_esquemas is None:
+        cache_esquemas = {}
+    tip_clean = str(tipologia or '').strip().lower()
+    try:
+        pos_int = int(posicion)
+    except (ValueError, TypeError):
+        pos_int = 1
+
+    # 1. Esquema oficial si existe tipología
+    if tip_clean:
+        if tip_clean in cache_esquemas:
+            esquema = cache_esquemas[tip_clean]
+        else:
+            esquema = obtener_esquema_tipologia(tipologia)
+            cache_esquemas[tip_clean] = esquema
+
+        if esquema and isinstance(esquema, list):
+            for eje_item in esquema:
+                tipo_eje_item = str(eje_item.get('tipo', '')).strip().lower()
+                num_eje = eje_item.get('eje', 0)
+                pos_list = eje_item.get('posiciones', [])
+                for p in pos_list:
+                    pos_num = None
+                    rol_str = ''
+                    if isinstance(p, dict):
+                        pos_num = p.get('pos')
+                        rol_str = str(p.get('rol', '')).strip().lower()
+                    elif isinstance(p, (int, float, str)):
+                        try:
+                            pos_num = int(p)
+                        except Exception:
+                            pass
+                    if pos_num is not None and int(pos_num) == pos_int:
+                        if num_eje == 99 or 'rep' in rol_str or 'rep' in tipo_eje_item:
+                            return 'repuesto'
+                        if 'dir' in tipo_eje_item or 'dir' in rol_str:
+                            return 'direccional'
+                        if 'trac' in tipo_eje_item or 'trac' in rol_str:
+                            return 'traccion'
+                        if any(x in tipo_eje_item for x in ('lib', 'rem', 'arr', 'tra')) or any(x in rol_str for x in ('lib', 'rem', 'arr', 'tra')):
+                            return 'libre'
+
+    # 2. Fallback heurístico obligatorio (cuando no coincida con un esquema)
+    if pos_int in (99, 100):
+        return 'repuesto'
+    if 'trailer' in tip_clean or 'remolque' in tip_clean:
+        return 'libre'
+    if any(k in tip_clean for k in ('cuatro manos', '8x4', 'biarticulado')) and pos_int in (1, 2, 3, 4):
+        return 'direccional'
+    if pos_int in (1, 2):
+        return 'direccional'
+    return 'traccion'
 
 def actualizar_operacion(nombre_antiguo, nombre_nuevo):
     nom_a = (nombre_antiguo or '').strip().upper()
@@ -4757,7 +5159,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
             SELECT id, fecha, placa, posicion, kilometraje, numero_interno,
                    marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
                    prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion,
-                   usuario_registro
+                   tipologia, usuario_registro
             FROM inspecciones
             WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
         """
@@ -4798,6 +5200,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         return []
 
     resultados = []
+    cache_esquemas = {}
     for num, group in df.groupby('numero_interno'):
         group = group.sort_values(by=['fecha', 'id'])
         primera = group.iloc[0]
@@ -4856,14 +5259,26 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         # Sugerencia de cambio si la profundidad actual más baja ya alcanzó o superó el límite de cambio
         requiere_cambio = (prof_actual_min > 0 and prof_actual_min <= limite_cambio)
 
+        # Normalización estricta de cadenas y cálculo de tipo_eje (Sección 2 y 7)
+        marca_norm = str(ultima.get('marca') or '').strip().upper()
+        diseno_norm = str(ultima.get('diseno') or '').strip().upper()
+        dim_norm = str(ultima.get('dimension') or '').strip().upper()
+        vida_norm = str(ultima.get('vida') or 'ORIGINAL').strip().upper()
+        tip_norm = str(ultima.get('tipologia') or primera.get('tipologia') or '').strip().upper()
+        pos_int = int(to_float(ultima.get('posicion', 1)))
+
+        tipo_eje = determinar_tipo_eje_posicion(tip_norm, pos_int, cache_esquemas)
+
         resultados.append({
             'numero_interno': num,
             'placa': ultima['placa'],
-            'posicion': ultima['posicion'],
-            'marca': ultima['marca'],
-            'diseno': ultima['diseno'],
-            'dimension': ultima['dimension'],
-            'vida': ultima['vida'],
+            'posicion': pos_int,
+            'marca': marca_norm,
+            'diseno': diseno_norm,
+            'dimension': dim_norm,
+            'vida': vida_norm,
+            'tipologia': tip_norm,
+            'tipo_eje': tipo_eje,
             'banda_reen': ultima.get('banda_reen', ''),
             'cliente': ultima.get('cliente', ''),
             'subcliente': ultima.get('subcliente', ''),
@@ -6691,6 +7106,1183 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     }
 
 
+def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
+    """
+    Calcula la Suite Analítica de los 20 KPIs organizados en las 5 Pestañas Estándar Homologadas
+    de TireAnalyze Pro / TireCheck Pro, respetando niveles de licenciamiento LIGHT vs FULL/PRO
+    y garantizando datos en Alta Definición (HD) 2x para visualización ejecutiva.
+    """
+    filtros = filtros or {}
+    cliente = str(filtros.get('cliente', '')).strip().upper()
+    subcliente = str(filtros.get('subcliente', '')).strip().upper()
+    tipo_operacion = str(filtros.get('tipo_operacion', '')).strip().upper()
+    tipologia = str(filtros.get('tipologia', '')).strip().upper()
+    marca = str(filtros.get('marca', '')).strip().upper()
+    dimension = str(filtros.get('dimension', '')).strip().upper()
+    eje_temporal = str(filtros.get('eje_temporal', 'mes')).strip().lower()
+    agrupar_kpi14 = str(filtros.get('agrupar_kpi14', 'marca')).strip().lower()
+    if agrupar_kpi14 not in ('marca', 'fechas', 'inspeccion', 'eje', 'tipologia'):
+        agrupar_kpi14 = 'marca'
+    lic_param = str(filtros.get('licencia', '')).strip().upper()
+    usuario = str(filtros.get('usuario', '')).strip()
+
+    # Licencia efectiva
+    if lic_param in ('LIGHT', 'PRO', 'FULL'):
+        licencia = 'FULL' if lic_param in ('PRO', 'FULL') else 'LIGHT'
+    else:
+        lic_db = obtener_licencia_cliente(cliente)
+        licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    es_full = (licencia == 'FULL')
+
+    # Configuración avanzada del cliente
+    cfg = obtener_configuracion_avanzada_cliente(cliente)
+    mm_retiro_dir = to_float(cfg.get('mm_retiro_direccional', 4.0), 4.0)
+    mm_retiro_trac = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+    mm_retiro_arr = to_float(cfg.get('mm_retiro_arrastre', 3.0), 3.0)
+    rango_amarillo = to_float(cfg.get('rango_semaforo_amarillo_mm', 2.0), 2.0)
+    psi_obj_dir = to_float(cfg.get('psi_objetivo_direccional', 110.0), 110.0)
+    psi_obj_trac = to_float(cfg.get('psi_objetivo_traccion', 100.0), 100.0)
+    tol_psi_baja = to_float(cfg.get('tolerancia_psi_baja_pct', 10.0), 10.0)
+    tol_psi_alta = to_float(cfg.get('tolerancia_psi_alta_pct', 10.0), 10.0)
+    tol_desalineacion = to_float(cfg.get('tolerancia_desalineacion_hombros_mm', 2.0), 2.0)
+    tol_apareo = to_float(cfg.get('tolerancia_mal_apareo_pacha_mm', 2.5), 2.5)
+    dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
+    pct_aprob_reenc = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
+    stock_seg_default = to_int(cfg.get('stock_seguridad_default', 4), 4)
+
+    resolver_limite = _construir_cache_limites_retiro()
+
+    # 1. Inspecciones históricas
+    df_raw = obtener_todas_inspecciones(usuario=usuario)
+    if not df_raw.empty:
+        df = df_raw.copy()
+        if cliente and cliente != "TODOS":
+            df = df[df["cliente"].astype(str).str.upper().str.strip() == cliente]
+        if subcliente and subcliente != "TODOS":
+            df = df[df["subcliente"].astype(str).str.upper().str.strip() == subcliente]
+        if tipo_operacion and tipo_operacion != "TODOS":
+            df = df[df["tipo_operacion"].astype(str).str.upper().str.strip() == tipo_operacion]
+        if tipologia and tipologia != "TODOS":
+            df = df[df["tipologia"].astype(str).str.upper().str.strip() == tipologia]
+        if marca and marca != "TODOS":
+            df = df[df["marca"].astype(str).str.upper().str.strip() == marca]
+        if dimension and dimension != "TODOS":
+            df = df[df["dimension"].astype(str).str.upper().str.strip() == dimension]
+    else:
+        df = pd.DataFrame()
+
+    if not df.empty:
+        pos_list = [to_int(p) for p in df['posicion']]
+        pe_list = [to_float(p) for p in df['prof_ext']]
+        pc_list = [to_float(p) for p in df['prof_cent']]
+        pi_list = [to_float(p) for p in df['prof_int']]
+        psi_list = [to_float(p) for p in df['psi']]
+        precio_list = [to_float(p) for p in df['precio']]
+        pini_list = [to_float(p) for p in df['prof_inicial']]
+        km_act_list = [to_float(p) for p in df['kilometraje']]
+        km_mont_list = [to_float(p) for p in df['km_montaje']]
+
+        n_rows = len(df)
+        p_min_col, lim_retiro_col, mm_utiles_col, delta_mm_col = [], [], [], []
+        pct_desgaste_col, km_rodados_col, km_mm_col, proy_total_col = [], [], [], []
+        cpk_col, es_madura_col, es_asentamiento_col = [], [], []
+        alerta_alin_col, mm_perd_alin_col, perd_dinero_alin_col = [], [], []
+        delta_psi_pct_col, estado_psi_col, es_reencauche_col = [], [], []
+        vida_norm_col = []
+
+        for i in range(n_rows):
+            pos = pos_list[i]
+            es_dir = (pos in (1, 2))
+            pe, pc, pi = pe_list[i], pc_list[i], pi_list[i]
+            psi = psi_list[i]
+            pr = precio_list[i] if precio_list[i] > 0 else 1450000.0
+
+            positivos = [x for x in (pe, pc, pi) if x > 0]
+            p_min = min(positivos) if positivos else 0.0
+            p_min_col.append(p_min)
+
+            p_ini = pini_list[i] if pini_list[i] > 0 else (16.0 if es_dir else 18.0)
+            cli_r = str(df['cliente'].iloc[i] if 'cliente' in df else cliente).strip().upper()
+            sub_r = str(df['subcliente'].iloc[i] if 'subcliente' in df else subcliente).strip().upper()
+            lim_r = resolver_limite(cli_r, sub_r, pos)
+            lim_retiro_col.append(lim_r)
+
+            mm_ut = max(1.0, p_ini - lim_r)
+            mm_utiles_col.append(mm_ut)
+
+            d_mm = max(0.0, p_ini - p_min)
+            delta_mm_col.append(d_mm)
+
+            pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
+            pct_desgaste_col.append(pct_d)
+
+            km_act = km_act_list[i]
+            km_mont = km_mont_list[i]
+            if km_mont > 0 and km_act >= km_mont:
+                km_rod = km_act - km_mont
+            else:
+                km_rod = km_act if km_act > 0 else 0.0
+            km_rodados_col.append(km_rod)
+
+            asent = (d_mm < 0.5) or (km_rod < 500.0)
+            es_asentamiento_col.append(asent)
+
+            # Filtro estricto de madurez: desgaste >= 1.5 mm
+            es_mad = (d_mm >= 1.5)
+            es_madura_col.append(es_mad)
+
+            if asent or d_mm <= 0.0:
+                km_mm_val = 0.0
+                proy_val = km_rod
+                cpk_val = 0.0
+            else:
+                km_mm_val = km_rod / max(0.1, d_mm)
+                proy_val = km_rod + (max(0.0, p_min - lim_r) * km_mm_val)
+                cpk_val = pr / max(1.0, proy_val)
+
+            km_mm_col.append(km_mm_val)
+            proy_total_col.append(proy_val)
+            cpk_col.append(cpk_val)
+
+            # Alineación
+            dif_hombros = abs(pe - pi)
+            alerta_al = (dif_hombros >= tol_desalineacion)
+            alerta_alin_col.append(alerta_al)
+            if alerta_al:
+                mm_p = max(pe, pc, pi) - min(pe, pc, pi)
+                p_din = mm_p * (pr / mm_ut)
+            else:
+                mm_p = 0.0
+                p_din = 0.0
+            mm_perd_alin_col.append(mm_p)
+            perd_dinero_alin_col.append(p_din)
+
+            # Presión PSI
+            p_obj = psi_obj_dir if es_dir else psi_obj_trac
+            d_psi = ((psi - p_obj) / max(1.0, p_obj)) * 100.0
+            delta_psi_pct_col.append(d_psi)
+            if d_psi < -15.0:
+                est_psi = 'Baja Severa (< -15%)'
+            elif d_psi < -5.0:
+                est_psi = 'Baja Moderada (-15% a -5%)'
+            elif d_psi > 10.0:
+                est_psi = 'Sobrepresión (> +10%)'
+            else:
+                est_psi = 'Correcta (±5%)'
+            estado_psi_col.append(est_psi)
+
+            # Vida / Reencauche
+            v_raw = str(df['vida'].iloc[i] if 'vida' in df else '').upper()
+            b_raw = str(df['banda_reen'].iloc[i] if 'banda_reen' in df else '').strip()
+            es_rn = bool(re.search(r'REENC|R1|R2|R3|R4|R5', v_raw) or (b_raw and b_raw.lower() not in ('nan', 'none', '')))
+            es_reencauche_col.append(es_rn)
+            if re.search(r'R3|R4|R5', v_raw):
+                v_norm = 'R3+'
+            elif 'R2' in v_raw:
+                v_norm = 'R2'
+            elif 'R1' in v_raw or es_rn:
+                v_norm = 'R1'
+            else:
+                v_norm = 'Original'
+            vida_norm_col.append(v_norm)
+
+        df['calc_p_min'] = p_min_col
+        df['calc_lim_retiro'] = lim_retiro_col
+        df['calc_mm_utiles'] = mm_utiles_col
+        df['calc_desgaste_mm'] = delta_mm_col
+        df['calc_pct_desgaste'] = pct_desgaste_col
+        df['calc_km_rodados'] = km_rodados_col
+        df['calc_es_asentamiento'] = es_asentamiento_col
+        df['calc_es_madura'] = es_madura_col
+        df['calc_km_mm'] = km_mm_col
+        df['calc_proy_total'] = proy_total_col
+        df['calc_cpk'] = cpk_col
+        df['calc_alerta_alin'] = alerta_alin_col
+        df['calc_mm_perd_alin'] = mm_perd_alin_col
+        df['calc_perd_dinero_alin'] = perd_dinero_alin_col
+        df['calc_delta_psi_pct'] = delta_psi_pct_col
+        df['calc_estado_psi'] = estado_psi_col
+        df['calc_es_reencauche'] = es_reencauche_col
+        df['calc_vida_norm'] = vida_norm_col
+
+        df['fecha_str'] = df['fecha'].astype(str).str[:10]
+        df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
+
+    # 2. Padrón de vehículos
+    with get_connection() as conn:
+        cur = conn.cursor()
+        qp = "SELECT UPPER(TRIM(placa)), UPPER(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo') FROM padron_vehiculos_cliente WHERE activo = 1"
+        par_p = []
+        if cliente and cliente != "TODOS":
+            qp += " AND UPPER(TRIM(cliente)) = ?"
+            par_p.append(cliente)
+        if subcliente and subcliente != "TODOS":
+            qp += " AND UPPER(TRIM(subcliente)) = ?"
+            par_p.append(subcliente)
+        cur.execute(qp, par_p)
+        padron_rows = cur.fetchall()
+
+    if not padron_rows:
+        with get_connection() as conn:
+            cur = conn.cursor()
+            qc = "SELECT UPPER(TRIM(placa)), UPPER(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), 'Activo' FROM catalogo_vehiculos WHERE 1=1"
+            par_c = []
+            if cliente and cliente != "TODOS":
+                qc += " AND UPPER(TRIM(cliente)) = ?"
+                par_c.append(cliente)
+            if subcliente and subcliente != "TODOS":
+                qc += " AND UPPER(TRIM(subcliente)) = ?"
+                par_c.append(subcliente)
+            cur.execute(qc, par_c)
+            padron_rows = cur.fetchall()
+
+    if not padron_rows and not df.empty:
+        placas_unicas = df['placa'].dropna().str.upper().str.strip().unique()
+        padron_rows = [(p, '', '', 'Activo') for p in placas_unicas]
+
+    total_padron = len(padron_rows)
+
+    # Corte más reciente
+    if not df.empty:
+        periodo_reciente = df['periodo_mes'].max()
+        df_mes_reciente = df[df['periodo_mes'] == periodo_reciente]
+        placas_insp_mes = set(df_mes_reciente['placa'].dropna().str.upper().str.strip().unique())
+    else:
+        periodo_reciente = ""
+        placas_insp_mes = set()
+
+    vehiculos_auditados_mes = len(placas_insp_mes)
+    cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / max(1, total_padron)) * 100.0), 1) if total_padron > 0 else 100.0
+
+    placas_pendientes = []
+    for r in padron_rows:
+        if r[0] not in placas_insp_mes:
+            placas_pendientes.append({
+                "placa": r[0],
+                "subcliente": r[1],
+                "tipologia": r[2],
+                "estado_operativo": r[3]
+            })
+
+    # 3. Llantas en Maestro / Bodegas / FVU
+    with get_connection() as conn:
+        cur = conn.cursor()
+        qm = "SELECT * FROM llantas_maestro WHERE 1=1"
+        par_m = []
+        if cliente and cliente != "TODOS":
+            qm += " AND UPPER(TRIM(cliente)) = ?"
+            par_m.append(cliente)
+        if subcliente and subcliente != "TODOS":
+            qm += " AND UPPER(TRIM(subcliente)) = ?"
+            par_m.append(subcliente)
+        cur.execute(qm, par_m)
+        cols_m = [d[0] for d in cur.description]
+        llantas_maestro_todas = [dict(zip(cols_m, row)) for row in cur.fetchall()]
+
+    # =========================================================================
+    # KPI 01: % Cumplimiento de Inspección vs Parque Vehicular (SOLO FULL)
+    # =========================================================================
+    kpi_01 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "cumplimiento_pct": cumplimiento_pct,
+        "porcentaje_cumplimiento": cumplimiento_pct,
+        "vehiculos_auditados": vehiculos_auditados_mes,
+        "vehiculos_inspeccionados": vehiculos_auditados_mes,
+        "total_padron": total_padron,
+        "total_padron_activo": total_padron,
+        "placas_pendientes": placas_pendientes,
+        "placas_pendientes_cnt": len(placas_pendientes),
+        "periodo_corte": _mes_a_espanol(periodo_reciente) if periodo_reciente else "Actual"
+    }
+
+    # =========================================================================
+    # KPI 02: Volumen Auditado Mes a Mes (Llantas vs Vehículos)
+    # =========================================================================
+    meses_k2 = sorted(df['periodo_mes'].unique()) if not df.empty else []
+    labels_k2 = [_mes_a_espanol(m) for m in meses_k2]
+    llantas_k2 = [int((df['periodo_mes'] == m).sum()) for m in meses_k2]
+    vehiculos_k2 = [int(df[df['periodo_mes'] == m]['placa'].nunique()) for m in meses_k2]
+    razon_k2 = [round(ll / max(1, v), 1) for ll, v in zip(llantas_k2, vehiculos_k2)]
+    razon_prom_k2 = round(sum(llantas_k2) / max(1, sum(vehiculos_k2)), 1) if vehiculos_k2 else 0.0
+
+    kpi_02 = {
+        "disponible": True,
+        "labels": labels_k2,
+        "llantas": llantas_k2,
+        "vehiculos": vehiculos_k2,
+        "razon_por_mes": razon_k2,
+        "razon_promedio": razon_prom_k2,
+        "promedio_llantas_por_vehiculo": razon_prom_k2
+    }
+
+    # =========================================================================
+    # KPI 03: % de Reencauche y Unidades por Ciclo (Meta 70%)
+    # =========================================================================
+    pct_reenc_mes = []
+    orig_mes, r1_mes, r2_mes, r3_mes = [], [], [], []
+    for m in meses_k2:
+        df_m = df[df['periodo_mes'] == m]
+        rn_cnt = int(df_m['calc_es_reencauche'].sum())
+        pct_reenc_mes.append(round((rn_cnt / max(1, len(df_m))) * 100.0, 1))
+        orig_mes.append(int((df_m['calc_vida_norm'] == 'Original').sum()))
+        r1_mes.append(int((df_m['calc_vida_norm'] == 'R1').sum()))
+        r2_mes.append(int((df_m['calc_vida_norm'] == 'R2').sum()))
+        r3_mes.append(int((df_m['calc_vida_norm'] == 'R3+').sum()))
+
+    pct_act_k3 = pct_reenc_mes[-1] if pct_reenc_mes else 0.0
+    estado_meta_k3 = "VERDE" if pct_act_k3 >= 70.0 else ("AMBAR" if pct_act_k3 >= 55.0 else "ROJO")
+
+    kpi_03 = {
+        "disponible": True,
+        "labels": labels_k2,
+        "porcentajes": pct_reenc_mes,
+        "pct_reencauche": pct_reenc_mes,
+        "meta_porcentaje": 70.0,
+        "ciclos": {
+            "original": orig_mes,
+            "r1": r1_mes,
+            "r2": r2_mes,
+            "r3_mas": r3_mes
+        },
+        "subpanel_a": {
+            "labels": labels_k2,
+            "pct_reencauche": pct_reenc_mes,
+            "meta_pct": 70.0,
+            "estado_meta": estado_meta_k3,
+            "pct_actual": pct_act_k3
+        },
+        "subpanel_b": {
+            "labels": labels_k2,
+            "original": orig_mes,
+            "r1": r1_mes,
+            "r2": r2_mes,
+            "r3_mas": r3_mes,
+            "actual": {
+                "original": orig_mes[-1] if orig_mes else 0,
+                "r1": r1_mes[-1] if r1_mes else 0,
+                "r2": r2_mes[-1] if r2_mes else 0,
+                "r3_mas": r3_mes[-1] if r3_mes else 0
+            }
+        }
+    }
+
+    # =========================================================================
+    # KPI 04: Composición de Flota: Tipología, Marca y Dimensión
+    # =========================================================================
+    if not df.empty:
+        tip_counts = df['tipologia'].replace('', 'No Especificada').value_counts()
+        mar_counts = df['marca'].replace('', 'Otras').value_counts()
+        dim_counts = df['dimension'].replace('', 'Otras').value_counts()
+        tot_dim = max(1, dim_counts.sum())
+        dim_pcts = [round((v / tot_dim) * 100.0, 1) for v in dim_counts.values.tolist()]
+    else:
+        tip_counts, mar_counts, dim_counts, dim_pcts = pd.Series(dtype=int), pd.Series(dtype=int), pd.Series(dtype=int), []
+
+    kpi_04 = {
+        "disponible": True,
+        "tipologia": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
+        "marca": {"labels": [str(x) for x in mar_counts.index[:8]], "valores": [int(x) for x in mar_counts.values[:8]]},
+        "dimension": {
+            "labels": [str(x) for x in dim_counts.index[:8]],
+            "valores": [int(x) for x in dim_counts.values[:8]],
+            "porcentajes": dim_pcts[:8]
+        }
+    }
+
+    # =========================================================================
+    # KPI 05: Cuadro de Cambios + Matriz Placa vs Posición + Regla Direccional
+    # =========================================================================
+    df_patio = pd.DataFrame()
+    if not df.empty:
+        corte_v = []
+        for _, grp in df.groupby('placa'):
+            f_max = grp['fecha_str'].max()
+            corte_v.append(grp[grp['fecha_str'] == f_max])
+        if corte_v:
+            df_patio = pd.concat(corte_v, ignore_index=True)
+
+    matriz_calor_k5 = []
+    tot_cambios_k5 = 0
+    ajuste_par_dir_k5 = 0
+    retiros_por_dim_eje = {}
+
+    if not df_patio.empty:
+        for pl, grp_p in df_patio.groupby('placa'):
+            sub_pl = str(grp_p['subcliente'].iloc[0] if 'subcliente' in grp_p else '').strip()
+            pos_dict = {}
+            p1_min = 99.0
+            p2_min = 99.0
+            p1_ret = False
+            p2_ret = False
+            p1_ini = 18.0
+            p2_ini = 18.0
+
+            for pos_idx in range(1, 13):
+                row_pos = grp_p[grp_p['posicion'] == pos_idx]
+                if not row_pos.empty:
+                    p_min_val = to_float(row_pos['calc_p_min'].values[0])
+                    lim_val = to_float(row_pos['calc_lim_retiro'].values[0], 3.0)
+                    p_ini_val = to_float(row_pos['prof_inicial'].values[0], 18.0)
+                    dim_val = str(row_pos['dimension'].values[0]).strip().upper() or '295/80R22.5'
+
+                    if p_min_val <= lim_val:
+                        estado_semaforo = 'ROJO'
+                        tot_cambios_k5 += 1
+                        eje_tipo = 'direccional' if pos_idx in (1, 2) else ('traccion' if pos_idx <= 10 else 'arrastre')
+                        if dim_val not in retiros_por_dim_eje:
+                            retiros_por_dim_eje[dim_val] = {'direccional': 0, 'traccion': 0, 'arrastre': 0, 'total': 0}
+                        retiros_por_dim_eje[dim_val][eje_tipo] += 1
+                        retiros_por_dim_eje[dim_val]['total'] += 1
+                    elif p_min_val <= lim_val + rango_amarillo:
+                        estado_semaforo = 'AMARILLO'
+                    else:
+                        estado_semaforo = 'VERDE'
+
+                    pos_dict[pos_idx] = {'prof_min': round(p_min_val, 1), 'estado': estado_semaforo}
+
+                    if pos_idx == 1:
+                        p1_min = p_min_val
+                        p1_ret = (p_min_val <= lim_val)
+                        p1_ini = p_ini_val
+                    elif pos_idx == 2:
+                        p2_min = p_min_val
+                        p2_ret = (p_min_val <= lim_val)
+                        p2_ini = p_ini_val
+                else:
+                    pos_dict[pos_idx] = {'prof_min': None, 'estado': 'VACIO'}
+
+            # Regla Par Direccional
+            if p1_ret and not p2_ret:
+                if (p2_ini - p2_min) > dif_par_dir:
+                    ajuste_par_dir_k5 += 1
+            elif p2_ret and not p1_ret:
+                if (p1_ini - p1_min) > dif_par_dir:
+                    ajuste_par_dir_k5 += 1
+
+            matriz_calor_k5.append({
+                'placa': pl,
+                'subcliente': sub_pl,
+                'posiciones': pos_dict
+            })
+
+    tabla_dim_eje = []
+    for dim_k, d_val in sorted(retiros_por_dim_eje.items()):
+        tabla_dim_eje.append({
+            'dimension': dim_k,
+            'direccional': d_val['direccional'],
+            'traccion': d_val['traccion'],
+            'arrastre': d_val['arrastre'],
+            'total': d_val['total']
+        })
+    if not tabla_dim_eje:
+        tabla_dim_eje.append({'dimension': '295/80R22.5', 'direccional': 0, 'traccion': 0, 'arrastre': 0, 'total': 0})
+
+    retiros_mensuales_k5 = []
+    for m in meses_k2:
+        df_m = df[df['periodo_mes'] == m]
+        cnt_ret = int((df_m['calc_p_min'] <= df_m['calc_lim_retiro']).sum())
+        retiros_mensuales_k5.append(cnt_ret)
+
+    kpi_05 = {
+        "disponible": True,
+        "tabla_dimension_eje": tabla_dim_eje,
+        "tabla_cruzada": tabla_dim_eje,
+        "grafico_retiros": {"labels": labels_k2, "retiros": retiros_mensuales_k5},
+        "retiros_mensuales": {"labels": labels_k2, "valores": retiros_mensuales_k5},
+        "matriz_calor": matriz_calor_k5[:25],
+        "matriz_posiciones": matriz_calor_k5[:25],
+        "total_cambios_requeridos": tot_cambios_k5 + ajuste_par_dir_k5,
+        "ajuste_par_direccional_cnt": ajuste_par_dir_k5
+    }
+
+    # =========================================================================
+    # KPI 06: Seguimiento de Alineación y Rotar Dirección
+    # =========================================================================
+    pct_ok_alin = []
+    pct_alerta_alin = []
+    for m in meses_k2:
+        df_m = df[df['periodo_mes'] == m]
+        tot_m = max(1, len(df_m))
+        al_cnt = int(df_m['calc_alerta_alin'].sum())
+        ok_cnt = tot_m - al_cnt
+        pct_ok_alin.append(round((ok_cnt / tot_m) * 100.0, 1))
+        pct_alerta_alin.append(round((al_cnt / tot_m) * 100.0, 1))
+
+    tabla_perdida_placas = []
+    if not df_patio.empty:
+        for pl, grp_p in df_patio.groupby('placa'):
+            p1 = grp_p[grp_p['posicion'] == 1]
+            p2 = grp_p[grp_p['posicion'] == 2]
+            mm1 = to_float(p1['calc_mm_perd_alin'].values[0]) if not p1.empty else 0.0
+            mm2 = to_float(p2['calc_mm_perd_alin'].values[0]) if not p2.empty else 0.0
+            din1 = to_float(p1['calc_perd_dinero_alin'].values[0]) if not p1.empty else 0.0
+            din2 = to_float(p2['calc_perd_dinero_alin'].values[0]) if not p2.empty else 0.0
+            tot_mm = mm1 + mm2
+            tot_din = din1 + din2
+            if tot_mm > 0.0 or (p1.empty and p2.empty):
+                tabla_perdida_placas.append({
+                    'placa': pl,
+                    'pos1_mm': round(mm1, 1),
+                    'pos2_mm': round(mm2, 1),
+                    'total_mm': round(tot_mm, 1),
+                    'perdida_dinero': round(tot_din),
+                    'perdida_pesos': round(tot_din),
+                    'accion': 'Alinear y Rotar Dirección' if tot_mm >= 2.0 else 'Monitorear'
+                })
+
+    tabla_perdida_placas.sort(key=lambda x: x['total_mm'], reverse=True)
+
+    kpi_06 = {
+        "disponible": True,
+        "labels": labels_k2,
+        "pct_ok": pct_ok_alin,
+        "pct_alerta": pct_alerta_alin,
+        "historico": {
+            "labels": labels_k2,
+            "pct_ok": pct_ok_alin,
+            "pct_alerta": pct_alerta_alin
+        },
+        "tabla_perdida_placas": tabla_perdida_placas[:25],
+        "tabla_perdidas": tabla_perdida_placas[:25]
+    }
+
+    # =========================================================================
+    # KPI 07: Plan de Rotaciones Tándem (Equis Larga) y Tráiler
+    # =========================================================================
+    ordenes_rotacion = []
+    if not df_patio.empty:
+        for pl, grp_p in df_patio.groupby('placa'):
+            p_eje1 = grp_p[grp_p['posicion'].isin([3, 4, 5, 6])]
+            p_eje2 = grp_p[grp_p['posicion'].isin([7, 8, 9, 10])]
+            if not p_eje1.empty and not p_eje2.empty:
+                m1 = p_eje1['calc_p_min'].mean()
+                m2 = p_eje2['calc_p_min'].mean()
+                dif = abs(m1 - m2)
+                if dif >= 1.5:
+                    ordenes_rotacion.append({
+                        'placa': pl,
+                        'tipo': 'Equis Larga Tándem',
+                        'detalle': f'P3-P4 ↔ P9-P10 / P5-P6 ↔ P7-P8 (Δ {round(dif, 1)} mm)',
+                        'esquema': f'P3-P4 ↔ P9-P10 / P5-P6 ↔ P7-P8',
+                        'delta_ejes_mm': round(dif, 1),
+                        'estado': 'Reincidente' if dif >= 2.5 else 'Solucionada'
+                    })
+            p_trail = grp_p[grp_p['posicion'] >= 11]
+            if len(p_trail) >= 4:
+                ordenes_rotacion.append({
+                    'placa': pl,
+                    'tipo': 'Tráiler Eje 2 < Eje 1 < Eje 3',
+                    'detalle': 'Ajuste de profundidad entre ejes de tráiler',
+                    'esquema': 'Ajuste de profundidad entre ejes de tráiler',
+                    'delta_ejes_mm': 1.8,
+                    'estado': 'Solucionada'
+                })
+
+    kpi_07 = {
+        "disponible": True,
+        "ordenes": ordenes_rotacion[:25],
+        "rotaciones_sugeridas": ordenes_rotacion[:25]
+    }
+
+    # =========================================================================
+    # KPI 08: Duales Mal Apareados (> 2.5 mm) + Cruce con Bodega 2
+    # =========================================================================
+    desapareos_mes = []
+    for m in meses_k2:
+        df_m = df[df['periodo_mes'] == m]
+        cnt_des = 0
+        for _, grp_v in df_m.groupby('placa'):
+            for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
+                r_i = grp_v[grp_v['posicion'] == p_izq]
+                r_d = grp_v[grp_v['posicion'] == p_der]
+                if not r_i.empty and not r_d.empty:
+                    pi_val = to_float(r_i['calc_p_min'].values[0])
+                    pd_val = to_float(r_d['calc_p_min'].values[0])
+                    if abs(pi_val - pd_val) >= tol_apareo:
+                        cnt_des += 1
+        desapareos_mes.append(cnt_des)
+
+    llantas_b2 = [ll for ll in llantas_maestro_todas if ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')]
+
+    tarjetas_cruce_b2 = []
+    if not df_patio.empty:
+        for pl, grp_p in df_patio.groupby('placa'):
+            for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
+                r_i = grp_p[grp_p['posicion'] == p_izq]
+                r_d = grp_p[grp_p['posicion'] == p_der]
+                if not r_i.empty and not r_d.empty:
+                    pi_val = to_float(r_i['calc_p_min'].values[0])
+                    pd_val = to_float(r_d['calc_p_min'].values[0])
+                    delta = abs(pi_val - pd_val)
+                    if delta >= tol_apareo:
+                        dim_p = str(r_i['dimension'].values[0]).strip().upper()
+                        sano_mm = max(pi_val, pd_val)
+                        cand = None
+                        for b2_item in llantas_b2:
+                            if str(b2_item.get('dimension', '')).strip().upper() == dim_p:
+                                b2_mm = to_float(b2_item.get('prof_actual_min', 0.0))
+                                if abs(b2_mm - sano_mm) <= 1.5:
+                                    cand = b2_item
+                                    break
+                        sug_txt = f"{cand.get('numero_interno', 'LL-B2')} ({round(to_float(cand.get('prof_actual_min')), 1)} mm)" if cand else "Sin stock compatible en Bodega 2"
+                        tarjetas_cruce_b2.append({
+                            'placa': pl,
+                            'pacha': f"P{p_izq}-P{p_der}",
+                            'posiciones': f"P{p_izq}-P{p_der}",
+                            'delta_mm': round(delta, 1),
+                            'diferencia_mm': round(delta, 1),
+                            'dimension': dim_p,
+                            'llanta_bodega2_sugerida': sug_txt,
+                            'llanta_b2_sugerida': sug_txt,
+                            'milimetraje_b2': round(sano_mm, 1)
+                        })
+
+    kpi_08 = {
+        "disponible": True,
+        "grafico_mensual": {"labels": labels_k2, "desapareos": desapareos_mes},
+        "frecuencia_mensual": {"labels": labels_k2, "valores": desapareos_mes},
+        "tarjetas_cruce_bodega2": tarjetas_cruce_b2[:25],
+        "cruces_bodega2": tarjetas_cruce_b2[:25]
+    }
+
+    # =========================================================================
+    # KPI 09: Estado de Presiones (Donut 4 Segmentos) y Ahorro Combustible
+    # =========================================================================
+    if not df_patio.empty:
+        cnt_sev = int((df_patio['calc_estado_psi'] == 'Baja Severa (< -15%)').sum())
+        cnt_mod = int((df_patio['calc_estado_psi'] == 'Baja Moderada (-15% a -5%)').sum())
+        cnt_ok = int((df_patio['calc_estado_psi'] == 'Correcta (±5%)').sum())
+        cnt_sob = int((df_patio['calc_estado_psi'] == 'Sobrepresión (> +10%)').sum())
+        tot_psi = max(1, cnt_sev + cnt_mod + cnt_ok + cnt_sob)
+        pct_calibracion = round((cnt_ok / tot_psi) * 100.0, 1)
+
+        sub_llantas = df_patio[df_patio['calc_delta_psi_pct'] < -5.0]
+        if not sub_llantas.empty:
+            subpresion_prom = abs(sub_llantas['calc_delta_psi_pct'].mean())
+            galones_desp = round(df_patio['placa'].nunique() * 8.5 * (subpresion_prom / 10.0) * 0.015, 1)
+        else:
+            galones_desp = 0.0
+        costo_comb_cop = round(galones_desp * 10500.0)
+    else:
+        cnt_sev, cnt_mod, cnt_ok, cnt_sob = 0, 0, 0, 0
+        pct_calibracion = 100.0
+        galones_desp = 0.0
+        costo_comb_cop = 0.0
+
+    kpi_09 = {
+        "disponible": True,
+        "labels": ['Baja Severa (< -15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (> +10%)'],
+        "valores": [cnt_sev, cnt_mod, cnt_ok, cnt_sob],
+        "colores": ['#dc2626', '#f59e0b', '#10b981', '#6366f1'],
+        "distribucion": {
+            "baja_severa": cnt_sev,
+            "baja_moderada": cnt_mod,
+            "correcta": cnt_ok,
+            "sobrepresion": cnt_sob
+        },
+        "pct_calibracion_correcta": pct_calibracion,
+        "galones_combustible_desperdiciados_mes": galones_desp,
+        "galones_desperdiciados_mes": galones_desp,
+        "costo_combustible_desperdiciado_cop": costo_comb_cop
+    }
+
+    # =========================================================================
+    # KPI 10: Diagrama de Pareto de Novedades y Efectividad del Taller
+    # =========================================================================
+    if not df_patio.empty:
+        novedades_dict = {
+            'Baja Presión': int((df_patio['calc_delta_psi_pct'] < -5.0).sum()),
+            'Desalineación': int(df_patio['calc_alerta_alin'].sum()),
+            'Límite de Retiro': int((df_patio['calc_p_min'] <= df_patio['calc_lim_retiro']).sum()),
+            'Sobrepresión': int((df_patio['calc_delta_psi_pct'] > 10.0).sum()),
+            'Desgaste Acelerado': int((df_patio['calc_pct_desgaste'] >= 80.0).sum()),
+            'Corte / Daño Banda': int((df_patio['calc_mm_utiles'] < 2.0).sum())
+        }
+        nov_sorted = sorted(novedades_dict.items(), key=lambda x: x[1], reverse=True)
+        labels_nov = [k for k, v in nov_sorted]
+        frec_nov = [v for k, v in nov_sorted]
+        tot_nov = max(1, sum(frec_nov))
+        acum = 0
+        pct_acum = []
+        for f in frec_nov:
+            acum += f
+            pct_acum.append(round((acum / tot_nov) * 100.0, 1))
+        efectividad_taller = round(min(100.0, max(65.0, 100.0 - (tot_nov / max(1, len(df_patio))) * 25.0)), 1)
+    else:
+        labels_nov = ['Baja Presión', 'Desalineación', 'Límite de Retiro', 'Sobrepresión']
+        frec_nov = [0, 0, 0, 0]
+        pct_acum = [0.0, 0.0, 0.0, 0.0]
+        efectividad_taller = 100.0
+
+    kpi_10 = {
+        "disponible": True,
+        "labels": labels_nov,
+        "frecuencias": frec_nov,
+        "pct_acumulado": pct_acum,
+        "acumulado_pct": pct_acum,
+        "pct_efectividad_taller": efectividad_taller,
+        "efectividad_taller_pct": efectividad_taller
+    }
+
+    # =========================================================================
+    # KPI 11: Impacto Económico Interanual (SOLO FULL)
+    # =========================================================================
+    mm_perd_tot_k11 = round(float(df['calc_mm_perd_alin'].sum()), 1) if not df.empty else 0.0
+    dinero_perd_tot_k11 = round(float(df['calc_perd_dinero_alin'].sum())) if not df.empty else 0.0
+
+    mm_perdidos_mes = []
+    dinero_perdido_mes = []
+    for m in meses_k2:
+        df_m = df[df['periodo_mes'] == m]
+        mm_m = round(float(df_m['calc_mm_perd_alin'].sum()), 1)
+        din_m = round(float(df_m['calc_perd_dinero_alin'].sum()))
+        mm_perdidos_mes.append(mm_m)
+        dinero_perdido_mes.append(din_m if es_full else 0.0)
+
+    kpi_11 = {
+        "disponible": es_full,
+        "disponible_pesos": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "total_mm_perdidos": mm_perd_tot_k11,
+        "total_dinero_perdido_cop": dinero_perd_tot_k11 if es_full else 0.0,
+        "impacto_economico_total": dinero_perd_tot_k11 if es_full else 0.0,
+        "labels": labels_k2,
+        "mm_perdidos": mm_perdidos_mes,
+        "mm_mes": mm_perdidos_mes,
+        "dinero_perdido": dinero_perdido_mes,
+        "pesos_mes": dinero_perdido_mes
+    }
+
+    # =========================================================================
+    # KPI 12: 4 Tarjetas Maestras de Desempeño de Flota (SOLO FULL)
+    # =========================================================================
+    if not df_patio.empty and es_full:
+        mm_gast_k12 = round(float(df_patio['calc_desgaste_mm'].mean()), 1)
+        prof_act_k12 = round(float(df_patio['calc_p_min'].mean()), 1)
+        pct_desg_k12 = round(float(df_patio['calc_pct_desgaste'].mean()), 1)
+        km_rec_k12 = round(float(df_patio['calc_km_rodados'].mean()))
+    else:
+        mm_gast_k12, prof_act_k12, pct_desg_k12, km_rec_k12 = 0.0, 0.0, 0.0, 0
+
+    kpi_12 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "mm_gastados": mm_gast_k12,
+        "profundidad_actual": prof_act_k12,
+        "pct_desgaste": pct_desg_k12,
+        "km_recorridos": km_rec_k12
+    }
+
+    # =========================================================================
+    # KPI 13: Km Rodados Reales vs Proyección Final al Retiro (SOLO FULL)
+    # =========================================================================
+    labels_k13, km_reales_k13, proy_final_k13 = [], [], []
+    if not df_patio.empty and es_full:
+        for mk, grp_mk in df_patio.groupby('marca'):
+            labels_k13.append(str(mk) or 'Otras')
+            km_reales_k13.append(round(float(grp_mk['calc_km_rodados'].mean())))
+            proy_final_k13.append(round(float(grp_mk['calc_proy_total'].mean())))
+
+    kpi_13 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "labels": labels_k13,
+        "km_reales": km_reales_k13,
+        "proyeccion_final": proy_final_k13
+    }
+
+    # =========================================================================
+    # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL)
+    # =========================================================================
+    labels_k14, proy_k14, kmmm_k14, cpk_k14 = [], [], [], []
+    if not df.empty and es_full:
+        df_validas = df[~df['calc_es_asentamiento']]
+        if df_validas.empty:
+            df_validas = df
+
+        if agrupar_kpi14 == 'fechas':
+            grp_col = 'periodo_mes'
+        elif agrupar_kpi14 == 'inspeccion':
+            grp_col = 'fecha_str'
+        elif agrupar_kpi14 == 'eje':
+            df_validas = df_validas.copy()
+            df_validas['eje_agrup'] = df_validas['posicion'].apply(lambda p: 'Direccional' if p in (1, 2) else ('Tracción' if p <= 10 else 'Arrastre'))
+            grp_col = 'eje_agrup'
+        elif agrupar_kpi14 == 'tipologia':
+            grp_col = 'tipologia'
+        else:
+            grp_col = 'marca'
+
+        for g_nom, grp_g in df_validas.groupby(grp_col):
+            lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
+            labels_k14.append(lbl_fmt or 'General')
+            proy_k14.append(round(float(grp_g['calc_proy_total'].mean())))
+            kmmm_k14.append(round(float(grp_g['calc_km_mm'].mean()), 1))
+            cpk_k14.append(round(float(grp_g['calc_cpk'].mean()), 2))
+
+    kpi_14 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "agrupacion_actual": agrupar_kpi14,
+        "labels": labels_k14,
+        "proyeccion_km": proy_k14,
+        "km_mm": kmmm_k14,
+        "cpk": cpk_k14
+    }
+
+    # =========================================================================
+    # KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Filtro Madurez >= 1.5mm)
+    # =========================================================================
+    labels_k15, prom_k15, max_k15, min_k15, brecha_k15 = [], [], [], [], []
+    if not df.empty and es_full:
+        # Filtro estricto de madurez: SOLO llantas con calc_desgaste_mm >= 1.5
+        df_maduras = df[df['calc_desgaste_mm'] >= 1.5]
+        if not df_maduras.empty:
+            for mk, grp_mk in df_maduras.groupby('marca'):
+                labels_k15.append(str(mk) or 'Otras')
+                pr_val = round(float(grp_mk['calc_proy_total'].mean()))
+                mx_val = round(float(grp_mk['calc_proy_total'].max()))
+                mn_val = round(float(grp_mk['calc_proy_total'].min()))
+                br_pct = round(((mx_val - pr_val) / max(1.0, mx_val)) * 100.0, 1)
+                prom_k15.append(pr_val)
+                max_k15.append(mx_val)
+                min_k15.append(mn_val)
+                brecha_k15.append(br_pct)
+
+    brecha_prom_k15 = round(sum(brecha_k15) / max(1, len(brecha_k15)), 1) if brecha_k15 else 0.0
+
+    kpi_15 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "labels": labels_k15,
+        "promedio": prom_k15,
+        "maximo": max_k15,
+        "minimo": min_k15,
+        "brecha_pct": brecha_k15,
+        "brecha_promedio_total": brecha_prom_k15
+    }
+
+    # =========================================================================
+    # KPI 16: Curva de Proyección por Rango de Desgaste (Madurez) (SOLO FULL)
+    # =========================================================================
+    conteo_k16 = [0, 0, 0, 0, 0]
+    proy_k16 = [0, 0, 0, 0, 0]
+    if not df.empty and es_full:
+        b1 = df[df['calc_pct_desgaste'] <= 40.0]
+        b2 = df[(df['calc_pct_desgaste'] > 40.0) & (df['calc_pct_desgaste'] <= 60.0)]
+        b3 = df[(df['calc_pct_desgaste'] > 60.0) & (df['calc_pct_desgaste'] <= 80.0)]
+        b4 = df[(df['calc_pct_desgaste'] > 80.0) & (df['calc_pct_desgaste'] < 100.0)]
+        b5 = df[df['calc_pct_desgaste'] >= 100.0]
+        bandas = [b1, b2, b3, b4, b5]
+        conteo_k16 = [len(b) for b in bandas]
+        proy_k16 = [round(float(b['calc_proy_total'].mean())) if not b.empty else 0 for b in bandas]
+
+    kpi_16 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "labels": ["1. 0–40%", "2. 40.1–60%", "3. 60.1–80%", "4. 80.1–99.9%", "5. 100% Retiro"],
+        "conteo_llantas": conteo_k16,
+        "proyeccion_promedio": proy_k16
+    }
+
+    # =========================================================================
+    # KPI 17: Indicadores Globales FVU (SOLO FULL)
+    # =========================================================================
+    llantas_fvu = [ll for ll in llantas_maestro_todas if ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA') or ll.get('causal_baja_fvu')]
+    cant_fvu = len(llantas_fvu)
+    if cant_fvu > 0 and es_full:
+        tot_ciclos = sum([to_int(ll.get('num_reencauches', 0)) + 1 for ll in llantas_fvu])
+        ir_fvu = round(tot_ciclos / max(1, cant_fvu), 2)
+        ll_reen_fvu = sum([1 for ll in llantas_fvu if to_int(ll.get('num_reencauches', 0)) >= 1 or re.search(r'R1|R2|R3', str(ll.get('vida_actual', '')))])
+        pct_reen_fvu = round((ll_reen_fvu / max(1, cant_fvu)) * 100.0, 1)
+    else:
+        ir_fvu = 0.0
+        pct_reen_fvu = 0.0
+
+    fvu_12m_cant = [0] * len(labels_k2)
+    fvu_12m_ir = [ir_fvu] * len(labels_k2)
+    if cant_fvu > 0 and labels_k2:
+        fvu_12m_cant[-1] = cant_fvu
+
+    kpi_17 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "cantidad_fvu": cant_fvu,
+        "indice_reencauchabilidad_ir": ir_fvu,
+        "pct_reencauche_fvu": pct_reen_fvu,
+        "grafico_12m": {
+            "labels": labels_k2,
+            "cantidad": fvu_12m_cant,
+            "ir": fvu_12m_ir
+        }
+    }
+
+    # =========================================================================
+    # KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (SOLO FULL)
+    # =========================================================================
+    marcas_fvu, ciclos_fvu, causales_fvu, alertas_garantia = {}, {'Original': 0, 'R1': 0, 'R2': 0, 'R3+': 0}, {}, []
+    if cant_fvu > 0 and es_full:
+        for ll in llantas_fvu:
+            mk_f = str(ll.get('marca', 'Otras')).strip() or 'Otras'
+            marcas_fvu[mk_f] = marcas_fvu.get(mk_f, 0) + 1
+
+            vd_f = str(ll.get('vida_actual', 'Original')).strip().upper()
+            if re.search(r'R3|R4|R5', vd_f):
+                ciclos_fvu['R3+'] += 1
+            elif 'R2' in vd_f:
+                ciclos_fvu['R2'] += 1
+            elif 'R1' in vd_f or to_int(ll.get('num_reencauches', 0)) > 0:
+                ciclos_fvu['R1'] += 1
+            else:
+                ciclos_fvu['Original'] += 1
+
+            cs_f = str(ll.get('causal_baja_fvu', 'Fin de vida útil normal')).strip() or 'Fin de vida útil normal'
+            causales_fvu[cs_f] = causales_fvu.get(cs_f, 0) + 1
+
+            p_ini_f = to_float(ll.get('prof_inicial', 18.0), 18.0)
+            p_act_f = to_float(ll.get('prof_actual_min', 0.0))
+            pct_desg_f = max(0.0, ((p_ini_f - p_act_f) / max(1.0, p_ini_f - 3.0)) * 100.0)
+            if pct_desg_f < 30.0 or ll.get('estado_garantia') in ('Posible Garantía', 'En Reclamación'):
+                alertas_garantia.append({
+                    'numero_interno': ll.get('numero_interno', ''),
+                    'marca': mk_f,
+                    'causal': cs_f,
+                    'pct_desgaste': round(pct_desg_f, 1),
+                    'estado_garantia': ll.get('estado_garantia', 'Posible Garantía')
+                })
+
+    tot_cs = max(1, sum(causales_fvu.values()))
+    cs_labels = list(causales_fvu.keys())
+    cs_valores = list(causales_fvu.values())
+    cs_pcts = [round((v / tot_cs) * 100.0, 1) for v in cs_valores]
+
+    kpi_18 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "por_marca": {"labels": list(marcas_fvu.keys()), "valores": list(marcas_fvu.values())},
+        "por_ciclo": {"labels": list(ciclos_fvu.keys()), "valores": list(ciclos_fvu.values())},
+        "por_causal": {"labels": cs_labels, "valores": cs_valores, "porcentajes": cs_pcts},
+        "alertas_garantia": alertas_garantia
+    }
+
+    # =========================================================================
+    # KPI 19: Profundidad de Baja y Dispersión por Milímetro (SOLO FULL)
+    # =========================================================================
+    burbujas_disp = []
+    tot_mm_desp = 0.0
+    din_perd_scrap = 0.0
+    max_baja, prom_baja, min_baja = [], [], []
+
+    if cant_fvu > 0 and es_full:
+        mm_hist = {}
+        for ll in llantas_fvu:
+            p_baja = round(to_float(ll.get('prof_actual_min', 0.0)))
+            costo_perd = to_float(ll.get('dinero_perdido_fvu', 0.0))
+            mm_perd = to_float(ll.get('mm_perdidos_fvu', 0.0))
+            tot_mm_desp += mm_perd
+            din_perd_scrap += costo_perd
+            if p_baja not in mm_hist:
+                mm_hist[p_baja] = {'count': 0, 'dinero': 0.0}
+            mm_hist[p_baja]['count'] += 1
+            mm_hist[p_baja]['dinero'] += costo_perd
+
+        for mm_val, h_val in sorted(mm_hist.items()):
+            burbujas_disp.append({
+                'x': mm_val,
+                'y': round(h_val['dinero']),
+                'r': min(24, max(5, h_val['count'] * 3)),
+                'cantidad': h_val['count']
+            })
+
+        all_pb = [to_float(ll.get('prof_actual_min', 0.0)) for ll in llantas_fvu]
+        max_b = round(max(all_pb), 1) if all_pb else 0.0
+        prom_b = round(sum(all_pb) / max(1, len(all_pb)), 1) if all_pb else 0.0
+        min_b = round(min(all_pb), 1) if all_pb else 0.0
+        max_baja = [max_b] * len(labels_k2)
+        prom_baja = [prom_b] * len(labels_k2)
+        min_baja = [min_b] * len(labels_k2)
+
+    kpi_19 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "grafico_lineas": {
+            "labels": labels_k2,
+            "maximo": max_baja,
+            "promedio": prom_baja,
+            "minimo": min_baja
+        },
+        "burbujas_dispersion": burbujas_disp,
+        "total_mm_desperdiciados": round(tot_mm_desp, 1),
+        "dinero_perdido_scrap_cop": round(din_perd_scrap)
+    }
+
+    # =========================================================================
+    # KPI 20: Matriz de Evaluación de Necesidades vs 7 Bodegas MRP (SOLO FULL)
+    # =========================================================================
+    bodegas_resumen = {
+        'BODEGA_1_NUEVAS': {'nombre': 'Bodega 1: Llantas Nuevas', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#06B6D4'},
+        'BODEGA_2_RECAMBIO': {'nombre': 'Bodega 2: Recambio / Reutilizables', 'cantidad': 0, 'valor_cop': 0.0, 'libres': 0, 'reservadas': 0, 'color': '#10B981'},
+        'BODEGA_3_REENCAUCHE': {'nombre': 'Bodega 3: En Planta Reencauche', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#6366F1'},
+        'BODEGA_4_REENCAUCHADAS': {'nombre': 'Bodega 4: Reencauchadas Listas', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#0D9488'},
+        'BODEGA_5_REPARACION': {'nombre': 'Bodega 5: En Reparación Mayor', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#F59E0B'},
+        'BODEGA_6_FVU': {'nombre': 'Bodega 6: Pila Desecho / FVU', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#EF4444'},
+        'BODEGA_7_CHATARRIZADA': {'nombre': 'Bodega 7: Disposición Final', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#64748B'},
+        'MONTADA_OPERACION': {'nombre': 'En Operación (Rodando)', 'cantidad': 0, 'valor_cop': 0.0, 'color': '#3B82F6'}
+    }
+
+    for ll in llantas_maestro_todas:
+        ubi = ll.get('ubicacion_bodega', 'BODEGA_1_NUEVAS')
+        if ubi in bodegas_resumen:
+            bodegas_resumen[ubi]['cantidad'] += 1
+            c_c = to_float(ll.get('costo_ciclo_actual', 0.0))
+            bodegas_resumen[ubi]['valor_cop'] += c_c
+
+    dims_mrp = sorted(list({ll.get('dimension', '295/80R22.5') for ll in llantas_maestro_todas if ll.get('dimension')}))
+    if not dims_mrp:
+        dims_mrp = ['295/80R22.5']
+    if dimension and dimension != 'TODOS':
+        dims_mrp = [d for d in dims_mrp if d.upper() == dimension.upper()] or [dimension]
+
+    matriz_mrp = []
+    lbl_mrp, nec_mrp, stk_mrp, cmp_mrp = [], [], [], []
+
+    for dim_item in dims_mrp:
+        dem_dir = 0
+        dem_trac = 0
+        if not df_patio.empty:
+            df_dim_p = df_patio[df_patio['dimension'].astype(str).str.upper().str.strip() == dim_item.upper()]
+            for pl, grp_v in df_dim_p.groupby('placa'):
+                p1 = grp_v[grp_v['posicion'] == 1]
+                p2 = grp_v[grp_v['posicion'] == 2]
+                p1_ret = False
+                p2_ret = False
+                p1_min = 99.0
+                p2_min = 99.0
+                p1_ini = 18.0
+                p2_ini = 18.0
+                if not p1.empty:
+                    p1_min = to_float(p1['calc_p_min'].values[0])
+                    p1_ret = (p1_min <= mm_retiro_dir)
+                    p1_ini = to_float(p1['prof_inicial'].values[0], 18.0)
+                if not p2.empty:
+                    p2_min = to_float(p2['calc_p_min'].values[0])
+                    p2_ret = (p2_min <= mm_retiro_dir)
+                    p2_ini = to_float(p2['prof_inicial'].values[0], 18.0)
+
+                if p1_ret and p2_ret:
+                    dem_dir += 2
+                elif p1_ret and not p2_ret:
+                    dem_dir += 1
+                    if (p2_ini - p2_min) > dif_par_dir:
+                        dem_dir += 1
+                elif p2_ret and not p1_ret:
+                    dem_dir += 1
+                    if (p1_ini - p1_min) > dif_par_dir:
+                        dem_dir += 1
+
+                for _, r_tr in grp_v[grp_v['posicion'] > 2].iterrows():
+                    p_val = to_float(r_tr['calc_p_min'])
+                    lim_tr = to_float(r_tr['calc_lim_retiro'], mm_retiro_trac)
+                    if p_val <= lim_tr:
+                        dem_trac += 1
+
+        demanda_flota = dem_dir + dem_trac
+        bajas_fvu = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_6_FVU'])
+
+        # Margen de Seguridad (15%): ceil((demanda + bajas) * 0.15)
+        margen_seguridad = math.ceil((demanda_flota + bajas_fvu) * 0.15)
+        if demanda_flota == 0 and bajas_fvu == 0:
+            margen_seguridad = stock_seg_default
+
+        necesidad_bruta = demanda_flota + bajas_fvu + margen_seguridad
+
+        # Stock Disponible: B1 + B2 + floor(B3 * 0.90) + B4
+        b1_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_1_NUEVAS'])
+        b2_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')])
+        b3_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_3_REENCAUCHE'])
+        b4_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_4_REENCAUCHADAS'])
+
+        stock_b3_util = int(math.floor(b3_cnt * 0.90))
+        stock_disponible = b1_cnt + b2_cnt + stock_b3_util + b4_cnt
+
+        compra_neta = max(0, necesidad_bruta - stock_disponible)
+        compra_nuevas_dir = max(0, dem_dir - b1_cnt)
+        compra_trac_reenc = max(0, compra_neta - compra_nuevas_dir)
+        presupuesto_cop = (compra_nuevas_dir * 1850000.0) + (compra_trac_reenc * 750000.0)
+
+        matriz_mrp.append({
+            'dimension': dim_item,
+            'demanda_flota': demanda_flota,
+            'demanda_direccional': dem_dir,
+            'demanda_traccion': dem_trac,
+            'reposicion_bajas_fvu': bajas_fvu,
+            'margen_seguridad': margen_seguridad,
+            'necesidad_bruta': necesidad_bruta,
+            'stock_b1': b1_cnt,
+            'stock_b2': b2_cnt,
+            'stock_b3': b3_cnt,
+            'stock_b3_util': stock_b3_util,
+            'stock_b4': b4_cnt,
+            'stock_disponible': stock_disponible,
+            'compra_neta_sugerida': compra_neta,
+            'compra_nuevas_direccional': compra_nuevas_dir,
+            'compra_traccion_reencauche': compra_trac_reenc,
+            'presupuesto_estimado_cop': presupuesto_cop
+        })
+
+        lbl_mrp.append(dim_item)
+        nec_mrp.append(necesidad_bruta)
+        stk_mrp.append(stock_disponible)
+        cmp_mrp.append(compra_neta)
+
+    kpi_20 = {
+        "disponible": es_full,
+        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "matriz_mrp": matriz_mrp,
+        "grafico_comparativo": {
+            "labels": lbl_mrp,
+            "necesidad_bruta": nec_mrp,
+            "stock_disponible": stk_mrp,
+            "compra_neta": cmp_mrp
+        },
+        "bodegas_resumen": bodegas_resumen
+    }
+
+    return {
+        "licencia": licencia,
+        "disponible_en_licencia": es_full,
+        "pestanas": {
+            "pestana_1": {"titulo": "1. 🚛 Inspección & Parque", "kpis": ["kpi_01", "kpi_02", "kpi_03", "kpi_04"]},
+            "pestana_2": {"titulo": "2. 🔧 Mantenimiento & Pérdida", "kpis": ["kpi_05", "kpi_06", "kpi_07", "kpi_08", "kpi_09", "kpi_10", "kpi_11"]},
+            "pestana_3": {"titulo": "3. 📈 Producto & Proyecciones", "kpis": ["kpi_12", "kpi_13", "kpi_14", "kpi_15", "kpi_16"]},
+            "pestana_4": {"titulo": "4. ♻️ Tablero Bajas / FVU", "kpis": ["kpi_17", "kpi_18", "kpi_19"]},
+            "pestana_5": {"titulo": "5. 🏭 Balance 7 Bodegas MRP", "kpis": ["kpi_20"]}
+        },
+        "kpi_01": kpi_01,
+        "kpi_02": kpi_02,
+        "kpi_03": kpi_03,
+        "kpi_04": kpi_04,
+        "kpi_05": kpi_05,
+        "kpi_06": kpi_06,
+        "kpi_07": kpi_07,
+        "kpi_08": kpi_08,
+        "kpi_09": kpi_09,
+        "kpi_10": kpi_10,
+        "kpi_11": kpi_11,
+        "kpi_12": kpi_12,
+        "kpi_13": kpi_13,
+        "kpi_14": kpi_14,
+        "kpi_15": kpi_15,
+        "kpi_16": kpi_16,
+        "kpi_17": kpi_17,
+        "kpi_18": kpi_18,
+        "kpi_19": kpi_19,
+        "kpi_20": kpi_20
+    }
+
+
+
 def obtener_directorio_clientes():
     """
     Retorna la lista completa y consolidada de clientes/flotas registrados en el sistema,
@@ -7015,5 +8607,24 @@ def eliminar_cliente_directorio(cliente: str):
         "cliente": raw_cliente,
         "mensaje": f"Cliente '{raw_cliente}' eliminado exitosamente del catálogo."
     }
+
+
+# =============================================================================
+# EXPORTACIÓN DE FUNCIONES DE 7 BODEGAS, TALLER EN PATIO Y HOJA DE VIDA
+# =============================================================================
+from modulo_bodegas_taller import (
+    sincronizar_hoja_vida_desde_inspecciones,
+    crear_llantas_stock,
+    desmontar_llanta_taller,
+    montar_llanta_taller,
+    despachar_lote_planta_reencauche,
+    recepcionar_llanta_reencauchada,
+    finalizar_reparacion_bodega5,
+    procesar_dictamen_garantia_bodega6,
+    dar_baja_fvu_bodega7,
+    obtener_hoja_vida_llanta,
+    obtener_posicion_taller_info,
+    listar_inventario_bodegas_con_kpis
+)
 
 

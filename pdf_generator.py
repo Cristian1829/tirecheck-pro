@@ -1397,3 +1397,324 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     doc.build(elements, canvasmaker=canvas_maker)
     buffer.seek(0)
     return buffer.getvalue()
+
+
+# =============================================================================
+# REPORTES PDF: DESPACHO A PLANTA Y ACTA DE CHATARRIZACIÓN FVU
+# =============================================================================
+
+def generar_pdf_despacho_planta(datos: dict) -> bytes:
+    """
+    Genera la Planilla Oficial de Despacho de Carcasas a Planta Renovadora (Bodega 3 -> Bodega 4).
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'DispatchTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=16,
+        leading=20,
+        textColor=colors.HexColor('#0f172a'),
+        alignment=1
+    )
+    sub_style = ParagraphStyle(
+        'DispatchSub',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#475569'),
+        alignment=1
+    )
+    th_style = ParagraphStyle(
+        'DispatchTH',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        leading=11,
+        textColor=colors.white,
+        alignment=1
+    )
+    td_style = ParagraphStyle(
+        'DispatchTD',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor('#1e293b')
+    )
+    td_center = ParagraphStyle(
+        'DispatchTDC',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor('#1e293b'),
+        alignment=1
+    )
+
+    elements = []
+
+    # Encabezado
+    guia = datos.get('guia_remision', 'GUIA-SIN-NUMERO')
+    cliente = datos.get('cliente', 'CLIENTE GENERAL')
+    proveedor = datos.get('proveedor_planta', 'Planta Renovadora')
+    transportador = datos.get('transportador', 'Transporte Propio')
+    fecha_envio = datos.get('fecha_envio', datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d'))
+    fecha_comp = datos.get('fecha_compromiso', 'Por definir')
+
+    elements.append(Paragraph("<b>TIREANALYZE PRO — GESTIÓN TÉCNICA DE FLOTAS</b>", sub_style))
+    elements.append(Paragraph("<b>ORDEN DE DESPACHO A PLANTA RENOVADORA</b>", title_style))
+    elements.append(Paragraph(f"Guía Oficial de Custodia: <b>{guia}</b> | Fecha de Envío: <b>{fecha_envio}</b>", sub_style))
+    elements.append(Spacer(1, 14))
+
+    # Metadatos del envío
+    info_data = [
+        [
+            Paragraph(f"<b>Cliente / Flota:</b> {cliente}", td_style),
+            Paragraph(f"<b>Planta Reencauchadora:</b> {proveedor}", td_style)
+        ],
+        [
+            Paragraph(f"<b>Transportador:</b> {transportador}", td_style),
+            Paragraph(f"<b>Fecha Compromiso Entrega:</b> {fecha_comp}", td_style)
+        ]
+    ]
+    t_info = Table(info_data, colWidths=[270, 270])
+    t_info.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(t_info)
+    elements.append(Spacer(1, 14))
+
+    # Tabla de Llantas Despachadas
+    llantas = datos.get('llantas', [])
+    rows = [
+        [
+            Paragraph("<b>#</b>", th_style),
+            Paragraph("<b>No. Interno</b>", th_style),
+            Paragraph("<b>Marca / Carcasa</b>", th_style),
+            Paragraph("<b>Diseño Orig.</b>", th_style),
+            Paragraph("<b>Dimensión</b>", th_style),
+            Paragraph("<b>Prof. Actual</b>", th_style),
+            Paragraph("<b>Ciclo</b>", th_style),
+            Paragraph("<b>Observaciones / Banda Sugerida</b>", th_style)
+        ]
+    ]
+
+    for idx, item in enumerate(llantas, 1):
+        num = item.get('numero_interno', '')
+        marca = item.get('marca_origen') or item.get('marca', '')
+        diseno = item.get('diseno_origen') or item.get('diseno', '')
+        dim = item.get('dimension', '295/80R22.5')
+        p_act = item.get('prof_actual_min', 0.0)
+        ciclo = item.get('ciclo_actual', 1)
+        obs = item.get('observaciones', 'Inspección de carcasa OK')
+
+        rows.append([
+            Paragraph(str(idx), td_center),
+            Paragraph(f"<b>{num}</b>", td_center),
+            Paragraph(str(marca), td_style),
+            Paragraph(str(diseno), td_style),
+            Paragraph(str(dim), td_center),
+            Paragraph(f"{float(p_act):.1f} mm", td_center),
+            Paragraph(f"R{ciclo-1}" if ciclo > 1 else "Orig.", td_center),
+            Paragraph(str(obs), td_style)
+        ])
+
+    if len(rows) == 1:
+        rows.append([Paragraph("No se seleccionaron llantas", td_style)] * 8)
+
+    t_llantas = Table(rows, colWidths=[24, 75, 75, 75, 75, 55, 45, 116])
+    t_llantas.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e293b')),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+    ]))
+    elements.append(t_llantas)
+    elements.append(Spacer(1, 24))
+
+    # Firmas de Entrega y Recepción
+    firmas = [
+        [
+            Paragraph("______________________________________<br/><b>Entregado por (Patio / Taller)</b><br/>Nombre:<br/>C.C.:", td_style),
+            Paragraph("______________________________________<br/><b>Transportador / Custodia</b><br/>Nombre:<br/>C.C. / Placa:", td_style),
+            Paragraph("______________________________________<br/><b>Recibido en Planta Reencauchadora</b><br/>Firma y Sello:<br/>Fecha:", td_style)
+        ]
+    ]
+    t_firmas = Table(firmas, colWidths=[180, 180, 180])
+    t_firmas.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 8)
+    ]))
+    elements.append(KeepTogether(t_firmas))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def generar_pdf_acta_chatarrizacion(datos: dict) -> bytes:
+    """
+    Genera el Acta Oficial de Chatarrización y Disposición Final (FVU - Bodega 7).
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'ActaTitle',
+        parent=styles['Heading1'],
+        fontName='Helvetica-Bold',
+        fontSize=15,
+        leading=18,
+        textColor=colors.HexColor('#b91c1c'),
+        alignment=1
+    )
+    sub_style = ParagraphStyle(
+        'ActaSub',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#475569'),
+        alignment=1
+    )
+    td_style = ParagraphStyle(
+        'ActaTD',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#1e293b')
+    )
+    alert_box_style = ParagraphStyle(
+        'ActaAlert',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#991b1b'),
+        alignment=1
+    )
+
+    elements = []
+
+    num = datos.get('numero_interno', 'S/N')
+    cliente = datos.get('cliente', 'CLIENTE GENERAL')
+    acta = datos.get('numero_acta', f"ACTA-FVU-{datetime.now(BOGOTA_TZ).strftime('%Y%m')}-{num}")
+    fecha = datos.get('fecha_baja', datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d'))
+    marca = datos.get('marca', 'GENERICA')
+    diseno = datos.get('diseno', 'ESTANDAR')
+    dim = datos.get('dimension', '295/80R22.5')
+    prof_ret = float(datos.get('prof_retiro', 0.0))
+    lim_ret = float(datos.get('limite_retiro', 3.0))
+    mm_desp = float(datos.get('mm_desperdiciados', 0.0))
+    dinero_perd = float(datos.get('dinero_perdido', 0.0))
+    motivo = datos.get('motivo_baja', 'Desgaste Irregular / Falla de Carcasa')
+
+    elements.append(Paragraph("<b>TIREANALYZE PRO — GESTIÓN TÉCNICA Y AUDITORÍA DE FLOTAS</b>", sub_style))
+    elements.append(Paragraph("<b>ACTA TÉCNICA DE DISPOSICIÓN FINAL Y CHATARRIZACIÓN (FVU)</b>", title_style))
+    elements.append(Paragraph(f"Consecutivo: <b>{acta}</b> | Fecha de Disposición: <b>{fecha}</b>", sub_style))
+    elements.append(Spacer(1, 14))
+
+    # Cuadro de Pérdida Financiera
+    cuadro_alerta = [
+        [
+            Paragraph(f"⚠️ AUDITORÍA DE RENDIMIENTO: <b>{mm_desp:.1f} mm Desperdiciados</b> | Pérdida Económica Estimada: <b>${dinero_perd:,.0f} COP</b>", alert_box_style)
+        ]
+    ]
+    t_alert = Table(cuadro_alerta, colWidths=[540])
+    t_alert.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#fef2f2')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#f87171')),
+        ('TOPPADDING', (0,0), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+    ]))
+    elements.append(t_alert)
+    elements.append(Spacer(1, 14))
+
+    # Ficha Técnica
+    tabla_datos = [
+        [
+            Paragraph(f"<b>Cliente Propietario:</b> {cliente}", td_style),
+            Paragraph(f"<b>No. Interno / Serial:</b> <b>{num}</b>", td_style)
+        ],
+        [
+            Paragraph(f"<b>Marca Carcasa:</b> {marca}", td_style),
+            Paragraph(f"<b>Diseño Original:</b> {diseno}", td_style)
+        ],
+        [
+            Paragraph(f"<b>Dimensión Técnica:</b> {dim}", td_style),
+            Paragraph(f"<b>Límite Retiro Flota:</b> {lim_ret:.1f} mm", td_style)
+        ],
+        [
+            Paragraph(f"<b>Profundidad Final Retiro:</b> {prof_ret:.1f} mm", td_style),
+            Paragraph(f"<b>Milímetros Remanentes:</b> {mm_desp:.1f} mm", td_style)
+        ],
+        [
+            Paragraph(f"<b>Causa Raíz de Desecho:</b><br/>{motivo}", td_style),
+            Paragraph(f"<b>Destino Final:</b><br/>Bodega 7 FVU / Chatarrización Ambiental", td_style)
+        ]
+    ]
+    t_detalles = Table(tabla_datos, colWidths=[270, 270])
+    t_detalles.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(t_detalles)
+    elements.append(Spacer(1, 14))
+
+    declaracion_texto = (
+        "<b>CERTIFICACIÓN AMBIENTAL Y TÉCNICA:</b> Por medio de la presente acta se certifica que la carcasa "
+        "referenciada ha cumplido su ciclo de servicio o presenta daño estructural no reparable según los "
+        "estándares de seguridad vial. Queda inhabilitada definitivamente para rodar y autorizada para su "
+        "reciclaje, trituración o disposición final con gestor ambiental autorizado."
+    )
+    elements.append(Paragraph(declaracion_texto, td_style))
+    elements.append(Spacer(1, 28))
+
+    # Firmas
+    firmas = [
+        [
+            Paragraph("______________________________________<br/><b>Inspector Técnico de Llantas</b><br/>Responsable de Inspección", td_style),
+            Paragraph("______________________________________<br/><b>Jefe de Patio / Mantenimiento</b><br/>Aprobación de Baja", td_style),
+            Paragraph("______________________________________<br/><b>Gestor Ambiental / Chatarrizador</b><br/>Recepción Disposición Final", td_style)
+        ]
+    ]
+    t_firmas = Table(firmas, colWidths=[180, 180, 180])
+    t_firmas.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 8)
+    ]))
+    elements.append(KeepTogether(t_firmas))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()
+
