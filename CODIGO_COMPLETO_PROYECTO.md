@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-24 09:47:54`
+- **Fecha de Generación:** `2026-10-24 14:07:57`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `52,092` líneas
-- **Tamaño Total de Código Fuente:** `2553.9 KB` (`2,615,165` bytes)
+- **Líneas Totales de Código:** `53,614` líneas
+- **Tamaño Total de Código Fuente:** `2619.0 KB` (`2,681,851` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -431,8 +431,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2037 | 89.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 8804 | 420.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2180 | 94.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 9227 | 439.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1846 | 85.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18316 | 969.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 19272 | 1011.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -3539,7 +3539,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2037 líneas | 91,640 bytes (89.5 KB)
+- **Métricas:** 2180 líneas | 96,784 bytes (94.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3647,6 +3647,8 @@ class ConfigLicenciaClienteItem(BaseModel):
     tipo_licencia: str = "PRO"  # "LIGHT" o "PRO"
     plantilla_kpis_json: str = "{}"
 
+class LoteInspeccionesOfflineRequest(BaseModel):
+    items: list[dict]
 
 class InspeccionItem(BaseModel):
     fecha: str = ""
@@ -3781,7 +3783,7 @@ def _obtener_o_crear_secret_key() -> str:
         return "tireanalyze-pro-fallback-secret-key-2026-production"
 
 SECRET_KEY = _obtener_o_crear_secret_key()
-TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
+TOKEN_EXPIRATION_SECONDS = 604800  # 7 días (para jornadas de campo en zonas remotas sin cobertura)
 
 def crear_token_acceso(username: str, rol: str) -> str:
     payload = {
@@ -3923,6 +3925,117 @@ def preview_chasis():
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "preview_chasis.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
+
+@app.get("/manifest.json")
+def pwa_manifest():
+    manifest_data = {
+        "name": "TireAnalyze Pro — Patio Offline",
+        "short_name": "TireAnalyze",
+        "description": "Sistema Integral de Inspección y Diagnóstico de Flotas — Modo Patio Offline",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#091323",
+        "theme_color": "#091323",
+        "icons": [
+            {
+                "src": "/static/img/logo_hd.svg",
+                "sizes": "any",
+                "type": "image/svg+xml",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+    return Response(content=json.dumps(manifest_data, indent=2), media_type="application/manifest+json")
+
+@app.get("/sw.js")
+def service_worker():
+    sw_code = """// Service Worker para TireAnalyze Pro — Soporte Offline-First en Patio
+const CACHE_NAME = 'tireanalyze-patio-v1';
+const PRECACHE_ASSETS = [
+  '/',
+  '/static/img/logo_hd.svg',
+  '/static/img/banner_tireanalyze_hd.png',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn('[SW] Precache parcial:', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+
+  // Navegación HTML (/): Network-First con Fallback a Caché
+  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/') {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match('/') || caches.match(req))
+    );
+    return;
+  }
+
+  // Peticiones de datos API: Network-First con Fallback a Caché
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Recursos Estáticos (CSS, JS, Fonts, Img): Cache-First
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      });
+    })
+  );
+});
+"""
+    return Response(
+        content=sw_code,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}
+    )
 
 @app.get("/api/servidor/info")
 def api_info_servidor():
@@ -4160,6 +4273,16 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
 
     database.eliminar_inspeccion(inspeccion_id)
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
+
+@app.post("/api/inspecciones/sincronizar-lote")
+def api_sincronizar_lote_inspecciones(req: LoteInspeccionesOfflineRequest, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if es_rol_gerencia(rol):
+        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede registrar inspecciones")
+    
+    res = database.sincronizar_lote_inspecciones(req.items, usuario_actual)
+    return sanitizar_nativos(res)
+
 
 # ==========================================
 
@@ -5115,6 +5238,26 @@ def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: d
         "novedades": det["novedades"]
     }
 
+@app.get("/api/offline/paquete-patio")
+def api_offline_paquete_patio(
+    cliente: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    username = str(usuario_actual.get("username", "")).strip()
+    clis_autorizados = []
+    if not es_rol_admin(rol, username):
+        clis_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis_autorizados:
+            if cliente and not any(c.lower() == cliente.strip().lower() for c in clis_autorizados):
+                raise HTTPException(status_code=403, detail="No tiene permisos para descargar datos de este cliente")
+            if not cliente and len(clis_autorizados) == 1:
+                cliente = clis_autorizados[0]
+    
+    paquete = database.obtener_paquete_offline_patio(cliente=cliente, usuario=username)
+    return sanitizar_nativos(paquete)
+
+
 # ==========================================
 # RUTAS DE AUTENTICACIÓN Y USUARIOS
 # ==========================================
@@ -5588,7 +5731,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 8804 líneas | 430,663 bytes (420.6 KB)
+- **Métricas:** 9227 líneas | 449,799 bytes (439.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14394,6 +14537,428 @@ from modulo_bodegas_taller import (
     obtener_posicion_taller_info,
     listar_inventario_bodegas_con_kpis
 )
+
+
+# =============================================================================
+# MÓDULO OFFLINE-FIRST: PAQUETE DE PATIO Y SINCRONIZACIÓN IDEMPOTENTE
+# =============================================================================
+
+def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
+    """
+    Retorna en un único JSON compacto todo el paquete de pre-carga para patio offline:
+    - tipologias completas (con esquema y posiciones)
+    - operaciones
+    - modelos
+    - limites
+    - marcas_por_cliente
+    - catalogos_campos (clientes, subclientes_por_cliente, marcas, disenos, dimensiones, bandas)
+    - vehiculos_perfil (indexado por placa con sus posiciones_previas 1..N)
+    - llantas_catalogo_cliente (indexado por {cliente}|||{numero_interno})
+    """
+    fecha_descarga = datetime.now().isoformat()
+
+    # 1. Permisos y clientes autorizados
+    clis_autorizados = []
+    es_admin = True
+    if usuario:
+        usr_info = obtener_usuario_por_username(usuario)
+        if usr_info and usr_info.get("rol") != "admin":
+            es_admin = False
+            clis_autorizados = parsear_clientes_asignados(usr_info.get("cliente_asignado"))
+
+    cli_filtro = str(cliente or "").strip().upper()
+    if not es_admin and clis_autorizados:
+        if cli_filtro:
+            if not any(c.lower() == cli_filtro.lower() for c in clis_autorizados):
+                flota_clientes = []
+            else:
+                flota_clientes = [cli_filtro]
+        else:
+            flota_clientes = clis_autorizados
+    elif cli_filtro:
+        flota_clientes = [cli_filtro]
+    else:
+        flota_clientes = []
+
+    # 2. Tipologías con esquema y posiciones
+    tipologias = obtener_todas_tipologias()
+    for tip in tipologias:
+        tip["posiciones"] = obtener_posiciones_por_tipologia(tip.get("nombre"))
+
+    # 3. Operaciones
+    operaciones = obtener_todas_operaciones()
+
+    # 4. Modelos de llanta
+    modelos = obtener_catalogo_modelos()
+
+    # 5. Límites de retiro
+    limites = obtener_todas_configuraciones_clientes()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 6. Marcas por cliente
+        marcas_por_cliente = {}
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), marca 
+            FROM configuracion_marcas_cliente 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+            ORDER BY cliente ASC, marca ASC
+        """)
+        for r in cursor.fetchall():
+            c = str(r[0]).strip().upper()
+            m = str(r[1] or '').strip()
+            if flota_clientes and not any(fc.lower() == c.lower() for fc in flota_clientes):
+                continue
+            if c not in marcas_por_cliente:
+                marcas_por_cliente[c] = []
+            if m and m not in marcas_por_cliente[c]:
+                marcas_por_cliente[c].append(m)
+
+        # 7. Catálogos de campos
+        # Clientes
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(cliente)) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(cliente)) FROM catalogo_vehiculos WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(cliente)) FROM configuracion_clientes WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+        """)
+        todos_clientes = sorted([r[0] for r in cursor.fetchall() if r[0]])
+        if flota_clientes:
+            todos_clientes = [c for c in todos_clientes if any(fc.lower() == c.lower() for fc in flota_clientes)]
+
+        # Subclientes por cliente
+        subclientes_por_cliente = {}
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente)) 
+            FROM inspecciones 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente)) 
+            FROM catalogo_vehiculos 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != ''
+        """)
+        for r in cursor.fetchall():
+            c = str(r[0]).strip().upper()
+            sub = str(r[1]).strip().upper()
+            if flota_clientes and not any(fc.lower() == c.lower() for fc in flota_clientes):
+                continue
+            if c not in subclientes_por_cliente:
+                subclientes_por_cliente[c] = []
+            if sub and sub not in subclientes_por_cliente[c]:
+                subclientes_por_cliente[c].append(sub)
+
+        # Marcas generales
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(marca)) FROM catalogo_modelos_llantas WHERE marca IS NOT NULL AND TRIM(marca) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(marca)) FROM inspecciones WHERE marca IS NOT NULL AND TRIM(marca) != ''
+        """)
+        todas_marcas = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Diseños
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(diseno)) FROM catalogo_modelos_llantas WHERE diseno IS NOT NULL AND TRIM(diseno) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(diseno)) FROM inspecciones WHERE diseno IS NOT NULL AND TRIM(diseno) != ''
+        """)
+        todos_disenos = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Dimensiones
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(dimension)) FROM catalogo_modelos_llantas WHERE dimension IS NOT NULL AND TRIM(dimension) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(dimension)) FROM inspecciones WHERE dimension IS NOT NULL AND TRIM(dimension) != ''
+        """)
+        todas_dimensiones = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Bandas
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(diseno)) FROM catalogo_modelos_llantas WHERE tipo_llanta = 'Reencauche' AND diseno IS NOT NULL AND TRIM(diseno) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(banda_reen)) FROM inspecciones WHERE banda_reen IS NOT NULL AND TRIM(banda_reen) != ''
+        """)
+        todas_bandas = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        catalogos_campos = {
+            "clientes": todos_clientes,
+            "subclientes_por_cliente": subclientes_por_cliente,
+            "marcas": todas_marcas,
+            "disenos": todos_disenos,
+            "dimensiones": todas_dimensiones,
+            "bandas": todas_bandas
+        }
+
+        # 8. Vehículos y sus perfiles con posiciones previas
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(placa)) FROM catalogo_vehiculos WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(placa)) FROM inspecciones WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(placa)) FROM padron_vehiculos_cliente WHERE placa IS NOT NULL AND TRIM(placa) != ''
+        """)
+        todas_placas = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Pre-cargar últimas inspecciones de cada placa y posición
+        cursor.execute("""
+            SELECT UPPER(TRIM(placa)), posicion, numero_interno, marca, diseno, dimension, vida, banda_reen,
+                   prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, psi, novedades, fecha, id
+            FROM inspecciones
+            WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            ORDER BY UPPER(TRIM(placa)) ASC, posicion ASC, fecha DESC, id DESC
+        """)
+        filas_pos = cursor.fetchall()
+        posiciones_por_placa = {}
+        for r in filas_pos:
+            pl = r[0]
+            pos_key = str(to_int(r[1], 1))
+            if pl not in posiciones_por_placa:
+                posiciones_por_placa[pl] = {}
+            if pos_key not in posiciones_por_placa[pl]:
+                posiciones_por_placa[pl][pos_key] = {
+                    "numero_interno": str(r[2] or "").strip().upper(),
+                    "marca": str(r[3] or "").strip().upper(),
+                    "diseno": str(r[4] or "").strip().upper(),
+                    "dimension": str(r[5] or "").strip().upper(),
+                    "vida": str(r[6] or "Original").strip(),
+                    "banda_reen": str(r[7] or "").strip().upper(),
+                    "prof_inicial": to_float(r[8]),
+                    "precio": to_float(r[9]),
+                    "km_montaje": to_float(r[10]),
+                    "prof_ext": to_float(r[11]),
+                    "prof_cent": to_float(r[12]),
+                    "prof_int": to_float(r[13]),
+                    "psi": to_float(r[14]),
+                    "novedades": str(r[15] or "").strip().upper(),
+                    "fecha": str(r[16] or "").strip()[:10]
+                }
+
+        vehiculos_perfil = {}
+        for pl in todas_placas:
+            perf = obtener_perfil_vehiculo(pl)
+            cli_veh = str(perf.get("cliente") or "").strip().upper()
+            if flota_clientes and not any(fc.lower() == cli_veh.lower() for fc in flota_clientes):
+                continue
+            
+            pos_previas = posiciones_por_placa.get(pl, {})
+            # Estructurar dict del perfil garantizando todos los campos solicitados
+            vehiculos_perfil[pl] = {
+                "placa": pl,
+                "tipologia": perf.get("tipologia") or "Cabezote",
+                "cliente": cli_veh,
+                "subcliente": perf.get("subcliente") or "",
+                "tipo_operacion": perf.get("tipo_operacion") or "",
+                "ultimo_km": to_float(perf.get("ultimo_km"), 0.0),
+                "dimension": perf.get("dimension") or "295/80R22.5",
+                "ultima_fecha_inspeccion": perf.get("ultima_fecha_inspeccion") or "",
+                "fecha_minima_permitida": perf.get("fecha_minima_permitida") or "",
+                "en_periodo_restringido": bool(perf.get("en_periodo_restringido", False)),
+                "ultima_marca": perf.get("ultima_marca") or "",
+                "ultimo_diseno": perf.get("ultimo_diseno") or "",
+                "cant_llantas": perf.get("cant_llantas", len(pos_previas)),
+                "esquema": perf.get("esquema", []),
+                "posiciones": perf.get("posiciones", [int(k) for k in pos_previas.keys()]),
+                "posiciones_previas": pos_previas
+            }
+
+        # 9. Llantas catálogo por cliente (para autocompletado offline sin red)
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), UPPER(TRIM(numero_interno)), subcliente, placa, posicion, fecha,
+                   marca, diseno, dimension, vida, banda_reen, prof_inicial, precio, km_montaje,
+                   prof_ext, prof_cent, prof_int, novedades
+            FROM inspecciones
+            WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != '' AND UPPER(TRIM(numero_interno)) != 'SN'
+            ORDER BY fecha DESC, id DESC
+        """)
+        llantas_catalogo_cliente = {}
+        for r in cursor.fetchall():
+            c = str(r[0] or "").strip().upper()
+            num = str(r[1] or "").strip().upper()
+            if flota_clientes and c and not any(fc.lower() == c.lower() for fc in flota_clientes):
+                continue
+            k = f"{c}|||{num}"
+            if k not in llantas_catalogo_cliente:
+                p_ext = to_float(r[14])
+                p_cent = to_float(r[15])
+                p_int = to_float(r[16])
+                profs = [p for p in (p_ext, p_cent, p_int) if p > 0]
+                prof_min = min(profs) if profs else 0.0
+                info_llanta = {
+                    "encontrado": True,
+                    "numero_interno": num,
+                    "cliente": r[0] or "",
+                    "subcliente": r[2] or "",
+                    "ult_placa": r[3] or "",
+                    "ult_posicion": to_int(r[4], 1),
+                    "ult_fecha": r[5] or "",
+                    "marca": r[6] or "",
+                    "diseno": r[7] or "",
+                    "dimension": r[8] or "",
+                    "vida": r[9] or "Original",
+                    "banda_reen": r[10] or "",
+                    "prof_inicial": to_float(r[11]),
+                    "precio": to_float(r[12]),
+                    "km_montaje": to_float(r[13]),
+                    "ult_prof_ext": p_ext,
+                    "ult_prof_cent": p_cent,
+                    "ult_prof_int": p_int,
+                    "ult_prof_min": prof_min,
+                    "ult_novedades": r[17] or ""
+                }
+                llantas_catalogo_cliente[k] = info_llanta
+                if f"|||{num}" not in llantas_catalogo_cliente:
+                    llantas_catalogo_cliente[f"|||{num}"] = info_llanta
+
+    return {
+        "fecha_descarga": fecha_descarga,
+        "tipologias": tipologias,
+        "operaciones": operaciones,
+        "modelos": modelos,
+        "limites": limites,
+        "marcas_por_cliente": marcas_por_cliente,
+        "catalogos_campos": catalogos_campos,
+        "vehiculos_perfil": vehiculos_perfil,
+        "llantas_catalogo_cliente": llantas_catalogo_cliente
+    }
+
+
+def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> dict:
+    """
+    Sincroniza un lote de inspecciones offline de forma idempotente con aislamiento de fallos individuales.
+    - Ordena por fecha ASC, timestamp_local ASC, posicion ASC.
+    - Normaliza placa, posicion, fecha (YYYY-MM-DD).
+    - Aplica aislamiento multi-cliente según el usuario_actual.
+    - Si ya existe en esa fecha: valida candados con excluir_id y actualiza (incrementa actualizadas).
+    - Si no existe: valida candados e inserta (incrementa sincronizadas).
+    - Si falla candado duro o permisos: añade a rechazadas sin abortar el resto del lote.
+    """
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    username = str(usuario_actual.get("username", "")).strip()
+
+    if rol in ("gerencia", "gerente"):
+        return {
+            "status": "ok",
+            "sincronizadas": 0,
+            "actualizadas": 0,
+            "rechazadas": [
+                {
+                    "dedup_key": it.get("dedup_key"),
+                    "placa": it.get("placa"),
+                    "posicion": it.get("posicion"),
+                    "motivo": "El rol Gerencia tiene perfil ejecutivo y no puede registrar inspecciones"
+                }
+                for it in items
+            ]
+        }
+
+    clis_autorizados = []
+    if rol not in ("admin", "administrador") and username.lower() != "admin":
+        clis_autorizados = parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+
+    def _clave_orden(it):
+        f = str(it.get("fecha") or "")
+        ts = str(it.get("timestamp_local") or it.get("fecha") or "")
+        p = to_int(it.get("posicion"), 1)
+        return (f, ts, p)
+
+    items_ordenados = sorted(items or [], key=_clave_orden)
+
+    count_insertadas = 0
+    count_actualizadas = 0
+    rechazadas = []
+
+    for it in items_ordenados:
+        placa = str(it.get("placa", "")).strip().upper()
+        pos = to_int(it.get("posicion"), 1)
+        fecha_raw = str(it.get("fecha", "")).strip()
+        fecha = fecha_raw[:10] if fecha_raw else datetime.now().strftime("%Y-%m-%d")
+        dedup_key = it.get("dedup_key") or f"{placa}_{pos}_{fecha}"
+
+        if not placa:
+            rechazadas.append({
+                "dedup_key": dedup_key,
+                "placa": placa,
+                "posicion": pos,
+                "motivo": "Por favor ingresa la Placa del vehículo."
+            })
+            continue
+
+        datos = dict(it)
+        datos["placa"] = placa
+        datos["posicion"] = pos
+        datos["fecha"] = fecha
+        datos["usuario_registro"] = username
+
+        # Validar permisos de cliente
+        if clis_autorizados:
+            cli_datos = str(datos.get("cliente", "")).strip().upper()
+            if not cli_datos and len(clis_autorizados) == 1:
+                cli_datos = clis_autorizados[0]
+                datos["cliente"] = cli_datos
+            elif not cli_datos or not any(c.lower() == cli_datos.lower() for c in clis_autorizados):
+                rechazadas.append({
+                    "dedup_key": dedup_key,
+                    "placa": placa,
+                    "posicion": pos,
+                    "motivo": "No tiene permisos para registrar inspecciones de este cliente"
+                })
+                continue
+
+        # Verificar si ya existe registro en SQLite para esa placa, posición y fecha
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND posicion = ? AND SUBSTR(fecha, 1, 10) = ?
+                ORDER BY id DESC LIMIT 1
+            """, (placa, pos, fecha))
+            row_exist = cursor.fetchone()
+
+        if row_exist:
+            id_existente = row_exist[0]
+            val = validar_inspeccion_candados(datos, excluir_id=id_existente)
+            if not val.get("valido", True):
+                rechazadas.append({
+                    "dedup_key": dedup_key,
+                    "placa": placa,
+                    "posicion": pos,
+                    "motivo": val.get("mensaje", "Violación de regla de seguridad")
+                })
+            else:
+                ok = actualizar_inspeccion(id_existente, datos)
+                if ok:
+                    count_actualizadas += 1
+                else:
+                    rechazadas.append({
+                        "dedup_key": dedup_key,
+                        "placa": placa,
+                        "posicion": pos,
+                        "motivo": "No se pudo actualizar el registro existente"
+                    })
+        else:
+            val = validar_inspeccion_candados(datos)
+            if not val.get("valido", True):
+                rechazadas.append({
+                    "dedup_key": dedup_key,
+                    "placa": placa,
+                    "posicion": pos,
+                    "motivo": val.get("mensaje", "Violación de regla de seguridad")
+                })
+            else:
+                new_id = insertar_inspeccion(datos)
+                if new_id:
+                    count_insertadas += 1
+                else:
+                    rechazadas.append({
+                        "dedup_key": dedup_key,
+                        "placa": placa,
+                        "posicion": pos,
+                        "motivo": "No se pudo insertar la inspección en la base de datos"
+                    })
+
+    return {
+        "status": "ok",
+        "sincronizadas": count_insertadas,
+        "actualizadas": count_actualizadas,
+        "rechazadas": rechazadas
+    }
 ```
 
 ---
@@ -20809,7 +21374,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 18316 líneas | 992,875 bytes (969.6 KB)
+- **Métricas:** 19272 líneas | 1,035,281 bytes (1011.0 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -20818,6 +21383,10 @@ if __name__ == '__main__':
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#091323">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
   <title>TireAnalyze Pro - Suite Integral Web de Inspección y Diagnóstico</title>
   <!-- Tailwind CSS CDN para diseño premium y responsive -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21133,8 +21702,13 @@ if __name__ == '__main__':
           </div>
       </div>
 
-      <!-- Lado Derecho: Botón Salir -->
-      <div class="flex items-center space-x-3">
+      <!-- Lado Derecho: Estado Offline y Botón Salir -->
+      <div class="flex items-center space-x-2.5">
+          <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de Conexión y Cola Offline de Patio" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50">
+              <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="lblTextoEstadoConexion">En línea · Flota Lista Offline</span>
+          </button>
+
           <button id="logoutBtn" type="button" onclick="cerrarSesionUsuario()" title="Cerrar Sesión" class="group flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-[#0c182c] hover:bg-red-950/40 text-slate-200 hover:text-red-300 border border-slate-700/80 hover:border-red-500/50 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
               <svg class="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
@@ -26462,6 +27036,89 @@ if __name__ == '__main__':
     </div>
   </div>
 
+  <!-- 8. MODAL: GESTIÓN DE COLA E INSPECCIONES OFFLINE DE PATIO -->
+  <div id="modalColaOffline" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-slate-900">Gestión de Cola e Inspección Offline de Patio</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Soporte Offline-First con IndexedDB y sincronización automática</p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalColaOffline()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Tarjetas de Resumen de Estado -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Llantas en Cola</span>
+          <span id="lblTotalPendientesOffline" class="text-xl font-black text-blue-700">0</span>
+          <span class="text-[10px] text-slate-400 block mt-0.5">Pendientes de subir</span>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Vehículos en Cola</span>
+          <span id="lblTotalVehiculosOffline" class="text-xl font-black text-slate-800">0</span>
+          <span class="text-[10px] text-slate-400 block mt-0.5">Placas capturadas</span>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Datos de Flota</span>
+          <span id="lblFechaDescargaOffline" class="text-xs font-bold text-slate-700 block truncate mt-1">Sin descargar</span>
+          <span class="text-[10px] text-slate-400 block mt-0.5">Última actualización patio</span>
+        </div>
+      </div>
+
+      <!-- Barra de Progreso de Sincronización -->
+      <div id="barraProgresoSincronizacionOffline" class="hidden space-y-1.5 p-3 bg-blue-50 rounded-2xl border border-blue-200">
+        <div class="flex justify-between items-center text-xs font-bold text-blue-900">
+          <span>Sincronizando por micro-lotes...</span>
+          <span id="progresoSincronizacionTexto">0 / 0</span>
+        </div>
+        <div class="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
+          <div id="progresoSincronizacionFill" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex flex-wrap gap-2 pt-1">
+        <button id="btnDescargarPaqueteOffline" type="button" onclick="descargarPaquetePatioOffline(true)" class="flex-1 min-w-[200px] px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-xs cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          <span>Preparar Datos de Flota para Patio</span>
+        </button>
+        <button id="btnSincronizarColaModal" type="button" onclick="sincronizarColaOffline()" class="flex-1 min-w-[200px] px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow cursor-pointer">
+          <i class="fa-solid fa-rotate"></i>
+          <span>Sincronizar Cola con Servidor</span>
+        </button>
+        <button id="btnExportarRespaldoOffline" type="button" onclick="descargarRespaldoJSONOffline()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer" title="Exportar un archivo JSON local como respaldo de seguridad">
+          <i class="fa-solid fa-file-code"></i>
+          <span>Respaldo .JSON</span>
+        </button>
+      </div>
+
+      <!-- Lista de Llantas en Cola -->
+      <div class="space-y-2 pt-2">
+        <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider">Llantas capturadas en cola</h4>
+        <div id="listaLlantasColaOffline" class="max-h-60 overflow-y-auto space-y-2 pr-1 text-xs">
+          <div class="p-4 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 font-medium">
+            No hay inspecciones pendientes en este dispositivo.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-3 border-t border-slate-100">
+        <button type="button" onclick="cerrarModalColaOffline()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+
 
   <!-- JAVASCRIPT PRINCIPAL DE LA APLICACIÓN -->
   <script>
@@ -26507,15 +27164,22 @@ if __name__ == '__main__':
         init.credentials = 'same-origin';
       }
 
-      const response = await _originalFetch(resource, init);
+      let response;
+      try {
+        response = await _originalFetch(resource, init);
+      } catch (netErr) {
+        // En caso de corte de red o falla de conexión en patio, NUNCA cerrar sesión ni borrar localStorage
+        throw netErr;
+      }
 
-      if (response.status === 401 && urlStr.includes('/api/') && !urlStr.includes('/api/login')) {
+      if (response && response.status === 401 && urlStr.includes('/api/') && !urlStr.includes('/api/login')) {
+        // Preservar la cola de pendientes intacta en IndexedDB (TireAnalyzeOfflineDB)
         localStorage.removeItem('tireanalyze_token');
         localStorage.removeItem('tirecheck_token');
         localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
-        mostrarToast('⚠️ Sesión expirada o no autorizada. Por favor inicie sesión.', true);
+        mostrarToast('⚠️ Sesión expirada. Sus inspecciones pendientes se conservan en el dispositivo para sincronizar.', true);
         const modalLogin = document.getElementById('modalLogin');
         if (modalLogin) {
           modalLogin.classList.remove('hidden');
@@ -26524,6 +27188,524 @@ if __name__ == '__main__':
 
       return response;
     };
+
+    // ==========================================
+    // PWA SERVICE WORKER Y ALMACENAMIENTO PERSISTENTE
+    // ==========================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(reg => console.log('[PWA] Service Worker registrado:', reg.scope))
+          .catch(err => console.warn('[PWA] Error registrando Service Worker:', err));
+      });
+    }
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(persistent => {
+        console.log('[Storage] Almacenamiento persistente activado:', persistent);
+      }).catch(() => {});
+    }
+
+    // ==========================================
+    // MOTOR DE BASE DE DATOS LOCAL (INDEXEDDB)
+    // ==========================================
+    const TireAnalyzeOfflineDB = {
+      dbName: 'TireAnalyzeOfflineDB',
+      dbVersion: 1,
+      _db: null,
+
+      async abrir() {
+        if (this._db) return this._db;
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(this.dbName, this.dbVersion);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('catalogos_offline')) {
+              db.createObjectStore('catalogos_offline', { keyPath: 'clave' });
+            }
+            if (!db.objectStoreNames.contains('vehiculos_offline')) {
+              db.createObjectStore('vehiculos_offline', { keyPath: 'placa' });
+            }
+            if (!db.objectStoreNames.contains('cola_pendientes')) {
+              db.createObjectStore('cola_pendientes', { keyPath: 'dedup_key' });
+            }
+          };
+          req.onsuccess = (e) => {
+            this._db = e.target.result;
+            resolve(this._db);
+          };
+          req.onerror = (e) => reject(e.target.error);
+        });
+      },
+
+      async guardarCatalogos(datos) {
+        const db = await this.abrir();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('catalogos_offline', 'readwrite');
+          const store = tx.objectStore('catalogos_offline');
+          store.put({ clave: 'paquete_patio', valor: datos, timestamp: Date.now() });
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+
+      async obtenerCatalogos() {
+        const db = await this.abrir();
+        return new Promise((resolve) => {
+          const tx = db.transaction('catalogos_offline', 'readonly');
+          const store = tx.objectStore('catalogos_offline');
+          const req = store.get('paquete_patio');
+          req.onsuccess = () => resolve(req.result ? req.result.valor : null);
+          req.onerror = () => resolve(null);
+        });
+      },
+
+      async guardarVehiculo(vehiculo) {
+        if (!vehiculo || !vehiculo.placa) return false;
+        const db = await this.abrir();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('vehiculos_offline', 'readwrite');
+          const store = tx.objectStore('vehiculos_offline');
+          store.put(vehiculo);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+
+      async guardarVehiculosBatch(vehiculosDict) {
+        const db = await this.abrir();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('vehiculos_offline', 'readwrite');
+          const store = tx.objectStore('vehiculos_offline');
+          for (const [placa, v] of Object.entries(vehiculosDict || {})) {
+            if (v && v.placa) store.put(v);
+          }
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+
+      async obtenerVehiculo(placa) {
+        if (!placa) return null;
+        const pl = String(placa).trim().toUpperCase();
+        const db = await this.abrir();
+        return new Promise((resolve) => {
+          const tx = db.transaction('vehiculos_offline', 'readonly');
+          const store = tx.objectStore('vehiculos_offline');
+          const req = store.get(pl);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      },
+
+      async guardarPendiente(item) {
+        const db = await this.abrir();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('cola_pendientes', 'readwrite');
+          const store = tx.objectStore('cola_pendientes');
+          store.put(item); // Upsert por dedup_key
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+
+      async obtenerPendientes() {
+        const db = await this.abrir();
+        return new Promise((resolve) => {
+          const tx = db.transaction('cola_pendientes', 'readonly');
+          const store = tx.objectStore('cola_pendientes');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        });
+      },
+
+      async eliminarPendiente(dedup_key) {
+        const db = await this.abrir();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('cola_pendientes', 'readwrite');
+          const store = tx.objectStore('cola_pendientes');
+          store.delete(dedup_key);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      },
+
+      async contarPendientes() {
+        const db = await this.abrir();
+        return new Promise((resolve) => {
+          const tx = db.transaction('cola_pendientes', 'readonly');
+          const store = tx.objectStore('cola_pendientes');
+          const req = store.count();
+          req.onsuccess = () => resolve(req.result || 0);
+          req.onerror = () => resolve(0);
+        });
+      }
+    };
+
+    // Helper para prevención de Lie-Fi (Falsa señal celular en patio)
+    async function fetchConTimeoutPatio(url, options = {}, timeoutMs = 3500) {
+      if (!navigator.onLine) {
+        throw new Error('Dispositivo sin conexión a internet');
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        return response;
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
+      }
+    }
+
+    // Helper para validación local de candados de seguridad en el navegador
+    function validarCandadosOfflineLocal(payload) {
+      const pExt = parseFloat(payload.prof_ext) || 0;
+      const pCent = parseFloat(payload.prof_cent) || 0;
+      const pInt = parseFloat(payload.prof_int) || 0;
+      const profs = [pExt, pCent, pInt];
+
+      // 1. Profundidades > 0 y <= 27.0 mm
+      if (profs.some(p => p > 27.0)) {
+        return {
+          valido: false,
+          mensaje: '⛔ CANDADO DE SEGURIDAD: Ninguna profundidad puede superar los 27.0 mm (Valores ingresados: ' + profs.join(', ') + ').'
+        };
+      }
+
+      // 2. prof <= prof_inicial si prof_inicial > 0
+      const profIni = parseFloat(payload.prof_inicial) || 0;
+      if (profIni > 0 && profs.some(p => p > profIni)) {
+        return {
+          valido: false,
+          mensaje: `⛔ CANDADO DE SEGURIDAD: Ninguna profundidad (${profs.join(', ')}) puede superar la Profundidad Inicial (${profIni} mm).`
+        };
+      }
+
+      // 3. Eje Direccional: vida debe ser Original
+      const pos = parseInt(payload.posicion) || 1;
+      const vida = String(payload.vida || 'Original').trim().toUpperCase();
+      const tipologia = String(payload.tipologia || '').trim();
+      if (esPosicionDireccionalLocal(tipologia, pos) && vida === 'REENCAUCHE') {
+        return {
+          valido: false,
+          mensaje: `⛔ CANDADO DE SEGURIDAD VIAL: En el eje direccional (Posición ${pos}) no se permite Reencauche, únicamente condición Original.`
+        };
+      }
+
+      // 4. Kilometraje no regresivo si hay ultimo_km previo de fecha anterior
+      const kmActual = parseFloat(payload.kilometraje) || 0;
+      const ultimoKm = parseFloat(payload._ultimo_km_previo || 0);
+      if (ultimoKm > 0 && kmActual > 0 && kmActual < ultimoKm) {
+        return {
+          valido: false,
+          mensaje: `⛔ CANDADO: El kilometraje ingresado (${kmActual}) no puede ser menor al último registrado (${ultimoKm}).`
+        };
+      }
+
+      return { valido: true };
+    }
+
+    function esPosicionDireccionalLocal(tipologia, pos) {
+      const tip = String(tipologia || '').toLowerCase();
+      const p = parseInt(pos) || 1;
+      if (tip.includes('cuatro manos') || tip.includes('4 manos') || tip.includes('8x4')) {
+        return [1, 2, 3, 4].includes(p);
+      }
+      return [1, 2].includes(p);
+    }
+
+    async function actualizarVehiculoOfflineConNuevaInspeccion(payload) {
+      const pl = String(payload.placa || '').trim().toUpperCase();
+      if (!pl) return;
+      let veh = await TireAnalyzeOfflineDB.obtenerVehiculo(pl);
+      if (!veh) {
+        veh = {
+          placa: pl,
+          tipologia: payload.tipologia || 'Cabezote',
+          cliente: payload.cliente || '',
+          subcliente: payload.subcliente || '',
+          tipo_operacion: payload.tipo_operacion || '',
+          ultimo_km: payload.kilometraje || 0,
+          dimension: payload.dimension || '295/80R22.5',
+          posiciones_previas: {}
+        };
+      }
+      if (payload.kilometraje > (veh.ultimo_km || 0)) {
+        veh.ultimo_km = payload.kilometraje;
+      }
+      if (!veh.posiciones_previas) veh.posiciones_previas = {};
+      const posKey = String(payload.posicion);
+      veh.posiciones_previas[posKey] = {
+        numero_interno: payload.numero_interno || '',
+        marca: payload.marca || '',
+        diseno: payload.diseno || '',
+        dimension: payload.dimension || '',
+        vida: payload.vida || 'Original',
+        banda_reen: payload.banda_reen || '',
+        prof_inicial: payload.prof_inicial || 0,
+        precio: payload.precio || 0,
+        km_montaje: payload.km_montaje || 0,
+        prof_ext: payload.prof_ext || 0,
+        prof_cent: payload.prof_cent || 0,
+        prof_int: payload.prof_int || 0,
+        psi: payload.psi || 100,
+        novedades: payload.novedades || '',
+        fecha: (payload.fecha || '').slice(0, 10)
+      };
+      await TireAnalyzeOfflineDB.guardarVehiculo(veh);
+    }
+
+    async function descargarPaquetePatioOffline(manual = false) {
+      const btn = document.getElementById('btnDescargarPaqueteOffline');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Preparando...';
+      }
+      try {
+        const cliSel = (document.getElementById('cliente')?.value || '').trim();
+        const url = `/api/offline/paquete-patio?cliente=${encodeURIComponent(cliSel)}`;
+        const res = await fetchConTimeoutPatio(url, {}, 8500);
+        if (!res.ok) throw new Error('Error HTTP ' + res.status);
+        const paquete = await res.json();
+        
+        await TireAnalyzeOfflineDB.guardarCatalogos(paquete);
+        if (paquete.vehiculos_perfil) {
+          await TireAnalyzeOfflineDB.guardarVehiculosBatch(paquete.vehiculos_perfil);
+        }
+        
+        const ahora = new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+        localStorage.setItem('tireanalyze_offline_fecha_descarga', ahora);
+        
+        const lblDesc = document.getElementById('lblFechaDescargaOffline');
+        if (lblDesc) lblDesc.textContent = ahora;
+        
+        await actualizarIndicadorConexionOffline();
+        if (manual) {
+          mostrarToast('✅ Datos de Flota listos para trabajo sin señal en Patio');
+        }
+      } catch (err) {
+        console.warn('[Offline] Error descargando paquete patio:', err);
+        if (manual) {
+          mostrarToast('⚠️ No se pudo descargar el paquete de patio: ' + (err.message || 'Error de red'), true);
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down mr-1.5"></i> Preparar Datos de Flota para Patio';
+        }
+      }
+    }
+
+    async function actualizarIndicadorConexionOffline() {
+      const btn = document.getElementById('btnEstadoConexionOffline');
+      const dot = document.getElementById('dotEstadoConexion');
+      const lbl = document.getElementById('lblTextoEstadoConexion');
+      if (!btn || !dot || !lbl) return;
+
+      const pendientes = await TireAnalyzeOfflineDB.contarPendientes();
+      const online = navigator.onLine;
+
+      if (!online) {
+        // 🟠 Sin señal
+        btn.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-amber-950/40 text-amber-300 border-amber-500/40 hover:bg-amber-900/50';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
+        lbl.textContent = `Modo Sin Señal · ${pendientes} llantas guardadas`;
+      } else if (pendientes > 0) {
+        // 🔵 Con pendientes por subir
+        btn.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-blue-950/40 text-blue-300 border-blue-500/40 hover:bg-blue-900/50';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping';
+        lbl.textContent = `🔄 Sincronizar Ahora (${pendientes})`;
+      } else {
+        // 🟢 En línea (0 pendientes)
+        btn.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+        lbl.textContent = 'En línea · Flota Lista Offline';
+      }
+
+      const lblTot = document.getElementById('lblTotalPendientesOffline');
+      if (lblTot) lblTot.textContent = pendientes;
+    }
+
+    async function abrirModalColaOffline() {
+      const modal = document.getElementById('modalColaOffline');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      const fechaDesc = localStorage.getItem('tireanalyze_offline_fecha_descarga') || 'Sin descargar';
+      const lblDesc = document.getElementById('lblFechaDescargaOffline');
+      if (lblDesc) lblDesc.textContent = fechaDesc;
+
+      await renderizarListaColaOffline();
+    }
+
+    function cerrarModalColaOffline() {
+      const modal = document.getElementById('modalColaOffline');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function renderizarListaColaOffline() {
+      const items = await TireAnalyzeOfflineDB.obtenerPendientes();
+      const lblTot = document.getElementById('lblTotalPendientesOffline');
+      const lblVeh = document.getElementById('lblTotalVehiculosOffline');
+      const contenedor = document.getElementById('listaLlantasColaOffline');
+
+      if (lblTot) lblTot.textContent = items.length;
+      const placasUnicas = new Set(items.map(it => it.placa));
+      if (lblVeh) lblVeh.textContent = placasUnicas.size;
+
+      if (!contenedor) return;
+
+      if (items.length === 0) {
+        contenedor.innerHTML = `
+          <div class="p-6 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200 font-medium">
+            <i class="fa-solid fa-circle-check text-emerald-500 text-2xl mb-2 block"></i>
+            Todas las inspecciones están sincronizadas con el servidor.
+          </div>
+        `;
+        return;
+      }
+
+      contenedor.innerHTML = items.map(it => `
+        <div class="p-3 bg-slate-50 hover:bg-white rounded-2xl border border-slate-200 transition-all flex items-center justify-between gap-3 shadow-2xs">
+          <div class="min-w-0">
+            <div class="flex items-center space-x-2">
+              <span class="font-black text-slate-900 font-mono tracking-wider">${escapeHtml(it.placa)}</span>
+              <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-bold text-[10px]">Pos. ${escapeHtml(it.posicion)}</span>
+              <span class="text-[10px] text-slate-400">${escapeHtml(it.fecha || '')}</span>
+            </div>
+            <div class="text-[11px] text-slate-600 mt-0.5 truncate">
+              <b>${escapeHtml(it.marca || '')}</b> ${escapeHtml(it.diseno || '')} · ${escapeHtml(it.dimension || '')} · ${it.prof_cent || 0} mm · ${it.psi || 0} PSI
+            </div>
+            ${it.novedades ? `<div class="text-[10px] text-amber-700 font-semibold mt-0.5 truncate"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(it.novedades)}</div>` : ''}
+          </div>
+          <button type="button" onclick="eliminarItemColaOffline('${escapeHtml(it.dedup_key)}')" class="px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold border border-rose-200 transition-all cursor-pointer" title="Eliminar de la cola">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function eliminarItemColaOffline(dedup_key) {
+      if (!confirm('¿Deseas descartar esta inspección de la cola local?')) return;
+      await TireAnalyzeOfflineDB.eliminarPendiente(dedup_key);
+      await renderizarListaColaOffline();
+      await actualizarIndicadorConexionOffline();
+      mostrarToast('Inspección eliminada de la cola local');
+    }
+
+    async function descargarRespaldoJSONOffline() {
+      const items = await TireAnalyzeOfflineDB.obtenerPendientes();
+      if (!items || items.length === 0) {
+        mostrarToast('No hay inspecciones pendientes en la cola para respaldar');
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `respaldo_patio_offline_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      mostrarToast(`💾 Respaldo .JSON descargado (${items.length} llantas)`);
+    }
+
+    async function sincronizarColaOffline() {
+      const items = await TireAnalyzeOfflineDB.obtenerPendientes();
+      if (!items || items.length === 0) {
+        mostrarToast('No hay inspecciones pendientes por sincronizar');
+        return;
+      }
+      if (!navigator.onLine) {
+        mostrarToast('⚠️ Dispositivo sin conexión. La sincronización se ejecutará apenas recupere señal.', true);
+        return;
+      }
+
+      const btn = document.getElementById('btnSincronizarColaModal');
+      const barra = document.getElementById('barraProgresoSincronizacionOffline');
+      const barraFill = document.getElementById('progresoSincronizacionFill');
+      const barraTxt = document.getElementById('progresoSincronizacionTexto');
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Sincronizando...';
+      }
+      if (barra) barra.classList.remove('hidden');
+
+      const tamanoLote = 5;
+      let totalSinc = 0;
+      let totalAct = 0;
+      let listaRechazadas = [];
+      const totalItems = items.length;
+
+      try {
+        for (let i = 0; i < totalItems; i += tamanoLote) {
+          const lote = items.slice(i, i + tamanoLote);
+          const res = await fetch('/api/inspecciones/sincronizar-lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: lote })
+          });
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.detail || 'Error en servidor al sincronizar');
+          }
+          const data = await res.json();
+          totalSinc += (data.sincronizadas || 0);
+          totalAct += (data.actualizadas || 0);
+
+          const rechKeys = new Set((data.rechazadas || []).map(r => r.dedup_key));
+          for (const it of lote) {
+            if (!rechKeys.has(it.dedup_key)) {
+              await TireAnalyzeOfflineDB.eliminarPendiente(it.dedup_key);
+            }
+          }
+          if (data.rechazadas && data.rechazadas.length > 0) {
+            listaRechazadas.push(...data.rechazadas);
+          }
+
+          const procesados = Math.min(i + tamanoLote, totalItems);
+          const pct = Math.round((procesados / totalItems) * 100);
+          if (barraFill) barraFill.style.width = pct + '%';
+          if (barraTxt) barraTxt.textContent = `${procesados} / ${totalItems} (${pct}%)`;
+        }
+
+        mostrarToast(`✅ Sincronización exitosa: ${totalSinc} insertadas, ${totalAct} actualizadas`);
+        if (listaRechazadas.length > 0) {
+          alert(`Atención: ${listaRechazadas.length} llanta(s) fueron rechazadas por candados de seguridad:\n` +
+            listaRechazadas.map(r => `• ${r.placa} Pos.${r.posicion}: ${r.motivo}`).join('\n')
+          );
+        }
+      } catch (err) {
+        console.warn('[Sync] Error sincronizando cola:', err);
+        mostrarToast('Error durante la sincronización: ' + (err.message || 'Error de red'), true);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-rotate mr-1.5"></i> Sincronizar Cola con Servidor';
+        }
+        if (barra) {
+          setTimeout(() => barra.classList.add('hidden'), 2000);
+        }
+        await renderizarListaColaOffline();
+        await actualizarIndicadorConexionOffline();
+      }
+    }
+
+    window.addEventListener('online', () => {
+      actualizarIndicadorConexionOffline();
+      mostrarToast('🌐 Conexión restablecida. Sincronizando inspecciones de patio...');
+      sincronizarColaOffline();
+    });
+
+    window.addEventListener('offline', () => {
+      actualizarIndicadorConexionOffline();
+      mostrarToast('📡 Modo Sin Señal activado. Las inspecciones se guardarán en el dispositivo.', false);
+    });
 
     // Variables globales de estado
     let idInspeccionActiva = 1;
@@ -26753,6 +27935,8 @@ if __name__ == '__main__':
           cargarCatalogos();
           validarVida();
           if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
+          descargarPaquetePatioOffline(false);
+          actualizarIndicadorConexionOffline();
           mostrarToast(`¡Bienvenido, ${usuarioActual.nombre_completo}!`);
         } else {
           errBox.textContent = d.detail || 'Usuario o contraseña incorrectos.';
@@ -33563,10 +34747,29 @@ if __name__ == '__main__':
         url += `&todas=true`;
       }
 
+      let marcas = null;
       try {
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const marcas = await res.json();
+        const res = await fetchConTimeoutPatio(url, {}, 3500);
+        if (res.ok) {
+          marcas = await res.json();
+        }
+      } catch (err) {}
+
+      if (!marcas) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat) {
+            if (cliente && !mostrarTodas && cat.marcas_por_cliente && cat.marcas_por_cliente[cliente]) {
+              marcas = cat.marcas_por_cliente[cliente];
+            } else if (cat.catalogos_campos && cat.catalogos_campos.marcas) {
+              marcas = cat.catalogos_campos.marcas;
+            }
+          }
+        } catch (eDb) {}
+      }
+      if (!marcas) return;
+
+      try {
         const unicos = [];
         const vistos = new Set();
         (marcas || []).forEach(m => {
@@ -33623,10 +34826,47 @@ if __name__ == '__main__':
       const sel = document.getElementById(elementId);
       if (!sel) return;
       const valorPrevio = valorSeleccionado !== null ? valorSeleccionado : (sel.value || '');
+      let items = null;
+
       try {
-        const res = await fetch(endpoint);
+        const res = await fetchConTimeoutPatio(endpoint, {}, 3500);
         if (res.ok) {
-          const items = await res.json();
+          items = await res.json();
+        }
+      } catch(e) {}
+
+      if (!items) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.catalogos_campos) {
+            const cc = cat.catalogos_campos;
+            if (endpoint.includes('campo=cliente')) {
+              items = cc.clientes || [];
+            } else if (endpoint.includes('campo=subcliente')) {
+              const urlObj = new URL('http://dummy.com' + endpoint);
+              const cliParam = urlObj.searchParams.get('cliente') || document.getElementById('cliente')?.value?.trim();
+              items = (cc.subclientes_por_cliente && cliParam && cc.subclientes_por_cliente[cliParam]) ? cc.subclientes_por_cliente[cliParam] : [];
+            } else if (endpoint.includes('campo=dimension')) {
+              items = cc.dimensiones || [];
+            } else if (endpoint.includes('campo=marca')) {
+              items = cc.marcas || [];
+            } else if (endpoint.includes('campo=diseno')) {
+              const urlObj = new URL('http://dummy.com' + endpoint);
+              const marcaParam = urlObj.searchParams.get('marca');
+              if (cat.modelos && marcaParam) {
+                const modelosMarca = cat.modelos.filter(m => (m.marca || '').toLowerCase() === marcaParam.toLowerCase());
+                items = Array.from(new Set(modelosMarca.map(m => m.diseno).filter(Boolean)));
+              }
+              if (!items || items.length === 0) items = cc.disenos || [];
+            } else if (endpoint.includes('campo=banda')) {
+              items = cc.bandas || [];
+            }
+          }
+        } catch(eDb) {}
+      }
+
+      if (items) {
+        try {
           const unicos = [];
           const vistos = new Set();
           (items || []).forEach(it => {
@@ -33654,8 +34894,8 @@ if __name__ == '__main__':
           // Mantener compatibilidad con datalist si existe en el DOM
           const dl = document.getElementById(`dl_${elementId}`) || document.getElementById(`dl_${elementId}s`);
           if (dl) dl.innerHTML = unicos.map(i => `<option value="${i}">`).join('');
-        }
-      } catch(e) {}
+        } catch(ePop) {}
+      }
     }
 
     async function cargarCatalogos(seleccionarOp = null, seleccionarTip = null) {
@@ -33670,21 +34910,43 @@ if __name__ == '__main__':
       const cliInicial = document.getElementById('cliente')?.value?.trim() || '';
       await actualizarMarcasCliente(cliInicial);
 
-      const resOps = await fetch('/api/operaciones');
-      if (resOps.ok) {
-        const ops = await resOps.json();
+      let ops = null;
+      try {
+        const resOps = await fetchConTimeoutPatio('/api/operaciones', {}, 3500);
+        if (resOps.ok) ops = await resOps.json();
+      } catch(e) {}
+      if (!ops) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.operaciones) ops = cat.operaciones;
+        } catch(eDb) {}
+      }
+      if (ops) {
         const selOp = document.getElementById('tipo_operacion');
-        selOp.innerHTML = ops.map(op => `<option value="${op}">${op}</option>`).join('');
-        if (seleccionarOp) selOp.value = seleccionarOp;
+        if (selOp) {
+          selOp.innerHTML = ops.map(op => `<option value="${op}">${op}</option>`).join('');
+          if (seleccionarOp) selOp.value = seleccionarOp;
+        }
       }
 
-      const resTips = await fetch('/api/tipologias');
-      if (resTips.ok) {
-        const tips = await resTips.json();
+      let tips = null;
+      try {
+        const resTips = await fetchConTimeoutPatio('/api/tipologias', {}, 3500);
+        if (resTips.ok) tips = await resTips.json();
+      } catch(e) {}
+      if (!tips) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.tipologias) tips = cat.tipologias;
+        } catch(eDb) {}
+      }
+      if (tips) {
         const selTip = document.getElementById('tipologia');
-        selTip.innerHTML = tips.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
-        if (seleccionarTip) selTip.value = seleccionarTip;
-        cambioTipologia();
+        if (selTip) {
+          selTip.innerHTML = tips.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
+          if (seleccionarTip) selTip.value = seleccionarTip;
+          cambioTipologia();
+        }
       }
     }
 
@@ -33695,7 +34957,7 @@ if __name__ == '__main__':
         return poblarSelect(idCampo, endpoint, `Seleccionar ${idCampo}...`);
       }
       try {
-        const res = await fetch(endpoint);
+        const res = await fetchConTimeoutPatio(endpoint, {}, 3500);
         if (res.ok) {
           const items = await res.json();
           const dl = document.getElementById(elementId);
@@ -33723,12 +34985,30 @@ if __name__ == '__main__':
 
     async function actualizarLimiteCliente() {
       const cli = document.getElementById('cliente').value.trim();
-      const res = await fetch(`/api/limite-cliente?cliente=${encodeURIComponent(cli)}`);
-      if (res.ok) {
-        const d = await res.json();
+      let d = null;
+      try {
+        const res = await fetchConTimeoutPatio(`/api/limite-cliente?cliente=${encodeURIComponent(cli)}`, {}, 3500);
+        if (res.ok) {
+          d = await res.json();
+        }
+      } catch(e) {}
+
+      if (!d) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.limites) {
+            const limEncontrado = cat.limites.find(l => (l.cliente || '').trim().toUpperCase() === cli.toUpperCase());
+            if (limEncontrado) {
+              d = { limite_retiro_mm: limEncontrado.limite_retiro_mm, tipo_licencia: limEncontrado.tipo_licencia || 'PRO' };
+            }
+          }
+        } catch(eDb) {}
+      }
+
+      if (d) {
         const mm = d.limite_retiro_mm || 3.0;
-        document.getElementById('lblMmRetiroCliente').textContent = mm.toFixed(1);
-        document.getElementById('lblMmAlerta').textContent = mm.toFixed(1);
+        document.getElementById('lblMmRetiroCliente').textContent = Number(mm).toFixed(1);
+        document.getElementById('lblMmAlerta').textContent = Number(mm).toFixed(1);
         if (d.tipo_licencia) {
           clienteLicenciaCaptura = d.tipo_licencia;
         }
@@ -33807,25 +35087,41 @@ if __name__ == '__main__':
 
     async function cambioTipologia() {
       const tip = document.getElementById('tipologia').value;
+      let d = null;
       try {
-        const res = await fetch(`/api/esquema?tipologia=${encodeURIComponent(tip)}`);
+        const res = await fetchConTimeoutPatio(`/api/esquema?tipologia=${encodeURIComponent(tip)}`, {}, 3500);
         if (res.ok) {
-          const d = await res.json();
-          esquemaTipologiaCache = d.esquema;
-          listaPosicionesActual = calcularOrdenInspeccion(d.esquema, d.posiciones);
-          const posActual = parseInt(document.getElementById('posicion').value) || 1;
-          renderizarChasisEjes(d.esquema, listaPosicionesActual);
-          renderizarBotonesPosicion(listaPosicionesActual, d.esquema);
-          renderizarCarruselLlantasMobile();
-
-          // Si la posición actual no existe en la nueva tipología, cambiar a la primera del orden
-          if (!listaPosicionesActual.includes(posActual)) {
-            seleccionarPosicion(listaPosicionesActual[0] || 1);
-          } else {
-            seleccionarPosicion(posActual);
-          }
+          d = await res.json();
         }
       } catch (e) {}
+
+      if (!d) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.tipologias) {
+            const match = cat.tipologias.find(t => t.nombre === tip);
+            if (match) {
+              d = match;
+            }
+          }
+        } catch(eDb) {}
+      }
+
+      if (d) {
+        esquemaTipologiaCache = d.esquema;
+        listaPosicionesActual = calcularOrdenInspeccion(d.esquema, d.posiciones);
+        const posActual = parseInt(document.getElementById('posicion').value) || 1;
+        renderizarChasisEjes(d.esquema, listaPosicionesActual);
+        renderizarBotonesPosicion(listaPosicionesActual, d.esquema);
+        renderizarCarruselLlantasMobile();
+
+        // Si la posición actual no existe en la nueva tipología, cambiar a la primera del orden
+        if (!listaPosicionesActual.includes(posActual)) {
+          seleccionarPosicion(listaPosicionesActual[0] || 1);
+        } else {
+          seleccionarPosicion(posActual);
+        }
+      }
     }
 
     function toggleConvenciones() {
@@ -35401,90 +36697,129 @@ if __name__ == '__main__':
       }
       ultimaPlacaConsultadaPerfil = placa;
 
+      let d = null;
       try {
-        const res = await fetch(`/api/vehiculo-perfil?placa=${encodeURIComponent(placa)}`);
+        const res = await fetchConTimeoutPatio(`/api/vehiculo-perfil?placa=${encodeURIComponent(placa)}`, {}, 3500);
         if (res.ok) {
-          const d = await res.json();
-          const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
-          if (placaActual !== placa) return;
-
-          perfilVehiculoActual = d;
-          if (d.ultima_marca) cacheUltimaMarcaVehiculo = d.ultima_marca;
-          if (d.ultimo_diseno) cacheUltimoDisenoVehiculo = d.ultimo_diseno;
-          if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
-
-          // Alerta si el vehículo ya fue inspeccionado dentro del período de vigencia técnica
-          if (d.en_periodo_restringido && ultimaPlacaPopupAlerta !== placa) {
-            mostrarModalVehiculoYaInspeccionado(d);
-            ultimaPlacaPopupAlerta = placa;
-          }
-
-          if (d.encontrado) {
-            // 1. Mostrar badge de tipología fija vinculada al historial
-            const b = document.getElementById('badgePlacaVinculada');
-            if (b) {
-              b.classList.remove('hidden');
-              b.innerHTML = '<i class="fa-solid fa-lock text-[9px] mr-1"></i>Tipología Fija (Historial)';
-            }
-
-            // 2. Precargar Cliente, Subcliente y Operación de la inspección anterior
-            if (d.cliente) {
-              asignarValorSelect('cliente', d.cliente);
-              await alCambiarClienteMobile();
-            }
-
-            if (d.subcliente && document.getElementById('subcliente')) {
-              asignarValorSelect('subcliente', d.subcliente);
-            }
-
-            if (d.tipo_operacion && document.getElementById('tipo_operacion')) {
-              asignarValorSelect('tipo_operacion', d.tipo_operacion);
-            }
-
-            // 2.1 Precargar dimensión histórica del vehículo si está disponible
-            if (d.dimension) {
-              dimensionPredeterminadaVehiculo = d.dimension;
-              asignarValorSelect('dimension', d.dimension);
-            }
-
-            // 3. Odómetro / Km si está disponible
-            const inputKm = document.getElementById('kilometraje');
-            if (d.ultimo_km > 0) {
-              kilometrajeInspeccionActual = d.ultimo_km;
-              if (inputKm) inputKm.value = Math.round(d.ultimo_km);
-            } else if (kilometrajeInspeccionActual > 0 && inputKm) {
-              inputKm.value = Math.round(kilometrajeInspeccionActual);
-            }
-
-            // 4. Seleccionar Tipología y BLOQUEARLA estrictamente (un vehículo no cambia de tipología)
-            if (d.tipologia) {
-              const selTip = document.getElementById('tipologia');
-              if (selTip) {
-                asignarValorSelect('tipologia', d.tipologia);
-                await cambioTipologia();
-                selTip.disabled = true;
-                selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
-                selTip.title = 'Tipología fija: vehículo previamente registrado. No es modificable.';
-                const btnDesb = document.getElementById('btnDesbloquearTipologia');
-                if (btnDesb) btnDesb.classList.add('hidden');
-              }
-            }
-
-            // 5. Garantizar profundidades en ceros/vacías para nueva inspección
-            document.getElementById('prof_ext').value = '';
-            document.getElementById('prof_cent').value = '';
-            document.getElementById('prof_int').value = '';
-            document.getElementById('novedades').value = '';
-            await cargarPosicionesInspeccionadasPlaca(placa);
-            await verificarInspeccionAnterior();
-          } else {
-            const b = document.getElementById('badgePlacaVinculada');
-            if (b) b.classList.add('hidden');
-            desbloquearTipologia();
-          }
+          d = await res.json();
         }
-      } catch (err) {
-        console.warn('Error al consultar perfil del vehículo:', err);
+      } catch (err) {}
+
+      if (!d) {
+        try {
+          const veh = await TireAnalyzeOfflineDB.obtenerVehiculo(placa);
+          if (veh) {
+            d = {
+              encontrado: true,
+              placa: veh.placa,
+              tipologia: veh.tipologia,
+              cliente: veh.cliente,
+              subcliente: veh.subcliente,
+              tipo_operacion: veh.tipo_operacion,
+              ultimo_km: veh.ultimo_km || 0,
+              dimension: veh.dimension,
+              ultima_fecha_inspeccion: veh.ultima_fecha_inspeccion || '',
+              fecha_minima_permitida: veh.fecha_minima_permitida || '',
+              en_periodo_restringido: Boolean(veh.en_periodo_restringido),
+              ultima_marca: veh.ultima_marca || '',
+              ultimo_diseno: veh.ultimo_diseno || ''
+            };
+          }
+        } catch(eDb) {}
+      }
+
+      const placaActual = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      if (placaActual !== placa) return;
+
+      if (d) {
+        // Combinar con kilometraje o datos de la cola pendiente offline si los hay
+        try {
+          const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+          const itemsPlaca = pendientes.filter(p => p.placa && p.placa.trim().toUpperCase() === placa);
+          itemsPlaca.forEach(it => {
+            const kmIt = parseFloat(it.kilometraje) || 0;
+            if (kmIt > (d.ultimo_km || 0)) d.ultimo_km = kmIt;
+          });
+        } catch(eDb) {}
+
+        perfilVehiculoActual = d;
+        if (d.ultima_marca) cacheUltimaMarcaVehiculo = d.ultima_marca;
+        if (d.ultimo_diseno) cacheUltimoDisenoVehiculo = d.ultimo_diseno;
+        if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
+
+        // Alerta si el vehículo ya fue inspeccionado dentro del período de vigencia técnica
+        if (d.en_periodo_restringido && ultimaPlacaPopupAlerta !== placa) {
+          mostrarModalVehiculoYaInspeccionado(d);
+          ultimaPlacaPopupAlerta = placa;
+        }
+
+        if (d.encontrado) {
+          // 1. Mostrar badge de tipología fija vinculada al historial
+          const b = document.getElementById('badgePlacaVinculada');
+          if (b) {
+            b.classList.remove('hidden');
+            b.innerHTML = '<i class="fa-solid fa-lock text-[9px] mr-1"></i>Tipología Fija (Historial)';
+          }
+
+          // 2. Precargar Cliente, Subcliente y Operación de la inspección anterior
+          if (d.cliente) {
+            asignarValorSelect('cliente', d.cliente);
+            await alCambiarClienteMobile();
+          }
+
+          if (d.subcliente && document.getElementById('subcliente')) {
+            asignarValorSelect('subcliente', d.subcliente);
+          }
+
+          if (d.tipo_operacion && document.getElementById('tipo_operacion')) {
+            asignarValorSelect('tipo_operacion', d.tipo_operacion);
+          }
+
+          // 2.1 Precargar dimensión histórica del vehículo si está disponible
+          if (d.dimension) {
+            dimensionPredeterminadaVehiculo = d.dimension;
+            asignarValorSelect('dimension', d.dimension);
+          }
+
+          // 3. Odómetro / Km si está disponible
+          const inputKm = document.getElementById('kilometraje');
+          if (d.ultimo_km > 0) {
+            kilometrajeInspeccionActual = d.ultimo_km;
+            if (inputKm) inputKm.value = Math.round(d.ultimo_km);
+          } else if (kilometrajeInspeccionActual > 0 && inputKm) {
+            inputKm.value = Math.round(kilometrajeInspeccionActual);
+          }
+
+          // 4. Seleccionar Tipología y BLOQUEARLA estrictamente (un vehículo no cambia de tipología)
+          if (d.tipologia) {
+            const selTip = document.getElementById('tipologia');
+            if (selTip) {
+              asignarValorSelect('tipologia', d.tipologia);
+              await cambioTipologia();
+              selTip.disabled = true;
+              selTip.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+              selTip.title = 'Tipología fija: vehículo previamente registrado. No es modificable.';
+              const btnDesb = document.getElementById('btnDesbloquearTipologia');
+              if (btnDesb) btnDesb.classList.add('hidden');
+            }
+          }
+
+          // 5. Garantizar profundidades en ceros/vacías para nueva inspección
+          document.getElementById('prof_ext').value = '';
+          document.getElementById('prof_cent').value = '';
+          document.getElementById('prof_int').value = '';
+          document.getElementById('novedades').value = '';
+          await cargarPosicionesInspeccionadasPlaca(placa);
+          await verificarInspeccionAnterior();
+        } else {
+          const b = document.getElementById('badgePlacaVinculada');
+          if (b) b.classList.add('hidden');
+          desbloquearTipologia();
+        }
+      } else {
+        const b = document.getElementById('badgePlacaVinculada');
+        if (b) b.classList.add('hidden');
+        desbloquearTipologia();
       }
     }
 
@@ -35539,7 +36874,31 @@ if __name__ == '__main__':
 
       if (!marca || !diseno) {
         try {
-          const resp = await fetch(`/api/inspecciones/ultima-marca-diseno?placa=${encodeURIComponent(placa)}`);
+          const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+          const itemsPlaca = pendientes.filter(p => p.placa && p.placa.trim().toUpperCase() === placa);
+          if (itemsPlaca.length > 0) {
+            const ult = itemsPlaca[itemsPlaca.length - 1];
+            if (ult.marca) marca = ult.marca;
+            if (ult.diseno) diseno = ult.diseno;
+            if (ult.dimension) dimension = ult.dimension;
+          }
+        } catch (e) {}
+
+        if (!marca || !diseno) {
+          try {
+            const veh = await TireAnalyzeOfflineDB.obtenerVehiculo(placa);
+            if (veh) {
+              marca = marca || veh.ultima_marca || '';
+              diseno = diseno || veh.ultimo_diseno || '';
+              dimension = dimension || veh.dimension || '';
+            }
+          } catch(e) {}
+        }
+      }
+
+      if (!marca || !diseno) {
+        try {
+          const resp = await fetchConTimeoutPatio(`/api/inspecciones/ultima-marca-diseno?placa=${encodeURIComponent(placa)}`, {}, 3500);
           if (resp.ok) {
             const d = await resp.json();
             if (d.encontrado) {
@@ -35626,14 +36985,39 @@ if __name__ == '__main__':
       const cli = (document.getElementById('cliente')?.value || '').trim();
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
 
+      let d = null;
       try {
         let url = `/api/llanta-por-cliente?numero_interno=${encodeURIComponent(num)}`;
         if (cli && cli !== '__nuevo__') url += `&cliente=${encodeURIComponent(cli)}`;
         if (placa) url += `&placa=${encodeURIComponent(placa)}`;
 
-        const res = await fetch(url);
+        const res = await fetchConTimeoutPatio(url, {}, 3500);
         if (res.ok) {
-          const d = await res.json();
+          d = await res.json();
+        }
+      } catch (err) {}
+
+      if (!d) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.llantas_catalogo_cliente) {
+            const keyDirecta = `${(cli || '').toUpperCase()}|||${num}`;
+            if (cat.llantas_catalogo_cliente[keyDirecta]) {
+              d = { encontrado: true, datos: cat.llantas_catalogo_cliente[keyDirecta] };
+            } else {
+              for (const [k, v] of Object.entries(cat.llantas_catalogo_cliente)) {
+                if (k.endsWith(`|||${num}`)) {
+                  d = { encontrado: true, datos: v };
+                  break;
+                }
+              }
+            }
+          }
+        } catch(eDb) {}
+      }
+
+      try {
+        if (d) {
           const numActual = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
           if (numActual !== num) return;
 
@@ -35671,7 +37055,8 @@ if __name__ == '__main__':
               document.getElementById('prof_inicial').value = lt.prof_inicial;
             }
             await autoCompletarProfInicial();
-      await actualizarPanelTallerPosicion(p);
+            const posVal = parseInt(document.getElementById('posicion')?.value) || 1;
+            await actualizarPanelTallerPosicion(posVal);
             if (lt.precio && (!document.getElementById('precio').value || document.getElementById('precio').value === '0')) {
               document.getElementById('precio').value = lt.precio;
             }
@@ -35696,18 +37081,48 @@ if __name__ == '__main__':
 
       cargarPosicionesInspeccionadasPlaca(placa);
 
+      let d = null;
+      let esDeColaPendiente = false;
+
+      // 1. Revisar si la posición ya fue registrada en la cola local pendiente (Modo Offline)
       try {
-        const res = await fetch(`/api/inspeccion-anterior?placa=${encodeURIComponent(placa)}&posicion=${pos}`);
-        if (res.ok) {
+        const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+        const itemCola = pendientes.find(item => (item.placa || '').toUpperCase() === placa && parseInt(item.posicion) === pos);
+        if (itemCola) {
+          d = { encontrado: true, datos: itemCola };
+          esDeColaPendiente = true;
+          posicionesInspeccionadasPlaca.add(pos);
+        }
+      } catch (eDb) {}
+
+      // 2. Si no estaba en cola, consultar al servidor con timeout rápido
+      if (!d) {
+        try {
+          const res = await fetchConTimeoutPatio(`/api/inspeccion-anterior?placa=${encodeURIComponent(placa)}&posicion=${pos}`, {}, 3500);
+          if (res.ok) {
+            d = await res.json();
+          }
+        } catch(eNet) {}
+      }
+
+      // 3. Si no hay conexión o falló el endpoint, buscar en vehiculos_offline (posiciones_previas)
+      if (!d) {
+        try {
+          const veh = await TireAnalyzeOfflineDB.obtenerVehiculo(placa);
+          if (veh && veh.posiciones_previas && veh.posiciones_previas[String(pos)]) {
+            d = { encontrado: true, datos: veh.posiciones_previas[String(pos)] };
+          }
+        } catch (eDb) {}
+      }
+
+      try {
+        if (d) {
           if (token !== idInspeccionActiva) return;
           const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
           if (!placaFin || placaFin !== placa) return;
 
-          const d = await res.json();
-          if (token !== idInspeccionActiva) return;
-
           // Si esta posición ya fue inspeccionada en la sesión actual
-          const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos);
+          const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos) || esDeColaPendiente;
 
           if (d.encontrado && d.datos) {
             datosInspeccionAnterior = d.datos;
@@ -35717,7 +37132,9 @@ if __name__ == '__main__':
             const badgeHist = document.getElementById('badgeHistorialPrevia');
             if (badgeHist) {
               badgeHist.classList.remove('hidden');
-              badgeHist.innerHTML = '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
+              badgeHist.innerHTML = esDeColaPendiente 
+                ? '<i class="fa-solid fa-cloud-arrow-up mr-1 text-blue-500"></i>En Cola Offline: ' + (d.datos.numero_interno || 'S/N')
+                : '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
             }
 
             if (yaInspeccionadaHoy) {
@@ -35762,7 +37179,7 @@ if __name__ == '__main__':
               }
               validarVida();
               await autoCompletarProfInicial();
-      await actualizarPanelTallerPosicion(p);
+              await actualizarPanelTallerPosicion(pos);
               if (d.datos.prof_inicial && (!document.getElementById('prof_inicial').value || document.getElementById('prof_inicial').value === '0')) {
                 document.getElementById('prof_inicial').value = d.datos.prof_inicial;
               }
@@ -35843,7 +37260,7 @@ if __name__ == '__main__':
 
               // RECALCULAR PROFUNDIDAD INICIAL DESDE EL CATÁLOGO SEGÚN MARCA Y MODELO/DISEÑO
               await autoCompletarProfInicial();
-      await actualizarPanelTallerPosicion(p);
+              await actualizarPanelTallerPosicion(pos);
 
               const bCli = document.getElementById('badgeLlantaCliente');
               if (bCli) {
@@ -35853,6 +37270,7 @@ if __name__ == '__main__':
                   bCli.classList.add('hidden');
                 }
               }
+
               if (kilometrajeInspeccionActual > 0) {
                 const inpKm = document.getElementById('kilometraje');
                 if (inpKm && (!inpKm.value || inpKm.value === '0')) {
@@ -35945,7 +37363,7 @@ if __name__ == '__main__':
         if (fActual) {
           url += `&fecha=${encodeURIComponent(fActual)}`;
         }
-        const res = await fetch(url);
+        const res = await fetchConTimeoutPatio(url, {}, 3500);
         if (res.ok) {
           if (token !== idInspeccionActiva) return;
           const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
@@ -35963,12 +37381,29 @@ if __name__ == '__main__':
           } else if (Array.isArray(d.posiciones_con_novedad)) {
             d.posiciones_con_novedad.forEach(p => posicionesConNovedadPlaca.set(p, 'Novedad registrada'));
           }
-
-          if (esquemaTipologiaCache) renderizarChasisEjes(esquemaTipologiaCache, listaPosicionesActual);
-          renderizarBotonesPosicion(listaPosicionesActual, esquemaTipologiaCache);
-          actualizarBarraPosicionMobile(parseInt(document.getElementById('posicion').value) || 1);
         }
       } catch (e) {}
+
+      // Fusionar siempre las posiciones guardadas en cola local de IndexedDB
+      try {
+        const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+        const plNorm = placa.trim().toUpperCase();
+        pendientes.forEach(item => {
+          if ((item.placa || '').trim().toUpperCase() === plNorm) {
+            const pNum = parseInt(item.posicion);
+            if (!isNaN(pNum)) {
+              posicionesInspeccionadasPlaca.add(pNum);
+              if (item.novedades && item.novedades.trim().length > 0) {
+                posicionesConNovedadPlaca.set(pNum, item.novedades.trim());
+              }
+            }
+          }
+        });
+      } catch (errDb) {}
+
+      if (esquemaTipologiaCache) renderizarChasisEjes(esquemaTipologiaCache, listaPosicionesActual);
+      renderizarBotonesPosicion(listaPosicionesActual, esquemaTipologiaCache);
+      actualizarBarraPosicionMobile(parseInt(document.getElementById('posicion').value) || 1);
     }
 
     function validarVida() {
@@ -36001,7 +37436,8 @@ if __name__ == '__main__':
         await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, 'ej. X Multi Z (Seleccionar diseño)');
       }
       await autoCompletarProfInicial();
-      await actualizarPanelTallerPosicion(p);
+      const posVal = parseInt(document.getElementById('posicion')?.value) || 1;
+      await actualizarPanelTallerPosicion(posVal);
     }
 
     function alCambiarDimensionMobile() {
@@ -36028,23 +37464,39 @@ if __name__ == '__main__':
       // Si no hay diseño/modelo ni banda válida seleccionada, no consultar
       if (!dValida && !bValida) return;
 
+      let data = null;
       try {
         let url = `/api/profundidad-inicial?marca=${encodeURIComponent(mValida ? m : '')}&diseno=${encodeURIComponent(dValida ? d : '')}&dimension=${encodeURIComponent(dim)}&vida=${encodeURIComponent(vida)}`;
         if (bValida) {
           url += `&banda=${encodeURIComponent(banda)}`;
         }
-        const res = await fetch(url);
+        const res = await fetchConTimeoutPatio(url, {}, 3500);
         if (res.ok) {
-          const data = await res.json();
-          if (data && data.prof_inicial > 0) {
-            const inp = document.getElementById('prof_inicial');
-            if (inp) {
-              inp.value = data.prof_inicial;
+          data = await res.json();
+        }
+      } catch (err) {}
+
+      if (!data || !(data.prof_inicial > 0)) {
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          if (cat && cat.modelos) {
+            const mod = cat.modelos.find(item => {
+              const matchMarca = !mValida || (item.marca || '').toLowerCase() === m.toLowerCase();
+              const matchDiseno = !dValida || (item.diseno || '').toLowerCase() === d.toLowerCase();
+              return matchMarca && matchDiseno;
+            });
+            if (mod && (mod.profundidad_original_mm > 0 || mod.prof_inicial > 0)) {
+              data = { prof_inicial: mod.profundidad_original_mm || mod.prof_inicial };
             }
           }
+        } catch(eDb) {}
+      }
+
+      if (data && data.prof_inicial > 0) {
+        const inp = document.getElementById('prof_inicial');
+        if (inp) {
+          inp.value = data.prof_inicial;
         }
-      } catch (err) {
-        console.warn('Error al autocompletar prof_inicial:', err);
       }
     }
 
@@ -36646,11 +38098,35 @@ if __name__ == '__main__':
 
       // 2. Consultar datos de inspección del vehículo para KPIs y Planes
       try {
-        const res = await fetch('/api/inspecciones?usuario=');
-        if (res.ok) {
-          const todas = await res.json();
-          const filas = todas.filter(r => (r['Vehículo/Placa'] || r['placa'] || '').toUpperCase() === placa.toUpperCase());
-          
+        let filas = [];
+        try {
+          const res = await fetchConTimeoutPatio('/api/inspecciones?usuario=', {}, 3500);
+          if (res.ok) {
+            const todas = await res.json();
+            filas = todas.filter(r => (r['Vehículo/Placa'] || r['placa'] || '').toUpperCase() === placa.toUpperCase());
+          }
+        } catch(eRed) {}
+
+        // Si no hay datos de la API (offline o no sincronizados), buscar en cola_pendientes
+        if (!filas || filas.length === 0) {
+          try {
+            const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+            const locales = pendientes.filter(r => (r.placa || '').toUpperCase() === placa.toUpperCase());
+            if (locales.length > 0) {
+              filas = locales.map(l => ({
+                'Vehículo/Placa': l.placa,
+                'Posición': l.posicion,
+                'Prof. Ext (mm)': l.prof_ext,
+                'Prof. Cent (mm)': l.prof_cent,
+                'Prof. Int (mm)': l.prof_int,
+                'PSI': l.psi,
+                'Novedades / Daños': l.novedades
+              }));
+            }
+          } catch(eDb) {}
+        }
+
+        if (filas && filas.length > 0) {
           const totalAuditadas = filas.length;
           const limite = parseFloat(document.getElementById('lblMmRetiroCliente')?.textContent) || 3.0;
           let retiroCount = 0;
@@ -36730,6 +38206,10 @@ if __name__ == '__main__':
       if (inpPlaca) inpPlaca.focus();
     }
     function descargarPdfVehiculoActual() {
+      if (!navigator.onLine) {
+        mostrarToast('📡 El informe PDF oficial se generará automáticamente apenas sincronices las inspecciones al conectarte a internet.', true);
+        return;
+      }
       let p = (document.getElementById('lblPlacaPdfModal')?.textContent || '').trim();
       let f = (document.getElementById('lblPlacaPdfModal')?.dataset?.fecha || '').trim();
       if (!p || p === '-') {
@@ -36946,22 +38426,22 @@ if __name__ == '__main__':
       const dimension = document.getElementById('dimension').value.trim();
       const prof_inicial_num = parseFloat(document.getElementById('prof_inicial').value) || 0;
 
-      if (p_ext > 27 || p_cent > 27 || p_int > 27) {
-        mostrarToast('⛔ CANDADO: Ninguna profundidad puede superar el límite físico de 27.0 mm', true);
-        return;
-      }
-      if (prof_inicial_num > 0 && (p_ext > prof_inicial_num || p_cent > prof_inicial_num || p_int > prof_inicial_num)) {
-        mostrarToast(`⛔ CANDADO: La profundidad no puede ser mayor a la inicial (${prof_inicial_num} mm)`, true);
-        return;
-      }
-
       function fechaLocalISO(d = new Date()) {
         const p = n => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
       }
 
+      const fechaVal = document.getElementById('fecha').value || fechaLocalISO();
+      let numInterno = (document.getElementById('numero_interno')?.value || '').trim().toUpperCase();
+      if (!numInterno) {
+        numInterno = `TMP-${placa}-P${String(pos).padStart(2, '0')}`;
+      }
+      const dedup_key = `${placa}_${pos}_${fechaVal.slice(0, 10)}`;
+
       const payload = {
-        fecha: document.getElementById('fecha').value || fechaLocalISO(),
+        dedup_key: dedup_key,
+        timestamp_local: new Date().toISOString(),
+        fecha: fechaVal,
         cliente: document.getElementById('cliente').value,
         subcliente: document.getElementById('subcliente').value,
         tipo_operacion: document.getElementById('tipo_operacion').value,
@@ -36987,10 +38467,18 @@ if __name__ == '__main__':
         precio: parseFloat(document.getElementById('precio').value) || 0,
         prof_inicial: prof_inicial_num,
         km_montaje: parseFloat(document.getElementById('km_montaje').value) || 0,
-        numero_interno: document.getElementById('numero_interno').value.trim().toUpperCase(),
+        numero_interno: numInterno,
         tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
-        usuario_registro: usuarioActual ? usuarioActual.username : ''
+        usuario_registro: usuarioActual ? usuarioActual.username : '',
+        _ultimo_km_previo: (perfilVehiculoActual && perfilVehiculoActual.ultimo_km > 0 && (perfilVehiculoActual.ultima_fecha_inspeccion || '') < fechaVal.slice(0, 10)) ? perfilVehiculoActual.ultimo_km : 0
       };
+
+      // Validación local de candados de seguridad en el navegador (Candados 1, 2, 3, 4)
+      const validacionCandados = validarCandadosOfflineLocal(payload);
+      if (!validacionCandados.valido) {
+        mostrarToast(validacionCandados.mensaje, true);
+        return;
+      }
 
       registrarInicioJornadaCliente();
       const btn = document.getElementById('btnGuardar');
@@ -36999,64 +38487,95 @@ if __name__ == '__main__':
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...';
       }
 
-      try {
-        const res = await fetch('/api/inspecciones', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        if (res.ok) {
-          posicionesInspeccionadasPlaca.add(pos);
-          if (payload.dimension && (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 1)) {
-            dimensionPredeterminadaVehiculo = payload.dimension;
-          }
-          if (payload.novedades && payload.novedades.trim().length > 0) {
-            posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
-          } else {
-            posicionesConNovedadPlaca.delete(pos);
-          }
-          actualizarBarraPosicionMobile(pos);
-          if (payload.marca) cacheUltimaMarcaVehiculo = payload.marca;
-          if (payload.diseno) cacheUltimoDisenoVehiculo = payload.diseno;
-          if (payload.dimension) cacheUltimaDimensionVehiculo = payload.dimension;
-          mostrarToast(`✅ Guardada llanta Posición ${payload.posicion} de ${placa}`);
-          const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
-          if (pendientes.length === 0) {
-            mostrarToast(`🎉 ¡Vehículo ${placa} COMPLETADO!`);
-            const fechaInspActual = (document.getElementById('fecha')?.value || '').trim();
-            const cliActual = document.getElementById('cliente')?.value.trim() || 'Flota';
-            const tipActual = document.getElementById('tipologia')?.value || 'Tipología';
-            setTimeout(() => {
-              abrirModalInformePdf(placa, fechaInspActual, cliActual, tipActual);
-              limpiarTodoParaNuevaInspeccion();
-            }, 600);
-          } else {
-            limpiarSoloMedicionesCaptura();
-            avanzarSiguientePosicion(pos);
-            if (kilometrajeInspeccionActual > 0) {
-              const inpKm = document.getElementById('kilometraje');
-              if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
-            }
-
-            // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
-            if (window.innerWidth < 1024) {
-              if (document.activeElement && typeof document.activeElement.blur === 'function') {
-                document.activeElement.blur();
-              }
-              setTimeout(() => {
-                const modChasis = document.getElementById('moduloChasis');
-                if (modChasis) {
-                  modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }, 120);
-            }
-          }
-        } else {
-          mostrarToast(result.detail || result.message || 'Error al guardar', true);
+      async function completarGuardadoRueda(esOffline = false) {
+        posicionesInspeccionadasPlaca.add(pos);
+        if (payload.dimension && (!dimensionPredeterminadaVehiculo || posicionesInspeccionadasPlaca.size === 1)) {
+          dimensionPredeterminadaVehiculo = payload.dimension;
         }
-      } catch (err) {
-        mostrarToast('Error de red o comunicación con el servidor al guardar la inspección.', true);
+        if (payload.novedades && payload.novedades.trim().length > 0) {
+          posicionesConNovedadPlaca.set(pos, payload.novedades.trim());
+        } else {
+          posicionesConNovedadPlaca.delete(pos);
+        }
+        actualizarBarraPosicionMobile(pos);
+        if (payload.marca) cacheUltimaMarcaVehiculo = payload.marca;
+        if (payload.diseno) cacheUltimoDisenoVehiculo = payload.diseno;
+        if (payload.dimension) cacheUltimaDimensionVehiculo = payload.dimension;
+
+        if (esOffline) {
+          mostrarToast(`📡 Guardada en el teléfono (Modo Sin Señal) — Posición ${payload.posicion} de ${placa}`);
+        } else {
+          mostrarToast(`✅ Guardada llanta Posición ${payload.posicion} de ${placa}`);
+        }
+
+        const pendientes = listaPosicionesActual.filter(p => !posicionesInspeccionadasPlaca.has(p));
+        if (pendientes.length === 0) {
+          mostrarToast(`🎉 ¡Vehículo ${placa} COMPLETADO!`);
+          const fechaInspActual = (document.getElementById('fecha')?.value || '').trim();
+          const cliActual = document.getElementById('cliente')?.value.trim() || 'Flota';
+          const tipActual = document.getElementById('tipologia')?.value || 'Tipología';
+          setTimeout(() => {
+            abrirModalInformePdf(placa, fechaInspActual, cliActual, tipActual);
+            limpiarTodoParaNuevaInspeccion();
+          }, 600);
+        } else {
+          limpiarSoloMedicionesCaptura();
+          avanzarSiguientePosicion(pos);
+          if (kilometrajeInspeccionActual > 0) {
+            const inpKm = document.getElementById('kilometraje');
+            if (inpKm) inpKm.value = Math.round(kilometrajeInspeccionActual);
+          }
+
+          if (window.innerWidth < 1024) {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+              document.activeElement.blur();
+            }
+            setTimeout(() => {
+              const modChasis = document.getElementById('moduloChasis');
+              if (modChasis) {
+                modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 120);
+          }
+        }
+      }
+
+      async function guardarEnColaOffline() {
+        try {
+          await TireAnalyzeOfflineDB.guardarPendiente(payload);
+          await actualizarVehiculoOfflineConNuevaInspeccion(payload);
+          await actualizarIndicadorConexionOffline();
+        } catch (eDb) {
+          console.warn('Error guardando en cola offline:', eDb);
+        }
+        await completarGuardadoRueda(true);
+      }
+
+      try {
+        if (!navigator.onLine) {
+          await guardarEnColaOffline();
+        } else {
+          try {
+            const res = await fetchConTimeoutPatio('/api/inspecciones', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(payload)
+            }, 4500);
+            const result = await res.json();
+            if (res.ok) {
+              actualizarVehiculoOfflineConNuevaInspeccion(payload).catch(() => {});
+              await completarGuardadoRueda(false);
+            } else {
+              mostrarToast(result.detail || result.message || 'Error al guardar', true);
+            }
+          } catch (errRed) {
+            console.warn('Red lenta o sin cobertura (Lie-Fi). Conmutando a guardado local en cola IndexedDB:', errRed);
+            await guardarEnColaOffline();
+          }
+        }
+      } catch (errGlobal) {
+        console.error('Error procesando inspección:', errGlobal);
+        mostrarToast('Error al procesar la inspección localmente', true);
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -39124,7 +40643,9 @@ if __name__ == '__main__':
         cargarCatalogos();
         validarVida();
         if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
+        descargarPaquetePatioOffline(false);
       }
+      actualizarIndicadorConexionOffline();
     });
   </script>
 </body>

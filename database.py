@@ -8802,3 +8802,426 @@ from modulo_bodegas_taller import (
 )
 
 
+# =============================================================================
+# MÓDULO OFFLINE-FIRST: PAQUETE DE PATIO Y SINCRONIZACIÓN IDEMPOTENTE
+# =============================================================================
+
+def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
+    """
+    Retorna en un único JSON compacto todo el paquete de pre-carga para patio offline:
+    - tipologias completas (con esquema y posiciones)
+    - operaciones
+    - modelos
+    - limites
+    - marcas_por_cliente
+    - catalogos_campos (clientes, subclientes_por_cliente, marcas, disenos, dimensiones, bandas)
+    - vehiculos_perfil (indexado por placa con sus posiciones_previas 1..N)
+    - llantas_catalogo_cliente (indexado por {cliente}|||{numero_interno})
+    """
+    fecha_descarga = datetime.now().isoformat()
+
+    # 1. Permisos y clientes autorizados
+    clis_autorizados = []
+    es_admin = True
+    if usuario:
+        usr_info = obtener_usuario_por_username(usuario)
+        if usr_info and usr_info.get("rol") != "admin":
+            es_admin = False
+            clis_autorizados = parsear_clientes_asignados(usr_info.get("cliente_asignado"))
+
+    cli_filtro = str(cliente or "").strip().upper()
+    if not es_admin and clis_autorizados:
+        if cli_filtro:
+            if not any(c.lower() == cli_filtro.lower() for c in clis_autorizados):
+                flota_clientes = []
+            else:
+                flota_clientes = [cli_filtro]
+        else:
+            flota_clientes = clis_autorizados
+    elif cli_filtro:
+        flota_clientes = [cli_filtro]
+    else:
+        flota_clientes = []
+
+    # 2. Tipologías con esquema y posiciones
+    tipologias = obtener_todas_tipologias()
+    for tip in tipologias:
+        tip["posiciones"] = obtener_posiciones_por_tipologia(tip.get("nombre"))
+
+    # 3. Operaciones
+    operaciones = obtener_todas_operaciones()
+
+    # 4. Modelos de llanta
+    modelos = obtener_catalogo_modelos()
+
+    # 5. Límites de retiro
+    limites = obtener_todas_configuraciones_clientes()
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # 6. Marcas por cliente
+        marcas_por_cliente = {}
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), marca 
+            FROM configuracion_marcas_cliente 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+            ORDER BY cliente ASC, marca ASC
+        """)
+        for r in cursor.fetchall():
+            c = str(r[0]).strip().upper()
+            m = str(r[1] or '').strip()
+            if flota_clientes and not any(fc.lower() == c.lower() for fc in flota_clientes):
+                continue
+            if c not in marcas_por_cliente:
+                marcas_por_cliente[c] = []
+            if m and m not in marcas_por_cliente[c]:
+                marcas_por_cliente[c].append(m)
+
+        # 7. Catálogos de campos
+        # Clientes
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(cliente)) FROM inspecciones WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(cliente)) FROM catalogo_vehiculos WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(cliente)) FROM configuracion_clientes WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
+        """)
+        todos_clientes = sorted([r[0] for r in cursor.fetchall() if r[0]])
+        if flota_clientes:
+            todos_clientes = [c for c in todos_clientes if any(fc.lower() == c.lower() for fc in flota_clientes)]
+
+        # Subclientes por cliente
+        subclientes_por_cliente = {}
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente)) 
+            FROM inspecciones 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente)) 
+            FROM catalogo_vehiculos 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != ''
+        """)
+        for r in cursor.fetchall():
+            c = str(r[0]).strip().upper()
+            sub = str(r[1]).strip().upper()
+            if flota_clientes and not any(fc.lower() == c.lower() for fc in flota_clientes):
+                continue
+            if c not in subclientes_por_cliente:
+                subclientes_por_cliente[c] = []
+            if sub and sub not in subclientes_por_cliente[c]:
+                subclientes_por_cliente[c].append(sub)
+
+        # Marcas generales
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(marca)) FROM catalogo_modelos_llantas WHERE marca IS NOT NULL AND TRIM(marca) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(marca)) FROM inspecciones WHERE marca IS NOT NULL AND TRIM(marca) != ''
+        """)
+        todas_marcas = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Diseños
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(diseno)) FROM catalogo_modelos_llantas WHERE diseno IS NOT NULL AND TRIM(diseno) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(diseno)) FROM inspecciones WHERE diseno IS NOT NULL AND TRIM(diseno) != ''
+        """)
+        todos_disenos = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Dimensiones
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(dimension)) FROM catalogo_modelos_llantas WHERE dimension IS NOT NULL AND TRIM(dimension) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(dimension)) FROM inspecciones WHERE dimension IS NOT NULL AND TRIM(dimension) != ''
+        """)
+        todas_dimensiones = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Bandas
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(diseno)) FROM catalogo_modelos_llantas WHERE tipo_llanta = 'Reencauche' AND diseno IS NOT NULL AND TRIM(diseno) != ''
+            UNION SELECT DISTINCT UPPER(TRIM(banda_reen)) FROM inspecciones WHERE banda_reen IS NOT NULL AND TRIM(banda_reen) != ''
+        """)
+        todas_bandas = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        catalogos_campos = {
+            "clientes": todos_clientes,
+            "subclientes_por_cliente": subclientes_por_cliente,
+            "marcas": todas_marcas,
+            "disenos": todos_disenos,
+            "dimensiones": todas_dimensiones,
+            "bandas": todas_bandas
+        }
+
+        # 8. Vehículos y sus perfiles con posiciones previas
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(placa)) FROM catalogo_vehiculos WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(placa)) FROM inspecciones WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(placa)) FROM padron_vehiculos_cliente WHERE placa IS NOT NULL AND TRIM(placa) != ''
+        """)
+        todas_placas = sorted([r[0] for r in cursor.fetchall() if r[0]])
+
+        # Pre-cargar últimas inspecciones de cada placa y posición
+        cursor.execute("""
+            SELECT UPPER(TRIM(placa)), posicion, numero_interno, marca, diseno, dimension, vida, banda_reen,
+                   prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, psi, novedades, fecha, id
+            FROM inspecciones
+            WHERE placa IS NOT NULL AND TRIM(placa) != ''
+            ORDER BY UPPER(TRIM(placa)) ASC, posicion ASC, fecha DESC, id DESC
+        """)
+        filas_pos = cursor.fetchall()
+        posiciones_por_placa = {}
+        for r in filas_pos:
+            pl = r[0]
+            pos_key = str(to_int(r[1], 1))
+            if pl not in posiciones_por_placa:
+                posiciones_por_placa[pl] = {}
+            if pos_key not in posiciones_por_placa[pl]:
+                posiciones_por_placa[pl][pos_key] = {
+                    "numero_interno": str(r[2] or "").strip().upper(),
+                    "marca": str(r[3] or "").strip().upper(),
+                    "diseno": str(r[4] or "").strip().upper(),
+                    "dimension": str(r[5] or "").strip().upper(),
+                    "vida": str(r[6] or "Original").strip(),
+                    "banda_reen": str(r[7] or "").strip().upper(),
+                    "prof_inicial": to_float(r[8]),
+                    "precio": to_float(r[9]),
+                    "km_montaje": to_float(r[10]),
+                    "prof_ext": to_float(r[11]),
+                    "prof_cent": to_float(r[12]),
+                    "prof_int": to_float(r[13]),
+                    "psi": to_float(r[14]),
+                    "novedades": str(r[15] or "").strip().upper(),
+                    "fecha": str(r[16] or "").strip()[:10]
+                }
+
+        vehiculos_perfil = {}
+        for pl in todas_placas:
+            perf = obtener_perfil_vehiculo(pl)
+            cli_veh = str(perf.get("cliente") or "").strip().upper()
+            if flota_clientes and not any(fc.lower() == cli_veh.lower() for fc in flota_clientes):
+                continue
+            
+            pos_previas = posiciones_por_placa.get(pl, {})
+            # Estructurar dict del perfil garantizando todos los campos solicitados
+            vehiculos_perfil[pl] = {
+                "placa": pl,
+                "tipologia": perf.get("tipologia") or "Cabezote",
+                "cliente": cli_veh,
+                "subcliente": perf.get("subcliente") or "",
+                "tipo_operacion": perf.get("tipo_operacion") or "",
+                "ultimo_km": to_float(perf.get("ultimo_km"), 0.0),
+                "dimension": perf.get("dimension") or "295/80R22.5",
+                "ultima_fecha_inspeccion": perf.get("ultima_fecha_inspeccion") or "",
+                "fecha_minima_permitida": perf.get("fecha_minima_permitida") or "",
+                "en_periodo_restringido": bool(perf.get("en_periodo_restringido", False)),
+                "ultima_marca": perf.get("ultima_marca") or "",
+                "ultimo_diseno": perf.get("ultimo_diseno") or "",
+                "cant_llantas": perf.get("cant_llantas", len(pos_previas)),
+                "esquema": perf.get("esquema", []),
+                "posiciones": perf.get("posiciones", [int(k) for k in pos_previas.keys()]),
+                "posiciones_previas": pos_previas
+            }
+
+        # 9. Llantas catálogo por cliente (para autocompletado offline sin red)
+        cursor.execute("""
+            SELECT UPPER(TRIM(cliente)), UPPER(TRIM(numero_interno)), subcliente, placa, posicion, fecha,
+                   marca, diseno, dimension, vida, banda_reen, prof_inicial, precio, km_montaje,
+                   prof_ext, prof_cent, prof_int, novedades
+            FROM inspecciones
+            WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != '' AND UPPER(TRIM(numero_interno)) != 'SN'
+            ORDER BY fecha DESC, id DESC
+        """)
+        llantas_catalogo_cliente = {}
+        for r in cursor.fetchall():
+            c = str(r[0] or "").strip().upper()
+            num = str(r[1] or "").strip().upper()
+            if flota_clientes and c and not any(fc.lower() == c.lower() for fc in flota_clientes):
+                continue
+            k = f"{c}|||{num}"
+            if k not in llantas_catalogo_cliente:
+                p_ext = to_float(r[14])
+                p_cent = to_float(r[15])
+                p_int = to_float(r[16])
+                profs = [p for p in (p_ext, p_cent, p_int) if p > 0]
+                prof_min = min(profs) if profs else 0.0
+                info_llanta = {
+                    "encontrado": True,
+                    "numero_interno": num,
+                    "cliente": r[0] or "",
+                    "subcliente": r[2] or "",
+                    "ult_placa": r[3] or "",
+                    "ult_posicion": to_int(r[4], 1),
+                    "ult_fecha": r[5] or "",
+                    "marca": r[6] or "",
+                    "diseno": r[7] or "",
+                    "dimension": r[8] or "",
+                    "vida": r[9] or "Original",
+                    "banda_reen": r[10] or "",
+                    "prof_inicial": to_float(r[11]),
+                    "precio": to_float(r[12]),
+                    "km_montaje": to_float(r[13]),
+                    "ult_prof_ext": p_ext,
+                    "ult_prof_cent": p_cent,
+                    "ult_prof_int": p_int,
+                    "ult_prof_min": prof_min,
+                    "ult_novedades": r[17] or ""
+                }
+                llantas_catalogo_cliente[k] = info_llanta
+                if f"|||{num}" not in llantas_catalogo_cliente:
+                    llantas_catalogo_cliente[f"|||{num}"] = info_llanta
+
+    return {
+        "fecha_descarga": fecha_descarga,
+        "tipologias": tipologias,
+        "operaciones": operaciones,
+        "modelos": modelos,
+        "limites": limites,
+        "marcas_por_cliente": marcas_por_cliente,
+        "catalogos_campos": catalogos_campos,
+        "vehiculos_perfil": vehiculos_perfil,
+        "llantas_catalogo_cliente": llantas_catalogo_cliente
+    }
+
+
+def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> dict:
+    """
+    Sincroniza un lote de inspecciones offline de forma idempotente con aislamiento de fallos individuales.
+    - Ordena por fecha ASC, timestamp_local ASC, posicion ASC.
+    - Normaliza placa, posicion, fecha (YYYY-MM-DD).
+    - Aplica aislamiento multi-cliente según el usuario_actual.
+    - Si ya existe en esa fecha: valida candados con excluir_id y actualiza (incrementa actualizadas).
+    - Si no existe: valida candados e inserta (incrementa sincronizadas).
+    - Si falla candado duro o permisos: añade a rechazadas sin abortar el resto del lote.
+    """
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    username = str(usuario_actual.get("username", "")).strip()
+
+    if rol in ("gerencia", "gerente"):
+        return {
+            "status": "ok",
+            "sincronizadas": 0,
+            "actualizadas": 0,
+            "rechazadas": [
+                {
+                    "dedup_key": it.get("dedup_key"),
+                    "placa": it.get("placa"),
+                    "posicion": it.get("posicion"),
+                    "motivo": "El rol Gerencia tiene perfil ejecutivo y no puede registrar inspecciones"
+                }
+                for it in items
+            ]
+        }
+
+    clis_autorizados = []
+    if rol not in ("admin", "administrador") and username.lower() != "admin":
+        clis_autorizados = parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+
+    def _clave_orden(it):
+        f = str(it.get("fecha") or "")
+        ts = str(it.get("timestamp_local") or it.get("fecha") or "")
+        p = to_int(it.get("posicion"), 1)
+        return (f, ts, p)
+
+    items_ordenados = sorted(items or [], key=_clave_orden)
+
+    count_insertadas = 0
+    count_actualizadas = 0
+    rechazadas = []
+
+    for it in items_ordenados:
+        placa = str(it.get("placa", "")).strip().upper()
+        pos = to_int(it.get("posicion"), 1)
+        fecha_raw = str(it.get("fecha", "")).strip()
+        fecha = fecha_raw[:10] if fecha_raw else datetime.now().strftime("%Y-%m-%d")
+        dedup_key = it.get("dedup_key") or f"{placa}_{pos}_{fecha}"
+
+        if not placa:
+            rechazadas.append({
+                "dedup_key": dedup_key,
+                "placa": placa,
+                "posicion": pos,
+                "motivo": "Por favor ingresa la Placa del vehículo."
+            })
+            continue
+
+        datos = dict(it)
+        datos["placa"] = placa
+        datos["posicion"] = pos
+        datos["fecha"] = fecha
+        datos["usuario_registro"] = username
+
+        # Validar permisos de cliente
+        if clis_autorizados:
+            cli_datos = str(datos.get("cliente", "")).strip().upper()
+            if not cli_datos and len(clis_autorizados) == 1:
+                cli_datos = clis_autorizados[0]
+                datos["cliente"] = cli_datos
+            elif not cli_datos or not any(c.lower() == cli_datos.lower() for c in clis_autorizados):
+                rechazadas.append({
+                    "dedup_key": dedup_key,
+                    "placa": placa,
+                    "posicion": pos,
+                    "motivo": "No tiene permisos para registrar inspecciones de este cliente"
+                })
+                continue
+
+        # Verificar si ya existe registro en SQLite para esa placa, posición y fecha
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id FROM inspecciones
+                WHERE UPPER(TRIM(placa)) = ? AND posicion = ? AND SUBSTR(fecha, 1, 10) = ?
+                ORDER BY id DESC LIMIT 1
+            """, (placa, pos, fecha))
+            row_exist = cursor.fetchone()
+
+        if row_exist:
+            id_existente = row_exist[0]
+            val = validar_inspeccion_candados(datos, excluir_id=id_existente)
+            if not val.get("valido", True):
+                rechazadas.append({
+                    "dedup_key": dedup_key,
+                    "placa": placa,
+                    "posicion": pos,
+                    "motivo": val.get("mensaje", "Violación de regla de seguridad")
+                })
+            else:
+                ok = actualizar_inspeccion(id_existente, datos)
+                if ok:
+                    count_actualizadas += 1
+                else:
+                    rechazadas.append({
+                        "dedup_key": dedup_key,
+                        "placa": placa,
+                        "posicion": pos,
+                        "motivo": "No se pudo actualizar el registro existente"
+                    })
+        else:
+            val = validar_inspeccion_candados(datos)
+            if not val.get("valido", True):
+                rechazadas.append({
+                    "dedup_key": dedup_key,
+                    "placa": placa,
+                    "posicion": pos,
+                    "motivo": val.get("mensaje", "Violación de regla de seguridad")
+                })
+            else:
+                new_id = insertar_inspeccion(datos)
+                if new_id:
+                    count_insertadas += 1
+                else:
+                    rechazadas.append({
+                        "dedup_key": dedup_key,
+                        "placa": placa,
+                        "posicion": pos,
+                        "motivo": "No se pudo insertar la inspección en la base de datos"
+                    })
+
+    return {
+        "status": "ok",
+        "sincronizadas": count_insertadas,
+        "actualizadas": count_actualizadas,
+        "rechazadas": rechazadas
+    }
+
+
+

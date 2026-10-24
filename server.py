@@ -102,6 +102,8 @@ class ConfigLicenciaClienteItem(BaseModel):
     tipo_licencia: str = "PRO"  # "LIGHT" o "PRO"
     plantilla_kpis_json: str = "{}"
 
+class LoteInspeccionesOfflineRequest(BaseModel):
+    items: list[dict]
 
 class InspeccionItem(BaseModel):
     fecha: str = ""
@@ -236,7 +238,7 @@ def _obtener_o_crear_secret_key() -> str:
         return "tireanalyze-pro-fallback-secret-key-2026-production"
 
 SECRET_KEY = _obtener_o_crear_secret_key()
-TOKEN_EXPIRATION_SECONDS = 43200  # 12 horas
+TOKEN_EXPIRATION_SECONDS = 604800  # 7 días (para jornadas de campo en zonas remotas sin cobertura)
 
 def crear_token_acceso(username: str, rol: str) -> str:
     payload = {
@@ -378,6 +380,117 @@ def preview_chasis():
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "preview_chasis.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
+
+@app.get("/manifest.json")
+def pwa_manifest():
+    manifest_data = {
+        "name": "TireAnalyze Pro — Patio Offline",
+        "short_name": "TireAnalyze",
+        "description": "Sistema Integral de Inspección y Diagnóstico de Flotas — Modo Patio Offline",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#091323",
+        "theme_color": "#091323",
+        "icons": [
+            {
+                "src": "/static/img/logo_hd.svg",
+                "sizes": "any",
+                "type": "image/svg+xml",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+    return Response(content=json.dumps(manifest_data, indent=2), media_type="application/manifest+json")
+
+@app.get("/sw.js")
+def service_worker():
+    sw_code = """// Service Worker para TireAnalyze Pro — Soporte Offline-First en Patio
+const CACHE_NAME = 'tireanalyze-patio-v1';
+const PRECACHE_ASSETS = [
+  '/',
+  '/static/img/logo_hd.svg',
+  '/static/img/banner_tireanalyze_hd.png',
+  'https://cdn.tailwindcss.com',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn('[SW] Precache parcial:', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+
+  // Navegación HTML (/): Network-First con Fallback a Caché
+  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/') {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match('/') || caches.match(req))
+    );
+    return;
+  }
+
+  // Peticiones de datos API: Network-First con Fallback a Caché
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Recursos Estáticos (CSS, JS, Fonts, Img): Cache-First
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return res;
+      });
+    })
+  );
+});
+"""
+    return Response(
+        content=sw_code,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}
+    )
 
 @app.get("/api/servidor/info")
 def api_info_servidor():
@@ -615,6 +728,16 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
 
     database.eliminar_inspeccion(inspeccion_id)
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
+
+@app.post("/api/inspecciones/sincronizar-lote")
+def api_sincronizar_lote_inspecciones(req: LoteInspeccionesOfflineRequest, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if es_rol_gerencia(rol):
+        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede registrar inspecciones")
+    
+    res = database.sincronizar_lote_inspecciones(req.items, usuario_actual)
+    return sanitizar_nativos(res)
+
 
 # ==========================================
 
@@ -1569,6 +1692,26 @@ def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: d
         "posiciones_con_novedad": det["posiciones_con_novedad"],
         "novedades": det["novedades"]
     }
+
+@app.get("/api/offline/paquete-patio")
+def api_offline_paquete_patio(
+    cliente: str = "",
+    usuario_actual: dict = Depends(obtener_usuario_actual)
+):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    username = str(usuario_actual.get("username", "")).strip()
+    clis_autorizados = []
+    if not es_rol_admin(rol, username):
+        clis_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis_autorizados:
+            if cliente and not any(c.lower() == cliente.strip().lower() for c in clis_autorizados):
+                raise HTTPException(status_code=403, detail="No tiene permisos para descargar datos de este cliente")
+            if not cliente and len(clis_autorizados) == 1:
+                cliente = clis_autorizados[0]
+    
+    paquete = database.obtener_paquete_offline_patio(cliente=cliente, usuario=username)
+    return sanitizar_nativos(paquete)
+
 
 # ==========================================
 # RUTAS DE AUTENTICACIÓN Y USUARIOS
