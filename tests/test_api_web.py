@@ -53,12 +53,12 @@ def test_servicios_landing_page_loads():
     assert "https://www.tireanalizepro.com" in html
     assert "lblAhorroEstimado" in html
     assert "actualizarCalculadora" in html
-    # Verificación de logos emblemáticos y toggle de tema
+    # Verificación de logos emblemáticos y textura de huellas de neumáticos
     assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
     assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
     assert "CONFIANZA EN TU INFORMACIÓN" in html
-    assert "btnThemeToggle" in html
-    assert "alternarModoTema" in html
+    assert "tire-treads-bg" in html   # Textura de huellas de neumático
+    assert "Los 4 Candados Viales de Seguridad" in html
     
     # También probar el alias /landing
     res_alias = client.get("/landing")

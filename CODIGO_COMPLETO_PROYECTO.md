@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-24 16:11:26`
+- **Fecha de Generación:** `2026-10-24 16:18:57`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
 - **Líneas Totales de Código:** `53,663` líneas
-- **Tamaño Total de Código Fuente:** `2621.4 KB` (`2,684,290` bytes)
+- **Tamaño Total de Código Fuente:** `2621.4 KB` (`2,684,364` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 297 | 11.0 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 259 | 10.5 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 924 | 35.1 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 924 | 35.2 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -47034,7 +47034,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 924 líneas | 35,927 bytes (35.1 KB)
+- **Métricas:** 924 líneas | 36,001 bytes (35.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -47093,12 +47093,12 @@ def test_servicios_landing_page_loads():
     assert "https://www.tireanalizepro.com" in html
     assert "lblAhorroEstimado" in html
     assert "actualizarCalculadora" in html
-    # Verificación de logos emblemáticos y toggle de tema
+    # Verificación de logos emblemáticos y textura de huellas de neumáticos
     assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
     assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
     assert "CONFIANZA EN TU INFORMACIÓN" in html
-    assert "btnThemeToggle" in html
-    assert "alternarModoTema" in html
+    assert "tire-treads-bg" in html   # Textura de huellas de neumático
+    assert "Los 4 Candados Viales de Seguridad" in html
     
     # También probar el alias /landing
     res_alias = client.get("/landing")
