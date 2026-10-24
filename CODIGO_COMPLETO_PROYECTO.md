@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-22 18:54:53`
+- **Fecha de Generación:** `2026-10-24 09:47:54`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `52,042` líneas
-- **Tamaño Total de Código Fuente:** `2551.3 KB` (`2,612,497` bytes)
+- **Líneas Totales de Código:** `52,092` líneas
+- **Tamaño Total de Código Fuente:** `2553.9 KB` (`2,615,165` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18266 | 967.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 18316 | 969.6 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -20809,7 +20809,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 18266 líneas | 990,207 bytes (967.0 KB)
+- **Métricas:** 18316 líneas | 992,875 bytes (969.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -21422,8 +21422,8 @@ if __name__ == '__main__':
     </div>
   </div>
 
-  <!-- Notificación Toast Flotante (Elevada en móvil para no tapar barra de acción) -->
-  <div id="toast" class="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 hidden transform transition-all duration-300 p-4 rounded-2xl text-sm font-bold shadow-2xl max-w-md border"></div>
+  <!-- Notificación Toast Flotante (z-index 99999 para que aparezca por encima de cualquier modal y fondo difuminado) -->
+  <div id="toast" style="z-index: 99999;" class="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-[99999] hidden transform transition-all duration-300 p-4 rounded-2xl text-sm font-bold shadow-2xl max-w-md border"></div>
 
   <!-- ============================================================== -->
   <!-- VISTA 1: INSPECCIÓN DE PATIO (4 MÓDULOS EN UNA SOLA PANTALLA)  -->
@@ -24378,9 +24378,11 @@ if __name__ == '__main__':
           </div>
 
           <!-- Botón Dar de Alta Llanta/Carcasa -->
-          <button type="button" onclick="abrirModalAltaBodega()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5">
-            <i class="fa-solid fa-plus"></i>
-            <span>+ Dar de Alta Llanta</span>
+          <button type="button" onclick="abrirModalAltaBodega()" title="Registrar una llanta nueva o carcasa reutilizable en inventario" class="group px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-950/20 hover:shadow-lg hover:shadow-emerald-600/30 border border-emerald-400/30 flex items-center space-x-2 transition-all duration-200 active:scale-95 cursor-pointer">
+            <span class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-[10px] group-hover:rotate-90 transition-transform duration-300">
+              <i class="fa-solid fa-plus"></i>
+            </span>
+            <span class="tracking-tight">Dar de Alta Llanta</span>
           </button>
 
           <!-- Botón Refrescar -->
@@ -25719,23 +25721,7 @@ if __name__ == '__main__':
           </div>
         </div>
 
-        <!-- 2. DIAGRAMA DE CHASIS DEL VEHÍCULO EN EL INFORME -->
-        <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-3.5 space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2 text-xs font-black text-slate-800">
-              <i class="fa-solid fa-truck-monster text-blue-600"></i>
-              <span>Diagrama de Chasis del Vehículo Auditado</span>
-            </div>
-            <span class="text-[11px] font-bold text-slate-500">
-              <i class="fa-solid fa-check-double text-emerald-600 mr-1"></i>Posiciones Completas
-            </span>
-          </div>
-          <div id="modalChasisContainer" class="max-h-56 overflow-y-auto custom-scroll rounded-xl bg-white border border-slate-200/90 p-2 flex justify-center">
-            <!-- Diagrama inyectado dinámicamente -->
-          </div>
-        </div>
-
-        <!-- 3. PLANES DE ACCIÓN Y ALERTAS INMEDIATAS -->
+        <!-- 2. DIAGNÓSTICO TÉCNICO Y ACCIONES INMEDIATAS -->
         <div id="modalPlanesAccionBox" class="rounded-2xl border border-slate-200 p-3.5 space-y-2 bg-white">
           <div class="flex items-center justify-between text-xs font-black text-slate-800 border-b border-slate-100 pb-1.5">
             <span class="flex items-center space-x-1.5">
@@ -25755,7 +25741,7 @@ if __name__ == '__main__':
       <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-2.5">
         <button type="button" onclick="descargarPdfVehiculoActual()" class="flex-1 w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs shadow-md shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all active:scale-95">
           <i class="fa-solid fa-file-pdf text-sm"></i>
-          <span>Descargar Informe PDF con Diagrama de Chasis</span>
+          <span>Descargar Informe PDF</span>
         </button>
         <button type="button" onclick="compartirWhatsAppPlan()" class="w-full sm:w-auto py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center space-x-2 transition-all active:scale-95">
           <i class="fa-brands fa-whatsapp text-sm"></i>
@@ -26899,9 +26885,10 @@ if __name__ == '__main__':
         ? '<i class="fa-solid fa-shield-halved text-rose-300 text-base mt-0.5"></i>' 
         : '<i class="fa-solid fa-circle-check text-emerald-300 text-base mt-0.5"></i>';
 
-      toast.className = `fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 transform transition-all duration-300 p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm font-bold shadow-2xl max-w-md border backdrop-blur-md flex items-start space-x-3 ${
+      toast.style.zIndex = '99999';
+      toast.className = `fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-[99999] transform transition-all duration-300 p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm font-bold shadow-2xl max-w-md border backdrop-blur-md flex items-start space-x-3 ${
         esError || esCandado
-          ? 'bg-rose-950/95 text-rose-100 border-rose-600 shadow-rose-950/50' 
+          ? 'bg-rose-950/95 text-rose-100 border-rose-600 shadow-rose-950/50 ring-2 ring-rose-500/50' 
           : 'bg-slate-900/95 text-emerald-300 border-slate-700 shadow-slate-950/50'
       }`;
 
@@ -36657,22 +36644,7 @@ if __name__ == '__main__':
       if (elTip) elTip.textContent = tip;
       if (elCli) elCli.textContent = cli;
 
-      // 2. Renderizar / Clonar Diagrama de Chasis en el Modal
-      const contenedorChasis = document.getElementById('contenedorChasisEjes');
-      const modalChasisBox = document.getElementById('modalChasisContainer');
-      if (modalChasisBox && contenedorChasis) {
-        modalChasisBox.innerHTML = '';
-        const clone = contenedorChasis.cloneNode(true);
-        clone.id = 'modal_clone_chasis';
-        // Deshabilitar clicks interactivos en el clone para vista de solo lectura
-        clone.querySelectorAll('.tire-interactive-node').forEach(node => {
-          node.style.cursor = 'default';
-          node.removeAttribute('onclick');
-        });
-        modalChasisBox.appendChild(clone);
-      }
-
-      // 3. Consultar datos de inspección del vehículo para KPIs y Planes
+      // 2. Consultar datos de inspección del vehículo para KPIs y Planes
       try {
         const res = await fetch('/api/inspecciones?usuario=');
         if (res.ok) {
@@ -36839,15 +36811,65 @@ if __name__ == '__main__':
       if (tok) url += `&token=${encodeURIComponent(tok)}`;
       window.open(url, '_blank');
     }
-    function compartirWhatsAppPlan() {
-      const p = (document.getElementById('lblPlacaPdfModal')?.textContent || '').trim();
+    async function compartirWhatsAppPlan() {
+      let p = (document.getElementById('lblPlacaPdfModal')?.textContent || '').trim();
       let f = (document.getElementById('lblPlacaPdfModal')?.dataset?.fecha || '').trim();
-      if (!f) f = (document.getElementById('fecha')?.value || '').trim();
-      const ip = window.location.host;
-      let url = `http://${ip}/api/informe-pdf/${encodeURIComponent(p)}`;
+      if (!p || p === '-') {
+        p = (document.getElementById('placa')?.value || '').trim();
+        if (!f) f = (document.getElementById('fecha')?.value || '').trim();
+      }
+      if (!p) {
+        mostrarToast('Por favor ingrese o seleccione una placa primero.', true);
+        return;
+      }
+
+      let url = `/api/informe-pdf/${encodeURIComponent(p)}`;
       if (f) url += `?fecha=${encodeURIComponent(f)}`;
-      const msg = encodeURIComponent(`Hola! Te comparto el Informe Técnico de Inspección TireAnalyze Pro para el vehículo ${p}:\n${url}`);
-      window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) url += (url.includes('?') ? '&' : '?') + `token=${encodeURIComponent(tok)}`;
+
+      mostrarToast('Preparando archivo PDF para compartir...');
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('No se pudo obtener el PDF del servidor');
+        const blob = await resp.blob();
+        const fileName = `Informe_Inspeccion_${p}.pdf`;
+        const file = new File([blob], fileName, { type: 'application/pdf' });
+
+        // 1. Web Share API con archivos (Soportado en móviles Android, iOS y navegadores compatibles)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Informe Técnico ${p}`,
+            text: `Informe de Inspección Vehículo ${p}`
+          });
+          mostrarToast('Archivo PDF listo para enviar por WhatsApp.');
+          return;
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return; // Operación cancelada voluntariamente por el usuario
+        console.warn('Web Share API con archivos no disponible o cancelada:', err);
+      }
+
+      // 2. Fallback para PC / Navegadores de escritorio sin Web Share de archivos:
+      // Se descarga automáticamente el archivo PDF al equipo y se abre WhatsApp para adjuntarlo sin compartir links
+      try {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = `Informe_Inspeccion_${p}.pdf`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        mostrarToast('📄 PDF descargado. Adjunta el archivo en el chat de WhatsApp que se abrirá.');
+        setTimeout(() => {
+          const msg = encodeURIComponent(`Hola, te adjunto el Informe Técnico de Inspección TireAnalyze Pro del vehículo ${p}:`);
+          window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+        }, 700);
+      } catch (e) {
+        window.open(url, '_blank');
+      }
     }
 
 
@@ -38132,6 +38154,17 @@ if __name__ == '__main__':
         if (pM && pM.value) payload.prof_min_mm = parseFloat(pM.value);
 
         if (!payload.placa || payload.posicion <= 0) {
+          const inpPlaca = document.getElementById('mover_placa');
+          const inpPos = document.getElementById('mover_posicion');
+          if (!payload.placa && inpPlaca) {
+            inpPlaca.focus();
+            inpPlaca.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+            setTimeout(() => inpPlaca.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
+          } else if (inpPos) {
+            inpPos.focus();
+            inpPos.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+            setTimeout(() => inpPos.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
+          }
           mostrarToast('⚠️ Para montar llanta debes ingresar placa y posición válida (>= 1)', true);
           return;
         }
@@ -38139,6 +38172,12 @@ if __name__ == '__main__':
         // Validación preventiva en cliente del candado vial
         const esReen = ll && ((ll.vida_actual && String(ll.vida_actual).toUpperCase() !== 'ORIGINAL') || (Number(ll.num_reencauches) > 0) || (ll.ubicacion_bodega === 'BODEGA_4_REENCAUCHADAS'));
         if (esReen && (payload.posicion === 1 || payload.posicion === 2)) {
+          const inpPos = document.getElementById('mover_posicion');
+          if (inpPos) {
+            inpPos.focus();
+            inpPos.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+            setTimeout(() => inpPos.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
+          }
           mostrarToast('⛔ CANDADO VIAL: No se permite montar llantas reencauchadas en posición direccional (1 o 2). Elige posición 3 en adelante.', true);
           return;
         }
@@ -38151,6 +38190,11 @@ if __name__ == '__main__':
         // Alerta preventiva si prof <= 3.0 mm
         const profCheck = (payload.prof_min_mm != null) ? payload.prof_min_mm : ((ll && ll.prof_actual_min != null) ? Number(ll.prof_actual_min) : 8.0);
         if (profCheck <= 3.0) {
+          if (pRec) {
+            pRec.focus();
+            pRec.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+            setTimeout(() => pRec.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
+          }
           mostrarToast('⛔ La profundidad (' + profCheck.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). No puede enviarse a Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).', true);
           return;
         }
@@ -38158,11 +38202,17 @@ if __name__ == '__main__':
         payload.proveedor = document.getElementById('mover_planta_reencauche')?.value.trim() || '';
         payload.documento_soporte = document.getElementById('mover_remision_reencauche')?.value.trim() || '';
       } else if (destino === 'BODEGA_4_REENCAUCHADAS') {
-        payload.banda_reen = document.getElementById('mover_banda_reen')?.value.trim().toUpperCase() || '';
+        const inpBanda = document.getElementById('mover_banda_reen');
+        payload.banda_reen = inpBanda?.value.trim().toUpperCase() || '';
         payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof')?.value) || 20.0;
         payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reencauche')?.value) || 0.0;
         payload.prof_min_mm = payload.nueva_prof_inicial;
         if (!payload.banda_reen) {
+          if (inpBanda) {
+            inpBanda.focus();
+            inpBanda.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+            setTimeout(() => inpBanda.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
+          }
           mostrarToast('⚠️ Ingrese el nombre de la banda de reencauche aplicada', true);
           return;
         }
