@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-24 14:07:57`
+- **Fecha de Generación:** `2026-10-24 15:56:59`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `53,614` líneas
-- **Tamaño Total de Código Fuente:** `2619.0 KB` (`2,681,851` bytes)
+- **Líneas Totales de Código:** `53,657` líneas
+- **Tamaño Total de Código Fuente:** `2621.1 KB` (`2,683,968` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -431,7 +431,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2180 | 94.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2195 | 95.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 9227 | 439.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 19272 | 1011.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 19285 | 1012.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 297 | 11.0 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 259 | 10.5 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 903 | 34.3 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 918 | 34.8 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -3539,7 +3539,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2180 líneas | 96,784 bytes (94.5 KB)
+- **Métricas:** 2195 líneas | 97,417 bytes (95.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3919,6 +3919,21 @@ def index(response: Response):
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
+
+@app.get("/servicios", response_class=HTMLResponse)
+@app.get("/landing", response_class=HTMLResponse)
+def pagina_servicios(response: Response):
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if os.path.exists(static_dir):
+    try:
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    except Exception:
+        pass
 
 @app.get("/preview-chasis", response_class=HTMLResponse)
 def preview_chasis():
@@ -21374,7 +21389,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 19272 líneas | 1,035,281 bytes (1011.0 KB)
+- **Métricas:** 19285 líneas | 1,036,251 bytes (1012.0 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -21660,6 +21675,14 @@ if __name__ == '__main__':
           <span>Ingresar a la Plataforma</span>
           <i class="fa-solid fa-arrow-right"></i>
         </button>
+
+        <div class="pt-3 border-t border-slate-100 text-center">
+          <a href="/servicios" class="text-xs text-blue-600 hover:text-blue-800 font-bold inline-flex items-center space-x-1.5 transition-colors">
+            <i class="fa-solid fa-layer-group text-[11px] text-cyan-600"></i>
+            <span>Conoce nuestro portafolio de servicios técnicos</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -21702,8 +21725,13 @@ if __name__ == '__main__':
           </div>
       </div>
 
-      <!-- Lado Derecho: Estado Offline y Botón Salir -->
+      <!-- Lado Derecho: Estado Offline, Enlace a Servicios y Botón Salir -->
       <div class="flex items-center space-x-2.5">
+          <a href="/servicios" target="_blank" title="Ver Servicios y Portafolio Comercial TireAnalyze Pro" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-semibold shadow-sm transition-all duration-200">
+              <i class="fa-solid fa-briefcase text-xs text-cyan-400"></i>
+              <span>Servicios</span>
+          </a>
+
           <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de Conexión y Cola Offline de Patio" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50">
               <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span id="lblTextoEstadoConexion">En línea · Flota Lista Offline</span>
@@ -47006,7 +47034,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 903 líneas | 35,091 bytes (34.3 KB)
+- **Métricas:** 918 líneas | 35,605 bytes (34.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -47055,6 +47083,21 @@ def test_index_page_loads_all_views():
     assert "filtroDiagAlerta" in html
     assert "filtroDiagPlaca" in html
     assert "Re-animar" not in html
+
+def test_servicios_landing_page_loads():
+    res = client.get("/servicios")
+    assert res.status_code == 200
+    html = res.text
+    assert "TireAnalyze Pro" in html
+    assert "Las 7 Bodegas (MRP)" in html
+    assert "https://www.tireanalizepro.com" in html
+    assert "lblAhorroEstimado" in html
+    assert "actualizarCalculadora" in html
+    
+    # También probar el alias /landing
+    res_alias = client.get("/landing")
+    assert res_alias.status_code == 200
+    assert "TireAnalyze Pro" in res_alias.text
 
 def test_seguridad_rechazo_sin_autenticacion(test_db):
     # 1. Petición sin token a /api/inspecciones debe dar 401

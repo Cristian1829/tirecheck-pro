@@ -375,6 +375,21 @@ def index(response: Response):
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/servicios", response_class=HTMLResponse)
+@app.get("/landing", response_class=HTMLResponse)
+def pagina_servicios(response: Response):
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if os.path.exists(static_dir):
+    try:
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    except Exception:
+        pass
+
 @app.get("/preview-chasis", response_class=HTMLResponse)
 def preview_chasis():
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "preview_chasis.html")

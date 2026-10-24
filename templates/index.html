@@ -280,6 +280,14 @@
           <span>Ingresar a la Plataforma</span>
           <i class="fa-solid fa-arrow-right"></i>
         </button>
+
+        <div class="pt-3 border-t border-slate-100 text-center">
+          <a href="/servicios" class="text-xs text-blue-600 hover:text-blue-800 font-bold inline-flex items-center space-x-1.5 transition-colors">
+            <i class="fa-solid fa-layer-group text-[11px] text-cyan-600"></i>
+            <span>Conoce nuestro portafolio de servicios técnicos</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -322,8 +330,13 @@
           </div>
       </div>
 
-      <!-- Lado Derecho: Estado Offline y Botón Salir -->
+      <!-- Lado Derecho: Estado Offline, Enlace a Servicios y Botón Salir -->
       <div class="flex items-center space-x-2.5">
+          <a href="/servicios" target="_blank" title="Ver Servicios y Portafolio Comercial TireAnalyze Pro" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-semibold shadow-sm transition-all duration-200">
+              <i class="fa-solid fa-briefcase text-xs text-cyan-400"></i>
+              <span>Servicios</span>
+          </a>
+
           <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de Conexión y Cola Offline de Patio" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50">
               <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span id="lblTextoEstadoConexion">En línea · Flota Lista Offline</span>

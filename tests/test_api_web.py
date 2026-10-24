@@ -44,6 +44,21 @@ def test_index_page_loads_all_views():
     assert "filtroDiagPlaca" in html
     assert "Re-animar" not in html
 
+def test_servicios_landing_page_loads():
+    res = client.get("/servicios")
+    assert res.status_code == 200
+    html = res.text
+    assert "TireAnalyze Pro" in html
+    assert "Las 7 Bodegas (MRP)" in html
+    assert "https://www.tireanalizepro.com" in html
+    assert "lblAhorroEstimado" in html
+    assert "actualizarCalculadora" in html
+    
+    # También probar el alias /landing
+    res_alias = client.get("/landing")
+    assert res_alias.status_code == 200
+    assert "TireAnalyze Pro" in res_alias.text
+
 def test_seguridad_rechazo_sin_autenticacion(test_db):
     # 1. Petición sin token a /api/inspecciones debe dar 401
     res_insp = client.get("/api/inspecciones")
