@@ -1,218 +1,181 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth dark">
+<html lang="es" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Servicios de Gestión Técnica de Flotas y Neumáticos — TireAnalyze Pro</title>
-  <meta name="description" content="El software que facilita la inspección en patio, control integral de carcasas, seguridad en los datos y maximización del rendimiento de neumáticos para flotas.">
-  <meta name="theme-color" content="#040812">
+  <meta name="description" content="El software que facilita la inspección en patio, control integral de llantas reencauchables, seguridad en los datos y maximización del rendimiento de neumáticos para flotas.">
+  <meta name="theme-color" content="#061226">
 
-  <!-- Tipografía Google Fonts: Plus Jakarta Sans & Inter -->
+  <!-- Tipografía industrial: Barlow Condensed (titulares), Barlow (texto), JetBrains Mono (medidas) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
-            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['Barlow', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
           },
           colors: {
-            navy: {
-              950: '#040812',
-              900: '#060d19',
-              850: '#0a1426',
-              800: '#0f1d38',
-              700: '#16284d'
-            },
-            cyan: {
-              400: '#22d3ee',
-              500: '#06b6d4',
-              glow: '#00d8ff'
-            }
+            // Azul marino (fondos oscuros)
+            asphalt: { 950: '#061226', 900: '#0B1B36', 800: '#122647', 700: '#1D3560', 600: '#2A4A7F' },
+            // Blancos y azul hielo (fondos claros)
+            concrete: { 50: '#FFFFFF', 100: '#F3F7FC', 200: '#E4ECF7', 300: '#C9D6EA' },
+            // Azul de marca (acento)
+            hivis: { DEFAULT: '#38B6FF', 300: '#7CCFFF', 600: '#0A6FC2' },
+            // Semáforo de desgaste
+            ok: '#22C55E', warn: '#F59E0B', crit: '#EF4444'
           }
         }
       }
     }
   </script>
 
-  <!-- FontAwesome 6 Pro CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    /* Estilos personalizados y utilidades de Craft */
-    ::selection {
-      background: #00d8ff;
-      color: #040812;
-    }
-    
-    /* Scrollbar sutil */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #040812;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1e293b;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #334155;
-    }
+    html { scroll-padding-top: 5rem; }
+    body { font-family: Barlow, system-ui, sans-serif; }
+    ::selection { background: #38B6FF; color: #061226; }
+    h1, h2, h3 { text-wrap: balance; }
+    :focus-visible { outline: 3px solid #38B6FF; outline-offset: 3px; border-radius: 4px; }
 
-    /* Ocultar barra de scroll en elementos horizontales táctiles */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+    .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 100; background: #38B6FF; color: #061226; font-weight: 700; padding: .6rem 1rem; transition: top .2s; }
+    .skip-link:focus { top: .75rem; }
 
-    /* Glow de bordes y fondos técnicos */
-    .glow-cyan {
-      box-shadow: 0 0 25px -5px rgba(0, 216, 255, 0.35);
+    /* Banda de rodadura: separador característico entre secciones */
+    .tread-band {
+      height: 26px;
+      background-color: #0B1B36;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='26' viewBox='0 0 36 26'%3E%3Cpath d='M2 0 L16 13 L2 26 L10 26 L24 13 L10 0 Z' fill='%231D3560'/%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+      border-top: 1px solid #1D3560; border-bottom: 1px solid #1D3560;
     }
-    .glow-blue {
-      box-shadow: 0 0 25px -5px rgba(37, 99, 235, 0.4);
-    }
-    .text-glow-cyan {
-      text-shadow: 0 0 16px rgba(0, 229, 255, 0.7);
-    }
-    .svg-glow-blue {
-      filter: drop-shadow(0 0 10px rgba(0, 136, 255, 0.6));
-    }
-    .svg-glow-cyan {
-      filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.65));
-    }
+    .tread-band.light { background-color: #E4ECF7; border-color: #C9D6EA;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='26' viewBox='0 0 36 26'%3E%3Cpath d='M2 0 L16 13 L2 26 L10 26 L24 13 L10 0 Z' fill='%23C9D6EA'/%3E%3C/svg%3E"); }
 
-    /* Textura de huellas de neumático sutiles en el fondo */
-    .tire-treads-bg {
-      background-image: 
-        radial-gradient(rgba(0, 216, 255, 0.08) 1px, transparent 1px),
-        url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%2300d8ff' stroke-width='2.2' stroke-linecap='round' opacity='0.035'%3E%3Cpath d='M8 6 L22 18 M22 24 L8 36 M8 46 L22 58 M22 64 L8 76'/%3E%3Cline x1='26' y1='0' x2='26' y2='80' stroke='%230088ff' stroke-width='1.2' stroke-dasharray='6 6' opacity='0.03'/%3E%3Cpath d='M44 18 L30 6 M30 36 L44 24 M44 58 L30 46 M30 76 L44 64'/%3E%3Cline x1='54' y1='10' x2='66' y2='8' stroke-width='2.5' opacity='0.025'/%3E%3Cline x1='54' y1='30' x2='66' y2='28' stroke-width='2.5' opacity='0.025'/%3E%3Cline x1='54' y1='50' x2='66' y2='48' stroke-width='2.5' opacity='0.025'/%3E%3Cline x1='54' y1='70' x2='66' y2='68' stroke-width='2.5' opacity='0.025'/%3E%3C/g%3E%3C/svg%3E");
-    }
+    /* Franja diagonal azul/blanco */
+    .hazard { background: repeating-linear-gradient(-45deg, #38B6FF 0 14px, #FFFFFF 14px 28px); }
 
-    /* Animaciones del banner emblemático */
-    @keyframes pulseBar {
-      0%, 100% { transform: scaleY(1); opacity: 0.9; }
-      50% { transform: scaleY(1.08); opacity: 1; }
-    }
-    @keyframes floatSteam {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-4px); }
-    }
-    .animate-bar-1 { animation: pulseBar 3s infinite ease-in-out; transform-origin: bottom; }
-    .animate-bar-2 { animation: pulseBar 2.4s infinite ease-in-out 0.3s; transform-origin: bottom; }
-    .animate-bar-3 { animation: pulseBar 3.2s infinite ease-in-out 0.6s; transform-origin: bottom; }
+    /* Textura sutil de caucho */
+    .rubber { background-color: #061226; background-image: radial-gradient(ellipse 70% 60% at 75% 40%, rgba(56,182,255,.18), transparent 70%), radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px); background-size: auto, 4px 4px; }
+
+    /* Etiqueta tipo marcaje de flanco */
+    .sidewall { font-family: "Barlow Condensed", sans-serif; letter-spacing: .22em; text-transform: uppercase; font-weight: 700; }
+
+    /* Calculadora */
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 0; background: linear-gradient(90deg,#38B6FF,#38B6FF) 0/var(--p,30%) 100% no-repeat, #1D3560; cursor: pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; background: #061226; border: 4px solid #38B6FF; border-radius: 50%; }
+    input[type=range]::-moz-range-thumb { width: 18px; height: 18px; background: #061226; border: 4px solid #38B6FF; border-radius: 50%; }
+
+    /* Aparición al hacer scroll */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; transition-delay: var(--d, 0ms); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    #mobileMenu { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+    #mobileMenu.open { grid-template-rows: 1fr; }
+    #mobileMenu > div { overflow: hidden; }
+
+    /* Emblema: barras de datos que respiran y vapor de la taza */
+    @keyframes pulseBar { 0%, 100% { transform: scaleY(1); opacity: .9; } 50% { transform: scaleY(1.08); opacity: 1; } }
+    @keyframes floatSteam { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .animate-bar-1 { animation: pulseBar 3s infinite ease-in-out; transform-origin: bottom; transform-box: fill-box; }
+    .animate-bar-2 { animation: pulseBar 2.4s infinite ease-in-out .3s; transform-origin: bottom; transform-box: fill-box; }
+    .animate-bar-3 { animation: pulseBar 3.2s infinite ease-in-out .6s; transform-origin: bottom; transform-box: fill-box; }
     .animate-steam { animation: floatSteam 4s infinite ease-in-out; }
+    .svg-glow-blue { filter: drop-shadow(0 0 10px rgba(0,136,255,.55)); }
+    .svg-glow-cyan { filter: drop-shadow(0 0 12px rgba(0,229,255,.55)); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
   </style>
 </head>
 
-<body class="bg-[#040812] text-slate-100 antialiased selection:bg-cyan-glow selection:text-navy-950 overflow-x-hidden min-h-screen">
+<body class="bg-asphalt-950 text-concrete-100 antialiased overflow-x-hidden">
+  <a href="#servicios" class="skip-link">Saltar al contenido</a>
 
   <!-- ============================================================== -->
-  <!-- NAVEGACIÓN SUPERIOR FIJA (RESPONSIVE HEADER)                     -->
+  <!-- ENCABEZADO                                                      -->
   <!-- ============================================================== -->
-  <header class="fixed top-0 inset-x-0 z-50 bg-[#040812]/95 backdrop-blur-md border-b border-cyan-500/20 shadow-lg shadow-black/50 transition-all duration-300">
-    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
-      
-      <!-- Logo y Marca -->
-      <a href="https://www.tireanalizepro.com" class="flex items-center space-x-2.5 sm:space-x-3 group shrink-0">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 p-0.5 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform shrink-0">
-          <div class="w-full h-full bg-[#060e1d] rounded-[10px] flex items-center justify-center">
-            <i class="fa-solid fa-truck-monster text-cyan-400 text-base sm:text-lg"></i>
-          </div>
-        </div>
-        <div class="flex flex-col justify-center">
-          <div class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5 whitespace-nowrap leading-none">
-            <span>TireAnalyze</span> <span class="text-cyan-400">Pro</span>
-            <span class="text-[9px] sm:text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800">Suite</span>
-          </div>
-          <span class="hidden md:block text-[10px] text-slate-400 font-medium tracking-wider uppercase mt-0.5">Gestión Técnica de Neumáticos</span>
-        </div>
+  <header class="fixed top-0 inset-x-0 z-50 bg-asphalt-950/95 backdrop-blur border-b border-asphalt-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <a href="https://www.tireanalizepro.com" class="flex items-center gap-2.5 shrink-0">
+        <!-- Isotipo: llanta con banda de rodadura -->
+        <svg class="w-9 h-9" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="18" fill="#0B1B36" stroke="#38B6FF" stroke-width="2.5"/>
+          <circle cx="20" cy="20" r="11" fill="#061226" stroke="#2A4A7F" stroke-width="2"/>
+          <circle cx="20" cy="20" r="4" fill="#38B6FF"/>
+          <g stroke="#38B6FF" stroke-width="2.5" stroke-linecap="round">
+            <path d="M20 2v4M20 34v4M2 20h4M34 20h4M7.3 7.3l2.8 2.8M29.9 29.9l2.8 2.8M7.3 32.7l2.8-2.8M29.9 10.1l2.8-2.8"/>
+          </g>
+        </svg>
+        <span class="font-display text-lg sm:text-xl font-extrabold tracking-wide uppercase leading-none">
+          TireAnalyze <span class="text-hivis">Pro</span>
+        </span>
       </a>
 
-      <!-- Menú Central Escritorio -->
-      <nav class="hidden lg:flex items-center space-x-6 text-xs font-bold text-slate-300">
-        <a href="#servicios" class="hover:text-cyan-400 transition-colors">Inspección en Patio</a>
-        <a href="#carcasas" class="hover:text-cyan-400 transition-colors">Control de Carcasas</a>
-        <a href="#seguridad" class="hover:text-cyan-400 transition-colors">Seguridad en Datos</a>
-        <a href="#calculadora" class="hover:text-cyan-400 transition-colors">Calculadora Ahorro</a>
-        <a href="#planes" class="hover:text-cyan-400 transition-colors">Versiones</a>
-        <a href="#historia" class="hover:text-cyan-400 transition-colors">Transformación</a>
-        <a href="#comparativa" class="hover:text-cyan-400 transition-colors">¿Por qué nosotros?</a>
+      <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-concrete-300">
+        <a href="#servicios" class="hover:text-hivis transition-colors">Servicios</a>
+        <a href="#reencauche" class="hover:text-hivis transition-colors">Reencauche</a>
+        <a href="#seguridad" class="hover:text-hivis transition-colors">Seguridad</a>
+        <a href="#calculadora" class="hover:text-hivis transition-colors">Calculadora</a>
+        <a href="#planes" class="hover:text-hivis transition-colors">Versiones</a>
+        <a href="#historia" class="hover:text-hivis transition-colors">Casos</a>
       </nav>
 
-      <!-- Botones de Acción (Optimizado para Mobile) -->
-      <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
-        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-400 hover:text-white bg-emerald-950/40 hover:bg-emerald-600/80 border border-emerald-500/40 transition-all active:scale-95 shadow-sm whitespace-nowrap">
-          <i class="fa-brands fa-whatsapp text-sm"></i>
-          <span>WhatsApp</span>
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-ok hover:text-ok transition-colors">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
         </a>
-
-        <!-- Botón de Ingreso Mejorado (Nunca se divide en 2 líneas) -->
-        <a href="https://www.tireanalizepro.com" class="relative group inline-flex items-center justify-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-blue-600/30 border border-cyan-400/40 hover:border-cyan-300 transition-all duration-200 active:scale-95 whitespace-nowrap shrink-0">
-          <i class="fa-solid fa-arrow-right-to-bracket text-xs sm:text-sm text-cyan-200 group-hover:translate-x-0.5 transition-transform"></i>
-          <span class="hidden sm:inline">Ingresar a la Plataforma</span>
-          <span class="sm:hidden">Ingresar</span>
+        <a href="https://www.tireanalizepro.com" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors">
+          Ingresar <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
         </a>
+        <button id="menuBtn" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu" class="lg:hidden w-10 h-10 border border-asphalt-600 flex items-center justify-center text-concrete-100">
+          <i class="fa-solid fa-bars"></i>
+        </button>
       </div>
+    </div>
 
+    <div id="mobileMenu" class="lg:hidden">
+      <div>
+        <nav class="px-4 pb-4 pt-1 grid grid-cols-2 gap-2 text-sm font-semibold">
+          <a href="#servicios" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Servicios</a>
+          <a href="#reencauche" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Reencauche</a>
+          <a href="#seguridad" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Seguridad</a>
+          <a href="#calculadora" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Calculadora</a>
+          <a href="#planes" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Versiones</a>
+          <a href="#historia" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Casos</a>
+        </nav>
+      </div>
     </div>
   </header>
 
   <!-- ============================================================== -->
-  <!-- SECCIÓN HERO (FONDO 1: OSCURO PROFUNDO #040812)                -->
+  <!-- HERO: emblema de marca + titular                               -->
   <!-- ============================================================== -->
-  <section class="relative pt-24 pb-14 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-24 overflow-hidden tire-treads-bg bg-[#040812]">
-    
-    <!-- Resplandores ambientales de fondo -->
-    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[380px] bg-gradient-to-tr from-blue-600/20 via-cyan-500/15 to-transparent blur-3xl pointer-events-none rounded-full"></div>
-    <div class="absolute top-12 right-10 w-96 h-96 bg-indigo-600/15 blur-3xl pointer-events-none rounded-full"></div>
+  <section class="rubber relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
+    <!-- Huella de llanta gigante decorativa -->
+    <svg class="absolute -right-24 top-10 w-[520px] h-[520px] opacity-[0.05] pointer-events-none hidden md:block" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="96" fill="none" stroke="#38B6FF" stroke-width="22" stroke-dasharray="14 8"/>
+      <circle cx="100" cy="100" r="60" fill="none" stroke="#38B6FF" stroke-width="4"/>
+    </svg>
 
-    <!-- Huella de neumático decorativa lateral izquierda -->
-    <div class="hidden md:block absolute left-0 top-1/3 -translate-y-1/2 w-32 sm:w-48 h-96 opacity-[0.04] pointer-events-none select-none">
-      <svg class="w-full h-full text-cyan-400" viewBox="0 0 100 300" fill="currentColor">
-        <path d="M10 20 L40 40 L30 50 L0 30 Z M60 20 L90 40 L80 50 L50 30 Z M10 70 L40 90 L30 100 L0 80 Z M60 70 L90 90 L80 100 L50 80 Z M10 120 L40 140 L30 150 L0 130 Z M60 120 L90 140 L80 150 L50 130 Z M10 170 L40 190 L30 200 L0 180 Z M60 170 L90 190 L80 200 L50 180 Z M10 220 L40 240 L30 250 L0 230 Z M60 220 L90 240 L80 250 L50 230 Z"/>
-      </svg>
-    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
 
-    <!-- Huella de neumático decorativa lateral derecha -->
-    <div class="hidden md:block absolute right-0 top-2/3 -translate-y-1/2 w-32 sm:w-48 h-96 opacity-[0.04] pointer-events-none select-none">
-      <svg class="w-full h-full text-cyan-400" viewBox="0 0 100 300" fill="currentColor">
-        <path d="M10 20 L40 40 L30 50 L0 30 Z M60 20 L90 40 L80 50 L50 30 Z M10 70 L40 90 L30 100 L0 80 Z M60 70 L90 90 L80 100 L50 80 Z M10 120 L40 140 L30 150 L0 130 Z M60 120 L90 140 L80 150 L50 130 Z M10 170 L40 190 L30 200 L0 180 Z M60 170 L90 190 L80 200 L50 180 Z M10 220 L40 240 L30 250 L0 230 Z M60 220 L90 240 L80 250 L50 230 Z"/>
-      </svg>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-      
-      <!-- Insignia Tecnológica -->
-      <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-cyan-500/30 text-cyan-300 text-[11px] sm:text-xs font-extrabold mb-4 sm:mb-5 shadow-inner">
-        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
-        <span class="leading-tight">Suite Empresarial para Transporte de Carga y Pasajeros</span>
-      </div>
-
-      <!-- ======================================================== -->
-      <!-- BANNER EMBLEMÁTICO: LLANTA 3D, TAGLINE Y TAZA DE CAFÉ    -->
-      <!-- ======================================================== -->
-      <div class="max-w-4xl mx-auto mb-6 sm:mb-8 p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-[#061224] border border-cyan-500/35 shadow-2xl relative overflow-hidden select-none">
-        <!-- Textura de fondo con gradiente sutil y huellas tenues -->
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-slate-900/50 to-cyan-900/30 pointer-events-none"></div>
-
-        <div class="relative z-10 flex flex-row items-center justify-between gap-1 sm:gap-4 md:gap-6">
-          
-          <!-- ILUSTRACIÓN IZQUIERDA: Llanta 3D + Gráfica Estadística Ascendente -->
-          <div class="w-16 sm:w-28 md:w-48 lg:w-56 h-12 sm:h-20 md:h-28 flex items-center justify-start shrink-0">
-            <svg class="w-full h-full svg-glow-blue" viewBox="0 0 270 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Emblema de marca: llanta con barras de rendimiento · nombre · taza de café con vapor de datos -->
+      <div class="max-w-4xl mx-auto relative bg-gradient-to-r from-asphalt-800 via-asphalt-900 to-asphalt-800 border border-asphalt-600 shadow-2xl shadow-black/50 px-3 py-4 sm:px-8 sm:py-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,182,255,.16),transparent_65%)] pointer-events-none"></div>
+        <div class="relative flex items-center justify-between gap-2 sm:gap-6">
+          <div class="shrink-0">
+            <svg class="h-16 sm:h-24 md:h-32 w-auto svg-glow-blue" aria-hidden="true" viewBox="0 0 270 150" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="srvTireTreadGrad" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0%" stop-color="#051630"/>
@@ -271,25 +234,16 @@
               <path d="M171 38 L185 35 L183 49" stroke="#00f2fe" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-
-          <!-- CENTRO: TÍTULO Y ESLOGAN EMBLEMÁTICO -->
-          <div class="text-center flex flex-col items-center justify-center my-0 px-1 min-w-0 flex-1">
-            <span class="text-xs sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              TireAnalyze <span class="text-[#00e5ff] text-glow-cyan">Pro</span>
-            </span>
-            
-            <div class="flex items-center justify-center space-x-1 sm:space-x-2.5 md:space-x-3 w-full mt-0.5 sm:mt-1.5">
-              <span class="h-[1px] sm:h-[2px] w-2 sm:w-6 md:w-10 bg-gradient-to-r from-transparent to-[#00d8ff]"></span>
-              <p class="text-[6px] sm:text-[11px] md:text-xs font-bold tracking-[0.08em] sm:tracking-[0.25em] text-[#4ddbff] uppercase whitespace-nowrap">
-                CONFIANZA EN TU INFORMACIÓN
-              </p>
-              <span class="h-[1px] sm:h-[2px] w-2 sm:w-6 md:w-10 bg-gradient-to-l from-transparent to-[#00d8ff]"></span>
+          <div class="min-w-0 flex-1">
+            <p class="font-display font-extrabold uppercase text-xl sm:text-4xl md:text-5xl tracking-wide leading-none">TireAnalyze <span class="text-hivis">Pro</span></p>
+            <div class="hidden sm:flex items-center justify-center gap-3 mt-3">
+              <span class="h-[2px] w-8 md:w-12 bg-gradient-to-r from-transparent to-hivis"></span>
+              <p class="sidewall text-xs md:text-sm text-hivis-300 whitespace-nowrap">Confianza en tu información</p>
+              <span class="h-[2px] w-8 md:w-12 bg-gradient-to-l from-transparent to-hivis"></span>
             </div>
           </div>
-
-          <!-- ILUSTRACIÓN DERECHA: Taza de Café + Humo de Barras Estadísticas -->
-          <div class="w-14 sm:w-26 md:w-44 lg:w-52 h-12 sm:h-20 md:h-28 flex items-center justify-end shrink-0">
-            <svg class="w-full h-full svg-glow-cyan" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <div class="shrink-0">
+            <svg class="h-16 sm:h-24 md:h-32 w-auto svg-glow-cyan" aria-hidden="true" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="srvSteamBarGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
@@ -331,854 +285,475 @@
               <ellipse cx="114" cy="85" rx="30" ry="4" fill="#0088ff" opacity="0.35"/>
             </svg>
           </div>
-
         </div>
       </div>
+      <p class="sm:hidden sidewall text-xs text-hivis-300 mt-3">Confianza en tu información</p>
 
-      <!-- Título Principal -->
-      <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight sm:leading-none">
-        Control Técnico Total y Máximo Rendimiento de Neumáticos en Flotas
+      <p class="sidewall text-xs text-hivis mt-12 mb-5 flex items-center justify-center gap-3">
+        <span class="w-8 h-[3px] bg-hivis"></span> Suite para flotas de carga y pasajeros <span class="w-8 h-[3px] bg-hivis"></span>
+      </p>
+      <h1 class="font-display font-extrabold uppercase text-5xl sm:text-6xl lg:text-7xl leading-[0.92] tracking-tight max-w-4xl mx-auto">
+        Cada milímetro de tus llantas, <span class="text-hivis">bajo control.</span>
       </h1>
-
-      <!-- Párrafo Descriptivo -->
-      <p class="mt-4 sm:mt-5 text-sm sm:text-base lg:text-lg text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed px-2 sm:px-0">
-        El software que <b class="text-cyan-400">facilita la inspección en patio</b> de extremo a extremo, automatiza el control de neumáticos y carcasas, protege la seguridad de los datos ingresados y reduce hasta un <b class="text-cyan-400">30% el costo por kilómetro (CPK)</b> de tu flota.
+      <p class="mt-6 text-lg text-concrete-300 max-w-2xl mx-auto leading-relaxed">
+        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> de tu flota de carga o pasajeros.
       </p>
 
-      <!-- Botones Principales del Hero (Responsive Stack en Mobile) -->
-      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-sm sm:max-w-none mx-auto px-2 sm:px-0">
-        <a href="https://www.tireanalizepro.com" class="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
-          <span>Acceder a la Suite TireAnalyze Pro</span>
-          <i class="fa-solid fa-circle-arrow-right text-base"></i>
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Agendar demo en mi patio
         </a>
-
-        <a href="#calculadora" class="w-full sm:w-auto px-6 sm:px-7 py-3.5 rounded-xl font-bold text-xs sm:text-sm text-slate-200 hover:text-white bg-[#0a172c] hover:bg-[#112444] border border-cyan-500/30 shadow-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap">
-          <i class="fa-solid fa-calculator text-cyan-400"></i>
-          <span>Calcular Ahorro de mi Flota</span>
+        <a href="#calculadora" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-600 text-concrete-100 font-bold uppercase tracking-wide hover:border-hivis hover:text-hivis transition-colors">
+          <i class="fa-solid fa-calculator"></i> Calcular ahorro
         </a>
       </div>
+    </div>
 
-      <!-- Métricas Clave de Confianza con Grid Cuadrado en Mobile -->
-      <div class="mt-10 sm:mt-14 grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-4xl mx-auto">
-        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#09152a]/90 border border-slate-800 shadow-sm backdrop-blur-sm hover:border-cyan-500/40 transition-colors">
-          <span class="block text-xl sm:text-2xl lg:text-3xl font-black text-cyan-400 font-mono">100%</span>
-          <span class="text-[10px] sm:text-xs text-slate-400 font-semibold mt-1 block leading-tight">Facilidad en Patio</span>
+    <!-- Indicadores clave -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 relative">
+      <dl class="grid grid-cols-2 lg:grid-cols-4 border border-asphalt-700 divide-asphalt-700 bg-asphalt-900/80">
+        <div class="p-5 border-b lg:border-b-0 border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Ahorro en neumáticos</dt>
+          <dd class="font-display font-extrabold text-4xl text-hivis mt-1">25–35%</dd>
         </div>
-        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#09152a]/90 border border-slate-800 shadow-sm backdrop-blur-sm hover:border-emerald-500/40 transition-colors">
-          <span class="block text-xl sm:text-2xl lg:text-3xl font-black text-emerald-400 font-mono">25% - 35%</span>
-          <span class="text-[10px] sm:text-xs text-slate-400 font-semibold mt-1 block leading-tight">Ahorro en Neumáticos</span>
+        <div class="p-5 border-b lg:border-b-0 lg:border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Reducción de CPK</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">hasta 30%</dd>
         </div>
-        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#09152a]/90 border border-slate-800 shadow-sm backdrop-blur-sm hover:border-indigo-500/40 transition-colors">
-          <span class="block text-xl sm:text-2xl lg:text-3xl font-black text-indigo-400 font-mono">Control Total</span>
-          <span class="text-[10px] sm:text-xs text-slate-400 font-semibold mt-1 block leading-tight">Gestión de Carcasas</span>
+        <div class="p-5 border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Inspección por vehículo</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">15 min</dd>
         </div>
-        <div class="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#09152a]/90 border border-slate-800 shadow-sm backdrop-blur-sm hover:border-amber-500/40 transition-colors">
-          <span class="block text-xl sm:text-2xl lg:text-3xl font-black text-amber-400 font-mono">100% Confiable</span>
-          <span class="text-[10px] sm:text-xs text-slate-400 font-semibold mt-1 block leading-tight">Seguridad en Datos</span>
+        <div class="p-5">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Funciona sin señal</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">Offline</dd>
         </div>
-      </div>
-
+      </dl>
     </div>
   </section>
 
+  <div class="tread-band" aria-hidden="true"></div>
+
   <!-- ============================================================== -->
-  <!-- SECCIÓN 1: SERVICIOS Y DEMOSTRACIÓN PRESENCIAL                 -->
+  <!-- SERVICIOS (fondo concreto claro)                               -->
   <!-- ============================================================== -->
-  <section id="servicios" class="py-14 sm:py-20 lg:py-28 bg-[#0a172c] border-t border-cyan-500/20 relative tire-treads-bg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-        <span class="text-[11px] sm:text-xs font-black uppercase text-cyan-400 tracking-widest">Demostración Técnica Presencial</span>
-        <h2 class="text-2xl sm:text-4xl font-black tracking-tight text-white mt-1">
-          ¿Cómo Transformamos la Rentabilidad de tu Flota?
-        </h2>
-        <p class="text-slate-300 text-xs sm:text-base mt-2.5 sm:mt-3 px-2 sm:px-0">
+  <section id="servicios" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-8 mb-14">
+        <div class="lg:col-span-7">
+          <p class="sidewall text-xs text-asphalt-700 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Demostración técnica presencial</p>
+          <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">¿Cómo transformamos la rentabilidad de tu flota?</h2>
+        </div>
+        <p class="lg:col-span-5 lg:pt-8 text-lg text-asphalt-700 leading-relaxed">
           Identificamos dónde se escapa el dinero en tus patios y talleres. Conoce nuestras soluciones y coordina una sesión en vivo con nuestros consultores técnicos.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-
-        <!-- 1. Inspección Digital en Patio -->
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d1e38] border border-slate-700/80 hover:border-cyan-400 shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 flex flex-col justify-between group">
-          <div>
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600/25 text-blue-400 border border-blue-500/40 flex items-center justify-center text-lg sm:text-xl mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-clipboard-check"></i>
-            </div>
-            <h3 class="text-base sm:text-lg font-black text-white group-hover:text-cyan-300 transition-colors">
-              Inspección Ágil y Digital en Patio
-            </h3>
-            <p class="text-xs text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
-              El sistema facilita la inspección en patio al máximo: guía visual paso a paso al pie del vehículo, captura rápida de medidas en segundos, semáforos automáticos de alerta y adiós definitivo a las planillas de papel.
-            </p>
-            <p class="text-[11px] text-cyan-300/90 font-semibold mt-3 italic">
-              ¿Quieres ver cómo reducimos a la mitad el tiempo de inspección en tu patio?
-            </p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-concrete-300 border border-concrete-300">
+        <!-- 01 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">01</span>
+            <i class="fa-solid fa-clipboard-check text-2xl text-asphalt-950"></i>
           </div>
-          <div class="mt-5 pt-3 border-t border-slate-800">
-            <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20demostración%20presencial%20para%20conocer%20la%20Inspección%20Digital%20en%20nuestro%20patio" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-blue-950/70 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Agendar Demo en Patio</span>
-              <i class="fa-solid fa-arrow-right text-[11px]"></i>
-            </a>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Inspección ágil y digital en patio</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Guía visual paso a paso al pie del vehículo, captura rápida de medidas, semáforos automáticos de alerta y adiós definitivo a las planillas de papel.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20demostración%20presencial%20para%20conocer%20la%20Inspección%20Digital%20en%20nuestro%20patio" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Agendar demo en patio <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 02 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">02</span>
+            <i class="fa-solid fa-recycle text-2xl text-asphalt-950"></i>
           </div>
-        </div>
-
-        <!-- 2. Control y Trazabilidad de Carcasas -->
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d1e38] border border-slate-700/80 hover:border-emerald-400 shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 flex flex-col justify-between group">
-          <div>
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-600/25 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-lg sm:text-xl mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-boxes-stacked"></i>
-            </div>
-            <h3 class="text-base sm:text-lg font-black text-white group-hover:text-emerald-300 transition-colors">
-              Control y Trazabilidad de Carcasas
-            </h3>
-            <p class="text-xs text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
-              Las carcasas representan una inversión patrimonial clave. Nuestro sistema permite conocer con exactitud el estado y ciclo de cada neumático (disponibles en patio, en proceso de renovación o listos para montaje), evitando que llantas con vida útil pendiente se pierdan o desechen.
-            </p>
-            <p class="text-[11px] text-emerald-300/90 font-semibold mt-3 italic">
-              Evaluemos juntos cuántas carcasas recuperables tienes en tu inventario.
-            </p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Control de llantas reencauchables</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Conoce el estado y ciclo de cada neumático: disponible en patio, en renovación o listo para montaje. Ninguna llanta con vida útil pendiente se pierde o se desecha.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20conocer%20el%20control%20de%20llantas%20reencauchables" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Consultar trazabilidad <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 03 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">03</span>
+            <i class="fa-solid fa-shield-halved text-2xl text-asphalt-950"></i>
           </div>
-          <div class="mt-5 pt-3 border-t border-slate-800">
-            <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20conocer%20el%20control%20y%20trazabilidad%20de%20carcasas" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-emerald-950/70 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Consultar Trazabilidad</span>
-              <i class="fa-solid fa-arrow-right text-[11px]"></i>
-            </a>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Seguridad y validación en los datos</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Configuraciones de seguridad técnica que impiden errores de digitación, para que la información registrada sea coherente, verificable y confiable.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20deseo%20agendar%20una%20demostración%20presencial%20sobre%20Seguridad%20en%20Datos%20y%20Control%20Técnico" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Ver seguridad en vivo <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 04 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">04</span>
+            <i class="fa-solid fa-gauge-high text-2xl text-asphalt-950"></i>
           </div>
-        </div>
-
-        <!-- 3. Seguridad en los Datos Ingresados -->
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d1e38] border border-slate-700/80 hover:border-rose-400 shadow-lg hover:shadow-rose-500/10 transition-all duration-300 flex flex-col justify-between group">
-          <div>
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-rose-600/25 text-rose-400 border border-rose-500/40 flex items-center justify-center text-lg sm:text-xl mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h3 class="text-base sm:text-lg font-black text-white group-hover:text-rose-300 transition-colors">
-              Seguridad y Validación en los Datos
-            </h3>
-            <p class="text-xs text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
-              Configuraciones avanzadas de seguridad técnica que impiden errores humanos de digitación, asegurando que la información registrada sea coherente, verificable y 100% confiable para la toma de decisiones gerenciales.
-            </p>
-            <p class="text-[11px] text-rose-300/90 font-semibold mt-3 italic">
-              Te mostramos en vivo los filtros de seguridad que blindan tus datos.
-            </p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Diagnóstico predictivo y costo por km</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Negocia compras con números en mano: descubre qué marca y diseño te dan el menor costo real por kilómetro en tus rutas habituales.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20simular%20el%20Costo%20por%20Kilómetro%20(CPK)%20de%20mi%20flota" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Simular mi CPK <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 05 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">05</span>
+            <i class="fa-solid fa-file-pdf text-2xl text-asphalt-950"></i>
           </div>
-          <div class="mt-5 pt-3 border-t border-slate-800">
-            <a href="https://wa.me/573204098077?text=Hola,%20deseo%20agendar%20una%20demostración%20presencial%20sobre%20Seguridad%20en%20Datos%20y%20Control%20Técnico" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-rose-950/70 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Ver Seguridad en Vivo</span>
-              <i class="fa-solid fa-arrow-right text-[11px]"></i>
-            </a>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Informes ejecutivos al instante</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Al terminar la auditoría, dirección y mantenimiento reciben informes gráficos para tomar decisiones técnicas el mismo día.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20conocer%20ejemplos%20reales%20de%20informes%20ejecutivos%20en%20una%20reunión%20presencial" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Ver informes muestra <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 06 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">06</span>
+            <i class="fa-solid fa-signal text-2xl text-asphalt-950"></i>
           </div>
-        </div>
-
-        <!-- 4. Diagnóstico Predictivo & CPK -->
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d1e38] border border-slate-700/80 hover:border-indigo-400 shadow-lg hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between group">
-          <div>
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-600/25 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-lg sm:text-xl mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-chart-line"></i>
-            </div>
-            <h3 class="text-base sm:text-lg font-black text-white group-hover:text-indigo-300 transition-colors">
-              Diagnóstico Predictivo & Costo x KM
-            </h3>
-            <p class="text-xs text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
-              Negocia compras con números irrefutables en mano. Nuestro análisis comparativo te revela cuál marca y diseño ofrece el menor costo real por kilómetro en tus rutas habituales.
-            </p>
-            <p class="text-[11px] text-indigo-300/90 font-semibold mt-3 italic">
-              Agendemos una sesión para simular el ahorro potencial en tu próxima compra.
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-slate-800">
-            <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20simular%20el%20Costo%20por%20Kilómetro%20(CPK)%20de%20mi%20flota" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-indigo-950/70 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Simular mi CPK</span>
-              <i class="fa-solid fa-arrow-right text-[11px]"></i>
-            </a>
-          </div>
-        </div>
-
-        <!-- 5. Informes PDF y WhatsApp Directo -->
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d1e38] border border-slate-700/80 hover:border-cyan-400 shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 flex flex-col justify-between group">
-          <div>
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-cyan-600/25 text-cyan-400 border border-cyan-500/40 flex items-center justify-center text-lg sm:text-xl mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-file-pdf"></i>
-            </div>
-            <h3 class="text-base sm:text-lg font-black text-white group-hover:text-cyan-300 transition-colors">
-              Informes Ejecutivos al Instante
-            </h3>
-            <p class="text-xs text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
-              Olvídate de esperar días por un balance gerencial. Al terminar la auditoría, dirección y mantenimiento reciben informes gráficos estructurados para tomar decisiones técnicas en el mismo día.
-            </p>
-            <p class="text-[11px] text-cyan-300/90 font-semibold mt-3 italic">
-              Te enseñamos ejemplos de informes ejecutivos diseñados para juntas directivas.
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-slate-800">
-            <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20conocer%20ejemplos%20reales%20de%20informes%20ejecutivos%20en%20una%20reunión%20presencial" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-cyan-950/70 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Ver Informes Muestra</span>
-              <i class="fa-solid fa-arrow-right text-[11px]"></i>
-            </a>
-          </div>
-        </div>
-
-        <!-- 6. Modo Patio 100% Offline -->
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0d1e38] border border-slate-700/80 hover:border-amber-400 shadow-lg hover:shadow-amber-500/10 transition-all duration-300 flex flex-col justify-between group">
-          <div>
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-600/25 text-amber-400 border border-amber-500/40 flex items-center justify-center text-lg sm:text-xl mb-4 sm:mb-5 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-wifi"></i>
-            </div>
-            <h3 class="text-base sm:text-lg font-black text-white group-hover:text-amber-300 transition-colors">
-              Operatividad Total Sin Señal
-            </h3>
-            <p class="text-xs text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
-              La gestión técnica no se detiene por falta de conectividad. Nuestro sistema opera fluidamente en sótanos, zonas rurales o patios remotos, garantizando cero pérdida de información.
-            </p>
-            <p class="text-[11px] text-amber-300/90 font-semibold mt-3 italic">
-              Probemos la herramienta en tus puntos de operación más remotos sin compromiso.
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-slate-800">
-            <a href="https://wa.me/573204098077?text=Hola,%20deseo%20coordinar%20una%20visita%20técnica%20para%20probar%20TireAnalyze%20Pro%20en%20nuestro%20patio" target="_blank" class="w-full py-2.5 px-3 rounded-xl bg-amber-950/70 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Probar en mi Patio</span>
-              <i class="fa-solid fa-arrow-right text-[11px]"></i>
-            </a>
-          </div>
-        </div>
-
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Operatividad total sin señal</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Opera en sótanos, zonas rurales o patios remotos sin conexión, con cero pérdida de información al sincronizar.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20deseo%20coordinar%20una%20visita%20técnica%20para%20probar%20TireAnalyze%20Pro%20en%20nuestro%20patio" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Probar en mi patio <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
       </div>
-
-      <!-- Banner de Cierre: Agendamiento Presencial Directo -->
-      <div class="mt-10 sm:mt-14 p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#081830] via-[#0b2144] to-[#081830] border-2 border-cyan-400/50 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-        <div class="max-w-2xl">
-          <span class="px-3 py-1 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40 text-[10px] sm:text-xs font-black uppercase tracking-wider">
-            Atención Especializada en tus Instalaciones
-          </span>
-          <h3 class="text-xl sm:text-2xl font-black text-white mt-2">
-            ¿Quieres ver TireAnalyze Pro operando en vivo en tu empresa?
-          </h3>
-          <p class="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed font-normal">
-            Coordinamos una reunión técnica presencial en tu taller o patio para evaluar tu operación, responder preguntas específicas con tu equipo y demostrarte el ahorro real en tiempo real.
-          </p>
-        </div>
-        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" class="w-full md:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-black text-xs sm:text-sm text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-xl shadow-cyan-400/25 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-95 shrink-0 whitespace-nowrap">
-          <i class="fa-brands fa-whatsapp text-lg"></i>
-          <span>Agendar Demostración Presencial</span>
-        </a>
-      </div>
-
     </div>
   </section>
 
   <!-- ============================================================== -->
-  <!-- SECCIÓN 2: CONTROL Y TRAZABILIDAD DE CARCASAS (FONDO 3)        -->
+  <!-- LLANTAS REENCAUCHABLES: ciclo de vida                                         -->
   <!-- ============================================================== -->
-  <section id="carcasas" class="py-14 sm:py-20 lg:py-28 bg-[#050c18] border-t border-cyan-500/20 relative tire-treads-bg">
-    <!-- Anchor de compatibilidad -->
-    <div id="bodegas" class="absolute -top-10"></div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-8 mb-8 sm:mb-14">
+  <section id="reencauche" class="bg-asphalt-950 py-20 lg:py-28">
+    <div id="bodegas"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <p class="sidewall text-xs text-hivis flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Llantas reencauchables</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Una llanta reencauchable conserva hasta el <span class="text-hivis">60%</span> de su valor. No la pierdas de vista.</h2>
+        <p class="mt-5 text-lg text-concrete-300 leading-relaxed">Saber en qué punto está cada unidad erradica pérdidas patrimoniales y evita compras innecesarias.</p>
+      </div>
+
+      <!-- Línea de vida de la llanta reencauchable -->
+      <ol class="mt-14 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-0 relative">
+        <div class="hidden md:block absolute top-7 left-[10%] right-[10%] h-[3px] bg-asphalt-700" aria-hidden="true"></div>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-ok flex items-center justify-center font-mono font-bold text-ok">N</span>
+          <div><p class="font-display font-bold uppercase text-lg">Nueva</p><p class="text-sm text-concrete-300">Ingreso y asignación</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-ok flex items-center justify-center"><i class="fa-solid fa-road text-ok"></i></span>
+          <div><p class="font-display font-bold uppercase text-lg">En operación</p><p class="text-sm text-concrete-300">Rotaciones y presiones</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-hivis flex items-center justify-center font-mono font-bold text-hivis">R1</span>
+          <div><p class="font-display font-bold uppercase text-lg">Reencauche</p><p class="text-sm text-concrete-300">Envío y retorno controlado</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-hivis flex items-center justify-center font-mono font-bold text-hivis">R2</span>
+          <div><p class="font-display font-bold uppercase text-lg">Nuevo ciclo</p><p class="text-sm text-concrete-300">Máximo aprovechamiento</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-crit flex items-center justify-center"><i class="fa-solid fa-file-signature text-crit"></i></span>
+          <div><p class="font-display font-bold uppercase text-lg">Baja auditada</p><p class="text-sm text-concrete-300">Respaldo para garantías</p></div>
+        </li>
+      </ol>
+
+      <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Disponibilidad en patio</h3>
+          <p class="mt-2 text-concrete-300">Neumáticos aptos para recambio o rotación, en tiempo real, sin vehículos detenidos en taller.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Seguimiento de renovación</h3>
+          <p class="mt-2 text-concrete-300">Trazabilidad de unidades enviadas a reencauche, con tiempos de retorno y cumplimiento.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Máximo aprovechamiento</h3>
+          <p class="mt-2 text-concrete-300">Cada neumático completa sus ciclos útiles planificados antes de su retiro definitivo.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Bajas técnicas auditadas</h3>
+          <p class="mt-2 text-concrete-300">Constancia técnica de cada baja para auditoría interna y respaldo de garantías.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hazard h-3" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- SEGURIDAD EN DATOS: lista de chequeo                           -->
+  <!-- ============================================================== -->
+  <section id="seguridad" class="bg-concrete-200 text-asphalt-950 py-20 lg:py-28">
+    <div id="candados"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12">
+      <div class="lg:col-span-5">
+        <p class="sidewall text-xs text-hivis-600 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Integridad de datos</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Datos de patio en los que gerencia puede confiar</h2>
+        <p class="mt-5 text-lg text-asphalt-700 leading-relaxed">Filtros y parámetros que asisten al inspector durante la captura, eliminando errores de digitación antes de que lleguen a un informe.</p>
+      </div>
+
+      <ul class="lg:col-span-7 divide-y divide-concrete-300 border-y border-concrete-300">
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Control de asignación</h3><p class="mt-1 text-asphalt-700">Cada neumático corresponde al eje y al requerimiento técnico del vehículo.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Auditoría de kilometraje</h3><p class="mt-1 text-asphalt-700">Validación del odómetro para que el rendimiento se calcule con datos históricos reales.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Filtros de consistencia</h3><p class="mt-1 text-asphalt-700">Detección automática de valores fuera de parámetros lógicos, al instante.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Supervisión de tolerancias</h3><p class="mt-1 text-asphalt-700">Alertas de diferencias de desgaste entre duales para evitar sobrecalentamiento.</p></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- CALCULADORA                                                     -->
+  <!-- ============================================================== -->
+  <section id="calculadora" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <p class="sidewall text-xs text-asphalt-700">Simulador de retorno (ROI)</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Calcula el ahorro potencial de tu flota</h2>
+        <p class="mt-4 text-lg text-asphalt-700">Cuánto deja de perder tu empresa al erradicar el retiro prematuro de llantas reencauchables y optimizar la presión de inflado.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 border border-concrete-300 bg-concrete-50">
+        <div class="p-7 sm:p-10 space-y-10">
+          <div>
+            <div class="flex justify-between items-baseline gap-3 mb-4">
+              <label for="rngVehiculos" class="font-semibold">Vehículos en la flota</label>
+              <output id="lblNumVehiculos" class="font-mono font-bold text-xl">25</output>
+            </div>
+            <input type="range" id="rngVehiculos" min="5" max="150" value="25" class="w-full">
+            <div class="flex justify-between font-mono text-xs text-asphalt-700 mt-2"><span>5</span><span>75</span><span>150</span></div>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline gap-3 mb-4">
+              <label for="rngGasto" class="font-semibold">Gasto anual en llantas (COP)</label>
+              <output id="lblGastoAnual" class="font-mono font-bold text-xl">$120 M</output>
+            </div>
+            <input type="range" id="rngGasto" min="20" max="600" step="10" value="120" class="w-full">
+            <div class="flex justify-between font-mono text-xs text-asphalt-700 mt-2"><span>$20 M</span><span>$300 M</span><span>$600 M</span></div>
+          </div>
+        </div>
+
+        <div class="p-7 sm:p-10 bg-asphalt-950 text-concrete-100 flex flex-col justify-center">
+          <p class="sidewall text-xs text-concrete-300">Ahorro anual estimado</p>
+          <p id="lblAhorroEstimado" aria-live="polite" class="font-display font-extrabold text-5xl sm:text-6xl text-hivis mt-2 leading-none">$33.600.000</p>
+          <p class="font-mono text-sm text-concrete-300 mt-1">COP / año</p>
+          <p class="mt-6 text-concrete-300 leading-relaxed">Basado en una reducción promedio del <strong class="text-concrete-50">28% en gasto por llantas</strong> gracias a reencauche oportuno, control de presiones y menos milímetros desperdiciados.</p>
+          <a href="https://www.tireanalizepro.com" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tread-band light" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- COMPARATIVA                                                     -->
+  <!-- ============================================================== -->
+  <section id="comparativa" class="bg-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] text-center">Planilla de papel vs. TireAnalyze Pro</h2>
+
+      <div class="mt-12 space-y-3">
+        <!-- Cada fila: aspecto / antes / ahora -->
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Toma de datos en patio</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Planillas sucias, errores de transcripción tardíos.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Diagrama interactivo en celular o tablet con validación automática.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Señal en campo</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Sistemas web que fallan sin cobertura.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Offline: trabaja en sótanos y sincroniza al volver.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Seguridad de datos</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Errores humanos, datos inconsistentes.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Validaciones automáticas de la información ingresada.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Llantas reencauchables</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Pérdidas en plantas de reencauche o chatarra no auditada.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Seguimiento integral del ciclo de vida e inventario.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Informes</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Días esperando a que alguien digite en oficina.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>PDF al instante, enviado por WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- VERSIONES                                                       -->
+  <!-- ============================================================== -->
+  <section id="planes" class="bg-asphalt-900 py-20 lg:py-28 border-t border-asphalt-700">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-14">
+        <p class="sidewall text-xs text-hivis">Modalidades de implementación</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Versiones diseñadas para tu flota</h2>
+        <p class="mt-4 text-lg text-concrete-300">Desde digitalizar la inspección en patio hasta el control gerencial y financiero total.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6 items-stretch">
+        <div class="flex flex-col p-8 sm:p-10 bg-asphalt-950 border border-asphalt-700">
+          <p class="sidewall text-xs text-concrete-300">Licencia operativa · Patio y taller</p>
+          <h3 class="font-display font-extrabold uppercase text-3xl mt-3 leading-tight">Inspección digital y diagnóstico de flota</h3>
+          <p class="mt-3 text-concrete-300">Para transportadoras o talleres que quieren estandarizar la inspección física, erradicar el papel y recibir diagnósticos automáticos.</p>
+          <ul class="mt-7 space-y-3.5 flex-1">
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Captura al pie del vehículo con fotos de evidencia.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Fácil de adoptar para inspectores sin experiencia previa.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Semáforo automático de desgaste y presiones.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Funciona sin internet y sincroniza al reconectar.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Informes técnicos y planes de acción por WhatsApp.</span></li>
+          </ul>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Operativa%20de%20TireAnalyze%20Pro" target="_blank" rel="noopener" class="mt-9 inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-concrete-100 font-bold uppercase tracking-wide hover:bg-concrete-100 hover:text-asphalt-950 transition-colors text-center">
+            <i class="fa-brands fa-whatsapp"></i> Solicitar demo operativa
+          </a>
+        </div>
+
+        <div class="relative flex flex-col p-8 sm:p-10 bg-asphalt-950 border-2 border-hivis">
+          <span class="absolute -top-3.5 left-8 px-3 py-1 bg-hivis text-asphalt-950 text-xs font-bold uppercase tracking-wider">Máximo ROI</span>
+          <p class="sidewall text-xs text-hivis">Licencia empresarial · Gestión y costos</p>
+          <h3 class="font-display font-extrabold uppercase text-3xl mt-3 leading-tight">Llantas reencauchables, costo por km y gestión estratégica</h3>
+          <p class="mt-3 text-concrete-300">Para directores de transporte y gerencias que requieren control total del ciclo de reencauche, CPK y compras.</p>
+          <ul class="mt-7 space-y-3.5 flex-1">
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span><strong>Todo lo de la Licencia Operativa</strong> con acompañamiento técnico prioritario.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Trazabilidad integral del inventario y ciclo de vida de las llantas reencauchables.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Analítica de costo por kilómetro y proyecciones de recambio.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Auditoría de bajas técnicas y respaldo para garantías.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Planificación de compras basada en consumo real.</span></li>
+          </ul>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Empresarial%20de%20TireAnalyze%20Pro" target="_blank" rel="noopener" class="mt-9 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors text-center">
+            <i class="fa-brands fa-whatsapp"></i> Solicitar demo empresarial
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- HISTORIA: un día en la vida del jefe de flota                   -->
+  <!-- ============================================================== -->
+  <section id="historia" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <p class="sidewall text-xs text-asphalt-700 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> El viaje de la transformación</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">De apagar incendios en carretera a dominar el 100% de tu flota</h2>
+      </div>
+
+      <div class="mt-14 grid md:grid-cols-3 gap-px bg-concrete-300 border border-concrete-300">
+        <article class="bg-concrete-50 p-7">
+          <p class="font-mono text-sm font-bold text-warn">06:30 AM</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">El caos cotidiano</h3>
+          <p class="mt-3 text-asphalt-700 leading-relaxed">Un camión varado por llanta estallada en ruta crítica. En el patio, planillas en papel bajo la lluvia y medidas tomadas al ojo.</p>
+          <p class="mt-5 pt-4 border-t border-concrete-300 text-sm font-semibold text-asphalt-700"><i class="fa-solid fa-triangle-exclamation text-warn mr-1.5"></i>Frustración y desgaste diario</p>
+        </article>
+        <article class="bg-concrete-50 p-7">
+          <p class="font-mono text-sm font-bold text-crit">Fin de mes</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">La fuga invisible</h3>
+          <p class="mt-3 text-asphalt-700 leading-relaxed">La factura de llantas superó el presupuesto un 35%. Sin trazabilidad, llantas que aún podían reencaucharse terminaron en el desecho.</p>
+          <p class="mt-5 pt-4 border-t border-concrete-300 text-sm font-semibold text-asphalt-700"><i class="fa-solid fa-arrow-trend-down text-crit mr-1.5"></i>Pérdida patrimonial oculta</p>
+        </article>
+        <article class="bg-asphalt-950 text-concrete-100 p-7">
+          <p class="font-mono text-sm font-bold text-hivis">Hoy</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">Certeza y paz operativa</h3>
+          <p class="mt-3 text-concrete-300 leading-relaxed">La inspección toma 15 minutos desde el móvil. El semáforo alerta antes de una falla vial y cada llanta reencauchable está protegida hasta su último reencauche.</p>
+          <p class="mt-5 pt-4 border-t border-asphalt-700 text-sm font-semibold"><i class="fa-solid fa-circle-check text-ok mr-1.5"></i>Ahorro superior al 25% y control total</p>
+        </article>
+      </div>
+
+      <figure class="mt-14 grid md:grid-cols-[auto_1fr] gap-6 items-start">
+        <i class="fa-solid fa-quote-left text-5xl text-hivis"></i>
         <div>
-          <span class="text-[11px] sm:text-xs font-black uppercase text-cyan-400 tracking-widest">¿Para qué le sirve esta funcionalidad a tu flota?</span>
-          <h2 class="text-2xl sm:text-4xl font-black tracking-tight text-white mt-1">
-            Control Estratégico y Ciclo de Vida de Carcasas
-          </h2>
-          <p class="text-slate-300 text-xs sm:text-sm mt-1.5 sm:mt-2 max-w-xl">
-            Cada carcasa representa hasta el 60% del valor de tus neumáticos. Conocer con exactitud en qué punto se encuentra cada unidad erradica pérdidas patrimoniales y evita compras innecesarias.
-          </p>
+          <blockquote class="font-display font-semibold text-2xl sm:text-3xl leading-snug">
+            “Antes pasábamos el día buscando culpables entre planillas traspapeladas. Ahora anticipamos los problemas antes de que el camión salga a ruta.”
+          </blockquote>
+          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento, flota de carga y pasajeros</figcaption>
         </div>
-        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20conocer%20el%20módulo%20de%20Control%20de%20Carcasas%20para%20mi%20flota" target="_blank" class="w-full sm:w-auto px-4 sm:px-5 py-2.5 rounded-xl bg-[#09152a] hover:bg-[#112444] border border-cyan-500/40 text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all shadow-md shrink-0">
-          <span>Consultar Módulo</span>
-          <i class="fa-solid fa-arrow-up-right-from-square text-cyan-400"></i>
-        </a>
-      </div>
-
-      <!-- Beneficios Clave para la Flota -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-slate-800 hover:border-blue-400/60 transition-colors shadow-sm">
-          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg mb-3">
-            <i class="fa-solid fa-boxes-stacked"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Disponibilidad en Patio</h4>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Control en tiempo real de neumáticos aptos para recambio o rotación sin tener vehículos detenidos en taller.</p>
-        </div>
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-slate-800 hover:border-emerald-400/60 transition-colors shadow-sm">
-          <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-lg mb-3">
-            <i class="fa-solid fa-rotate"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Seguimiento de Renovación</h4>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Trazabilidad de unidades enviadas a procesos de reencauche, monitoreando tiempos de retorno y cumplimiento.</p>
-        </div>
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-slate-800 hover:border-indigo-400/60 transition-colors shadow-sm">
-          <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-lg mb-3">
-            <i class="fa-solid fa-arrows-spin"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Máximo Aprovechamiento</h4>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Asegura que cada neumático complete sus ciclos útiles planificados antes de considerar su retiro definitivo.</p>
-        </div>
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-slate-800 hover:border-cyan-400/60 transition-colors shadow-sm">
-          <div class="w-10 h-10 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center text-lg mb-3">
-            <i class="fa-solid fa-shield-halved"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Bajas Técnicas Auditadas</h4>
-          <p class="text-xs text-slate-400 mt-2 leading-relaxed">Constancias técnicas de cada baja para auditoría interna, evitando pérdidas patrimoniales y respaldando garantías.</p>
-        </div>
-
-      </div>
-
+      </figure>
     </div>
   </section>
 
   <!-- ============================================================== -->
-  <!-- SECCIÓN 3: CONFIGURACIONES DE SEGURIDAD EN DATOS (FONDO 4)     -->
+  <!-- CTA FINAL                                                        -->
   <!-- ============================================================== -->
-  <section id="seguridad" class="py-14 sm:py-20 lg:py-28 bg-[#0d1c38] border-t border-cyan-500/20 relative tire-treads-bg">
-    <!-- Anchor de compatibilidad -->
-    <div id="candados" class="absolute -top-10"></div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-        <span class="text-[11px] sm:text-xs font-black uppercase text-rose-400 tracking-widest">Auditoría Automática y Confiabilidad</span>
-        <h2 class="text-2xl sm:text-4xl font-black tracking-tight text-white mt-1">
-          Configuraciones de Seguridad e Integridad en Datos
-        </h2>
-        <p class="text-slate-300 text-xs sm:text-sm mt-2 px-2 sm:px-0">
-          El software incorpora filtros y parámetros inteligentes que asisten al inspector durante la captura en patio, eliminando errores de digitación y garantizando que la dirección tome decisiones con datos 100% confiables.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-rose-500/30 hover:border-rose-400 shadow-xl transition-all">
-          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center text-lg sm:text-xl mb-3.5 sm:mb-4">
-            <i class="fa-solid fa-truck-front"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Control de Asignación</h4>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Parámetros de seguridad que guían al inspector y aseguran que cada neumático corresponda al eje y requerimiento técnico del vehículo.
-          </p>
-        </div>
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-amber-500/30 hover:border-amber-400 shadow-xl transition-all">
-          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center text-lg sm:text-xl mb-3.5 sm:mb-4">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Auditoría de Kilometraje</h4>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Validación de consistencia en el odómetro para garantizar que los cálculos de rendimiento se basen en datos históricos reales.
-          </p>
-        </div>
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-cyan-500/30 hover:border-cyan-400 shadow-xl transition-all">
-          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center text-lg sm:text-xl mb-3.5 sm:mb-4">
-            <i class="fa-solid fa-filter-circle-check"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Filtros de Consistencia</h4>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Detección automática de valores fuera de parámetros lógicos, eliminando errores involuntarios de captura en patio al instante.
-          </p>
-        </div>
-
-        <div class="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#09152a] border border-emerald-500/30 hover:border-emerald-400 shadow-xl transition-all">
-          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-lg sm:text-xl mb-3.5 sm:mb-4">
-            <i class="fa-solid fa-scale-balanced"></i>
-          </div>
-          <h4 class="text-sm sm:text-base font-black text-white">Supervisión de Tolerancias</h4>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Asistencia técnica para advertir diferencias de desgaste en conjuntos de rodadura, equilibrando la operación y evitando sobrecalentamiento.
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- SECCIÓN 4: CALCULADORA DE AHORRO (FONDO 5: OSCURO #060e1d)     -->
-  <!-- ============================================================== -->
-  <section id="calculadora" class="py-14 sm:py-20 lg:py-28 bg-[#060e1d] border-t border-cyan-500/20 relative tire-treads-bg">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[#09162c] border border-cyan-500/40 shadow-2xl relative overflow-hidden">
-        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-          <span class="text-[11px] sm:text-xs font-black uppercase text-cyan-400 tracking-wider">Simulador Financiero de Retorno (ROI)</span>
-          <h2 class="text-2xl sm:text-4xl font-black text-white mt-1">Calcula el Ahorro Potencial de tu Flota</h2>
-          <p class="text-slate-300 text-xs sm:text-sm mt-2 px-1 sm:px-0">
-            Comprueba cuánto dinero deja de perder tu empresa al erradicar el retiro prematuro de carcasas y optimizar la presión de inflado.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
-          
-          <!-- Controles Deslizantes -->
-          <div class="space-y-5 sm:space-y-6">
-            <div>
-              <div class="flex justify-between items-center text-xs font-bold mb-2">
-                <label class="text-slate-300">Número de Vehículos en la Flota</label>
-                <span id="lblNumVehiculos" class="text-cyan-400 font-mono text-sm sm:text-base font-black">25 Vehículos</span>
-              </div>
-              <input type="range" id="rngVehiculos" min="5" max="150" value="25" class="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400" oninput="actualizarCalculadora()">
-              <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
-                <span>5 vhs</span>
-                <span>75 vhs</span>
-                <span>150 vhs</span>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center text-xs font-bold mb-2">
-                <label class="text-slate-300">Gasto Anual Estimado en Neumáticos ($ COP)</label>
-                <span id="lblGastoAnual" class="text-cyan-400 font-mono text-sm sm:text-base font-black">$ 120,000,000</span>
-              </div>
-              <input type="range" id="rngGasto" min="20" max="600" step="10" value="120" class="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400" oninput="actualizarCalculadora()">
-              <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
-                <span>$20 Millones</span>
-                <span>$300 Millones</span>
-                <span>$600 Millones</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Resultado del Ahorro -->
-          <div class="p-5 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#0c1c38] to-[#071326] border border-cyan-500/30 flex flex-col justify-center text-center space-y-3.5 sm:space-y-4 shadow-xl">
-            <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Ahorro Anual Estimado con TireAnalyze Pro</span>
-            <div id="lblAhorroEstimado" class="text-2xl sm:text-4xl font-black text-emerald-400 font-mono">
-              $ 33,600,000 COP
-            </div>
-            <p class="text-xs text-slate-300 leading-snug">
-              Basado en una reducción promedio del <b class="text-white">28% en gasto por llantas</b> gracias a reencauche oportuno, control de presiones y reducción de milímetros desperdiciados.
-            </p>
-            <div class="pt-1 sm:pt-2">
-              <a href="https://www.tireanalizepro.com" class="w-full py-3 sm:py-3.5 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-emerald-600/30 transition-all inline-block text-center whitespace-nowrap active:scale-95">
-                Empezar a Ahorrar con TireAnalyze Pro
-              </a>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- SECCIÓN 5: COMPARATIVA (FONDO 6: MÁS CLARO #0a162b)             -->
-  <!-- ============================================================== -->
-  <section id="comparativa" class="py-14 sm:py-20 lg:py-28 bg-[#0a162b] border-t border-cyan-500/20 relative tire-treads-bg">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-14">
-        <h2 class="text-2xl sm:text-4xl font-black text-white">¿Por qué cambiar la forma de gestionar llantas?</h2>
-        <p class="text-slate-300 text-xs sm:text-sm mt-2 px-2 sm:px-0">Comparativa directa entre la planilla manual y nuestra suite técnica.</p>
-      </div>
-
-      <!-- Contenedor Responsivo con Indicador de Scroll para Móvil -->
-      <div class="relative rounded-2xl sm:rounded-3xl border border-slate-700/80 shadow-2xl bg-[#060e1d] overflow-hidden">
-        
-        <div class="sm:hidden flex items-center justify-between px-3.5 py-2 text-[10px] text-cyan-400 font-bold bg-[#08152c] border-b border-slate-800">
-          <span>Desliza para comparar columnas</span>
-          <i class="fa-solid fa-arrows-left-right text-xs"></i>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[540px]">
-            <thead>
-              <tr class="bg-[#091833] text-xs font-black uppercase text-slate-300 border-b border-slate-700">
-                <th class="p-3.5 sm:p-5">Aspecto Operativo</th>
-                <th class="p-3.5 sm:p-5 text-rose-400">Gestión Tradicional (Papel / Excel)</th>
-                <th class="p-3.5 sm:p-5 text-cyan-400 bg-cyan-950/40">TireAnalyze Pro</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800 text-xs">
-              <tr class="hover:bg-[#0c1c38]/50 transition-colors">
-                <td class="p-3.5 sm:p-4 font-bold text-white">Toma de datos en patio</td>
-                <td class="p-3.5 sm:p-4 text-slate-400">Planillas de papel sucias, errores de transcripción tardíos.</td>
-                <td class="p-3.5 sm:p-4 text-cyan-300 font-semibold bg-cyan-950/20">Diagrama interactivo en celular/tablet, validación automática.</td>
-              </tr>
-              <tr class="hover:bg-[#0c1c38]/50 transition-colors">
-                <td class="p-3.5 sm:p-4 font-bold text-white">Señal e internet en campo</td>
-                <td class="p-3.5 sm:p-4 text-slate-400">Sistemas web lentos que fallan sin cobertura celular.</td>
-                <td class="p-3.5 sm:p-4 text-cyan-300 font-semibold bg-cyan-950/20">100% Offline-First. Trabaja en sótanos y sincroniza al volver.</td>
-              </tr>
-              <tr class="hover:bg-[#0c1c38]/50 transition-colors">
-                <td class="p-3.5 sm:p-4 font-bold text-white">Seguridad en los datos</td>
-                <td class="p-3.5 sm:p-4 text-slate-400">Riesgo de errores humanos, datos falseados o inconsistentes.</td>
-                <td class="p-3.5 sm:p-4 text-cyan-300 font-semibold bg-cyan-950/20">Configuraciones automáticas de seguridad que validan la información ingresada.</td>
-              </tr>
-              <tr class="hover:bg-[#0c1c38]/50 transition-colors">
-                <td class="p-3.5 sm:p-4 font-bold text-white">Control de Carcasas</td>
-                <td class="p-3.5 sm:p-4 text-slate-400">Pérdida de carcasas en plantas de reencauche o chatarra no auditada.</td>
-                <td class="p-3.5 sm:p-4 text-cyan-300 font-semibold bg-cyan-950/20">Control y Trazabilidad de Carcasas: Seguimiento integral del ciclo de vida e inventario.</td>
-              </tr>
-              <tr class="hover:bg-[#0c1c38]/50 transition-colors">
-                <td class="p-3.5 sm:p-4 font-bold text-white">Entrega de Informes</td>
-                <td class="p-3.5 sm:p-4 text-slate-400">Días esperando a que alguien digite los datos en oficina.</td>
-                <td class="p-3.5 sm:p-4 text-cyan-300 font-semibold bg-cyan-950/20">Informe PDF generado en el instante y enviado por WhatsApp.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- SECCIÓN: MODALIDADES Y VERSIONES (FONDO 6B: OSCURO #050c18)     -->
-  <!-- ============================================================== -->
-  <section id="planes" class="py-14 sm:py-20 lg:py-28 bg-[#050c18] border-t border-cyan-500/20 relative tire-treads-bg">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-        <span class="text-[11px] sm:text-xs font-black uppercase text-cyan-400 tracking-widest">Modalidades de Implementación</span>
-        <h2 class="text-2xl sm:text-4xl font-black tracking-tight text-white mt-1">
-          Versiones Diseñadas para tu Flota
-        </h2>
-        <p class="text-slate-300 text-xs sm:text-sm mt-2 px-2 sm:px-0">
-          Escalable: desde digitalizar la inspección física en patio hasta el control gerencial y financiero total de tus neumáticos.
-        </p>
-      </div>
-
-      <!-- Grid de las 2 Versiones -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-8 items-stretch max-w-5xl mx-auto">
-
-        <!-- TARJETA 1: LICENCIA OPERATIVA -->
-        <div class="relative flex flex-col justify-between p-6 sm:p-8 lg:p-9 rounded-3xl bg-[#09152a] border border-slate-700/80 hover:border-amber-500/50 shadow-xl transition-all duration-300">
-          <div>
-            <!-- Header de la tarjeta -->
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <span class="px-3 py-1 rounded-full bg-amber-950/70 text-amber-300 border border-amber-500/40 text-[10px] sm:text-xs font-black tracking-wider uppercase">
-                LICENCIA OPERATIVA
-              </span>
-              <span class="text-xs sm:text-sm font-medium text-slate-400">
-                Patio y Taller
-              </span>
-            </div>
-
-            <!-- Título -->
-            <h3 class="text-xl sm:text-2xl font-black text-white leading-snug">
-              Inspección Digital, Control Operativo y Diagnóstico de Flota
-            </h3>
-
-            <!-- Descripción -->
-            <p class="text-xs sm:text-sm text-slate-300 mt-3 leading-relaxed font-normal">
-              Ideal para empresas de transporte o talleres que buscan facilitar y estandarizar la inspección física en patio, erradicar el papel y recibir diagnósticos visuales automatizados.
-            </p>
-
-            <!-- Lista de Características Generales -->
-            <ul class="mt-6 space-y-3.5 text-xs sm:text-sm text-slate-200">
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-amber-400 text-base mt-0.5 shrink-0"></i>
-                <span>Facilita la captura de datos al pie del vehículo con fotos de evidencia.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-amber-400 text-base mt-0.5 shrink-0"></i>
-                <span>Facilidad total de adopción para inspectores y técnicos sin experiencia previa.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-amber-400 text-base mt-0.5 shrink-0"></i>
-                <span>Semaforización automática de desgaste crítico y calibración de presiones.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-amber-400 text-base mt-0.5 shrink-0"></i>
-                <span>Operatividad sin conexión a internet y sincronización segura al reconectar.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-amber-400 text-base mt-0.5 shrink-0"></i>
-                <span>Generación inmediata de informes técnicos y planes de acción para compartir por WhatsApp.</span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Botón de Acción -->
-          <div class="mt-8 pt-2">
-            <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Operativa%20de%20TireAnalyze%20Pro" target="_blank" class="w-full py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-slate-200 hover:text-white bg-[#14233c] hover:bg-[#1c3254] border border-slate-700/80 hover:border-amber-500/50 shadow-md flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 text-center whitespace-nowrap">
-              <i class="fa-brands fa-whatsapp text-amber-400 text-sm"></i>
-              <span>Solicitar Demostración Licencia Operativa</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- TARJETA 2: LICENCIA EMPRESARIAL - DESTACADA -->
-        <div class="relative flex flex-col justify-between p-6 sm:p-8 lg:p-9 rounded-3xl bg-[#081730] border-2 border-cyan-400 shadow-2xl shadow-cyan-500/20 transition-all duration-300 mt-4 lg:mt-0">
-          
-          <!-- Badge Flotante Superior (ROI) -->
-          <div class="absolute -top-3.5 right-6 sm:right-8 px-4 py-1 rounded-full bg-cyan-400 text-slate-950 text-[10px] sm:text-xs font-black tracking-wider uppercase shadow-lg shadow-cyan-400/40 flex items-center gap-1.5 whitespace-nowrap">
-            <i class="fa-solid fa-bolt text-[11px]"></i>
-            <span>MÁXIMO RETORNO DE INVERSIÓN (ROI)</span>
-          </div>
-
-          <div>
-            <!-- Header de la tarjeta -->
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <span class="px-3 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 text-[10px] sm:text-xs font-black tracking-wider uppercase">
-                LICENCIA EMPRESARIAL
-              </span>
-              <span class="text-xs sm:text-sm font-medium text-slate-400">
-                Gestión Integral y Costos
-              </span>
-            </div>
-
-            <!-- Título -->
-            <h3 class="text-xl sm:text-2xl font-black text-white leading-snug">
-              Trazabilidad de Carcasas, Costo x KM y Gestión Estratégica
-            </h3>
-
-            <!-- Descripción -->
-            <p class="text-xs sm:text-sm text-slate-300 mt-3 leading-relaxed font-normal">
-              Para directores de transporte y gerencias que requieren control total: trazabilidad del ciclo de carcasas, analítica de costo por kilómetro y planificación inteligente de compras.
-            </p>
-
-            <!-- Lista de Características Generales -->
-            <ul class="mt-6 space-y-3.5 text-xs sm:text-sm text-slate-200">
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-cyan-400 text-base mt-0.5 shrink-0"></i>
-                <span>Todo lo incluido en la Licencia Operativa con acompañamiento técnico prioritario.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-cyan-400 text-base mt-0.5 shrink-0"></i>
-                <span>Control y trazabilidad integral del inventario y ciclo de vida de carcasas.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-cyan-400 text-base mt-0.5 shrink-0"></i>
-                <span>Analítica avanzada de costo por kilómetro (CPK) y proyecciones de recambio preventivo.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-cyan-400 text-base mt-0.5 shrink-0"></i>
-                <span>Auditoría de bajas técnicas y respaldo documental para gestión de garantías.</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <i class="fa-solid fa-circle-check text-cyan-400 text-base mt-0.5 shrink-0"></i>
-                <span>Planificación inteligente de compras basada en consumo real para optimizar presupuestos.</span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Botón de Acción -->
-          <div class="mt-8 pt-2">
-            <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Empresarial%20de%20TireAnalyze%20Pro" target="_blank" class="w-full py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/30 flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 text-center whitespace-nowrap">
-              <i class="fa-brands fa-whatsapp text-emerald-300 text-sm"></i>
-              <span>Solicitar Demostración Licencia Empresarial</span>
-            </a>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- SECCIÓN STORYTELLING: EL VIAJE DE LA FLOTA (FONDO: #0a1730)    -->
-  <!-- ============================================================== -->
-  <section id="historia" class="py-14 sm:py-20 lg:py-28 bg-[#0a1730] border-t border-cyan-500/20 relative tire-treads-bg overflow-hidden">
-    <!-- Resplandor ambiental de fondo -->
-    <div class="absolute -top-24 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute -bottom-24 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-
-      <!-- Encabezado de la Sección -->
-      <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-        <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-black tracking-wider uppercase mb-3 shadow-inner">
-          <i class="fa-solid fa-book-open-reader text-cyan-400"></i>
-          <span>El Viaje de la Transformación</span>
-        </div>
-        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-          De Apagar Incendios en Carretera a Dominar el 100% de tu Flota
-        </h2>
-        <p class="text-slate-300 text-xs sm:text-sm lg:text-base mt-3 sm:mt-4 leading-relaxed font-normal">
-          La historia real de cientos de jefes de mantenimiento y directores de transporte que pasaron de la incertidumbre del papel a la tranquilidad de una operación rentable y predecible.
-        </p>
-      </div>
-
-      <!-- Los 3 Actos Narrativos: Grid de 3 Columnas con Timeline Visual -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative">
-        
-        <!-- ACTO 1: EL DESAFÍO EN PATIO -->
-        <div class="relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[#061022] border border-slate-700/70 hover:border-amber-500/50 shadow-xl transition-all duration-300 group">
-          <div class="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider">
-            Acto 1 · El Inicio
-          </div>
-          <div>
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl mb-4 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-            </div>
-            <h3 class="text-lg font-bold text-white mb-2">06:30 AM · El Caos Cotidiano</h3>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-              Suena el teléfono en la madrugada: un camión varado por llanta estallada en ruta crítica. En el patio, los inspectores llenan planillas en papel bajo la lluvia con letra apresurada y medidas tomadas al ojo. Los conductores apuran el despacho y nadie tiene tiempo de verificar si la presión o el remanente eran seguros.
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-slate-800 text-[11px] text-amber-400/90 font-semibold flex items-center gap-1.5">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <span>Sensación: Frustración y desgaste diario</span>
-          </div>
-        </div>
-
-        <!-- ACTO 2: LA TENSIÓN CON GERENCIA -->
-        <div class="relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[#061022] border border-slate-700/70 hover:border-red-500/50 shadow-xl transition-all duration-300 group">
-          <div class="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-500/40 text-[10px] font-black uppercase tracking-wider">
-            Acto 2 · El Nudo
-          </div>
-          <div>
-            <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center text-xl mb-4 group-hover:scale-105 transition-transform">
-              <i class="fa-solid fa-file-invoice-dollar"></i>
-            </div>
-            <h3 class="text-lg font-bold text-white mb-2">Fin de Mes · La Fuga Invisible</h3>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-              Reunión con gerencia general: la factura de llantas superó el presupuesto un 35%. La pregunta que nadie puede responder con certeza: <em class="text-slate-100">"¿Por qué gastamos tanto si compramos llantas hace poco?"</em>. Sin trazabilidad de carcasas, decenas de llantas que aún podían reencaucharse terminaron en el desecho sin que nadie supiera por qué.
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-slate-800 text-[11px] text-red-400/90 font-semibold flex items-center gap-1.5">
-            <i class="fa-solid fa-arrow-trend-down"></i>
-            <span>Problema: Pérdida patrimonial oculta</span>
-          </div>
-        </div>
-
-        <!-- ACTO 3: LA TRANSFORMACIÓN CON TIREANALYZE PRO -->
-        <div class="relative flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-gradient-to-b from-[#091836] to-[#061124] border-2 border-cyan-400 shadow-2xl shadow-cyan-500/20 transition-all duration-300 group">
-          <div class="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-cyan-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md shadow-cyan-400/30">
-            Acto 3 · El Desenlace
-          </div>
-          <div>
-            <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center text-xl mb-4 group-hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20">
-              <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h3 class="text-lg font-bold text-white mb-2">Hoy · Certeza y Paz Operativa</h3>
-            <p class="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
-              Con <span class="font-bold text-cyan-400">TireAnalyze Pro</span>, la inspección en patio toma 15 minutos directamente desde el móvil. La semaforización alerta en rojo antes de que ocurra una falla vial y las configuraciones de seguridad impiden errores de captura. Cada carcasa está identificada y protegida hasta su último reencauche.
-            </p>
-          </div>
-          <div class="mt-5 pt-3 border-t border-cyan-500/30 text-[11px] text-cyan-300 font-bold flex items-center gap-1.5">
-            <i class="fa-solid fa-circle-check text-emerald-400"></i>
-            <span>Resultado: Ahorro superior al 25% y control total</span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Caja Testimonial / Moraleja Inspiradora (Glassmorphism) -->
-      <div class="mt-10 sm:mt-14 p-6 sm:p-8 rounded-3xl bg-[#061024]/90 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center text-xl shrink-0">
-              <i class="fa-solid fa-quote-left"></i>
-            </div>
-            <div>
-              <p class="text-sm sm:text-base text-slate-100 font-medium italic leading-relaxed">
-                “Antes pasábamos el día buscando culpables entre planillas traspapeladas. Con TireAnalyze Pro pasamos a anticipar los problemas antes de que el camión salga a ruta. Dejamos de adivinar y empezamos a ahorrar de verdad.”
-              </p>
-              <div class="mt-2 text-xs text-slate-400 font-semibold">
-                — <span class="text-cyan-400 font-bold">Director de Mantenimiento</span>, Flota de Transporte de Carga y Pasajeros
-              </div>
-            </div>
-          </div>
-
-          <div class="shrink-0 w-full md:w-auto">
-            <a href="https://wa.me/573204098077?text=Hola,%20leí%20la%20historia%20de%20transformación%20en%20su%20web%20y%20quisiera%20agendar%20una%20demostración%20para%20mi%20flota" target="_blank" class="w-full md:w-auto px-6 py-3.5 rounded-xl font-black text-xs sm:text-sm text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-xl shadow-cyan-400/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
-              <i class="fa-brands fa-whatsapp text-base"></i>
-              <span>Quiero esta transformación en mi flota</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- LLAMADO A LA ACCIÓN FINAL (FONDO 7: OSCURO PROFUNDO #040812)   -->
-  <!-- ============================================================== -->
-  <section class="py-14 sm:py-20 lg:py-28 bg-gradient-to-b from-[#040812] to-[#08152c] border-t border-cyan-500/20 text-center relative overflow-hidden tire-treads-bg">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/35 flex items-center justify-center text-xl sm:text-2xl mx-auto mb-5 sm:mb-6 shadow-xl shadow-cyan-500/20">
-        <i class="fa-solid fa-gauge-high"></i>
-      </div>
-
-      <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-        Lleva el Control de tus Llantas al Siguiente Nivel
-      </h2>
-      <p class="text-slate-300 text-xs sm:text-sm lg:text-base mt-3 sm:mt-4 max-w-xl mx-auto font-normal px-2 sm:px-0">
-        Comienza hoy a auditar tus flotas con la suite técnica más completa y robusta del sector transporte.
-      </p>
-
-      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-sm sm:max-w-none mx-auto">
-        <a href="https://www.tireanalizepro.com" class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-black text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap">
-          <i class="fa-solid fa-arrow-right-to-bracket text-base"></i>
-          <span>Ingresar a la Plataforma</span>
-        </a>
-
-        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" class="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 rounded-xl font-bold text-xs sm:text-sm text-emerald-300 hover:text-white bg-emerald-950/60 hover:bg-emerald-600 border border-emerald-500/50 flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap">
-          <i class="fa-brands fa-whatsapp text-lg"></i>
-          <span>Hablar con un Especialista (+57 320 4098077)</span>
-        </a>
-      </div>
-
-      <p class="text-[10px] sm:text-[11px] text-slate-500 mt-5 sm:mt-6 font-medium">
-        Acceso disponible en web, móviles y tablets · Compatible con Chrome, Safari y Edge
-      </p>
-    </div>
-  </section>
-
-  <!-- ============================================================== -->
-  <!-- PIE DE PÁGINA (FOOTER EN OSCURO OBSIDIAN #02050a)               -->
-  <!-- ============================================================== -->
-  <footer class="bg-[#02050a] border-t border-slate-900 py-10 sm:py-12 text-slate-400 text-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+  <section class="bg-hivis text-asphalt-950 relative overflow-hidden">
+    <div class="tread-band" aria-hidden="true"></div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 grid lg:grid-cols-[1.4fr_1fr] gap-10 items-center">
       <div>
-        <div class="flex items-center justify-center sm:justify-start space-x-2 text-white font-black text-sm">
-          <i class="fa-solid fa-truck-monster text-cyan-400"></i>
-          <span>TireAnalyze Pro</span>
-        </div>
-        <p class="text-[11px] text-slate-400 mt-1">© 2026 TireAnalyze Pro — CONFIANZA EN TU INFORMACIÓN. Todos los derechos reservados.</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-6xl leading-[0.92]">¿Quieres verlo operando en tu patio?</h2>
+        <p class="mt-4 text-lg font-medium max-w-xl">Coordinamos una visita técnica presencial para evaluar tu operación con tu equipo y mostrarte el ahorro real.</p>
       </div>
-
-      <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-slate-400 font-semibold text-xs">
-        <a href="https://www.tireanalizepro.com" class="hover:text-cyan-400 transition-colors">Plataforma</a>
-        <a href="#servicios" class="hover:text-cyan-400 transition-colors">Inspección</a>
-        <a href="#carcasas" class="hover:text-cyan-400 transition-colors">Control de Carcasas</a>
-        <a href="#seguridad" class="hover:text-cyan-400 transition-colors">Seguridad en Datos</a>
-        <a href="#planes" class="hover:text-cyan-400 transition-colors">Versiones</a>
-        <a href="#historia" class="hover:text-cyan-400 transition-colors">Transformación</a>
-        <a href="https://wa.me/573204098077" target="_blank" class="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-          <i class="fa-brands fa-whatsapp text-emerald-400"></i>
-          <span>WhatsApp: +57 320 4098077</span>
+      <div class="flex flex-col gap-3">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-asphalt-950 text-concrete-50 font-bold uppercase tracking-wide hover:bg-asphalt-800 transition-colors text-center">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Agendar visita presencial
         </a>
+        <a href="https://www.tireanalizepro.com" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
+          Ingresar a la plataforma <i class="fa-solid fa-arrow-right text-sm"></i>
+        </a>
+        <p class="text-sm font-semibold text-center">o llámanos: <a href="tel:+573204098077" class="underline font-mono">+57 320 409 8077</a></p>
       </div>
+    </div>
+  </section>
+
+  <footer class="bg-asphalt-950 border-t border-asphalt-700 pt-10 pb-24 md:pb-10 md:pr-20 text-sm text-concrete-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 items-center justify-between text-center md:text-left">
+      <div>
+        <p class="font-display font-extrabold uppercase text-lg text-concrete-50">TireAnalyze <span class="text-hivis">Pro</span></p>
+        <p class="mt-1">© 2026 TireAnalyze Pro — Confianza en tu información.</p>
+      </div>
+      <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 font-semibold">
+        <a href="https://www.tireanalizepro.com" class="hover:text-hivis">Plataforma</a>
+        <a href="#servicios" class="hover:text-hivis">Servicios</a>
+        <a href="#reencauche" class="hover:text-hivis">Reencauche</a>
+        <a href="#planes" class="hover:text-hivis">Versiones</a>
+        <a href="https://wa.me/573204098077" target="_blank" rel="noopener" class="hover:text-ok"><i class="fa-brands fa-whatsapp mr-1"></i>+57 320 409 8077</a>
+      </nav>
     </div>
   </footer>
 
-  <!-- Botón Flotante Permanente de WhatsApp (Solo Logo, Compacto) -->
-  <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20más%20información%20sobre%20TireAnalyze%20Pro" target="_blank" aria-label="Contactar por WhatsApp" title="WhatsApp: +57 320 4098077" class="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white shadow-xl shadow-emerald-500/40 border border-emerald-300/40 hover:scale-110 active:scale-95 transition-all duration-300 group">
-    <i class="fa-brands fa-whatsapp text-2xl sm:text-3xl"></i>
-    <span class="sr-only">WhatsApp +57 320 4098077</span>
+  <!-- WhatsApp flotante -->
+  <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20más%20información%20sobre%20TireAnalyze%20Pro" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp" class="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full flex items-center justify-center bg-ok text-white shadow-xl shadow-black/50 hover:scale-105 transition-transform">
+    <i class="fa-brands fa-whatsapp text-3xl"></i>
   </a>
 
-  <!-- Scripts: Calculadora Interactiva de Ahorro -->
   <script>
+    // Calculadora: estimación de ahorro del 28%
+    const rngV = document.getElementById('rngVehiculos'), rngG = document.getElementById('rngGasto');
     function actualizarCalculadora() {
-      const vhs = parseInt(document.getElementById('rngVehiculos').value) || 25;
-      const gastoM = parseInt(document.getElementById('rngGasto').value) || 120;
-
-      document.getElementById('lblNumVehiculos').textContent = `${vhs} Vehículos`;
-      document.getElementById('lblGastoAnual').textContent = `$ ${gastoM.toLocaleString('es-CO')},000,000 COP`;
-
-      // Estimación de ahorro del 28% con TireAnalyze Pro
-      const ahorroTotal = Math.round((gastoM * 1000000) * 0.28);
-      document.getElementById('lblAhorroEstimado').textContent = `$ ${ahorroTotal.toLocaleString('es-CO')} COP`;
+      const gastoM = parseInt(rngG.value) || 120;
+      document.getElementById('lblNumVehiculos').textContent = rngV.value;
+      document.getElementById('lblGastoAnual').textContent = `$${gastoM} M`;
+      document.getElementById('lblAhorroEstimado').textContent = '$' + Math.round(gastoM * 1e6 * 0.28).toLocaleString('es-CO');
+      [rngV, rngG].forEach(r => r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%'));
     }
+    [rngV, rngG].forEach(r => r.addEventListener('input', actualizarCalculadora));
+    actualizarCalculadora();
 
-    document.addEventListener('DOMContentLoaded', actualizarCalculadora);
+    // Menú móvil
+    const menuBtn = document.getElementById('menuBtn'), menu = document.getElementById('mobileMenu');
+    function setMenu(open) {
+      menu.classList.toggle('open', open);
+      menuBtn.setAttribute('aria-expanded', open);
+      menuBtn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      menuBtn.firstElementChild.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    }
+    menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('open')));
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+
+    // Aparición al hacer scroll
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }), { threshold: .12 });
+    document.querySelectorAll('article, #reencauche li, #reencauche .grid > div, #seguridad li, #comparativa .grid, #planes .grid > div').forEach((el, i) => {
+      el.classList.add('reveal'); el.style.setProperty('--d', (i % 3) * 90 + 'ms'); io.observe(el);
+    });
   </script>
-
 </body>
 </html>

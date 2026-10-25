@@ -50,32 +50,28 @@ def test_servicios_landing_page_loads():
     html = res.text
     assert "TireAnalyze Pro" in html
     assert "facilita la inspección en patio" in html
-    assert "Control de Carcasas" in html
     assert "https://www.tireanalizepro.com" in html
     assert "lblAhorroEstimado" in html
     assert "actualizarCalculadora" in html
-    # Verificación de logos emblemáticos y textura de huellas de neumáticos
+    # Verificación de logos emblemáticos y textura industrial
     assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
     assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
-    assert "CONFIANZA EN TU INFORMACIÓN" in html
-    assert "tire-treads-bg" in html   # Textura de huellas de neumático
-    assert "Configuraciones de Seguridad e Integridad en Datos" in html
-    # Verificación de la sección de licencias y planes generales
-    assert "LICENCIA OPERATIVA" in html
-    assert "LICENCIA EMPRESARIAL" in html
-    assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
-    assert "Solicitar Demostración Licencia Operativa" in html
-    assert "Solicitar Demostración Licencia Empresarial" in html
+    assert "Confianza en tu información" in html
+    assert "tread-band" in html       # Separador de banda de rodadura
+    # Verificación de la sección de licencias y versiones
+    assert "Licencia operativa" in html
+    assert "Licencia empresarial" in html
+    assert "Solicitar demo operativa" in html
+    assert "Solicitar demo empresarial" in html
     # Verificación de la sección de Storytelling (El Viaje de la Transformación)
-    assert "El Viaje de la Transformación" in html
-    assert "De Apagar Incendios en Carretera a Dominar el 100% de tu Flota" in html
-    assert "Acto 1 · El Inicio" in html
-    assert "Acto 2 · El Nudo" in html
-    assert "Acto 3 · El Desenlace" in html
-    assert "Quiero esta transformación en mi flota" in html
+    assert "El viaje de la transformación" in html
+    assert "De apagar incendios en carretera a dominar el 100% de tu flota" in html
+    assert "El caos cotidiano" in html
+    assert "La fuga invisible" in html
+    assert "Certeza y paz operativa" in html
     # Verificación de WhatsApp comercial y soporte
     assert "573204098077" in html
-    assert "+57 320 4098077" in html
+    assert "+57 320 409 8077" in html
     
     # También probar el alias /landing
     res_alias = client.get("/landing")

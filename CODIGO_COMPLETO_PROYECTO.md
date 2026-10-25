@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 11:42:04`
+- **Fecha de Generación:** `2026-10-25 18:58:56`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `53,756` líneas
-- **Tamaño Total de Código Fuente:** `2626.1 KB` (`2,689,083` bytes)
+- **Líneas Totales de Código:** `53,754` líneas
+- **Tamaño Total de Código Fuente:** `2627.2 KB` (`2,690,295` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -431,7 +431,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2195 | 95.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2197 | 95.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 9248 | 440.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
@@ -445,7 +445,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [templates/index.html](#archivo-templatesindexhtml) | `html` | 19340 | 1014.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
-| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
+| [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 297 | 11.0 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 259 | 10.5 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 941 | 36.1 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 937 | 35.8 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -3539,7 +3539,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2195 líneas | 97,417 bytes (95.1 KB)
+- **Métricas:** 2197 líneas | 97,574 bytes (95.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3924,7 +3924,9 @@ def index(response: Response):
 @app.get("/landing", response_class=HTMLResponse)
 def pagina_servicios(response: Response):
     response.headers["Cache-Control"] = "public, max-age=3600"
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios_v3.html")
+    if not os.path.exists(template_path):
+        template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
@@ -40762,7 +40764,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/preview_chasis.html`
 - **Descripción:** Visor interactivo y banco de pruebas de renderizado de tipologías de chasis
-- **Métricas:** 1346 líneas | 71,453 bytes (69.8 KB)
+- **Métricas:** 1346 líneas | 72,799 bytes (71.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -47110,7 +47112,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 941 líneas | 36,935 bytes (36.1 KB)
+- **Métricas:** 937 líneas | 36,644 bytes (35.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -47166,32 +47168,28 @@ def test_servicios_landing_page_loads():
     html = res.text
     assert "TireAnalyze Pro" in html
     assert "facilita la inspección en patio" in html
-    assert "Control de Carcasas" in html
     assert "https://www.tireanalizepro.com" in html
     assert "lblAhorroEstimado" in html
     assert "actualizarCalculadora" in html
-    # Verificación de logos emblemáticos y textura de huellas de neumáticos
+    # Verificación de logos emblemáticos y textura industrial
     assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
     assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
-    assert "CONFIANZA EN TU INFORMACIÓN" in html
-    assert "tire-treads-bg" in html   # Textura de huellas de neumático
-    assert "Configuraciones de Seguridad e Integridad en Datos" in html
-    # Verificación de la sección de licencias y planes generales
-    assert "LICENCIA OPERATIVA" in html
-    assert "LICENCIA EMPRESARIAL" in html
-    assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
-    assert "Solicitar Demostración Licencia Operativa" in html
-    assert "Solicitar Demostración Licencia Empresarial" in html
+    assert "Confianza en tu información" in html
+    assert "tread-band" in html       # Separador de banda de rodadura
+    # Verificación de la sección de licencias y versiones
+    assert "Licencia operativa" in html
+    assert "Licencia empresarial" in html
+    assert "Solicitar demo operativa" in html
+    assert "Solicitar demo empresarial" in html
     # Verificación de la sección de Storytelling (El Viaje de la Transformación)
-    assert "El Viaje de la Transformación" in html
-    assert "De Apagar Incendios en Carretera a Dominar el 100% de tu Flota" in html
-    assert "Acto 1 · El Inicio" in html
-    assert "Acto 2 · El Nudo" in html
-    assert "Acto 3 · El Desenlace" in html
-    assert "Quiero esta transformación en mi flota" in html
+    assert "El viaje de la transformación" in html
+    assert "De apagar incendios en carretera a dominar el 100% de tu flota" in html
+    assert "El caos cotidiano" in html
+    assert "La fuga invisible" in html
+    assert "Certeza y paz operativa" in html
     # Verificación de WhatsApp comercial y soporte
     assert "573204098077" in html
-    assert "+57 320 4098077" in html
+    assert "+57 320 409 8077" in html
     
     # También probar el alias /landing
     res_alias = client.get("/landing")

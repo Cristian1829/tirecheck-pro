@@ -379,7 +379,9 @@ def index(response: Response):
 @app.get("/landing", response_class=HTMLResponse)
 def pagina_servicios(response: Response):
     response.headers["Cache-Control"] = "public, max-age=3600"
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios_v3.html")
+    if not os.path.exists(template_path):
+        template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
