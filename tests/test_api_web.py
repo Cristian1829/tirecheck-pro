@@ -59,6 +59,12 @@ def test_servicios_landing_page_loads():
     assert "CONFIANZA EN TU INFORMACIÓN" in html
     assert "tire-treads-bg" in html   # Textura de huellas de neumático
     assert "Los 4 Candados Viales de Seguridad" in html
+    # Verificación de la sección de licencias y planes
+    assert "LICENCIA LIGHT (OPERATIVA)" in html
+    assert "LICENCIA PRO / FULL (FINANCIERA)" in html
+    assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
+    assert "Solicitar Activación Licencia LIGHT" in html
+    assert "Solicitar Demostración Licencia PRO" in html
     
     # También probar el alias /landing
     res_alias = client.get("/landing")
