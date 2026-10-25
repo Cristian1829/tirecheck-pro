@@ -66,6 +66,13 @@ def test_servicios_landing_page_loads():
     assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
     assert "Solicitar Demostración Licencia Operativa" in html
     assert "Solicitar Demostración Licencia Empresarial" in html
+    # Verificación de la sección de Storytelling (El Viaje de la Transformación)
+    assert "El Viaje de la Transformación" in html
+    assert "De Apagar Incendios en Carretera a Dominar el 100% de tu Flota" in html
+    assert "Acto 1 · El Inicio" in html
+    assert "Acto 2 · El Nudo" in html
+    assert "Acto 3 · El Desenlace" in html
+    assert "Quiero esta transformación en mi flota" in html
     # Verificación de WhatsApp comercial y soporte
     assert "573204098077" in html
     assert "+57 320 4098077" in html
