@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-24 20:16:58`
+- **Fecha de Generación:** `2026-10-24 22:15:36`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `53,672` líneas
-- **Tamaño Total de Código Fuente:** `2621.9 KB` (`2,684,819` bytes)
+- **Líneas Totales de Código:** `53,748` líneas
+- **Tamaño Total de Código Fuente:** `2625.6 KB` (`2,688,604` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,7 +432,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2195 | 95.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9227 | 439.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 9248 | 440.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1846 | 85.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -444,7 +444,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 19285 | 1012.0 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 19340 | 1014.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 69.8 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -5746,7 +5746,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9227 líneas | 449,799 bytes (439.3 KB)
+- **Métricas:** 9248 líneas | 450,783 bytes (440.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14678,6 +14678,26 @@ def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
         """)
         todos_disenos = sorted([r[0] for r in cursor.fetchall() if r[0]])
 
+        # Diseños agrupados por marca para filtrado offline estricto O(1)
+        disenos_por_marca = {}
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(marca)), UPPER(TRIM(diseno))
+            FROM catalogo_modelos_llantas
+            WHERE marca IS NOT NULL AND TRIM(marca) != '' AND diseno IS NOT NULL AND TRIM(diseno) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(marca)), UPPER(TRIM(diseno))
+            FROM inspecciones
+            WHERE marca IS NOT NULL AND TRIM(marca) != '' AND diseno IS NOT NULL AND TRIM(diseno) != ''
+            ORDER BY 1, 2
+        """)
+        for r in cursor.fetchall():
+            m = str(r[0]).strip().upper()
+            d = str(r[1]).strip().upper()
+            if m not in disenos_por_marca:
+                disenos_por_marca[m] = []
+            if d and d not in disenos_por_marca[m]:
+                disenos_por_marca[m].append(d)
+
         # Dimensiones
         cursor.execute("""
             SELECT DISTINCT UPPER(TRIM(dimension)) FROM catalogo_modelos_llantas WHERE dimension IS NOT NULL AND TRIM(dimension) != ''
@@ -14697,6 +14717,7 @@ def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
             "subclientes_por_cliente": subclientes_por_cliente,
             "marcas": todas_marcas,
             "disenos": todos_disenos,
+            "disenos_por_marca": disenos_por_marca,
             "dimensiones": todas_dimensiones,
             "bandas": todas_bandas
         }
@@ -21389,7 +21410,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 19285 líneas | 1,036,251 bytes (1012.0 KB)
+- **Métricas:** 19340 líneas | 1,039,052 bytes (1014.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -34880,12 +34901,61 @@ if __name__ == '__main__':
               items = cc.marcas || [];
             } else if (endpoint.includes('campo=diseno')) {
               const urlObj = new URL('http://dummy.com' + endpoint);
-              const marcaParam = urlObj.searchParams.get('marca');
-              if (cat.modelos && marcaParam) {
-                const modelosMarca = cat.modelos.filter(m => (m.marca || '').toLowerCase() === marcaParam.toLowerCase());
-                items = Array.from(new Set(modelosMarca.map(m => m.diseno).filter(Boolean)));
+              const marcaParam = (urlObj.searchParams.get('marca') || document.getElementById('marca')?.value || '').trim();
+              if (marcaParam && marcaParam !== '__nuevo__' && !marcaParam.includes('(Seleccionar')) {
+                const marcaNorm = marcaParam.toUpperCase();
+                const setDisenos = new Set();
+
+                // 1. Del diccionario precargado disenos_por_marca (catálogo + histórico)
+                if (cc.disenos_por_marca) {
+                  for (const [mk, dList] of Object.entries(cc.disenos_por_marca)) {
+                    if (mk.trim().toUpperCase() === marcaNorm && Array.isArray(dList)) {
+                      dList.forEach(d => { if (d) setDisenos.add(String(d).trim().toUpperCase()); });
+                    }
+                  }
+                }
+
+                // 2. Del catálogo de modelos offline
+                if (Array.isArray(cat.modelos)) {
+                  cat.modelos.forEach(m => {
+                    if (m && String(m.marca || '').trim().toUpperCase() === marcaNorm && m.diseno) {
+                      setDisenos.add(String(m.diseno).trim().toUpperCase());
+                    }
+                  });
+                }
+
+                // 3. De posiciones previas de vehículos offline
+                if (cat.vehiculos_perfil) {
+                  Object.values(cat.vehiculos_perfil).forEach(perfil => {
+                    if (perfil && Array.isArray(perfil.posiciones_previas)) {
+                      perfil.posiciones_previas.forEach(pos => {
+                        if (pos && String(pos.marca || '').trim().toUpperCase() === marcaNorm && pos.diseno) {
+                          setDisenos.add(String(pos.diseno).trim().toUpperCase());
+                        }
+                      });
+                    }
+                  });
+                }
+
+                // 4. De la cola offline local (inspecciones recién guardadas offline)
+                try {
+                  const pendientes = await TireAnalyzeOfflineDB.obtenerPendientes();
+                  if (Array.isArray(pendientes)) {
+                    pendientes.forEach(p => {
+                      if (p && String(p.marca || '').trim().toUpperCase() === marcaNorm && p.diseno) {
+                        setDisenos.add(String(p.diseno).trim().toUpperCase());
+                      }
+                    });
+                  }
+                } catch(ePend) {}
+
+                // Filtrado estricto: SÓLO los diseños asociados a esta marca
+                items = Array.from(setDisenos).sort();
+                // OJO: Si se especificó marca, NUNCA caer en cc.disenos para evitar mezclar marcas
+              } else {
+                // Solo si NO se especificó marca, mostrar catálogo global
+                items = cc.disenos || [];
               }
-              if (!items || items.length === 0) items = cc.disenos || [];
             } else if (endpoint.includes('campo=banda')) {
               items = cc.bandas || [];
             }
@@ -37460,8 +37530,14 @@ if __name__ == '__main__':
 
     async function alCambiarMarcaMobile() {
       const m = (document.getElementById('marca')?.value || '').trim();
+      const selDis = document.getElementById('diseno');
       if (m && m !== '__nuevo__' && !m.includes('(Seleccionar')) {
-        await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, 'ej. X Multi Z (Seleccionar diseño)');
+        await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, `ej. Diseños de ${m}`);
+      } else {
+        if (selDis) {
+          selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">Primero selecciona una marca...</option><option value="__nuevo__" class="font-bold text-blue-600 bg-blue-50">+ Agregar nuevo valor...</option>';
+          selDis.value = '';
+        }
       }
       await autoCompletarProfInicial();
       const posVal = parseInt(document.getElementById('posicion')?.value) || 1;

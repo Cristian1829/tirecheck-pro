@@ -13485,12 +13485,61 @@
               items = cc.marcas || [];
             } else if (endpoint.includes('campo=diseno')) {
               const urlObj = new URL('http://dummy.com' + endpoint);
-              const marcaParam = urlObj.searchParams.get('marca');
-              if (cat.modelos && marcaParam) {
-                const modelosMarca = cat.modelos.filter(m => (m.marca || '').toLowerCase() === marcaParam.toLowerCase());
-                items = Array.from(new Set(modelosMarca.map(m => m.diseno).filter(Boolean)));
+              const marcaParam = (urlObj.searchParams.get('marca') || document.getElementById('marca')?.value || '').trim();
+              if (marcaParam && marcaParam !== '__nuevo__' && !marcaParam.includes('(Seleccionar')) {
+                const marcaNorm = marcaParam.toUpperCase();
+                const setDisenos = new Set();
+
+                // 1. Del diccionario precargado disenos_por_marca (catálogo + histórico)
+                if (cc.disenos_por_marca) {
+                  for (const [mk, dList] of Object.entries(cc.disenos_por_marca)) {
+                    if (mk.trim().toUpperCase() === marcaNorm && Array.isArray(dList)) {
+                      dList.forEach(d => { if (d) setDisenos.add(String(d).trim().toUpperCase()); });
+                    }
+                  }
+                }
+
+                // 2. Del catálogo de modelos offline
+                if (Array.isArray(cat.modelos)) {
+                  cat.modelos.forEach(m => {
+                    if (m && String(m.marca || '').trim().toUpperCase() === marcaNorm && m.diseno) {
+                      setDisenos.add(String(m.diseno).trim().toUpperCase());
+                    }
+                  });
+                }
+
+                // 3. De posiciones previas de vehículos offline
+                if (cat.vehiculos_perfil) {
+                  Object.values(cat.vehiculos_perfil).forEach(perfil => {
+                    if (perfil && Array.isArray(perfil.posiciones_previas)) {
+                      perfil.posiciones_previas.forEach(pos => {
+                        if (pos && String(pos.marca || '').trim().toUpperCase() === marcaNorm && pos.diseno) {
+                          setDisenos.add(String(pos.diseno).trim().toUpperCase());
+                        }
+                      });
+                    }
+                  });
+                }
+
+                // 4. De la cola offline local (inspecciones recién guardadas offline)
+                try {
+                  const pendientes = await TireAnalyzeOfflineDB.obtenerPendientes();
+                  if (Array.isArray(pendientes)) {
+                    pendientes.forEach(p => {
+                      if (p && String(p.marca || '').trim().toUpperCase() === marcaNorm && p.diseno) {
+                        setDisenos.add(String(p.diseno).trim().toUpperCase());
+                      }
+                    });
+                  }
+                } catch(ePend) {}
+
+                // Filtrado estricto: SÓLO los diseños asociados a esta marca
+                items = Array.from(setDisenos).sort();
+                // OJO: Si se especificó marca, NUNCA caer en cc.disenos para evitar mezclar marcas
+              } else {
+                // Solo si NO se especificó marca, mostrar catálogo global
+                items = cc.disenos || [];
               }
-              if (!items || items.length === 0) items = cc.disenos || [];
             } else if (endpoint.includes('campo=banda')) {
               items = cc.bandas || [];
             }
@@ -16065,8 +16114,14 @@
 
     async function alCambiarMarcaMobile() {
       const m = (document.getElementById('marca')?.value || '').trim();
+      const selDis = document.getElementById('diseno');
       if (m && m !== '__nuevo__' && !m.includes('(Seleccionar')) {
-        await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, 'ej. X Multi Z (Seleccionar diseño)');
+        await poblarSelect('diseno', `/api/valores-campo?campo=diseno&marca=${encodeURIComponent(m)}`, `ej. Diseños de ${m}`);
+      } else {
+        if (selDis) {
+          selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">Primero selecciona una marca...</option><option value="__nuevo__" class="font-bold text-blue-600 bg-blue-50">+ Agregar nuevo valor...</option>';
+          selDis.value = '';
+        }
       }
       await autoCompletarProfInicial();
       const posVal = parseInt(document.getElementById('posicion')?.value) || 1;

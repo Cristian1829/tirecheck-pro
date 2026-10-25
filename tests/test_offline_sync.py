@@ -81,6 +81,10 @@ def test_obtener_paquete_offline_patio_completo(test_db, auth_client):
     assert "catalogos_campos" in pkg
     assert "clientes" in pkg["catalogos_campos"]
     assert "subclientes_por_cliente" in pkg["catalogos_campos"]
+    assert "disenos_por_marca" in pkg["catalogos_campos"]
+    assert isinstance(pkg["catalogos_campos"]["disenos_por_marca"], dict)
+    assert "GOODYEAR" in pkg["catalogos_campos"]["disenos_por_marca"]
+    assert "KMAX" in pkg["catalogos_campos"]["disenos_por_marca"]["GOODYEAR"]
 
     assert "vehiculos_perfil" in pkg
     assert placa_test in pkg["vehiculos_perfil"]
@@ -311,3 +315,57 @@ def test_frontend_contiene_motor_indexeddb_y_modal_offline(auth_client):
                 os.remove(temp_js_path)
             except OSError:
                 pass
+
+
+def test_offline_filtrado_disenos_por_marca_estricto(test_db, auth_client):
+    """
+    6. Verifica que en el paquete offline y en el frontend, los diseños estén estrictamente
+    asociados a cada marca sin fugas entre fabricantes diferentes (ej. BRIDGESTONE vs MICHELIN).
+    """
+    # 1. Sembrar modelos en catálogo con marcas y diseños específicos
+    with database.get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM catalogo_modelos_llantas WHERE marca IN ('BRIDGESTONE', 'MICHELIN', 'PIRELLI')")
+        cursor.execute("""
+            INSERT INTO catalogo_modelos_llantas (marca, diseno, dimension, prof_inicial, tipo_llanta)
+            VALUES 
+                ('BRIDGESTONE', 'R168', '295/80R22.5', 16.0, 'Original'),
+                ('BRIDGESTONE', 'M853', '295/80R22.5', 18.0, 'Original'),
+                ('MICHELIN', 'X MULTI Z', '295/80R22.5', 15.5, 'Original'),
+                ('MICHELIN', 'X WORKS D', '295/80R22.5', 19.0, 'Original'),
+                ('PIRELLI', 'FG01', '295/80R22.5', 16.5, 'Original')
+        """)
+        conn.commit()
+
+    # 2. Consultar paquete offline
+    resp = auth_client.get("/api/offline/paquete-patio")
+    assert resp.status_code == 200
+    pkg = resp.json()
+
+    dis_por_marca = pkg["catalogos_campos"]["disenos_por_marca"]
+    assert "BRIDGESTONE" in dis_por_marca
+    assert "MICHELIN" in dis_por_marca
+    assert "PIRELLI" in dis_por_marca
+
+    # Verificar que BRIDGESTONE contenga solo sus diseños
+    assert "R168" in dis_por_marca["BRIDGESTONE"]
+    assert "M853" in dis_por_marca["BRIDGESTONE"]
+    assert "X MULTI Z" not in dis_por_marca["BRIDGESTONE"]
+    assert "FG01" not in dis_por_marca["BRIDGESTONE"]
+
+    # Verificar que MICHELIN contenga solo sus diseños
+    assert "X MULTI Z" in dis_por_marca["MICHELIN"]
+    assert "X WORKS D" in dis_por_marca["MICHELIN"]
+    assert "R168" not in dis_por_marca["MICHELIN"]
+
+    # Verificar que PIRELLI contenga solo su diseño
+    assert "FG01" in dis_por_marca["PIRELLI"]
+    assert "M853" not in dis_por_marca["PIRELLI"]
+
+    # 3. Verificar que el frontend HTML no haga fallback a cc.disenos cuando hay marca seleccionada
+    resp_front = auth_client.get("/")
+    assert resp_front.status_code == 200
+    html = resp_front.text
+    assert "disenos_por_marca" in html
+    assert "NUNCA caer en cc.disenos para evitar mezclar marcas" in html
+

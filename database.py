@@ -8926,6 +8926,26 @@ def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
         """)
         todos_disenos = sorted([r[0] for r in cursor.fetchall() if r[0]])
 
+        # Diseños agrupados por marca para filtrado offline estricto O(1)
+        disenos_por_marca = {}
+        cursor.execute("""
+            SELECT DISTINCT UPPER(TRIM(marca)), UPPER(TRIM(diseno))
+            FROM catalogo_modelos_llantas
+            WHERE marca IS NOT NULL AND TRIM(marca) != '' AND diseno IS NOT NULL AND TRIM(diseno) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(marca)), UPPER(TRIM(diseno))
+            FROM inspecciones
+            WHERE marca IS NOT NULL AND TRIM(marca) != '' AND diseno IS NOT NULL AND TRIM(diseno) != ''
+            ORDER BY 1, 2
+        """)
+        for r in cursor.fetchall():
+            m = str(r[0]).strip().upper()
+            d = str(r[1]).strip().upper()
+            if m not in disenos_por_marca:
+                disenos_por_marca[m] = []
+            if d and d not in disenos_por_marca[m]:
+                disenos_por_marca[m].append(d)
+
         # Dimensiones
         cursor.execute("""
             SELECT DISTINCT UPPER(TRIM(dimension)) FROM catalogo_modelos_llantas WHERE dimension IS NOT NULL AND TRIM(dimension) != ''
@@ -8945,6 +8965,7 @@ def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
             "subclientes_por_cliente": subclientes_por_cliente,
             "marcas": todas_marcas,
             "disenos": todos_disenos,
+            "disenos_por_marca": disenos_por_marca,
             "dimensiones": todas_dimensiones,
             "bandas": todas_bandas
         }
