@@ -65,6 +65,9 @@ def test_servicios_landing_page_loads():
     assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
     assert "Solicitar Activación Licencia LIGHT" in html
     assert "Solicitar Demostración Licencia PRO" in html
+    # Verificación de WhatsApp comercial y soporte
+    assert "573204098077" in html
+    assert "+57 320 4098077" in html
     
     # También probar el alias /landing
     res_alias = client.get("/landing")
