@@ -49,7 +49,8 @@ def test_servicios_landing_page_loads():
     assert res.status_code == 200
     html = res.text
     assert "TireAnalyze Pro" in html
-    assert "Las 7 Bodegas (MRP)" in html
+    assert "facilita la inspección en patio" in html
+    assert "Control de Carcasas" in html
     assert "https://www.tireanalizepro.com" in html
     assert "lblAhorroEstimado" in html
     assert "actualizarCalculadora" in html
@@ -58,13 +59,13 @@ def test_servicios_landing_page_loads():
     assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
     assert "CONFIANZA EN TU INFORMACIÓN" in html
     assert "tire-treads-bg" in html   # Textura de huellas de neumático
-    assert "Los 4 Candados Viales de Seguridad" in html
-    # Verificación de la sección de licencias y planes
-    assert "LICENCIA LIGHT (OPERATIVA)" in html
-    assert "LICENCIA PRO / FULL (FINANCIERA)" in html
+    assert "Configuraciones de Seguridad e Integridad en Datos" in html
+    # Verificación de la sección de licencias y planes generales
+    assert "LICENCIA OPERATIVA" in html
+    assert "LICENCIA EMPRESARIAL" in html
     assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
-    assert "Solicitar Activación Licencia LIGHT" in html
-    assert "Solicitar Demostración Licencia PRO" in html
+    assert "Solicitar Demostración Licencia Operativa" in html
+    assert "Solicitar Demostración Licencia Empresarial" in html
     # Verificación de WhatsApp comercial y soporte
     assert "573204098077" in html
     assert "+57 320 4098077" in html

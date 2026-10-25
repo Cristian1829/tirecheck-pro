@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-24 22:48:38`
+- **Fecha de Generación:** `2026-10-24 23:24:35`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `53,748` líneas
-- **Tamaño Total de Código Fuente:** `2625.6 KB` (`2,688,604` bytes)
+- **Líneas Totales de Código:** `53,749` líneas
+- **Tamaño Total de Código Fuente:** `2625.7 KB` (`2,688,678` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 297 | 11.0 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 259 | 10.5 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 933 | 35.6 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 934 | 35.7 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -47110,7 +47110,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 933 líneas | 36,456 bytes (35.6 KB)
+- **Métricas:** 934 líneas | 36,530 bytes (35.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -47165,7 +47165,8 @@ def test_servicios_landing_page_loads():
     assert res.status_code == 200
     html = res.text
     assert "TireAnalyze Pro" in html
-    assert "Las 7 Bodegas (MRP)" in html
+    assert "facilita la inspección en patio" in html
+    assert "Control de Carcasas" in html
     assert "https://www.tireanalizepro.com" in html
     assert "lblAhorroEstimado" in html
     assert "actualizarCalculadora" in html
@@ -47174,13 +47175,13 @@ def test_servicios_landing_page_loads():
     assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
     assert "CONFIANZA EN TU INFORMACIÓN" in html
     assert "tire-treads-bg" in html   # Textura de huellas de neumático
-    assert "Los 4 Candados Viales de Seguridad" in html
-    # Verificación de la sección de licencias y planes
-    assert "LICENCIA LIGHT (OPERATIVA)" in html
-    assert "LICENCIA PRO / FULL (FINANCIERA)" in html
+    assert "Configuraciones de Seguridad e Integridad en Datos" in html
+    # Verificación de la sección de licencias y planes generales
+    assert "LICENCIA OPERATIVA" in html
+    assert "LICENCIA EMPRESARIAL" in html
     assert "MÁXIMO RETORNO DE INVERSIÓN (ROI)" in html
-    assert "Solicitar Activación Licencia LIGHT" in html
-    assert "Solicitar Demostración Licencia PRO" in html
+    assert "Solicitar Demostración Licencia Operativa" in html
+    assert "Solicitar Demostración Licencia Empresarial" in html
     # Verificación de WhatsApp comercial y soporte
     assert "573204098077" in html
     assert "+57 320 4098077" in html
