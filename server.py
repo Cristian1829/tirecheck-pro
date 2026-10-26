@@ -1959,7 +1959,7 @@ class AltaLlantaBodegaItem(BaseModel):
     banda_reen: str = ""
     prof_inicial: float = 18.0
     prof_actual_min: float = 18.0
-    costo_compra: float = 1450000.0
+    costo_compra: Optional[float] = None  # sin precio: la llanta se excluye de los cálculos en pesos
     proveedor_actual: str = ""
     observaciones: str = ""
 

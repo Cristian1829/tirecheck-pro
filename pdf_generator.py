@@ -2021,7 +2021,8 @@ def generar_pdf_acta_chatarrizacion(datos: dict) -> bytes:
     prof_ret = float(datos.get('prof_retiro', 0.0))
     lim_ret = float(datos.get('limite_retiro', 3.0))
     mm_desp = float(datos.get('mm_desperdiciados', 0.0))
-    dinero_perd = float(datos.get('dinero_perdido', 0.0))
+    dinero_perd = datos.get('dinero_perdido')
+    dinero_perd = float(dinero_perd) if dinero_perd not in (None, '') else None
     motivo = datos.get('motivo_baja', 'Desgaste Irregular / Falla de Carcasa')
 
     elements.append(Paragraph("<b>TIREANALYZE PRO — GESTIÓN TÉCNICA Y AUDITORÍA DE FLOTAS</b>", sub_style))
@@ -2032,7 +2033,7 @@ def generar_pdf_acta_chatarrizacion(datos: dict) -> bytes:
     # Cuadro de Pérdida Financiera
     cuadro_alerta = [
         [
-            Paragraph(f"⚠️ AUDITORÍA DE RENDIMIENTO: <b>{mm_desp:.1f} mm Desperdiciados</b> | Pérdida Económica Estimada: <b>${dinero_perd:,.0f} COP</b>", alert_box_style)
+            Paragraph(f"⚠️ AUDITORÍA DE RENDIMIENTO: <b>{mm_desp:.1f} mm Desperdiciados</b> | Pérdida Económica Estimada: <b>{f'${dinero_perd:,.0f} COP' if dinero_perd is not None else 'sin precio registrado'}</b>", alert_box_style)
         ]
     ]
     t_alert = Table(cuadro_alerta, colWidths=[540])

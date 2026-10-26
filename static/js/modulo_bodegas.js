@@ -722,7 +722,7 @@
         banda_reen: document.getElementById('alta_banda_reen').value.trim().toUpperCase(),
         prof_inicial: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
         prof_actual_min: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
-        costo_compra: parseFloat(document.getElementById('alta_costo_compra').value) || 1450000.0,
+        costo_compra: parseFloat(document.getElementById('alta_costo_compra').value) || null,
         proveedor_actual: document.getElementById('alta_proveedor').value.trim(),
         observaciones: document.getElementById('alta_observaciones').value.trim()
       };
@@ -1676,8 +1676,8 @@
         payload.marca = document.getElementById('mont_nueva_marca').value;
         payload.diseno = document.getElementById('mont_nueva_diseno').value;
         payload.dimension = document.getElementById('mont_nueva_dimension').value;
-        payload.prof_inicial = parseFloat(document.getElementById('mont_nueva_prof').value) || 16.0;
-        payload.precio_compra = parseFloat(document.getElementById('mont_nueva_precio').value) || 1450000.0;
+        payload.prof_inicial = parseFloat(document.getElementById('mont_nueva_prof').value) || null;  // sin dato: el servidor usa el catálogo del modelo
+        payload.precio_compra = parseFloat(document.getElementById('mont_nueva_precio').value) || null;
       }
 
       try {
@@ -1743,10 +1743,11 @@
 
       // 5 Tarjetas KPIs
       document.getElementById('hv_kpi_km').textContent = `${Number(met.km_totales || 0).toLocaleString()} km`;
-      document.getElementById('hv_kpi_costo').textContent = `$ ${Number(met.costo_total_invertido || 0).toLocaleString('es-CO')}`;
-      document.getElementById('hv_kpi_cpk').textContent = `$ ${Number(met.cpk_global || 0).toFixed(2)} / km`;
+      // Sin precio registrado se dice así, en lugar de mostrar $0
+      document.getElementById('hv_kpi_costo').textContent = met.costo_total_invertido ? `$ ${Number(met.costo_total_invertido).toLocaleString('es-CO')}` : 'Sin precio';
+      document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${Number(met.cpk_global).toFixed(2)} / km` : 'Sin precio';
       document.getElementById('hv_kpi_rendimiento').textContent = `${Number(met.rendimiento_km_mm || 0).toLocaleString()} km/mm`;
-      document.getElementById('hv_kpi_ahorro').textContent = `$ ${Number(met.ahorro_estimado_vs_nueva || 0).toLocaleString('es-CO')}`;
+      document.getElementById('hv_kpi_ahorro').textContent = met.ahorro_generado_vs_nueva != null ? `$ ${Number(met.ahorro_generado_vs_nueva).toLocaleString('es-CO')}` : 'Sin precio';
 
       // Botón Acta PDF si está en FVU
       const btnActa = document.getElementById('btnHvPdfActa');

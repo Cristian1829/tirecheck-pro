@@ -88,7 +88,7 @@ def sincronizar_hoja_vida_desde_inspecciones(conn=None):
             psi = database.to_float(r[13], 100.0)
             km_act = database.to_float(r[14])
             km_mont = database.to_float(r[15])
-            pr = database.to_float(r[16], 1450000.0)
+            pr = database.to_float(r[16], 0.0)
             p_ini = database.to_float(r[17], 16.0)
             subc = str(r[18] or 'Principal').strip()
             nov = str(r[19] or '').strip()
@@ -214,7 +214,7 @@ def crear_llantas_stock(datos: dict) -> dict:
     diseno = str(datos.get('diseno_origen') or datos.get('diseno', '')).strip().upper()
     dimension = str(datos.get('dimension', '295/80R22.5')).strip().upper()
     tipo_construccion = str(datos.get('tipo_construccion', 'Radial')).strip()
-    precio_compra = database.to_float(datos.get('precio_compra_inicial') or datos.get('precio_compra', 1450000.0), 1450000.0)
+    precio_compra = database.to_float(datos.get('precio_compra_inicial') or datos.get('precio_compra'), 0.0)  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
     prof_ini = database.to_float(datos.get('prof_inicial_nueva') or datos.get('prof_inicial', 16.0), 16.0)
     proveedor = str(datos.get('proveedor_factura') or datos.get('proveedor', '')).strip()
     dot_base = str(datos.get('numero_serie_dot') or datos.get('dot', '')).strip().upper()
@@ -380,8 +380,8 @@ def desmontar_llanta_taller(datos: dict) -> dict:
             if prof_momento > lim_ret:
                 mm_desp = max(0.0, prof_momento - lim_ret)
                 denominador = max(1.0, (p_ini or 16.0) - lim_ret)
-                costo_base = c_ciclo or 1450000.0
-                dinero_perd = max(0.0, (mm_desp * (costo_base / denominador)) - (val_gar or 0.0))
+                # Sin costo registrado la pérdida en pesos queda sin dato
+                dinero_perd = max(0.0, (mm_desp * (c_ciclo / denominador)) - (val_gar or 0.0)) if c_ciclo else None
 
             cursor.execute("""
                 UPDATE llantas_ciclos SET
@@ -500,15 +500,23 @@ def montar_llanta_taller(datos: dict) -> dict:
         row_check = cursor.fetchone()
         if not row_check or es_nueva_directa:
             if not row_check:
+                marca_n = str(datos.get('marca') or '').strip().upper()
+                diseno_n = str(datos.get('diseno') or '').strip().upper()
+                dim_n = str(datos.get('dimension') or '').strip().upper()
+                prof_n = database.to_float(datos.get('prof_inicial'), 0.0)
+                if prof_n <= 0 and marca_n and diseno_n:
+                    prof_n = database.to_float(database.buscar_profundidad_inicial(marca_n, diseno_n, dim_n, 'Original'), 0.0)
+                if not (marca_n and diseno_n and dim_n and prof_n > 0):
+                    return {"ok": False, "status": "error", "message": f"La llanta {numero_interno} no existe en el inventario: indique marca, diseño, dimensión y profundidad inicial para darla de alta"}
                 res_alta = crear_llantas_stock({
                     "cliente_propietario": cliente or "CLIENTE GENERAL",
                     "modo": "individual",
                     "numero_interno": numero_interno,
-                    "marca_origen": str(datos.get('marca', 'MICHELIN')).strip().upper(),
-                    "diseno_origen": str(datos.get('diseno', 'X-LINE')).strip().upper(),
-                    "dimension": str(datos.get('dimension', '295/80R22.5')).strip().upper(),
-                    "precio_compra_inicial": database.to_float(datos.get('precio_compra', 1450000.0), 1450000.0),
-                    "prof_inicial_nueva": database.to_float(datos.get('prof_inicial', 16.0), 16.0),
+                    "marca_origen": marca_n,
+                    "diseno_origen": diseno_n,
+                    "dimension": dim_n,
+                    "precio_compra_inicial": database.to_float(datos.get('precio_compra'), 0.0),
+                    "prof_inicial_nueva": prof_n,
                     "usuario_responsable": user
                 })
                 if not res_alta.get('ok'):
@@ -983,7 +991,7 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
 
         p_ret = database.to_float(prof_retiro_in, p_act or 0.0)
         p_ini = database.to_float(p_ini, 16.0)
-        c_ciclo = database.to_float(c_ciclo, 1450000.0)
+        c_ciclo = database.to_float(c_ciclo, 0.0)
         val_gar = database.to_float(val_gar, 0.0)
 
         cfg = database.obtener_configuracion_avanzada_cliente(cli_efectivo)
@@ -991,7 +999,7 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
 
         mm_desperdiciados = max(0.0, p_ret - lim_ret)
         denominador = max(1.0, p_ini - lim_ret)
-        dinero_perdido = max(0.0, (mm_desperdiciados * (c_ciclo / denominador)) - val_gar)
+        dinero_perdido = max(0.0, (mm_desperdiciados * (c_ciclo / denominador)) - val_gar) if c_ciclo > 0 else None
 
         cursor.execute("""
             UPDATE llantas_ciclos SET
@@ -1125,9 +1133,10 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
         costo_total = sum(database.to_float(c.get('costo_ciclo', 0.0)) for c in ciclos_raw)
 
     if not costo_total:
-        costo_total = database.to_float(ll.get('precio_compra_inicial', 1450000.0), 1450000.0)
+        costo_total = database.to_float(ll.get('precio_compra_inicial'), 0.0)
 
-    cpk_global = round(costo_total / max(1.0, km_totales), 4)
+    # Sin costo registrado no hay CPK (antes se usaba $1.450.000)
+    cpk_global = round(costo_total / max(1.0, km_totales), 4) if costo_total > 0 else None
 
     # Calcular mm gastados para rendimiento km/mm
     mm_gastados_tot = 0.0
@@ -1139,11 +1148,14 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
     rendimiento_km_mm = round(km_totales / max(1.0, mm_gastados_tot), 1)
 
     # Ahorro vs Llanta Nueva
-    p_compra_ini = database.to_float(ll.get('precio_compra_inicial', 1450000.0), 1450000.0)
+    p_compra_ini = database.to_float(ll.get('precio_compra_inicial'), 0.0)
     ciclo_1_km = ciclos_raw[0].get('km_recorridos_ciclo', 0.0) if ciclos_raw else km_totales
-    cpk_nueva_estimado = p_compra_ini / max(1.0, ciclo_1_km)
-    costo_proyectado_solo_nuevas = km_totales * cpk_nueva_estimado
-    ahorro_generado = max(0.0, round(costo_proyectado_solo_nuevas - costo_total, 2))
+    if p_compra_ini > 0 and costo_total > 0:
+        cpk_nueva_estimado = p_compra_ini / max(1.0, ciclo_1_km)
+        costo_proyectado_solo_nuevas = km_totales * cpk_nueva_estimado
+        ahorro_generado = max(0.0, round(costo_proyectado_solo_nuevas - costo_total, 2))
+    else:
+        ahorro_generado = None
 
     # Curva de Desgaste (mm vs km) con trazabilidad de ciclos (diente de sierra) e inspecciones
     curva_desgaste = []

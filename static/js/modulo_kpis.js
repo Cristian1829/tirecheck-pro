@@ -1325,7 +1325,7 @@
           data: {
             labels: labels,
             datasets: [{
-              label: 'CPK ($/km)',
+              label: 'CPK proyectado ($/km)',
               data: ds.cpk || [],
               backgroundColor: gradCpk,
               borderRadius: 6,

@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 12:18:30`
+- **Fecha de Generación:** `2026-10-26 12:28:51`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `56,379` líneas
-- **Tamaño Total de Código Fuente:** `2814.2 KB` (`2,881,720` bytes)
+- **Líneas Totales de Código:** `56,398` líneas
+- **Tamaño Total de Código Fuente:** `2814.5 KB` (`2,882,033` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,11 +432,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2304 | 103.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9480 | 460.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
-| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
+| [server.py](#archivo-serverpy) | `python` | 2304 | 103.1 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 9485 | 461.0 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1524 | 70.1 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2109 | 103.1 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2110 | 103.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -445,7 +445,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5789 | 383.7 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5789 | 384.1 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
@@ -456,7 +456,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1209 | 57.1 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1759 | 83.8 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
-| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2077 | 108.9 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
+| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2078 | 107.1 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -3777,7 +3777,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2304 líneas | 105,493 bytes (103.0 KB)
+- **Métricas:** 2304 líneas | 105,560 bytes (103.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5742,7 +5742,7 @@ class AltaLlantaBodegaItem(BaseModel):
     banda_reen: str = ""
     prof_inicial: float = 18.0
     prof_actual_min: float = 18.0
-    costo_compra: float = 1450000.0
+    costo_compra: Optional[float] = None  # sin precio: la llanta se excluye de los cálculos en pesos
     proveedor_actual: str = ""
     observaciones: str = ""
 
@@ -6093,7 +6093,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9480 líneas | 471,271 bytes (460.2 KB)
+- **Métricas:** 9485 líneas | 472,023 bytes (461.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -7774,7 +7774,7 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
             psi = to_float(r[13], 100.0)
             km_act = to_float(r[14])
             km_mont = to_float(r[15])
-            pr = to_float(r[16], 1450000.0)
+            pr = to_float(r[16], 0.0)
             p_ini = to_float(r[17], 18.0)
             subc = str(r[18] or '').strip().upper()
             tipo_op = str(r[19] or '').strip().upper()
@@ -7794,7 +7794,7 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
             row_m = c.fetchone()
 
             if not row_m:
-                costo_base = pr if pr > 0 else 1450000.0
+                costo_base = pr if pr > 0 else 0.0  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
                 c.execute("""
                     INSERT INTO llantas_maestro (
                         numero_interno, cliente, subcliente, tipo_operacion, ubicacion_bodega, estado_actual,
@@ -11876,24 +11876,27 @@ VENTANA_SALVAMENTO_MM = 1.2                # mm sobre el límite en que el casco
 def construir_referencias_llanta(df: pd.DataFrame):
     """
     Precio y profundidad inicial de referencia cuando la inspección no los trae.
-    - Precio: mediana de precios reales del mismo cliente y dimensión; si no hay, de la dimensión.
+    - Precio: el precio real de la MISMA llanta (cliente + número interno) registrado en otra de sus
+      inspecciones. No se estima con otras llantas ni con otros clientes: sin precio la llanta se
+      excluye de los cálculos en pesos hasta que se registre (regla de negocio).
     - Profundidad inicial: catálogo de modelos (marca, diseño, dimensión, vida).
     Si no hay referencia retorna None y la llanta queda fuera del cálculo (antes se usaban
     $1.450.000 y 16/18 mm fijos, que inventaban montos y desgastes).
     """
-    med_cli_dim, med_dim = {}, {}
-    if df is not None and not df.empty and 'precio' in df.columns:
+    precio_llanta = {}
+    if df is not None and not df.empty and {'precio', 'numero_interno'} <= set(df.columns):
         d = df[pd.to_numeric(df['precio'], errors='coerce').fillna(0) > 0].copy()
         if not d.empty:
             d['_cli'] = d['cliente'].astype(str).str.strip().str.upper()
-            d['_dim'] = d['dimension'].astype(str).str.strip().str.upper()
+            d['_sn'] = d['numero_interno'].astype(str).str.strip().str.upper()
             d['_pr'] = pd.to_numeric(d['precio'], errors='coerce')
-            med_cli_dim = d.groupby(['_cli', '_dim'])['_pr'].median().to_dict()
-            med_dim = d.groupby('_dim')['_pr'].median().to_dict()
+            d = d[~d['_sn'].isin(('', 'NAN', 'NONE'))]
+            if 'fecha' in d.columns:
+                d = d.sort_values('fecha')
+            precio_llanta = d.groupby(['_cli', '_sn'])['_pr'].last().to_dict()  # el más reciente
 
-    def ref_precio(cliente, dimension):
-        clave_dim = str(dimension or '').strip().upper()
-        v = med_cli_dim.get((str(cliente or '').strip().upper(), clave_dim)) or med_dim.get(clave_dim)
+    def ref_precio(cliente, dimension, numero_interno=''):
+        v = precio_llanta.get((str(cliente or '').strip().upper(), str(numero_interno or '').strip().upper()))
         return float(v) if v and v > 0 else None
 
     cache_pini = {}
@@ -12118,6 +12121,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         ref_precio, ref_prof_inicial = construir_referencias_llanta(df_raw)
         _col = lambda c: [str(x or '').strip() for x in (df[c].tolist() if c in df else [''] * n_rows)]
         marca_list_g, diseno_list_g, dim_list_g, vida_list_g = _col('marca'), _col('diseno'), _col('dimension'), _col('vida')
+        sn_list_g = _col('numero_interno')
         delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
         alerta_alin_col_g = []
 
@@ -12156,11 +12160,11 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             # Profundidad inicial real o del catálogo (antes 16/18 mm fijos inventaban desgaste)
             p_ini = pini_list[idx] if pini_list[idx] > 0 else ref_prof_inicial(marca_list_g[idx], diseno_list_g[idx], dim_list_g[idx], vida_list_g[idx])
             p_ini_col.append(p_ini if p_ini is not None else float('nan'))
-            # Precio real o mediana real del cliente/dimensión; si no hay, sin dato (antes $1.450.000 fijo)
+            # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
             pr_real = precio_list[idx] if precio_list[idx] > 0 else None
-            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx])
+            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx], sn_list_g[idx])
             precio_col.append(pr if pr else float('nan'))
-            precio_estimado_col.append(pr_real is None and pr is not None)
+            precio_estimado_col.append(False)
 
             cli_row = cli_list[idx] or cliente or ''
             sub_row = sub_list[idx] or subcliente or ''
@@ -12642,7 +12646,7 @@ def crear_llanta_en_bodega(datos: dict) -> dict:
     banda = str(datos.get('banda_reen', '')).strip().upper()
     prof_ini = to_float(datos.get('prof_inicial', 18.0), 18.0)
     prof_act = to_float(datos.get('prof_actual_min', prof_ini), prof_ini)
-    costo = to_float(datos.get('costo_compra', 1450000.0), 1450000.0)
+    costo = to_float(datos.get('costo_compra'), 0.0)  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
     proveedor = str(datos.get('proveedor_actual', '')).strip()
     obs = str(datos.get('observaciones', '')).strip()
     user = str(datos.get('usuario_registro', 'admin')).strip()
@@ -12769,7 +12773,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         vida_act = str(cur.get('vida_actual', 'Original'))
         p_ini = to_float(cur.get('prof_inicial', 18.0))
         p_act = to_float(cur.get('prof_actual_min', 18.0))
-        costo_ciclo = to_float(cur.get('costo_ciclo_actual', 1450000.0))
+        costo_ciclo = to_float(cur.get('costo_ciclo_actual', 0.0))
         costo_rep_ciclo = to_float(cur.get('costo_reparaciones_ciclo_actual', 0.0))
         costo_acum = to_float(cur.get('costo_acumulado_total', costo_ciclo))
         km_ciclo = to_float(cur.get('km_recorridos_ciclo', 0.0))
@@ -13053,7 +13057,7 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
         ll = dict(zip(col_names, row))
         p_ini = to_float(ll.get('prof_inicial', 18.0))
         p_act = to_float(ll.get('prof_actual_min', 18.0))
-        c_ciclo = to_float(ll.get('costo_ciclo_actual', 1450000.0))
+        c_ciclo = to_float(ll.get('costo_ciclo_actual', 0.0))
         c_rep = to_float(ll.get('costo_reparaciones_ciclo_actual', 0.0))
 
         cfg = obtener_configuracion_avanzada_cliente(cliente)
@@ -13066,7 +13070,8 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
             mm_ut = max(1.0, p_ini - lim_ret)
             mm_perd = max(0.0, p_act - lim_ret)
             costo_mm = (c_ciclo + c_rep) / mm_ut
-            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido)
+            # Sin costo registrado la pérdida en pesos queda sin dato (no $0 ni un valor inventado)
+            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido) if (c_ciclo + c_rep) > 0 else None
 
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -13599,12 +13604,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             cli_r = cli_list[i] or cliente or ''
             sub_r = sub_list[i] or subcliente or ''
 
-            # Precio real; si falta, mediana real del cliente/dimensión; si tampoco hay, sin dato
-            if precio_list[i] > 0:
-                pr, pr_estimado = precio_list[i], False
-            else:
-                pr, pr_estimado = ref_precio(cli_r, dim_list_k[i]), True
-            precio_estimado_col.append(pr_estimado and pr is not None)
+            # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
+            pr = precio_list[i] if precio_list[i] > 0 else ref_precio(cli_r, dim_list_k[i], sn_list[i])
+            precio_estimado_col.append(False)
 
             positivos = [x for x in (pe, pc, pi) if x > 0]
             p_min = min(positivos) if positivos else 0.0
@@ -13749,7 +13751,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_es_repuesto'] = [e == ee.REPUESTO for e in eje_col]
         df['calc_pini_sin_dato'] = pini_sin_dato_col
         # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
-        df['calc_precio'] = [p if p > 0 else ref_precio(c, d) for p, c, d in zip(precio_list, cli_list, dim_list_k)]
+        df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn) for p, c, d, sn in zip(precio_list, cli_list, dim_list_k, sn_list)]
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
@@ -14438,7 +14440,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "labels": labels_k14,
         "proyeccion_km": proy_k14,
         "km_mm": kmmm_k14,
-        "cpk": cpk_k14
+        "cpk": cpk_k14,
+        # Este CPK es el PROYECTADO (no el operativo): precio de la llanta / km proyectados al límite de retiro
+        "cpk_tipo": "proyectado",
+        "cpk_formula": "CPK proyectado = precio de la llanta ÷ km proyectados hasta el límite de retiro"
     }
 
     # =========================================================================
@@ -15582,7 +15587,7 @@ def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> di
 
 - **Ruta:** `modulo_bodegas_taller.py`
 - **Descripción:** Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)
-- **Métricas:** 1512 líneas | 70,979 bytes (69.3 KB)
+- **Métricas:** 1524 líneas | 71,820 bytes (70.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -15676,7 +15681,7 @@ def sincronizar_hoja_vida_desde_inspecciones(conn=None):
             psi = database.to_float(r[13], 100.0)
             km_act = database.to_float(r[14])
             km_mont = database.to_float(r[15])
-            pr = database.to_float(r[16], 1450000.0)
+            pr = database.to_float(r[16], 0.0)
             p_ini = database.to_float(r[17], 16.0)
             subc = str(r[18] or 'Principal').strip()
             nov = str(r[19] or '').strip()
@@ -15802,7 +15807,7 @@ def crear_llantas_stock(datos: dict) -> dict:
     diseno = str(datos.get('diseno_origen') or datos.get('diseno', '')).strip().upper()
     dimension = str(datos.get('dimension', '295/80R22.5')).strip().upper()
     tipo_construccion = str(datos.get('tipo_construccion', 'Radial')).strip()
-    precio_compra = database.to_float(datos.get('precio_compra_inicial') or datos.get('precio_compra', 1450000.0), 1450000.0)
+    precio_compra = database.to_float(datos.get('precio_compra_inicial') or datos.get('precio_compra'), 0.0)  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
     prof_ini = database.to_float(datos.get('prof_inicial_nueva') or datos.get('prof_inicial', 16.0), 16.0)
     proveedor = str(datos.get('proveedor_factura') or datos.get('proveedor', '')).strip()
     dot_base = str(datos.get('numero_serie_dot') or datos.get('dot', '')).strip().upper()
@@ -15968,8 +15973,8 @@ def desmontar_llanta_taller(datos: dict) -> dict:
             if prof_momento > lim_ret:
                 mm_desp = max(0.0, prof_momento - lim_ret)
                 denominador = max(1.0, (p_ini or 16.0) - lim_ret)
-                costo_base = c_ciclo or 1450000.0
-                dinero_perd = max(0.0, (mm_desp * (costo_base / denominador)) - (val_gar or 0.0))
+                # Sin costo registrado la pérdida en pesos queda sin dato
+                dinero_perd = max(0.0, (mm_desp * (c_ciclo / denominador)) - (val_gar or 0.0)) if c_ciclo else None
 
             cursor.execute("""
                 UPDATE llantas_ciclos SET
@@ -16088,15 +16093,23 @@ def montar_llanta_taller(datos: dict) -> dict:
         row_check = cursor.fetchone()
         if not row_check or es_nueva_directa:
             if not row_check:
+                marca_n = str(datos.get('marca') or '').strip().upper()
+                diseno_n = str(datos.get('diseno') or '').strip().upper()
+                dim_n = str(datos.get('dimension') or '').strip().upper()
+                prof_n = database.to_float(datos.get('prof_inicial'), 0.0)
+                if prof_n <= 0 and marca_n and diseno_n:
+                    prof_n = database.to_float(database.buscar_profundidad_inicial(marca_n, diseno_n, dim_n, 'Original'), 0.0)
+                if not (marca_n and diseno_n and dim_n and prof_n > 0):
+                    return {"ok": False, "status": "error", "message": f"La llanta {numero_interno} no existe en el inventario: indique marca, diseño, dimensión y profundidad inicial para darla de alta"}
                 res_alta = crear_llantas_stock({
                     "cliente_propietario": cliente or "CLIENTE GENERAL",
                     "modo": "individual",
                     "numero_interno": numero_interno,
-                    "marca_origen": str(datos.get('marca', 'MICHELIN')).strip().upper(),
-                    "diseno_origen": str(datos.get('diseno', 'X-LINE')).strip().upper(),
-                    "dimension": str(datos.get('dimension', '295/80R22.5')).strip().upper(),
-                    "precio_compra_inicial": database.to_float(datos.get('precio_compra', 1450000.0), 1450000.0),
-                    "prof_inicial_nueva": database.to_float(datos.get('prof_inicial', 16.0), 16.0),
+                    "marca_origen": marca_n,
+                    "diseno_origen": diseno_n,
+                    "dimension": dim_n,
+                    "precio_compra_inicial": database.to_float(datos.get('precio_compra'), 0.0),
+                    "prof_inicial_nueva": prof_n,
                     "usuario_responsable": user
                 })
                 if not res_alta.get('ok'):
@@ -16571,7 +16584,7 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
 
         p_ret = database.to_float(prof_retiro_in, p_act or 0.0)
         p_ini = database.to_float(p_ini, 16.0)
-        c_ciclo = database.to_float(c_ciclo, 1450000.0)
+        c_ciclo = database.to_float(c_ciclo, 0.0)
         val_gar = database.to_float(val_gar, 0.0)
 
         cfg = database.obtener_configuracion_avanzada_cliente(cli_efectivo)
@@ -16579,7 +16592,7 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
 
         mm_desperdiciados = max(0.0, p_ret - lim_ret)
         denominador = max(1.0, p_ini - lim_ret)
-        dinero_perdido = max(0.0, (mm_desperdiciados * (c_ciclo / denominador)) - val_gar)
+        dinero_perdido = max(0.0, (mm_desperdiciados * (c_ciclo / denominador)) - val_gar) if c_ciclo > 0 else None
 
         cursor.execute("""
             UPDATE llantas_ciclos SET
@@ -16713,9 +16726,10 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
         costo_total = sum(database.to_float(c.get('costo_ciclo', 0.0)) for c in ciclos_raw)
 
     if not costo_total:
-        costo_total = database.to_float(ll.get('precio_compra_inicial', 1450000.0), 1450000.0)
+        costo_total = database.to_float(ll.get('precio_compra_inicial'), 0.0)
 
-    cpk_global = round(costo_total / max(1.0, km_totales), 4)
+    # Sin costo registrado no hay CPK (antes se usaba $1.450.000)
+    cpk_global = round(costo_total / max(1.0, km_totales), 4) if costo_total > 0 else None
 
     # Calcular mm gastados para rendimiento km/mm
     mm_gastados_tot = 0.0
@@ -16727,11 +16741,14 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
     rendimiento_km_mm = round(km_totales / max(1.0, mm_gastados_tot), 1)
 
     # Ahorro vs Llanta Nueva
-    p_compra_ini = database.to_float(ll.get('precio_compra_inicial', 1450000.0), 1450000.0)
+    p_compra_ini = database.to_float(ll.get('precio_compra_inicial'), 0.0)
     ciclo_1_km = ciclos_raw[0].get('km_recorridos_ciclo', 0.0) if ciclos_raw else km_totales
-    cpk_nueva_estimado = p_compra_ini / max(1.0, ciclo_1_km)
-    costo_proyectado_solo_nuevas = km_totales * cpk_nueva_estimado
-    ahorro_generado = max(0.0, round(costo_proyectado_solo_nuevas - costo_total, 2))
+    if p_compra_ini > 0 and costo_total > 0:
+        cpk_nueva_estimado = p_compra_ini / max(1.0, ciclo_1_km)
+        costo_proyectado_solo_nuevas = km_totales * cpk_nueva_estimado
+        ahorro_generado = max(0.0, round(costo_proyectado_solo_nuevas - costo_total, 2))
+    else:
+        ahorro_generado = None
 
     # Curva de Desgaste (mm vs km) con trazabilidad de ciclos (diente de sierra) e inspecciones
     curva_desgaste = []
@@ -17262,7 +17279,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 2109 líneas | 105,619 bytes (103.1 KB)
+- **Métricas:** 2110 líneas | 105,749 bytes (103.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -19289,7 +19306,8 @@ def generar_pdf_acta_chatarrizacion(datos: dict) -> bytes:
     prof_ret = float(datos.get('prof_retiro', 0.0))
     lim_ret = float(datos.get('limite_retiro', 3.0))
     mm_desp = float(datos.get('mm_desperdiciados', 0.0))
-    dinero_perd = float(datos.get('dinero_perdido', 0.0))
+    dinero_perd = datos.get('dinero_perdido')
+    dinero_perd = float(dinero_perd) if dinero_perd not in (None, '') else None
     motivo = datos.get('motivo_baja', 'Desgaste Irregular / Falla de Carcasa')
 
     elements.append(Paragraph("<b>TIREANALYZE PRO — GESTIÓN TÉCNICA Y AUDITORÍA DE FLOTAS</b>", sub_style))
@@ -19300,7 +19318,7 @@ def generar_pdf_acta_chatarrizacion(datos: dict) -> bytes:
     # Cuadro de Pérdida Financiera
     cuadro_alerta = [
         [
-            Paragraph(f"⚠️ AUDITORÍA DE RENDIMIENTO: <b>{mm_desp:.1f} mm Desperdiciados</b> | Pérdida Económica Estimada: <b>${dinero_perd:,.0f} COP</b>", alert_box_style)
+            Paragraph(f"⚠️ AUDITORÍA DE RENDIMIENTO: <b>{mm_desp:.1f} mm Desperdiciados</b> | Pérdida Económica Estimada: <b>{f'${dinero_perd:,.0f} COP' if dinero_perd is not None else 'sin precio registrado'}</b>", alert_box_style)
         ]
     ]
     t_alert = Table(cuadro_alerta, colWidths=[540])
@@ -22242,7 +22260,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 5789 líneas | 392,921 bytes (383.7 KB)
+- **Métricas:** 5789 líneas | 393,276 bytes (384.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -24742,7 +24760,7 @@ if __name__ == '__main__':
           <div>
             <div class="flex items-center space-x-1.5">
               <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800">KPI 14</span>
-              <h4 class="text-sm font-black text-slate-900">Tríada Multidimensional Sincronizada: Proyección, Km/mm y CPK ($)</h4>
+              <h4 class="text-sm font-black text-slate-900">Tríada Multidimensional Sincronizada: Proyección, Km/mm y CPK proyectado ($)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Visualización simultánea de rendimiento técnico y financiero reagrupado dinámicamente</p>
           </div>
@@ -24774,7 +24792,7 @@ if __name__ == '__main__':
             </div>
           </div>
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
-            <h5 class="text-xs font-black text-purple-700 mb-2 text-center uppercase tracking-wider">3. CPK ($/km)</h5>
+            <h5 class="text-xs font-black text-purple-700 mb-2 text-center uppercase tracking-wider" title="Precio de la llanta ÷ km proyectados hasta el límite de retiro">3. CPK proyectado ($/km)</h5>
             <div class="relative w-full h-[260px]">
               <canvas id="canvasKpi14_cpk"></canvas>
             </div>
@@ -25127,7 +25145,7 @@ if __name__ == '__main__':
           <div id="cardKpiKmProm" class="text-lg font-black text-blue-600">0.0</div>
         </div>
         <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl">
-          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CPK Actual Promedio</span>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" title="Precio de la llanta ÷ km recorridos a la última inspección">CPK Operativo Promedio</span>
           <div id="cardKpiCpkProm" class="text-lg font-black text-emerald-600">$0.0000</div>
         </div>
         <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl">
@@ -25157,9 +25175,9 @@ if __name__ == '__main__':
               <th class="p-2.5 text-right">Km Rodados</th>
               <th class="p-2.5 text-right">Km/mm</th>
               <th class="p-2.5 text-right">Precio</th>
-              <th class="p-2.5 text-right">CPK Actual</th>
+              <th class="p-2.5 text-right" title="Precio ÷ km recorridos a la última inspección">CPK Operativo</th>
               <th class="p-2.5 text-right">Proy Total Km</th>
-              <th class="p-2.5 text-right">CPK Proy</th>
+              <th class="p-2.5 text-right" title="Precio ÷ km proyectados hasta el límite de retiro">CPK Proyectado</th>
               <th class="p-2.5 text-right">Km Restantes</th>
             </tr>
           </thead>
@@ -26169,7 +26187,7 @@ if __name__ == '__main__':
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP) *</label>
-            <input type="number" step="1000" id="alta_costo_compra" required value="1450000" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="1000" id="alta_costo_compra" placeholder="Sin precio: se excluye de los costos" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Factura</label>
@@ -27599,7 +27617,7 @@ if __name__ == '__main__':
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-0.5">Precio Compra ($)</label>
-              <input type="number" step="1000" id="mont_nueva_precio" value="1450000" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+              <input type="number" step="1000" id="mont_nueva_precio" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
             </div>
           </div>
         </div>
@@ -36729,7 +36747,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 1953 líneas | 84,503 bytes (82.5 KB)
+- **Métricas:** 1953 líneas | 84,514 bytes (82.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -38060,7 +38078,7 @@ if __name__ == '__main__':
           data: {
             labels: labels,
             datasets: [{
-              label: 'CPK ($/km)',
+              label: 'CPK proyectado ($/km)',
               data: ds.cpk || [],
               backgroundColor: gradCpk,
               borderRadius: 6,
@@ -42680,7 +42698,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_bodegas.js`
 - **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
-- **Métricas:** 2077 líneas | 111,494 bytes (108.9 KB)
+- **Métricas:** 2078 líneas | 109,651 bytes (107.1 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43408,7 +43426,7 @@ if __name__ == '__main__':
         banda_reen: document.getElementById('alta_banda_reen').value.trim().toUpperCase(),
         prof_inicial: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
         prof_actual_min: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
-        costo_compra: parseFloat(document.getElementById('alta_costo_compra').value) || 1450000.0,
+        costo_compra: parseFloat(document.getElementById('alta_costo_compra').value) || null,
         proveedor_actual: document.getElementById('alta_proveedor').value.trim(),
         observaciones: document.getElementById('alta_observaciones').value.trim()
       };
@@ -44362,8 +44380,8 @@ if __name__ == '__main__':
         payload.marca = document.getElementById('mont_nueva_marca').value;
         payload.diseno = document.getElementById('mont_nueva_diseno').value;
         payload.dimension = document.getElementById('mont_nueva_dimension').value;
-        payload.prof_inicial = parseFloat(document.getElementById('mont_nueva_prof').value) || 16.0;
-        payload.precio_compra = parseFloat(document.getElementById('mont_nueva_precio').value) || 1450000.0;
+        payload.prof_inicial = parseFloat(document.getElementById('mont_nueva_prof').value) || null;  // sin dato: el servidor usa el catálogo del modelo
+        payload.precio_compra = parseFloat(document.getElementById('mont_nueva_precio').value) || null;
       }
 
       try {
@@ -44429,10 +44447,11 @@ if __name__ == '__main__':
 
       // 5 Tarjetas KPIs
       document.getElementById('hv_kpi_km').textContent = `${Number(met.km_totales || 0).toLocaleString()} km`;
-      document.getElementById('hv_kpi_costo').textContent = `$ ${Number(met.costo_total_invertido || 0).toLocaleString('es-CO')}`;
-      document.getElementById('hv_kpi_cpk').textContent = `$ ${Number(met.cpk_global || 0).toFixed(2)} / km`;
+      // Sin precio registrado se dice así, en lugar de mostrar $0
+      document.getElementById('hv_kpi_costo').textContent = met.costo_total_invertido ? `$ ${Number(met.costo_total_invertido).toLocaleString('es-CO')}` : 'Sin precio';
+      document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${Number(met.cpk_global).toFixed(2)} / km` : 'Sin precio';
       document.getElementById('hv_kpi_rendimiento').textContent = `${Number(met.rendimiento_km_mm || 0).toLocaleString()} km/mm`;
-      document.getElementById('hv_kpi_ahorro').textContent = `$ ${Number(met.ahorro_estimado_vs_nueva || 0).toLocaleString('es-CO')}`;
+      document.getElementById('hv_kpi_ahorro').textContent = met.ahorro_generado_vs_nueva != null ? `$ ${Number(met.ahorro_generado_vs_nueva).toLocaleString('es-CO')}` : 'Sin precio';
 
       // Botón Acta PDF si está en FVU
       const btnActa = document.getElementById('btnHvPdfActa');

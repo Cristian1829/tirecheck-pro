@@ -1675,7 +1675,7 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
             psi = to_float(r[13], 100.0)
             km_act = to_float(r[14])
             km_mont = to_float(r[15])
-            pr = to_float(r[16], 1450000.0)
+            pr = to_float(r[16], 0.0)
             p_ini = to_float(r[17], 18.0)
             subc = str(r[18] or '').strip().upper()
             tipo_op = str(r[19] or '').strip().upper()
@@ -1695,7 +1695,7 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
             row_m = c.fetchone()
 
             if not row_m:
-                costo_base = pr if pr > 0 else 1450000.0
+                costo_base = pr if pr > 0 else 0.0  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
                 c.execute("""
                     INSERT INTO llantas_maestro (
                         numero_interno, cliente, subcliente, tipo_operacion, ubicacion_bodega, estado_actual,
@@ -5777,24 +5777,27 @@ VENTANA_SALVAMENTO_MM = 1.2                # mm sobre el límite en que el casco
 def construir_referencias_llanta(df: pd.DataFrame):
     """
     Precio y profundidad inicial de referencia cuando la inspección no los trae.
-    - Precio: mediana de precios reales del mismo cliente y dimensión; si no hay, de la dimensión.
+    - Precio: el precio real de la MISMA llanta (cliente + número interno) registrado en otra de sus
+      inspecciones. No se estima con otras llantas ni con otros clientes: sin precio la llanta se
+      excluye de los cálculos en pesos hasta que se registre (regla de negocio).
     - Profundidad inicial: catálogo de modelos (marca, diseño, dimensión, vida).
     Si no hay referencia retorna None y la llanta queda fuera del cálculo (antes se usaban
     $1.450.000 y 16/18 mm fijos, que inventaban montos y desgastes).
     """
-    med_cli_dim, med_dim = {}, {}
-    if df is not None and not df.empty and 'precio' in df.columns:
+    precio_llanta = {}
+    if df is not None and not df.empty and {'precio', 'numero_interno'} <= set(df.columns):
         d = df[pd.to_numeric(df['precio'], errors='coerce').fillna(0) > 0].copy()
         if not d.empty:
             d['_cli'] = d['cliente'].astype(str).str.strip().str.upper()
-            d['_dim'] = d['dimension'].astype(str).str.strip().str.upper()
+            d['_sn'] = d['numero_interno'].astype(str).str.strip().str.upper()
             d['_pr'] = pd.to_numeric(d['precio'], errors='coerce')
-            med_cli_dim = d.groupby(['_cli', '_dim'])['_pr'].median().to_dict()
-            med_dim = d.groupby('_dim')['_pr'].median().to_dict()
+            d = d[~d['_sn'].isin(('', 'NAN', 'NONE'))]
+            if 'fecha' in d.columns:
+                d = d.sort_values('fecha')
+            precio_llanta = d.groupby(['_cli', '_sn'])['_pr'].last().to_dict()  # el más reciente
 
-    def ref_precio(cliente, dimension):
-        clave_dim = str(dimension or '').strip().upper()
-        v = med_cli_dim.get((str(cliente or '').strip().upper(), clave_dim)) or med_dim.get(clave_dim)
+    def ref_precio(cliente, dimension, numero_interno=''):
+        v = precio_llanta.get((str(cliente or '').strip().upper(), str(numero_interno or '').strip().upper()))
         return float(v) if v and v > 0 else None
 
     cache_pini = {}
@@ -6019,6 +6022,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         ref_precio, ref_prof_inicial = construir_referencias_llanta(df_raw)
         _col = lambda c: [str(x or '').strip() for x in (df[c].tolist() if c in df else [''] * n_rows)]
         marca_list_g, diseno_list_g, dim_list_g, vida_list_g = _col('marca'), _col('diseno'), _col('dimension'), _col('vida')
+        sn_list_g = _col('numero_interno')
         delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
         alerta_alin_col_g = []
 
@@ -6057,11 +6061,11 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             # Profundidad inicial real o del catálogo (antes 16/18 mm fijos inventaban desgaste)
             p_ini = pini_list[idx] if pini_list[idx] > 0 else ref_prof_inicial(marca_list_g[idx], diseno_list_g[idx], dim_list_g[idx], vida_list_g[idx])
             p_ini_col.append(p_ini if p_ini is not None else float('nan'))
-            # Precio real o mediana real del cliente/dimensión; si no hay, sin dato (antes $1.450.000 fijo)
+            # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
             pr_real = precio_list[idx] if precio_list[idx] > 0 else None
-            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx])
+            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx], sn_list_g[idx])
             precio_col.append(pr if pr else float('nan'))
-            precio_estimado_col.append(pr_real is None and pr is not None)
+            precio_estimado_col.append(False)
 
             cli_row = cli_list[idx] or cliente or ''
             sub_row = sub_list[idx] or subcliente or ''
@@ -6543,7 +6547,7 @@ def crear_llanta_en_bodega(datos: dict) -> dict:
     banda = str(datos.get('banda_reen', '')).strip().upper()
     prof_ini = to_float(datos.get('prof_inicial', 18.0), 18.0)
     prof_act = to_float(datos.get('prof_actual_min', prof_ini), prof_ini)
-    costo = to_float(datos.get('costo_compra', 1450000.0), 1450000.0)
+    costo = to_float(datos.get('costo_compra'), 0.0)  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
     proveedor = str(datos.get('proveedor_actual', '')).strip()
     obs = str(datos.get('observaciones', '')).strip()
     user = str(datos.get('usuario_registro', 'admin')).strip()
@@ -6670,7 +6674,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         vida_act = str(cur.get('vida_actual', 'Original'))
         p_ini = to_float(cur.get('prof_inicial', 18.0))
         p_act = to_float(cur.get('prof_actual_min', 18.0))
-        costo_ciclo = to_float(cur.get('costo_ciclo_actual', 1450000.0))
+        costo_ciclo = to_float(cur.get('costo_ciclo_actual', 0.0))
         costo_rep_ciclo = to_float(cur.get('costo_reparaciones_ciclo_actual', 0.0))
         costo_acum = to_float(cur.get('costo_acumulado_total', costo_ciclo))
         km_ciclo = to_float(cur.get('km_recorridos_ciclo', 0.0))
@@ -6954,7 +6958,7 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
         ll = dict(zip(col_names, row))
         p_ini = to_float(ll.get('prof_inicial', 18.0))
         p_act = to_float(ll.get('prof_actual_min', 18.0))
-        c_ciclo = to_float(ll.get('costo_ciclo_actual', 1450000.0))
+        c_ciclo = to_float(ll.get('costo_ciclo_actual', 0.0))
         c_rep = to_float(ll.get('costo_reparaciones_ciclo_actual', 0.0))
 
         cfg = obtener_configuracion_avanzada_cliente(cliente)
@@ -6967,7 +6971,8 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
             mm_ut = max(1.0, p_ini - lim_ret)
             mm_perd = max(0.0, p_act - lim_ret)
             costo_mm = (c_ciclo + c_rep) / mm_ut
-            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido)
+            # Sin costo registrado la pérdida en pesos queda sin dato (no $0 ni un valor inventado)
+            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido) if (c_ciclo + c_rep) > 0 else None
 
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -7500,12 +7505,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             cli_r = cli_list[i] or cliente or ''
             sub_r = sub_list[i] or subcliente or ''
 
-            # Precio real; si falta, mediana real del cliente/dimensión; si tampoco hay, sin dato
-            if precio_list[i] > 0:
-                pr, pr_estimado = precio_list[i], False
-            else:
-                pr, pr_estimado = ref_precio(cli_r, dim_list_k[i]), True
-            precio_estimado_col.append(pr_estimado and pr is not None)
+            # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
+            pr = precio_list[i] if precio_list[i] > 0 else ref_precio(cli_r, dim_list_k[i], sn_list[i])
+            precio_estimado_col.append(False)
 
             positivos = [x for x in (pe, pc, pi) if x > 0]
             p_min = min(positivos) if positivos else 0.0
@@ -7650,7 +7652,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_es_repuesto'] = [e == ee.REPUESTO for e in eje_col]
         df['calc_pini_sin_dato'] = pini_sin_dato_col
         # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
-        df['calc_precio'] = [p if p > 0 else ref_precio(c, d) for p, c, d in zip(precio_list, cli_list, dim_list_k)]
+        df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn) for p, c, d, sn in zip(precio_list, cli_list, dim_list_k, sn_list)]
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
@@ -8339,7 +8341,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "labels": labels_k14,
         "proyeccion_km": proy_k14,
         "km_mm": kmmm_k14,
-        "cpk": cpk_k14
+        "cpk": cpk_k14,
+        # Este CPK es el PROYECTADO (no el operativo): precio de la llanta / km proyectados al límite de retiro
+        "cpk_tipo": "proyectado",
+        "cpk_formula": "CPK proyectado = precio de la llanta ÷ km proyectados hasta el límite de retiro"
     }
 
     # =========================================================================
