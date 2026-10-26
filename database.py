@@ -2967,7 +2967,13 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
         conn.commit()
     return registros_insertados
 
-def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_manos: bool) -> dict:
+def _texto_alineacion(pos: int, diff: float, en_retiro: bool) -> str:
+    """Una llanta que se va a retirar no se rota: solo queda la revisión de alineación."""
+    if en_retiro:
+        return f"Pos {pos} (dif {diff:.1f} mm): Revisar alineación (llanta programada para retiro)"
+    return f"Pos {pos} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación"
+
+def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_manos: bool, posiciones_retiro=None) -> dict:
     """
     Motor Avanzado de Auto-Ajuste Interno (Versión 3.5 Enterprise).
     Aplica las 4 Reglas Físicas de Optimización de Chasis:
@@ -2975,6 +2981,9 @@ def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_ma
     2. Mayor Altura al Exterior en Pachas Duales (Pos Int vs Pos Ext).
     3. Jerarquía de Ejes en Tráiler 2E (Eje 1 Delantero <= Eje 2 Trasero).
     4. Jerarquía en Tráiler 3E / Tridem (Eje 2 Central < Eje 1 Delantero < Eje 3 Trasero).
+
+    Las posiciones en `posiciones_retiro` se desmontan, así que no participan
+    en ningún cruce ni inversión (evita "retirar Pos 1" y "cruzar P1 ↔ P2" a la vez).
     """
     instrucciones = []
     if group_df.empty:
@@ -2982,10 +2991,13 @@ def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_ma
 
     t_lower = (t_veh or '').lower()
     es_trailer = 'trailer' in t_lower or 'remolque' in t_lower
+    excluir = set(posiciones_retiro or ())
 
     pos_map = {}
     for _, r in group_df.iterrows():
         p = int(r['posicion'])
+        if p in excluir:
+            continue
         p_val = to_float(r.get('prof_min', 0))
         pos_map[p] = p_val
 
@@ -3138,6 +3150,9 @@ def analizar_inspecciones_df(df_inspecciones):
         cant_proximas = 0
         detalles_cambio = []
         detalles_proximas = []
+        # Posiciones que se desmontan (retiro o ajuste de par direccional): ninguna otra
+        # recomendación debe proponer rotarlas o cruzarlas
+        posiciones_retiro = set()
 
         for _, r in group.iterrows():
             pos_r = int(r['posicion'])
@@ -3146,6 +3161,7 @@ def analizar_inspecciones_df(df_inspecciones):
             if 0 < pb_r <= limite_cambio_cliente:
                 plan_cambio = True
                 cant_cambios += 1
+                posiciones_retiro.add(pos_r)
                 detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
             # Plan 3: Limite_Retiro < P_min <= Limite_Retiro + 2.0 mm
             elif limite_cambio_cliente < pb_r <= (limite_cambio_cliente + 2.0):
@@ -3170,9 +3186,11 @@ def analizar_inspecciones_df(df_inspecciones):
 
                 if pa_ret and not pb_ret and (pb_ini - pb_val) >= 3.0:
                     plan_cambio = True
+                    posiciones_retiro.add(pd_b)
                     detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_b} ({pb_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
                 elif pb_ret and not pa_ret and (pa_ini - pa_val) >= 3.0:
                     plan_cambio = True
+                    posiciones_retiro.add(pd_a)
                     detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_a} ({pa_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
 
         # 3. Plan 4 — Alineación Direccional (Delta Hombros >= 2.0 mm)
@@ -3186,18 +3204,20 @@ def analizar_inspecciones_df(df_inspecciones):
                     diff = abs(r['prof_int'].values[0] - r['prof_ext'].values[0])
                     if diff >= 2.0:
                         plan_alineacion = True
-                        detalles_alineacion.append(f"Pos {p} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación")
+                        detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
         elif 'trailer' in t_veh.lower() or 'remolque' in t_veh.lower():
             for _, r in group.iterrows():
                 diff = abs(r['prof_int'] - r['prof_ext'])
                 if diff >= 2.0:
                     plan_alineacion = True
-                    detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación")
+                    p = int(r['posicion'])
+                    detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
 
         # 4. Plan 5 — Mal Apareo en Pachas (Delta Pacha > 2.5 mm o dimensiones distintas)
         plan_dual = False
         detalles_dual = []
         recomendaciones_dual = []
+        posiciones_con_cruce_b2 = set()
 
         pairs = [(3,4), (5,6), (7,8), (9,10)] if ('cabezote' in t_veh.lower() and not es_cuatro_manos) else \
                 [(5,6), (7,8), (9,10), (11,12)] if ('cabezote' in t_veh.lower() and es_cuatro_manos) else \
@@ -3242,9 +3262,11 @@ def analizar_inspecciones_df(df_inspecciones):
                         ]
                         candidatas_b2.sort(key=lambda x: abs(x["prof_actual_min"] - mm_alta))
 
-                        if candidatas_b2:
+                        # Si ambas llantas del dual salen por retiro no hay referencia para emparejar
+                        if candidatas_b2 and not (p_a in posiciones_retiro and p_b in posiciones_retiro):
                             cand_b2 = candidatas_b2[0]
                             llantas_b2_usadas.add(cand_b2["numero_interno"])
+                            posiciones_con_cruce_b2.add(pos_baja)
                             recomendaciones_dual.append(
                                 f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2['numero_interno']} ({cand_b2['prof_actual_min']:.1f} mm) disponible en Bodega 2 (Recambio)."
                             )
@@ -3254,13 +3276,14 @@ def analizar_inspecciones_df(df_inspecciones):
                 a_para_cambio = (0 < pb_a <= limite_cambio_cliente)
                 b_para_cambio = (0 < pb_b <= limite_cambio_cliente)
 
-                if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0):
+                # Si ya hay una llanta concreta de Bodega 2 para esa posición, el rango genérico sobra
+                if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0) and p_a not in posiciones_con_cruce_b2:
                     r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
                     r_max = pb_b + 1.0
                     recomendaciones_dual.append(
                         f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
-                elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0):
+                elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0) and p_b not in posiciones_con_cruce_b2:
                     r_min = max(limite_cambio_cliente + 1.0, pb_a - 1.0)
                     r_max = pb_a + 1.0
                     recomendaciones_dual.append(
@@ -3316,7 +3339,7 @@ def analizar_inspecciones_df(df_inspecciones):
             p_int = to_float(r.get('prof_int', 0))
             diff_ext_int = abs(p_ext - p_int)
 
-            if pos_i not in pos_direccionales:
+            if pos_i not in pos_direccionales and pos_i not in posiciones_retiro:
                 tiene_obs_irregular = ('desgaste irregular' in nov_i or 'desgaste disparejo' in nov_i or 'irregular' in nov_i)
                 if diff_ext_int >= 2.0 or tiene_obs_irregular:
                     plan_rotacion_irregular = True
@@ -3327,12 +3350,15 @@ def analizar_inspecciones_df(df_inspecciones):
                 plan_rotacion_escalonado = True
                 detalles_rot_escalonado.append(f"Pos {pos_i} (desgaste escalonado)")
 
-            # Plan 7 — Calibración de Presión
+            # Plan 7 — Calibración de Presión (no aplica a llantas que se desmontan)
+            if pos_i in posiciones_retiro:
+                continue
             if psi_i > 0:
                 if psi_i < psi_min or psi_i > psi_max:
                     cant_presiones += 1
                     plan_calibracion_psi = True
-                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI)")
+                    sentido = 'alta' if psi_i > psi_max else 'baja'
+                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI, {sentido})")
             elif 'baja presion' in nov_i or 'baja presión' in nov_i:
                 cant_presiones += 1
                 plan_calibracion_psi = True
@@ -3353,7 +3379,8 @@ def analizar_inspecciones_df(df_inspecciones):
             detalles_dims_heterogeneas.append(f"Dimensiones mixtas ({'; '.join(partes_dims)} - No recomendado mezclar)")
 
         # 7. Motor Avanzado de Auto-Ajuste Interno (Sección 7 del Manual)
-        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, t_veh, es_cuatro_manos)
+        # Las posiciones que se desmontan para recibir llanta de Bodega 2 tampoco se cruzan
+        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, t_veh, es_cuatro_manos, posiciones_retiro | posiciones_con_cruce_b2)
 
         # Estado del Badge de la Columna 10 (Badge_Rotacion)
         if auto_ajuste_dict['tiene_auto_ajuste']:
@@ -3559,7 +3586,8 @@ def es_novedad_alerta(texto: str) -> bool:
     """
     if not texto or not isinstance(texto, str):
         return False
-    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
+    # Separadores como "Normal - sin novedad" o "OK / sin novedades" cuentan como espacios
+    limpio = " ".join(re.sub(r"[\-/,;:.()]+", " ", texto.lower()).split())
     if not limpio:
         return False
     frases_benignas = {
@@ -3567,7 +3595,12 @@ def es_novedad_alerta(texto: str) -> bool:
         'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
         'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
     }
-    return limpio not in frases_benignas
+    if limpio in frases_benignas:
+        return False
+    # Combinaciones de frases benignas: "Normal sin Novedad", "Sin novedad normal", "OK sin novedades"
+    for frase in sorted(frases_benignas, key=len, reverse=True):
+        limpio = re.sub(rf"\b{re.escape(frase)}\b", " ", limpio)
+    return bool(limpio.strip())
 
 def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
     """

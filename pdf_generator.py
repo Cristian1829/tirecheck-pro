@@ -22,22 +22,8 @@ BOGOTA_TZ = ZoneInfo("America/Bogota")
 def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
 
-def es_novedad_alerta(texto: str) -> bool:
-    """
-    Retorna False si el texto está vacío o coincide con observaciones benignas
-    o estados normales ('ok', 'normal', 'desgaste normal y parejo').
-    """
-    if not texto or not isinstance(texto, str):
-        return False
-    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
-    if not limpio:
-        return False
-    frases_benignas = {
-        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
-        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
-        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
-    }
-    return limpio not in frases_benignas
+# Misma regla que la app: "Normal sin Novedad", "OK", etc. no son alertas
+es_novedad_alerta = database.es_novedad_alerta
 
 def formatear_fecha_ddmmyyyy(f_str):
     if not f_str:
@@ -57,6 +43,24 @@ def format_num_es(val, decimals=1):
         return f"{float(val):.{decimals}f}".replace('.', ',')
     except (ValueError, TypeError):
         return str(val)
+
+def format_miles_es(val):
+    """Entero con separador de miles colombiano: 246383 -> '246.383'."""
+    try:
+        return f"{float(val):,.0f}".replace(',', '.')
+    except (ValueError, TypeError):
+        return str(val)
+
+# Decimales sueltos ("2.5mm", "dif 3.0 mm", "(2.2 vs 10.4)") pero no medidas de llanta como "R22.5"
+_RE_DECIMAL_EN = re.compile(r'(?<![R/\d.,])(\d{1,3})\.(\d+)(?![\d.])')
+
+def decimales_es(texto: str) -> str:
+    """Pasa a coma decimal los textos que arma el motor de diagnóstico (en formato inglés)."""
+    return _RE_DECIMAL_EN.sub(r'\1,\2', texto or '')
+
+def punto_color(hex_color: str) -> str:
+    """Punto de color para leyendas. Helvetica no tiene emojis (salen como cuadros), ZapfDingbats sí trae el círculo."""
+    return f"<font name='ZapfDingbats' color='{hex_color}'>l</font>"
 
 def normalizar_rol_pdf(rol):
     return dg._rol(rol)
@@ -398,7 +402,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             es_trailer_tip = ('trailer' in tipologia.lower() or 'remolque' in tipologia.lower() or 'semirremolque' in tipologia.lower())
             tipo_ali = 'Alineación (Trailer / Eje libre)' if es_trailer_tip else 'Alineación Direccional'
             accion_ali = 'Alinear ejes de remolque y verificar bujes/tensores de suspensión.' if es_trailer_tip else 'Alinear y balancear eje direccional.'
-            detalle_ali_fmt = f"{det_ali} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
+            detalle_ali_fmt = f"{decimales_es(det_ali)} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
 
             alertas_lista.append({
                 'tipo': tipo_ali,
@@ -412,7 +416,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
                 'tipo': 'Dual mal apareado',
                 'tipo_color': '#D97706',
                 'posicion': 'Duales',
-                'detalle': str(r_an.get('Detalle_Dual', 'Diferencia en conjunto dual mayor al umbral permitido.')),
+                'detalle': decimales_es(str(r_an.get('Detalle_Dual', 'Diferencia en conjunto dual mayor al umbral permitido.'))),
                 'accion': 'Rotar y aparear.'
             })
 
@@ -930,7 +934,7 @@ def renderizar_informe(datos) -> bytes:
     criterios_html = f"""
     <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({format_num_es(limite_retiro)} mm).<br/>
     <b>Alineación y geometría de ejes:</b> diferencia de 2,0 mm o más entre la profundidad exterior e interior en llantas direccionales o en ejes de trailer / eje libre.<br/>
-    <b>Dual mal apareado:</b> diferencia de 2,0 mm o más entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
+    <b>Dual mal apareado:</b> diferencia de más de 2,5 mm entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
     <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
     La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
     """
@@ -981,7 +985,7 @@ def formatear_detalles_alertas_pdf(r, limite_def):
     cant_cambios = int(r.get('Cant_Cambios', 0) or (1 if p_cambio == 'SÍ' else 0))
     det_camb = str(r.get('Detalle_Cambio', '') or '').strip()
     if p_cambio == 'SÍ' or (det_camb and det_camb != 'OK'):
-        txt = det_camb if (det_camb and det_camb != 'OK') else f"Posiciones en o bajo límite ({limite_def:.1f} mm)"
+        txt = det_camb if (det_camb and det_camb != 'OK') else f"Posiciones en o bajo límite ({format_num_es(limite_def)} mm)"
         lineas.append(f"• <b><font color='#b91c1c'>[RETIRO URGENTE]</font></b> <font color='#1e293b'>{txt}</font>")
 
     # 2. Próximas a Cambio (+2.0 mm)
@@ -1026,7 +1030,10 @@ def formatear_detalles_alertas_pdf(r, limite_def):
             elif 'en retiro' in p_rec.lower() and 'se recomienda instalar' in p_rec.lower():
                 m = re.search(r'Pos\s+(\d+)\s+en retiro.*?vs\s+Pos\s+(\d+).*?entre\s+([\d\.]+)\s+y\s+([\d\.]+)\s+mm', p_rec)
                 if m:
-                    lineas.append(f"• <b><font color='#4338ca'>[EMPAREJAMIENTO]</font></b> <font color='#1e293b'>Pos {m.group(1)} vs Pos {m.group(2)}: instalar llanta entre {m.group(3)} y {m.group(4)} mm</font>")
+                    lineas.append(
+                        f"• <b><font color='#4338ca'>[EMPAREJAMIENTO]</font></b> <font color='#1e293b'>Reemplazo de Pos {m.group(1)} (en retiro): "
+                        f"montar llanta de {format_num_es(m.group(3))} a {format_num_es(m.group(4))} mm para emparejar con Pos {m.group(2)}</font>"
+                    )
                 else:
                     lineas.append(f"• <b><font color='#4338ca'>[EMPAREJAMIENTO]</font></b> <font color='#1e293b'>{p_rec}</font>")
             else:
@@ -1060,7 +1067,7 @@ def formatear_detalles_alertas_pdf(r, limite_def):
     if not lineas:
         lineas.append("• <b><font color='#15803d'>[VEHÍCULO OK]</font></b> <font color='#15803d'>Sin alertas activas en la inspección.</font>")
 
-    return "<br/>".join(lineas)
+    return decimales_es("<br/>".join(lineas))
 
 def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None, fecha_desde=None, fecha_hasta=None):
     """
@@ -1154,18 +1161,21 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         partes_sede.append(f"Sede: {subcliente}")
     if operacion and operacion != 'Todos':
         partes_sede.append(f"Operación: {operacion}")
+    sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las sedes y operaciones"
+
+    # El período va en su propia línea: antes salía bajo la etiqueta "Sede / Operación"
     if fecha and fecha != 'Todos':
-        partes_sede.append(f"Fecha: {fecha}")
+        periodo_txt = formatear_fecha_ddmmyyyy(fecha)
     elif fecha_desde or fecha_hasta:
-        rango = f"{fecha_desde or 'Inicio'} al {fecha_hasta or 'Hoy'}"
-        partes_sede.append(f"Período: {rango}")
-    sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las Sedes y Operaciones"
+        periodo_txt = f"{formatear_fecha_ddmmyyyy(fecha_desde) or 'Inicio'} al {formatear_fecha_ddmmyyyy(fecha_hasta) or 'Hoy'}"
+    else:
+        periodo_txt = "Histórico general"
 
     res_box = [
         [
             Paragraph(f"<b>Cliente / Flota:</b> {cliente_txt}", style_subtitulo),
-            Paragraph(f"<b>Sede / Operación:</b> {sub_txt}", style_subtitulo),
-            Paragraph(f"<b>Límite Retiro Aplicado:</b> {limite_def:.1f} mm", style_subtitulo)
+            Paragraph(f"<b>Sede / Operación:</b> {sub_txt}<br/><b>Período:</b> {periodo_txt}", style_subtitulo),
+            Paragraph(f"<b>Límite Retiro Aplicado:</b> {format_num_es(limite_def)} mm", style_subtitulo)
         ],
         [
             Paragraph(f"<b>Vehículos Inspeccionados:</b> <font color='#2563eb' size=10><b>{total_vehiculos}</b></font>", style_subtitulo),
@@ -1194,21 +1204,21 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             Paragraph("<b>ACCIÓN TÉCNICA RECOMENDADA</b>", style_cell_header)
         ],
         [
-            Paragraph("🔴 <b>Retiro Urgente (<= Límite)</b>", style_cell_alert),
+            Paragraph(f"{punto_color('#dc2626')} <b>Retiro Urgente (≤ Límite)</b>", style_cell_alert),
             Paragraph(f"<b>{llantas_retiro}</b>", style_cell_alert),
-            Paragraph(f"<b>{pct_retiro:.1f}%</b>", style_cell_alert),
-            Paragraph("Programar desmontaje inmediato para evitar daños de carcasa o incidentes viales.", style_cell_body)
+            Paragraph(f"<b>{format_num_es(pct_retiro)}%</b>", style_cell_alert),
+            Paragraph("Programar desmontaje inmediato para proteger la llanta reencauchable y evitar incidentes viales.", style_cell_body)
         ],
         [
-            Paragraph("🟡 <b>Próximo a Cambio (+2.0 mm)</b>", style_cell_body),
+            Paragraph(f"{punto_color('#d97706')} <b>Próximo a Cambio (+2,0 mm)</b>", style_cell_body),
             Paragraph(f"<b>{llantas_proximo}</b>", style_cell_body),
-            Paragraph(f"<b>{pct_proximo:.1f}%</b>", style_cell_body),
+            Paragraph(f"<b>{format_num_es(pct_proximo)}%</b>", style_cell_body),
             Paragraph("Monitorear en 15 a 30 días y alistar stock de reemplazo o reencauche.", style_cell_body)
         ],
         [
-            Paragraph("🟢 <b>Condición Normal / Óptima</b>", style_cell_body),
+            Paragraph(f"{punto_color('#16a34a')} <b>Condición Normal / Óptima</b>", style_cell_body),
             Paragraph(f"<b>{llantas_optimas}</b>", style_cell_body),
-            Paragraph(f"<b>{pct_optimas:.1f}%</b>", style_cell_body),
+            Paragraph(f"<b>{format_num_es(pct_optimas)}%</b>", style_cell_body),
             Paragraph("Mantener presiones recomendadas y rotación preventiva según kilometraje.", style_cell_body)
         ]
     ]
@@ -1238,17 +1248,17 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph("<b>Sugerencia Retiro / Cambio</b>", style_cell_body),
             Paragraph(f"<b>{veh_cambio}</b>", style_cell_alert if veh_cambio > 0 else style_cell_body),
-            Paragraph(f"Vehículos con al menos una llanta en o por debajo de {limite_def:.1f} mm.", style_cell_body)
+            Paragraph(f"Vehículos con al menos una llanta en o por debajo de {format_num_es(limite_def)} mm.", style_cell_body)
         ],
         [
             Paragraph("<b>Alineación y Geometría de Ejes</b>", style_cell_body),
             Paragraph(f"<b>{veh_ali}</b>", style_cell_alert if veh_ali > 0 else style_cell_body),
-            Paragraph("Vehículos con diferencia entre exterior e interior >= 2.0 mm en llantas direccionales o en ejes de trailer / eje libre.", style_cell_body)
+            Paragraph("Vehículos con diferencia entre exterior e interior ≥ 2,0 mm en llantas direccionales o en ejes de trailer / eje libre.", style_cell_body)
         ],
         [
             Paragraph("<b>Emparejamiento / Dual Mal Apareado</b>", style_cell_body),
             Paragraph(f"<b>{veh_dual}</b>", style_cell_alert if veh_dual > 0 else style_cell_body),
-            Paragraph("Vehículos con duales que superan 2.0 mm de diferencia o dimensiones heterogéneas.", style_cell_body)
+            Paragraph("Vehículos con duales que superan 2,5 mm de diferencia o con dimensiones distintas en el par.", style_cell_body)
         ],
         [
             Paragraph("<b>Dimensiones Heterogéneas en Unidad</b>", style_cell_body),
@@ -1258,17 +1268,17 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph("<b>Rotación por Desgaste Irregular</b>", style_cell_body),
             Paragraph(f"<b>{veh_rot_irr}</b>", style_cell_alert if veh_rot_irr > 0 else style_cell_body),
-            Paragraph("Llantas en tracción o eje libre con desgaste irregular o disparejo.", style_cell_body)
+            Paragraph("Vehículos con llantas de tracción o eje libre con desgaste irregular o disparejo.", style_cell_body)
         ],
         [
             Paragraph("<b>Rotación por Desgaste Escalonado</b>", style_cell_body),
             Paragraph(f"<b>{veh_rot_esc}</b>", style_cell_alert if veh_rot_esc > 0 else style_cell_body),
-            Paragraph("Llantas con diente de sierra / desgaste escalonado en eje de tracción.", style_cell_body)
+            Paragraph("Vehículos con llantas con diente de sierra / desgaste escalonado en eje de tracción.", style_cell_body)
         ],
         [
             Paragraph("<b>Calibración de Presión de Aire</b>", style_cell_body),
             Paragraph(f"<b>{veh_psi}</b>", style_cell_alert if veh_psi > 0 else style_cell_body),
-            Paragraph("Posiciones con baja presión (< 90 PSI o novedad reportada).", style_cell_body)
+            Paragraph("Vehículos con alguna llanta fuera del rango 90–110 PSI (baja o alta) o con baja presión reportada.", style_cell_body)
         ]
     ]
     t_planes = Table(planes_data, colWidths=[180, 80, 280])
@@ -1321,11 +1331,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         km_val = r.get('Km', 0)
         partes_veh = [f"<b>{placa_txt}</b>"]
         if fecha_txt:
-            partes_veh.append(f"<font color='#64748b' size=5.5>{fecha_txt}</font>")
+            partes_veh.append(f"<font color='#64748b' size=5.5>{formatear_fecha_ddmmyyyy(fecha_txt)}</font>")
         try:
             km_num = float(km_val)
             if km_num > 0:
-                partes_veh.append(f"<font color='#94a3b8' size=5.5>{km_num:,.0f} Km</font>")
+                partes_veh.append(f"<font color='#94a3b8' size=5.5>{format_miles_es(km_num)} km</font>")
         except Exception:
             pass
         celda_veh_html = "<br/>".join(partes_veh)
@@ -1394,10 +1404,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         elements.append(Paragraph("4. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
         leyenda_sem = (
             "<b>Umbrales Técnicos por Eje:</b> "
-            "<font color='#b91c1c'><b>🔴 Retiro Inmediato (PB ≤ Límite)</b></font> · "
-            "<font color='#b45309'><b>🟡 Próxima a Cambio (+2.0 mm)</b></font> · "
-            "<font color='#15803d'><b>🟢 Estado Óptimo (&gt; Límite + 2mm)</b></font> · "
-            "<font color='#64748b'><b>⚪ Sin Datos / Casco (PB ≤ 0)</b></font>"
+            f"{punto_color('#dc2626')} <font color='#b91c1c'><b>Retiro Inmediato (PB ≤ Límite)</b></font> · "
+            f"{punto_color('#d97706')} <font color='#b45309'><b>Próxima a Cambio (+2,0 mm)</b></font> · "
+            f"{punto_color('#16a34a')} <font color='#15803d'><b>Estado Óptimo (&gt; Límite + 2 mm)</b></font> · "
+            f"{punto_color('#94a3b8')} <font color='#64748b'><b>Sin Datos (PB ≤ 0)</b></font>"
         )
         elements.append(Paragraph(leyenda_sem, style_subtitulo))
         elements.append(Spacer(1, 4))
@@ -1435,7 +1445,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         ]
         for p in pos_list:
             hdr_row.append(Paragraph(f"<b>P{p}</b>", style_sem_hdr))
-        hdr_row.append(Paragraph("<b>🔴/🟡/🟢</b>", style_sem_hdr))
+        hdr_row.append(Paragraph("<b>Retiro / Próx. / Ópt.</b>", style_sem_hdr))
         t_sem_rows.append(hdr_row)
 
         table_styles = [
@@ -1473,7 +1483,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
                         txt_c = '#64748b'
 
                     table_styles.append(('BACKGROUND', (col_pos_table, r_idx), (col_pos_table, r_idx), bg_c))
-                    pb_str = f"{pb_val:.1f}" if pb_val > 0 else "0.0"
+                    pb_str = format_num_es(pb_val) if pb_val > 0 else "0,0"
                     f_row.append(Paragraph(f"<font color='{txt_c}'><b>{pb_str}</b></font>", style_sem_cell))
                 else:
                     f_row.append(Paragraph("<font color='#cbd5e1'>-</font>", style_sem_cell))
@@ -1487,7 +1497,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         tot_row_idx = len(t_sem_rows)
         foot_row = [
             Paragraph("<b>TOTALES</b>", style_sem_text),
-            Paragraph("<b>(R/A/V)</b>", style_sem_hdr)
+            Paragraph("<font color='#475569'><b>Ret. / Próx. / Ópt.</b></font>", style_sem_text)
         ]
         for c_idx, p in enumerate(pos_list):
             t_p = matriz_pos['totales_posicion'].get(p, {'rojo': 0, 'amarillo': 0, 'verde': 0})
@@ -1519,7 +1529,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     cliente_canvas = cliente_txt
     if subcliente and subcliente != 'Todos':
         cliente_canvas += f" ({subcliente})"
-    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_canvas)
+    canvas_maker = obtener_canvas_consolidado_flota(periodo_txt, cliente_canvas)
     doc.build(elements, canvasmaker=canvas_maker)
     buffer.seek(0)
     return buffer.getvalue()

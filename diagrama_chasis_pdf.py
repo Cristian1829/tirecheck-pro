@@ -34,19 +34,7 @@ HEADER_H, LEGEND_H = 23.0, 28.0
 X_SEN, X_INT, X_EXT = 111.0, 98.0, 124.0               # duales: centros separados 26 pt (hueco de 8 pt)
 MARGEN_X = 14.0
 
-def es_novedad_alerta(texto: str) -> bool:
-    """Retorna False si el texto está vacío o coincide con observaciones benignas."""
-    if not texto or not isinstance(texto, str):
-        return False
-    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
-    if not limpio:
-        return False
-    frases_benignas = {
-        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
-        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
-        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
-    }
-    return limpio not in frases_benignas
+from database import es_novedad_alerta  # misma regla de novedades que la app y el informe
 
 def profundidad_minima(fila):
     """Única definición de profundidad mínima (úsala también en KPIs y tabla)."""
