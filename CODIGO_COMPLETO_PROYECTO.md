@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 19:29:15`
-- **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `53,768` líneas
-- **Tamaño Total de Código Fuente:** `2627.2 KB` (`2,690,277` bytes)
+- **Fecha de Generación:** `2026-10-25 19:46:35`
+- **Total de Archivos Incluidos:** `91` archivos de código y documentación
+- **Líneas Totales de Código:** `55,495` líneas
+- **Tamaño Total de Código Fuente:** `2752.5 KB` (`2,818,609` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -417,7 +417,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [docs/implementar kpis.md](#archivo-docsimplementar-kpismd) | `markdown` | 251 | 23.3 KB | Especificación técnica de la Suite Integral de 20 KPIs, pestañas analíticas y balance de compras MRP |
 | [docs/prompt_antigravity_ide_implementaci_n_de_las_7_bodegas_y_hoja_de_vida_de_neum_ticos.md](#archivo-docsprompt-antigravity-ide-implementaci-n-de-las-7-bodegas-y-hoja-de-vida-de-neum-ticosmd) | `markdown` | 296 | 22.6 KB | Guía maestra del sistema de Las 7 Bodegas, Hoja de Vida, Kardex y Balance MRP |
 | [docs/detalle de vh.md](#archivo-docsdetalle-de-vhmd) | `markdown` | 219 | 18.4 KB | Especificación de ficha técnica vehicular y planes de mantenimiento preventivo y correctivo |
-| [evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md](#archivo-evaluaci-n-t-cnica-y-prompt-para-antigravity-automatizaci-n-de-placa-y-llantasmd) | `markdown` | 122 | 11.3 KB | Evaluación técnica y reglas de automatización de placas, esquemas y llantas |
+| [GUIA_DESPLIEGUE_PRODUCCION.md](#archivo-guia-despliegue-produccionmd) | `markdown` | 199 | 9.2 KB | Guía maestra de integración continua y despliegue a producción con GitHub y Railway |
+| [docs/evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md](#archivo-docsevaluaci-n-t-cnica-y-prompt-para-antigravity-automatizaci-n-de-placa-y-llantasmd) | `markdown` | 122 | 11.3 KB | Evaluación técnica y reglas de automatización de placas, esquemas y llantas |
 | [docs/GUIA_DESPLIEGUE_RENDER.md](#archivo-docsguia-despliegue-rendermd) | `markdown` | 65 | 2.9 KB | Guía paso a paso para desplegar TireAnalyze Pro en Render.com de forma gratuita |
 | [docs/AGENTS.md](#archivo-docsagentsmd) | `markdown` | 125 | 8.8 KB | Guía especializada para Agentes de IA: invariantes del sistema, reglas críticas y no regresión |
 | [docs/ARCHITECTURE.md](#archivo-docsarchitecturemd) | `markdown` | 226 | 9.7 KB | Arquitectura en capas, diagrama C4, flujos de inspección y persistencia de datos |
@@ -444,8 +445,19 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 19340 | 1014.7 KB | Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline) |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5770 | 382.1 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
+| [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
+| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.8 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4011 | 178.9 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1946 | 81.9 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 968 | 50.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
+| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1209 | 57.1 KB | Módulo Trazabilidad: Historial y caracterización de flota |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1759 | 83.8 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2005 | 105.4 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
+| [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
@@ -1974,9 +1986,220 @@ Ejecuta `python -m pytest tests/ -v` y confirma que el 100% de las pruebas pasen
 
 ---
 
-## Archivo: evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md
+## Archivo: GUIA_DESPLIEGUE_PRODUCCION.md
 
-- **Ruta:** `evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md`
+- **Ruta:** `GUIA_DESPLIEGUE_PRODUCCION.md`
+- **Descripción:** Guía maestra de integración continua y despliegue a producción con GitHub y Railway
+- **Métricas:** 199 líneas | 9,417 bytes (9.2 KB)
+- **Lenguaje:** `markdown`
+
+````markdown
+# 🚀 Guía de Despliegue a Producción — TireAnalyze Pro
+### Flujo de Integración y Entrega Continua (CI/CD) con GitHub y Railway
+
+Este documento detalla el paso a paso estándar, comandos de consola, buenas prácticas y solución de problemas para publicar cambios de forma segura en **[www.tireanalizepro.com](https://www.tireanalizepro.com)**.
+
+---
+
+## 🏗️ 1. Arquitectura del Despliegue
+
+```mermaid
+graph LR
+    A["💻 Entorno Local<br>(VS Code / Antigravity)"] -->|"1. Tests & Bundle"| B["🧪 Validación Local<br>(pytest 23/23 OK)"]
+    B -->|"2. git push"| C["🐙 Repositorio GitHub<br>(rama main)"]
+    C -->|"3. Webhook Automático"| D["🚂 Railway Cloud<br>(Build Dockerfile)"]
+    D -->|"4. Zero-Downtime"| E["🌐 Producción en Vivo<br>(tireanalizepro.com)"]
+```
+
+| Componente | Servicio / Herramienta | Detalle Técnico |
+| :--- | :--- | :--- |
+| **Control de Versiones** | GitHub | Repositorio: `Cristian1829/tirecheck-pro` · Rama: `main` |
+| **Plataforma Cloud** | Railway | Proyecto vinculado a GitHub con despliegue automático |
+| **Motor de Ejecución** | Dockerfile | Base `python:3.12-slim` configurado en `railway.json` |
+| **Servidor Web** | FastAPI + Uvicorn | Ejecutado mediante `python server.py` en puerto dinámico `$PORT` |
+| **Persistencia** | Volumen Railway | Montado en `/app/data` para SQLite (`inspecciones.db`) |
+| **Dominio y SSL** | Cloudflare / Railway | Certificados HTTPS automáticos gestionados por Railway |
+
+---
+
+## 📋 2. Checklist Obligatorio Antes de Desplegar
+
+Antes de enviar cualquier cambio a la rama `main`, ejecuta siempre estas 3 comprobaciones en tu terminal local:
+
+### Paso A: Validar la suite de pruebas automatizadas
+Garantiza que ningún cambio rompa autenticación, APIs ni plantillas web:
+```powershell
+python -m pytest tests/test_api_web.py
+```
+> **Criterio de éxito:** Los **23 tests deben salir en verde (100% passed)**. Si alguno falla, corrígelo antes de continuar.
+
+### Paso B: Regenerar el bundle de código consolidado
+Mantiene sincronizada la documentación maestra del proyecto:
+```powershell
+python scripts/generar_bundle_codigo_md.py
+```
+> **Criterio de éxito:** Salida confirmando `¡ÉXITO TOTAL!` y actualización de `CODIGO_COMPLETO_PROYECTO.md`.
+
+### Paso C: Revisar los archivos modificados
+Verifica qué archivos fueron alterados y asegúrate de no incluir archivos temporales o credenciales:
+```powershell
+git status -s
+```
+
+---
+
+## ⚡ 3. Paso a Paso para Desplegar (Paso a Paso)
+
+Abre la terminal en la carpeta del proyecto (`c:\Users\crist\OneDrive\Documentos\Tyre\TireCheck_Pro_Proyecto`) y ejecuta:
+
+### 1️⃣ Preparar los archivos para el commit
+Puedes agregar archivos específicos o todo el proyecto:
+```powershell
+# Opción recomendada: agregar solo los archivos que modificaste
+git add templates/servicios.html server.py tests/test_api_web.py CODIGO_COMPLETO_PROYECTO.md
+
+# O si modificaste múltiples archivos del proyecto:
+git add .
+```
+
+### 2️⃣ Crear el Commit con un mensaje descriptivo
+Usa la convención de commits semánticos para mantener un historial ordenado:
+```powershell
+# Para nuevas funcionalidades:
+git commit -m "feat(servicios): actualizar landing a version v3 con diseño industrial"
+
+# Para corrección de errores:
+git commit -m "fix(inspecciones): corregir validacion de limite de profundidad en eje trasero"
+
+# Para mejoras visuales o de texto:
+git commit -m "refactor(ui): simplificar lenguaje comercial y destacar inspeccion en patio"
+```
+
+### 3️⃣ Enviar los cambios a GitHub (Disparador de Producción)
+```powershell
+git push origin main
+```
+> ⏱️ **¿Qué ocurre al ejecutar `git push`?**
+> Inmediatamente GitHub recibe el commit y notifica a Railway mediante un webhook. Railway inicia automáticamente la fase de compilación y despliegue sin que tengas que presionar ningún botón adicional.
+
+---
+
+## 🔍 4. Monitoreo y Verificación del Despliegue
+
+El ciclo completo de despliegue toma aproximadamente **40 a 90 segundos**.
+
+### Opción A: Monitoreo desde el Dashboard de Railway (Recomendado)
+1. Ingresa a **[railway.app](https://railway.app)** e inicia sesión.
+2. Abre tu proyecto (`tirecheck-pro` / `TireAnalyze Pro`).
+3. Haz clic en la pestaña **Deployments**:
+   - Verás el commit que acabas de enviar en estado `Building` 🟡.
+   - Una vez finalizada la construcción, pasará a `Deploying` 🔵.
+   - Cuando esté listo, mostrará el estado `Active` 🟢 con el check verde.
+4. En la pestaña **Deploy Logs** puedes ver el proceso de instalación de Docker y `requirements.txt`.
+5. En la pestaña **Runtime Logs** puedes ver el arranque de FastAPI y las peticiones en vivo.
+
+### Opción B: Verificación rápida desde la Terminal
+Ejecuta una petición con `curl` para confirmar que el servidor responde con el nuevo contenido:
+```powershell
+# Probar cabeceras y estado 200 OK
+curl.exe -s --max-time 10 "https://www.tireanalizepro.com/servicios" | Select-String -Pattern "TireAnalyze Pro"
+
+# O probar que el alias /landing esté activo
+curl.exe -s --max-time 10 "https://www.tireanalizepro.com/landing" | Select-String -Pattern "TireAnalyze Pro"
+```
+
+### Opción C: Verificación en el Navegador
+Abre en modo incógnito (para evitar caché local):
+- **Landing de Servicios:** [https://www.tireanalizepro.com/servicios](https://www.tireanalizepro.com/servicios)
+- **Plataforma Web:** [https://www.tireanalizepro.com](https://www.tireanalizepro.com)
+
+---
+
+## 🛡️ 5. Separación Estricta de Datos: QA Local vs. Producción
+
+> [!IMPORTANT]
+> **Regla de Oro:** La información de pruebas, inspecciones de QA y clientes de prueba creados en tu entorno local **NUNCA se deben mezclar ni subir a Producción**. Son entornos 100% aislados.
+
+### ¿Cómo se garantiza esta separación?
+1. **Exclusión en Git (`.gitignore`):**
+   - Todos los archivos `*.db`, `data/*.db`, `seed_inspecciones.db` y archivos temporales SQLite están ignorados en Git y desvinculados del índice remoto.
+   - Aunque hagas `git add .`, Git **jamás incluirá tus inspecciones locales**. Tu archivo `data/inspecciones.db` local se queda intacto en tu máquina para tu trabajo diario de QA.
+
+2. **Exclusión en el Contenedor Docker (`.dockerignore`):**
+   - El archivo `.dockerignore` bloquea explícitamente `data/` y `*.db`.
+   - Cuando Railway construye la imagen del software, **no empaqueta ninguna base de datos de tu computadora**.
+
+3. **Persistencia Autónoma en Railway:**
+   - La base de datos de producción vive **única y exclusivamente dentro del volumen persistente de Railway** montado en `/app/data`.
+   - Al desplegar nuevo código (`git push origin main`), Railway solo actualiza los archivos del programa (rutas, plantillas, APIs). El archivo de base de datos del cliente en producción **permanece inalterado y protegido**.
+
+| Entorno | Ubicación de la Base | ¿Sube a GitHub? | ¿Se afecta con despliegues? |
+| :--- | :--- | :--- | :--- |
+| **QA / Local** | `TireCheck_Pro_Proyecto/data/inspecciones.db` | ❌ No (Ignorado) | ❌ No (Vive solo en tu máquina) |
+| **Producción** | Volumen persistente Railway en `/app/data` | ❌ No (Vive en la nube) | 🛡️ Protegido contra sobreescritura |
+
+---
+
+## 🔧 6. Solución de Problemas Comunes (Troubleshooting)
+
+### 🔴 Error 1: Fallo en el Build (`pip install error` o dependencias)
+- **Causa:** Agregaste un nuevo paquete en Python (ej. `reportlab` o `pillow`) en tu código local pero no lo agregaste a `requirements.txt`.
+- **Solución:**
+  1. Agrega la librería a `requirements.txt`.
+  2. Haz commit y push de `requirements.txt`.
+
+### 🔴 Error 2: El contenedor se reinicia constantemente (`Application crashed`)
+- **Causa:** Error de sintaxis en `server.py` o falta de una variable de entorno.
+- **Solución:**
+  1. Ve a Railway -> Pestaña **Runtime Logs**.
+  2. Lee la última línea del Traceback en rojo.
+  3. Ejecuta `python server.py` localmente para reproducir y resolver el error antes de subirlo.
+
+### 🔴 Error 3: En el navegador no se ven los cambios más recientes
+- **Causa:** Caché agresiva del navegador o de Cloudflare.
+- **Solución:**
+  1. Presiona `Ctrl + F5` en el navegador para recarga forzada sin caché.
+  2. Abre la URL en una ventana de incógnito.
+  3. Comprueba en Railway que el commit desplegado (`Active`) coincida con el hash de tu último `git log -1`.
+
+### 🔴 Error 4: Necesitas volver a una versión anterior urgente (Rollback)
+Si un cambio introdujo un error crítico en producción y necesitas volver atrás inmediatamente:
+1. En el panel de **Railway**, ve a la lista de **Deployments**.
+2. Busca el despliegue anterior que estaba funcionando correctamente.
+3. Haz clic en los tres puntos `...` del despliegue anterior y selecciona **Rollback**.
+4. Railway activará la versión anterior en menos de 10 segundos mientras corriges el problema en tu máquina local.
+
+---
+
+## 📌 7. Resumen de Comando Rápido (Cheat Sheet)
+
+Guarda este flujo para despliegues diarios:
+
+```powershell
+# 1. Probar
+python -m pytest tests/test_api_web.py
+
+# 2. Documentar
+python scripts/generar_bundle_codigo_md.py
+
+# 3. Subir
+git add .
+git commit -m "feat(modulo): descripcion de la mejora"
+git push origin main
+
+# 4. Verificar en vivo
+curl.exe -s --max-time 10 "https://www.tireanalizepro.com/servicios" | Select-String "TireAnalyze Pro"
+```
+
+---
+*Documento generado para el equipo técnico y de operaciones de **TireAnalyze Pro** — © 2026 Todos los derechos reservados.*
+````
+
+---
+
+## Archivo: docs/evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md
+
+- **Ruta:** `docs/evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md`
 - **Descripción:** Evaluación técnica y reglas de automatización de placas, esquemas y llantas
 - **Métricas:** 122 líneas | 11,618 bytes (11.3 KB)
 - **Lenguaje:** `markdown`
@@ -21425,8 +21648,8 @@ if __name__ == '__main__':
 ## Archivo: templates/index.html
 
 - **Ruta:** `templates/index.html`
-- **Descripción:** Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)
-- **Métricas:** 19340 líneas | 1,039,052 bytes (1014.7 KB)
+- **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
+- **Métricas:** 5770 líneas | 391,250 bytes (382.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -22937,23 +23160,23 @@ if __name__ == '__main__':
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2.5 text-xs items-end bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Buscar Placa:</label>
-          <input type="text" id="filtro_diag_busqueda" oninput="filtrarTablaDiagnostico()" placeholder="ej. WMK941..." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
+          <input type="text" id="filtro_diag_busqueda" name="filtroDiagPlaca" data-alias="filtroDiagPlaca" oninput="filtrarTablaDiagnostico()" placeholder="ej. WMK941..." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
-          <select id="filtro_diag_cliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
+          <select id="filtro_diag_cliente" name="filtroDiagCliente" data-alias="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todos los Clientes</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcliente:</label>
-          <select id="filtro_diag_subcliente" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
+          <select id="filtro_diag_subcliente" name="filtroDiagSede" data-alias="filtroDiagSede" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todas las Sedes</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo Operación:</label>
-          <select id="filtro_diag_operacion" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
+          <select id="filtro_diag_operacion" name="filtroDiagOperacion" data-alias="filtroDiagOperacion" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todas las Operaciones</option>
           </select>
         </div>
@@ -22967,7 +23190,7 @@ if __name__ == '__main__':
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtro por Acción:</label>
-          <select id="filtro_diag_accion" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
+          <select id="filtro_diag_accion" name="filtroDiagAlerta" data-alias="filtroDiagAlerta" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todas las Acciones</option>
             <option value="Retiro Inmediato">🔴 Retiro Inmediato (≤ Límite)</option>
             <option value="Próximas a Cambio">🟡 Próximas a Cambio (+2.0 mm)</option>
@@ -27186,7 +27409,2932 @@ if __name__ == '__main__':
 
 
   <!-- JAVASCRIPT PRINCIPAL DE LA APLICACIÓN -->
+  <!-- ============================================================== -->
+  <!-- MÓDULOS JAVASCRIPT MODULARES (OPTIMIZADOS PARA CACHÉ Y PATIO)   -->
+  <!-- ============================================================== -->
+  <script src="/static/js/app_core.js"></script>
+  <script src="/static/js/modulo_basedatos.js"></script>
+  <script src="/static/js/modulo_kpis.js"></script>
+  <script src="/static/js/modulo_diagnostico.js"></script>
+  <script src="/static/js/modulo_trazabilidad.js"></script>
+  <script src="/static/js/modulo_catalogos.js"></script>
+  <script src="/static/js/modulo_patio.js"></script>
+  <script src="/static/js/modulo_bodegas.js"></script>
+  <script src="/static/js/app_init.js"></script>
+</body>
+</html>
+```
+
+---
+
+## Archivo: templates/servicios_v3.html
+
+- **Ruta:** `templates/servicios_v3.html`
+- **Descripción:** Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura
+- **Métricas:** 759 líneas | 58,970 bytes (57.6 KB)
+- **Lenguaje:** `html`
+
+```html
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servicios de Gestión Técnica de Flotas y Neumáticos — TireAnalyze Pro</title>
+  <meta name="description" content="El software que facilita la inspección en patio, control integral de llantas reencauchables, seguridad en los datos y maximización del rendimiento de neumáticos para flotas.">
+  <meta name="theme-color" content="#061226">
+
+  <!-- Tipografía industrial: Barlow Condensed (titulares), Barlow (texto), JetBrains Mono (medidas) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['Barlow', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+          },
+          colors: {
+            // Azul marino (fondos oscuros)
+            asphalt: { 950: '#061226', 900: '#0B1B36', 800: '#122647', 700: '#1D3560', 600: '#2A4A7F' },
+            // Blancos y azul hielo (fondos claros)
+            concrete: { 50: '#FFFFFF', 100: '#F3F7FC', 200: '#E4ECF7', 300: '#C9D6EA' },
+            // Azul de marca (acento)
+            hivis: { DEFAULT: '#38B6FF', 300: '#7CCFFF', 600: '#0A6FC2' },
+            // Semáforo de desgaste
+            ok: '#22C55E', warn: '#F59E0B', crit: '#EF4444'
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    html { scroll-padding-top: 5rem; }
+    body { font-family: Barlow, system-ui, sans-serif; }
+    ::selection { background: #38B6FF; color: #061226; }
+    h1, h2, h3 { text-wrap: balance; }
+    :focus-visible { outline: 3px solid #38B6FF; outline-offset: 3px; border-radius: 4px; }
+
+    .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 100; background: #38B6FF; color: #061226; font-weight: 700; padding: .6rem 1rem; transition: top .2s; }
+    .skip-link:focus { top: .75rem; }
+
+    /* Banda de rodadura: separador característico entre secciones */
+    .tread-band {
+      height: 26px;
+      background-color: #0B1B36;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='26' viewBox='0 0 36 26'%3E%3Cpath d='M2 0 L16 13 L2 26 L10 26 L24 13 L10 0 Z' fill='%231D3560'/%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+      border-top: 1px solid #1D3560; border-bottom: 1px solid #1D3560;
+    }
+    .tread-band.light { background-color: #E4ECF7; border-color: #C9D6EA;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='26' viewBox='0 0 36 26'%3E%3Cpath d='M2 0 L16 13 L2 26 L10 26 L24 13 L10 0 Z' fill='%23C9D6EA'/%3E%3C/svg%3E"); }
+
+    /* Franja diagonal azul/blanco */
+    .hazard { background: repeating-linear-gradient(-45deg, #38B6FF 0 14px, #FFFFFF 14px 28px); }
+
+    /* Textura sutil de caucho */
+    .rubber { background-color: #061226; background-image: radial-gradient(ellipse 70% 60% at 75% 40%, rgba(56,182,255,.18), transparent 70%), radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px); background-size: auto, 4px 4px; }
+
+    /* Etiqueta tipo marcaje de flanco */
+    .sidewall { font-family: "Barlow Condensed", sans-serif; letter-spacing: .22em; text-transform: uppercase; font-weight: 700; }
+
+    /* Calculadora */
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 0; background: linear-gradient(90deg,#38B6FF,#38B6FF) 0/var(--p,30%) 100% no-repeat, #1D3560; cursor: pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; background: #061226; border: 4px solid #38B6FF; border-radius: 50%; }
+    input[type=range]::-moz-range-thumb { width: 18px; height: 18px; background: #061226; border: 4px solid #38B6FF; border-radius: 50%; }
+
+    /* Aparición al hacer scroll */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; transition-delay: var(--d, 0ms); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    #mobileMenu { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+    #mobileMenu.open { grid-template-rows: 1fr; }
+    #mobileMenu > div { overflow: hidden; }
+
+    /* Emblema: barras de datos que respiran y vapor de la taza */
+    @keyframes pulseBar { 0%, 100% { transform: scaleY(1); opacity: .9; } 50% { transform: scaleY(1.08); opacity: 1; } }
+    @keyframes floatSteam { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .animate-bar-1 { animation: pulseBar 3s infinite ease-in-out; transform-origin: bottom; transform-box: fill-box; }
+    .animate-bar-2 { animation: pulseBar 2.4s infinite ease-in-out .3s; transform-origin: bottom; transform-box: fill-box; }
+    .animate-bar-3 { animation: pulseBar 3.2s infinite ease-in-out .6s; transform-origin: bottom; transform-box: fill-box; }
+    .animate-steam { animation: floatSteam 4s infinite ease-in-out; }
+    .svg-glow-blue { filter: drop-shadow(0 0 10px rgba(0,136,255,.55)); }
+    .svg-glow-cyan { filter: drop-shadow(0 0 12px rgba(0,229,255,.55)); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+
+<body class="bg-asphalt-950 text-concrete-100 antialiased overflow-x-hidden">
+  <a href="#servicios" class="skip-link">Saltar al contenido</a>
+
+  <!-- ============================================================== -->
+  <!-- ENCABEZADO                                                      -->
+  <!-- ============================================================== -->
+  <header class="fixed top-0 inset-x-0 z-50 bg-asphalt-950/95 backdrop-blur border-b border-asphalt-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <a href="https://www.tireanalizepro.com" class="flex items-center gap-2.5 shrink-0">
+        <!-- Isotipo: llanta con banda de rodadura -->
+        <svg class="w-9 h-9" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="18" fill="#0B1B36" stroke="#38B6FF" stroke-width="2.5"/>
+          <circle cx="20" cy="20" r="11" fill="#061226" stroke="#2A4A7F" stroke-width="2"/>
+          <circle cx="20" cy="20" r="4" fill="#38B6FF"/>
+          <g stroke="#38B6FF" stroke-width="2.5" stroke-linecap="round">
+            <path d="M20 2v4M20 34v4M2 20h4M34 20h4M7.3 7.3l2.8 2.8M29.9 29.9l2.8 2.8M7.3 32.7l2.8-2.8M29.9 10.1l2.8-2.8"/>
+          </g>
+        </svg>
+        <span class="font-display text-lg sm:text-xl font-extrabold tracking-wide uppercase leading-none">
+          TireAnalyze <span class="text-hivis">Pro</span>
+        </span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-concrete-300">
+        <a href="#servicios" class="hover:text-hivis transition-colors">Servicios</a>
+        <a href="#reencauche" class="hover:text-hivis transition-colors">Reencauche</a>
+        <a href="#seguridad" class="hover:text-hivis transition-colors">Seguridad</a>
+        <a href="#calculadora" class="hover:text-hivis transition-colors">Calculadora</a>
+        <a href="#planes" class="hover:text-hivis transition-colors">Versiones</a>
+        <a href="#historia" class="hover:text-hivis transition-colors">Casos</a>
+      </nav>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-ok hover:text-ok transition-colors">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </a>
+        <a href="https://www.tireanalizepro.com" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors">
+          Ingresar <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
+        </a>
+        <button id="menuBtn" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu" class="lg:hidden w-10 h-10 border border-asphalt-600 flex items-center justify-center text-concrete-100">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="mobileMenu" class="lg:hidden">
+      <div>
+        <nav class="px-4 pb-4 pt-1 grid grid-cols-2 gap-2 text-sm font-semibold">
+          <a href="#servicios" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Servicios</a>
+          <a href="#reencauche" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Reencauche</a>
+          <a href="#seguridad" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Seguridad</a>
+          <a href="#calculadora" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Calculadora</a>
+          <a href="#planes" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Versiones</a>
+          <a href="#historia" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Casos</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- HERO: emblema de marca + titular                               -->
+  <!-- ============================================================== -->
+  <section class="rubber relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
+    <!-- Huella de llanta gigante decorativa -->
+    <svg class="absolute -right-24 top-10 w-[520px] h-[520px] opacity-[0.05] pointer-events-none hidden md:block" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="96" fill="none" stroke="#38B6FF" stroke-width="22" stroke-dasharray="14 8"/>
+      <circle cx="100" cy="100" r="60" fill="none" stroke="#38B6FF" stroke-width="4"/>
+    </svg>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+
+      <!-- Emblema de marca: llanta con barras de rendimiento · nombre · taza de café con vapor de datos -->
+      <div class="max-w-4xl mx-auto relative bg-gradient-to-r from-asphalt-800 via-asphalt-900 to-asphalt-800 border border-asphalt-600 shadow-2xl shadow-black/50 px-3 py-4 sm:px-8 sm:py-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,182,255,.16),transparent_65%)] pointer-events-none"></div>
+        <div class="relative flex items-center justify-between gap-2 sm:gap-6">
+          <div class="shrink-0">
+            <svg class="h-16 sm:h-24 md:h-32 w-auto svg-glow-blue" aria-hidden="true" viewBox="0 0 270 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="srvTireTreadGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#051630"/>
+                  <stop offset="50%" stop-color="#0b2954"/>
+                  <stop offset="100%" stop-color="#040d1e"/>
+                </linearGradient>
+                <linearGradient id="srvNeonBlueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00f2fe"/>
+                  <stop offset="50%" stop-color="#0088ff"/>
+                  <stop offset="100%" stop-color="#0044aa"/>
+                </linearGradient>
+                <linearGradient id="srvBarCyanGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
+                  <stop offset="100%" stop-color="#0066cc" stop-opacity="0.25"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Sombra base -->
+              <ellipse cx="105" cy="140" rx="85" ry="6" fill="#00091a" opacity="0.8"/>
+
+              <!-- Banda de rodadura izquierda -->
+              <path d="M55 12 C22 12, 8 42, 8 75 C8 108, 22 138, 55 138 L95 138 C62 138, 48 108, 48 75 C48 42, 62 12, 95 12 Z" 
+                    fill="url(#srvTireTreadGrad)" stroke="#0088ff" stroke-width="1.8"/>
+
+              <!-- Canales longitudinales de la llanta -->
+              <path d="M70 12 C37 12, 23 42, 23 75 C23 108, 37 138, 70 138" stroke="#00b4ff" stroke-width="1.4" opacity="0.85"/>
+              <path d="M82 12 C49 12, 35 42, 35 75 C35 108, 49 138, 82 138" stroke="#00d8ff" stroke-width="1.4" opacity="0.85"/>
+
+              <!-- Bloques de tracción con huellas -->
+              <g stroke="#00aaff" stroke-width="1.6" stroke-linecap="round" opacity="0.85">
+                <line x1="36" y1="22" x2="49" y2="20"/>
+                <line x1="24" y1="33" x2="38" y2="31"/>
+                <line x1="16" y1="46" x2="30" y2="45"/>
+                <line x1="11" y1="60" x2="25" y2="60"/>
+                <line x1="10" y1="75" x2="23" y2="75"/>
+                <line x1="11" y1="90" x2="25" y2="90"/>
+                <line x1="16" y1="104" x2="30" y2="105"/>
+                <line x1="24" y1="117" x2="38" y2="119"/>
+                <line x1="36" y1="128" x2="49" y2="130"/>
+              </g>
+
+              <!-- Lateral y aro del rin interior -->
+              <ellipse cx="95" cy="75" rx="36" ry="63" fill="#051329" stroke="url(#srvNeonBlueGrad)" stroke-width="2.5"/>
+              <ellipse cx="95" cy="75" rx="29" ry="51" fill="#030b18" stroke="#0088ff" stroke-width="1.2" stroke-dasharray="6 3"/>
+              <ellipse cx="95" cy="75" rx="22" ry="39" fill="#020710" stroke="#00d8ff" stroke-width="2"/>
+
+              <!-- Barras Estadísticas de rendimiento -->
+              <rect class="animate-bar-1" x="112" y="108" width="12" height="28" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+              <rect class="animate-bar-2" x="132" y="92" width="12" height="44" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+              <rect class="animate-bar-3" x="152" y="74" width="12" height="62" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+              <rect class="animate-bar-1" x="172" y="54" width="12" height="82" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+
+              <!-- Línea y Flecha de crecimiento -->
+              <line x1="95" y1="136" x2="195" y2="136" stroke="#0088ff" stroke-width="1.5" opacity="0.7"/>
+              <path d="M96 116 L124 85 L140 96 L184 36" stroke="#00f2fe" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M171 38 L185 35 L183 49" stroke="#00f2fe" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="font-display font-extrabold uppercase text-xl sm:text-4xl md:text-5xl tracking-wide leading-none">TireAnalyze <span class="text-hivis">Pro</span></p>
+            <div class="hidden sm:flex items-center justify-center gap-3 mt-3">
+              <span class="h-[2px] w-8 md:w-12 bg-gradient-to-r from-transparent to-hivis"></span>
+              <p class="sidewall text-xs md:text-sm text-hivis-300 whitespace-nowrap">Confianza en tu información</p>
+              <span class="h-[2px] w-8 md:w-12 bg-gradient-to-l from-transparent to-hivis"></span>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <svg class="h-16 sm:h-24 md:h-32 w-auto svg-glow-cyan" aria-hidden="true" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="srvSteamBarGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
+                  <stop offset="65%" stop-color="#0099ff" stop-opacity="0.55"/>
+                  <stop offset="100%" stop-color="#0044aa" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="srvCupBodyGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#071f40"/>
+                  <stop offset="50%" stop-color="#041022"/>
+                  <stop offset="100%" stop-color="#082449"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Barras de vapor estadístico -->
+              <g class="animate-steam">
+                <rect class="animate-bar-1" x="84" y="48" width="8" height="32" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+                <rect class="animate-bar-2" x="97" y="30" width="8" height="50" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+                <rect class="animate-bar-3" x="110" y="16" width="9" height="64" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00f2fe" stroke-width="1.2"/>
+                <rect class="animate-bar-1" x="124" y="34" width="8" height="46" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+                <rect class="animate-bar-2" x="137" y="46" width="8" height="34" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+
+                <path d="M113 82 C104 66, 123 50, 113 32 C105 18, 117 10, 115 4" 
+                      stroke="#66f7ff" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>
+              </g>
+
+              <!-- Platillo -->
+              <ellipse cx="114" cy="133" rx="48" ry="8" fill="#041022" stroke="#00d8ff" stroke-width="2"/>
+              <ellipse cx="114" cy="133" rx="34" ry="4" stroke="#0088ff" stroke-width="1" opacity="0.6"/>
+
+              <!-- Asa de la taza -->
+              <path d="M148 92 C164 92, 166 118, 144 120" stroke="#00e5ff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+              <!-- Cuerpo de la taza -->
+              <path d="M78 84 C78 116, 89 130, 114 130 C139 130, 150 116, 150 84 Z" 
+                    fill="url(#srvCupBodyGrad)" stroke="#00e5ff" stroke-width="2.4" stroke-linejoin="round"/>
+
+              <!-- Borde y superficie del café -->
+              <ellipse cx="114" cy="84" rx="36" ry="6.5" fill="#051733" stroke="#00f2fe" stroke-width="2.2"/>
+              <ellipse cx="114" cy="85" rx="30" ry="4" fill="#0088ff" opacity="0.35"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <p class="sm:hidden sidewall text-xs text-hivis-300 mt-3">Confianza en tu información</p>
+
+      <p class="sidewall text-xs text-hivis mt-12 mb-5 flex items-center justify-center gap-3">
+        <span class="w-8 h-[3px] bg-hivis"></span> Suite para flotas de carga y pasajeros <span class="w-8 h-[3px] bg-hivis"></span>
+      </p>
+      <h1 class="font-display font-extrabold uppercase text-5xl sm:text-6xl lg:text-7xl leading-[0.92] tracking-tight max-w-4xl mx-auto">
+        Cada milímetro de tus llantas, <span class="text-hivis">bajo control.</span>
+      </h1>
+      <p class="mt-6 text-lg text-concrete-300 max-w-2xl mx-auto leading-relaxed">
+        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> de tu flota de carga o pasajeros.
+      </p>
+
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Agendar demo en mi patio
+        </a>
+        <a href="#calculadora" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-600 text-concrete-100 font-bold uppercase tracking-wide hover:border-hivis hover:text-hivis transition-colors">
+          <i class="fa-solid fa-calculator"></i> Calcular ahorro
+        </a>
+      </div>
+    </div>
+
+    <!-- Indicadores clave -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 relative">
+      <dl class="grid grid-cols-2 lg:grid-cols-4 border border-asphalt-700 divide-asphalt-700 bg-asphalt-900/80">
+        <div class="p-5 border-b lg:border-b-0 border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Ahorro en neumáticos</dt>
+          <dd class="font-display font-extrabold text-4xl text-hivis mt-1">25–35%</dd>
+        </div>
+        <div class="p-5 border-b lg:border-b-0 lg:border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Reducción de CPK</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">hasta 30%</dd>
+        </div>
+        <div class="p-5 border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Inspección por vehículo</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">15 min</dd>
+        </div>
+        <div class="p-5">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Funciona sin señal</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">Offline</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="tread-band" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- SERVICIOS (fondo concreto claro)                               -->
+  <!-- ============================================================== -->
+  <section id="servicios" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-8 mb-14">
+        <div class="lg:col-span-7">
+          <p class="sidewall text-xs text-asphalt-700 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Demostración técnica presencial</p>
+          <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">¿Cómo transformamos la rentabilidad de tu flota?</h2>
+        </div>
+        <p class="lg:col-span-5 lg:pt-8 text-lg text-asphalt-700 leading-relaxed">
+          Identificamos dónde se escapa el dinero en tus patios y talleres. Conoce nuestras soluciones y coordina una sesión en vivo con nuestros consultores técnicos.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-concrete-300 border border-concrete-300">
+        <!-- 01 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">01</span>
+            <i class="fa-solid fa-clipboard-check text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Inspección ágil y digital en patio</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Guía visual paso a paso al pie del vehículo, captura rápida de medidas, semáforos automáticos de alerta y adiós definitivo a las planillas de papel.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20demostración%20presencial%20para%20conocer%20la%20Inspección%20Digital%20en%20nuestro%20patio" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Agendar demo en patio <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 02 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">02</span>
+            <i class="fa-solid fa-recycle text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Control de llantas reencauchables</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Conoce el estado y ciclo de cada neumático: disponible en patio, en renovación o listo para montaje. Ninguna llanta con vida útil pendiente se pierde o se desecha.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20conocer%20el%20control%20de%20llantas%20reencauchables" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Consultar trazabilidad <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 03 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">03</span>
+            <i class="fa-solid fa-shield-halved text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Seguridad y validación en los datos</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Configuraciones de seguridad técnica que impiden errores de digitación, para que la información registrada sea coherente, verificable y confiable.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20deseo%20agendar%20una%20demostración%20presencial%20sobre%20Seguridad%20en%20Datos%20y%20Control%20Técnico" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Ver seguridad en vivo <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 04 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">04</span>
+            <i class="fa-solid fa-gauge-high text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Diagnóstico predictivo y costo por km</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Negocia compras con números en mano: descubre qué marca y diseño te dan el menor costo real por kilómetro en tus rutas habituales.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20simular%20el%20Costo%20por%20Kilómetro%20(CPK)%20de%20mi%20flota" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Simular mi CPK <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 05 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">05</span>
+            <i class="fa-solid fa-file-pdf text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Informes ejecutivos al instante</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Al terminar la auditoría, dirección y mantenimiento reciben informes gráficos para tomar decisiones técnicas el mismo día.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20conocer%20ejemplos%20reales%20de%20informes%20ejecutivos%20en%20una%20reunión%20presencial" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Ver informes muestra <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 06 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">06</span>
+            <i class="fa-solid fa-signal text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Operatividad total sin señal</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Opera en sótanos, zonas rurales o patios remotos sin conexión, con cero pérdida de información al sincronizar.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20deseo%20coordinar%20una%20visita%20técnica%20para%20probar%20TireAnalyze%20Pro%20en%20nuestro%20patio" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Probar en mi patio <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- LLANTAS REENCAUCHABLES: ciclo de vida                                         -->
+  <!-- ============================================================== -->
+  <section id="reencauche" class="bg-asphalt-950 py-20 lg:py-28">
+    <div id="bodegas"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <p class="sidewall text-xs text-hivis flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Llantas reencauchables</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Una llanta reencauchable conserva hasta el <span class="text-hivis">60%</span> de su valor. No la pierdas de vista.</h2>
+        <p class="mt-5 text-lg text-concrete-300 leading-relaxed">Saber en qué punto está cada unidad erradica pérdidas patrimoniales y evita compras innecesarias.</p>
+      </div>
+
+      <!-- Línea de vida de la llanta reencauchable -->
+      <ol class="mt-14 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-0 relative">
+        <div class="hidden md:block absolute top-7 left-[10%] right-[10%] h-[3px] bg-asphalt-700" aria-hidden="true"></div>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-ok flex items-center justify-center font-mono font-bold text-ok">N</span>
+          <div><p class="font-display font-bold uppercase text-lg">Nueva</p><p class="text-sm text-concrete-300">Ingreso y asignación</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-ok flex items-center justify-center"><i class="fa-solid fa-road text-ok"></i></span>
+          <div><p class="font-display font-bold uppercase text-lg">En operación</p><p class="text-sm text-concrete-300">Rotaciones y presiones</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-hivis flex items-center justify-center font-mono font-bold text-hivis">R1</span>
+          <div><p class="font-display font-bold uppercase text-lg">Reencauche</p><p class="text-sm text-concrete-300">Envío y retorno controlado</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-hivis flex items-center justify-center font-mono font-bold text-hivis">R2</span>
+          <div><p class="font-display font-bold uppercase text-lg">Nuevo ciclo</p><p class="text-sm text-concrete-300">Máximo aprovechamiento</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-crit flex items-center justify-center"><i class="fa-solid fa-file-signature text-crit"></i></span>
+          <div><p class="font-display font-bold uppercase text-lg">Baja auditada</p><p class="text-sm text-concrete-300">Respaldo para garantías</p></div>
+        </li>
+      </ol>
+
+      <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Disponibilidad en patio</h3>
+          <p class="mt-2 text-concrete-300">Neumáticos aptos para recambio o rotación, en tiempo real, sin vehículos detenidos en taller.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Seguimiento de renovación</h3>
+          <p class="mt-2 text-concrete-300">Trazabilidad de unidades enviadas a reencauche, con tiempos de retorno y cumplimiento.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Máximo aprovechamiento</h3>
+          <p class="mt-2 text-concrete-300">Cada neumático completa sus ciclos útiles planificados antes de su retiro definitivo.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Bajas técnicas auditadas</h3>
+          <p class="mt-2 text-concrete-300">Constancia técnica de cada baja para auditoría interna y respaldo de garantías.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hazard h-3" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- SEGURIDAD EN DATOS: lista de chequeo                           -->
+  <!-- ============================================================== -->
+  <section id="seguridad" class="bg-concrete-200 text-asphalt-950 py-20 lg:py-28">
+    <div id="candados"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12">
+      <div class="lg:col-span-5">
+        <p class="sidewall text-xs text-hivis-600 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Integridad de datos</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Datos de patio en los que gerencia puede confiar</h2>
+        <p class="mt-5 text-lg text-asphalt-700 leading-relaxed">Filtros y parámetros que asisten al inspector durante la captura, eliminando errores de digitación antes de que lleguen a un informe.</p>
+      </div>
+
+      <ul class="lg:col-span-7 divide-y divide-concrete-300 border-y border-concrete-300">
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Control de asignación</h3><p class="mt-1 text-asphalt-700">Cada neumático corresponde al eje y al requerimiento técnico del vehículo.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Auditoría de kilometraje</h3><p class="mt-1 text-asphalt-700">Validación del odómetro para que el rendimiento se calcule con datos históricos reales.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Filtros de consistencia</h3><p class="mt-1 text-asphalt-700">Detección automática de valores fuera de parámetros lógicos, al instante.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Supervisión de tolerancias</h3><p class="mt-1 text-asphalt-700">Alertas de diferencias de desgaste entre duales para evitar sobrecalentamiento.</p></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- CALCULADORA                                                     -->
+  <!-- ============================================================== -->
+  <section id="calculadora" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <p class="sidewall text-xs text-asphalt-700">Simulador de retorno (ROI)</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Calcula el ahorro potencial de tu flota</h2>
+        <p class="mt-4 text-lg text-asphalt-700">Cuánto deja de perder tu empresa al erradicar el retiro prematuro de llantas reencauchables y optimizar la presión de inflado.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 border border-concrete-300 bg-concrete-50">
+        <div class="p-7 sm:p-10 space-y-10">
+          <div>
+            <div class="flex justify-between items-baseline gap-3 mb-4">
+              <label for="rngVehiculos" class="font-semibold">Vehículos en la flota</label>
+              <output id="lblNumVehiculos" class="font-mono font-bold text-xl">25</output>
+            </div>
+            <input type="range" id="rngVehiculos" min="5" max="150" value="25" class="w-full">
+            <div class="flex justify-between font-mono text-xs text-asphalt-700 mt-2"><span>5</span><span>75</span><span>150</span></div>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline gap-3 mb-4">
+              <label for="rngGasto" class="font-semibold">Gasto anual en llantas (COP)</label>
+              <output id="lblGastoAnual" class="font-mono font-bold text-xl">$120 M</output>
+            </div>
+            <input type="range" id="rngGasto" min="20" max="600" step="10" value="120" class="w-full">
+            <div class="flex justify-between font-mono text-xs text-asphalt-700 mt-2"><span>$20 M</span><span>$300 M</span><span>$600 M</span></div>
+          </div>
+        </div>
+
+        <div class="p-7 sm:p-10 bg-asphalt-950 text-concrete-100 flex flex-col justify-center">
+          <p class="sidewall text-xs text-concrete-300">Ahorro anual estimado</p>
+          <p id="lblAhorroEstimado" aria-live="polite" class="font-display font-extrabold text-5xl sm:text-6xl text-hivis mt-2 leading-none">$33.600.000</p>
+          <p class="font-mono text-sm text-concrete-300 mt-1">COP / año</p>
+          <p class="mt-6 text-concrete-300 leading-relaxed">Basado en una reducción promedio del <strong class="text-concrete-50">28% en gasto por llantas</strong> gracias a reencauche oportuno, control de presiones y menos milímetros desperdiciados.</p>
+          <a href="https://www.tireanalizepro.com" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tread-band light" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- COMPARATIVA                                                     -->
+  <!-- ============================================================== -->
+  <section id="comparativa" class="bg-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] text-center">Planilla de papel vs. TireAnalyze Pro</h2>
+
+      <div class="mt-12 space-y-3">
+        <!-- Cada fila: aspecto / antes / ahora -->
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Toma de datos en patio</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Planillas sucias, errores de transcripción tardíos.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Diagrama interactivo en celular o tablet con validación automática.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Señal en campo</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Sistemas web que fallan sin cobertura.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Offline: trabaja en sótanos y sincroniza al volver.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Seguridad de datos</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Errores humanos, datos inconsistentes.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Validaciones automáticas de la información ingresada.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Llantas reencauchables</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Pérdidas en plantas de reencauche o chatarra no auditada.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Seguimiento integral del ciclo de vida e inventario.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Informes</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Días esperando a que alguien digite en oficina.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>PDF al instante, enviado por WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- VERSIONES                                                       -->
+  <!-- ============================================================== -->
+  <section id="planes" class="bg-asphalt-900 py-20 lg:py-28 border-t border-asphalt-700">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-14">
+        <p class="sidewall text-xs text-hivis">Modalidades de implementación</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Versiones diseñadas para tu flota</h2>
+        <p class="mt-4 text-lg text-concrete-300">Desde digitalizar la inspección en patio hasta el control gerencial y financiero total.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6 items-stretch">
+        <div class="flex flex-col p-8 sm:p-10 bg-asphalt-950 border border-asphalt-700">
+          <p class="sidewall text-xs text-concrete-300">Licencia operativa · Patio y taller</p>
+          <h3 class="font-display font-extrabold uppercase text-3xl mt-3 leading-tight">Inspección digital y diagnóstico de flota</h3>
+          <p class="mt-3 text-concrete-300">Para transportadoras o talleres que quieren estandarizar la inspección física, erradicar el papel y recibir diagnósticos automáticos.</p>
+          <ul class="mt-7 space-y-3.5 flex-1">
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Captura al pie del vehículo con fotos de evidencia.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Fácil de adoptar para inspectores sin experiencia previa.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Semáforo automático de desgaste y presiones.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Funciona sin internet y sincroniza al reconectar.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Informes técnicos y planes de acción por WhatsApp.</span></li>
+          </ul>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Operativa%20de%20TireAnalyze%20Pro" target="_blank" rel="noopener" class="mt-9 inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-concrete-100 font-bold uppercase tracking-wide hover:bg-concrete-100 hover:text-asphalt-950 transition-colors text-center">
+            <i class="fa-brands fa-whatsapp"></i> Solicitar demo operativa
+          </a>
+        </div>
+
+        <div class="relative flex flex-col p-8 sm:p-10 bg-asphalt-950 border-2 border-hivis">
+          <span class="absolute -top-3.5 left-8 px-3 py-1 bg-hivis text-asphalt-950 text-xs font-bold uppercase tracking-wider">Máximo ROI</span>
+          <p class="sidewall text-xs text-hivis">Licencia empresarial · Gestión y costos</p>
+          <h3 class="font-display font-extrabold uppercase text-3xl mt-3 leading-tight">Llantas reencauchables, costo por km y gestión estratégica</h3>
+          <p class="mt-3 text-concrete-300">Para directores de transporte y gerencias que requieren control total del ciclo de reencauche, CPK y compras.</p>
+          <ul class="mt-7 space-y-3.5 flex-1">
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span><strong>Todo lo de la Licencia Operativa</strong> con acompañamiento técnico prioritario.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Trazabilidad integral del inventario y ciclo de vida de las llantas reencauchables.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Analítica de costo por kilómetro y proyecciones de recambio.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Auditoría de bajas técnicas y respaldo para garantías.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Planificación de compras basada en consumo real.</span></li>
+          </ul>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Empresarial%20de%20TireAnalyze%20Pro" target="_blank" rel="noopener" class="mt-9 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors text-center">
+            <i class="fa-brands fa-whatsapp"></i> Solicitar demo empresarial
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- HISTORIA: un día en la vida del jefe de flota                   -->
+  <!-- ============================================================== -->
+  <section id="historia" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <p class="sidewall text-xs text-asphalt-700 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> El viaje de la transformación</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">De apagar incendios en carretera a dominar el 100% de tu flota</h2>
+      </div>
+
+      <div class="mt-14 grid md:grid-cols-3 gap-px bg-concrete-300 border border-concrete-300">
+        <article class="bg-concrete-50 p-7">
+          <p class="font-mono text-sm font-bold text-warn">06:30 AM</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">El caos cotidiano</h3>
+          <p class="mt-3 text-asphalt-700 leading-relaxed">Un camión varado por llanta estallada en ruta crítica. En el patio, planillas en papel bajo la lluvia y medidas tomadas al ojo.</p>
+          <p class="mt-5 pt-4 border-t border-concrete-300 text-sm font-semibold text-asphalt-700"><i class="fa-solid fa-triangle-exclamation text-warn mr-1.5"></i>Frustración y desgaste diario</p>
+        </article>
+        <article class="bg-concrete-50 p-7">
+          <p class="font-mono text-sm font-bold text-crit">Fin de mes</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">La fuga invisible</h3>
+          <p class="mt-3 text-asphalt-700 leading-relaxed">La factura de llantas superó el presupuesto un 35%. Sin trazabilidad, llantas que aún podían reencaucharse terminaron en el desecho.</p>
+          <p class="mt-5 pt-4 border-t border-concrete-300 text-sm font-semibold text-asphalt-700"><i class="fa-solid fa-arrow-trend-down text-crit mr-1.5"></i>Pérdida patrimonial oculta</p>
+        </article>
+        <article class="bg-asphalt-950 text-concrete-100 p-7">
+          <p class="font-mono text-sm font-bold text-hivis">Hoy</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">Certeza y paz operativa</h3>
+          <p class="mt-3 text-concrete-300 leading-relaxed">La inspección toma 15 minutos desde el móvil. El semáforo alerta antes de una falla vial y cada llanta reencauchable está protegida hasta su último reencauche.</p>
+          <p class="mt-5 pt-4 border-t border-asphalt-700 text-sm font-semibold"><i class="fa-solid fa-circle-check text-ok mr-1.5"></i>Ahorro superior al 25% y control total</p>
+        </article>
+      </div>
+
+      <figure class="mt-14 grid md:grid-cols-[auto_1fr] gap-6 items-start">
+        <i class="fa-solid fa-quote-left text-5xl text-hivis"></i>
+        <div>
+          <blockquote class="font-display font-semibold text-2xl sm:text-3xl leading-snug">
+            “Antes pasábamos el día buscando culpables entre planillas traspapeladas. Ahora anticipamos los problemas antes de que el camión salga a ruta.”
+          </blockquote>
+          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento, flota de carga y pasajeros</figcaption>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- CTA FINAL                                                        -->
+  <!-- ============================================================== -->
+  <section class="bg-hivis text-asphalt-950 relative overflow-hidden">
+    <div class="tread-band" aria-hidden="true"></div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 grid lg:grid-cols-[1.4fr_1fr] gap-10 items-center">
+      <div>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-6xl leading-[0.92]">¿Quieres verlo operando en tu patio?</h2>
+        <p class="mt-4 text-lg font-medium max-w-xl">Coordinamos una visita técnica presencial para evaluar tu operación con tu equipo y mostrarte el ahorro real.</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-asphalt-950 text-concrete-50 font-bold uppercase tracking-wide hover:bg-asphalt-800 transition-colors text-center">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Agendar visita presencial
+        </a>
+        <a href="https://www.tireanalizepro.com" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
+          Ingresar a la plataforma <i class="fa-solid fa-arrow-right text-sm"></i>
+        </a>
+        <p class="text-sm font-semibold text-center">o llámanos: <a href="tel:+573204098077" class="underline font-mono">+57 320 409 8077</a></p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-asphalt-950 border-t border-asphalt-700 pt-10 pb-24 md:pb-10 md:pr-20 text-sm text-concrete-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 items-center justify-between text-center md:text-left">
+      <div>
+        <p class="font-display font-extrabold uppercase text-lg text-concrete-50">TireAnalyze <span class="text-hivis">Pro</span></p>
+        <p class="mt-1">© 2026 TireAnalyze Pro — Confianza en tu información.</p>
+      </div>
+      <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 font-semibold">
+        <a href="https://www.tireanalizepro.com" class="hover:text-hivis">Plataforma</a>
+        <a href="#servicios" class="hover:text-hivis">Servicios</a>
+        <a href="#reencauche" class="hover:text-hivis">Reencauche</a>
+        <a href="#planes" class="hover:text-hivis">Versiones</a>
+        <a href="https://wa.me/573204098077" target="_blank" rel="noopener" class="hover:text-ok"><i class="fa-brands fa-whatsapp mr-1"></i>+57 320 409 8077</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- WhatsApp flotante -->
+  <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20más%20información%20sobre%20TireAnalyze%20Pro" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp" class="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full flex items-center justify-center bg-ok text-white shadow-xl shadow-black/50 hover:scale-105 transition-transform">
+    <i class="fa-brands fa-whatsapp text-3xl"></i>
+  </a>
+
+  <script>
+    // Calculadora: estimación de ahorro del 28%
+    const rngV = document.getElementById('rngVehiculos'), rngG = document.getElementById('rngGasto');
+    function actualizarCalculadora() {
+      const gastoM = parseInt(rngG.value) || 120;
+      document.getElementById('lblNumVehiculos').textContent = rngV.value;
+      document.getElementById('lblGastoAnual').textContent = `$${gastoM} M`;
+      document.getElementById('lblAhorroEstimado').textContent = '$' + Math.round(gastoM * 1e6 * 0.28).toLocaleString('es-CO');
+      [rngV, rngG].forEach(r => r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%'));
+    }
+    [rngV, rngG].forEach(r => r.addEventListener('input', actualizarCalculadora));
+    actualizarCalculadora();
+
+    // Menú móvil
+    const menuBtn = document.getElementById('menuBtn'), menu = document.getElementById('mobileMenu');
+    function setMenu(open) {
+      menu.classList.toggle('open', open);
+      menuBtn.setAttribute('aria-expanded', open);
+      menuBtn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      menuBtn.firstElementChild.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    }
+    menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('open')));
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+
+    // Aparición al hacer scroll
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }), { threshold: .12 });
+    document.querySelectorAll('article, #reencauche li, #reencauche .grid > div, #seguridad li, #comparativa .grid, #planes .grid > div').forEach((el, i) => {
+      el.classList.add('reveal'); el.style.setProperty('--d', (i % 3) * 90 + 'ms'); io.observe(el);
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## Archivo: templates/servicios.html
+
+- **Ruta:** `templates/servicios.html`
+- **Descripción:** Plantilla de servicios activa en producción
+- **Métricas:** 759 líneas | 58,970 bytes (57.6 KB)
+- **Lenguaje:** `html`
+
+```html
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servicios de Gestión Técnica de Flotas y Neumáticos — TireAnalyze Pro</title>
+  <meta name="description" content="El software que facilita la inspección en patio, control integral de llantas reencauchables, seguridad en los datos y maximización del rendimiento de neumáticos para flotas.">
+  <meta name="theme-color" content="#061226">
+
+  <!-- Tipografía industrial: Barlow Condensed (titulares), Barlow (texto), JetBrains Mono (medidas) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['Barlow', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+          },
+          colors: {
+            // Azul marino (fondos oscuros)
+            asphalt: { 950: '#061226', 900: '#0B1B36', 800: '#122647', 700: '#1D3560', 600: '#2A4A7F' },
+            // Blancos y azul hielo (fondos claros)
+            concrete: { 50: '#FFFFFF', 100: '#F3F7FC', 200: '#E4ECF7', 300: '#C9D6EA' },
+            // Azul de marca (acento)
+            hivis: { DEFAULT: '#38B6FF', 300: '#7CCFFF', 600: '#0A6FC2' },
+            // Semáforo de desgaste
+            ok: '#22C55E', warn: '#F59E0B', crit: '#EF4444'
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    html { scroll-padding-top: 5rem; }
+    body { font-family: Barlow, system-ui, sans-serif; }
+    ::selection { background: #38B6FF; color: #061226; }
+    h1, h2, h3 { text-wrap: balance; }
+    :focus-visible { outline: 3px solid #38B6FF; outline-offset: 3px; border-radius: 4px; }
+
+    .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 100; background: #38B6FF; color: #061226; font-weight: 700; padding: .6rem 1rem; transition: top .2s; }
+    .skip-link:focus { top: .75rem; }
+
+    /* Banda de rodadura: separador característico entre secciones */
+    .tread-band {
+      height: 26px;
+      background-color: #0B1B36;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='26' viewBox='0 0 36 26'%3E%3Cpath d='M2 0 L16 13 L2 26 L10 26 L24 13 L10 0 Z' fill='%231D3560'/%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+      border-top: 1px solid #1D3560; border-bottom: 1px solid #1D3560;
+    }
+    .tread-band.light { background-color: #E4ECF7; border-color: #C9D6EA;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='26' viewBox='0 0 36 26'%3E%3Cpath d='M2 0 L16 13 L2 26 L10 26 L24 13 L10 0 Z' fill='%23C9D6EA'/%3E%3C/svg%3E"); }
+
+    /* Franja diagonal azul/blanco */
+    .hazard { background: repeating-linear-gradient(-45deg, #38B6FF 0 14px, #FFFFFF 14px 28px); }
+
+    /* Textura sutil de caucho */
+    .rubber { background-color: #061226; background-image: radial-gradient(ellipse 70% 60% at 75% 40%, rgba(56,182,255,.18), transparent 70%), radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px); background-size: auto, 4px 4px; }
+
+    /* Etiqueta tipo marcaje de flanco */
+    .sidewall { font-family: "Barlow Condensed", sans-serif; letter-spacing: .22em; text-transform: uppercase; font-weight: 700; }
+
+    /* Calculadora */
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 0; background: linear-gradient(90deg,#38B6FF,#38B6FF) 0/var(--p,30%) 100% no-repeat, #1D3560; cursor: pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; background: #061226; border: 4px solid #38B6FF; border-radius: 50%; }
+    input[type=range]::-moz-range-thumb { width: 18px; height: 18px; background: #061226; border: 4px solid #38B6FF; border-radius: 50%; }
+
+    /* Aparición al hacer scroll */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; transition-delay: var(--d, 0ms); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    #mobileMenu { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+    #mobileMenu.open { grid-template-rows: 1fr; }
+    #mobileMenu > div { overflow: hidden; }
+
+    /* Emblema: barras de datos que respiran y vapor de la taza */
+    @keyframes pulseBar { 0%, 100% { transform: scaleY(1); opacity: .9; } 50% { transform: scaleY(1.08); opacity: 1; } }
+    @keyframes floatSteam { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .animate-bar-1 { animation: pulseBar 3s infinite ease-in-out; transform-origin: bottom; transform-box: fill-box; }
+    .animate-bar-2 { animation: pulseBar 2.4s infinite ease-in-out .3s; transform-origin: bottom; transform-box: fill-box; }
+    .animate-bar-3 { animation: pulseBar 3.2s infinite ease-in-out .6s; transform-origin: bottom; transform-box: fill-box; }
+    .animate-steam { animation: floatSteam 4s infinite ease-in-out; }
+    .svg-glow-blue { filter: drop-shadow(0 0 10px rgba(0,136,255,.55)); }
+    .svg-glow-cyan { filter: drop-shadow(0 0 12px rgba(0,229,255,.55)); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+
+<body class="bg-asphalt-950 text-concrete-100 antialiased overflow-x-hidden">
+  <a href="#servicios" class="skip-link">Saltar al contenido</a>
+
+  <!-- ============================================================== -->
+  <!-- ENCABEZADO                                                      -->
+  <!-- ============================================================== -->
+  <header class="fixed top-0 inset-x-0 z-50 bg-asphalt-950/95 backdrop-blur border-b border-asphalt-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <a href="https://www.tireanalizepro.com" class="flex items-center gap-2.5 shrink-0">
+        <!-- Isotipo: llanta con banda de rodadura -->
+        <svg class="w-9 h-9" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="18" fill="#0B1B36" stroke="#38B6FF" stroke-width="2.5"/>
+          <circle cx="20" cy="20" r="11" fill="#061226" stroke="#2A4A7F" stroke-width="2"/>
+          <circle cx="20" cy="20" r="4" fill="#38B6FF"/>
+          <g stroke="#38B6FF" stroke-width="2.5" stroke-linecap="round">
+            <path d="M20 2v4M20 34v4M2 20h4M34 20h4M7.3 7.3l2.8 2.8M29.9 29.9l2.8 2.8M7.3 32.7l2.8-2.8M29.9 10.1l2.8-2.8"/>
+          </g>
+        </svg>
+        <span class="font-display text-lg sm:text-xl font-extrabold tracking-wide uppercase leading-none">
+          TireAnalyze <span class="text-hivis">Pro</span>
+        </span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-7 text-sm font-semibold text-concrete-300">
+        <a href="#servicios" class="hover:text-hivis transition-colors">Servicios</a>
+        <a href="#reencauche" class="hover:text-hivis transition-colors">Reencauche</a>
+        <a href="#seguridad" class="hover:text-hivis transition-colors">Seguridad</a>
+        <a href="#calculadora" class="hover:text-hivis transition-colors">Calculadora</a>
+        <a href="#planes" class="hover:text-hivis transition-colors">Versiones</a>
+        <a href="#historia" class="hover:text-hivis transition-colors">Casos</a>
+      </nav>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-ok hover:text-ok transition-colors">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </a>
+        <a href="https://www.tireanalizepro.com" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors">
+          Ingresar <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
+        </a>
+        <button id="menuBtn" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu" class="lg:hidden w-10 h-10 border border-asphalt-600 flex items-center justify-center text-concrete-100">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="mobileMenu" class="lg:hidden">
+      <div>
+        <nav class="px-4 pb-4 pt-1 grid grid-cols-2 gap-2 text-sm font-semibold">
+          <a href="#servicios" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Servicios</a>
+          <a href="#reencauche" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Reencauche</a>
+          <a href="#seguridad" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Seguridad</a>
+          <a href="#calculadora" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Calculadora</a>
+          <a href="#planes" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Versiones</a>
+          <a href="#historia" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Casos</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- HERO: emblema de marca + titular                               -->
+  <!-- ============================================================== -->
+  <section class="rubber relative pt-28 pb-16 lg:pt-36 lg:pb-24 overflow-hidden">
+    <!-- Huella de llanta gigante decorativa -->
+    <svg class="absolute -right-24 top-10 w-[520px] h-[520px] opacity-[0.05] pointer-events-none hidden md:block" viewBox="0 0 200 200" aria-hidden="true">
+      <circle cx="100" cy="100" r="96" fill="none" stroke="#38B6FF" stroke-width="22" stroke-dasharray="14 8"/>
+      <circle cx="100" cy="100" r="60" fill="none" stroke="#38B6FF" stroke-width="4"/>
+    </svg>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+
+      <!-- Emblema de marca: llanta con barras de rendimiento · nombre · taza de café con vapor de datos -->
+      <div class="max-w-4xl mx-auto relative bg-gradient-to-r from-asphalt-800 via-asphalt-900 to-asphalt-800 border border-asphalt-600 shadow-2xl shadow-black/50 px-3 py-4 sm:px-8 sm:py-6 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,182,255,.16),transparent_65%)] pointer-events-none"></div>
+        <div class="relative flex items-center justify-between gap-2 sm:gap-6">
+          <div class="shrink-0">
+            <svg class="h-16 sm:h-24 md:h-32 w-auto svg-glow-blue" aria-hidden="true" viewBox="0 0 270 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="srvTireTreadGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#051630"/>
+                  <stop offset="50%" stop-color="#0b2954"/>
+                  <stop offset="100%" stop-color="#040d1e"/>
+                </linearGradient>
+                <linearGradient id="srvNeonBlueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00f2fe"/>
+                  <stop offset="50%" stop-color="#0088ff"/>
+                  <stop offset="100%" stop-color="#0044aa"/>
+                </linearGradient>
+                <linearGradient id="srvBarCyanGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
+                  <stop offset="100%" stop-color="#0066cc" stop-opacity="0.25"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Sombra base -->
+              <ellipse cx="105" cy="140" rx="85" ry="6" fill="#00091a" opacity="0.8"/>
+
+              <!-- Banda de rodadura izquierda -->
+              <path d="M55 12 C22 12, 8 42, 8 75 C8 108, 22 138, 55 138 L95 138 C62 138, 48 108, 48 75 C48 42, 62 12, 95 12 Z" 
+                    fill="url(#srvTireTreadGrad)" stroke="#0088ff" stroke-width="1.8"/>
+
+              <!-- Canales longitudinales de la llanta -->
+              <path d="M70 12 C37 12, 23 42, 23 75 C23 108, 37 138, 70 138" stroke="#00b4ff" stroke-width="1.4" opacity="0.85"/>
+              <path d="M82 12 C49 12, 35 42, 35 75 C35 108, 49 138, 82 138" stroke="#00d8ff" stroke-width="1.4" opacity="0.85"/>
+
+              <!-- Bloques de tracción con huellas -->
+              <g stroke="#00aaff" stroke-width="1.6" stroke-linecap="round" opacity="0.85">
+                <line x1="36" y1="22" x2="49" y2="20"/>
+                <line x1="24" y1="33" x2="38" y2="31"/>
+                <line x1="16" y1="46" x2="30" y2="45"/>
+                <line x1="11" y1="60" x2="25" y2="60"/>
+                <line x1="10" y1="75" x2="23" y2="75"/>
+                <line x1="11" y1="90" x2="25" y2="90"/>
+                <line x1="16" y1="104" x2="30" y2="105"/>
+                <line x1="24" y1="117" x2="38" y2="119"/>
+                <line x1="36" y1="128" x2="49" y2="130"/>
+              </g>
+
+              <!-- Lateral y aro del rin interior -->
+              <ellipse cx="95" cy="75" rx="36" ry="63" fill="#051329" stroke="url(#srvNeonBlueGrad)" stroke-width="2.5"/>
+              <ellipse cx="95" cy="75" rx="29" ry="51" fill="#030b18" stroke="#0088ff" stroke-width="1.2" stroke-dasharray="6 3"/>
+              <ellipse cx="95" cy="75" rx="22" ry="39" fill="#020710" stroke="#00d8ff" stroke-width="2"/>
+
+              <!-- Barras Estadísticas de rendimiento -->
+              <rect class="animate-bar-1" x="112" y="108" width="12" height="28" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+              <rect class="animate-bar-2" x="132" y="92" width="12" height="44" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+              <rect class="animate-bar-3" x="152" y="74" width="12" height="62" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+              <rect class="animate-bar-1" x="172" y="54" width="12" height="82" rx="1.5" fill="url(#srvBarCyanGrad)" stroke="#00e5ff" stroke-width="1.3"/>
+
+              <!-- Línea y Flecha de crecimiento -->
+              <line x1="95" y1="136" x2="195" y2="136" stroke="#0088ff" stroke-width="1.5" opacity="0.7"/>
+              <path d="M96 116 L124 85 L140 96 L184 36" stroke="#00f2fe" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M171 38 L185 35 L183 49" stroke="#00f2fe" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="font-display font-extrabold uppercase text-xl sm:text-4xl md:text-5xl tracking-wide leading-none">TireAnalyze <span class="text-hivis">Pro</span></p>
+            <div class="hidden sm:flex items-center justify-center gap-3 mt-3">
+              <span class="h-[2px] w-8 md:w-12 bg-gradient-to-r from-transparent to-hivis"></span>
+              <p class="sidewall text-xs md:text-sm text-hivis-300 whitespace-nowrap">Confianza en tu información</p>
+              <span class="h-[2px] w-8 md:w-12 bg-gradient-to-l from-transparent to-hivis"></span>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <svg class="h-16 sm:h-24 md:h-32 w-auto svg-glow-cyan" aria-hidden="true" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="srvSteamBarGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
+                  <stop offset="65%" stop-color="#0099ff" stop-opacity="0.55"/>
+                  <stop offset="100%" stop-color="#0044aa" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="srvCupBodyGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#071f40"/>
+                  <stop offset="50%" stop-color="#041022"/>
+                  <stop offset="100%" stop-color="#082449"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Barras de vapor estadístico -->
+              <g class="animate-steam">
+                <rect class="animate-bar-1" x="84" y="48" width="8" height="32" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+                <rect class="animate-bar-2" x="97" y="30" width="8" height="50" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+                <rect class="animate-bar-3" x="110" y="16" width="9" height="64" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00f2fe" stroke-width="1.2"/>
+                <rect class="animate-bar-1" x="124" y="34" width="8" height="46" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+                <rect class="animate-bar-2" x="137" y="46" width="8" height="34" rx="1" fill="url(#srvSteamBarGrad)" stroke="#00e5ff" stroke-width="1"/>
+
+                <path d="M113 82 C104 66, 123 50, 113 32 C105 18, 117 10, 115 4" 
+                      stroke="#66f7ff" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>
+              </g>
+
+              <!-- Platillo -->
+              <ellipse cx="114" cy="133" rx="48" ry="8" fill="#041022" stroke="#00d8ff" stroke-width="2"/>
+              <ellipse cx="114" cy="133" rx="34" ry="4" stroke="#0088ff" stroke-width="1" opacity="0.6"/>
+
+              <!-- Asa de la taza -->
+              <path d="M148 92 C164 92, 166 118, 144 120" stroke="#00e5ff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+              <!-- Cuerpo de la taza -->
+              <path d="M78 84 C78 116, 89 130, 114 130 C139 130, 150 116, 150 84 Z" 
+                    fill="url(#srvCupBodyGrad)" stroke="#00e5ff" stroke-width="2.4" stroke-linejoin="round"/>
+
+              <!-- Borde y superficie del café -->
+              <ellipse cx="114" cy="84" rx="36" ry="6.5" fill="#051733" stroke="#00f2fe" stroke-width="2.2"/>
+              <ellipse cx="114" cy="85" rx="30" ry="4" fill="#0088ff" opacity="0.35"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <p class="sm:hidden sidewall text-xs text-hivis-300 mt-3">Confianza en tu información</p>
+
+      <p class="sidewall text-xs text-hivis mt-12 mb-5 flex items-center justify-center gap-3">
+        <span class="w-8 h-[3px] bg-hivis"></span> Suite para flotas de carga y pasajeros <span class="w-8 h-[3px] bg-hivis"></span>
+      </p>
+      <h1 class="font-display font-extrabold uppercase text-5xl sm:text-6xl lg:text-7xl leading-[0.92] tracking-tight max-w-4xl mx-auto">
+        Cada milímetro de tus llantas, <span class="text-hivis">bajo control.</span>
+      </h1>
+      <p class="mt-6 text-lg text-concrete-300 max-w-2xl mx-auto leading-relaxed">
+        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> de tu flota de carga o pasajeros.
+      </p>
+
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Agendar demo en mi patio
+        </a>
+        <a href="#calculadora" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-600 text-concrete-100 font-bold uppercase tracking-wide hover:border-hivis hover:text-hivis transition-colors">
+          <i class="fa-solid fa-calculator"></i> Calcular ahorro
+        </a>
+      </div>
+    </div>
+
+    <!-- Indicadores clave -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 relative">
+      <dl class="grid grid-cols-2 lg:grid-cols-4 border border-asphalt-700 divide-asphalt-700 bg-asphalt-900/80">
+        <div class="p-5 border-b lg:border-b-0 border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Ahorro en neumáticos</dt>
+          <dd class="font-display font-extrabold text-4xl text-hivis mt-1">25–35%</dd>
+        </div>
+        <div class="p-5 border-b lg:border-b-0 lg:border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Reducción de CPK</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">hasta 30%</dd>
+        </div>
+        <div class="p-5 border-r border-asphalt-700">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Inspección por vehículo</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">15 min</dd>
+        </div>
+        <div class="p-5">
+          <dt class="sidewall text-[0.7rem] text-concrete-300">Funciona sin señal</dt>
+          <dd class="font-display font-extrabold text-4xl text-concrete-50 mt-1">Offline</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="tread-band" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- SERVICIOS (fondo concreto claro)                               -->
+  <!-- ============================================================== -->
+  <section id="servicios" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-8 mb-14">
+        <div class="lg:col-span-7">
+          <p class="sidewall text-xs text-asphalt-700 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Demostración técnica presencial</p>
+          <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">¿Cómo transformamos la rentabilidad de tu flota?</h2>
+        </div>
+        <p class="lg:col-span-5 lg:pt-8 text-lg text-asphalt-700 leading-relaxed">
+          Identificamos dónde se escapa el dinero en tus patios y talleres. Conoce nuestras soluciones y coordina una sesión en vivo con nuestros consultores técnicos.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-concrete-300 border border-concrete-300">
+        <!-- 01 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">01</span>
+            <i class="fa-solid fa-clipboard-check text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Inspección ágil y digital en patio</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Guía visual paso a paso al pie del vehículo, captura rápida de medidas, semáforos automáticos de alerta y adiós definitivo a las planillas de papel.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20demostración%20presencial%20para%20conocer%20la%20Inspección%20Digital%20en%20nuestro%20patio" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Agendar demo en patio <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 02 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">02</span>
+            <i class="fa-solid fa-recycle text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Control de llantas reencauchables</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Conoce el estado y ciclo de cada neumático: disponible en patio, en renovación o listo para montaje. Ninguna llanta con vida útil pendiente se pierde o se desecha.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20conocer%20el%20control%20de%20llantas%20reencauchables" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Consultar trazabilidad <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 03 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">03</span>
+            <i class="fa-solid fa-shield-halved text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Seguridad y validación en los datos</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Configuraciones de seguridad técnica que impiden errores de digitación, para que la información registrada sea coherente, verificable y confiable.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20deseo%20agendar%20una%20demostración%20presencial%20sobre%20Seguridad%20en%20Datos%20y%20Control%20Técnico" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Ver seguridad en vivo <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 04 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">04</span>
+            <i class="fa-solid fa-gauge-high text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Diagnóstico predictivo y costo por km</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Negocia compras con números en mano: descubre qué marca y diseño te dan el menor costo real por kilómetro en tus rutas habituales.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20una%20reunión%20técnica%20para%20simular%20el%20Costo%20por%20Kilómetro%20(CPK)%20de%20mi%20flota" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Simular mi CPK <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 05 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">05</span>
+            <i class="fa-solid fa-file-pdf text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Informes ejecutivos al instante</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Al terminar la auditoría, dirección y mantenimiento reciben informes gráficos para tomar decisiones técnicas el mismo día.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20conocer%20ejemplos%20reales%20de%20informes%20ejecutivos%20en%20una%20reunión%20presencial" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Ver informes muestra <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+        <!-- 06 -->
+        <article class="group bg-concrete-50 p-7 flex flex-col hover:bg-white transition-colors">
+          <div class="flex items-start justify-between">
+            <span class="font-display font-extrabold text-5xl text-concrete-300 group-hover:text-hivis-600 transition-colors">06</span>
+            <i class="fa-solid fa-signal text-2xl text-asphalt-950"></i>
+          </div>
+          <h3 class="font-display font-bold uppercase text-2xl mt-5 leading-tight">Operatividad total sin señal</h3>
+          <p class="mt-3 text-base text-asphalt-700 leading-relaxed flex-1">Opera en sótanos, zonas rurales o patios remotos sin conexión, con cero pérdida de información al sincronizar.</p>
+          <a href="https://wa.me/573204098077?text=Hola,%20deseo%20coordinar%20una%20visita%20técnica%20para%20probar%20TireAnalyze%20Pro%20en%20nuestro%20patio" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 font-bold uppercase text-sm tracking-wide border-b-2 border-hivis-600 self-start pb-1 hover:gap-3 transition-all">Probar en mi patio <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- LLANTAS REENCAUCHABLES: ciclo de vida                                         -->
+  <!-- ============================================================== -->
+  <section id="reencauche" class="bg-asphalt-950 py-20 lg:py-28">
+    <div id="bodegas"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <p class="sidewall text-xs text-hivis flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Llantas reencauchables</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Una llanta reencauchable conserva hasta el <span class="text-hivis">60%</span> de su valor. No la pierdas de vista.</h2>
+        <p class="mt-5 text-lg text-concrete-300 leading-relaxed">Saber en qué punto está cada unidad erradica pérdidas patrimoniales y evita compras innecesarias.</p>
+      </div>
+
+      <!-- Línea de vida de la llanta reencauchable -->
+      <ol class="mt-14 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-0 relative">
+        <div class="hidden md:block absolute top-7 left-[10%] right-[10%] h-[3px] bg-asphalt-700" aria-hidden="true"></div>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-ok flex items-center justify-center font-mono font-bold text-ok">N</span>
+          <div><p class="font-display font-bold uppercase text-lg">Nueva</p><p class="text-sm text-concrete-300">Ingreso y asignación</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-ok flex items-center justify-center"><i class="fa-solid fa-road text-ok"></i></span>
+          <div><p class="font-display font-bold uppercase text-lg">En operación</p><p class="text-sm text-concrete-300">Rotaciones y presiones</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-hivis flex items-center justify-center font-mono font-bold text-hivis">R1</span>
+          <div><p class="font-display font-bold uppercase text-lg">Reencauche</p><p class="text-sm text-concrete-300">Envío y retorno controlado</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-hivis flex items-center justify-center font-mono font-bold text-hivis">R2</span>
+          <div><p class="font-display font-bold uppercase text-lg">Nuevo ciclo</p><p class="text-sm text-concrete-300">Máximo aprovechamiento</p></div>
+        </li>
+        <li class="relative flex md:flex-col items-center md:text-center gap-4 md:gap-3">
+          <span class="relative z-10 w-14 h-14 rounded-full bg-asphalt-900 border-[3px] border-crit flex items-center justify-center"><i class="fa-solid fa-file-signature text-crit"></i></span>
+          <div><p class="font-display font-bold uppercase text-lg">Baja auditada</p><p class="text-sm text-concrete-300">Respaldo para garantías</p></div>
+        </li>
+      </ol>
+
+      <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Disponibilidad en patio</h3>
+          <p class="mt-2 text-concrete-300">Neumáticos aptos para recambio o rotación, en tiempo real, sin vehículos detenidos en taller.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Seguimiento de renovación</h3>
+          <p class="mt-2 text-concrete-300">Trazabilidad de unidades enviadas a reencauche, con tiempos de retorno y cumplimiento.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Máximo aprovechamiento</h3>
+          <p class="mt-2 text-concrete-300">Cada neumático completa sus ciclos útiles planificados antes de su retiro definitivo.</p>
+        </div>
+        <div class="p-6 bg-asphalt-900 border-t-4 border-hivis">
+          <h3 class="font-display font-bold uppercase text-xl">Bajas técnicas auditadas</h3>
+          <p class="mt-2 text-concrete-300">Constancia técnica de cada baja para auditoría interna y respaldo de garantías.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hazard h-3" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- SEGURIDAD EN DATOS: lista de chequeo                           -->
+  <!-- ============================================================== -->
+  <section id="seguridad" class="bg-concrete-200 text-asphalt-950 py-20 lg:py-28">
+    <div id="candados"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12">
+      <div class="lg:col-span-5">
+        <p class="sidewall text-xs text-hivis-600 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> Integridad de datos</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Datos de patio en los que gerencia puede confiar</h2>
+        <p class="mt-5 text-lg text-asphalt-700 leading-relaxed">Filtros y parámetros que asisten al inspector durante la captura, eliminando errores de digitación antes de que lleguen a un informe.</p>
+      </div>
+
+      <ul class="lg:col-span-7 divide-y divide-concrete-300 border-y border-concrete-300">
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Control de asignación</h3><p class="mt-1 text-asphalt-700">Cada neumático corresponde al eje y al requerimiento técnico del vehículo.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Auditoría de kilometraje</h3><p class="mt-1 text-asphalt-700">Validación del odómetro para que el rendimiento se calcule con datos históricos reales.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Filtros de consistencia</h3><p class="mt-1 text-asphalt-700">Detección automática de valores fuera de parámetros lógicos, al instante.</p></div>
+        </li>
+        <li class="py-6 flex gap-5">
+          <span class="w-11 h-11 shrink-0 bg-hivis-600 text-white flex items-center justify-center"><i class="fa-solid fa-check"></i></span>
+          <div><h3 class="font-display font-bold uppercase text-xl">Supervisión de tolerancias</h3><p class="mt-1 text-asphalt-700">Alertas de diferencias de desgaste entre duales para evitar sobrecalentamiento.</p></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- CALCULADORA                                                     -->
+  <!-- ============================================================== -->
+  <section id="calculadora" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <p class="sidewall text-xs text-asphalt-700">Simulador de retorno (ROI)</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Calcula el ahorro potencial de tu flota</h2>
+        <p class="mt-4 text-lg text-asphalt-700">Cuánto deja de perder tu empresa al erradicar el retiro prematuro de llantas reencauchables y optimizar la presión de inflado.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 border border-concrete-300 bg-concrete-50">
+        <div class="p-7 sm:p-10 space-y-10">
+          <div>
+            <div class="flex justify-between items-baseline gap-3 mb-4">
+              <label for="rngVehiculos" class="font-semibold">Vehículos en la flota</label>
+              <output id="lblNumVehiculos" class="font-mono font-bold text-xl">25</output>
+            </div>
+            <input type="range" id="rngVehiculos" min="5" max="150" value="25" class="w-full">
+            <div class="flex justify-between font-mono text-xs text-asphalt-700 mt-2"><span>5</span><span>75</span><span>150</span></div>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline gap-3 mb-4">
+              <label for="rngGasto" class="font-semibold">Gasto anual en llantas (COP)</label>
+              <output id="lblGastoAnual" class="font-mono font-bold text-xl">$120 M</output>
+            </div>
+            <input type="range" id="rngGasto" min="20" max="600" step="10" value="120" class="w-full">
+            <div class="flex justify-between font-mono text-xs text-asphalt-700 mt-2"><span>$20 M</span><span>$300 M</span><span>$600 M</span></div>
+          </div>
+        </div>
+
+        <div class="p-7 sm:p-10 bg-asphalt-950 text-concrete-100 flex flex-col justify-center">
+          <p class="sidewall text-xs text-concrete-300">Ahorro anual estimado</p>
+          <p id="lblAhorroEstimado" aria-live="polite" class="font-display font-extrabold text-5xl sm:text-6xl text-hivis mt-2 leading-none">$33.600.000</p>
+          <p class="font-mono text-sm text-concrete-300 mt-1">COP / año</p>
+          <p class="mt-6 text-concrete-300 leading-relaxed">Basado en una reducción promedio del <strong class="text-concrete-50">28% en gasto por llantas</strong> gracias a reencauche oportuno, control de presiones y menos milímetros desperdiciados.</p>
+          <a href="https://www.tireanalizepro.com" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="tread-band light" aria-hidden="true"></div>
+
+  <!-- ============================================================== -->
+  <!-- COMPARATIVA                                                     -->
+  <!-- ============================================================== -->
+  <section id="comparativa" class="bg-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] text-center">Planilla de papel vs. TireAnalyze Pro</h2>
+
+      <div class="mt-12 space-y-3">
+        <!-- Cada fila: aspecto / antes / ahora -->
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Toma de datos en patio</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Planillas sucias, errores de transcripción tardíos.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Diagrama interactivo en celular o tablet con validación automática.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Señal en campo</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Sistemas web que fallan sin cobertura.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Offline: trabaja en sótanos y sincroniza al volver.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Seguridad de datos</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Errores humanos, datos inconsistentes.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Validaciones automáticas de la información ingresada.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Llantas reencauchables</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Pérdidas en plantas de reencauche o chatarra no auditada.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>Seguimiento integral del ciclo de vida e inventario.</p>
+        </div>
+        <div class="grid md:grid-cols-[1fr_1.3fr_1.3fr] bg-asphalt-900 border border-asphalt-700">
+          <p class="p-5 font-display font-bold uppercase text-lg md:border-r border-asphalt-700">Informes</p>
+          <p class="px-5 pb-3 md:p-5 text-concrete-300 md:border-r border-asphalt-700"><i class="fa-solid fa-xmark text-crit mr-2"></i>Días esperando a que alguien digite en oficina.</p>
+          <p class="px-5 pb-5 md:p-5 text-concrete-50 font-medium"><i class="fa-solid fa-check text-ok mr-2"></i>PDF al instante, enviado por WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- VERSIONES                                                       -->
+  <!-- ============================================================== -->
+  <section id="planes" class="bg-asphalt-900 py-20 lg:py-28 border-t border-asphalt-700">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-14">
+        <p class="sidewall text-xs text-hivis">Modalidades de implementación</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">Versiones diseñadas para tu flota</h2>
+        <p class="mt-4 text-lg text-concrete-300">Desde digitalizar la inspección en patio hasta el control gerencial y financiero total.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6 items-stretch">
+        <div class="flex flex-col p-8 sm:p-10 bg-asphalt-950 border border-asphalt-700">
+          <p class="sidewall text-xs text-concrete-300">Licencia operativa · Patio y taller</p>
+          <h3 class="font-display font-extrabold uppercase text-3xl mt-3 leading-tight">Inspección digital y diagnóstico de flota</h3>
+          <p class="mt-3 text-concrete-300">Para transportadoras o talleres que quieren estandarizar la inspección física, erradicar el papel y recibir diagnósticos automáticos.</p>
+          <ul class="mt-7 space-y-3.5 flex-1">
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Captura al pie del vehículo con fotos de evidencia.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Fácil de adoptar para inspectores sin experiencia previa.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Semáforo automático de desgaste y presiones.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Funciona sin internet y sincroniza al reconectar.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Informes técnicos y planes de acción por WhatsApp.</span></li>
+          </ul>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Operativa%20de%20TireAnalyze%20Pro" target="_blank" rel="noopener" class="mt-9 inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-concrete-100 font-bold uppercase tracking-wide hover:bg-concrete-100 hover:text-asphalt-950 transition-colors text-center">
+            <i class="fa-brands fa-whatsapp"></i> Solicitar demo operativa
+          </a>
+        </div>
+
+        <div class="relative flex flex-col p-8 sm:p-10 bg-asphalt-950 border-2 border-hivis">
+          <span class="absolute -top-3.5 left-8 px-3 py-1 bg-hivis text-asphalt-950 text-xs font-bold uppercase tracking-wider">Máximo ROI</span>
+          <p class="sidewall text-xs text-hivis">Licencia empresarial · Gestión y costos</p>
+          <h3 class="font-display font-extrabold uppercase text-3xl mt-3 leading-tight">Llantas reencauchables, costo por km y gestión estratégica</h3>
+          <p class="mt-3 text-concrete-300">Para directores de transporte y gerencias que requieren control total del ciclo de reencauche, CPK y compras.</p>
+          <ul class="mt-7 space-y-3.5 flex-1">
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span><strong>Todo lo de la Licencia Operativa</strong> con acompañamiento técnico prioritario.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Trazabilidad integral del inventario y ciclo de vida de las llantas reencauchables.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Analítica de costo por kilómetro y proyecciones de recambio.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Auditoría de bajas técnicas y respaldo para garantías.</span></li>
+            <li class="flex gap-3"><i class="fa-solid fa-check text-hivis mt-1"></i><span>Planificación de compras basada en consumo real.</span></li>
+          </ul>
+          <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20de%20la%20Licencia%20Empresarial%20de%20TireAnalyze%20Pro" target="_blank" rel="noopener" class="mt-9 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors text-center">
+            <i class="fa-brands fa-whatsapp"></i> Solicitar demo empresarial
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- HISTORIA: un día en la vida del jefe de flota                   -->
+  <!-- ============================================================== -->
+  <section id="historia" class="bg-concrete-100 text-asphalt-950 py-20 lg:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <p class="sidewall text-xs text-asphalt-700 flex items-center gap-3"><span class="w-8 h-[3px] bg-hivis"></span> El viaje de la transformación</p>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-5xl leading-[0.95] mt-3">De apagar incendios en carretera a dominar el 100% de tu flota</h2>
+      </div>
+
+      <div class="mt-14 grid md:grid-cols-3 gap-px bg-concrete-300 border border-concrete-300">
+        <article class="bg-concrete-50 p-7">
+          <p class="font-mono text-sm font-bold text-warn">06:30 AM</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">El caos cotidiano</h3>
+          <p class="mt-3 text-asphalt-700 leading-relaxed">Un camión varado por llanta estallada en ruta crítica. En el patio, planillas en papel bajo la lluvia y medidas tomadas al ojo.</p>
+          <p class="mt-5 pt-4 border-t border-concrete-300 text-sm font-semibold text-asphalt-700"><i class="fa-solid fa-triangle-exclamation text-warn mr-1.5"></i>Frustración y desgaste diario</p>
+        </article>
+        <article class="bg-concrete-50 p-7">
+          <p class="font-mono text-sm font-bold text-crit">Fin de mes</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">La fuga invisible</h3>
+          <p class="mt-3 text-asphalt-700 leading-relaxed">La factura de llantas superó el presupuesto un 35%. Sin trazabilidad, llantas que aún podían reencaucharse terminaron en el desecho.</p>
+          <p class="mt-5 pt-4 border-t border-concrete-300 text-sm font-semibold text-asphalt-700"><i class="fa-solid fa-arrow-trend-down text-crit mr-1.5"></i>Pérdida patrimonial oculta</p>
+        </article>
+        <article class="bg-asphalt-950 text-concrete-100 p-7">
+          <p class="font-mono text-sm font-bold text-hivis">Hoy</p>
+          <h3 class="font-display font-bold uppercase text-2xl mt-2">Certeza y paz operativa</h3>
+          <p class="mt-3 text-concrete-300 leading-relaxed">La inspección toma 15 minutos desde el móvil. El semáforo alerta antes de una falla vial y cada llanta reencauchable está protegida hasta su último reencauche.</p>
+          <p class="mt-5 pt-4 border-t border-asphalt-700 text-sm font-semibold"><i class="fa-solid fa-circle-check text-ok mr-1.5"></i>Ahorro superior al 25% y control total</p>
+        </article>
+      </div>
+
+      <figure class="mt-14 grid md:grid-cols-[auto_1fr] gap-6 items-start">
+        <i class="fa-solid fa-quote-left text-5xl text-hivis"></i>
+        <div>
+          <blockquote class="font-display font-semibold text-2xl sm:text-3xl leading-snug">
+            “Antes pasábamos el día buscando culpables entre planillas traspapeladas. Ahora anticipamos los problemas antes de que el camión salga a ruta.”
+          </blockquote>
+          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento, flota de carga y pasajeros</figcaption>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- CTA FINAL                                                        -->
+  <!-- ============================================================== -->
+  <section class="bg-hivis text-asphalt-950 relative overflow-hidden">
+    <div class="tread-band" aria-hidden="true"></div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 grid lg:grid-cols-[1.4fr_1fr] gap-10 items-center">
+      <div>
+        <h2 class="font-display font-extrabold uppercase text-4xl sm:text-6xl leading-[0.92]">¿Quieres verlo operando en tu patio?</h2>
+        <p class="mt-4 text-lg font-medium max-w-xl">Coordinamos una visita técnica presencial para evaluar tu operación con tu equipo y mostrarte el ahorro real.</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-asphalt-950 text-concrete-50 font-bold uppercase tracking-wide hover:bg-asphalt-800 transition-colors text-center">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Agendar visita presencial
+        </a>
+        <a href="https://www.tireanalizepro.com" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
+          Ingresar a la plataforma <i class="fa-solid fa-arrow-right text-sm"></i>
+        </a>
+        <p class="text-sm font-semibold text-center">o llámanos: <a href="tel:+573204098077" class="underline font-mono">+57 320 409 8077</a></p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-asphalt-950 border-t border-asphalt-700 pt-10 pb-24 md:pb-10 md:pr-20 text-sm text-concrete-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-6 items-center justify-between text-center md:text-left">
+      <div>
+        <p class="font-display font-extrabold uppercase text-lg text-concrete-50">TireAnalyze <span class="text-hivis">Pro</span></p>
+        <p class="mt-1">© 2026 TireAnalyze Pro — Confianza en tu información.</p>
+      </div>
+      <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 font-semibold">
+        <a href="https://www.tireanalizepro.com" class="hover:text-hivis">Plataforma</a>
+        <a href="#servicios" class="hover:text-hivis">Servicios</a>
+        <a href="#reencauche" class="hover:text-hivis">Reencauche</a>
+        <a href="#planes" class="hover:text-hivis">Versiones</a>
+        <a href="https://wa.me/573204098077" target="_blank" rel="noopener" class="hover:text-ok"><i class="fa-brands fa-whatsapp mr-1"></i>+57 320 409 8077</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- WhatsApp flotante -->
+  <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20más%20información%20sobre%20TireAnalyze%20Pro" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp" class="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full flex items-center justify-center bg-ok text-white shadow-xl shadow-black/50 hover:scale-105 transition-transform">
+    <i class="fa-brands fa-whatsapp text-3xl"></i>
+  </a>
+
+  <script>
+    // Calculadora: estimación de ahorro del 28%
+    const rngV = document.getElementById('rngVehiculos'), rngG = document.getElementById('rngGasto');
+    function actualizarCalculadora() {
+      const gastoM = parseInt(rngG.value) || 120;
+      document.getElementById('lblNumVehiculos').textContent = rngV.value;
+      document.getElementById('lblGastoAnual').textContent = `$${gastoM} M`;
+      document.getElementById('lblAhorroEstimado').textContent = '$' + Math.round(gastoM * 1e6 * 0.28).toLocaleString('es-CO');
+      [rngV, rngG].forEach(r => r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%'));
+    }
+    [rngV, rngG].forEach(r => r.addEventListener('input', actualizarCalculadora));
+    actualizarCalculadora();
+
+    // Menú móvil
+    const menuBtn = document.getElementById('menuBtn'), menu = document.getElementById('mobileMenu');
+    function setMenu(open) {
+      menu.classList.toggle('open', open);
+      menuBtn.setAttribute('aria-expanded', open);
+      menuBtn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      menuBtn.firstElementChild.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    }
+    menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('open')));
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+
+    // Aparición al hacer scroll
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }), { threshold: .12 });
+    document.querySelectorAll('article, #reencauche li, #reencauche .grid > div, #seguridad li, #comparativa .grid, #planes .grid > div').forEach((el, i) => {
+      el.classList.add('reveal'); el.style.setProperty('--d', (i % 3) * 90 + 'ms'); io.observe(el);
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## Archivo: templates/preview_chasis.html
+
+- **Ruta:** `templates/preview_chasis.html`
+- **Descripción:** Visor interactivo y banco de pruebas de renderizado de tipologías de chasis
+- **Métricas:** 1346 líneas | 72,799 bytes (71.1 KB)
+- **Lenguaje:** `html`
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista Previa: Inspección de Patio — Chasis y Mediciones</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .touch-target { min-height: 44px; }
+
+    /* Ruedas Interactivas SVG */
+    .tire-interactive-node {
+      cursor: pointer;
+      outline: none;
+      user-select: none;
+    }
+    .tire-interactive-node:hover .tire-rubber-body {
+      filter: brightness(1.18);
+    }
+    .tire-interactive-node:focus-visible .tire-selection-ring {
+      stroke: #2563EB !important;
+      stroke-width: 3px !important;
+    }
+
+    /* Placeholders con alto contraste (mínimo 4.5:1 contra fondo blanco) */
+    input::placeholder, textarea::placeholder {
+      color: #475569 !important;
+      opacity: 1 !important;
+    }
+
+    /* Scrollbars suaves */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F1F5F9;
+      border-radius: 3px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 3px;
+    }
+
+    /* Selector de posición activo en chips */
+    .pos-btn.active {
+      background-color: #2563EB !important;
+      color: #FFFFFF !important;
+      border-color: #1D4ED8 !important;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.35);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-16">
+
+  <!-- ============================================================== -->
+  <!-- BARRA DE HERRAMIENTAS DE PRUEBA Y AUDITORÍA DE LA VISTA PREVIA -->
+  <!-- ============================================================== -->
+  <header class="sticky top-0 z-50 bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <span class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm">
+          <i class="fa-solid fa-eye"></i>
+        </span>
+        <div>
+          <h1 class="text-sm font-black tracking-tight flex items-center space-x-2">
+            <span>VISTA PREVIA: INSPECCIÓN DE PATIO</span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950 uppercase">Pre-Integración</span>
+          </h1>
+          <p class="text-xs text-slate-400">Verificación de Chasis, Mediciones y Columna Derecha Sticky</p>
+        </div>
+      </div>
+
+      <!-- Controles de Simulación de Escenarios -->
+      <div class="flex items-center flex-wrap gap-2 text-xs">
+        <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
+          <label for="selTipologiaPrueba" class="font-bold text-slate-300">Tipología:</label>
+          <select id="selTipologiaPrueba" onchange="cambiarTipologiaPrueba(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            <option value="Cabezote (6x4)" selected>Cabezote (6x4) - 10 llantas</option>
+            <option value="Camión Sencillo (4x2)">Camión Sencillo (4x2) - 6 llantas</option>
+            <option value="Volqueta Dobletroque (6x4)">Volqueta Dobletroque (6x4)</option>
+            <option value="Trailer (2 Ejes - 8 Llantas + Repuesto)">Trailer (2 Ejes + Repuesto)</option>
+            <option value="Cabezote (Cuatro Manos / 8x4)">Cuatro Manos (8x4)</option>
+            <option value="Liviano / Camioneta (4x2)">Liviano (4x2) - 4 llantas</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+          <button type="button" onclick="aplicarEscenario(0)" id="btnEsc0" class="px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white hover:bg-slate-600" title="0 llantas registradas">0 Registradas</button>
+          <button type="button" onclick="aplicarEscenario(1)" id="btnEsc1" class="px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700" title="Algunas llantas registradas y 1 con novedad">Algunas (con novedad)</button>
+          <button type="button" onclick="aplicarEscenario(2)" id="btnEsc2" class="px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700" title="Todas las llantas registradas">Todas Registradas</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- CONTENEDOR PRINCIPAL DE INSPECCIÓN DE PATIO                     -->
+  <!-- ============================================================== -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
+
+    <!-- MODULO CLIENTE, OPERACIÓN & VEHÍCULO (Encabezado General) -->
+    <div id="moduloCliente" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+          <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-building"></i>
+          </div>
+          <span class="text-xs sm:text-sm">Datos del Cliente, Operación & Vehículo</span>
+        </div>
+      </div>
+
+      <!-- Contenedor a 2 Columnas en Web (md:grid-cols-2) y 2 Columnas Compacto en Móvil -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
+        
+        <!-- COLUMNA 1: CLIENTE & INSPECCIÓN -->
+        <div class="space-y-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa</label>
+              <input type="text" id="cliente" value="Transportes Andes S.A.S" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Sede / Subcliente</label>
+              <input type="text" id="subcliente" value="Patio Principal - Bogotá" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Inspección</label>
+            <input type="text" id="fecha" value="2026-10-12" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+          </div>
+        </div>
+
+        <!-- COLUMNA 2: VEHÍCULO & OPERACIÓN -->
+        <div class="space-y-2.5 pt-2 md:pt-0 border-t md:border-t-0 md:border-l md:pl-5 border-slate-100">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo *</label>
+              <input type="text" id="placa" value="XYZ789" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Tipología</label>
+              <input type="text" id="lblTipologiaNombre" value="Cabezote (6x4)" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+              <input type="number" id="kilometraje" value="128500" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Operación</label>
+              <input type="text" id="tipo_operacion" value="Carga Seca" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CUADRÍCULA PRINCIPAL: CHASIS (IZQ) & COLUMNA DERECHA STICKY  -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+      <!-- ========================================================== -->
+      <!-- COLUMNA IZQUIERDA: DIAGRAMA DE CHASIS INTERACTIVO (lg: 7 cols) -->
+      <!-- ========================================================== -->
+      <div id="moduloChasis" class="lg:col-span-7 bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/90 space-y-4">
+
+        <!-- CABECERA DEL CHASIS -->
+        <div class="space-y-1.5 pb-2 border-b border-slate-100">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-truck"></i>
+              </div>
+              <!-- Sin numeración '3.' -->
+              <span class="text-sm font-extrabold text-slate-900">Diagrama de Chasis Interactivo</span>
+            </div>
+            <span id="badgeContadorProgreso" class="px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200/60 font-mono">
+              0 de 10
+            </span>
+          </div>
+
+          <div class="flex items-baseline justify-between pt-1">
+            <h3 id="lblTituloConfiguracion" class="text-base font-black text-slate-900 tracking-tight">
+              Cabezote (6x4)
+            </h3>
+            <div class="flex items-center space-x-1.5">
+              <button type="button" onclick="irPosicionAnterior()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center text-xs border border-slate-200 transition-all" title="Llanta Anterior">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <span class="text-xs font-bold text-slate-600 font-mono px-1">Pos: <b id="lblPosPill" class="text-blue-600 font-black text-sm">1</b></span>
+              <button type="button" onclick="irPosicionSiguiente()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center text-xs border border-slate-200 transition-all" title="Siguiente Llanta">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra de Progreso Fina -->
+          <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
+            <div id="barraProgresoChasis" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- FILA DE ORIENTACIÓN ESPACIAL: JUSTO SOBRE EL PRIMER EJE -->
+        <div class="flex items-center justify-between px-4 py-2 bg-slate-100/70 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 border border-slate-200/80">
+          <span class="flex items-center space-x-1">
+            <i class="fa-solid fa-arrow-left text-[11px] text-slate-400"></i>
+            <span>IZQUIERDA</span>
+          </span>
+          <span class="flex items-center space-x-1.5 text-slate-700 font-black">
+            <i class="fa-solid fa-arrow-up text-blue-600"></i>
+            <span>FRENTE</span>
+          </span>
+          <span class="flex items-center space-x-1">
+            <span>DERECHA</span>
+            <i class="fa-solid fa-arrow-right text-[11px] text-slate-400"></i>
+          </span>
+        </div>
+
+        <!-- CONTENEDOR DINÁMICO DE FILAS DE EJES -->
+        <div id="contenedorChasisEjes" class="space-y-4 pt-1"></div>
+
+        <!-- SECCIÓN DE REPUESTO INDEPENDIENTE (Si aplica) -->
+        <div id="seccionRepuestoChasis" class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div class="space-y-0.5">
+            <h4 class="text-xs font-black text-slate-800">Repuesto</h4>
+            <p class="text-xs text-slate-400 font-medium">Posición independiente</p>
+          </div>
+          <div id="contenedorCajaRepuestoChasis" class="flex items-center space-x-3"></div>
+        </div>
+
+        <!-- LEYENDA TÉCNICA CLARA Y ACCESIBLE (Mínimo 12px) -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-center flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-slate-600">
+          <!-- Pendiente -->
+          <span class="flex items-center space-x-2">
+            <span class="w-3.5 h-3.5 rounded-full border border-slate-400 bg-white"></span>
+            <span>Pendiente</span>
+          </span>
+
+          <!-- Registrada (Insignia check verde y texto 'Registrada') -->
+          <span class="flex items-center space-x-2">
+            <span class="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black">
+              <i class="fa-solid fa-check"></i>
+            </span>
+            <span class="text-emerald-800">Registrada</span>
+          </span>
+
+          <!-- Con Novedad (Insignia ! ámbar y texto 'Con Novedad') -->
+          <span class="flex items-center space-x-2">
+            <span class="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black">
+              !
+            </span>
+            <span class="text-amber-800">Con Novedad</span>
+          </span>
+
+          <!-- Seleccionada (Contorno azul de 2.5px y fondo tenue) -->
+          <span class="flex items-center space-x-2">
+            <span class="w-3.5 h-5 rounded-md border-[2.5px] border-blue-600 bg-blue-50"></span>
+            <span class="text-blue-700">Seleccionada</span>
+          </span>
+        </div>
+
+        <!-- SELECTOR ALTERNATIVO PLEGABLE EN ESCRITORIO -->
+        <div class="hidden lg:block pt-2 border-t border-slate-100">
+          <details class="group bg-slate-50/70 border border-slate-200 rounded-xl overflow-hidden text-xs">
+            <summary class="px-3 py-2 cursor-pointer font-bold text-slate-600 hover:text-slate-900 flex items-center justify-between select-none">
+              <span class="flex items-center space-x-2">
+                <i class="fa-solid fa-layer-group text-slate-400"></i>
+                <span>Selector alternativo</span>
+              </span>
+              <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <div id="gridBotonesEscritorioPlegable" class="p-3 pt-1 border-t border-slate-200/70 space-y-2"></div>
+          </details>
+        </div>
+
+        <!-- BOTÓN DE AUSENCIA DE REPUESTO -->
+        <div id="boxBtnSinRepuesto" class="pt-1 border-t border-slate-100 flex items-center justify-center">
+          <button type="button" id="btnSinRepuesto" onclick="toggleSinRepuesto()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl border border-slate-200 transition-all flex items-center space-x-1.5">
+            <i class="fa-solid fa-ban text-slate-400"></i>
+            <span id="txtBtnSinRepuesto">Marcar: Vehículo sin llanta de repuesto</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ========================================================== -->
+      <!-- COLUMNA DERECHA: RESUMEN + ESPECIFICACIONES + MEDICIONES    -->
+      <!-- Comportamiento: STICKY EN PANTALLAS GRANDES (lg:sticky lg:top-16) -->
+      <!-- ========================================================== -->
+      <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-16 lg:self-start">
+
+        <!-- 1. RESUMEN DE LA POSICIÓN SELECCIONADA (Subido a Columna Derecha) -->
+        <div id="panelResumenPosicion" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 transition-all">
+          <!-- Renderizado dinámicamente -->
+        </div>
+
+        <!-- 2. ESPECIFICACIONES DE LA LLANTA (Subido a Columna Derecha) -->
+        <!-- Sin numeración '2.' -->
+        <div id="moduloEspecificaciones" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+              <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-ring"></i>
+              </div>
+              <span class="text-xs sm:text-sm font-extrabold">Especificaciones de la Llanta</span>
+            </div>
+            <span id="badgeHistorialPrevia" class="text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
+              <i class="fa-solid fa-clock-rotate-left mr-1"></i>Catálogo Activo
+            </span>
+          </div>
+
+          <!-- Campos de Especificaciones Compactos y Prácticos -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Marca</label>
+              <input type="text" id="marca" value="MICHELIN" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Diseño</label>
+              <input type="text" id="diseno" value="X MULTI D" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
+              <select id="dimension" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="295/80R22.5" selected>295/80R22.5</option>
+                <option value="11R22.5">11R22.5</option>
+                <option value="12R22.5">12R22.5</option>
+                <option value="315/80R22.5">315/80R22.5</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Vida / Condición</label>
+              <select id="vida" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                <option value="Original" selected>Original</option>
+                <option value="Reencauche 1">Reencauche 1</option>
+                <option value="Reencauche 2">Reencauche 2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. MEDICIONES DE LA LLANTA -->
+        <!-- Sin numeración '4.' -->
+        <div id="moduloMediciones" class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
+              <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-gauge-high"></i>
+              </div>
+              <span class="text-xs sm:text-sm font-extrabold">Mediciones de la Llanta</span>
+            </div>
+            <input type="hidden" id="posicion" value="1">
+            <span id="badgeLimiteRetiro" class="text-xs bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full border border-slate-200">
+              Límite Retiro: <b id="lblMmRetiroCliente">3.0</b> mm
+            </span>
+          </div>
+
+          <!-- FILA 1 DE MEDICIONES: EXT, CENT, INT EN UNA FILA DE TRES CON SUFIJO 'mm' INTERNO -->
+          <div class="space-y-1.5">
+            <span class="block text-xs font-bold text-slate-600">Profundidades de Labrado (mm):</span>
+            
+            <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+              <!-- Prof. Ext -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Ext *</label>
+                <div class="relative flex items-center">
+                  <input type="number" id="prof_ext" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
+                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                    oninput="evaluarSugerenciaCambio();">
+                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
+                </div>
+              </div>
+
+              <!-- Prof. Cent -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Cent *</label>
+                <div class="relative flex items-center">
+                  <input type="number" id="prof_cent" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
+                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                    oninput="evaluarSugerenciaCambio();">
+                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
+                </div>
+              </div>
+
+              <!-- Prof. Int -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Int *</label>
+                <div class="relative flex items-center">
+                  <input type="number" id="prof_int" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
+                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+                    oninput="evaluarSugerenciaCambio();">
+                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FILA 2 DE MEDICIONES: PRESIÓN (PSI) EN FILA APARTE CON SUFIJO 'PSI' INTERNO -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-100">
+            <label class="block text-xs font-bold text-slate-700">Presión Calibrada (PSI) *</label>
+            <div class="flex items-center space-x-3">
+              <div class="relative flex-1 sm:max-w-xs flex items-center">
+                <input type="number" id="psi" step="1" min="0" max="160" value="100" placeholder="100" inputmode="numeric"
+                  class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
+                <span class="absolute right-3 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">PSI</span>
+              </div>
+
+              <div class="text-xs text-slate-500 font-medium hidden sm:block">
+                Presión estándar recomendada
+              </div>
+            </div>
+
+            <!-- CHIPS DE PSI EN ESTILO NEUTRO (Mínimo 12px) -->
+            <div class="pt-2 flex items-center flex-wrap gap-1.5">
+              <span class="text-xs font-bold text-slate-500 mr-1 flex items-center space-x-1">
+                <i class="fa-solid fa-gauge text-slate-400 text-xs"></i>
+                <span>Presets PSI:</span>
+              </span>
+              <button type="button" onclick="setPsiRapido(90)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">90</button>
+              <button type="button" onclick="setPsiRapido(100)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">100</button>
+              <button type="button" onclick="setPsiRapido(105)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">105</button>
+              <button type="button" onclick="setPsiRapido(110)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">110</button>
+              <button type="button" onclick="setPsiRapido(115)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">115</button>
+              <button type="button" onclick="setPsiRapido(120)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">120</button>
+            </div>
+          </div>
+
+          <!-- Alerta Reactiva de Sugerencia de Retiro -->
+          <div id="alertaRetiroInmediato" class="hidden p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs font-bold flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+            <span>¡ALERTA TÉCNICA: Esta llanta alcanzó el límite de retiro (<span id="lblMmAlerta">3.0</span> mm). Requiere cambio programado.</span>
+          </div>
+
+          <!-- NOVEDADES / OBSERVACIÓN CON CHIPS RÁPIDOS NEUTROS & LIMPIAR SIN ROJO INTENSO -->
+          <div class="space-y-2 pt-2 border-t border-slate-100">
+            <label class="block text-xs font-semibold text-slate-700">Novedades / Daños / Observaciones</label>
+            <input type="text" id="novedades" placeholder="ej. Desgaste irregular, corte en banda, baja presión, filtración..."
+              class="w-full touch-target px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              oninput="evaluarHabilitarFotoNovedad()">
+
+            <!-- CHIPS RÁPIDOS EN ESTILO NEUTRO SUAVE (Mínimo 12px) -->
+            <div class="flex items-center flex-wrap gap-1.5 pt-0.5">
+              <span class="text-xs text-slate-500 font-bold mr-1">Rápidos:</span>
+              <button type="button" onclick="agregarNovedadRapida('Desgaste irregular')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Desgaste irregular</button>
+              <button type="button" onclick="agregarNovedadRapida('Desgaste escalonado')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Desgaste escalonado</button>
+              <button type="button" onclick="agregarNovedadRapida('Corte en costado')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Corte en costado</button>
+              <button type="button" onclick="agregarNovedadRapida('Corte en banda')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Corte en banda</button>
+              <button type="button" onclick="agregarNovedadRapida('Baja presión')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Baja presión</button>
+              <button type="button" onclick="agregarNovedadRapida('Filtración')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Filtración</button>
+              <button type="button" onclick="agregarNovedadRapida('Daño en pestaña')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Daño en pestaña</button>
+              <!-- Botón Limpiar: Neutro suave sin rojo intenso -->
+              <button type="button" onclick="limpiarNovedades()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 transition-all" title="Borrar observación">
+                <i class="fa-solid fa-eraser mr-1"></i>Limpiar
+              </button>
+            </div>
+
+            <!-- MÓDULO REACTIVO DE EVIDENCIAS FOTOGRÁFICAS -->
+            <div id="boxAdjuntarFotoNovedad" class="hidden pt-2 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-600">
+                <span class="flex items-center space-x-1.5 text-blue-700">
+                  <i class="fa-solid fa-camera"></i>
+                  <span>Evidencias Fotográficas:</span>
+                </span>
+                <span class="text-xs text-slate-400 font-normal">1 o varias fotos</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="simularAdjuntarFoto()" class="flex-1 py-2.5 px-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs rounded-xl border border-blue-200/90 flex items-center justify-center space-x-2 transition-all">
+                  <i class="fa-solid fa-camera-retro text-sm"></i>
+                  <span id="txtBtnCamaraNovedad">Tomar Foto o Subir Evidencia</span>
+                </button>
+              </div>
+
+              <!-- Miniaturas de Fotos -->
+              <div id="previewFotoNovedadBox" class="hidden rounded-xl border border-blue-200 bg-blue-50/40 p-2.5 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span id="lblConteoFotosAdjuntas" class="font-bold text-slate-800">1 imagen adjunta</span>
+                  <span class="text-xs text-emerald-700 font-bold flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-check text-xs"></i>
+                    <span>Lista para guardar</span>
+                  </span>
+                </div>
+                <div id="gridPreviewFotosNovedad" class="flex flex-wrap gap-2 pt-1"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BOTONES DE ACCIÓN (Guardar & Siguiente Llanta) -->
+          <div class="flex items-center space-x-3 pt-2">
+            <button type="button" onclick="guardarPosicionSimulada()" class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
+              <i class="fa-solid fa-circle-check text-base"></i>
+              <span>Guardar & Siguiente Llanta</span>
+            </button>
+            <button type="button" onclick="limpiarCamposMediciones()" class="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-200 transition-all" title="Limpiar mediciones">
+              <i class="fa-solid fa-eraser"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- LÓGICA JAVASCRIPT DE VISTA PREVIA Y SIMULACIÓN                 -->
+  <!-- ============================================================== -->
+  <script>
+    // Estado en memoria de la simulación
+    let posicionActiva = 1;
+    let tipologiaActual = 'Cabezote (6x4)';
+    let posicionesInspeccionadas = new Set();
+    let posicionesConNovedad = new Map(); // pos -> textoNovedad
+    let fotosNovedad = new Map(); // pos -> array de fotos
+    let sinRepuesto = false;
+
+    // Diccionario de normalización de roles (EXT, INT, DIR, REP, SEN)
+    function normalizarRolRueda(rol) {
+      if (!rol) return '';
+      const r = String(rol).trim().toUpperCase();
+      if (r.includes('DIR')) return 'DIR';
+      if (r.includes('EXT')) return 'EXT';
+      if (r.includes('INT')) return 'INT';
+      if (r.includes('REP')) return 'REP';
+      if (r.includes('SEN') || r.includes('LIB')) return 'SEN';
+      return r;
+    }
+
+    // Diccionario de etiquetas visibles normalizado con tildes
+    function normalizarEtiquetaTipo(tipo) {
+      if (!tipo) return 'Rodante';
+      const t = String(tipo).trim().toLowerCase();
+      if (t === 'traccion' || t === 'tracción') return 'Tracción';
+      if (t === 'direccional') return 'Direccional';
+      if (t === 'libre') return 'Libre';
+      if (t === 'repuesto') return 'Repuesto';
+      if (t === 'sencilla') return 'Sencilla';
+      return tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    }
+
+    function obtenerTextoRolLargo(rol) {
+      const r = normalizarRolRueda(rol);
+      if (r === 'EXT') return 'Exterior (EXT)';
+      if (r === 'INT') return 'Interior (INT)';
+      if (r === 'DIR') return 'Direccional (DIR)';
+      if (r === 'REP') return 'Repuesto (REP)';
+      if (r === 'SEN') return 'Sencilla (SEN)';
+      return rol || 'Estándar';
+    }
+
+    // Catálogo base de esquemas para simulación independiente
+    const esquemasPorTipologia = {
+      'Cabezote (6x4)': {
+        total: 10,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] },
+          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 7, lado: 'izq', rol: 'ext' }, { pos: 8, lado: 'izq', rol: 'int' }, { pos: 9, lado: 'der', rol: 'int' }, { pos: 10, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Camión Sencillo (4x2)': {
+        total: 6,
+        posiciones: [1, 2, 3, 4, 5, 6],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Volqueta Dobletroque (6x4)': {
+        total: 10,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] },
+          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 7, lado: 'izq', rol: 'ext' }, { pos: 8, lado: 'izq', rol: 'int' }, { pos: 9, lado: 'der', rol: 'int' }, { pos: 10, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Trailer (2 Ejes - 8 Llantas + Repuesto)': {
+        total: 9,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 99],
+        esquema: [
+          { eje: 1, tipo: 'libre', posiciones: [{ pos: 1, lado: 'izq', rol: 'ext' }, { pos: 2, lado: 'izq', rol: 'int' }, { pos: 3, lado: 'der', rol: 'int' }, { pos: 4, lado: 'der', rol: 'ext' }] },
+          { eje: 2, tipo: 'libre', posiciones: [{ pos: 5, lado: 'izq', rol: 'ext' }, { pos: 6, lado: 'izq', rol: 'int' }, { pos: 7, lado: 'der', rol: 'int' }, { pos: 8, lado: 'der', rol: 'ext' }] },
+          { eje: 99, tipo: 'repuesto', posiciones: [{ pos: 99, lado: 'centro', rol: 'rep' }] }
+        ]
+      },
+      'Cabezote (Cuatro Manos / 8x4)': {
+        total: 12,
+        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'direccional', posiciones: [{ pos: 3, lado: 'izq', rol: 'direccional' }, { pos: 4, lado: 'der', rol: 'direccional' }] },
+          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 5, lado: 'izq', rol: 'ext' }, { pos: 6, lado: 'izq', rol: 'int' }, { pos: 7, lado: 'der', rol: 'int' }, { pos: 8, lado: 'der', rol: 'ext' }] },
+          { eje: 4, tipo: 'traccion', posiciones: [{ pos: 9, lado: 'izq', rol: 'ext' }, { pos: 10, lado: 'izq', rol: 'int' }, { pos: 11, lado: 'der', rol: 'int' }, { pos: 12, lado: 'der', rol: 'ext' }] }
+        ]
+      },
+      'Liviano / Camioneta (4x2)': {
+        total: 4,
+        posiciones: [1, 2, 3, 4],
+        esquema: [
+          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
+          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'sencilla' }, { pos: 4, lado: 'der', rol: 'sencilla' }] }
+        ]
+      }
+    };
+
+    function obtenerConfigActual() {
+      return esquemasPorTipologia[tipologiaActual] || esquemasPorTipologia['Cabezote (6x4)'];
+    }
+
+    // Coordenadas SVG
+    function distribuirEjeReferencia(eje) {
+      const posiciones = eje.posiciones || [];
+      const izquierda = posiciones.filter(p => p.lado === 'izq');
+      const derecha = posiciones.filter(p => p.lado === 'der');
+
+      if (izquierda.length === 1 && derecha.length === 1) {
+        return [
+          { posicion: izquierda[0], x: 112, y: 12 },
+          { posicion: derecha[0], x: 408, y: 12 }
+        ];
+      }
+
+      if (izquierda.length === 2 && derecha.length === 2) {
+        function obtenerUnica(lado, rol) {
+          const match = lado.filter(p => String(p.rol).toUpperCase().includes(rol));
+          if (match.length === 1) return match[0];
+          return (rol === 'EXT') ? lado[0] : lado[1];
+        }
+        return [
+          { posicion: obtenerUnica(izquierda, 'EXT'), x: 96, y: 12 },
+          { posicion: obtenerUnica(izquierda, 'INT'), x: 150, y: 12 },
+          { posicion: obtenerUnica(derecha, 'INT'), x: 370, y: 12 },
+          { posicion: obtenerUnica(derecha, 'EXT'), x: 424, y: 12 }
+        ];
+      }
+
+      const res = [];
+      izquierda.forEach((p, idx) => {
+        const x = (izquierda.length === 1) ? 112 : (96 + idx * 54);
+        res.push({ posicion: p, x, y: 12 });
+      });
+      derecha.forEach((p, idx) => {
+        const x = (derecha.length === 1) ? 408 : (370 + idx * 54);
+        res.push({ posicion: p, x, y: 12 });
+      });
+      return res;
+    }
+
+    // ==============================================================
+    // GENERACIÓN DE SVG DE EJES (Fiel a los nuevos requerimientos)
+    // 1. Neumáticos SIEMPRE en grafito (sin relleno verde/naranja y sin halo)
+    // 2. Insignia check verde para registrada, '!' ámbar para novedad
+    // 3. Medallón numérico exterior con el color del estado
+    // 4. Selección: contorno azul 2.5px más fondo azul muy tenue #EFF6FF
+    // 5. Roles en mayúsculas (EXT, INT, DIR), 10.5px, sans-serif
+    // ==============================================================
+    function generarSvgFilaEje(eje, posActual) {
+      const items = distribuirEjeReferencia(eje);
+      const ejeId = eje.eje;
+
+      let svg = `
+        <svg viewBox="0 0 560 158" width="100%" height="auto" class="max-w-[560px] overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- Gradiente de Caucho Grafito Neutro Fijo (Siempre usado para todas las llantas) -->
+            <linearGradient id="gradRubber_eje_${ejeId}" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="15%" stop-color="#334155"/>
+              <stop offset="50%" stop-color="#1E293B"/>
+              <stop offset="85%" stop-color="#334155"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+
+            <!-- Gradiente Cilíndrico Metálico del Eje Central -->
+            <linearGradient id="gradAxleTube_eje_${ejeId}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#94A3B8"/>
+              <stop offset="25%" stop-color="#E2E8F0"/>
+              <stop offset="55%" stop-color="#CBD5E1"/>
+              <stop offset="85%" stop-color="#94A3B8"/>
+              <stop offset="100%" stop-color="#64748B"/>
+            </linearGradient>
+
+            <linearGradient id="gradAcopleCenter_eje_${ejeId}" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F1F5F9"/>
+              <stop offset="50%" stop-color="#CBD5E1"/>
+              <stop offset="100%" stop-color="#94A3B8"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Tubo Metálico Horizontal de Chasis -->
+          <g id="eje_metalico_${ejeId}">
+            <line x1="120" y1="58.5" x2="440" y2="58.5" stroke="#CBD5E1" stroke-width="2" opacity="0.6"/>
+            <rect x="120" y="52.5" width="320" height="6.5" rx="1.5" fill="url(#gradAxleTube_eje_${ejeId})" stroke="#94A3B8" stroke-width="0.75"/>
+            <rect x="162" y="50" width="3.5" height="11.5" rx="1" fill="#E2E8F0" stroke="#64748B" stroke-width="0.75"/>
+            <rect x="394" y="50" width="3.5" height="11.5" rx="1" fill="#E2E8F0" stroke="#64748B" stroke-width="0.75"/>
+            <rect x="267" y="47.5" width="26" height="16.5" rx="3.5" fill="url(#gradAcopleCenter_eje_${ejeId})" stroke="#64748B" stroke-width="1.2"/>
+            <circle cx="280" cy="55.75" r="7.5" fill="#E2E8F0" stroke="#475569" stroke-width="1.2"/>
+            <circle cx="280" cy="55.75" r="2.5" fill="#334155"/>
+            <circle cx="270" cy="50.5" r="1.2" fill="#475569"/>
+            <circle cx="290" cy="50.5" r="1.2" fill="#475569"/>
+            <circle cx="270" cy="61" r="1.2" fill="#475569"/>
+            <circle cx="290" cy="61" r="1.2" fill="#475569"/>
+          </g>
+      `;
+
+      items.forEach(item => {
+        const p = item.posicion;
+        const x = item.x;
+        const y = item.y; // 12
+        const esSeleccionada = (p.pos === posActual);
+        const tieneNovedad = posicionesConNovedad.has(p.pos);
+        const esRegistrada = posicionesInspeccionadas.has(p.pos);
+        const textoNovedad = tieneNovedad ? posicionesConNovedad.get(p.pos) : '';
+
+        // Caucho SIEMPRE en grafito, sin halos ni tintes de color
+        const fillCaucho = `url(#gradRubber_eje_${ejeId})`;
+        const strokeCaucho = '#0F172A';
+        const strokeWidthCaucho = '1.25';
+        const colorSurcos = '#0F172A';
+
+        let ariaTitle = `Llanta posición ${p.pos}, rol ${normalizarRolRueda(p.rol)}`;
+        if (tieneNovedad) ariaTitle += ` - Con Novedad: ${textoNovedad}`;
+        else if (esRegistrada) ariaTitle += ` - Registrada`;
+
+        svg += `
+          <g id="neumatico_node_${p.pos}" class="tire-interactive-node" onclick="seleccionarPosicion(${p.pos})" role="button" tabindex="0" aria-label="${ariaTitle}">
+            <title>${ariaTitle}</title>
+
+            <!-- A. Anillo y Fondo de Selección Activa: Contorno azul 2.5px más fondo azul muy tenue (#EFF6FF) -->
+            ${esSeleccionada ? `
+              <rect x="${x - 5}" y="${y - 5}" width="50" height="102" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="2.5" class="tire-selection-ring"/>
+            ` : ''}
+
+            <!-- B. Sombra suave bajo el neumático -->
+            <ellipse cx="${x + 20}" cy="${y + 93}" rx="17" ry="3.5" fill="#000000" opacity="0.18"/>
+
+            <!-- C. Silueta Principal del Neumático (SIEMPRE GRAFITO) -->
+            <rect x="${x}" y="${y}" width="40" height="92" rx="8" fill="${fillCaucho}" stroke="${strokeCaucho}" stroke-width="${strokeWidthCaucho}" class="tire-rubber-body"/>
+
+            <!-- D. Surcos Longitudinales -->
+            <line x1="${x + 13}" y1="${y + 5}" x2="${x + 13}" y2="${y + 87}" stroke="${colorSurcos}" stroke-width="2" stroke-linecap="round"/>
+            <line x1="${x + 27}" y1="${y + 5}" x2="${x + 27}" y2="${y + 87}" stroke="${colorSurcos}" stroke-width="2" stroke-linecap="round"/>
+        `;
+
+        // Ranuras en hombros
+        for (let cutY = y + 10; cutY <= y + 82; cutY += 9) {
+          svg += `
+            <line x1="${x + 2}" y1="${cutY}" x2="${x + 10}" y2="${cutY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.85"/>
+            <line x1="${x + 30}" y1="${cutY}" x2="${x + 38}" y2="${cutY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.85"/>
+          `;
+        }
+
+        // Tacos centrales
+        for (let tY = y + 14; tY <= y + 78; tY += 14) {
+          svg += `
+            <line x1="${x + 16}" y1="${tY}" x2="${x + 24}" y2="${tY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.6"/>
+          `;
+        }
+
+        // ============================================================
+        // INSIGNIAS SUPERIORES DE ESTADO (Check verde o '!' ámbar)
+        // ============================================================
+        if (tieneNovedad) {
+          svg += `
+            <!-- Insignia: '!' Ámbar para Con Novedad -->
+            <g id="badge_warn_${p.pos}">
+              <circle cx="${x + 32}" cy="${y + 8.5}" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.6"/>
+              <line x1="${x + 32}" y1="${y + 4.8}" x2="${x + 32}" y2="${y + 9}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="${x + 32}" cy="${y + 11.8}" r="1" fill="#FFFFFF"/>
+            </g>
+          `;
+        } else if (esRegistrada) {
+          svg += `
+            <!-- Insignia: Check Verde para Registrada -->
+            <g id="badge_ok_${p.pos}">
+              <circle cx="${x + 32}" cy="${y + 8.5}" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.6"/>
+              <path d="M ${x + 29.5} ${y + 8.5} L ${x + 31.5} ${y + 10.5} L ${x + 34.5} ${y + 6.8}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          `;
+        }
+
+        // ============================================================
+        // MEDALLÓN NUMÉRICO EXTERIOR CON EL COLOR DEL ESTADO
+        // Registrada: #ECFDF5 / #10B981
+        // Con Novedad: #FFFBEB / #F59E0B
+        // Pendiente: #F8FAFC / #E2E8F0
+        // Selección: Anillo exterior azul de 2.5px si está seleccionada
+        // ============================================================
+        const cxNum = x + 20;
+        const cyNum = 125;
+        let fillCirculo = '#F8FAFC';
+        let strokeCirculo = '#CBD5E1';
+        let strokeWidthNum = '1.2';
+        let fillTexto = '#1E293B';
+
+        if (tieneNovedad) {
+          fillCirculo = '#FFFBEB';
+          strokeCirculo = '#F59E0B';
+          strokeWidthNum = '2';
+          fillTexto = '#B45309';
+        } else if (esRegistrada) {
+          fillCirculo = '#ECFDF5';
+          strokeCirculo = '#10B981';
+          strokeWidthNum = '2';
+          fillTexto = '#047857';
+        }
+
+        // Selección resalta con anillo azul prominente de 2.5px visible en cualquier estado
+        let ringSeleccionNum = '';
+        if (esSeleccionada) {
+          ringSeleccionNum = `
+            <circle cx="${cxNum}" cy="${cyNum}" r="15" fill="none" stroke="#2563EB" stroke-width="2.5" opacity="0.95"/>
+          `;
+        }
+
+        svg += `
+          <!-- Medallón Numérico Exterior -->
+          ${ringSeleccionNum}
+          <circle cx="${cxNum}" cy="${cyNum}" r="12" fill="${fillCirculo}" stroke="${strokeCirculo}" stroke-width="${strokeWidthNum}"/>
+          <text x="${cxNum}" y="${cyNum + 0.5}" font-size="11.5" font-weight="800" fill="${fillTexto}" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="central">
+            ${p.pos}
+          </text>
+
+          <!-- ROLES BAJO LA RUEDA: EXT, INT, DIR en mayúsculas, 10.5px, sans-serif -->
+          <text x="${cxNum}" y="148" font-size="10.5" font-weight="700" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" letter-spacing="0.5">
+            ${normalizarRolRueda(p.rol)}
+          </text>
+
+        </g>
+        `;
+      });
+
+      svg += `</svg>`;
+      return svg;
+    }
+
+    // SVG Repuesto Fiel
+    function generarCajaRepuestoHtml(pos, rol, posActual) {
+      const esSeleccionada = (pos === posActual);
+      const tieneNovedad = posicionesConNovedad.has(pos);
+      const esRegistrada = posicionesInspeccionadas.has(pos);
+
+      const div = document.createElement('div');
+      div.className = `tire-repuesto-card p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center ${
+        esSeleccionada ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-500 shadow-sm' : 'bg-[#F8FAFC] border-slate-200 hover:bg-slate-100'
+      } ${sinRepuesto ? 'opacity-30 line-through' : ''}`;
+      div.onclick = () => seleccionarPosicion(pos);
+
+      div.innerHTML = `
+        <svg viewBox="0 0 40 92" width="28" height="64" class="overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gradRubberRep_${pos}" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="20%" stop-color="#334155"/>
+              <stop offset="50%" stop-color="#1E293B"/>
+              <stop offset="80%" stop-color="#334155"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="40" height="92" rx="8" fill="url(#gradRubberRep_${pos})" stroke="#0F172A" stroke-width="1.25"/>
+          <line x1="13" y1="5" x2="13" y2="87" stroke="#0F172A" stroke-width="2"/>
+          <line x1="27" y1="5" x2="27" y2="87" stroke="#0F172A" stroke-width="2"/>
+          ${tieneNovedad ? `
+            <circle cx="32" cy="8.5" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5"/>
+            <line x1="32" y1="5" x2="32" y2="9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="32" cy="11.5" r="0.9" fill="#FFFFFF"/>
+          ` : esRegistrada ? `
+            <circle cx="32" cy="8.5" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5"/>
+            <path d="M 29.5 8.5 L 31.5 10.5 L 34.5 6.8" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          ` : ''}
+        </svg>
+
+        <span class="mt-1.5 font-sans text-xs font-black flex items-center space-x-1 ${
+          tieneNovedad ? 'text-amber-700' : esRegistrada ? 'text-emerald-700' : 'text-slate-800'
+        }">
+          <span>${pos}</span>
+          ${tieneNovedad ? '<span class="text-[10px]">!</span>' : esRegistrada ? '<span class="text-[10px]">✓</span>' : ''}
+        </span>
+        <span class="text-[10px] font-bold text-slate-500 uppercase">REP</span>
+      `;
+
+      return div;
+    }
+
+    // ==============================================================
+    // RENDERIZADO DEL RESUMEN EN COLUMNA DERECHA
+    // Muestra: 'Eje 2 · Lado derecho · Exterior'
+    // Muestra 'Registrada' UNA SOLA VEZ
+    // ==============================================================
+    function renderizarResumenPosicion(posActual) {
+      const panel = document.getElementById('panelResumenPosicion');
+      if (!panel) return;
+
+      const cfg = obtenerConfigActual();
+      let posData = null;
+      let ejeData = null;
+
+      for (const e of cfg.esquema) {
+        for (const p of (e.posiciones || [])) {
+          if (p.pos === posActual) {
+            posData = p;
+            ejeData = e;
+            break;
+          }
+        }
+        if (posData) break;
+      }
+
+      if (!posData || !ejeData) {
+        panel.innerHTML = `
+          <div class="flex items-center space-x-2 text-slate-500 font-bold text-xs">
+            <span>Posición ${posActual} activa</span>
+          </div>
+        `;
+        return;
+      }
+
+      const esRep = (ejeData.eje === 99 || (ejeData.tipo || '').toLowerCase() === 'repuesto');
+      const tipoNormalizado = normalizarEtiquetaTipo(ejeData.tipo);
+      const nombreEje = esRep ? 'Soporte de Repuesto' : `Eje ${ejeData.eje} · ${tipoNormalizado}`;
+      const ladoTexto = posData.lado === 'izq' ? 'Lado Izquierdo' : posData.lado === 'der' ? 'Lado Derecho' : 'Soporte Central';
+      const rolTexto = obtenerTextoRolLargo(posData.rol);
+
+      const tieneNovedad = posicionesConNovedad.has(posActual);
+      const esRegistrada = posicionesInspeccionadas.has(posActual);
+      const textoNovedad = tieneNovedad ? posicionesConNovedad.get(posActual) : '';
+
+      // Badge de estado único en el resumen
+      let badgeEstadoHtml = '';
+      if (tieneNovedad) {
+        badgeEstadoHtml = `
+          <span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center space-x-1.5 shadow-xs">
+            <span class="w-3.5 h-3.5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">!</span>
+            <span>Con Novedad</span>
+          </span>
+        `;
+      } else if (esRegistrada) {
+        badgeEstadoHtml = `
+          <span class="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center space-x-1.5 shadow-xs">
+            <i class="fa-solid fa-check text-emerald-600 text-xs"></i>
+            <span>Registrada</span>
+          </span>
+        `;
+      } else {
+        badgeEstadoHtml = `
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center space-x-1">
+            <i class="fa-solid fa-clock text-slate-400 text-[10px]"></i>
+            <span>Pendiente</span>
+          </span>
+        `;
+      }
+
+      panel.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-base font-mono shadow-md shadow-blue-500/20">
+              ${posActual}
+            </span>
+            <div>
+              <div class="font-extrabold text-slate-900 text-xs sm:text-sm">
+                ${nombreEje} · ${ladoTexto}
+              </div>
+              <div class="text-xs text-slate-500 font-medium">
+                Posición: <b class="text-slate-800">${rolTexto}</b>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            ${badgeEstadoHtml}
+          </div>
+        </div>
+
+        ${tieneNovedad ? `
+          <div class="mt-2.5 text-xs text-amber-900 font-bold bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xs"></i>
+            <span>Novedad: ${textoNovedad}</span>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // ==============================================================
+    // RENDERIZADO DEL DIAGRAMA COMPLETO DE EJES
+    // ==============================================================
+    function renderizarChasis() {
+      const contenedor = document.getElementById('contenedorChasisEjes');
+      if (!contenedor) return;
+      contenedor.innerHTML = '';
+
+      const cfg = obtenerConfigActual();
+      const posActual = posicionActiva;
+
+      // Actualizar contador y progreso
+      const totalPos = cfg.posiciones.length;
+      const regCount = cfg.posiciones.filter(p => posicionesInspeccionadas.has(p)).length;
+      document.getElementById('badgeContadorProgreso').textContent = `${regCount} de ${totalPos}`;
+      document.getElementById('barraProgresoChasis').style.width = `${(regCount / totalPos) * 100}%`;
+      document.getElementById('lblPosPill').textContent = posActual;
+
+      const ejesRodantes = cfg.esquema.filter(e => e.eje !== 99 && (e.tipo || '').toLowerCase() !== 'repuesto');
+      const ejeRepuesto = cfg.esquema.find(e => e.eje === 99 || (e.tipo || '').toLowerCase() === 'repuesto');
+
+      ejesRodantes.forEach((eje, idx) => {
+        const filaDiv = document.createElement('div');
+        filaDiv.className = `space-y-1.5 pb-3 ${idx < ejesRodantes.length - 1 ? 'border-b border-slate-100' : ''}`;
+
+        // Encabezado del eje: Diccionario de etiquetas visibles corregido (Tracción, Direccional, Libre)
+        const headerFila = document.createElement('div');
+        headerFila.className = 'flex items-center space-x-2 text-xs text-slate-500 pl-1';
+        const tipoNormalizado = normalizarEtiquetaTipo(eje.tipo);
+
+        headerFila.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span class="font-black text-slate-800">Eje ${eje.eje}</span>
+          <span class="text-slate-300">•</span>
+          <span class="font-bold text-slate-600">${tipoNormalizado}</span>
+        `;
+        filaDiv.appendChild(headerFila);
+
+        // SVG del eje
+        const svgBox = document.createElement('div');
+        svgBox.className = 'w-full flex justify-center';
+        svgBox.innerHTML = generarSvgFilaEje(eje, posActual);
+        filaDiv.appendChild(svgBox);
+
+        contenedor.appendChild(filaDiv);
+      });
+
+      // Repuesto
+      const secRepuesto = document.getElementById('seccionRepuestoChasis');
+      const cajaRepuesto = document.getElementById('contenedorCajaRepuestoChasis');
+      const boxBtnSinRep = document.getElementById('boxBtnSinRepuesto');
+
+      if (ejeRepuesto && ejeRepuesto.posiciones && ejeRepuesto.posiciones.length > 0) {
+        secRepuesto.classList.remove('hidden');
+        boxBtnSinRep.classList.remove('hidden');
+        cajaRepuesto.innerHTML = '';
+        ejeRepuesto.posiciones.forEach(p => {
+          cajaRepuesto.appendChild(generarCajaRepuestoHtml(p.pos, p.rol || 'REP', posActual));
+        });
+      } else {
+        secRepuesto.classList.add('hidden');
+        boxBtnSinRep.classList.add('hidden');
+      }
+
+      // Renderizar resumen de la posición seleccionada
+      renderizarResumenPosicion(posActual);
+
+      // Renderizar carrusel móvil y selector alternativo escritorio
+      renderizarSelectoresAuxiliares();
+    }
+
+    function renderizarSelectoresAuxiliares() {
+      const cfg = obtenerConfigActual();
+      const posActual = posicionActiva;
+
+      // 1. Móvil
+      const mobCont = document.getElementById('carruselLlantasMobile');
+      if (mobCont) {
+        mobCont.innerHTML = '';
+        cfg.posiciones.forEach(p => {
+          const esSel = (p === posActual);
+          const tieneNov = posicionesConNovedad.has(p);
+          const esReg = posicionesInspeccionadas.has(p);
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `flex-shrink-0 w-11 h-12 rounded-xl border flex flex-col items-center justify-center font-bold text-xs transition-all ${
+            esSel ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300' :
+            tieneNov ? 'bg-amber-50 text-amber-900 border-amber-300' :
+            esReg ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+            'bg-white text-slate-700 border-slate-200'
+          }`;
+          btn.onclick = () => seleccionarPosicion(p);
+          btn.innerHTML = `
+            <span>${p}</span>
+            <span class="text-[10px] opacity-80">${tieneNov ? '!' : esReg ? '✓' : '•'}</span>
+          `;
+          mobCont.appendChild(btn);
+        });
+      }
+
+      // 2. Escritorio dentro de bloque plegable
+      const dskCont = document.getElementById('gridBotonesEscritorioPlegable');
+      if (dskCont) {
+        dskCont.innerHTML = '';
+        const flexBox = document.createElement('div');
+        flexBox.className = 'flex flex-wrap gap-1.5';
+        cfg.posiciones.forEach(p => {
+          const esSel = (p === posActual);
+          const tieneNov = posicionesConNovedad.has(p);
+          const esReg = posicionesInspeccionadas.has(p);
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+            esSel ? 'bg-blue-600 text-white border-blue-600' :
+            tieneNov ? 'bg-amber-50 text-amber-900 border-amber-300' :
+            esReg ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+            'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+          }`;
+          btn.onclick = () => seleccionarPosicion(p);
+          btn.innerHTML = `Llanta ${p} ${tieneNov ? '(!)' : esReg ? '(✓)' : ''}`;
+          flexBox.appendChild(btn);
+        });
+        dskCont.appendChild(flexBox);
+      }
+    }
+
+    // ==============================================================
+    // INTERACCIÓN Y NAVEGACIÓN
+    // ==============================================================
+    function seleccionarPosicion(p) {
+      posicionActiva = p;
+      document.getElementById('posicion').value = p;
+
+      // Cargar valores simulados o limpiar
+      if (posicionesInspeccionadas.has(p)) {
+        document.getElementById('prof_ext').value = '11.5';
+        document.getElementById('prof_cent').value = '11.2';
+        document.getElementById('prof_int').value = '11.0';
+        document.getElementById('psi').value = '105';
+      } else {
+        document.getElementById('prof_ext').value = '';
+        document.getElementById('prof_cent').value = '';
+        document.getElementById('prof_int').value = '';
+        document.getElementById('psi').value = '100';
+      }
+
+      const nov = posicionesConNovedad.get(p) || '';
+      document.getElementById('novedades').value = nov;
+      evaluarHabilitarFotoNovedad();
+
+      renderizarChasis();
+    }
+
+    function irPosicionAnterior() {
+      const cfg = obtenerConfigActual();
+      const idx = cfg.posiciones.indexOf(posicionActiva);
+      if (idx > 0) seleccionarPosicion(cfg.posiciones[idx - 1]);
+      else seleccionarPosicion(cfg.posiciones[cfg.posiciones.length - 1]);
+    }
+
+    function irPosicionSiguiente() {
+      const cfg = obtenerConfigActual();
+      const idx = cfg.posiciones.indexOf(posicionActiva);
+      if (idx !== -1 && idx + 1 < cfg.posiciones.length) seleccionarPosicion(cfg.posiciones[idx + 1]);
+      else seleccionarPosicion(cfg.posiciones[0]);
+    }
+
+    function setPsiRapido(val) {
+      document.getElementById('psi').value = val;
+    }
+
+    function agregarNovedadRapida(texto) {
+      const input = document.getElementById('novedades');
+      const val = input.value.trim();
+      if (!val) input.value = texto;
+      else if (!val.includes(texto)) input.value = `${val}, ${texto}`;
+      evaluarHabilitarFotoNovedad();
+    }
+
+    function limpiarNovedades() {
+      document.getElementById('novedades').value = '';
+      evaluarHabilitarFotoNovedad();
+    }
+
+    function evaluarHabilitarFotoNovedad() {
+      const val = document.getElementById('novedades').value.trim();
+      const box = document.getElementById('boxAdjuntarFotoNovedad');
+      if (val.length > 0) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    }
+
+    function simularAdjuntarFoto() {
+      const p = posicionActiva;
+      const list = fotosNovedad.get(p) || [];
+      list.push('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="%232563EB"><rect width="60" height="60" rx="8" fill="%23DBEAFE"/><text x="30" y="35" font-size="10" text-anchor="middle" fill="%231E40AF">FOTO</text></svg>');
+      fotosNovedad.set(p, list);
+      actualizarMiniaturasFotos(p);
+    }
+
+    function actualizarMiniaturasFotos(p) {
+      const list = fotosNovedad.get(p) || [];
+      const box = document.getElementById('previewFotoNovedadBox');
+      const grid = document.getElementById('gridPreviewFotosNovedad');
+      const lbl = document.getElementById('lblConteoFotosAdjuntas');
+
+      if (list.length > 0) {
+        box.classList.remove('hidden');
+        lbl.textContent = `${list.length} imagen(es) adjunta(s)`;
+        grid.innerHTML = '';
+        list.forEach((img, i) => {
+          const thumb = document.createElement('div');
+          thumb.className = 'w-12 h-12 rounded-lg bg-blue-100 border border-blue-300 flex items-center justify-center text-[10px] font-bold text-blue-800';
+          thumb.textContent = `IMG ${i + 1}`;
+          grid.appendChild(thumb);
+        });
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    function guardarPosicionSimulada() {
+      const p = posicionActiva;
+      posicionesInspeccionadas.add(p);
+      const nov = document.getElementById('novedades').value.trim();
+      if (nov) posicionesConNovedad.set(p, nov);
+      else posicionesConNovedad.delete(p);
+
+      irPosicionSiguiente();
+
+      // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
+      if (window.innerWidth < 1024) {
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+        setTimeout(() => {
+          const modChasis = document.getElementById('moduloChasis');
+          if (modChasis) {
+            modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 120);
+      }
+    }
+
+    function limpiarCamposMediciones() {
+      document.getElementById('prof_ext').value = '';
+      document.getElementById('prof_cent').value = '';
+      document.getElementById('prof_int').value = '';
+      document.getElementById('psi').value = '100';
+      document.getElementById('novedades').value = '';
+      evaluarHabilitarFotoNovedad();
+    }
+
+    function toggleSinRepuesto() {
+      sinRepuesto = !sinRepuesto;
+      const btnTxt = document.getElementById('txtBtnSinRepuesto');
+      if (sinRepuesto) btnTxt.textContent = 'Repuesto deshabilitado (Vehículo sin repuesto)';
+      else btnTxt.textContent = 'Marcar: Vehículo sin llanta de repuesto';
+      renderizarChasis();
+    }
+
+    function evaluarSugerenciaCambio() {
+      const ext = parseFloat(document.getElementById('prof_ext').value) || 0;
+      const cent = parseFloat(document.getElementById('prof_cent').value) || 0;
+      const int = parseFloat(document.getElementById('prof_int').value) || 0;
+      const alerta = document.getElementById('alertaRetiroInmediato');
+      if ((ext > 0 && ext <= 3.0) || (cent > 0 && cent <= 3.0) || (int > 0 && int <= 3.0)) {
+        alerta.classList.remove('hidden');
+      } else {
+        alerta.classList.add('hidden');
+      }
+    }
+
+    // ==============================================================
+    // CONTROLADORES DE PRUEBAS DE AUDITORÍA (Escenarios 0, 1, 2)
+    // ==============================================================
+    function cambiarTipologiaPrueba(tip) {
+      tipologiaActual = tip;
+      document.getElementById('lblTipologiaNombre').value = tip;
+      document.getElementById('lblTituloConfiguracion').textContent = tip;
+      const cfg = obtenerConfigActual();
+      posicionActiva = cfg.posiciones[0];
+      posicionesInspeccionadas.clear();
+      posicionesConNovedad.clear();
+      fotosNovedad.clear();
+      renderizarChasis();
+    }
+
+    function aplicarEscenario(esc) {
+      const cfg = obtenerConfigActual();
+      posicionesInspeccionadas.clear();
+      posicionesConNovedad.clear();
+      fotosNovedad.clear();
+
+      ['btnEsc0', 'btnEsc1', 'btnEsc2'].forEach(id => {
+        const b = document.getElementById(id);
+        b.className = 'px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700';
+      });
+
+      if (esc === 0) {
+        // 0 Llantas registradas
+        document.getElementById('btnEsc0').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
+        posicionActiva = cfg.posiciones[0];
+      } else if (esc === 1) {
+        // Algunas registradas y con novedad
+        document.getElementById('btnEsc1').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
+        // Registramos primeras 2
+        if (cfg.posiciones.length >= 1) posicionesInspeccionadas.add(cfg.posiciones[0]);
+        if (cfg.posiciones.length >= 2) posicionesInspeccionadas.add(cfg.posiciones[1]);
+        // Posición 3 con novedad
+        if (cfg.posiciones.length >= 3) {
+          posicionesInspeccionadas.add(cfg.posiciones[2]);
+          posicionesConNovedad.set(cfg.posiciones[2], 'Corte superficial en banda');
+        }
+        // Seleccionamos posición 4 (o la última)
+        posicionActiva = cfg.posiciones[Math.min(3, cfg.posiciones.length - 1)];
+      } else if (esc === 2) {
+        // Todas registradas
+        document.getElementById('btnEsc2').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
+        cfg.posiciones.forEach((p, idx) => {
+          posicionesInspeccionadas.add(p);
+          if (idx === 1) posicionesConNovedad.set(p, 'Desgaste irregular hombro');
+        });
+        // Posición 1 activa seleccionada
+        posicionActiva = cfg.posiciones[0];
+      }
+
+      seleccionarPosicion(posicionActiva);
+    }
+
+    // Inicializar al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      aplicarEscenario(1); // Iniciar con escenario ilustrativo 'Algunas (con novedad)'
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## Archivo: static/js/app_core.js
+
+- **Ruta:** `static/js/app_core.js`
+- **Descripción:** Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación
+- **Métricas:** 976 líneas | 42,767 bytes (41.8 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
     // Prevención de XSS: Sanitizador de cadenas HTML
     function escapeHtml(val) {
       if (val === null || val === undefined) return '';
@@ -28162,6576 +31310,18 @@ if __name__ == '__main__':
         }, 4500);
       }
     }
+```
 
-    // ==========================================
-    // VISTA 2: BASE DE INSPECCIONES (CRUD, FILTROS & EXCEL)
-    // ==========================================
-    let bdFiltrosPoblados = false;
+---
 
-    async function cargarBaseInspecciones() {
-      const tbody = document.getElementById('tbodyInspecciones');
-      if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
-        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
-      }
-      try {
-        const res = await fetch('/api/inspecciones');
-        if (res.ok) {
-          cacheTodasInspecciones = await res.json();
-          const bTotal = document.getElementById('badgeTotalInspecciones');
-          if (bTotal) bTotal.textContent = cacheTodasInspecciones.length;
-          const lTotal = document.getElementById('lblTotalBD');
-          if (lTotal) lTotal.textContent = cacheTodasInspecciones.length;
-          poblarSelectoresFiltroBD(cacheTodasInspecciones);
-          filtrarTablaBD();
-        } else if (res.status === 401) {
-          if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
-          }
-        } else {
-          if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
-          }
-        }
-      } catch (e) {
-        if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
-        }
-        mostrarToast('Error al cargar inspecciones desde el servidor', true);
-      }
-    }
+## Archivo: static/js/modulo_patio.js
 
-    function poblarSelectoresFiltroBD(data) {
-      if (!Array.isArray(data)) return;
+- **Ruta:** `static/js/modulo_patio.js`
+- **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
+- **Métricas:** 4011 líneas | 183,187 bytes (178.9 KB)
+- **Lenguaje:** `javascript`
 
-      const selCli = document.getElementById('filtroBDCliente');
-      const selOp = document.getElementById('filtroBDOperacion');
-      const selTip = document.getElementById('filtroBDTipologia');
-      const selMar = document.getElementById('filtroBDMarca');
-
-      if (!selCli || !selOp || !selTip || !selMar) return;
-
-      // Guardar selecciones actuales
-      const valCli = selCli.value || 'TODOS';
-      const valOp = selOp.value || 'TODOS';
-      const valTip = selTip.value || 'TODOS';
-      const valMar = selMar.value || 'TODOS';
-
-      // Extraer valores únicos no vacíos
-      const clientes = Array.from(new Set(data.map(r => (r.cliente || '').trim()).filter(Boolean))).sort();
-      const operaciones = Array.from(new Set(data.map(r => (r.tipo_operacion || '').trim()).filter(Boolean))).sort();
-      const tipologias = Array.from(new Set(data.map(r => (r.tipologia || '').trim()).filter(Boolean))).sort();
-      const marcas = Array.from(new Set(data.map(r => (r.marca || '').trim()).filter(Boolean))).sort();
-
-      selCli.innerHTML = '<option value="TODOS">Todos los Clientes</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      selTip.innerHTML = '<option value="TODOS">Todas las Tipologías</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
-      selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
-
-      // Restaurar si aún existen
-      if (clientes.includes(valCli)) selCli.value = valCli;
-      if (operaciones.includes(valOp)) selOp.value = valOp;
-      if (tipologias.includes(valTip)) selTip.value = valTip;
-      if (marcas.includes(valMar)) selMar.value = valMar;
-
-      actualizarCombosSedesBD();
-    }
-
-    function actualizarCombosSedesBD() {
-      const selCli = document.getElementById('filtroBDCliente');
-      const selSede = document.getElementById('filtroBDSede');
-      if (!selSede) return;
-
-      const valCli = selCli ? (selCli.value || 'TODOS') : 'TODOS';
-      const valSedeActual = selSede.value || 'TODOS';
-
-      const sedes = Array.from(new Set(
-        cacheTodasInspecciones
-          .filter(r => (valCli === 'TODOS' || (r.cliente || '').toLowerCase() === valCli.toLowerCase()))
-          .map(r => (r.subcliente || '').trim())
-          .filter(Boolean)
-      )).sort();
-
-      selSede.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
-
-      if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
-        selSede.value = valSedeActual;
-      } else {
-        selSede.value = 'TODOS';
-      }
-    }
-
-    function onCambioFiltroBDCliente() {
-      actualizarCombosSedesBD();
-      filtrarTablaBD();
-    }
-
-    let paginaActualBD = 1;
-    const ITEMS_POR_PAGINA_BD = 25;
-    let cacheFiltradasBD = [];
-
-    function filtrarTablaBD() {
-      paginaActualBD = 1;
-      aplicarFiltrosYRenderizarBD();
-    }
-
-    function cambiarPaginaBD(nuevaPagina) {
-      const totalPaginas = Math.ceil(cacheFiltradasBD.length / ITEMS_POR_PAGINA_BD) || 1;
-      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
-      paginaActualBD = nuevaPagina;
-      renderizarTablaBD();
-      const contTabla = document.querySelector('#vista-basedatos .overflow-x-auto');
-      if (contTabla) contTabla.scrollTop = 0;
-    }
-
-    function aplicarFiltrosYRenderizarBD() {
-      const tbody = document.getElementById('tbodyInspecciones');
-      if (!tbody) return;
-
-      const q = (document.getElementById('filtroTextoBD')?.value || '').trim().toLowerCase();
-      const fDesde = document.getElementById('filtroBDFechaDesde')?.value || '';
-      const fHasta = document.getElementById('filtroBDFechaHasta')?.value || '';
-      const cli = document.getElementById('filtroBDCliente')?.value || 'TODOS';
-      const sede = document.getElementById('filtroBDSede')?.value || 'TODOS';
-      const op = document.getElementById('filtroBDOperacion')?.value || 'TODOS';
-      const tip = document.getElementById('filtroBDTipologia')?.value || 'TODOS';
-      const marca = document.getElementById('filtroBDMarca')?.value || 'TODOS';
-      const vida = document.getElementById('filtroBDVida')?.value || 'TODOS';
-      const semaforo = document.getElementById('filtroBDSemaforo')?.value || 'TODOS';
-
-      // Conteo de filtros activos
-      let filtrosActivos = 0;
-      if (q) filtrosActivos++;
-      if (fDesde) filtrosActivos++;
-      if (fHasta) filtrosActivos++;
-      if (cli !== 'TODOS') filtrosActivos++;
-      if (sede !== 'TODOS') filtrosActivos++;
-      if (op !== 'TODOS') filtrosActivos++;
-      if (tip !== 'TODOS') filtrosActivos++;
-      if (marca !== 'TODOS') filtrosActivos++;
-      if (vida !== 'TODOS') filtrosActivos++;
-      if (semaforo !== 'TODOS') filtrosActivos++;
-
-      const badgeFiltros = document.getElementById('badgeFiltrosActivosBD');
-      if (badgeFiltros) {
-        if (filtrosActivos > 0) {
-          badgeFiltros.textContent = `${filtrosActivos} filtro${filtrosActivos > 1 ? 's' : ''} activo${filtrosActivos > 1 ? 's' : ''}`;
-          badgeFiltros.classList.remove('hidden');
-        } else {
-          badgeFiltros.classList.add('hidden');
-        }
-      }
-
-      cacheFiltradasBD = cacheTodasInspecciones.filter(r => {
-        // 1. Filtro Texto Libre
-        if (q) {
-          const matchTexto = (r.placa || '').toLowerCase().includes(q) ||
-                             (r.cliente || '').toLowerCase().includes(q) ||
-                             (r.subcliente || '').toLowerCase().includes(q) ||
-                             (r.numero_interno || '').toLowerCase().includes(q) ||
-                             (r.marca || '').toLowerCase().includes(q) ||
-                             (r.diseno || '').toLowerCase().includes(q) ||
-                             (r.dimension || '').toLowerCase().includes(q) ||
-                             (r.novedades || '').toLowerCase().includes(q) ||
-                             (r.usuario_registro || '').toLowerCase().includes(q);
-          if (!matchTexto) return false;
-        }
-
-        // 2. Rango de Fechas
-        if (fDesde && r.fecha && r.fecha < fDesde) return false;
-        if (fHasta && r.fecha && r.fecha > fHasta) return false;
-
-        // 3. Cliente
-        if (cli !== 'TODOS' && (r.cliente || '').toLowerCase() !== cli.toLowerCase()) return false;
-
-        // 3.1 Sede (subcliente)
-        if (sede !== 'TODOS' && (r.subcliente || '').toLowerCase() !== sede.toLowerCase()) return false;
-
-        // 4. Operación
-        if (op !== 'TODOS' && (r.tipo_operacion || '').toLowerCase() !== op.toLowerCase()) return false;
-
-        // 5. Tipología
-        if (tip !== 'TODOS' && (r.tipologia || '').toLowerCase() !== tip.toLowerCase()) return false;
-
-        // 6. Marca
-        if (marca !== 'TODOS' && (r.marca || '').toLowerCase() !== marca.toLowerCase()) return false;
-
-        // 7. Condición / Vida
-        if (vida !== 'TODOS') {
-          const vNorm = (r.vida || '').toLowerCase();
-          if (!vNorm.includes(vida.toLowerCase())) return false;
-        }
-
-        // 8. Semáforo / Desgaste & Presión
-        if (semaforo !== 'TODOS') {
-          const pExt = parseFloat(r.prof_ext) || 0;
-          const pCent = parseFloat(r.prof_cent) || 0;
-          const pInt = parseFloat(r.prof_int) || 0;
-          const profValidas = [pExt, pCent, pInt].filter(p => p > 0);
-          const minP = profValidas.length > 0 ? Math.min(...profValidas) : 0;
-          const psiVal = parseFloat(r.psi) || 0;
-
-          if (semaforo === 'CRITICO' && !(minP > 0 && minP <= 3.0)) return false;
-          if (semaforo === 'ALERTA' && !(minP > 3.0 && minP <= 5.0)) return false;
-          if (semaforo === 'OPTIMO' && !(minP > 5.0)) return false;
-          if (semaforo === 'PSI_ANORMAL' && (psiVal >= 90 && psiVal <= 120)) return false;
-        }
-
-        return true;
-      });
-
-      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.length;
-      document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
-
-      renderizarTablaBD();
-    }
-
-    function renderizarTablaBD() {
-      const tbody = document.getElementById('tbodyInspecciones');
-      const contenedorPaginacion = document.getElementById('contenedorPaginacionBD');
-      if (!tbody) return;
-
-      if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="25" class="p-12 text-center text-slate-400">
-              <div class="flex flex-col items-center justify-center space-y-2">
-                <i class="fa-solid fa-filter-circle-xmark text-3xl text-slate-300"></i>
-                <span class="font-bold text-slate-600">No se encontraron inspecciones con los filtros seleccionados</span>
-                <span class="text-xs text-slate-400">Intenta cambiar los términos de búsqueda o restablecer los filtros</span>
-                <button type="button" onclick="limpiarFiltrosBD()" class="mt-2 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs rounded-xl border border-blue-200 transition-all">
-                  Restablecer Filtros
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
-        return;
-      }
-
-      // Cálculo de Paginación de 25 resultados
-      const totalRegistros = cacheFiltradasBD.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_BD) || 1;
-      if (paginaActualBD > totalPaginas) paginaActualBD = totalPaginas;
-      if (paginaActualBD < 1) paginaActualBD = 1;
-
-      const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, totalRegistros);
-      const paginaItems = cacheFiltradasBD.slice(inicio, fin);
-
-      tbody.innerHTML = paginaItems.map(r => {
-        const pExt = parseFloat(r.prof_ext) || 0;
-        const pCent = parseFloat(r.prof_cent) || 0;
-        const pInt = parseFloat(r.prof_int) || 0;
-        const profValidas = [pExt, pCent, pInt].filter(p => p > 0);
-        const minP = profValidas.length > 0 ? Math.min(...profValidas) : 0;
-        
-        let colorDesgaste = 'text-slate-700 font-medium';
-        let badgeAlerta = '';
-        if (minP > 0 && minP <= 3.0) {
-          colorDesgaste = 'text-rose-600 font-black';
-          badgeAlerta = '<span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-800">RETIRO</span>';
-        } else if (minP > 3.0 && minP <= 5.0) {
-          colorDesgaste = 'text-amber-600 font-bold';
-        }
-
-        const fotos = obtenerListaFotos(r.foto_novedad);
-        const tieneFotos = fotos.length > 0;
-        const htmlBotonFotos = tieneFotos ? `
-          <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${fotos.length} foto(s) de evidencia de forma ordenada">
-            <i class="fa-solid fa-camera text-blue-600 text-[11px]"></i>
-            <span>Ver foto${fotos.length > 1 ? 's' : ''} (${fotos.length})</span>
-          </button>
-        ` : `<span class="text-slate-300 font-medium text-xs">Sin fotos</span>`;
-
-        return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
-            <td class="p-2.5 text-center whitespace-nowrap">
-              ${tieneFotos ? `
-                <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
-                  <i class="fa-solid fa-camera"></i>
-                </button>
-              ` : ''}
-              ${esAdminOJefatura() ? `
-                <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              ` : ''}
-            </td>
-            <td class="p-2.5 font-mono text-slate-600">${r.fecha || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
-            <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
-            <td class="p-2.5">${r.tipo_operacion || '-'}</td>
-            <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${r.placa || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-800">${r.numero_interno || '-'}</td>
-            <td class="p-2.5 text-center font-black">
-              <span class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-800 font-mono text-xs">
-                ${r.posicion}
-              </span>
-            </td>
-            <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
-            <td class="p-2.5">${r.tipologia || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-800">${r.marca || '-'}</td>
-            <td class="p-2.5">${r.diseno || '-'}</td>
-            <td class="p-2.5 font-mono text-[11px]">${r.dimension || '-'}</td>
-            <td class="p-2.5">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${
-                (r.vida || '').toLowerCase().includes('reen') || (r.banda_reen && r.banda_reen !== '-') 
-                  ? 'bg-purple-50 text-purple-700' 
-                  : 'bg-blue-50 text-blue-700'
-              }">
-                ${(r.vida && r.vida !== '-') ? r.vida : (r.banda_reen && r.banda_reen !== '-' ? 'REENCAUCHE' : 'ORIGINAL')}
-              </span>
-            </td>
-            <td class="p-2.5 text-slate-500">${r.banda_reen || '-'}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_ext}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_cent}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_int}${badgeAlerta}</td>
-            <td class="p-2.5 text-center font-mono font-bold ${
-              (parseFloat(r.psi) < 90 || parseFloat(r.psi) > 120) ? 'text-amber-600 bg-amber-50/60 rounded' : 'text-slate-700'
-            }">${r.psi}</td>
-            <td class="p-2.5 max-w-xs truncate" title="${escapeHtml(r.novedades || '')}">
-              ${escapeHtml(r.novedades) || '-'}
-            </td>
-            <td class="p-2.5 text-center whitespace-nowrap">
-              ${htmlBotonFotos}
-            </td>
-            <td class="p-2.5 text-right font-mono text-slate-600">$${(r.precio || 0).toLocaleString()}</td>
-            <td class="p-2.5 text-center font-mono text-slate-400">${r.prof_inicial || 0}</td>
-            <td class="p-2.5 text-right font-mono text-slate-400">${(r.km_montaje || 0).toLocaleString()}</td>
-          </tr>
-        `;
-      }).join('');
-
-      actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin);
-    }
-
-    function actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin) {
-      const contenedor = document.getElementById('contenedorPaginacionBD');
-      const spanInicio = document.getElementById('pagInicioBD');
-      const spanFin = document.getElementById('pagFinBD');
-      const spanTotal = document.getElementById('pagTotalBD');
-      const controles = document.getElementById('controlesPaginacionBD');
-
-      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
-
-      if (totalRegistros === 0) {
-        contenedor.classList.add('hidden');
-        return;
-      }
-      contenedor.classList.remove('hidden');
-
-      spanInicio.textContent = (inicio + 1).toLocaleString();
-      spanFin.textContent = fin.toLocaleString();
-      spanTotal.textContent = totalRegistros.toLocaleString();
-
-      let html = '';
-
-      // Botón Primero
-      const deshabilitarPrimero = paginaActualBD <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaBD(1)" ${deshabilitarPrimero ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Primera página">
-          <i class="fa-solid fa-angles-left text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Anterior
-      const deshabilitarAnt = paginaActualBD <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaBD(${paginaActualBD - 1})" ${deshabilitarAnt ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página anterior">
-          <i class="fa-solid fa-chevron-left text-[11px]"></i>
-          <span class="hidden sm:inline">Ant</span>
-        </button>
-      `;
-
-      // Botones numéricos de página
-      const paginas = [];
-      if (totalPaginas <= 7) {
-        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-      } else {
-        paginas.push(1);
-        let start = Math.max(2, paginaActualBD - 1);
-        let end = Math.min(totalPaginas - 1, paginaActualBD + 1);
-
-        if (paginaActualBD <= 3) {
-          end = 4;
-        } else if (paginaActualBD >= totalPaginas - 2) {
-          start = totalPaginas - 3;
-        }
-
-        if (start > 2) paginas.push('...');
-        for (let i = start; i <= end; i++) paginas.push(i);
-        if (end < totalPaginas - 1) paginas.push('...');
-        paginas.push(totalPaginas);
-      }
-
-      paginas.forEach(p => {
-        if (p === '...') {
-          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
-        } else if (p === paginaActualBD) {
-          html += `
-            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
-              ${p}
-            </button>
-          `;
-        } else {
-          html += `
-            <button type="button" onclick="cambiarPaginaBD(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
-              ${p}
-            </button>
-          `;
-        }
-      });
-
-      // Botón Siguiente
-      const deshabilitarSig = paginaActualBD >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaBD(${paginaActualBD + 1})" ${deshabilitarSig ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página siguiente">
-          <span class="hidden sm:inline">Sig</span>
-          <i class="fa-solid fa-chevron-right text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Último
-      const deshabilitarUltimo = paginaActualBD >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaBD(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Última página">
-          <i class="fa-solid fa-angles-right text-[11px]"></i>
-        </button>
-      `;
-
-      controles.innerHTML = html;
-    }
-
-    function limpiarTextoFiltroBD() {
-      const input = document.getElementById('filtroTextoBD');
-      if (input) {
-        input.value = '';
-        filtrarTablaBD();
-      }
-    }
-
-    function limpiarFiltrosBD() {
-      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-      setVal('filtroTextoBD', '');
-      setVal('filtroBDFechaDesde', '');
-      setVal('filtroBDFechaHasta', '');
-      setVal('filtroBDCliente', 'TODOS');
-      setVal('filtroBDSede', 'TODOS');
-      setVal('filtroBDOperacion', 'TODOS');
-      setVal('filtroBDTipologia', 'TODOS');
-      setVal('filtroBDMarca', 'TODOS');
-      setVal('filtroBDVida', 'TODOS');
-      setVal('filtroBDSemaforo', 'TODOS');
-      actualizarCombosSedesBD();
-      filtrarTablaBD();
-      mostrarToast('Filtros de búsqueda restablecidos.');
-    }
-
-    async function abrirModalEditarInspeccion(id) {
-      try {
-        const res = await fetch(`/api/inspecciones/${id}`);
-        if (!res.ok) throw new Error('No se pudo obtener el registro');
-        const d = await res.json();
-        
-        document.getElementById('edit_id').value = d.id;
-        document.getElementById('lblEditSubtitulo').textContent = `ID: ${d.id} | Vehículo: ${d.placa} | Posición: ${d.posicion}`;
-        document.getElementById('edit_fecha').value = d.fecha || '';
-        document.getElementById('edit_cliente').value = d.cliente || '';
-        document.getElementById('edit_subcliente').value = d.subcliente || '';
-        document.getElementById('edit_tipo_operacion').value = d.tipo_operacion || '';
-        document.getElementById('edit_placa').value = d.placa || '';
-        document.getElementById('edit_posicion').value = d.posicion || 1;
-        document.getElementById('edit_numero_interno').value = d.numero_interno || '';
-        document.getElementById('edit_kilometraje').value = d.kilometraje || 0;
-        document.getElementById('edit_tipologia').value = d.tipologia || '';
-        document.getElementById('edit_marca').value = d.marca || '';
-        document.getElementById('edit_diseno').value = d.diseno || '';
-        document.getElementById('edit_dimension').value = d.dimension || '';
-        const vEd = String(d.vida || 'Original').trim();
-        const selEditVida = document.getElementById('edit_vida');
-        if (selEditVida) {
-          selEditVida.value = vEd.toLowerCase().includes('reen') ? 'Reencauche' : 'Original';
-        }
-        document.getElementById('edit_banda_reen').value = d.banda_reen || '';
-        document.getElementById('edit_psi').value = d.psi || 100;
-        document.getElementById('edit_prof_ext').value = d.prof_ext || 0;
-        document.getElementById('edit_prof_cent').value = d.prof_cent || 0;
-        document.getElementById('edit_prof_int').value = d.prof_int || 0;
-        document.getElementById('edit_prof_inicial').value = d.prof_inicial || 0;
-        document.getElementById('edit_precio').value = d.precio || 0;
-        document.getElementById('edit_km_montaje').value = d.km_montaje || 0;
-        document.getElementById('edit_novedades').value = d.novedades || '';
-        fotosEdicionActuales = obtenerListaFotos(d.foto_novedad);
-        actualizarUIFotosEdicion();
-
-        document.getElementById('modalEditarInspeccion').classList.remove('hidden');
-        document.getElementById('modalEditarInspeccion').classList.add('flex');
-      } catch (e) {
-        mostrarToast('Error al cargar datos para edición', true);
-      }
-    }
-
-    function cerrarModalEditarInspeccion() {
-      const m = document.getElementById('modalEditarInspeccion');
-      m.classList.add('hidden');
-      m.classList.remove('flex');
-      fotosEdicionActuales = [];
-    }
-
-    async function guardarEdicionInspeccion(e) {
-      e.preventDefault();
-      const id = document.getElementById('edit_id').value;
-      const subVal = (document.getElementById('edit_subcliente')?.value || '').trim();
-      if (!subVal) {
-        mostrarToast('⚠️ La Sede / Subcliente es un campo obligatorio', true);
-        document.getElementById('edit_subcliente')?.focus();
-        return;
-      }
-      const payload = {
-        fecha: document.getElementById('edit_fecha').value,
-        cliente: document.getElementById('edit_cliente').value,
-        subcliente: document.getElementById('edit_subcliente').value,
-        tipo_operacion: document.getElementById('edit_tipo_operacion').value,
-        placa: document.getElementById('edit_placa').value.trim().toUpperCase(),
-        posicion: parseInt(document.getElementById('edit_posicion').value) || 1,
-        numero_interno: document.getElementById('edit_numero_interno').value.trim().toUpperCase(),
-        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
-        kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
-        tipologia: document.getElementById('edit_tipologia').value,
-        marca: document.getElementById('edit_marca').value,
-        diseno: document.getElementById('edit_diseno').value,
-        dimension: document.getElementById('edit_dimension').value,
-        vida: (document.getElementById('edit_vida')?.value || 'Original').trim() || 'Original',
-        banda_reen: document.getElementById('edit_banda_reen').value,
-        psi: parseFloat(document.getElementById('edit_psi').value) || 100,
-        prof_ext: parseFloat(document.getElementById('edit_prof_ext').value) || 0,
-        prof_cent: parseFloat(document.getElementById('edit_prof_cent').value) || 0,
-        prof_int: parseFloat(document.getElementById('edit_prof_int').value) || 0,
-        prof_inicial: parseFloat(document.getElementById('edit_prof_inicial').value) || 0,
-        precio: parseFloat(document.getElementById('edit_precio').value) || 0,
-        km_montaje: parseFloat(document.getElementById('edit_km_montaje').value) || 0,
-        novedades: document.getElementById('edit_novedades').value,
-        foto_novedad: document.getElementById('edit_foto_novedad_base64')?.value || ''
-      };
-
-
-      try {
-        const res = await fetch(`/api/inspecciones/${id}`, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-        const d = await res.json();
-        if (res.ok) {
-          cerrarModalEditarInspeccion();
-          mostrarToast(`✅ Registro ID ${id} actualizado correctamente.`);
-          cargarBaseInspecciones();
-        } else {
-          mostrarToast(d.detail || d.message || 'Error al actualizar', true);
-        }
-      } catch (err) {
-        mostrarToast('Error de red al actualizar la inspección', true);
-      }
-    }
-
-    async function eliminarInspeccion(id, placa, pos) {
-      if (!confirm(`¿Eliminar la inspección ID ${id} (Vehículo ${placa}, Posición ${pos})?`)) return;
-      try {
-        const res = await fetch(`/api/inspecciones/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          mostrarToast(`🗑️ Registro ID ${id} eliminado.`);
-          cargarBaseInspecciones();
-        } else {
-          mostrarToast('No se pudo eliminar el registro', true);
-        }
-      } catch (e) {
-        mostrarToast('Error al intentar eliminar', true);
-      }
-    }
-
-    // Funciones de Excel
-    function abrirModalImportarExcel() {
-      const m = document.getElementById('modalImportarExcel');
-      m.classList.remove('hidden');
-      m.classList.add('flex');
-    }
-    function cerrarModalImportarExcel() {
-      const m = document.getElementById('modalImportarExcel');
-      m.classList.add('hidden');
-      m.classList.remove('flex');
-    }
-    function descargarPlantillaExcel() {
-      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
-      window.location.href = `/api/inspecciones/plantilla-excel${q}`;
-    }
-    function exportarInspeccionesExcel() {
-      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
-      window.location.href = `/api/inspecciones/exportar-excel${q}`;
-    }
-
-    // Zona Drag and Drop Excel
-    const dropZone = document.getElementById('dropZoneExcel');
-    const fileInput = document.getElementById('fileExcelInput');
-    if (dropZone && fileInput) {
-      dropZone.onclick = () => fileInput.click();
-      dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('border-emerald-500', 'bg-emerald-50'); };
-      dropZone.ondragleave = () => { dropZone.classList.remove('border-emerald-500', 'bg-emerald-50'); };
-      dropZone.ondrop = (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-emerald-500', 'bg-emerald-50');
-        if (e.dataTransfer.files.length) {
-          fileInput.files = e.dataTransfer.files;
-          alSeleccionarArchivoExcel({ target: fileInput });
-        }
-      };
-    }
-
-    function alSeleccionarArchivoExcel(e) {
-      const f = e.target.files[0];
-      const lbl = document.getElementById('lblArchivoSeleccionado');
-      const btn = document.getElementById('btnSubirExcel');
-      if (f) {
-        lbl.textContent = `Archivo seleccionado: ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
-        btn.disabled = false;
-      } else {
-        lbl.textContent = 'Formatos permitidos: .xlsx, .xls';
-        btn.disabled = true;
-      }
-    }
-
-    async function ejecutarImportarExcel() {
-      const f = fileInput.files[0];
-      if (!f) return;
-      const btn = document.getElementById('btnSubirExcel');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando...';
-
-      const formData = new FormData();
-      formData.append('file', f);
-
-      try {
-        const res = await fetch('/api/inspecciones/importar-excel', {
-          method: 'POST',
-          body: formData
-        });
-        const d = await res.json();
-        if (res.ok) {
-          cerrarModalImportarExcel();
-          mostrarToast(`🎉 ${d.message || 'Importación completada'}`);
-          cargarBaseInspecciones();
-        } else {
-          mostrarToast(d.detail || 'Error al procesar el archivo Excel', true);
-        }
-      } catch (e) {
-        mostrarToast('Error de red al subir el archivo', true);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Subir e Importar';
-      }
-    }
-
-    // =========================================================================
-    // CONTROLADOR DE LA SUITE ANALÍTICA DE 20 KPIS (5 PESTAÑAS HOMOLOGADAS)
-    // =========================================================================
-    if (typeof Chart !== 'undefined') {
-      Chart.defaults.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 2);
-      Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
-      Chart.defaults.color = '#475569';
-      if (typeof ChartDataLabels !== 'undefined') {
-        try {
-          Chart.register(ChartDataLabels);
-        } catch (e) {
-          console.warn('ChartDataLabels ya registrado o error:', e);
-        }
-      }
-    }
-
-    let modoLicenciaSuite = 'FULL'; // 'LIGHT' o 'FULL'
-    let datosSuite20Actuales = null;
-    let subpestanaKpiActiva = 1;
-    let agrupacionKpi14Actual = 'marca';
-    const instanciasChartsSuite = {};
-
-    function formatCO_Miles(num) {
-      if (num === null || num === undefined || isNaN(num)) return '0';
-      return Math.round(num).toLocaleString('es-CO');
-    }
-
-    function formatCO_Moneda(num) {
-      if (num === null || num === undefined || isNaN(num)) return '$ 0';
-      return '$ ' + Math.round(num).toLocaleString('es-CO');
-    }
-
-    function formatCO_Decimal(num, dec = 1) {
-      if (num === null || num === undefined || isNaN(num)) return '0,0';
-      return Number(num).toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-    }
-
-    const animacionCascadaStandard = {
-      duration: 850,
-      easing: 'easeOutQuart',
-      delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 35 : 0
-    };
-
-    function pillDatalabelConfig(bgColor = 'rgba(15, 23, 42, 0.88)', textColor = '#ffffff', formatter = null) {
-      return {
-        display: (ctx) => {
-          const ds = ctx.dataset;
-          if (ds && ds.data && ds.data.length > 10) {
-            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1);
-          }
-          return true;
-        },
-        backgroundColor: bgColor,
-        borderRadius: 5,
-        color: textColor,
-        font: { weight: '800', size: 10 },
-        padding: { top: 2, bottom: 2, left: 6, right: 6 },
-        formatter: formatter || ((val) => (val !== null && val !== undefined) ? formatCO_Miles(val) : '')
-      };
-    }
-
-    function destruirChartSuite(chartId) {
-      if (instanciasChartsSuite[chartId]) {
-        try {
-          instanciasChartsSuite[chartId].destroy();
-        } catch (e) {}
-        delete instanciasChartsSuite[chartId];
-      }
-    }
-
-    function exportarGraficoPngHd(canvasId, filename = 'grafico_kpi') {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas) {
-        mostrarToast('Gráfico no disponible para exportar', true);
-        return;
-      }
-      try {
-        const link = document.createElement('a');
-        link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = canvas.toDataURL('image/png', 1.0);
-        link.click();
-        mostrarToast('📷 Gráfico HD exportado correctamente');
-      } catch (e) {
-        console.error('Error exportando PNG:', e);
-        mostrarToast('No se pudo exportar la imagen', true);
-      }
-    }
-
-    function exportarMrpExcel() {
-      const cli = document.getElementById('filtroKpiCliente')?.value || '';
-      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
-      const op = document.getElementById('filtroKpiOperacion')?.value || '';
-      const params = new URLSearchParams();
-      if (cli && cli !== 'TODOS') params.append('cliente', cli);
-      if (sub && sub !== 'TODOS') params.append('subcliente', sub);
-      if (op && op !== 'TODOS') params.append('tipo_operacion', op);
-
-      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      if (tok) params.append('token', tok);
-
-      window.location.href = `/api/kpis/exportar-mrp-excel?${params.toString()}`;
-    }
-
-    function cambiarSubpestanaKpis(num) {
-      subpestanaKpiActiva = num;
-      for (let i = 1; i <= 5; i++) {
-        const sub = document.getElementById(`subvista-kpi-${i}`);
-        const btn = document.getElementById(`btnSubtabKpi${i}`);
-        if (sub) {
-          if (i === num) sub.classList.remove('hidden');
-          else sub.classList.add('hidden');
-        }
-        if (btn) {
-          const iconBox = btn.querySelector('.subtab-icon-box');
-          const title = btn.querySelector('.text-left span:first-child');
-          const subTitle = btn.querySelector('.subtab-kpi-sub');
-          if (i === num) {
-            btn.className = 'subtab-kpi-btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-md shadow-indigo-950/20 flex items-center space-x-2.5 shrink-0 transition-all scale-[1.02] cursor-pointer';
-            if (iconBox) iconBox.className = 'subtab-icon-box w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs shrink-0 transition-colors';
-            if (title) title.className = 'block font-bold text-xs tracking-tight text-white';
-            if (subTitle) subTitle.className = 'subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90';
-          } else {
-            btn.className = 'subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer';
-            if (iconBox) iconBox.className = 'subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors';
-            if (title) title.className = 'block font-bold text-xs tracking-tight text-slate-700';
-            if (subTitle) subTitle.className = 'subtab-kpi-sub block text-[9.5px] font-mono text-slate-400';
-          }
-        }
-      }
-
-      sincronizarAvisosLicenciaSubpestanas();
-
-      if (datosSuite20Actuales) {
-        renderizarSubpestanaActiva(num, datosSuite20Actuales);
-      }
-    }
-
-    function sincronizarAvisosLicenciaSubpestanas() {
-      const esLight = (modoLicenciaSuite === 'LIGHT');
-      const av3 = document.getElementById('bloqueAvisoLicenciaKpi3');
-      const av4 = document.getElementById('bloqueAvisoLicenciaKpi4');
-      const av5 = document.getElementById('bloqueAvisoLicenciaKpi5');
-      if (av3) av3.classList.toggle('hidden', !esLight);
-      if (av4) av4.classList.toggle('hidden', !esLight);
-      if (av5) av5.classList.toggle('hidden', !esLight);
-
-      // En LIGHT, ocultar KPI 01 padrón o banner
-      const kpi01Banner = document.getElementById('kpi01-banner');
-      if (kpi01Banner) kpi01Banner.classList.toggle('hidden', esLight);
-    }
-
-    function cambiarModoLicenciaSuite(nuevoModo) {
-      modoLicenciaSuite = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'FULL';
-      const badge = document.getElementById('badgeLicenciaActiva');
-      const btnLight = document.getElementById('btnModoLight');
-      const btnPro = document.getElementById('btnModoPro');
-
-      if (modoLicenciaSuite === 'LIGHT') {
-        if (badge) {
-          badge.textContent = 'LICENCIA LIGHT (OPERATIVA)';
-          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 border border-amber-400/40';
-        }
-        if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-amber-500 text-slate-950 shadow transition-all';
-        if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all';
-      } else {
-        if (badge) {
-          badge.textContent = 'LICENCIA FULL / PRO';
-          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-700 border border-sky-400/40';
-        }
-        if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-blue-600 text-white shadow transition-all';
-        if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all';
-      }
-
-      sincronizarAvisosLicenciaSubpestanas();
-      cargarSuite20Kpis();
-    }
-
-    function cambiarAgrupacionKpi14(nuevaAgrup) {
-      agrupacionKpi14Actual = nuevaAgrup || 'marca';
-      cargarSuite20Kpis();
-    }
-
-    function abrirModalPlacasPendientesKpi01() {
-      const m = document.getElementById('modalPlacasPendientesKpi01');
-      if (m) {
-        m.classList.remove('hidden');
-        m.classList.add('flex');
-      }
-    }
-
-    function cerrarModalPlacasPendientesKpi01() {
-      const m = document.getElementById('modalPlacasPendientesKpi01');
-      if (m) {
-        m.classList.add('hidden');
-        m.classList.remove('flex');
-      }
-    }
-
-    async function cargarSuite20Kpis() {
-      try {
-        const cliVal = document.getElementById('filtroKpiCliente')?.value || '';
-        const sedeVal = document.getElementById('filtroKpiSubcliente')?.value || '';
-        const opVal = document.getElementById('filtroKpiOperacion')?.value || '';
-        const tipVal = document.getElementById('filtroKpiTipologia')?.value || '';
-        const marVal = document.getElementById('filtroKpiMarca')?.value || '';
-        const dimVal = document.getElementById('filtroKpiDimension')?.value || '';
-        const ejeVal = document.getElementById('filtroKpiEjeTemporal')?.value || 'mes';
-
-        const params = new URLSearchParams();
-        if (cliVal && cliVal !== 'TODOS') params.append('cliente', cliVal);
-        if (sedeVal && sedeVal !== 'TODOS') params.append('subcliente', sedeVal);
-        if (opVal && opVal !== 'TODOS') params.append('tipo_operacion', opVal);
-        if (tipVal && tipVal !== 'TODOS') params.append('tipologia', tipVal);
-        if (marVal && marVal !== 'TODOS') params.append('marca', marVal);
-        if (dimVal && dimVal !== 'TODOS') params.append('dimension', dimVal);
-        params.append('eje_temporal', ejeVal);
-        params.append('agrupar_kpi14', agrupacionKpi14Actual);
-        params.append('licencia', modoLicenciaSuite);
-
-        const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-        const headers = tok ? { 'Authorization': `Bearer ${tok}` } : {};
-
-        const res = await fetch(`/api/kpis/suite-20?${params.toString()}`, { headers });
-        if (!res.ok) {
-          console.warn('No se pudo cargar la suite de 20 KPIs, status:', res.status);
-          return;
-        }
-
-        const data = await res.json();
-        datosSuite20Actuales = data;
-
-        // Si el backend dictamina licencia del cliente, sincronizar si no se forzó manual
-        if (data.licencia && data.licencia !== modoLicenciaSuite) {
-          // mantenemos modo actual
-        }
-
-        renderizarTodaLaSuite20(data);
-
-      } catch (err) {
-        console.error('Error al cargar la Suite de 20 KPIs:', err);
-      }
-    }
-
-    function renderizarTodaLaSuite20(data) {
-      if (!data) return;
-      sincronizarAvisosLicenciaSubpestanas();
-      if (data.ahorro_roi || data.resumen_ahorro_roi) {
-        renderizarBannerAhorroRoi(data.ahorro_roi || data.resumen_ahorro_roi);
-      }
-      renderizarSubpestanaActiva(subpestanaKpiActiva, data);
-    }
-
-    function renderizarSubpestanaActiva(num, data) {
-      if (!data) return;
-      switch (num) {
-        case 1:
-          if (data.kpi_01) renderizarKpi01(data.kpi_01);
-          if (data.kpi_02) renderChartKpi02(data.kpi_02);
-          if (data.kpi_03) renderChartKpi03(data.kpi_03);
-          if (data.kpi_04) renderChartKpi04(data.kpi_04);
-          break;
-        case 2:
-          if (data.kpi_05) renderKpi05(data.kpi_05);
-          if (data.kpi_06) renderKpi06(data.kpi_06);
-          if (data.kpi_07) renderKpi07(data.kpi_07);
-          if (data.kpi_08) renderKpi08(data.kpi_08);
-          if (data.kpi_09) renderKpi09(data.kpi_09);
-          if (data.kpi_10) renderChartKpi10(data.kpi_10);
-          if (data.kpi_11) renderChartKpi11(data.kpi_11);
-          break;
-        case 3:
-          if (modoLicenciaSuite === 'FULL') {
-            if (data.kpi_12) renderKpi12(data.kpi_12);
-            if (data.kpi_13) renderChartKpi13(data.kpi_13);
-            if (data.kpi_14) renderChartKpi14(data.kpi_14);
-            if (data.kpi_15) renderChartKpi15(data.kpi_15);
-            if (data.kpi_16) renderChartKpi16(data.kpi_16);
-          }
-          break;
-        case 4:
-          if (modoLicenciaSuite === 'FULL') {
-            if (data.kpi_17) renderKpi17(data.kpi_17);
-            if (data.kpi_18) renderChartKpi18(data.kpi_18);
-            if (data.kpi_19) renderChartKpi19(data.kpi_19);
-          }
-          break;
-        case 5:
-          if (modoLicenciaSuite === 'FULL') {
-            if (data.kpi_20) renderKpi20(data.kpi_20);
-          }
-          break;
-      }
-    }
-
-    // ==========================================
-    // RENDERERS SUB-PESTAÑA 1 (KPI 01 AL 04)
-    // ==========================================
-
-    // KPI 01: Cumplimiento de Inspección vs Parque
-    function renderizarKpi01(d) {
-      if (!d) return;
-      const pct = Math.min(100, Math.max(0, d.porcentaje_cumplimiento || 0));
-      const elPct = document.getElementById('kpi01_cumplimiento_pct');
-      const elAudPad = document.getElementById('kpi01_auditados_padron');
-      const elBar = document.getElementById('kpi01_barra_progreso');
-      const elBtnTxt = document.getElementById('btnKpi01Texto');
-
-      if (elPct) elPct.textContent = `${formatCO_Decimal(pct, 1)}%`;
-      if (elAudPad) elAudPad.textContent = `${formatCO_Miles(d.vehiculos_inspeccionados)} / ${formatCO_Miles(d.total_padron_activo)}`;
-      if (elBar) elBar.style.width = `${pct}%`;
-      const numPend = (d.placas_pendientes || []).length;
-      if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${numPend})`;
-
-      // Llenar tabla del modal
-      const tbody = document.getElementById('tbodyModalPlacasPendientes');
-      if (tbody) {
-        if (!d.placas_pendientes || d.placas_pendientes.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">¡Excelente! El 100% de los vehículos del padrón han sido inspeccionados.</td></tr>';
-        } else {
-          tbody.innerHTML = (d.placas_pendientes || []).slice(0, 25).map(p => `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-black text-slate-900 font-mono">${p.placa || '-'}</td>
-              <td class="p-2.5 text-slate-600">${p.cliente || '-'} ${p.subcliente ? `/ ${p.subcliente}` : ''}</td>
-              <td class="p-2.5 text-slate-600">${p.tipologia || '-'}</td>
-              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${p.estado_padron || 'Activo'}</span></td>
-            </tr>
-          `).join('');
-        }
-      }
-    }
-
-    // KPI 02: Volumen Auditado Mes a Mes (Mixto Doble Eje)
-    function renderChartKpi02(ds) {
-      destruirChartSuite('kpi02');
-      const ctx = document.getElementById('canvasKpi02_volumen');
-      if (!ctx || !ds) return;
-
-      const badgeRazon = document.getElementById('kpi02_badge_razon');
-      if (badgeRazon && ds.promedio_llantas_por_vehiculo !== undefined) {
-        badgeRazon.textContent = `Promedio: ${formatCO_Decimal(ds.promedio_llantas_por_vehiculo, 1)} llantas/vehículo`;
-      }
-
-      const gradientBar = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
-      gradientBar.addColorStop(0, '#3b82f6');
-      gradientBar.addColorStop(1, '#1d4ed8');
-
-      instanciasChartsSuite['kpi02'] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ds.labels || [],
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Llantas Rodando',
-              data: ds.llantas || [],
-              backgroundColor: gradientBar,
-              borderRadius: 6,
-              borderSkipped: false,
-              yAxisID: 'y',
-              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff')
-            },
-            {
-              type: 'line',
-              label: 'Vehículos Auditados',
-              data: ds.vehiculos || [],
-              borderColor: '#10b981',
-              backgroundColor: '#10b981',
-              borderWidth: 2.8,
-              tension: 0.35,
-              pointBackgroundColor: '#10b981',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2,
-              pointRadius: 4,
-              yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(6, 95, 70, 0.9)', '#ffffff')
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-          animation: animacionCascadaStandard,
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.94)',
-              cornerRadius: 10,
-              padding: 12,
-              callbacks: {
-                afterBody: (items) => {
-                  const idx = items[0].dataIndex;
-                  const ll = ds.llantas?.[idx] || 0;
-                  const vh = ds.vehiculos?.[idx] || 1;
-                  const rz = vh > 0 ? (ll / vh).toFixed(1) : '0';
-                  return `Razón: ${rz} llantas/vehículo`;
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              type: 'linear',
-              position: 'left',
-              title: { display: true, text: 'Total Llantas', font: { weight: 'bold', size: 10 } },
-              grace: '15%',
-              grid: { color: 'rgba(226, 232, 240, 0.6)' },
-              ticks: { callback: (v) => formatCO_Miles(v) }
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              title: { display: true, text: 'Vehículos', font: { weight: 'bold', size: 10 } },
-              grace: '15%',
-              grid: { drawOnChartArea: false },
-              ticks: { callback: (v) => formatCO_Miles(v) }
-            },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
-          }
-        }
-      });
-    }
-
-    // KPI 03: % Reencauche (Meta 70%) y Unidades por Ciclo
-    function renderChartKpi03(ds) {
-      destruirChartSuite('kpi03_pct');
-      destruirChartSuite('kpi03_ciclos');
-      const ctxPct = document.getElementById('canvasKpi03_pct');
-      const ctxCiclos = document.getElementById('canvasKpi03_ciclos');
-      if (!ds) return;
-
-      // Badge meta
-      const badge = document.getElementById('kpi03_badge_meta');
-      const meta = ds.meta_porcentaje || 70.0;
-      const ultimoPct = (ds.porcentajes && ds.porcentajes.length > 0) ? ds.porcentajes[ds.porcentajes.length - 1] : 0;
-      if (badge) {
-        if (ultimoPct >= meta) {
-          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-          badge.textContent = `🟢 Meta Cumplida (${formatCO_Decimal(ultimoPct, 1)}%)`;
-        } else if (ultimoPct >= meta - 15) {
-          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300';
-          badge.textContent = `🟡 Alerta Meta (${formatCO_Decimal(ultimoPct, 1)}%)`;
-        } else {
-          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
-          badge.textContent = `🔴 Crítico (${formatCO_Decimal(ultimoPct, 1)}%)`;
-        }
-      }
-
-      // Subpanel A: Línea % Reencauche con umbral 70%
-      if (ctxPct) {
-        const lineaMeta = (ds.labels || []).map(() => meta);
-        instanciasChartsSuite['kpi03_pct'] = new Chart(ctxPct, {
-          type: 'line',
-          data: {
-            labels: ds.labels || [],
-            datasets: [
-              {
-                label: '% Reencauche',
-                data: ds.porcentajes || [],
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                borderWidth: 2.8,
-                fill: true,
-                tension: 0.35,
-                pointBackgroundColor: '#10b981',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                datalabels: pillDatalabelConfig('rgba(6, 95, 70, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)}%`)
-              },
-              {
-                label: `Meta (${meta}%)`,
-                data: lineaMeta,
-                borderColor: '#ef4444',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0,
-                fill: false,
-                datalabels: { display: false }
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 12, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } }
-            },
-            scales: {
-              y: {
-                min: 0,
-                max: 100,
-                ticks: { callback: (v) => `${v}%` },
-                grid: { color: 'rgba(226, 232, 240, 0.6)' }
-              },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // Subpanel B: Barras Apiladas por Ciclo
-      if (ctxCiclos && ds.ciclos) {
-        const c = ds.ciclos;
-        instanciasChartsSuite['kpi03_ciclos'] = new Chart(ctxCiclos, {
-          type: 'bar',
-          data: {
-            labels: ds.labels || [],
-            datasets: [
-              { label: 'Original', data: c.original || [], backgroundColor: '#3b82f6', borderRadius: 4 },
-              { label: 'R1', data: c.r1 || [], backgroundColor: '#10b981', borderRadius: 4 },
-              { label: 'R2', data: c.r2 || [], backgroundColor: '#f59e0b', borderRadius: 4 },
-              { label: 'R3+', data: c.r3_mas || [], backgroundColor: '#8b5cf6', borderRadius: 4 }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 20, right: 8, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
-              datalabels: { display: false }
-            },
-            scales: {
-              x: { stacked: true, ticks: { font: { weight: 'bold', size: 10 } } },
-              y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(226, 232, 240, 0.6)' } }
-            }
-          }
-        });
-      }
-    }
-
-    // KPI 04: Composición de Flota (Tipología, Marca, Dimensión)
-    function renderChartKpi04(ds) {
-      destruirChartSuite('kpi04_tip');
-      destruirChartSuite('kpi04_mar');
-      destruirChartSuite('kpi04_dim');
-      if (!ds) return;
-
-      const dsTip = ds.tipologias || ds.tipologia;
-      const dsMar = ds.marcas || ds.marca;
-      const dsDim = ds.dimensiones || ds.dimension;
-
-      // Columna A: Tipología Vehicular (Barras Horizontales)
-      const ctxTip = document.getElementById('canvasKpi04_tipologia');
-      if (ctxTip && dsTip) {
-        instanciasChartsSuite['kpi04_tip'] = new Chart(ctxTip, {
-          type: 'bar',
-          data: {
-            labels: dsTip.labels || [],
-            datasets: [{
-              label: 'Vehículos',
-              data: dsTip.valores || [],
-              backgroundColor: '#6366f1',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { right: 20 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff')
-            },
-            scales: {
-              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
-            }
-          }
-        });
-      }
-
-      // Columna B: Marcas de Llanta (Barras Verticales)
-      const ctxMar = document.getElementById('canvasKpi04_marca');
-      if (ctxMar && dsMar) {
-        instanciasChartsSuite['kpi04_mar'] = new Chart(ctxMar, {
-          type: 'bar',
-          data: {
-            labels: dsMar.labels || [],
-            datasets: [{
-              label: 'Llantas',
-              data: dsMar.valores || [],
-              backgroundColor: '#0ea5e9',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 24 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              datalabels: pillDatalabelConfig('rgba(14, 165, 233, 0.9)', '#ffffff')
-            },
-            scales: {
-              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // Columna C: Dimensión y Diseño (Donut)
-      const ctxDim = document.getElementById('canvasKpi04_dimension');
-      if (ctxDim && dsDim) {
-        instanciasChartsSuite['kpi04_dim'] = new Chart(ctxDim, {
-          type: 'doughnut',
-          data: {
-            labels: dsDim.labels || [],
-            datasets: [{
-              data: dsDim.valores || [],
-              backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b']
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '62%',
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
-              datalabels: {
-                display: 'auto',
-                color: '#fff',
-                font: { weight: 'bold', size: 10 },
-                formatter: (val, ctx) => {
-                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                  const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
-                  return `${pct}%`;
-                }
-              }
-            }
-          }
-        });
-      }
-    }
-
-    // ==========================================
-    // INTELIGENCIA DE AHORRO FINANCIERO & ROI (BANNER & MODAL CAMBIAZOS)
-    // ==========================================
-    let ultimasAlertasCambiazo = [];
-
-    function renderizarBannerAhorroRoi(ahorroData) {
-      if (!ahorroData) return;
-      ultimasAlertasCambiazo = ahorroData.alertas_cambiazo_serial || [];
-
-      const totalFmt = formatCO_Moneda(ahorroData.ahorro_potencial_total_cop || 0) + ' COP';
-      const cascosFmt = formatCO_Moneda(ahorroData.ahorro_salvamento_cascos_cop || 0) + ' COP';
-      const alinFmt = formatCO_Moneda(ahorroData.ahorro_alineacion_oportuna_cop || 0) + ' COP';
-      const combFmt = formatCO_Moneda(ahorroData.ahorro_combustible_anual_psi_cop || 0) + ' COP';
-      const cantCambiazos = ahorroData.total_alertas_cambiazo !== undefined ? ahorroData.total_alertas_cambiazo : (ultimasAlertasCambiazo.length || 0);
-      const cascosCant = ahorroData.cascos_en_ventana_salvamento || 0;
-
-      // Banner en Vista KPIs
-      const elTot = document.getElementById('banner_kpi_ahorro_total');
-      if (elTot) elTot.textContent = totalFmt;
-      const elCas = document.getElementById('banner_kpi_ahorro_cascos');
-      if (elCas) elCas.textContent = cascosFmt;
-      const elAlin = document.getElementById('banner_kpi_ahorro_alineacion');
-      if (elAlin) elAlin.textContent = alinFmt;
-      const elComb = document.getElementById('banner_kpi_ahorro_combustible');
-      if (elComb) elComb.textContent = combFmt;
-      const elNumC = document.getElementById('banner_kpi_cambiazos_num');
-      if (elNumC) elNumC.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Caso' : ' Casos');
-      const elBdgC = document.getElementById('badge_cambiazos_total');
-      if (elBdgC) elBdgC.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Caso' : ' Casos');
-      const elBdgS = document.getElementById('badge_cascos_salvamento');
-      if (elBdgS) elBdgS.textContent = cascosCant + (cascosCant === 1 ? ' Casco' : ' Cascos');
-
-      // Banner en Vista Diagnóstico
-      const elDiagTot = document.getElementById('diag_ahorro_total_cop');
-      if (elDiagTot) elDiagTot.textContent = totalFmt;
-      const elDiagBdg = document.getElementById('diag_badge_cambiazos');
-      if (elDiagBdg) elDiagBdg.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Cambiazo' : ' Cambiazos');
-    }
-
-    function abrirModalAlertasCambiazo() {
-      const modal = document.getElementById('modalAlertasCambiazo');
-      const tbody = document.getElementById('tbodyAlertasCambiazo');
-      const lblTotal = document.getElementById('lblTotalCambiazosModal');
-      if (!modal || !tbody) return;
-
-      if (!ultimasAlertasCambiazo || ultimasAlertasCambiazo.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-check text-emerald-500 mr-2 text-base"></i>No se detectaron discrepancias ni sustituciones no autorizadas de serial en la flota</td></tr>';
-        if (lblTotal) lblTotal.textContent = 'Total: 0 discrepancias detectadas';
-      } else {
-        tbody.innerHTML = ultimasAlertasCambiazo.map(a => `
-          <tr class="hover:bg-rose-50/50 transition-colors">
-            <td class="p-2.5 font-bold text-slate-900">${a.placa || ''}</td>
-            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${a.posicion || ''}</td>
-            <td class="p-2.5 font-mono text-slate-400 line-through">${a.serial_anterior || ''}</td>
-            <td class="p-2.5 font-mono font-bold text-rose-600">${a.serial_actual || ''}</td>
-            <td class="p-2.5 text-right font-mono font-bold">${a.prof_actual_min || 0} mm</td>
-            <td class="p-2.5 text-slate-400 text-xs">${a.fecha_anterior || ''}</td>
-            <td class="p-2.5 text-slate-700 font-semibold text-xs">${a.fecha_actual || ''}</td>
-            <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Sustitución sin Kardex</span></td>
-          </tr>
-        `).join('');
-        if (lblTotal) lblTotal.textContent = `Total: ${ultimasAlertasCambiazo.length} discrepancias detectadas`;
-      }
-
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function cerrarModalAlertasCambiazo() {
-      const modal = document.getElementById('modalAlertasCambiazo');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    }
-
-    // ==========================================
-    // RENDERERS SUB-PESTAÑA 2 (KPI 05 AL 11)
-    // ==========================================
-
-    // KPI 05: Cuadro de Cambios + Heatmap Placa vs Posición + Regla Direccional
-    function renderKpi05(d) {
-      if (!d) return;
-
-      // Nivel 1: Tabla Cruzada Dimensión vs Eje
-      const tbodyCruz = document.getElementById('tbodyKpi05_cruzada');
-      if (tbodyCruz) {
-        if (!d.tabla_cruzada || d.tabla_cruzada.length === 0) {
-          tbodyCruz.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Sin retiros requeridos</td></tr>';
-        } else {
-          tbodyCruz.innerHTML = d.tabla_cruzada.map(r => `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold text-slate-800">${r.dimension || '-'}</td>
-              <td class="p-2.5 text-center font-mono">${r.direccional || 0}</td>
-              <td class="p-2.5 text-center font-mono">${r.traccion || 0}</td>
-              <td class="p-2.5 text-center font-mono">${r.arrastre || 0}</td>
-              <td class="p-2.5 text-right font-black font-mono text-rose-700 bg-rose-50/50">${r.total || 0}</td>
-            </tr>
-          `).join('');
-        }
-      }
-
-      // Nivel 1: Gráfico Barras Retiros Mensuales
-      destruirChartSuite('kpi05_ret');
-      const ctxRet = document.getElementById('canvasKpi05_retiros');
-      if (ctxRet && d.retiros_mensuales) {
-        const rm = d.retiros_mensuales;
-        instanciasChartsSuite['kpi05_ret'] = new Chart(ctxRet, {
-          type: 'bar',
-          data: {
-            labels: rm.labels || [],
-            datasets: [{
-              label: 'Retiros Mensuales',
-              data: rm.valores || [],
-              backgroundColor: '#ef4444',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 22 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff')
-            },
-            scales: {
-              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
-            }
-          }
-        });
-      }
-
-      // Nivel 2: Heatmap Placa vs Posición 1..12
-      const tbodyHeat = document.getElementById('tbodyKpi05_heatmap');
-      if (tbodyHeat) {
-        if (!d.matriz_posiciones || d.matriz_posiciones.length === 0) {
-          tbodyHeat.innerHTML = '<tr><td colspan="13" class="p-4 text-center text-slate-400">Sin registros de posiciones</td></tr>';
-        } else {
-          tbodyHeat.innerHTML = d.matriz_posiciones.map(r => {
-            const celdas = [1,2,3,4,5,6,7,8,9,10,11,12].map(pos => {
-              const info = r.posiciones ? r.posiciones[String(pos)] : null;
-              if (!info || info.prof === null || info.prof === undefined) {
-                return '<td class="p-2 bg-slate-50 text-slate-300">-</td>';
-              }
-              const prof = info.prof;
-              const lim = info.limite || 3.0;
-              let bg = 'bg-emerald-50 text-emerald-800 border-emerald-100';
-              if (prof <= lim) {
-                bg = 'bg-rose-500 text-white font-black shadow-xs';
-              } else if (prof <= lim + 2.0) {
-                bg = 'bg-amber-400 text-slate-900 font-bold';
-              }
-              const title = `Pos ${pos}: ${prof}mm (Límite: ${lim}mm)${info.alerta_par_direccional ? ' ⚠️ Par Direccional' : ''}`;
-              return `<td class="p-2 ${bg} border border-white" title="${title}">${prof}</td>`;
-            }).join('');
-
-            return `
-              <tr class="hover:bg-slate-100 transition-colors">
-                <td class="p-2 text-left font-bold text-slate-900 sticky left-0 bg-white border-r border-slate-200">${r.placa || '-'}</td>
-                ${celdas}
-              </tr>
-            `;
-          }).join('');
-        }
-      }
-    }
-
-    // KPI 06: Seguimiento de Alineación y Pérdida
-    function renderKpi06(d) {
-      if (!d) return;
-
-      destruirChartSuite('kpi06_alin');
-      const ctx = document.getElementById('canvasKpi06_alineacion');
-      if (ctx && d.historico) {
-        const h = d.historico;
-        instanciasChartsSuite['kpi06_alin'] = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: h.labels || [],
-            datasets: [
-              { label: '% Alineación OK', data: h.pct_ok || [], backgroundColor: '#0ea5e9', borderRadius: 4 },
-              { label: '% Desalineadas', data: h.pct_alerta || [], backgroundColor: '#dc2626', borderRadius: 4 }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
-              datalabels: { display: false }
-            },
-            scales: {
-              x: { stacked: true },
-              y: { stacked: true, min: 0, max: 100, ticks: { callback: (v) => `${v}%` } }
-            }
-          }
-        });
-      }
-
-      // Tabla Detallada por Placa
-      const tbody = document.getElementById('tbodyKpi06_perdidaPlaca');
-      if (tbody) {
-        if (!d.tabla_perdidas || d.tabla_perdidas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Sin vehículos desalineados</td></tr>';
-        } else {
-          tbody.innerHTML = d.tabla_perdidas.map(r => `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
-              <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos1_mm, 1)}</td>
-              <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos2_mm, 1)}</td>
-              <td class="p-2.5 text-center font-mono font-black text-rose-600">${formatCO_Decimal(r.total_mm, 1)} mm</td>
-              <td class="p-2.5 text-right font-mono font-bold text-slate-900">${modoLicenciaSuite === 'FULL' ? formatCO_Moneda(r.perdida_pesos) : 'Modo LIGHT'}</td>
-              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${r.accion || 'Alinear Dirección'}</span></td>
-            </tr>
-          `).join('');
-        }
-      }
-    }
-
-    // KPI 07: Plan de Rotaciones Tándem y Tráiler
-    function renderKpi07(d) {
-      if (!d) return;
-      const tbody = document.getElementById('tbodyKpi07_rotaciones');
-      if (tbody) {
-        if (!d.rotaciones_sugeridas || d.rotaciones_sugeridas.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Desgaste equilibrado: no se requieren rotaciones en este corte</td></tr>';
-        } else {
-          tbody.innerHTML = d.rotaciones_sugeridas.map(r => `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
-              <td class="p-2.5 text-center font-medium text-indigo-700 font-mono">${r.esquema || 'P3 ↔ P9 / P4 ↔ P10'}</td>
-              <td class="p-2.5 text-center font-mono font-black text-amber-600">&Delta; ${formatCO_Decimal(r.delta_ejes_mm, 1)} mm</td>
-              <td class="p-2.5 text-center">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${r.estado === 'Reincidente' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
-                  ${r.estado || 'Solucionada'}
-                </span>
-              </td>
-            </tr>
-          `).join('');
-        }
-      }
-    }
-
-    // KPI 08: Duales Mal Apareados + Cruce con Bodega 2
-    function renderKpi08(d) {
-      if (!d) return;
-
-      destruirChartSuite('kpi08_apar');
-      const ctx = document.getElementById('canvasKpi08_apareo');
-      if (ctx && d.frecuencia_mensual) {
-        const fm = d.frecuencia_mensual;
-        instanciasChartsSuite['kpi08_apar'] = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: fm.labels || [],
-            datasets: [{
-              label: 'Pachas Desapareadas',
-              data: fm.valores || [],
-              backgroundColor: '#f43f5e',
-              borderRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              datalabels: pillDatalabelConfig('rgba(244, 63, 94, 0.9)', '#ffffff')
-            },
-            scales: {
-              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
-            }
-          }
-        });
-      }
-
-      // Tarjetas de Cruce con Bodega 2
-      const cont = document.getElementById('contenedorKpi08_crucesB2');
-      if (cont) {
-        if (!d.cruces_bodega2 || d.cruces_bodega2.length === 0) {
-          cont.innerHTML = '<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-center text-xs">Sin pachas con desbalance &gt; 3 mm</div>';
-        } else {
-          cont.innerHTML = d.cruces_bodega2.map(c => `
-            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-              <div>
-                <span class="font-mono font-black text-slate-900">${c.placa || '-'}</span>
-                <span class="text-slate-500 ml-1.5">${c.pacha || 'P3-P4'} (&Delta; ${formatCO_Decimal(c.diferencia_mm, 1)} mm)</span>
-              </div>
-              <div class="text-right">
-                <span class="text-[10px] text-indigo-600 font-bold block">Bodega 2: ${c.llanta_b2_sugerida || 'Stock disponible'}</span>
-                <span class="text-[10px] text-slate-500 font-mono">${c.milimetraje_b2 || 0} mm</span>
-              </div>
-            </div>
-          `).join('');
-        }
-      }
-    }
-
-    // KPI 09: Presiones PSI y Combustible
-    function renderKpi09(d) {
-      if (!d) return;
-
-      destruirChartSuite('kpi09_psi');
-      const ctx = document.getElementById('canvasKpi09_psi');
-      if (ctx && d.distribucion) {
-        const dist = d.distribucion;
-        instanciasChartsSuite['kpi09_psi'] = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: ['Baja Severa (<-15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (>+10%)'],
-            datasets: [{
-              data: [dist.baja_severa || 0, dist.baja_moderada || 0, dist.correcta || 0, dist.sobrepresion || 0],
-              backgroundColor: ['#dc2626', '#f59e0b', '#10b981', '#6366f1']
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '60%',
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
-              datalabels: {
-                color: '#fff',
-                font: { weight: 'bold', size: 10 },
-                formatter: (val, ctx) => {
-                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                  return total > 0 ? `${((val / total) * 100).toFixed(0)}%` : '';
-                }
-              }
-            }
-          }
-        });
-      }
-
-      const elGalones = document.getElementById('kpi09_galones_diesel');
-      if (elGalones) {
-        elGalones.textContent = `${formatCO_Miles(d.galones_desperdiciados_mes || 0)} gal/mes`;
-      }
-    }
-
-    // KPI 10: Pareto de Novedades y Taller
-    function renderChartKpi10(d) {
-      destruirChartSuite('kpi10_pareto');
-      const ctx = document.getElementById('canvasKpi10_pareto');
-      if (!ctx || !d) return;
-
-      const elEfect = document.getElementById('kpi10_efectividad_badge');
-      if (elEfect && d.efectividad_taller_pct !== undefined) {
-        elEfect.textContent = `Efectividad: ${formatCO_Decimal(d.efectividad_taller_pct, 1)}%`;
-      }
-
-      instanciasChartsSuite['kpi10_pareto'] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: d.labels || [],
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Frecuencia Novedades',
-              data: d.frecuencias || [],
-              backgroundColor: '#a855f7',
-              borderRadius: 4,
-              yAxisID: 'y',
-              datalabels: pillDatalabelConfig('rgba(168, 85, 247, 0.9)', '#ffffff')
-            },
-            {
-              type: 'line',
-              label: '% Acumulado (Pareto)',
-              data: d.acumulado_pct || [],
-              borderColor: '#f59e0b',
-              backgroundColor: '#f59e0b',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              yAxisID: 'y1',
-              datalabels: { display: false }
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 24, right: 12, bottom: 8, left: 8 } },
-          animation: animacionCascadaStandard,
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } }
-          },
-          scales: {
-            y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Cantidad' } },
-            y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => `${v}%` } },
-            x: { ticks: { font: { weight: 'bold', size: 10 } } }
-          }
-        }
-      });
-    }
-
-    // KPI 11: Impacto Económico Interanual (mm vs $)
-    function renderChartKpi11(d) {
-      destruirChartSuite('kpi11_impacto');
-      const ctx = document.getElementById('canvasKpi11_impacto');
-      if (!d) return;
-
-      const elMm = document.getElementById('kpi11_mm_perdidos');
-      const elPesos = document.getElementById('kpi11_pesos_perdidos');
-      if (elMm) elMm.textContent = `${formatCO_Decimal(d.total_mm_perdidos || 0, 1)} mm`;
-      if (elPesos) {
-        elPesos.textContent = (modoLicenciaSuite === 'FULL') ? formatCO_Moneda(d.impacto_economico_total || 0) : 'Modo LIGHT';
-      }
-
-      if (ctx) {
-        const datasets = [
-          {
-            type: 'bar',
-            label: 'Milímetros Perdidos',
-            data: d.mm_mes || [],
-            backgroundColor: '#f43f5e',
-            borderRadius: 6,
-            yAxisID: 'y',
-            datalabels: pillDatalabelConfig('rgba(244, 63, 94, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
-          }
-        ];
-
-        if (modoLicenciaSuite === 'FULL') {
-          datasets.push({
-            type: 'line',
-            label: 'Pérdida Monetaria ($ COP)',
-            data: d.pesos_mes || [],
-            borderColor: '#f97316',
-            backgroundColor: '#f97316',
-            borderWidth: 2.8,
-            tension: 0.35,
-            pointRadius: 4,
-            yAxisID: 'y1',
-            datalabels: pillDatalabelConfig('rgba(249, 115, 22, 0.9)', '#ffffff', (v) => formatCO_Moneda(v))
-          });
-        }
-
-        instanciasChartsSuite['kpi11_impacto'] = new Chart(ctx, {
-          data: {
-            labels: d.labels || [],
-            datasets: datasets
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } }
-            },
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Milímetros Perdidos' }, ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} mm` } },
-              y1: {
-                display: (modoLicenciaSuite === 'FULL'),
-                beginAtZero: true,
-                position: 'right',
-                grid: { drawOnChartArea: false },
-                title: { display: true, text: 'Pérdida Económica ($)' },
-                ticks: { callback: (v) => formatCO_Moneda(v) }
-              },
-              x: { ticks: { font: { weight: 'bold', size: 11 } } }
-            }
-          }
-        });
-      }
-    }
-
-    // ==========================================
-    // RENDERERS SUB-PESTAÑA 3 (KPI 12 AL 16) [SOLO FULL]
-    // ==========================================
-
-    // KPI 12: Las 4 Tarjetas Maestras de Desempeño de Flota
-    function renderKpi12(d) {
-      if (!d) return;
-      const elMmG = document.getElementById('kpi12_mm_gastados');
-      const elProfAct = document.getElementById('kpi12_prof_actual');
-      const elPctDesg = document.getElementById('kpi12_pct_desgaste');
-      const elBarDesg = document.getElementById('kpi12_barra_desgaste');
-      const elKmRec = document.getElementById('kpi12_km_recorridos');
-
-      if (elMmG) elMmG.textContent = `${formatCO_Decimal(d.mm_gastados || 0, 1)} mm`;
-      if (elProfAct) elProfAct.textContent = `${formatCO_Decimal(d.profundidad_actual || 0, 1)} mm`;
-
-      const pct = Math.min(100, Math.max(0, d.pct_desgaste || 0));
-      if (elPctDesg) elPctDesg.textContent = `${formatCO_Decimal(pct, 1)}%`;
-      if (elBarDesg) {
-        elBarDesg.style.width = `${pct}%`;
-        if (pct < 60) {
-          elBarDesg.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
-        } else if (pct < 85) {
-          elBarDesg.className = 'h-full bg-amber-500 rounded-full transition-all duration-500';
-        } else {
-          elBarDesg.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
-        }
-      }
-      if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} km`;
-    }
-
-    // KPI 13: Km Rodados Reales vs. Proyección Final al Límite de Retiro
-    function renderChartKpi13(ds) {
-      destruirChartSuite('kpi13_comparativo');
-      const ctx = document.getElementById('canvasKpi13_comparativo');
-      if (!ctx || !ds) return;
-
-      const gradientReales = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-      gradientReales.addColorStop(0, '#2563eb');
-      gradientReales.addColorStop(1, '#1d4ed8');
-
-      const gradientProy = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-      gradientProy.addColorStop(0, 'rgba(96, 165, 250, 0.7)');
-      gradientProy.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
-
-      instanciasChartsSuite['kpi13_comparativo'] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ds.labels || [],
-          datasets: [
-            {
-              label: 'Km Reales Rodados',
-              data: ds.km_reales || [],
-              backgroundColor: gradientReales,
-              borderColor: '#1e40af',
-              borderWidth: 1.5,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
-            },
-            {
-              label: 'Proyección Final al Retiro',
-              data: ds.proyeccion_final || [],
-              backgroundColor: gradientProy,
-              borderColor: '#2563eb',
-              borderWidth: 1.5,
-              borderDash: [4, 4],
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-          animation: animacionCascadaStandard,
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.94)',
-              cornerRadius: 10,
-              padding: 12,
-              callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`,
-                afterBody: (items) => {
-                  const idx = items[0].dataIndex;
-                  const r = ds.km_reales?.[idx] || 0;
-                  const p = ds.proyeccion_final?.[idx] || 0;
-                  const dif = Math.max(0, p - r);
-                  return `Vida Remanente Est.: ${formatCO_Miles(dif)} km`;
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grace: '15%',
-              title: { display: true, text: 'Kilómetros', font: { weight: 'bold', size: 10 } },
-              grid: { color: 'rgba(226, 232, 240, 0.6)' },
-              ticks: { callback: (v) => formatCO_Miles(v) }
-            },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
-          }
-        }
-      });
-    }
-
-    // KPI 14: Tríada Multidimensional Sincronizada (Proyección, Km/mm, CPK)
-    function renderChartKpi14(ds) {
-      destruirChartSuite('kpi14_proy');
-      destruirChartSuite('kpi14_kmmm');
-      destruirChartSuite('kpi14_cpk');
-      if (!ds) return;
-
-      const sel = document.getElementById('selAgrupacionKpi14');
-      if (sel && ds.agrupacion_actual && sel.value !== ds.agrupacion_actual) {
-        sel.value = ds.agrupacion_actual;
-      }
-
-      const labels = ds.labels || [];
-
-      // 1. Proyección Km Final (Índigo)
-      const ctxProy = document.getElementById('canvasKpi14_proy');
-      if (ctxProy) {
-        const gradProy = ctxProy.getContext('2d').createLinearGradient(0, 0, 0, 240);
-        gradProy.addColorStop(0, '#6366f1');
-        gradProy.addColorStop(1, '#4338ca');
-
-        instanciasChartsSuite['kpi14_proy'] = new Chart(ctxProy, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Proy. Km Final',
-              data: ds.proyeccion_km || [],
-              backgroundColor: gradProy,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} km` } }
-            },
-            scales: {
-              y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // 2. Rendimiento Km/mm (Esmeralda)
-      const ctxKmmm = document.getElementById('canvasKpi14_kmmm');
-      if (ctxKmmm) {
-        const gradKmmm = ctxKmmm.getContext('2d').createLinearGradient(0, 0, 0, 240);
-        gradKmmm.addColorStop(0, '#10b981');
-        gradKmmm.addColorStop(1, '#047857');
-
-        instanciasChartsSuite['kpi14_kmmm'] = new Chart(ctxKmmm, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Rendimiento Km/mm',
-              data: ds.km_mm || [],
-              backgroundColor: gradKmmm,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(4, 120, 87, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} km/mm`)
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Rendimiento: ${formatCO_Decimal(c.raw, 1)} km/mm` } }
-            },
-            scales: {
-              y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Decimal(v, 1), font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // 3. Costo por Kilómetro CPK (Púrpura)
-      const ctxCpk = document.getElementById('canvasKpi14_cpk');
-      if (ctxCpk) {
-        const gradCpk = ctxCpk.getContext('2d').createLinearGradient(0, 0, 0, 240);
-        gradCpk.addColorStop(0, '#a855f7');
-        gradCpk.addColorStop(1, '#7e22ce');
-
-        instanciasChartsSuite['kpi14_cpk'] = new Chart(ctxCpk, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'CPK ($/km)',
-              data: ds.cpk || [],
-              backgroundColor: gradCpk,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(126, 34, 206, 0.9)', '#ffffff', (v) => `$ ${formatCO_Decimal(v, 2)}`)
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `CPK: $ ${formatCO_Decimal(c.raw, 2)} COP/km` } }
-            },
-            scales: {
-              y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 1)}`, font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-    }
-
-    // KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Filtro Madurez >= 1.5mm)
-    function renderChartKpi15(ds) {
-      destruirChartSuite('kpi15_potencial');
-      const ctx = document.getElementById('canvasKpi15_potencial');
-      if (!ctx || !ds) return;
-
-      const badgeBrecha = document.getElementById('kpi15_brecha_badge');
-      if (badgeBrecha && ds.brecha_promedio_total !== undefined) {
-        const br = ds.brecha_promedio_total;
-        badgeBrecha.textContent = `Brecha: ${formatCO_Decimal(br, 1)}%`;
-        if (br < 15) {
-          badgeBrecha.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-        } else if (br < 30) {
-          badgeBrecha.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300';
-        } else {
-          badgeBrecha.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
-        }
-      }
-
-      const gradProm = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-      gradProm.addColorStop(0, 'rgba(37, 99, 235, 0.85)');
-      gradProm.addColorStop(1, 'rgba(29, 78, 216, 0.7)');
-
-      instanciasChartsSuite['kpi15_potencial'] = new Chart(ctx, {
-        data: {
-          labels: ds.labels || [],
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Proyección Promedio',
-              data: ds.promedio || [],
-              backgroundColor: gradProm,
-              borderColor: '#1d4ed8',
-              borderWidth: 1.5,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.85)', '#ffffff', (v) => formatCO_Miles(v))
-            },
-            {
-              type: 'line',
-              label: 'Máximo Alcanzado',
-              data: ds.maximo || [],
-              borderColor: '#0284c7',
-              backgroundColor: '#0284c7',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              tension: 0.25,
-              datalabels: pillDatalabelConfig('rgba(2, 132, 199, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-            },
-            {
-              type: 'line',
-              label: 'Mínimo / Peor Desempeño',
-              data: ds.minimo || [],
-              borderColor: '#f59e0b',
-              backgroundColor: '#f59e0b',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              tension: 0.25,
-              datalabels: pillDatalabelConfig('rgba(217, 119, 6, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-          animation: animacionCascadaStandard,
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.94)',
-              cornerRadius: 10,
-              padding: 12,
-              callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grace: '15%',
-              title: { display: true, text: 'Kilómetros', font: { weight: 'bold', size: 10 } },
-              grid: { color: 'rgba(226, 232, 240, 0.6)' },
-              ticks: { callback: (v) => formatCO_Miles(v) }
-            },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
-          }
-        }
-      });
-    }
-
-    // KPI 16: Curva de Proyección por Rango de Desgaste (Madurez del Caucho)
-    function renderChartKpi16(ds) {
-      destruirChartSuite('kpi16_rangos');
-      const ctx = document.getElementById('canvasKpi16_rangos');
-      if (!ctx || !ds) return;
-
-      instanciasChartsSuite['kpi16_rangos'] = new Chart(ctx, {
-        data: {
-          labels: ds.labels || [],
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Llantas en Banda',
-              data: ds.conteo_llantas || [],
-              backgroundColor: 'rgba(129, 140, 248, 0.65)',
-              borderColor: '#6366f1',
-              borderWidth: 1.5,
-              borderRadius: 6,
-              yAxisID: 'y',
-              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-            },
-            {
-              type: 'line',
-              label: 'Proyección Promedio (km)',
-              data: ds.proyeccion_promedio || [],
-              borderColor: '#4f46e5',
-              backgroundColor: 'rgba(79, 70, 229, 0.12)',
-              fill: true,
-              borderWidth: 2.8,
-              pointRadius: 4,
-              tension: 0.35,
-              yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-          animation: animacionCascadaStandard,
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.94)',
-              cornerRadius: 10,
-              padding: 12
-            }
-          },
-          scales: {
-            y: {
-              type: 'linear',
-              position: 'left',
-              beginAtZero: true,
-              grace: '15%',
-              title: { display: true, text: 'Cantidad de Llantas', font: { weight: 'bold', size: 10 } },
-              grid: { color: 'rgba(226, 232, 240, 0.6)' },
-              ticks: { callback: (v) => formatCO_Miles(v) }
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              beginAtZero: true,
-              grace: '15%',
-              title: { display: true, text: 'Proyección (km)', font: { weight: 'bold', size: 10 } },
-              grid: { drawOnChartArea: false },
-              ticks: { callback: (v) => `${formatCO_Miles(v)} km` }
-            },
-            x: { ticks: { font: { weight: 'bold', size: 10 } } }
-          }
-        }
-      });
-    }
-
-    // ==========================================
-    // RENDERERS SUB-PESTAÑA 4 (KPI 17 AL 19) [SOLO FULL]
-    // ==========================================
-
-    // KPI 17: Indicadores Globales FVU
-    function renderKpi17(d) {
-      if (!d) return;
-      const elCant = document.getElementById('kpi17_cantidad_fvu');
-      const elIr = document.getElementById('kpi17_ir_fvu');
-      const elPctReen = document.getElementById('kpi17_pct_reenc_fvu');
-
-      if (elCant) elCant.textContent = `${formatCO_Miles(d.cantidad_fvu || 0)} llantas`;
-      if (elIr) elIr.textContent = formatCO_Decimal(d.indice_reencauchabilidad_ir || 0, 2);
-      if (elPctReen) elPctReen.textContent = `${formatCO_Decimal(d.pct_reencauche_fvu || 0, 1)}%`;
-
-      destruirChartSuite('kpi17_lineas');
-      const ctx = document.getElementById('canvasKpi17_lineas');
-      if (!ctx || !d.grafico_12m) return;
-
-      const g = d.grafico_12m;
-      const gradBar = ctx.getContext('2d').createLinearGradient(0, 0, 0, 240);
-      gradBar.addColorStop(0, '#f43f5e');
-      gradBar.addColorStop(1, '#be123c');
-
-      instanciasChartsSuite['kpi17_lineas'] = new Chart(ctx, {
-        data: {
-          labels: g.labels || [],
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Bajas FVU (Llantas)',
-              data: g.cantidad || [],
-              backgroundColor: gradBar,
-              borderRadius: 6,
-              yAxisID: 'y',
-              datalabels: pillDatalabelConfig('rgba(190, 18, 60, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-            },
-            {
-              type: 'line',
-              label: 'Índice Reencauchabilidad (I.R.)',
-              data: g.ir || [],
-              borderColor: '#6366f1',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
-              fill: true,
-              borderWidth: 2.8,
-              pointRadius: 4,
-              tension: 0.35,
-              yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => formatCO_Decimal(v, 2))
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-          animation: animacionCascadaStandard,
-          plugins: {
-            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.94)',
-              cornerRadius: 10,
-              padding: 12
-            }
-          },
-          scales: {
-            y: {
-              type: 'linear',
-              position: 'left',
-              beginAtZero: true,
-              grace: '15%',
-              title: { display: true, text: 'Llantas FVU', font: { weight: 'bold', size: 10 } },
-              grid: { color: 'rgba(226, 232, 240, 0.6)' },
-              ticks: { callback: (v) => formatCO_Miles(v) }
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              beginAtZero: true,
-              grace: '15%',
-              title: { display: true, text: 'I.R. FVU', font: { weight: 'bold', size: 10 } },
-              grid: { drawOnChartArea: false },
-              ticks: { callback: (v) => formatCO_Decimal(v, 1) }
-            },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
-          }
-        }
-      });
-    }
-
-    // KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (+ Alerta Garantía)
-    function renderChartKpi18(d) {
-      destruirChartSuite('kpi18_marca');
-      destruirChartSuite('kpi18_ciclo');
-      destruirChartSuite('kpi18_causal');
-      if (!d) return;
-
-      // Badge garantía
-      const badgeGarantia = document.getElementById('kpi18_badge_garantia');
-      const numGar = (d.alertas_garantia || []).length;
-      if (badgeGarantia) {
-        badgeGarantia.textContent = `${numGar} en Garantía (<30%)`;
-        if (numGar > 0) {
-          badgeGarantia.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 animate-pulse';
-        } else {
-          badgeGarantia.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200';
-        }
-      }
-
-      // A. Bajas por Marca (Barras)
-      const ctxMarca = document.getElementById('canvasKpi18_marca');
-      if (ctxMarca && d.por_marca) {
-        const gradM = ctxMarca.getContext('2d').createLinearGradient(0, 0, 0, 220);
-        gradM.addColorStop(0, '#f43f5e');
-        gradM.addColorStop(1, '#e11d48');
-
-        instanciasChartsSuite['kpi18_marca'] = new Chart(ctxMarca, {
-          type: 'bar',
-          data: {
-            labels: d.por_marca.labels || [],
-            datasets: [{
-              label: 'Bajas FVU',
-              data: d.por_marca.valores || [],
-              backgroundColor: gradM,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(225, 29, 72, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 24, right: 8, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Llantas dadas de baja: ${formatCO_Miles(c.raw)}` } }
-            },
-            scales: {
-              y: { beginAtZero: true, grace: '15%', ticks: { font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // B. Por Ciclo de Vida (Barras Agrupadas)
-      const ctxCiclo = document.getElementById('canvasKpi18_ciclo');
-      if (ctxCiclo && d.por_ciclo) {
-        const coloresCiclos = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
-        instanciasChartsSuite['kpi18_ciclo'] = new Chart(ctxCiclo, {
-          type: 'bar',
-          data: {
-            labels: d.por_ciclo.labels || [],
-            datasets: [{
-              label: 'Ciclo de Fallo',
-              data: d.por_ciclo.valores || [],
-              backgroundColor: coloresCiclos,
-              borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(15, 23, 42, 0.85)', '#ffffff', (v) => formatCO_Miles(v))
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 24, right: 8, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Llantas: ${formatCO_Miles(c.raw)}` } }
-            },
-            scales: {
-              y: { beginAtZero: true, grace: '15%', ticks: { font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // C. Causales de Daño (Doughnut interactiva)
-      const ctxCausal = document.getElementById('canvasKpi18_causal');
-      if (ctxCausal && d.por_causal) {
-        const paletaCausales = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b', '#10b981', '#ec4899'];
-        instanciasChartsSuite['kpi18_causal'] = new Chart(ctxCausal, {
-          type: 'doughnut',
-          data: {
-            labels: d.por_causal.labels || [],
-            datasets: [{
-              data: d.por_causal.valores || [],
-              backgroundColor: paletaCausales.slice(0, (d.por_causal.labels || []).length),
-              borderWidth: 2,
-              borderColor: '#ffffff'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { weight: 'bold', size: 9 } } },
-              tooltip: {
-                callbacks: {
-                  label: (c) => {
-                    const idx = c.dataIndex;
-                    const pct = d.por_causal.porcentajes?.[idx] || 0;
-                    return ` ${c.label}: ${formatCO_Miles(c.raw)} llantas (${pct}%)`;
-                  }
-                }
-              },
-              datalabels: {
-                color: '#ffffff',
-                font: { weight: '800', size: 9 },
-                formatter: (val, ctx) => {
-                  const idx = ctx.dataIndex;
-                  const pct = d.por_causal.porcentajes?.[idx] || 0;
-                  return pct >= 8 ? `${pct}%` : '';
-                }
-              }
-            }
-          }
-        });
-      }
-    }
-
-    // KPI 19: Profundidad de Retiro (Líneas) y Dispersión por mm (Burbujas)
-    function renderChartKpi19(d) {
-      destruirChartSuite('kpi19_lineas');
-      destruirChartSuite('kpi19_burbujas');
-      if (!d) return;
-
-      // 1. Gráfico de 3 Líneas (Máx, Prom, Mín)
-      const ctxLineas = document.getElementById('canvasKpi19_lineas');
-      if (ctxLineas && d.grafico_lineas) {
-        const gl = d.grafico_lineas;
-        instanciasChartsSuite['kpi19_lineas'] = new Chart(ctxLineas, {
-          type: 'line',
-          data: {
-            labels: gl.labels || [],
-            datasets: [
-              {
-                label: 'Prof. Máxima (mm)',
-                data: gl.maximo || [],
-                borderColor: '#ef4444',
-                backgroundColor: '#ef4444',
-                borderWidth: 2.2,
-                pointRadius: 4,
-                tension: 0.25,
-                datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
-              },
-              {
-                label: 'Prof. Promedio (mm)',
-                data: gl.promedio || [],
-                borderColor: '#3b82f6',
-                backgroundColor: '#3b82f6',
-                borderWidth: 2.5,
-                pointRadius: 4,
-                tension: 0.25,
-                datalabels: pillDatalabelConfig('rgba(59, 130, 246, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
-              },
-              {
-                label: 'Prof. Mínima (mm)',
-                data: gl.minimo || [],
-                borderColor: '#64748b',
-                backgroundColor: '#64748b',
-                borderWidth: 2,
-                pointRadius: 4,
-                tension: 0.25,
-                datalabels: pillDatalabelConfig('rgba(100, 116, 139, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } },
-              tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCO_Decimal(c.raw, 1)} mm` } }
-            },
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Milímetros' }, ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} mm` } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
-            }
-          }
-        });
-      }
-
-      // 2. Gráfico de Burbujas (Dispersión mm vs Dinero Perdido)
-      const ctxBurbujas = document.getElementById('canvasKpi19_burbujas');
-      if (ctxBurbujas && d.burbujas_dispersion) {
-        instanciasChartsSuite['kpi19_burbujas'] = new Chart(ctxBurbujas, {
-          type: 'bubble',
-          data: {
-            datasets: [{
-              label: 'Dispersión Retiro FVU',
-              data: d.burbujas_dispersion || [],
-              backgroundColor: 'rgba(239, 68, 68, 0.6)',
-              borderColor: '#dc2626',
-              borderWidth: 1.5,
-              datalabels: {
-                display: true,
-                formatter: (val) => val.cantidad > 0 ? `${val.x}mm (${val.cantidad})` : '',
-                font: { weight: 'bold', size: 9 },
-                color: '#1e293b',
-                align: 'top'
-              }
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 24, right: 16, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: (c) => {
-                    const raw = c.raw;
-                    return `Profundidad: ${raw.x} mm | Llantas: ${raw.cantidad} | Scrap: ${formatCO_Moneda(raw.y)}`;
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                title: { display: true, text: 'Milímetros al Salir a FVU (mm)', font: { weight: 'bold', size: 10 } },
-                min: 0,
-                max: 20,
-                ticks: { stepSize: 2 }
-              },
-              y: {
-                title: { display: true, text: 'Dinero Scrap Perdido ($ COP)', font: { weight: 'bold', size: 10 } },
-                beginAtZero: true,
-                ticks: { callback: (v) => formatCO_Moneda(v) }
-              }
-            }
-          }
-        });
-      }
-    }
-
-    // ==========================================
-    // RENDERERS SUB-PESTAÑA 5 (KPI 20) [SOLO FULL]
-    // ==========================================
-
-    // KPI 20: Matriz de Evaluación de Necesidades vs Las 7 Bodegas (MRP)
-    function renderKpi20(d) {
-      destruirChartSuite('kpi20_mrp');
-      const ctx = document.getElementById('canvasKpi20_mrp');
-      const tbody = document.getElementById('tbodyKpi20_mrp');
-      if (!d) return;
-
-      // 1. Gráfico Superior de Barras Comparativas por Dimensión
-      if (ctx && d.grafico_comparativo) {
-        const gc = d.grafico_comparativo;
-        instanciasChartsSuite['kpi20_mrp'] = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: gc.labels || [],
-            datasets: [
-              {
-                label: 'Necesidad Bruta Total',
-                data: gc.necesidad_bruta || [],
-                backgroundColor: '#ef4444',
-                borderRadius: 6,
-                datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-              },
-              {
-                label: 'Stock Disponible (B1+B2+B3x0.9+B4)',
-                data: gc.stock_disponible || [],
-                backgroundColor: '#10b981',
-                borderRadius: 6,
-                datalabels: pillDatalabelConfig('rgba(16, 185, 129, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-              },
-              {
-                label: 'Compra Neta Sugerida',
-                data: gc.compra_neta || [],
-                backgroundColor: '#6366f1',
-                borderRadius: 6,
-                datalabels: pillDatalabelConfig('rgba(99, 102, 241, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
-            animation: animacionCascadaStandard,
-            plugins: {
-              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
-              tooltip: {
-                backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                cornerRadius: 10,
-                padding: 12
-              }
-            },
-            scales: {
-              y: { beginAtZero: true, grace: '15%', title: { display: true, text: 'Cantidad de Llantas' } },
-              x: { ticks: { font: { weight: 'bold', size: 11 } } }
-            }
-          }
-        });
-      }
-
-      // 2. Gran Tabla Maestra MRP de 12 Columnas
-      if (tbody) {
-        if (!d.matriz_mrp || d.matriz_mrp.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="12" class="p-6 text-center text-slate-400">No hay datos de inventario o necesidades para los filtros seleccionados.</td></tr>';
-        } else {
-          tbody.innerHTML = d.matriz_mrp.map(m => {
-            const tieneCompra = (m.compra_neta_sugerida || 0) > 0;
-            return `
-              <tr class="hover:bg-slate-50 transition-colors">
-                <!-- Demanda -->
-                <td class="p-2.5 font-black text-slate-900 font-mono">${m.dimension || '-'}</td>
-                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.demanda_flota)}</td>
-                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.reposicion_bajas_fvu)}</td>
-                <td class="p-2.5 text-center text-slate-500 font-mono">+${formatCO_Miles(m.margen_seguridad)}</td>
-                <td class="p-2.5 text-center font-black bg-rose-50 text-rose-700 font-mono">${formatCO_Miles(m.necesidad_bruta)}</td>
-                <!-- Bodegas -->
-                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b1)}</td>
-                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b2)}</td>
-                <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${m.stock_b3})</span></td>
-                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b4)}</td>
-                <td class="p-2.5 text-center font-black bg-emerald-50 text-emerald-700 font-mono">${formatCO_Miles(m.stock_disponible)}</td>
-                <!-- Compra -->
-                <td class="p-2.5 text-center font-black ${tieneCompra ? 'bg-amber-100 text-amber-900 border border-amber-300 rounded-lg' : 'text-slate-400'} font-mono">${formatCO_Miles(m.compra_neta_sugerida)}</td>
-                <td class="p-2.5 text-right font-black text-indigo-700 font-mono">${formatCO_Moneda(m.presupuesto_estimado_cop)}</td>
-              </tr>
-            `;
-          }).join('');
-        }
-      }
-    }
-
-    // ==========================================
-    // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
-    // ==========================================
-    // ==========================================
-    // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO (V3.5 ENTERPRISE)
-    // ==========================================
-    let paginaActualDiag = 1;
-    const ITEMS_POR_PAGINA_DIAG = 25;
-    let cacheFiltradasDiag = [];
-
-    // Helper reactivo para compatibilidad total con IDs oficiales del manual y clásicos
-    function getDiagEl(idNuevo, idClasico) {
-      return document.getElementById(idNuevo) || (idClasico ? document.getElementById(idClasico) : null);
-    }
-    function getDiagVal(idNuevo, idClasico, defaultVal = '') {
-      const el = getDiagEl(idNuevo, idClasico);
-      return el ? (el.value || defaultVal) : defaultVal;
-    }
-
-    async function cargarDiagnostico() {
-      const tbody = getDiagEl('tbody_diagnostico_web', 'tbodyDiagnostico');
-      const tbodyMat = getDiagEl('tbody_semaforo_matriz_flota', 'tbodyMatrizSemaforos');
-      if (tbody && (!cacheDiagnostico || cacheDiagnostico.length === 0)) {
-        tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando diagnósticos de flota...</td></tr>';
-      }
-      if (tbodyMat && (!cacheMatrizSemaforos || !cacheMatrizSemaforos.filas)) {
-        tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-600"></i>Cargando matriz de semáforos por posición...</td></tr>';
-      }
-      try {
-        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-        const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde');
-        const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta');
-        const qParams = new URLSearchParams();
-        if (fDesde) qParams.append('fecha_desde', fDesde);
-        if (fHasta) qParams.append('fecha_hasta', fHasta);
-        const qs = qParams.toString() ? `?${qParams.toString()}` : '';
-
-        const [res, resMat] = await Promise.all([
-          fetch(`/api/diagnostico${qs}`, { headers }),
-          fetch(`/api/diagnostico/matriz-semaforos${qs}`, { headers })
-        ]);
-        if (res.ok) {
-          cacheDiagnostico = await res.json();
-        }
-        if (resMat.ok) {
-          cacheMatrizSemaforos = await resMat.json();
-        }
-
-        // Consultar indicadores de Ahorro ROI para el banner en diagnóstico
-        try {
-          const resGraf = await fetch(`/api/diagnostico/graficos${qs}`, { headers });
-          if (resGraf.ok) {
-            const dataGraf = await resGraf.json();
-            if (dataGraf.ahorro_roi || dataGraf.resumen_ahorro_roi) {
-              renderizarBannerAhorroRoi(dataGraf.ahorro_roi || dataGraf.resumen_ahorro_roi);
-            }
-          }
-        } catch (_) {}
-        if (res.ok) {
-          actualizarCombosFiltroDiagnostico();
-          filtrarTablaDiagnostico();
-        } else if (res.status === 401) {
-          if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
-          if (tbodyMat) tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada.</td></tr>';
-        } else {
-          if (tbody) tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar diagnósticos (HTTP ${res.status}). <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
-        }
-      } catch (e) {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión con el servidor. <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
-        if (typeof mostrarToast === 'function') mostrarToast('Error al cargar diagnóstico de flota', true);
-      }
-    }
-
-    function onCambioRangoFechasDiagnostico() {
-      cargarDiagnostico();
-    }
-
-    function actualizarCombosFiltroDiagnostico() {
-      const selCli = getDiagEl('filtro_diag_cliente', 'filtroDiagCliente');
-      const selOp = getDiagEl('filtro_diag_operacion', 'filtroDiagOperacion');
-
-      const clientes = Array.from(new Set(cacheDiagnostico.map(r => r.Cliente ? String(r.Cliente).trim().toUpperCase() : '').filter(Boolean))).sort();
-      const operaciones = Array.from(new Set(cacheDiagnostico.map(r => r.Operación).filter(Boolean))).sort();
-
-      if (selCli) {
-        const valCli = selCli.value || 'Todos';
-        selCli.innerHTML = '<option value="Todos">Todos los Clientes</option>' +
-          clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-        if (clientes.includes(valCli)) selCli.value = valCli;
-      }
-
-      actualizarCombosSedesDiagnostico();
-
-      if (selOp) {
-        const valOp = selOp.value || 'Todos';
-        selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
-          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-        if (operaciones.includes(valOp)) selOp.value = valOp;
-      }
-    }
-
-    function actualizarCombosSedesDiagnostico() {
-      const selCli = getDiagEl('filtro_diag_cliente', 'filtroDiagCliente');
-      const selSede = getDiagEl('filtro_diag_subcliente', 'filtroDiagSede');
-      if (!selSede) return;
-
-      const valCli = selCli ? (selCli.value || 'Todos') : 'Todos';
-      const valCliNorm = valCli.trim().toUpperCase();
-      const valSedeActual = selSede.value || 'Todos';
-
-      const sedes = Array.from(new Set(
-        cacheDiagnostico
-          .filter(r => (valCliNorm === 'TODOS' || String(r.Cliente || '').trim().toUpperCase() === valCliNorm))
-          .map(r => r.Subcliente)
-          .filter(Boolean)
-      )).sort();
-
-      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
-
-      if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
-        selSede.value = valSedeActual;
-      } else {
-        selSede.value = 'Todos';
-      }
-    }
-
-    function onCambioFiltrosDiagnostico() {
-      filtrarTablaDiagnostico();
-    }
-
-    function onCambioFiltroDiagCliente() {
-      actualizarCombosSedesDiagnostico();
-      filtrarTablaDiagnostico();
-    }
-
-    function filtrarDiagnosticoPorCard(tipoAlerta) {
-      const sel = getDiagEl('filtro_diag_accion', 'filtroDiagAlerta');
-      if (sel) {
-        sel.value = tipoAlerta;
-        filtrarTablaDiagnostico();
-      }
-    }
-
-    function cambiarPaginaDiag(nuevaPagina) {
-      const totalPaginas = Math.ceil(cacheFiltradasDiag.length / ITEMS_POR_PAGINA_DIAG) || 1;
-      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
-      paginaActualDiag = nuevaPagina;
-      renderizarTablaDiagnostico();
-      const contTabla = document.getElementById('contenedorTablaDiagnostico');
-      if (contTabla) contTabla.scrollTop = 0;
-    }
-
-    function filtrarTablaDiagnostico() {
-      const cli = getDiagVal('filtro_diag_cliente', 'filtroDiagCliente', 'Todos');
-      const sede = getDiagVal('filtro_diag_subcliente', 'filtroDiagSede', 'Todos');
-      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion', 'Todos');
-      const accion = getDiagVal('filtro_diag_accion', 'filtroDiagAlerta', 'Todos');
-      const busqueda = getDiagVal('filtro_diag_busqueda', 'filtroDiagPlaca', '').trim().toLowerCase();
-
-      // Actualizar botón de Consolidado Flota según el cliente y sede filtrados
-      const btnCons = document.getElementById('btnConsolidadoDiag');
-      const lblCons = document.getElementById('lblConsolidadoDiag');
-      if (lblCons) {
-        if (cli && cli !== 'Todos') {
-          let texto = `Consolidado Flota (${cli}`;
-          if (sede && sede !== 'Todos') {
-            texto += ` - ${sede}`;
-          }
-          texto += `)`;
-          lblCons.textContent = texto;
-          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}${sede && sede !== 'Todos' ? ' · Sede ' + sede : ''}`;
-        } else {
-          lblCons.textContent = 'Consolidado Flota PDF';
-          if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
-        }
-      }
-
-      const cliNorm = String(cli || 'Todos').trim().toUpperCase();
-      const sedeNorm = String(sede || 'Todos').trim().toUpperCase();
-      const opNorm = String(op || 'Todos').trim().toUpperCase();
-
-      // 1. Filtrar por ámbito de flota (Cliente, Sede, Operación y Placa/Búsqueda)
-      const flotaFiltrada = (cacheDiagnostico || []).filter(r => {
-        if (cliNorm !== 'TODOS' && String(r.Cliente || '').trim().toUpperCase() !== cliNorm) return false;
-        if (sedeNorm !== 'TODOS' && String(r.Subcliente || '').trim().toUpperCase() !== sedeNorm) return false;
-        if (opNorm !== 'TODOS' && String(r.Operación || '').trim().toUpperCase() !== opNorm) return false;
-        if (busqueda && !String(r['Vehículo/Placa'] || '').toLowerCase().includes(busqueda)) return false;
-        return true;
-      });
-
-      // 2. Conteo métrico de las 5 tarjetas KPI según el estándar de la Sección 4
-      const kpiVehiculos = new Set(flotaFiltrada.map(r => r['Vehículo/Placa'])).size;
-      const kpiRetiroYA = flotaFiltrada.reduce((acc, r) => acc + (Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0)), 0);
-      const kpiProximas = flotaFiltrada.reduce((acc, r) => acc + (Number(r.Cant_Proximas) || 0), 0);
-      const kpiAlineacionDual = flotaFiltrada.filter(r => 
-        r.Plan_Alineacion === 'SÍ' || 
-        r.Plan_Dual_Mal_Apareado === 'SÍ' || 
-        r.Plan_Rotacion === 'SÍ' || 
-        r.Badge_Rotacion === 'AUTO-AJUSTE'
-      ).length;
-      const kpiPresion = flotaFiltrada.reduce((acc, r) => acc + (Number(r.Cant_Presiones) || (r.Plan_Calibracion_PSI === 'SÍ' ? 1 : 0)), 0);
-
-      // Actualizar valores en el DOM (oficiales y alias)
-      const setCardTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-      setCardTxt('cardDiagTotal', kpiVehiculos);
-      setCardTxt('diag_kpi_vehiculos', kpiVehiculos);
-      setCardTxt('cardDiagCambio', kpiRetiroYA);
-      setCardTxt('diag_kpi_retiro_ya', kpiRetiroYA);
-      setCardTxt('cardDiagProximas', kpiProximas);
-      setCardTxt('diag_kpi_proximas', kpiProximas);
-      setCardTxt('cardDiagAlineacion', kpiAlineacionDual);
-      setCardTxt('diag_kpi_alineacion_dual', kpiAlineacionDual);
-      setCardTxt('cardDiagPresion', kpiPresion);
-      setCardTxt('diag_kpi_presion', kpiPresion);
-
-      // Resaltar tarjeta seleccionada según el filtro de acción
-      const mapCards = {
-        'Todos': 'cardBoxTotal',
-        'Retiro Inmediato': 'cardBoxCambio',
-        'Cambio': 'cardBoxCambio',
-        'Próximas a Cambio': 'cardBoxProximas',
-        'Proximas': 'cardBoxProximas',
-        'Alineación': 'cardBoxAlineacion',
-        'Alineacion': 'cardBoxAlineacion',
-        'Dual': 'cardBoxAlineacion',
-        'Rotaciones': 'cardBoxAlineacion',
-        'Presión': 'cardBoxPresion',
-        'Presion': 'cardBoxPresion'
-      };
-      ['cardBoxTotal', 'cardBoxCambio', 'cardBoxProximas', 'cardBoxAlineacion', 'cardBoxPresion'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
-      });
-      const activeId = mapCards[accion];
-      if (activeId && accion !== 'Todos') {
-        const el = document.getElementById(activeId);
-        if (el) el.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
-      }
-
-      // 3. Filtrar por acción específica (8 opciones oficiales + alias clásicos)
-      const filtradas = flotaFiltrada.filter(r => {
-        const cCambios = Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0);
-        const cProx = Number(r.Cant_Proximas) || 0;
-        const esAlin = r.Plan_Alineacion === 'SÍ';
-        const esDual = r.Plan_Dual_Mal_Apareado === 'SÍ';
-        const esRot = r.Plan_Rotacion === 'SÍ' || r.Badge_Rotacion === 'AUTO-AJUSTE';
-        const cPres = Number(r.Cant_Presiones) || (r.Plan_Calibracion_PSI === 'SÍ' ? 1 : 0);
-
-        if (accion === 'Retiro Inmediato' || accion === 'Cambio') {
-          return cCambios > 0;
-        }
-        if (accion === 'Próximas a Cambio' || accion === 'Proximas') {
-          return cProx > 0;
-        }
-        if (accion === 'Estado OK' || accion === 'OK') {
-          return cCambios === 0 && !esAlin && !esDual && !esRot && cPres === 0;
-        }
-        if (accion === 'Rotaciones') {
-          return esRot;
-        }
-        if (accion === 'Alineación' || accion === 'Alineacion') {
-          return esAlin;
-        }
-        if (accion === 'Dual') {
-          return esDual;
-        }
-        if (accion === 'Presión' || accion === 'Presion') {
-          return cPres > 0;
-        }
-        if (accion === 'Alerta') {
-          return cCambios > 0 || cProx > 0 || esAlin || esDual || esRot || cPres > 0;
-        }
-        return true;
-      });
-
-      // Ordenar de la inspección más reciente a la más antigua (y secundariamente por placa)
-      filtradas.sort((a, b) => {
-        const fechaA = String(a.Fecha || '').trim();
-        const fechaB = String(b.Fecha || '').trim();
-        if (fechaA !== fechaB) {
-          return fechaB.localeCompare(fechaA);
-        }
-        return String(a['Vehículo/Placa'] || '').localeCompare(String(b['Vehículo/Placa'] || ''));
-      });
-
-      // Sincronizar tooltip de exportación de diagnóstico a Excel
-      const btnExp = document.getElementById('btnExportarDiagExcel');
-      const hayFiltros = (cliNorm !== 'TODOS' || sedeNorm !== 'TODOS' || opNorm !== 'TODOS' || (accion && accion !== 'Todos') || Boolean(busqueda));
-      if (btnExp) {
-        btnExp.title = hayFiltros 
-          ? `Exportar reporte Excel aplicando los filtros activos (${filtradas.length} vehículos)` 
-          : `Exportar diagnóstico completo de flota en Excel (${kpiVehiculos} vehículos)`;
-      }
-
-      // Asignar a la caché de diagnóstico filtrado y renderizar página 1
-      cacheFiltradasDiag = filtradas;
-      paginaActualDiag = 1;
-      renderizarTablaDiagnostico();
-
-      // Actualizar automáticamente la Matriz de Semáforos por Posición
-      renderizarMatrizSemaforos(cli, sede, op, busqueda);
-    }
-
-    function renderizarTablaDiagnostico() {
-      const tbody = getDiagEl('tbody_diagnostico_web', 'tbodyDiagnostico');
-      const contenedorPaginacion = document.getElementById('contenedorPaginacionDiag');
-      if (!tbody) return;
-
-      if (!cacheFiltradasDiag || cacheFiltradasDiag.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 font-medium">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
-        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
-        return;
-      }
-
-      // Cálculo de Paginación de 25 registros
-      const totalRegistros = cacheFiltradasDiag.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_DIAG) || 1;
-      if (paginaActualDiag > totalPaginas) paginaActualDiag = totalPaginas;
-      if (paginaActualDiag < 1) paginaActualDiag = 1;
-
-      const inicio = (paginaActualDiag - 1) * ITEMS_POR_PAGINA_DIAG;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_DIAG, totalRegistros);
-      const paginaItems = cacheFiltradasDiag.slice(inicio, fin);
-
-      tbody.innerHTML = paginaItems.map(r => {
-        const cantCambios = Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0);
-        const cantProx = Number(r.Cant_Proximas) || 0;
-        const esAlin = r.Plan_Alineacion === 'SÍ';
-        const esDual = r.Plan_Dual_Mal_Apareado === 'SÍ';
-        const esRotAuto = r.Badge_Rotacion === 'AUTO-AJUSTE';
-        const esRot = r.Plan_Rotacion === 'SÍ';
-
-        const bgRow = cantCambios > 0 ? 'bg-rose-50/50' : (esAlin || esDual || cantProx > 0) ? 'bg-amber-50/40' : '';
-
-        // Bloques de prescripción formateados (Sección 5 Columna 11)
-        let bloquesHtml = '';
-        if (Array.isArray(r.Bloques_Recomendaciones) && r.Bloques_Recomendaciones.length > 0) {
-          bloquesHtml = `<div class="flex flex-col gap-1 max-w-sm whitespace-normal">` +
-            r.Bloques_Recomendaciones.map(b => {
-              let cls = 'bg-slate-50 text-slate-700 border-slate-200';
-              let ico = 'fa-circle-info';
-              if (b.tipo === 'CAMBIO_YA' || b.tipo === 'RETIRO' || b.tipo === 'PAR_DIRECCIONAL') {
-                cls = 'bg-rose-50 text-rose-800 border-rose-200 font-bold';
-                ico = 'fa-triangle-exclamation text-rose-600';
-              } else if (b.tipo === 'PROXIMO' || b.tipo === 'PROXIMA') {
-                cls = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
-                ico = 'fa-clock text-amber-600';
-              } else if (b.tipo === 'ALINEACION') {
-                cls = 'bg-orange-50 text-orange-800 border-orange-200 font-medium';
-                ico = 'fa-arrows-left-right text-orange-600';
-              } else if (b.tipo === 'DUAL') {
-                cls = 'bg-purple-50 text-purple-800 border-purple-200 font-medium';
-                ico = 'fa-scale-unbalanced text-purple-600';
-              } else if (b.tipo === 'AUTO_AJUSTE') {
-                cls = 'bg-indigo-50 text-indigo-800 border-indigo-200 font-bold';
-                ico = 'fa-rotate text-indigo-600';
-              } else if (b.tipo === 'ROTACION' || b.tipo === 'EQUIS_LARGA' || b.tipo === 'ROTACION_IRREGULAR' || b.tipo === 'ROTACION_ESCALONADO') {
-                cls = 'bg-blue-50 text-blue-800 border-blue-200 font-medium';
-                ico = 'fa-arrows-rotate text-blue-600';
-              } else if (b.tipo === 'PRESION') {
-                cls = 'bg-cyan-50 text-cyan-800 border-cyan-200 font-medium';
-                ico = 'fa-gauge text-cyan-600';
-              } else if (b.tipo === 'OK') {
-                cls = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
-                ico = 'fa-check text-emerald-600';
-              }
-              return `<span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded border ${cls} leading-snug">
-                        <i class="fa-solid ${ico} mr-1.5 shrink-0 text-[9px]"></i>
-                        <span>${b.texto}</span>
-                      </span>`;
-            }).join('') +
-          `</div>`;
-        } else {
-          const lineas = [];
-          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${r.Detalle_Cambio}</span>`);
-          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${r.Detalle_Proximas}</span>`);
-          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${r.Detalle_Alineacion}</span>`);
-          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${r.Detalle_Dual}</span>`);
-          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${r.Detalle_Auto_Ajuste}</span>`);
-          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${r.Detalle_Calibracion_PSI}</span>`);
-          if (lineas.length === 0) lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
-          bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
-        }
-
-        return `
-          <tr class="${bgRow} hover:bg-slate-100 transition-colors">
-            <!-- 1. Placa -->
-            <td class="p-2.5 font-black text-slate-900">
-              <div>${r['Vehículo/Placa']}</div>
-              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${r.Fecha}</div>` : ''}
-            </td>
-            <!-- 2. Cliente / Sede -->
-            <td class="p-2.5">
-              <div class="font-bold text-slate-800">${r.Cliente || '-'}</div>
-              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${r.Subcliente}</div>` : ''}
-            </td>
-            <!-- 3. Tipología -->
-            <td class="p-2.5">
-              <div class="font-bold text-slate-700">${r.Tipo || '-'}</div>
-              ${r.Operación ? `<div class="text-[10px] text-slate-400">${r.Operación}</div>` : ''}
-            </td>
-            <!-- 4. Inspeccionadas -->
-            <td class="p-2.5 text-center">
-              <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold font-mono text-xs">
-                ${r['Llantas Inspeccionadas'] || 0}
-              </span>
-            </td>
-            <!-- 5. Límite Retiro -->
-            <td class="p-2.5 text-center font-mono font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
-            <!-- 6. Alineación -->
-            <td class="p-2.5 text-center">
-              ${esAlin 
-                ? '<span class="bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
-                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 7. Dual Parejas -->
-            <td class="p-2.5 text-center">
-              ${esDual 
-                ? '<span class="bg-purple-100 text-purple-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
-                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 8. Cambio YA -->
-            <td class="p-2.5 text-center">
-              ${cantCambios > 0 
-                ? `<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px] animate-pulse">URGENTE (${cantCambios})</span>` 
-                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 9. Próximas -->
-            <td class="p-2.5 text-center">
-              ${cantProx > 0 
-                ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">PRÓXIMO (${cantProx})</span>` 
-                : '<span class="text-slate-400 font-mono text-[11px]">0</span>'}
-            </td>
-            <!-- 10. Rotación -->
-            <td class="p-2.5 text-center">
-              ${esRotAuto 
-                ? '<span class="bg-indigo-100 text-indigo-800 font-black px-2 py-0.5 rounded-full text-[10px]">AUTO-AJUSTE</span>' 
-                : esRot 
-                  ? '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
-                  : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 11. Detalles & Recomendaciones -->
-            <td class="p-2.5">${bloquesHtml}</td>
-            <!-- 12. Plan PDF -->
-            <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}', '${r.Cliente || ''}', '${r.Tipo || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
-                <i class="fa-solid fa-file-pdf mr-1"></i>PDF
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin);
-    }
-
-    function actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin) {
-      const contenedor = document.getElementById('contenedorPaginacionDiag');
-      const spanInicio = document.getElementById('pagInicioDiag');
-      const spanFin = document.getElementById('pagFinDiag');
-      const spanTotal = document.getElementById('pagTotalDiag');
-      const controles = document.getElementById('controlesPaginacionDiag');
-
-      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
-
-      if (totalRegistros === 0) {
-        contenedor.classList.add('hidden');
-        return;
-      }
-      contenedor.classList.remove('hidden');
-
-      spanInicio.textContent = (inicio + 1).toLocaleString();
-      spanFin.textContent = fin.toLocaleString();
-      spanTotal.textContent = totalRegistros.toLocaleString();
-
-      let html = '';
-
-      // Botón Primero
-      const deshabilitarPrimero = paginaActualDiag <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaDiag(1)" ${deshabilitarPrimero ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Primera página">
-          <i class="fa-solid fa-angles-left text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Anterior
-      const deshabilitarAnt = paginaActualDiag <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag - 1})" ${deshabilitarAnt ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página anterior">
-          <i class="fa-solid fa-chevron-left text-[11px]"></i>
-          <span class="hidden sm:inline">Ant</span>
-        </button>
-      `;
-
-      // Botones numéricos de página
-      const paginas = [];
-      if (totalPaginas <= 7) {
-        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-      } else {
-        paginas.push(1);
-        let start = Math.max(2, paginaActualDiag - 1);
-        let end = Math.min(totalPaginas - 1, paginaActualDiag + 1);
-
-        if (paginaActualDiag <= 3) {
-          end = 4;
-        } else if (paginaActualDiag >= totalPaginas - 2) {
-          start = totalPaginas - 3;
-        }
-
-        if (start > 2) paginas.push('...');
-        for (let i = start; i <= end; i++) paginas.push(i);
-        if (end < totalPaginas - 1) paginas.push('...');
-        paginas.push(totalPaginas);
-      }
-
-      paginas.forEach(p => {
-        if (p === '...') {
-          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
-        } else if (p === paginaActualDiag) {
-          html += `
-            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
-              ${p}
-            </button>
-          `;
-        } else {
-          html += `
-            <button type="button" onclick="cambiarPaginaDiag(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
-              ${p}
-            </button>
-          `;
-        }
-      });
-
-      // Botón Siguiente
-      const deshabilitarSig = paginaActualDiag >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag + 1})" ${deshabilitarSig ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página siguiente">
-          <span class="hidden sm:inline">Sig</span>
-          <i class="fa-solid fa-chevron-right text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Último
-      const deshabilitarUltimo = paginaActualDiag >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaDiag(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Última página">
-          <i class="fa-solid fa-angles-right text-[11px]"></i>
-        </button>
-      `;
-
-      controles.innerHTML = html;
-    }
-
-    let paginaActualMatriz = 1;
-    const ITEMS_POR_PAGINA_MATRIZ = 25;
-    let cacheFiltradasMatriz = [];
-
-    function renderizarMatrizSemaforos(cli, sede, op, placa) {
-      const thead = getDiagEl('thead_semaforo_matriz_flota', 'theadMatrizSemaforos');
-      const tbody = getDiagEl('tbody_semaforo_matriz_flota', 'tbodyMatrizSemaforos');
-      const tfoot = getDiagEl('tfoot_semaforo_matriz_flota', 'tfootMatrizSemaforos');
-      const contenedorPaginacion = document.getElementById('contenedorPaginacionMatriz');
-      if (!tbody) return;
-
-      // Obtener filas de matriz: sincronizadas desde cacheFiltradasDiag si tiene Llantas_Posiciones, o fallback a cacheMatrizSemaforos
-      let filasFiltradas = [];
-      const posiciones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-      if (cacheFiltradasDiag && cacheFiltradasDiag.length > 0 && cacheFiltradasDiag[0].Llantas_Posiciones) {
-        filasFiltradas = cacheFiltradasDiag.map(r => {
-          const mapPos = {};
-          if (Array.isArray(r.Llantas_Posiciones)) {
-            r.Llantas_Posiciones.forEach(lp => {
-              const semNorm = String(lp.semaforo || '').trim().toLowerCase();
-              const col = semNorm === 'verde' ? 'verde' : semNorm === 'amarillo' ? 'amarillo' : semNorm === 'rojo' ? 'rojo' : 'gris';
-              mapPos[lp.posicion] = {
-                color: col,
-                pb: lp.prof_min !== undefined ? lp.prof_min : 0.0,
-                numero_interno: lp.numero_interno || '',
-                psi: lp.psi,
-                dimension: lp.dimension,
-                eje: lp.posicion <= 2 ? 'Direccional' : 'Tracción/Arrastre',
-                limite: r.Limite_Retiro_mm || 3.0
-              };
-            });
-          } else if (typeof r.Llantas_Posiciones === 'object') {
-            Object.assign(mapPos, r.Llantas_Posiciones);
-          }
-          return {
-            placa: r['Vehículo/Placa'],
-            cliente: r.Cliente,
-            subcliente: r.Subcliente,
-            tipologia: r.Tipo,
-            limite: r.Limite_Retiro_mm || 3.0,
-            posiciones: mapPos
-          };
-        });
-      } else if (cacheMatrizSemaforos && cacheMatrizSemaforos.filas) {
-        const cliNorm = String(cli || 'Todos').trim().toUpperCase();
-        const sedeNorm = String(sede || 'Todos').trim().toUpperCase();
-        const opNorm = String(op || 'Todos').trim().toUpperCase();
-        const placaNorm = String(placa || '').trim().toLowerCase();
-
-        filasFiltradas = cacheMatrizSemaforos.filas.filter(r => {
-          if (cliNorm !== 'TODOS' && String(r.cliente || '').trim().toUpperCase() !== cliNorm) return false;
-          if (sedeNorm !== 'TODOS' && String(r.subcliente || '').trim().toUpperCase() !== sedeNorm) return false;
-          if (opNorm !== 'TODOS' && String(r.tipo_operacion || '').trim().toUpperCase() !== opNorm) return false;
-          if (placaNorm && !String(r.placa || '').toLowerCase().includes(placaNorm)) return false;
-          return true;
-        });
-      }
-
-      cacheFiltradasMatriz = filasFiltradas;
-
-      // Encabezado estándar de la matriz de semáforos
-      if (thead) {
-        thead.innerHTML = `
-          <tr>
-            <th class="p-2.5 text-left font-bold sticky left-0 z-30 bg-slate-900 min-w-[95px] shadow-sm">Placa</th>
-            <th class="p-2.5 text-left font-bold min-w-[130px]">Cliente / Sede</th>
-            <th class="p-2.5 text-left font-bold min-w-[110px]">Tipología</th>
-            <th class="p-2.5 text-center font-bold min-w-[75px]">Límite</th>
-            ${posiciones.map(p => `<th class="p-2 text-center font-black min-w-[55px] border-l border-slate-800" title="Posición ${p}">P${p}</th>`).join('')}
-            <th class="p-2.5 text-center font-bold min-w-[95px] border-l border-slate-800">🔴/🟡/🟢</th>
-          </tr>
-        `;
-      }
-
-      if (filasFiltradas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="17" class="p-8 text-center text-slate-400 font-medium">No se encontraron vehículos que coincidan con los filtros aplicados.</td></tr>`;
-        if (tfoot) tfoot.innerHTML = '';
-        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
-        return;
-      }
-
-      // Cálculos globales sobre TODAS las filas filtradas
-      const posTotales = {};
-      posiciones.forEach(p => {
-        posTotales[p] = { rojo: 0, amarillo: 0, verde: 0, gris: 0, total: 0 };
-      });
-      const globalTot = { rojo: 0, amarillo: 0, verde: 0, gris: 0 };
-
-      filasFiltradas.forEach(r => {
-        posiciones.forEach(p => {
-          const cel = r.posiciones ? (r.posiciones[p] || r.posiciones[String(p)]) : null;
-          if (cel) {
-            const col = cel.color;
-            if (col === 'rojo') { posTotales[p].rojo++; globalTot.rojo++; }
-            else if (col === 'amarillo') { posTotales[p].amarillo++; globalTot.amarillo++; }
-            else if (col === 'verde') { posTotales[p].verde++; globalTot.verde++; }
-            else { posTotales[p].gris++; globalTot.gris++; }
-            posTotales[p].total++;
-          }
-        });
-      });
-
-      // Paginación de 25 vehículos por página
-      const totalRegistros = filasFiltradas.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MATRIZ) || 1;
-      if (paginaActualMatriz > totalPaginas) paginaActualMatriz = totalPaginas;
-      if (paginaActualMatriz < 1) paginaActualMatriz = 1;
-
-      const inicio = (paginaActualMatriz - 1) * ITEMS_POR_PAGINA_MATRIZ;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_MATRIZ, totalRegistros);
-      const paginaItems = filasFiltradas.slice(inicio, fin);
-
-      tbody.innerHTML = paginaItems.map(r => {
-        let cRojo = 0, cAmar = 0, cVerde = 0;
-        const celdasPos = posiciones.map(p => {
-          const cel = r.posiciones ? (r.posiciones[p] || r.posiciones[String(p)]) : null;
-          if (!cel) {
-            return '<td class="p-1.5 text-center text-slate-300 font-mono border-l border-slate-100">-</td>';
-          }
-          const pb = cel.pb !== undefined ? cel.pb : (cel.p_min !== undefined ? cel.p_min : 0.0);
-          const col = cel.color;
-          if (col === 'rojo') cRojo++;
-          else if (col === 'amarillo') cAmar++;
-          else if (col === 'verde') cVerde++;
-
-          let badgeClass = '';
-          let dotColor = '';
-          if (col === 'rojo') {
-            badgeClass = 'bg-rose-100 text-rose-800 border-rose-300 font-black';
-            dotColor = 'bg-rose-600 animate-pulse';
-          } else if (col === 'amarillo') {
-            badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
-            dotColor = 'bg-amber-500';
-          } else if (col === 'verde') {
-            badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
-            dotColor = 'bg-emerald-500';
-          } else {
-            badgeClass = 'bg-slate-100 text-slate-500 border-slate-200 font-medium';
-            dotColor = 'bg-slate-400';
-          }
-
-          const valTxt = pb > 0 ? pb.toFixed(1) : '0.0';
-          const numInterno = cel.numero_interno || cel.serie || '';
-          const lim = cel.limite !== undefined ? cel.limite : (r.limite || 3.0);
-          const tooltip = `Pos P${p} (${cel.eje || 'Eje'}) | PB: ${valTxt} mm | Límite: ${lim} mm | ${cel.estado || ''} ${cel.accion ? '- ' + cel.accion : ''} ${cel.marca ? '| ' + cel.marca : ''} ${numInterno ? '| #' + numInterno : ''} ${cel.psi ? '| ' + cel.psi + ' PSI' : ''}`.trim();
-
-          return `
-            <td class="p-1 text-center border-l border-slate-100" title="${tooltip}">
-              <div class="inline-flex flex-col items-center justify-center">
-                <span class="inline-flex items-center justify-center space-x-1 px-1.5 py-0.5 rounded-md border text-[11px] font-mono ${badgeClass} cursor-help shadow-2xs">
-                  <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
-                  <span>${valTxt}</span>
-                </span>
-                ${numInterno ? `<span class="text-[9px] text-slate-400 font-mono truncate max-w-[50px] leading-tight" title="Serial/Interno: ${numInterno}">#${numInterno}</span>` : ''}
-              </div>
-            </td>
-          `;
-        }).join('');
-
-        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
-        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
-        const limTxt = (r.limite ? Number(r.limite).toFixed(1) : '3.0') + ' mm';
-
-        return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${r.placa}</td>
-            <td class="p-2.5 text-left font-bold text-slate-700">${r.cliente || '-'}${subClienteTxt}</td>
-            <td class="p-2.5 text-left text-slate-600 text-[11px]">${tipoTxt}</td>
-            <td class="p-2 text-center font-mono font-bold text-slate-600">${limTxt}</td>
-            ${celdasPos}
-            <td class="p-2 text-center border-l border-slate-100 font-mono text-xs whitespace-nowrap">
-              <span class="text-rose-700 font-black">${cRojo}</span> /
-              <span class="text-amber-700 font-bold">${cAmar}</span> /
-              <span class="text-emerald-700 font-bold">${cVerde}</span>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      if (tfoot) {
-        tfoot.innerHTML = `
-          <tr class="bg-slate-100 text-slate-800 border-t-2 border-slate-300">
-            <td class="p-2.5 text-left font-black sticky left-0 z-10 bg-slate-100 shadow-2xs">TOTALES FLOTA</td>
-            <td class="p-2.5 text-left text-[11px] text-slate-500 font-bold">${filasFiltradas.length} Vehículos</td>
-            <td class="p-2.5 text-left text-[10px] text-slate-500 font-bold">🔴/🟡/🟢</td>
-            <td class="p-2 text-center text-slate-400 font-mono">-</td>
-            ${posiciones.map(p => {
-              const t = posTotales[p];
-              return `
-                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos P${p}: ${t.rojo} Retiro Urgente, ${t.amarillo} Próxima a Cambio, ${t.verde} Óptima">
-                  <span class="text-rose-700 font-black">${t.rojo}</span>/<span class="text-amber-700 font-bold">${t.amarillo}</span>/<span class="text-emerald-700 font-bold">${t.verde}</span>
-                </td>
-              `;
-            }).join('')}
-            <td class="p-2 text-center border-l border-slate-200 font-mono font-black text-xs whitespace-nowrap">
-              <span class="text-rose-700">${globalTot.rojo}</span> /
-              <span class="text-amber-700">${globalTot.amarillo}</span> /
-              <span class="text-emerald-700">${globalTot.verde}</span>
-            </td>
-          </tr>
-        `;
-      }
-
-      actualizarBarraPaginacionMatriz(totalRegistros, inicio, fin);
-    }
-
-    function cambiarPaginaMatriz(nuevaPagina) {
-      const totalRegistros = cacheFiltradasMatriz ? cacheFiltradasMatriz.length : 0;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MATRIZ) || 1;
-      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
-      paginaActualMatriz = nuevaPagina;
-      
-      const cli = getDiagVal('filtro_diag_cliente', 'filtroDiagCliente');
-      const sede = getDiagVal('filtro_diag_subcliente', 'filtroDiagSede');
-      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion');
-      const placa = getDiagVal('filtro_diag_busqueda', 'filtroDiagPlaca');
-      renderizarMatrizSemaforos(cli, sede, op, placa);
-
-      const contTabla = document.querySelector('#contenedorMatrizSemaforosFlota');
-      if (contTabla) contTabla.scrollTop = 0;
-    }
-
-    function actualizarBarraPaginacionMatriz(totalRegistros, inicio, fin) {
-      const contenedor = document.getElementById('contenedorPaginacionMatriz');
-      const lblInicio = document.getElementById('pagInicioMatriz');
-      const lblFin = document.getElementById('pagFinMatriz');
-      const lblTotal = document.getElementById('pagTotalMatriz');
-      const controles = document.getElementById('controlesPaginacionMatriz');
-
-      if (!contenedor || !controles) return;
-      if (totalRegistros === 0) {
-        contenedor.classList.add('hidden');
-        return;
-      }
-
-      contenedor.classList.remove('hidden');
-      if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
-      if (lblFin) lblFin.textContent = fin.toLocaleString();
-      if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
-
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MATRIZ) || 1;
-
-      let html = '';
-
-      // Botón Primero
-      const deshabilitarPrimero = paginaActualMatriz <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaMatriz(1)" ${deshabilitarPrimero ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Primera página">
-          <i class="fa-solid fa-angles-left text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Anterior
-      const deshabilitarAnt = paginaActualMatriz <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaMatriz(${paginaActualMatriz - 1})" ${deshabilitarAnt ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página anterior">
-          <i class="fa-solid fa-chevron-left text-[11px]"></i>
-          <span class="hidden sm:inline">Ant</span>
-        </button>
-      `;
-
-      // Botones numéricos de página
-      const paginas = [];
-      if (totalPaginas <= 7) {
-        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-      } else {
-        paginas.push(1);
-        let start = Math.max(2, paginaActualMatriz - 1);
-        let end = Math.min(totalPaginas - 1, paginaActualMatriz + 1);
-
-        if (paginaActualMatriz <= 3) {
-          end = 4;
-        } else if (paginaActualMatriz >= totalPaginas - 2) {
-          start = totalPaginas - 3;
-        }
-
-        if (start > 2) paginas.push('...');
-        for (let i = start; i <= end; i++) paginas.push(i);
-        if (end < totalPaginas - 1) paginas.push('...');
-        paginas.push(totalPaginas);
-      }
-
-      paginas.forEach(p => {
-        if (p === '...') {
-          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
-        } else if (p === paginaActualMatriz) {
-          html += `
-            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
-              ${p}
-            </button>
-          `;
-        } else {
-          html += `
-            <button type="button" onclick="cambiarPaginaMatriz(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
-              ${p}
-            </button>
-          `;
-        }
-      });
-
-      // Botón Siguiente
-      const deshabilitarSig = paginaActualMatriz >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaMatriz(${paginaActualMatriz + 1})" ${deshabilitarSig ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página siguiente">
-          <span class="hidden sm:inline">Sig</span>
-          <i class="fa-solid fa-chevron-right text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Último
-      const deshabilitarUltimo = paginaActualMatriz >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaMatriz(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Última página">
-          <i class="fa-solid fa-angles-right text-[11px]"></i>
-        </button>
-      `;
-
-      controles.innerHTML = html;
-    }
-
-    function limpiarFiltrosDiagnostico() {
-      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-      setVal('filtro_diag_cliente', 'Todos');
-      setVal('filtroDiagCliente', 'Todos');
-      actualizarCombosSedesDiagnostico();
-      setVal('filtro_diag_subcliente', 'Todos');
-      setVal('filtroDiagSede', 'Todos');
-      setVal('filtro_diag_operacion', 'Todos');
-      setVal('filtroDiagOperacion', 'Todos');
-      setVal('filtro_diag_fecha_desde', '');
-      setVal('filtroDiagFechaDesde', '');
-      setVal('filtro_diag_fecha_hasta', '');
-      setVal('filtroDiagFechaHasta', '');
-      setVal('filtro_diag_accion', 'Todos');
-      setVal('filtroDiagAlerta', 'Todos');
-      setVal('filtro_diag_busqueda', '');
-      setVal('filtroDiagPlaca', '');
-      cargarDiagnostico();
-      if (typeof mostrarToast === 'function') mostrarToast('Filtros de diagnóstico restablecidos.');
-    }
-
-    function exportarDiagnosticoExcel() {
-      const cli = getDiagVal('filtro_diag_cliente', 'filtroDiagCliente', 'Todos');
-      const sede = getDiagVal('filtro_diag_subcliente', 'filtroDiagSede', 'Todos');
-      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion', 'Todos');
-      const accion = getDiagVal('filtro_diag_accion', 'filtroDiagAlerta', 'Todos');
-      const busqueda = getDiagVal('filtro_diag_busqueda', 'filtroDiagPlaca', '').trim();
-      const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde', '').trim();
-      const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta', '').trim();
-
-      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-
-      const params = new URLSearchParams();
-      if (tok) params.append('token', tok);
-      if (cli && cli !== 'Todos') params.append('cliente', cli);
-      if (sede && sede !== 'Todos') params.append('subcliente', sede);
-      if (op && op !== 'Todos') params.append('tipo_operacion', op);
-      if (accion && accion !== 'Todos') params.append('alerta', accion);
-      if (busqueda) params.append('placa', busqueda);
-      if (fDesde) params.append('fecha_desde', fDesde);
-      if (fHasta) params.append('fecha_hasta', fHasta);
-
-      const btn = document.getElementById('btnExportarDiagExcel');
-      const lbl = document.getElementById('lblExportarDiagExcel');
-      const origText = lbl ? lbl.innerHTML : 'Exportar Diagnóstico';
-
-      if (lbl) {
-        lbl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i>Generando...`;
-      }
-      if (btn) btn.disabled = true;
-
-      const descFiltro = (cli !== 'Todos' || sede !== 'Todos' || op !== 'Todos' || accion !== 'Todos' || busqueda || fDesde || fHasta)
-        ? 'con los filtros seleccionados'
-        : 'de toda la flota';
-
-      if (typeof mostrarToast === 'function') {
-        mostrarToast(`Generando archivo Excel ${descFiltro}...`, 'info');
-      }
-
-      window.location.href = `/api/diagnostico/exportar-excel?${params.toString()}`;
-
-      setTimeout(() => {
-        if (lbl) lbl.innerHTML = origText;
-        if (btn) btn.disabled = false;
-      }, 3000);
-    }
-
-    // ==========================================
-    // VISTA 4: TRAZABILIDAD & KPIS DE LLANTAS
-    // ==========================================
-    let kpisFiltrosPoblados = false;
-    let paginaActualKpis = 1;
-    const ITEMS_POR_PAGINA_KPIS = 25;
-
-    async function cargarKpis() {
-      const tbody = document.getElementById('tbodyKpis');
-      if (tbody && (!cacheKpis || cacheKpis.length === 0)) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="20" class="p-8 text-center text-slate-500 font-bold text-xs">
-              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 mr-2 text-sm"></i>
-              Cargando métricas de trazabilidad y KPIs...
-            </td>
-          </tr>
-        `;
-      }
-
-      const qNum = (document.getElementById('filtroKpiNumero')?.value || '').trim();
-      const cli = document.getElementById('filtroKpiCliente')?.value || '';
-      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
-      const op = document.getElementById('filtroKpiOperacion')?.value || '';
-      const marca = document.getElementById('filtroKpiMarca')?.value || '';
-
-      const params = new URLSearchParams();
-      if (qNum) params.append('numero_interno', qNum);
-      if (cli && cli !== 'TODOS') params.append('cliente', cli);
-      if (sub && sub !== 'TODOS') params.append('subcliente', sub);
-      if (op && op !== 'TODOS') params.append('tipo_operacion', op);
-      if (marca && marca !== 'TODOS') params.append('marca', marca);
-
-      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-      try {
-        const res = await fetch(`/api/kpis-llantas?${params.toString()}`, { headers });
-        if (res.ok) {
-          cacheKpis = await res.json();
-          poblarSelectoresFiltroKpis(cacheKpis);
-          renderizarTablaKpis();
-        } else if (res.status === 401) {
-          if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no válida o expirada. Por favor inicia sesión nuevamente.</td></tr>`;
-          }
-        } else {
-          if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar métricas (${res.status}). <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
-          }
-        }
-      } catch (e) {
-        console.error('Error en cargarKpis:', e);
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-wifi mr-2"></i>Error al procesar métricas de KPIs. <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
-        }
-        mostrarToast('Error al cargar métricas de KPIs: ' + (e.message || ''), true);
-      }
-    }
-
-    function poblarSelectoresFiltroKpis(data) {
-      const selCli = document.getElementById('filtroKpiCliente');
-      const selSub = document.getElementById('filtroKpiSubcliente');
-      const selOp = document.getElementById('filtroKpiOperacion');
-      const selMar = document.getElementById('filtroKpiMarca');
-
-      const valCliActual = selCli ? (selCli.value || 'TODOS') : 'TODOS';
-      const valSubActual = selSub ? (selSub.value || 'TODOS') : 'TODOS';
-      const valOpActual = selOp ? (selOp.value || 'TODOS') : 'TODOS';
-      const valMarActual = selMar ? (selMar.value || 'TODOS') : 'TODOS';
-
-      // Detectar clientes asignados del usuario si es inspector
-      let clisAsignados = [];
-      if (usuarioActual && !esUsuarioAdmin()) {
-        if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
-          clisAsignados = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
-        } else if (usuarioActual.cliente_asignado) {
-          clisAsignados = usuarioActual.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
-        }
-      }
-
-      // Clientes disponibles
-      let clientes = [];
-      if (data && data.length > 0) {
-        clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
-      }
-      if (clisAsignados.length > 0) {
-        clisAsignados.forEach(c => {
-          if (!clientes.some(x => x.toLowerCase() === c.toLowerCase())) clientes.push(c);
-        });
-        clientes.sort();
-      }
-
-      if (selCli) {
-        if (clisAsignados.length === 1) {
-          const unico = clisAsignados[0];
-          selCli.innerHTML = `<option value="${unico}" selected>${unico} (Fijo)</option>`;
-          selCli.disabled = true;
-          selCli.classList.add('bg-slate-100', 'cursor-not-allowed');
-        } else {
-          selCli.disabled = false;
-          selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
-          const lblTodos = clisAsignados.length > 1 ? 'Todas Mis Flotas Asignadas' : 'Todos los Clientes';
-          selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
-            clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-          if (valCliActual && clientes.includes(valCliActual)) {
-            selCli.value = valCliActual;
-          } else {
-            selCli.value = 'TODOS';
-          }
-        }
-      }
-
-      // Subclientes / Sedes disponibles (filtrados por cliente si está seleccionado)
-      const cliFiltro = selCli ? selCli.value : 'TODOS';
-      const dataSedes = (cliFiltro && cliFiltro !== 'TODOS')
-        ? (data || []).filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
-        : (data || []);
-      const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
-      if (selSub) {
-        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
-          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
-        if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
-        else selSub.value = 'TODOS';
-      }
-
-      // Operaciones
-      const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
-      if (selOp) {
-        selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' +
-          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-        if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
-        else selOp.value = 'TODOS';
-      }
-
-      // Marcas
-      const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
-      if (selMar) {
-        selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
-        if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
-        else selMar.value = 'TODOS';
-      }
-
-      kpisFiltrosPoblados = true;
-    }
-
-    function renderizarTablaKpis() {
-      const tbody = document.getElementById('tbodyKpis');
-      const contenedorPaginacion = document.getElementById('contenedorPaginacionKpis');
-      const data = cacheKpis;
-
-      const elTotal = document.getElementById('cardKpiTotal');
-      const elKm = document.getElementById('cardKpiKmProm');
-      const elCpk = document.getElementById('cardKpiCpkProm');
-      const elProy = document.getElementById('cardKpiProyProm');
-
-      if (!data || data.length === 0) {
-        if (elTotal) elTotal.textContent = '0';
-        if (elKm) elKm.textContent = '0.0';
-        if (elCpk) elCpk.textContent = '$0.0000';
-        if (elProy) elProy.textContent = '0 km';
-        if (tbody) tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-slate-400">No hay datos de rendimiento coincidentes con los filtros.</td></tr>`;
-        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
-        return;
-      }
-
-      // Cálculo de promedios para tarjetas sobre el TOTAL de datos
-      const km_mms = data.map(d => d.km_por_mm).filter(v => v > 0);
-      const cpks = data.map(d => d.cpk).filter(v => v > 0);
-      const proys = data.map(d => d.proyeccion_total_km).filter(v => v > 0);
-
-      const prom_km_mm = km_mms.length ? (km_mms.reduce((a, b) => a + b, 0) / km_mms.length) : 0;
-      const prom_cpk = cpks.length ? (cpks.reduce((a, b) => a + b, 0) / cpks.length) : 0;
-      const prom_proy = proys.length ? (proys.reduce((a, b) => a + b, 0) / proys.length) : 0;
-
-      if (elTotal) elTotal.textContent = data.length.toLocaleString();
-      if (elKm) elKm.textContent = prom_km_mm.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
-      if (elCpk) elCpk.textContent = `$${prom_cpk.toFixed(4)}`;
-      if (elProy) elProy.textContent = `${Math.round(prom_proy).toLocaleString()} km`;
-
-      // Paginación estricta de 25 registros por página
-      const totalRegistros = data.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_KPIS) || 1;
-      if (paginaActualKpis > totalPaginas) paginaActualKpis = totalPaginas;
-      if (paginaActualKpis < 1) paginaActualKpis = 1;
-
-      const inicio = (paginaActualKpis - 1) * ITEMS_POR_PAGINA_KPIS;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_KPIS, totalRegistros);
-      const paginaItems = data.slice(inicio, fin);
-
-      tbody.innerHTML = paginaItems.map(d => `
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-black text-slate-900">${d.numero_interno || '-'}</td>
-          <td class="p-2.5 font-bold text-blue-700">${d.placa || '-'}</td>
-          <td class="p-2.5 text-center font-bold">${d.posicion}</td>
-          <td class="p-2.5">${d.marca} ${d.diseno}</td>
-          <td class="p-2.5">${d.dimension || '-'}</td>
-          <td class="p-2.5">${d.vida || '-'}</td>
-          <td class="p-2.5">${d.banda_reen || '-'}</td>
-          <td class="p-2.5 text-center font-mono">${d.prof_inicial} mm</td>
-          <td class="p-2.5 text-center font-mono font-bold">${d.prof_actual_min} mm</td>
-          <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
-          <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
-          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm} mm</td>
-          <td class="p-2.5 text-center font-mono">${(d.porcentaje_desgaste || 0).toFixed(1)}%</td>
-          <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
-          <td class="p-2.5 text-right font-mono">$${(d.precio || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$${(d.cpk || 0).toFixed(4)}</td>
-          <td class="p-2.5 text-right font-mono">${Math.round(d.proyeccion_total_km || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono">$${(d.cpk_proyectado || 0).toFixed(4)}</td>
-          <td class="p-2.5 text-right font-mono font-black text-purple-700">${Math.round(d.km_restantes || 0).toLocaleString()} km</td>
-        </tr>
-      `).join('');
-
-      actualizarBarraPaginacionKpis(totalRegistros, inicio, fin);
-    }
-
-    function cambiarPaginaKpis(nuevaPagina) {
-      const totalRegistros = cacheKpis ? cacheKpis.length : 0;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_KPIS) || 1;
-      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
-      paginaActualKpis = nuevaPagina;
-      renderizarTablaKpis();
-      const contTabla = document.querySelector('#vista-kpis .overflow-x-auto');
-      if (contTabla) contTabla.scrollTop = 0;
-    }
-
-    function actualizarBarraPaginacionKpis(totalRegistros, inicio, fin) {
-      const contenedor = document.getElementById('contenedorPaginacionKpis');
-      const lblInicio = document.getElementById('pagInicioKpis');
-      const lblFin = document.getElementById('pagFinKpis');
-      const lblTotal = document.getElementById('pagTotalKpis');
-      const controles = document.getElementById('controlesPaginacionKpis');
-
-      if (!contenedor || !controles) return;
-      if (totalRegistros === 0) {
-        contenedor.classList.add('hidden');
-        return;
-      }
-
-      contenedor.classList.remove('hidden');
-      if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
-      if (lblFin) lblFin.textContent = fin.toLocaleString();
-      if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
-
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_KPIS) || 1;
-
-      let html = '';
-
-      // Botón Primero
-      const deshabilitarPrimero = paginaActualKpis <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaKpis(1)" ${deshabilitarPrimero ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Primera página">
-          <i class="fa-solid fa-angles-left text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Anterior
-      const deshabilitarAnt = paginaActualKpis <= 1;
-      html += `
-        <button type="button" onclick="cambiarPaginaKpis(${paginaActualKpis - 1})" ${deshabilitarAnt ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página anterior">
-          <i class="fa-solid fa-chevron-left text-[11px]"></i>
-          <span class="hidden sm:inline">Ant</span>
-        </button>
-      `;
-
-      // Botones numéricos de página
-      const paginas = [];
-      if (totalPaginas <= 7) {
-        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
-      } else {
-        paginas.push(1);
-        let start = Math.max(2, paginaActualKpis - 1);
-        let end = Math.min(totalPaginas - 1, paginaActualKpis + 1);
-
-        if (paginaActualKpis <= 3) {
-          end = 4;
-        } else if (paginaActualKpis >= totalPaginas - 2) {
-          start = totalPaginas - 3;
-        }
-
-        if (start > 2) paginas.push('...');
-        for (let i = start; i <= end; i++) paginas.push(i);
-        if (end < totalPaginas - 1) paginas.push('...');
-        paginas.push(totalPaginas);
-      }
-
-      paginas.forEach(p => {
-        if (p === '...') {
-          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
-        } else if (p === paginaActualKpis) {
-          html += `
-            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
-              ${p}
-            </button>
-          `;
-        } else {
-          html += `
-            <button type="button" onclick="cambiarPaginaKpis(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
-              ${p}
-            </button>
-          `;
-        }
-      });
-
-      // Botón Siguiente
-      const deshabilitarSig = paginaActualKpis >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaKpis(${paginaActualKpis + 1})" ${deshabilitarSig ? 'disabled' : ''}
-          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
-            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Página siguiente">
-          <span class="hidden sm:inline">Sig</span>
-          <i class="fa-solid fa-chevron-right text-[11px]"></i>
-        </button>
-      `;
-
-      // Botón Último
-      const deshabilitarUltimo = paginaActualKpis >= totalPaginas;
-      html += `
-        <button type="button" onclick="cambiarPaginaKpis(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
-          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
-          }" title="Última página">
-          <i class="fa-solid fa-angles-right text-[11px]"></i>
-        </button>
-      `;
-
-      controles.innerHTML = html;
-    }
-
-    function alCambiarFiltroKpiCliente() {
-      const selCli = document.getElementById('filtroKpiCliente');
-      const selSub = document.getElementById('filtroKpiSubcliente');
-      const cliFiltro = selCli ? selCli.value : 'TODOS';
-      if (selSub && cacheKpis && cacheKpis.length > 0) {
-        const dataSedes = (cliFiltro && cliFiltro !== 'TODOS')
-          ? cacheKpis.filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
-          : cacheKpis;
-        const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
-        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
-          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
-        selSub.value = 'TODOS';
-      }
-      cargarSuite20Kpis();
-      cargarKpis();
-    }
-
-    function limpiarFiltrosKpis() {
-      const elNum = document.getElementById('filtroKpiNumero');
-      if (elNum) elNum.value = '';
-      const selCli = document.getElementById('filtroKpiCliente');
-      if (selCli && !selCli.disabled) {
-        selCli.value = 'TODOS';
-      }
-      const selSub = document.getElementById('filtroKpiSubcliente');
-      if (selSub) selSub.value = 'TODOS';
-      const selOp = document.getElementById('filtroKpiOperacion');
-      if (selOp) selOp.value = 'TODOS';
-      const selTip = document.getElementById('filtroKpiTipologia');
-      if (selTip) selTip.value = 'TODOS';
-      const selMar = document.getElementById('filtroKpiMarca');
-      if (selMar) selMar.value = 'TODOS';
-      const selDim = document.getElementById('filtroKpiDimension');
-      if (selDim) selDim.value = 'TODOS';
-      const selEje = document.getElementById('filtroKpiEjeTemporal');
-      if (selEje) selEje.value = 'mes';
-
-      cargarSuite20Kpis();
-      cargarKpis();
-    }
-
-    function exportarKpisExcel() {
-      const qNum = (document.getElementById('filtroKpiNumero')?.value || '').trim();
-      const cli = document.getElementById('filtroKpiCliente')?.value || '';
-      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
-      const op = document.getElementById('filtroKpiOperacion')?.value || '';
-      const marca = document.getElementById('filtroKpiMarca')?.value || '';
-
-      const params = new URLSearchParams();
-      if (qNum) params.append('numero_interno', qNum);
-      if (cli && cli !== 'TODOS') params.append('cliente', cli);
-      if (sub && sub !== 'TODOS') params.append('subcliente', sub);
-      if (op && op !== 'TODOS') params.append('tipo_operacion', op);
-      if (marca && marca !== 'TODOS') params.append('marca', marca);
-
-      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      if (tok) params.append('token', tok);
-
-      window.location.href = `/api/kpis-llantas/exportar-excel?${params.toString()}`;
-    }
-
-    // =========================================================================
-    // VISTA: COMPOSICIÓN & CARACTERIZACIÓN DE FLOTA (v3.5 ENTERPRISE) - SCRIPTS
-    // =========================================================================
-    let cacheComposicionLlantas = [];
-    let chartsComposicion = { vida: null, marca: null, dimension: null, diseno: null };
-
-    function normalizarTextoComp(val, fallback = 'SIN ESPECIFICAR') {
-      return String(val || '').trim().toUpperCase() || fallback;
-    }
-
-    function esLlantaReencauchadaComp(vidaStr) {
-      const v = String(vidaStr || '').trim().toLowerCase();
-      return ['reenc', '1r', '2r', '3r', '4r', 'r1', 'r2', 'r3', 'renov'].some(token => v.includes(token));
-    }
-
-    async function cargarComposicionFlotaWeb(forzarRecarga = false) {
-      if (!forzarRecarga && cacheComposicionLlantas && cacheComposicionLlantas.length > 0) {
-        renderizarComposicionFlotaWeb();
-        return;
-      }
-
-      const tbody = document.getElementById('tbody_composicion_flota');
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-3"><div class="w-8 h-8 rounded-full border-3 border-cyan-500 border-t-transparent animate-spin"></div><p class="text-xs font-bold text-slate-600">Consultando composición de flota en tiempo real...</p></div></td></tr>`;
-      }
-
-      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-      try {
-        const res = await fetch('/api/kpis-llantas', { headers });
-        if (res.ok) {
-          const raw = await res.json();
-          cacheComposicionLlantas = (Array.isArray(raw) ? raw : []).map(item => ({
-            ...item,
-            marca: normalizarTextoComp(item.marca, 'GENÉRICA'),
-            diseno: normalizarTextoComp(item.diseno, 'ESTÁNDAR'),
-            dimension: normalizarTextoComp(item.dimension, 'ESTÁNDAR'),
-            cliente: normalizarTextoComp(item.cliente, 'FLOTA GENERAL'),
-            subcliente: normalizarTextoComp(item.subcliente, 'SEDE PRINCIPAL'),
-            vida: normalizarTextoComp(item.vida, 'ORIGINAL'),
-            tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase()
-          }));
-
-          poblarFiltrosComposicionCascada();
-          renderizarComposicionFlotaWeb();
-        } else if (res.status === 401) {
-          if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-2 max-w-sm mx-auto"><div class="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 text-lg shadow-2xs"><i class="fa-solid fa-lock"></i></div><p class="text-xs font-bold text-amber-800">Sesión no válida o expirada</p><p class="text-[11px] text-slate-500">Por favor, inicie sesión nuevamente para acceder a los datos de composición.</p></div></td></tr>`;
-          }
-        } else {
-          if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto"><div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 text-lg shadow-2xs"><i class="fa-solid fa-triangle-exclamation"></i></div><p class="text-xs font-bold text-rose-700">Error al consultar composición (${res.status})</p><button type="button" onclick="cargarComposicionFlotaWeb(true)" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">Reintentar</button></div></td></tr>`;
-          }
-        }
-      } catch (e) {
-        console.error('Error al cargarComposicionFlotaWeb:', e);
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto"><div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 text-lg shadow-2xs"><i class="fa-solid fa-wifi"></i></div><p class="text-xs font-bold text-rose-700">Error de red al consultar composición de flota</p><button type="button" onclick="cargarComposicionFlotaWeb(true)" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">Reintentar</button></div></td></tr>`;
-        }
-      }
-    }
-
-    function poblarFiltrosComposicionCascada() {
-      const selCli = document.getElementById('filtro_comp_cliente');
-      if (!selCli) return;
-
-      const valorCliPrevio = selCli.value || 'TODOS';
-      const clientesUnicos = Array.from(new Set(cacheComposicionLlantas.map(x => x.cliente).filter(Boolean))).sort();
-
-      let htmlCli = '<option value="TODOS">Todos los Clientes</option>';
-      clientesUnicos.forEach(c => {
-        htmlCli += `<option value="${c}">${c}</option>`;
-      });
-      selCli.innerHTML = htmlCli;
-
-      if (clientesUnicos.includes(valorCliPrevio)) {
-        selCli.value = valorCliPrevio;
-      } else {
-        selCli.value = 'TODOS';
-      }
-
-      poblarFiltrosSecundariosComposicion();
-    }
-
-    function poblarFiltrosSecundariosComposicion() {
-      const cli = document.getElementById('filtro_comp_cliente')?.value || 'TODOS';
-      const conjunto = (cli && cli !== 'TODOS')
-        ? cacheComposicionLlantas.filter(x => x.cliente === cli)
-        : cacheComposicionLlantas;
-
-      const selSub = document.getElementById('filtro_comp_subcliente');
-      const selMarca = document.getElementById('filtro_comp_marca');
-      const selDim = document.getElementById('filtro_comp_dimension');
-      const selDis = document.getElementById('filtro_comp_diseno');
-
-      const rellenarSelect = (el, lista, etiquetaTodos) => {
-        if (!el) return;
-        const prev = el.value || 'TODOS';
-        let h = `<option value="TODOS">${etiquetaTodos}</option>`;
-        lista.forEach(val => {
-          h += `<option value="${val}">${val}</option>`;
-        });
-        el.innerHTML = h;
-        if (lista.includes(prev)) el.value = prev;
-        else el.value = 'TODOS';
-      };
-
-      const subs = Array.from(new Set(conjunto.map(x => x.subcliente).filter(Boolean))).sort();
-      const marcas = Array.from(new Set(conjunto.map(x => x.marca).filter(Boolean))).sort();
-      const dims = Array.from(new Set(conjunto.map(x => x.dimension).filter(Boolean))).sort();
-      const disenos = Array.from(new Set(conjunto.map(x => x.diseno).filter(Boolean))).sort();
-
-      rellenarSelect(selSub, subs, 'Todas las Sedes');
-      rellenarSelect(selMarca, marcas, 'Todas las Marcas');
-      rellenarSelect(selDim, dims, 'Todas las Medidas');
-      rellenarSelect(selDis, disenos, 'Todos los Diseños');
-    }
-
-    function alCambiarClienteComposicion() {
-      poblarFiltrosSecundariosComposicion();
-      renderizarComposicionFlotaWeb();
-    }
-
-    function seleccionarEjeRapidoComposicion(tipoEje) {
-      const selEje = document.getElementById('filtro_comp_tipo_eje');
-      if (selEje) selEje.value = tipoEje;
-      sincronizarBotonesEjeComposicion(tipoEje);
-      renderizarComposicionFlotaWeb();
-    }
-
-    function alCambiarTipoEjeSelectComposicion() {
-      const selEje = document.getElementById('filtro_comp_tipo_eje');
-      const tipo = selEje ? selEje.value : 'TODOS';
-      sincronizarBotonesEjeComposicion(tipo);
-      renderizarComposicionFlotaWeb();
-    }
-
-    function sincronizarBotonesEjeComposicion(tipoActivo) {
-      const botones = ['TODOS', 'direccional', 'traccion', 'libre'];
-      botones.forEach(b => {
-        const btn = document.getElementById(`btn_eje_comp_${b}`);
-        if (!btn) return;
-        if (b === tipoActivo) {
-          btn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm border border-slate-200/80 cursor-pointer';
-        } else {
-          btn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 cursor-pointer';
-        }
-      });
-    }
-
-    function limpiarFiltrosComposicion() {
-      const selCli = document.getElementById('filtro_comp_cliente');
-      const selSub = document.getElementById('filtro_comp_subcliente');
-      const selEje = document.getElementById('filtro_comp_tipo_eje');
-      const selVida = document.getElementById('filtro_comp_vida');
-      const selMar = document.getElementById('filtro_comp_marca');
-      const selDim = document.getElementById('filtro_comp_dimension');
-      const selDis = document.getElementById('filtro_comp_diseno');
-
-      if (selCli) selCli.value = 'TODOS';
-      if (selSub) selSub.value = 'TODOS';
-      if (selEje) selEje.value = 'TODOS';
-      if (selVida) selVida.value = 'TODAS';
-      if (selMar) selMar.value = 'TODOS';
-      if (selDim) selDim.value = 'TODOS';
-      if (selDis) selDis.value = 'TODOS';
-
-      sincronizarBotonesEjeComposicion('TODOS');
-      poblarFiltrosSecundariosComposicion();
-      renderizarComposicionFlotaWeb();
-    }
-
-    function renderizarComposicionFlotaWeb() {
-      const cli = document.getElementById('filtro_comp_cliente')?.value || 'TODOS';
-      const sub = document.getElementById('filtro_comp_subcliente')?.value || 'TODOS';
-      const eje = document.getElementById('filtro_comp_tipo_eje')?.value || 'TODOS';
-      const vida = document.getElementById('filtro_comp_vida')?.value || 'TODAS';
-      const marca = document.getElementById('filtro_comp_marca')?.value || 'TODOS';
-      const dim = document.getElementById('filtro_comp_dimension')?.value || 'TODOS';
-      const dis = document.getElementById('filtro_comp_diseno')?.value || 'TODOS';
-
-      // 1. Filtrado Reactivo en Memoria con Reglas de Negocio
-      const dataFiltrada = cacheComposicionLlantas.filter(llanta => {
-        if (cli !== 'TODOS' && llanta.cliente !== cli) return false;
-        if (sub !== 'TODOS' && llanta.subcliente !== sub) return false;
-
-        // Regla Especial de Ejes y Repuesto (Sección 7 del Manual):
-        // Si se filtra por un eje operativo ('direccional', 'traccion', 'libre'),
-        // las llantas de repuesto ('repuesto') NO se suman; solo se incluyen en 'TODOS'.
-        if (eje !== 'TODOS') {
-          if (llanta.tipo_eje === 'repuesto' || llanta.tipo_eje !== eje) return false;
-        }
-
-        if (vida !== 'TODAS') {
-          const esReenc = esLlantaReencauchadaComp(llanta.vida);
-          if (vida === 'ORIGINAL' && esReenc) return false;
-          if (vida === 'REENCAUCHE' && !esReenc) return false;
-        }
-
-        if (marca !== 'TODOS' && llanta.marca !== marca) return false;
-        if (dim !== 'TODOS' && llanta.dimension !== dim) return false;
-        if (dis !== 'TODOS' && llanta.diseno !== dis) return false;
-        return true;
-      });
-
-      const totalLlantas = dataFiltrada.length;
-      const placasSet = new Set(dataFiltrada.map(x => x.placa).filter(Boolean));
-      const totalVehiculos = placasSet.size;
-
-      // 2. Agregaciones y Mapas
-      let cntReenc = 0;
-      let cntOrig = 0;
-      const mapaMarcas = {};
-      const mapaDimensiones = {};
-      const mapaDisenos = {};
-      const mapaCombinaciones = {};
-
-      dataFiltrada.forEach(llanta => {
-        const esReenc = esLlantaReencauchadaComp(llanta.vida);
-        if (esReenc) cntReenc++; else cntOrig++;
-
-        mapaMarcas[llanta.marca] = (mapaMarcas[llanta.marca] || 0) + 1;
-        mapaDimensiones[llanta.dimension] = (mapaDimensiones[llanta.dimension] || 0) + 1;
-        mapaDisenos[llanta.diseno] = (mapaDisenos[llanta.diseno] || 0) + 1;
-
-        const keyComb = `${llanta.marca}|||${llanta.diseno}|||${llanta.dimension}`;
-        if (!mapaCombinaciones[keyComb]) {
-          mapaCombinaciones[keyComb] = {
-            marca: llanta.marca,
-            diseno: llanta.diseno,
-            dimension: llanta.dimension,
-            orig: 0,
-            reenc: 0,
-            total: 0,
-            sumaProf: 0,
-            cantProf: 0
-          };
-        }
-        const c = mapaCombinaciones[keyComb];
-        if (esReenc) c.reenc++; else c.orig++;
-        c.total++;
-        const pMin = parseFloat(llanta.prof_actual_min || 0);
-        if (pMin > 0) {
-          c.sumaProf += pMin;
-          c.cantProf++;
-        }
-      });
-
-      // 3. Actualización de las 6 Tarjetas Resumen de KPIs (Scorecards) con Protección Div/0
-      const elTotLlantas = document.getElementById('comp_kpi_total_llantas');
-      const elTotVeh = document.getElementById('comp_kpi_total_vehiculos');
-      const elPctReenc = document.getElementById('comp_kpi_pct_reenc');
-      const elCntReenc = document.getElementById('comp_kpi_cnt_reenc');
-      const elPctOrig = document.getElementById('comp_kpi_pct_orig');
-      const elCntOrig = document.getElementById('comp_kpi_cnt_orig');
-      const elTopMarca = document.getElementById('comp_kpi_top_marca');
-      const elSubMarca = document.getElementById('comp_kpi_sub_marca');
-      const elTopDim = document.getElementById('comp_kpi_top_dim');
-      const elSubDim = document.getElementById('comp_kpi_sub_dim');
-      const elTopDis = document.getElementById('comp_kpi_top_diseno');
-      const elSubDis = document.getElementById('comp_kpi_sub_diseno');
-
-      if (elTotLlantas) elTotLlantas.textContent = totalLlantas;
-      if (elTotVeh) elTotVeh.textContent = `${totalVehiculos} vehículo(s) activo(s)`;
-
-      if (totalLlantas === 0) {
-        if (elPctReenc) elPctReenc.textContent = '0.0%';
-        if (elCntReenc) elCntReenc.textContent = '0 llanta(s) reencauchada(s)';
-        if (elPctOrig) elPctOrig.textContent = '0.0%';
-        if (elCntOrig) elCntOrig.textContent = '0 llanta(s) originales';
-        if (elTopMarca) elTopMarca.textContent = '—';
-        if (elSubMarca) elSubMarca.textContent = '0 llantas (0.0%)';
-        if (elTopDim) elTopDim.textContent = '—';
-        if (elSubDim) elSubDim.textContent = '0 llantas (0.0%)';
-        if (elTopDis) elTopDis.textContent = '—';
-        if (elSubDis) elSubDis.textContent = '0 llantas montadas (0.0%)';
-      } else {
-        const pctR = ((cntReenc / totalLlantas) * 100).toFixed(1);
-        const pctO = ((cntOrig / totalLlantas) * 100).toFixed(1);
-        if (elPctReenc) elPctReenc.textContent = `${pctR}%`;
-        if (elCntReenc) elCntReenc.textContent = `${cntReenc} llanta(s) reencauchada(s)`;
-        if (elPctOrig) elPctOrig.textContent = `${pctO}%`;
-        if (elCntOrig) elCntOrig.textContent = `${cntOrig} llanta(s) originales`;
-
-        const arrM = Object.entries(mapaMarcas).sort((a, b) => b[1] - a[1]);
-        const arrDm = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
-        const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
-
-        if (arrM.length > 0) {
-          const [mNom, mCant] = arrM[0];
-          const mPct = ((mCant / totalLlantas) * 100).toFixed(1);
-          if (elTopMarca) elTopMarca.textContent = mNom;
-          if (elSubMarca) elSubMarca.textContent = `${mCant} llantas (${mPct}%)`;
-        }
-        if (arrDm.length > 0) {
-          const [dNom, dCant] = arrDm[0];
-          const dPct = ((dCant / totalLlantas) * 100).toFixed(1);
-          if (elTopDim) elTopDim.textContent = dNom;
-          if (elSubDim) elSubDim.textContent = `${dCant} llantas (${dPct}%)`;
-        }
-        if (arrDs.length > 0) {
-          const [sNom, sCant] = arrDs[0];
-          const sPct = ((sCant / totalLlantas) * 100).toFixed(1);
-          if (elTopDis) elTopDis.textContent = sNom;
-          if (elSubDis) elSubDis.textContent = `${sCant} llantas montadas (${sPct}%)`;
-        }
-      }
-
-      // 4. Panel de Auditoría: "Las 4 Reglas de Oro de Negocio" (Sección 8 del Manual)
-      // Regla de Oro 1: Cero Reencauches en Dirección
-      const llantasDireccionales = dataFiltrada.filter(x => x.tipo_eje === 'direccional');
-      const totalDir = llantasDireccionales.length;
-      const reencEnDir = llantasDireccionales.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctReencDir = totalDir > 0 ? ((reencEnDir / totalDir) * 100).toFixed(1) : '0.0';
-
-      const cardR1 = document.getElementById('card_regla_oro_1');
-      const badgeR1 = document.getElementById('badge_regla_oro_1');
-      const titR1 = document.getElementById('txt_regla_oro_1_titulo');
-      const descR1 = document.getElementById('txt_regla_oro_1_desc');
-
-      if (reencEnDir > 0) {
-        if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-rose-50 border-rose-300 shadow-sm';
-        if (badgeR1) {
-          badgeR1.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white animate-pulse';
-          badgeR1.textContent = 'INCUMPLIDA';
-        }
-        if (titR1) {
-          titR1.className = 'text-xs font-black text-rose-900';
-          titR1.textContent = '🚨 REGLA DE ORO 1 INCUMPLIDA';
-        }
-        if (descR1) {
-          descR1.className = 'text-[11px] text-rose-800 mt-0.5 leading-snug font-medium';
-          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0.0%.`;
-        }
-      } else {
-        if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-300 shadow-sm';
-        if (badgeR1) {
-          badgeR1.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-600 text-white';
-          badgeR1.textContent = 'CUMPLIDA (0.0%)';
-        }
-        if (titR1) {
-          titR1.className = 'text-xs font-black text-emerald-900';
-          titR1.textContent = '✅ Regla de Oro 1 Cumplida';
-        }
-        if (descR1) {
-          descR1.className = 'text-[11px] text-emerald-800 mt-0.5 leading-snug';
-          descR1.textContent = '0.0% Reencauches en Dirección. Cumplimiento estricto de seguridad vial.';
-        }
-      }
-
-      // Regla de Oro 2: Adopción Renovado Remolques y Tracción
-      const llantasLibres = dataFiltrada.filter(x => x.tipo_eje === 'libre');
-      const reencLibres = llantasLibres.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctLibres = llantasLibres.length > 0 ? ((reencLibres / llantasLibres.length) * 100).toFixed(1) : '0.0';
-
-      const llantasTrac = dataFiltrada.filter(x => x.tipo_eje === 'traccion');
-      const reencTrac = llantasTrac.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctTrac = llantasTrac.length > 0 ? ((reencTrac / llantasTrac.length) * 100).toFixed(1) : '0.0';
-
-      const badgeR2 = document.getElementById('badge_regla_oro_2');
-      const descR2 = document.getElementById('txt_regla_oro_2_desc');
-      if (badgeR2 && descR2) {
-        badgeR2.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800';
-        badgeR2.textContent = `Rem ${pctLibres}% | Trac ${pctTrac}%`;
-        descR2.textContent = `Madurez: Remolque ${pctLibres}% (Meta >70%), Tracción ${pctTrac}% (Meta 50%-65%).`;
-      }
-
-      // Regla de Oro 3: Índice de Dispersión Dimensional
-      const arrDimsTotal = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
-      const cardR3 = document.getElementById('card_regla_oro_3');
-      const badgeR3 = document.getElementById('badge_regla_oro_3');
-      const titR3 = document.getElementById('txt_regla_oro_3_titulo');
-      const descR3 = document.getElementById('txt_regla_oro_3_desc');
-
-      if (arrDimsTotal.length > 0 && totalLlantas > 0) {
-        const topDimPct = (arrDimsTotal[0][1] / totalLlantas) * 100;
-        const totalDimsDistintas = arrDimsTotal.length;
-        if (topDimPct < 70 && totalDimsDistintas > 4) {
-          if (cardR3) cardR3.className = 'p-3 rounded-2xl border transition-all duration-300 bg-amber-50 border-amber-300 shadow-sm';
-          if (badgeR3) {
-            badgeR3.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500 text-white';
-            badgeR3.textContent = 'ALTA DISPERSIÓN';
-          }
-          if (titR3) titR3.textContent = '⚠️ Dispersión Dimensional';
-          if (descR3) descR3.textContent = `Medida líder concentra ${topDimPct.toFixed(1)}% con ${totalDimsDistintas} medidas activas. Se sugiere racionalizar.`;
-        } else {
-          if (cardR3) cardR3.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-200';
-          if (badgeR3) {
-            badgeR3.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800';
-            badgeR3.textContent = 'ESTANDARIZADA';
-          }
-          if (titR3) titR3.textContent = '✅ Estandarización Óptima';
-          if (descR3) descR3.textContent = `Medida principal concentra ${topDimPct.toFixed(1)}% en ${totalDimsDistintas} dimensión(es).`;
-        }
-      }
-
-      // 5. Renderizado de Gráficos Chart.js HD (Sección 5 del Manual)
-      renderizarGraficosComposicion({
-        cntOrig,
-        cntReenc,
-        mapaMarcas,
-        mapaDimensiones,
-        mapaDisenos,
-        totalLlantas
-      });
-
-      // 6. Renderizado de la Matriz de Inventario [Marca × Diseño × Medida]
-      renderizarMatrizComposicion(mapaCombinaciones, totalLlantas);
-    }
-
-    function renderizarGraficosComposicion({ cntOrig, cntReenc, mapaMarcas, mapaDimensiones, mapaDisenos, totalLlantas }) {
-      if (typeof Chart === 'undefined') return;
-
-      const tooltipStyleHD = {
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-        titleColor: '#f8fafc',
-        bodyColor: '#e2e8f0',
-        borderColor: 'rgba(255, 255, 255, 0.12)',
-        borderWidth: 1,
-        padding: 10,
-        boxPadding: 4,
-        cornerRadius: 8,
-        displayColors: true
-      };
-
-      // Gráfico 1: Condición / Vida de Llanta por Eje (Doughnut cutout: '62%')
-      const cvVida = document.getElementById('chartCompVidaEje');
-      if (cvVida) {
-        if (chartsComposicion.vida) chartsComposicion.vida.destroy();
-        const ctxVida = cvVida.getContext('2d');
-        const totVida = cntOrig + cntReenc;
-
-        if (totVida === 0) {
-          chartsComposicion.vida = new Chart(ctxVida, {
-            type: 'doughnut',
-            data: {
-              labels: ['Sin llantas registradas'],
-              datasets: [{
-                data: [1],
-                backgroundColor: ['#f1f5f9'],
-                borderWidth: 1,
-                borderColor: '#e2e8f0'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '62%',
-              plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } } },
-                tooltip: { enabled: false }
-              }
-            }
-          });
-        } else {
-          const pOrig = ((cntOrig / totVida) * 100).toFixed(1);
-          const pReenc = ((cntReenc / totVida) * 100).toFixed(1);
-
-          chartsComposicion.vida = new Chart(ctxVida, {
-            type: 'doughnut',
-            data: {
-              labels: [`Original (${pOrig}%)`, `Reencauche (${pReenc}%)`],
-              datasets: [{
-                data: [cntOrig, cntReenc],
-                backgroundColor: ['#3b82f6', '#10b981'],
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '62%',
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: 'bold' } }
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
-                  }
-                }
-              }
-            }
-          });
-        }
-      }
-
-      // Gráfico 2: Participación por Marca — Top 7 (Doughnut cutout: '58%')
-      const cvMarcas = document.getElementById('chartCompMarcas');
-      if (cvMarcas) {
-        if (chartsComposicion.marca) chartsComposicion.marca.destroy();
-        const ctxMarcas = cvMarcas.getContext('2d');
-
-        if (totalLlantas === 0) {
-          chartsComposicion.marca = new Chart(ctxMarcas, {
-            type: 'doughnut',
-            data: {
-              labels: ['Sin datos'],
-              datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 1, borderColor: '#e2e8f0' }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '58%',
-              plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } } },
-                tooltip: { enabled: false }
-              }
-            }
-          });
-        } else {
-          const arrM = Object.entries(mapaMarcas).sort((a, b) => b[1] - a[1]);
-          const top7M = arrM.slice(0, 7);
-          const otrosM = arrM.slice(7).reduce((acc, curr) => acc + curr[1], 0);
-          if (otrosM > 0) top7M.push(['OTROS', otrosM]);
-
-          const paletaMarcas = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#94a3b8'];
-          const labelsM = top7M.map(([m, cnt]) => {
-            const p = ((cnt / totalLlantas) * 100).toFixed(1);
-            return `${m} (${p}%)`;
-          });
-          const dataM = top7M.map(([, cnt]) => cnt);
-
-          chartsComposicion.marca = new Chart(ctxMarcas, {
-            type: 'doughnut',
-            data: {
-              labels: labelsM,
-              datasets: [{
-                data: dataM,
-                backgroundColor: paletaMarcas.slice(0, top7M.length),
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '58%',
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
-                  }
-                }
-              }
-            }
-          });
-        }
-      }
-
-      // Gráfico 3: Distribución por Dimensión — Top 6 (Pie 360°)
-      const cvDim = document.getElementById('chartCompDimensiones');
-      if (cvDim) {
-        if (chartsComposicion.dimension) chartsComposicion.dimension.destroy();
-        const ctxDim = cvDim.getContext('2d');
-
-        if (totalLlantas === 0) {
-          chartsComposicion.dimension = new Chart(ctxDim, {
-            type: 'pie',
-            data: {
-              labels: ['Sin datos'],
-              datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 1, borderColor: '#e2e8f0' }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } } },
-                tooltip: { enabled: false }
-              }
-            }
-          });
-        } else {
-          const arrD = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
-          const top6D = arrD.slice(0, 6);
-          const otrosD = arrD.slice(6).reduce((acc, curr) => acc + curr[1], 0);
-          if (otrosD > 0) top6D.push(['OTRAS', otrosD]);
-
-          const paletaDim = ['#7c3aed', '#0891b2', '#d97706', '#059669', '#1d4ed8', '#c026d3', '#94a3b8'];
-          const labelsD = top6D.map(([d, cnt]) => {
-            const p = ((cnt / totalLlantas) * 100).toFixed(1);
-            return `${d} (${p}%)`;
-          });
-          const dataD = top6D.map(([, cnt]) => cnt);
-
-          chartsComposicion.dimension = new Chart(ctxDim, {
-            type: 'pie',
-            data: {
-              labels: labelsD,
-              datasets: [{
-                data: dataD,
-                backgroundColor: paletaDim.slice(0, top6D.length),
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
-                  }
-                }
-              }
-            }
-          });
-        }
-      }
-
-      // Gráfico 4: Top Diseños de Rodamiento — Top 6 (Bar Vertical)
-      const cvDis = document.getElementById('chartCompDisenos');
-      if (cvDis) {
-        if (chartsComposicion.diseno) chartsComposicion.diseno.destroy();
-        const ctxDis = cvDis.getContext('2d');
-
-        if (totalLlantas === 0) {
-          chartsComposicion.diseno = new Chart(ctxDis, {
-            type: 'bar',
-            data: {
-              labels: ['Sin datos'],
-              datasets: [{ label: 'Llantas Montadas', data: [0], backgroundColor: '#f1f5f9' }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: { y: { beginAtZero: true, max: 10 } },
-              plugins: { legend: { display: false }, tooltip: { enabled: false } }
-            }
-          });
-        } else {
-          const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
-          const top6Ds = arrDs.slice(0, 6);
-          const labelsDs = top6Ds.map(([ds]) => ds);
-          const dataDs = top6Ds.map(([, cnt]) => cnt);
-
-          chartsComposicion.diseno = new Chart(ctxDis, {
-            type: 'bar',
-            data: {
-              labels: labelsDs,
-              datasets: [{
-                label: 'Llantas Montadas',
-                data: dataDs,
-                backgroundColor: '#f59e0b',
-                borderRadius: 6,
-                borderSkipped: false
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => {
-                      const cnt = ctx.raw;
-                      const p = ((cnt / totalLlantas) * 100).toFixed(1);
-                      return ` ${cnt} llantas (${p}%)`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { font: { size: 10, weight: '600' } }
-                },
-                y: {
-                  beginAtZero: true,
-                  ticks: { precision: 0 }
-                }
-              }
-            }
-          });
-        }
-      }
-    }
-
-    function renderizarMatrizComposicion(mapaCombinaciones, totalLlantasFlota) {
-      const tbody = document.getElementById('tbody_composicion_flota');
-      const badgeComb = document.getElementById('badge_comp_combinaciones');
-      if (!tbody) return;
-
-      const combinaciones = Object.values(mapaCombinaciones).sort((a, b) => b.total - a.total);
-      if (badgeComb) {
-        badgeComb.textContent = `${combinaciones.length} combinaciones activas`;
-      }
-
-      if (combinaciones.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" class="p-10 text-center">
-              <div class="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
-                <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xl shadow-inner">
-                  <i class="fa-solid fa-filter-circle-xmark"></i>
-                </div>
-                <p class="text-sm font-bold text-slate-800">No hay neumáticos con los filtros seleccionados</p>
-                <p class="text-xs text-slate-500">Prueba ajustando los criterios de búsqueda o limpiando los filtros para ver toda la flota activa.</p>
-                <button type="button" onclick="limpiarFiltrosComposicion()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5">
-                  <i class="fa-solid fa-rotate-left text-[11px]"></i>
-                  <span>Restablecer Filtros</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      let html = '';
-      combinaciones.forEach(c => {
-        const pctFlota = totalLlantasFlota > 0 ? ((c.total / totalLlantasFlota) * 100).toFixed(1) : '0.0';
-        let profPromText = '—';
-        let semaforoProf = 'text-slate-600 bg-slate-100 border border-slate-200';
-        let semaforoDot = 'bg-slate-400';
-
-        if (c.cantProf > 0) {
-          const prom = (c.sumaProf / c.cantProf);
-          profPromText = `${prom.toFixed(1)} mm`;
-          if (prom >= 9.0) {
-            semaforoProf = 'text-emerald-700 bg-emerald-50 border border-emerald-200/80';
-            semaforoDot = 'bg-emerald-500';
-          } else if (prom >= 5.0) {
-            semaforoProf = 'text-amber-700 bg-amber-50 border border-amber-200/80';
-            semaforoDot = 'bg-amber-500';
-          } else {
-            semaforoProf = 'text-rose-700 bg-rose-50 border border-rose-200/80 font-bold';
-            semaforoDot = 'bg-rose-500 animate-pulse';
-          }
-        }
-
-        html += `
-          <tr class="hover:bg-cyan-50/40 transition-colors duration-150 border-b border-slate-100 last:border-b-0">
-            <td class="p-3 font-bold text-slate-900">${c.marca}</td>
-            <td class="p-3 text-slate-800 font-semibold">${c.diseno}</td>
-            <td class="p-3 font-mono text-slate-600 text-[11px]">${c.dimension}</td>
-            <td class="p-3 text-center text-blue-600 font-bold">${c.orig}</td>
-            <td class="p-3 text-center text-emerald-600 font-bold">${c.reenc}</td>
-            <td class="p-3 text-center text-slate-900 font-black">${c.total}</td>
-            <td class="p-3 text-center text-indigo-600 font-extrabold">${pctFlota}%</td>
-            <td class="p-3 text-center">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black ${semaforoProf}">
-                <span class="w-1.5 h-1.5 rounded-full ${semaforoDot}"></span>
-                <span>${profPromText}</span>
-              </span>
-            </td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = html;
-    }
-
-    function exportarComposicionExcel() {
-      const tbody = document.getElementById('tbody_composicion_flota');
-      if (!tbody) return;
-
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      if (rows.length === 0 || rows[0].innerText.includes('No se encontraron') || rows[0].innerText.includes('Cargando')) {
-        mostrarToast('No hay datos disponibles en la matriz para exportar', true);
-        return;
-      }
-
-      let csv = '\uFEFF';
-      csv += 'Marca;Diseño;Dimensión;Original;Reencauche;Total Llantas;% Part. Flota;Prof. Promedio\r\n';
-
-      rows.forEach(tr => {
-        const cols = Array.from(tr.querySelectorAll('td')).map(td => {
-          let text = td.innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
-          return `"${text.replace(/"/g, '""')}"`;
-        });
-        if (cols.length === 8) {
-          csv += cols.join(';') + '\r\n';
-        }
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const now = new Date();
-      const fechaStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-      link.setAttribute('href', url);
-      link.setAttribute('download', `Composicion_Flota_TireAnalyze_${fechaStr}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      mostrarToast('✅ Matriz de Composición de Flota exportada exitosamente');
-    }
-
-    // ==========================================
-    // VISTA 5: GESTIÓN DE CATÁLOGOS & CONFIGURACIÓN
-    // ==========================================
-    let cacheDirectorioClientes = [];
-
-    function mostrarSubtabCat(subtab) {
-      const esAdmin = esUsuarioAdmin();
-      const puedeVerClientes = esAdminOJefatura();
-      if (subtab === 'usuarios' && !esAdmin) {
-        subtab = 'operaciones';
-      }
-      if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
-        subtab = 'operaciones';
-      }
-      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'usuarios'];
-      tabs.forEach(t => {
-        const sec = document.getElementById(`cat-seccion-${t}`);
-        if (sec) sec.classList.add('hidden');
-        const btn = document.getElementById(`subtab-btn-${t}`);
-        if (btn) btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200';
-      });
-      const secAct = document.getElementById(`cat-seccion-${subtab}`);
-      if (secAct) secAct.classList.remove('hidden');
-      const btnAct = document.getElementById(`subtab-btn-${subtab}`);
-      if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
-
-      // Cargar los datos de la subpestaña seleccionada
-      if (subtab === 'directorio_clientes' && puedeVerClientes) {
-        cargarDirectorioClientesCat();
-      } else if (subtab === 'usuarios' && esAdmin) {
-        cargarUsuariosCat();
-      } else if (subtab === 'clientes' && puedeVerClientes) {
-        cargarClientesLimCat();
-      } else if (subtab === 'marcas_cliente' && puedeVerClientes) {
-        cargarMarcasClienteCat();
-      } else if (subtab === 'operaciones') {
-        cargarOperacionesCat();
-      } else if (subtab === 'tipologias') {
-        cargarTipologiasCat();
-      } else if (subtab === 'modelos') {
-        cargarModelosCat();
-      }
-    }
-
-    async function cargarGestionCatalogos() {
-      if (esAdminOJefatura()) {
-        cargarDirectorioClientesCat();
-        cargarClientesLimCat();
-        cargarMarcasClienteCat();
-      }
-      cargarOperacionesCat();
-      cargarTipologiasCat();
-      cargarModelosCat();
-      if (esUsuarioAdmin()) {
-        cargarUsuariosCat();
-      }
-    }
-
-    async function cargarDirectorioClientesCat() {
-      try {
-        const res = await fetch('/api/clientes-directorio');
-        if (res.ok) {
-          cacheDirectorioClientes = await res.json();
-          renderizarDirectorioClientes(cacheDirectorioClientes);
-        } else {
-          const tbody = document.getElementById('tbodyDirectorioClientesCat');
-          if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-rose-500 font-bold">Error al cargar clientes desde el servidor.</td></tr>`;
-        }
-      } catch (e) {
-        console.error('Error cargando directorio de clientes:', e);
-        const tbody = document.getElementById('tbodyDirectorioClientesCat');
-        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-rose-500 font-bold">Error de conexión al cargar clientes.</td></tr>`;
-      }
-    }
-
-    function renderizarDirectorioClientes(lista) {
-      const tbody = document.getElementById('tbodyDirectorioClientesCat');
-      if (!tbody) return;
-
-      const totalClientes = lista ? lista.length : 0;
-      let totalVehiculos = 0;
-      let totalInspecciones = 0;
-      (lista || []).forEach(c => {
-        totalVehiculos += (c.vehiculos_count || 0);
-        totalInspecciones += (c.inspecciones_count || 0);
-      });
-
-      if (document.getElementById('kpiTotalClientesCat')) {
-        document.getElementById('kpiTotalClientesCat').textContent = totalClientes;
-      }
-      if (document.getElementById('kpiTotalVehiculosCat')) {
-        document.getElementById('kpiTotalVehiculosCat').textContent = `${totalVehiculos} veh (${totalInspecciones} insp)`;
-      }
-
-      if (!lista || lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400 italic font-medium">No se encontraron clientes registrados con el filtro aplicado</td></tr>`;
-        return;
-      }
-
-      const puedeEditar = esAdminOJefatura();
-      tbody.innerHTML = lista.map(c => {
-        const licBadge = (c.tipo_licencia === 'PRO') 
-          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">PRO (Bodegas & MRP)</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">LIGHT</span>';
-
-        const reqMes = (c.requiere_mes_siguiente !== false && c.requiere_mes_siguiente !== 0);
-        const diasNum = c.dias_espera_inspeccion || 20;
-        const freqBadge = reqMes
-          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200" title="Mes siguiente y mínimo ${diasNum} días transcurridos">📅 Mes sig. + ${diasNum}d</span>`
-          : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Habilita exactamente a los ${diasNum} días de la última inspección">⚡ ${diasNum}d corridos</span>`;
-
-        const subChips = (c.subclientes && c.subclientes.length > 0)
-          ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${s}</span>`).join('')
-          : '<span class="text-slate-400 italic text-[11px]">Principal</span>';
-
-        const serialCliSeguro = String(c.cliente || '').replace(/'/g, "\\'");
-
-        return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-3">
-              <div class="font-black text-slate-900 flex items-center space-x-1.5">
-                <i class="fa-solid fa-building text-slate-400 text-xs"></i>
-                <span>${c.cliente}</span>
-              </div>
-              <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? c.fecha_actualizacion.slice(0, 10) : 'Al día'}</div>
-            </td>
-            <td class="p-3 text-center">${licBadge}</td>
-            <td class="p-3 text-center font-mono font-black text-rose-700">${Number(c.limite_retiro_mm || 3.0).toFixed(1)} mm</td>
-            <td class="p-3 text-center">${freqBadge}</td>
-            <td class="p-3 max-w-[200px]">${subChips}</td>
-            <td class="p-3 text-center">
-              <span class="font-bold text-slate-800">${c.vehiculos_count || 0}</span>
-              <span class="text-[10px] text-slate-400 block">${c.inspecciones_count || 0} insp</span>
-            </td>
-            <td class="p-3 text-center">
-              <span class="font-black ${c.llantas_count > 0 ? 'text-blue-700' : 'text-slate-400'}">${c.llantas_count || 0}</span>
-            </td>
-            <td class="p-3 text-center">
-              <span class="font-bold text-slate-700">${c.marcas_count || 0}</span>
-            </td>
-            <td class="p-3 text-slate-600 max-w-[180px] truncate" title="${escapeHtml(c.observaciones || '')}">${escapeHtml(c.observaciones) || '-'}</td>
-            <td class="p-3 text-center">
-              <div class="flex items-center justify-center space-x-1">
-                ${puedeEditar ? `
-                  <button type="button" onclick="abrirModalEditarCliente('${serialCliSeguro}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg font-bold text-xs transition-colors" title="Editar configuración del cliente">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button type="button" onclick="irAAsociarMarcaCliente('${serialCliSeguro}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg font-bold text-xs transition-colors" title="Parametrizar marcas autorizadas">
-                    <i class="fa-solid fa-tags"></i>
-                  </button>
-                  ${(c.inspecciones_count === 0 && c.llantas_count === 0) ? `
-                    <button type="button" onclick="eliminarClienteDirectorio('${serialCliSeguro}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg font-bold text-xs transition-colors" title="Eliminar cliente sin historial">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
-                  ` : `
-                    <span class="p-1.5 text-slate-300 text-xs cursor-not-allowed" title="Cliente con historial operativo protegido">
-                      <i class="fa-solid fa-lock"></i>
-                    </span>
-                  `}
-                ` : '<span class="text-slate-400 text-xs italic">Ver</span>'}
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function filtrarDirectorioClientesCat(texto) {
-      const q = String(texto || '').trim().toUpperCase();
-      if (!q) {
-        renderizarDirectorioClientes(cacheDirectorioClientes);
-        return;
-      }
-      const filtrados = cacheDirectorioClientes.filter(c => {
-        return c.cliente.includes(q) || 
-               (c.subclientes_str && c.subclientes_str.toUpperCase().includes(q)) ||
-               (c.observaciones && c.observaciones.toUpperCase().includes(q));
-      });
-      renderizarDirectorioClientes(filtrados);
-    }
-
-    function abrirModalNuevoCliente() {
-      document.getElementById('tituloModalCliente').textContent = 'Agregar Nuevo Cliente / Flota';
-      document.getElementById('btnGuardarClienteTexto').textContent = 'Guardar Cliente';
-      document.getElementById('nuevo_cliente_nombre').value = '';
-      document.getElementById('nuevo_cliente_nombre').readOnly = false;
-      document.getElementById('nuevo_cliente_licencia').value = 'PRO';
-      document.getElementById('nuevo_cliente_limite').value = '3.0';
-      document.getElementById('nuevo_cliente_dias_inspeccion').value = '20';
-      document.getElementById('nuevo_cliente_regla_frecuencia').value = 'mes_siguiente';
-      document.getElementById('nuevo_cliente_subclientes').value = 'Principal';
-      document.getElementById('nuevo_cliente_observaciones').value = '';
-
-      document.getElementById('modalNuevoCliente').classList.remove('hidden');
-      document.getElementById('modalNuevoCliente').classList.add('flex');
-    }
-
-    function abrirModalEditarCliente(clienteNom) {
-      const clean = String(clienteNom || '').trim().toUpperCase();
-      const cli = cacheDirectorioClientes.find(c => c.cliente === clean);
-      if (!cli) return;
-
-      document.getElementById('tituloModalCliente').textContent = `Editar Configuración: ${cli.cliente}`;
-      document.getElementById('btnGuardarClienteTexto').textContent = 'Actualizar Cambios';
-      document.getElementById('nuevo_cliente_nombre').value = cli.cliente;
-      document.getElementById('nuevo_cliente_nombre').readOnly = true;
-      document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'PRO';
-      document.getElementById('nuevo_cliente_limite').value = cli.limite_retiro_mm || '3.0';
-      document.getElementById('nuevo_cliente_dias_inspeccion').value = cli.dias_espera_inspeccion || 20;
-      const esCorridos = (cli.requiere_mes_siguiente === false || cli.requiere_mes_siguiente === 0);
-      document.getElementById('nuevo_cliente_regla_frecuencia').value = esCorridos ? 'dias_corridos' : 'mes_siguiente';
-      document.getElementById('nuevo_cliente_subclientes').value = (cli.subclientes && cli.subclientes.length > 0) ? cli.subclientes.join(', ') : 'Principal';
-      document.getElementById('nuevo_cliente_observaciones').value = cli.observaciones || '';
-
-      document.getElementById('modalNuevoCliente').classList.remove('hidden');
-      document.getElementById('modalNuevoCliente').classList.add('flex');
-    }
-
-    function cerrarModalNuevoCliente() {
-      document.getElementById('modalNuevoCliente').classList.add('hidden');
-      document.getElementById('modalNuevoCliente').classList.remove('flex');
-    }
-
-    async function guardarNuevoCliente(e) {
-      e.preventDefault();
-      const nom = document.getElementById('nuevo_cliente_nombre').value.trim().toUpperCase();
-      if (!nom) {
-        mostrarToast('⚠️ Ingrese el nombre del cliente o flota', true);
-        return;
-      }
-
-      const payload = {
-        cliente: nom,
-        tipo_licencia: document.getElementById('nuevo_cliente_licencia').value,
-        limite_retiro_mm: parseFloat(document.getElementById('nuevo_cliente_limite').value) || 3.0,
-        dias_espera_inspeccion: parseInt(document.getElementById('nuevo_cliente_dias_inspeccion').value) || 20,
-        requiere_mes_siguiente: document.getElementById('nuevo_cliente_regla_frecuencia').value === 'mes_siguiente',
-        subclientes: document.getElementById('nuevo_cliente_subclientes').value.trim(),
-        observaciones: document.getElementById('nuevo_cliente_observaciones').value.trim()
-      };
-
-      try {
-        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
-        const headers = {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        };
-        const res = await fetch('/api/clientes-directorio', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload)
-        });
-        const resp = await res.json();
-        if (res.ok && (resp.ok || resp.status === 'ok')) {
-          mostrarToast(`✅ Cliente '${nom}' guardado exitosamente`);
-          cerrarModalNuevoCliente();
-          await cargarDirectorioClientesCat();
-          if (typeof cargarCatalogos === 'function') {
-            await cargarCatalogos();
-          }
-        } else {
-          mostrarToast('❌ Error: ' + (resp.detail || resp.mensaje || 'No se pudo guardar el cliente'), true);
-        }
-      } catch (err) {
-        console.error('Error al guardar cliente:', err);
-        mostrarToast('❌ Error de conexión al guardar cliente', true);
-      }
-    }
-
-    async function eliminarClienteDirectorio(clienteNom) {
-      if (!confirm(`¿Está seguro de eliminar el cliente '${clienteNom}'? Esta acción solo se permite si el cliente no tiene inspecciones ni llantas en bodega.`)) {
-        return;
-      }
-      try {
-        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const res = await fetch(`/api/clientes-directorio/${encodeURIComponent(clienteNom)}`, {
-          method: 'DELETE',
-          headers
-        });
-        const resp = await res.json();
-        if (res.ok && (resp.ok || resp.status === 'ok')) {
-          mostrarToast(`✅ Cliente '${clienteNom}' eliminado exitosamente`);
-          await cargarDirectorioClientesCat();
-          if (typeof cargarCatalogos === 'function') {
-            await cargarCatalogos();
-          }
-        } else {
-          mostrarToast('❌ ' + (resp.detail || resp.mensaje || 'No se pudo eliminar el cliente'), true);
-        }
-      } catch (err) {
-        console.error('Error al eliminar cliente:', err);
-        mostrarToast('❌ Error de comunicación con el servidor', true);
-      }
-    }
-
-    function irAAsociarMarcaCliente(clienteNom) {
-      mostrarSubtabCat('marcas_cliente');
-      const filtro = document.getElementById('filtroCatMarcaCliente');
-      if (filtro) {
-        filtro.value = clienteNom;
-        filtrarMarcasClienteCat();
-      }
-    }
-
-    async function cargarOperacionesCat() {
-      const res = await fetch('/api/operaciones');
-      if (res.ok) {
-        const ops = await res.json();
-        const box = document.getElementById('listaOperacionesCat');
-        const puedeEditar = esAdminOJefatura();
-        box.innerHTML = ops.map(op => `
-          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-            <span class="font-bold text-slate-800">${op}</span>
-            ${puedeEditar ? `
-              <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
-            ` : ''}
-          </div>
-        `).join('');
-      }
-    }
-
-    async function eliminarOperacionCat(nombre) {
-      if (!confirm(`¿Eliminar la operación "${nombre}"?`)) return;
-      const res = await fetch(`/api/operaciones?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
-      if (res.ok) {
-        mostrarToast('Operación eliminada.');
-        cargarOperacionesCat();
-      }
-    }
-
-    let tipologiaEditando = null;
-    let catalogoModelosCache = [];
-    let modeloEditandoId = null;
-    let catalogoLimitesCache = [];
-    let limiteClienteEditandoId = null;
-
-    async function cargarTipologiasCat() {
-      const res = await fetch('/api/tipologias');
-      if (res.ok) {
-        const tips = await res.json();
-        const box = document.getElementById('listaTipologiasCat');
-        const puedeEditar = esAdminOJefatura();
-        box.innerHTML = tips.map(t => {
-          return `
-            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:shadow-sm transition-all flex flex-col justify-between">
-              <div class="space-y-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
-                  <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
-                </div>
-                <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
-              </div>
-              ${puedeEditar ? `
-                <div class="pt-2 border-t border-slate-200/70 flex items-center justify-end space-x-1.5">
-                  <button type="button" onclick="abrirModalEditarTipologia('${encodeURIComponent(JSON.stringify(t))}')" class="px-2.5 py-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center space-x-1 transition-all" title="Editar Tipología">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    <span>Editar</span>
-                  </button>
-                  <button type="button" onclick="eliminarTipologiaCat('${encodeURIComponent(t.nombre)}')" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg flex items-center space-x-1 transition-all" title="Eliminar Tipología">
-                    <i class="fa-solid fa-trash"></i>
-                    <span>Eliminar</span>
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-          `;
-        }).join('');
-      }
-    }
-
-    async function eliminarTipologiaCat(nombreEncoded) {
-      const nombre = decodeURIComponent(nombreEncoded);
-      if (!confirm(`¿Estás seguro de eliminar la tipología "${nombre}"?\nEsta acción sólo se completará si no está en uso por ningún vehículo o inspección en la base de datos.`)) {
-        return;
-      }
-      try {
-        const res = await fetch(`/api/tipologias?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
-        if (res.ok) {
-          mostrarToast(`✅ Tipología "${nombre}" eliminada correctamente.`);
-          cargarTipologiasCat();
-          cargarCatalogos();
-        } else {
-          const data = await res.json().catch(() => ({}));
-          const msg = data.detail || `No se pudo eliminar la tipología "${nombre}".`;
-          alert(`⚠️ ${msg}`);
-        }
-      } catch (err) {
-        alert('Error de conexión al intentar eliminar la tipología.');
-      }
-    }
-
-        function actualizarBarraPaginacionGenerica(sufijo, totalRegistros, inicio, fin, paginaActual, totalPaginas, fnCambioNombre) {
-      const contenedor = document.getElementById(`contenedorPaginacion${sufijo}`);
-      const lblInicio = document.getElementById(`pagInicio${sufijo}`);
-      const lblFin = document.getElementById(`pagFin${sufijo}`);
-      const lblTotal = document.getElementById(`pagTotal${sufijo}`);
-      const controles = document.getElementById(`controlesPaginacion${sufijo}`);
-
-      if (!contenedor || !controles) return;
-      if (totalRegistros <= 25 && totalPaginas <= 1) {
-        contenedor.classList.remove('hidden');
-        if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
-        if (lblFin) lblFin.textContent = fin.toLocaleString();
-        if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
-        controles.innerHTML = '<span class="text-xs text-slate-400 font-bold px-2 py-1">Pág 1 de 1</span>';
-        return;
-      }
-
-      contenedor.classList.remove('hidden');
-      if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
-      if (lblFin) lblFin.textContent = fin.toLocaleString();
-      if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
-
-      let html = '';
-      const deshabilitarPrimero = paginaActual <= 1;
-      html += `
-        <button type="button" onclick="${fnCambioNombre}(1)" ${deshabilitarPrimero ? 'disabled' : ''}
-          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
-          }" title="Primera página">
-          <i class="fa-solid fa-angles-left text-[10px]"></i>
-        </button>
-      `;
-
-      const deshabilitarAnt = paginaActual <= 1;
-      html += `
-        <button type="button" onclick="${fnCambioNombre}(${paginaActual - 1})" ${deshabilitarAnt ? 'disabled' : ''}
-          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
-          }" title="Página anterior">
-          <i class="fa-solid fa-chevron-left text-[10px]"></i>
-        </button>
-      `;
-
-      for (let i = 1; i <= totalPaginas; i++) {
-        if (i === paginaActual) {
-          html += `<button type="button" class="w-7 h-7 rounded-lg bg-blue-600 text-white font-black text-xs shadow-2xs flex items-center justify-center cursor-default">${i}</button>`;
-        } else {
-          html += `<button type="button" onclick="${fnCambioNombre}(${i})" class="w-7 h-7 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 font-bold text-xs shadow-2xs flex items-center justify-center cursor-pointer">${i}</button>`;
-        }
-      }
-
-      const deshabilitarSig = paginaActual >= totalPaginas;
-      html += `
-        <button type="button" onclick="${fnCambioNombre}(${paginaActual + 1})" ${deshabilitarSig ? 'disabled' : ''}
-          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
-          }" title="Página siguiente">
-          <i class="fa-solid fa-chevron-right text-[10px]"></i>
-        </button>
-      `;
-
-      const deshabilitarUltimo = paginaActual >= totalPaginas;
-      html += `
-        <button type="button" onclick="${fnCambioNombre}(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
-          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
-            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
-          }" title="Última página">
-          <i class="fa-solid fa-angles-right text-[10px]"></i>
-        </button>
-      `;
-
-      controles.innerHTML = html;
-    }
-
-    let paginaActualModelosCat = 1;
-    const ITEMS_POR_PAGINA_MODELOS = 25;
-
-    async function cargarModelosCat() {
-      const res = await fetch('/api/modelos-llanta');
-      if (res.ok) {
-        catalogoModelosCache = await res.json();
-        paginaActualModelosCat = 1;
-        renderizarTablaModelosCat();
-      }
-    }
-
-    function renderizarTablaModelosCat() {
-      const tbody = document.getElementById('tbodyModelosCat');
-      const contenedor = document.getElementById('contenedorPaginacionModelosCat');
-      if (!tbody) return;
-
-      const lista = catalogoModelosCache || [];
-      if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">No hay modelos de llanta registrados</td></tr>`;
-        if (contenedor) contenedor.classList.add('hidden');
-        return;
-      }
-
-      const totalRegistros = lista.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MODELOS) || 1;
-      if (paginaActualModelosCat > totalPaginas) paginaActualModelosCat = totalPaginas;
-      if (paginaActualModelosCat < 1) paginaActualModelosCat = 1;
-
-      const inicio = (paginaActualModelosCat - 1) * ITEMS_POR_PAGINA_MODELOS;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_MODELOS, totalRegistros);
-      const paginaItems = lista.slice(inicio, fin);
-      const puedeEditar = esAdminOJefatura();
-
-      tbody.innerHTML = paginaItems.map(m => `
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-bold">${m.tipo_llanta}</td>
-          <td class="p-2.5 font-black text-slate-900">${m.marca}</td>
-          <td class="p-2.5 font-bold text-slate-800">${m.diseno}</td>
-          <td class="p-2.5 text-slate-700">${m.dimension}</td>
-          <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
-          <td class="p-2.5 text-slate-500">${m.descripcion || '-'}</td>
-          <td class="p-2.5 text-center">
-            ${puedeEditar ? `
-              <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar modelo y sincronizar prof. inicial en BD">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent(m.marca + ' ' + m.diseno)}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar modelo del catálogo">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            ` : '-'}
-          </td>
-        </tr>
-      `).join('');
-
-      actualizarBarraPaginacionGenerica('ModelosCat', totalRegistros, inicio, fin, paginaActualModelosCat, totalPaginas, 'cambiarPaginaModelosCat');
-    }
-
-    function cambiarPaginaModelosCat(p) {
-      paginaActualModelosCat = p;
-      renderizarTablaModelosCat();
-    }
-
-    function abrirModalNuevoModelo() {
-      modeloEditandoId = null;
-      const elTit = document.getElementById('tituloModalModelo');
-      if (elTit) elTit.textContent = 'Nuevo Modelo de Llanta';
-      const elNota = document.getElementById('notaSincronizarModelo');
-      if (elNota) elNota.classList.add('hidden');
-      const elBtn = document.getElementById('btnGuardarModeloTexto');
-      if (elBtn) elBtn.textContent = 'Guardar';
-      document.getElementById('mod_tipo').value = 'Nueva';
-      document.getElementById('mod_marca').value = '';
-      document.getElementById('mod_diseno').value = '';
-      document.getElementById('mod_dimension').value = '295/80R22.5';
-      document.getElementById('mod_prof').value = '';
-      document.getElementById('mod_desc').value = '';
-      document.getElementById('modalNuevoModelo').classList.remove('hidden');
-      document.getElementById('modalNuevoModelo').classList.add('flex');
-    }
-
-    function abrirModalEditarModelo(id) {
-      const m = catalogoModelosCache.find(x => x.id === id);
-      if (!m) return;
-      modeloEditandoId = id;
-      const elTit = document.getElementById('tituloModalModelo');
-      if (elTit) elTit.textContent = `Editar Modelo: ${m.marca} ${m.diseno}`;
-      const elNota = document.getElementById('notaSincronizarModelo');
-      if (elNota) elNota.classList.remove('hidden');
-      const elBtn = document.getElementById('btnGuardarModeloTexto');
-      if (elBtn) elBtn.textContent = 'Guardar Cambios';
-      document.getElementById('mod_tipo').value = m.tipo_llanta;
-      document.getElementById('mod_marca').value = m.marca;
-      document.getElementById('mod_diseno').value = m.diseno;
-      document.getElementById('mod_dimension').value = m.dimension;
-      document.getElementById('mod_prof').value = m.prof_inicial;
-      document.getElementById('mod_desc').value = m.descripcion || '';
-      document.getElementById('modalNuevoModelo').classList.remove('hidden');
-      document.getElementById('modalNuevoModelo').classList.add('flex');
-    }
-
-    function cerrarModalNuevoModelo() {
-      document.getElementById('modalNuevoModelo').classList.add('hidden');
-      document.getElementById('modalNuevoModelo').classList.remove('flex');
-    }
-
-    async function guardarNuevoModelo() {
-      const p = parseFloat(document.getElementById('mod_prof').value);
-      if (!p || p <= 0) {
-        alert('Ingresa una profundidad inicial válida (mayor a 0)');
-        return;
-      }
-      const item = {
-        tipo_llanta: document.getElementById('mod_tipo').value,
-        marca: document.getElementById('mod_marca').value.trim().toUpperCase(),
-        diseno: document.getElementById('mod_diseno').value.trim().toUpperCase(),
-        dimension: document.getElementById('mod_dimension').value.trim().toUpperCase(),
-        prof_inicial: p,
-        descripcion: document.getElementById('mod_desc').value.trim()
-      };
-      if (!item.marca || !item.diseno) {
-        alert('Marca y Diseño son obligatorios');
-        return;
-      }
-
-      if (modeloEditandoId) {
-        const payload = {
-          id: modeloEditandoId,
-          ...item,
-          actualizar_bd: true
-        };
-        try {
-          const res = await fetch('/api/modelos-llanta', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            const data = await res.json();
-            cerrarModalNuevoModelo();
-            const msgSinc = data.filas_actualizadas > 0 
-              ? ` Se actualizó la prof. inicial (${data.prof_inicial} mm) en ${data.filas_actualizadas} inspección(es) de la base de datos.` 
-              : '';
-            mostrarToast(`✅ Modelo "${item.marca} ${item.diseno}" actualizado.${msgSinc}`);
-            cargarModelosCat();
-            if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
-          } else {
-            const err = await res.json().catch(() => ({}));
-            alert(err.detail || 'Error al actualizar el modelo de llanta.');
-          }
-        } catch (e) {
-          alert('Error de conexión al actualizar el modelo.');
-        }
-      } else {
-        const res = await fetch('/api/modelos-llanta', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(item)
-        });
-        if (res.ok) {
-          cerrarModalNuevoModelo();
-          mostrarToast('✅ Modelo guardado en catálogo.');
-          cargarModelosCat();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(err.detail || 'Error al guardar el modelo de llanta.');
-        }
-      }
-    }
-
-    async function eliminarModeloCat(id, nombreEncoded) {
-      const nombre = decodeURIComponent(nombreEncoded);
-      if (!confirm(`¿Eliminar el modelo "${nombre}" del catálogo?`)) return;
-      try {
-        const res = await fetch(`/api/modelos-llanta/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          mostrarToast(`✅ Modelo "${nombre}" eliminado del catálogo.`);
-          cargarModelosCat();
-        } else {
-          alert('Error al eliminar el modelo.');
-        }
-      } catch (e) {
-        alert('Error de conexión al eliminar modelo.');
-      }
-    }
-
-    let paginaActualLimitesCat = 1;
-    const ITEMS_POR_PAGINA_LIMITES = 25;
-
-    async function cargarClientesLimCat() {
-      const res = await fetch('/api/configuraciones-clientes');
-      if (res.ok) {
-        catalogoLimitesCache = await res.json();
-        paginaActualLimitesCat = 1;
-        renderizarTablaLimitesCat();
-      }
-    }
-
-    function renderizarTablaLimitesCat() {
-      const tbody = document.getElementById('tbodyClientesLimCat');
-      const contenedor = document.getElementById('contenedorPaginacionLimitesCat');
-      if (!tbody) return;
-
-      const lista = catalogoLimitesCache || [];
-      if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
-        if (contenedor) contenedor.classList.add('hidden');
-        return;
-      }
-
-      const totalRegistros = lista.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_LIMITES) || 1;
-      if (paginaActualLimitesCat > totalPaginas) paginaActualLimitesCat = totalPaginas;
-      if (paginaActualLimitesCat < 1) paginaActualLimitesCat = 1;
-
-      const inicio = (paginaActualLimitesCat - 1) * ITEMS_POR_PAGINA_LIMITES;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_LIMITES, totalRegistros);
-      const paginaItems = lista.slice(inicio, fin);
-
-      tbody.innerHTML = paginaItems.map(c => {
-        let badgeEje = '';
-        const ejeUpper = (c.eje || 'TODOS').toUpperCase();
-        if (ejeUpper === 'DIRECCIONAL') {
-          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">DIRECCIONAL</span>';
-        } else if (ejeUpper === 'TRACCIÓN' || ejeUpper === 'TRACCION') {
-          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">TRACCIÓN</span>';
-        } else if (ejeUpper === 'LIBRE') {
-          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">LIBRE</span>';
-        } else if (ejeUpper === 'REPUESTO') {
-          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">REPUESTO</span>';
-        } else {
-          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300">TODOS</span>';
-        }
-
-        return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
-            <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
-            <td class="p-2.5 text-center">${badgeEje}</td>
-            <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
-            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
-            <td class="p-2.5 text-center">
-              <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar límite de retiro">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      actualizarBarraPaginacionGenerica('LimitesCat', totalRegistros, inicio, fin, paginaActualLimitesCat, totalPaginas, 'cambiarPaginaLimitesCat');
-    }
-
-    function cambiarPaginaLimitesCat(p) {
-      paginaActualLimitesCat = p;
-      renderizarTablaLimitesCat();
-    }
-
-    function abrirModalLimiteCliente() {
-      limiteClienteEditandoId = null;
-      const elTit = document.getElementById('tituloModalLimiteCliente');
-      if (elTit) elTit.textContent = 'Límite de Retiro por Cliente y Eje';
-      const elBtn = document.getElementById('btnGuardarLimiteTexto');
-      if (elBtn) elBtn.textContent = 'Guardar Límite';
-      document.getElementById('lim_cliente').value = '';
-      document.getElementById('lim_subcliente').value = 'TODOS';
-      document.getElementById('lim_eje').value = 'TODOS';
-      document.getElementById('lim_mm').value = '3.0';
-      document.getElementById('lim_obs').value = '';
-      document.getElementById('modalLimiteCliente').classList.remove('hidden');
-      document.getElementById('modalLimiteCliente').classList.add('flex');
-    }
-
-    function abrirModalEditarLimiteCliente(id) {
-      const c = catalogoLimitesCache.find(x => x.id === id);
-      if (!c) return;
-      limiteClienteEditandoId = id;
-      const elTit = document.getElementById('tituloModalLimiteCliente');
-      if (elTit) elTit.textContent = `Editar Límite: ${c.cliente}`;
-      const elBtn = document.getElementById('btnGuardarLimiteTexto');
-      if (elBtn) elBtn.textContent = 'Guardar Cambios';
-      document.getElementById('lim_cliente').value = c.cliente;
-      document.getElementById('lim_subcliente').value = c.subcliente || 'TODOS';
-      document.getElementById('lim_eje').value = (c.eje || 'TODOS').toUpperCase();
-      document.getElementById('lim_mm').value = c.limite_retiro_mm;
-      document.getElementById('lim_obs').value = c.observaciones || '';
-      document.getElementById('modalLimiteCliente').classList.remove('hidden');
-      document.getElementById('modalLimiteCliente').classList.add('flex');
-    }
-
-    function cerrarModalLimiteCliente() {
-      document.getElementById('modalLimiteCliente').classList.add('hidden');
-      document.getElementById('modalLimiteCliente').classList.remove('flex');
-    }
-
-    async function guardarLimiteCliente() {
-      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
-      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
-      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
-      const mm = parseFloat(document.getElementById('lim_mm').value);
-      const obs = document.getElementById('lim_obs').value.trim().toUpperCase();
-      if (!cli || isNaN(mm)) {
-        alert('Por favor completa el cliente y el límite en mm');
-        return;
-      }
-
-      if (limiteClienteEditandoId) {
-        const payload = {
-          id: limiteClienteEditandoId,
-          cliente: cli,
-          subcliente: sub,
-          eje: eje,
-          limite_retiro_mm: mm,
-          observaciones: obs
-        };
-        try {
-          const res = await fetch('/api/configuraciones-clientes', {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            cerrarModalLimiteCliente();
-            mostrarToast(`✅ Límite actualizado para ${cli} (${sub} - ${eje}) a ${mm} mm.`);
-            cargarClientesLimCat();
-          } else {
-            const err = await res.json().catch(() => ({}));
-            alert(err.detail || 'Error al actualizar el límite de cliente');
-          }
-        } catch (e) {
-          alert('Error de conexión al actualizar límite.');
-        }
-      } else {
-        const res = await fetch('/api/configuraciones-clientes', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            cliente: cli,
-            subcliente: sub,
-            eje: eje,
-            limite_retiro_mm: mm,
-            observaciones: obs
-          })
-        });
-        if (res.ok) {
-          cerrarModalLimiteCliente();
-          mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
-          cargarClientesLimCat();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(err.detail || 'Error al guardar el límite de cliente');
-        }
-      }
-    }
-
-    async function eliminarLimiteCliente(id) {
-      if (!confirm('¿Deseas eliminar esta política de límite de retiro?')) return;
-      const res = await fetch(`/api/configuraciones-clientes/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        mostrarToast('Límite eliminado.');
-        cargarClientesLimCat();
-      }
-    }
-
-    // ==========================================
-    // GESTIÓN DE MARCAS POR CLIENTE (CATÁLOGOS)
-    // ==========================================
-    let marcasClienteCatCache = [];
-
-    async function cargarMarcasClienteCat() {
-      try {
-        const res = await fetch('/api/configuracion-marcas-cliente');
-        if (!res.ok) return;
-        marcasClienteCatCache = await res.json();
-
-        // Poblar selector de filtro por cliente
-        const selFiltro = document.getElementById('filtroCatMarcaCliente');
-        if (selFiltro) {
-          const valPrevio = selFiltro.value;
-          const clientesUnicos = Array.from(new Set(marcasClienteCatCache.map(m => m.cliente))).sort();
-          selFiltro.innerHTML = `<option value="">TODOS LOS CLIENTES (${clientesUnicos.length})</option>` +
-            clientesUnicos.map(c => `<option value="${c}">${c}</option>`).join('');
-          if (valPrevio) selFiltro.value = valPrevio;
-        }
-
-        filtrarMarcasClienteCat();
-      } catch (err) {
-        console.error("Error al cargar marcas cliente en catálogos:", err);
-      }
-    }
-
-    function filtrarMarcasClienteCat() {
-      const cliSel = (document.getElementById('filtroCatMarcaCliente')?.value || '').trim().toUpperCase();
-      let filtradas = marcasClienteCatCache;
-      if (cliSel) {
-        filtradas = marcasClienteCatCache.filter(m => m.cliente === cliSel);
-      }
-      renderizarTablaMarcasCliente(filtradas);
-    }
-
-    let paginaActualMarcasCat = 1;
-    const ITEMS_POR_PAGINA_MARCAS = 25;
-    let cacheFiltradasMarcasCat = [];
-
-    function renderizarTablaMarcasCliente(lista) {
-      const tbody = document.getElementById('tbodyMarcasClienteCat');
-      const contador = document.getElementById('contadorMarcasClienteCat');
-      const contenedor = document.getElementById('contenedorPaginacionMarcasCat');
-      cacheFiltradasMarcasCat = lista || [];
-
-      if (contador) contador.textContent = `Total: ${lista ? lista.length : 0} asociaciones (25 por página)`;
-      if (!tbody) return;
-
-      if (!lista || lista.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="4" class="p-6 text-center text-slate-400">
-              <i class="fa-solid fa-tags text-2xl mb-2 text-slate-300 block"></i>
-              No hay marcas parametrizadas para este cliente aún. Haz clic en "Asociar Marca a Cliente".
-            </td>
-          </tr>
-        `;
-        if (contenedor) contenedor.classList.add('hidden');
-        return;
-      }
-
-      const totalRegistros = lista.length;
-      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MARCAS) || 1;
-      if (paginaActualMarcasCat > totalPaginas) paginaActualMarcasCat = totalPaginas;
-      if (paginaActualMarcasCat < 1) paginaActualMarcasCat = 1;
-
-      const inicio = (paginaActualMarcasCat - 1) * ITEMS_POR_PAGINA_MARCAS;
-      const fin = Math.min(inicio + ITEMS_POR_PAGINA_MARCAS, totalRegistros);
-      const paginaItems = lista.slice(inicio, fin);
-
-      tbody.innerHTML = paginaItems.map(item => `
-        <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-bold text-slate-900">${item.cliente}</td>
-          <td class="p-2.5">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
-              <i class="fa-solid fa-tag mr-1 text-[10px]"></i>
-              ${item.marca}
-            </span>
-          </td>
-          <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
-          <td class="p-2.5 text-center">
-            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors" title="Desvincular marca de este cliente">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
-
-      actualizarBarraPaginacionGenerica('MarcasCat', totalRegistros, inicio, fin, paginaActualMarcasCat, totalPaginas, 'cambiarPaginaMarcasCat');
-    }
-
-    function cambiarPaginaMarcasCat(p) {
-      paginaActualMarcasCat = p;
-      renderizarTablaMarcasCliente(cacheFiltradasMarcasCat);
-    }
-
-    async function abrirModalAsociarMarcaCliente(clientePref = '') {
-      const cliInput = document.getElementById('asoc_marca_cliente');
-      const marcaInput = document.getElementById('asoc_marca_nombre');
-      if (cliInput) {
-        const selFiltro = document.getElementById('filtroCatMarcaCliente');
-        cliInput.value = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
-      }
-      if (marcaInput) marcaInput.value = '';
-
-      // Cargar todas las marcas del catálogo en datalist
-      try {
-        const res = await fetch('/api/valores-campo?campo=marca&todas=true');
-        if (res.ok) {
-          const marcas = await res.json();
-          const dl = document.getElementById('dl_marcas_todas');
-          if (dl) dl.innerHTML = marcas.map(m => `<option value="${m}">`).join('');
-        }
-      } catch (e) {}
-
-      const modal = document.getElementById('modalAsociarMarcaCliente');
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-    }
-
-    function cerrarModalAsociarMarcaCliente() {
-      const modal = document.getElementById('modalAsociarMarcaCliente');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    }
-
-    async function guardarAsociacionMarcaCliente() {
-      const cli = (document.getElementById('asoc_marca_cliente')?.value || '').trim().toUpperCase();
-      const marca = (document.getElementById('asoc_marca_nombre')?.value || '').trim();
-      if (!cli || !marca) {
-        alert('Por favor ingresa tanto el Cliente como la Marca');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/configuracion-marcas-cliente', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ cliente: cli, marca: marca })
-        });
-        if (res.ok) {
-          cerrarModalAsociarMarcaCliente();
-          mostrarToast(`✅ Marca '${marca}' asociada a '${cli}'.`);
-          await cargarMarcasClienteCat();
-          // Si el patio tiene seleccionado a este cliente, refrescar marcas de patio
-          const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
-          if (cliPatio === cli) {
-            actualizarMarcasCliente(cli);
-          }
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(err.detail || 'Error al asociar marca');
-        }
-      } catch (err) {
-        alert('Error de conexión al asociar marca');
-      }
-    }
-
-    async function eliminarMarcaClientePorId(id, cliente, marca) {
-      if (!confirm(`¿Deseas desvincular la marca '${marca}' del cliente '${cliente}'?`)) return;
-      try {
-        const res = await fetch(`/api/configuracion-marcas-cliente/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          mostrarToast(`Marca '${marca}' desvinculada de '${cliente}'.`);
-          await cargarMarcasClienteCat();
-          const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
-          if (cliPatio === cliente) {
-            actualizarMarcasCliente(cliente);
-          }
-        } else {
-          const err = await res.json().catch(() => ({}));
-          alert(err.detail || 'Error al eliminar asociación');
-        }
-      } catch (err) {
-        alert('Error de conexión al desvincular marca');
-      }
-    }
-
-    let usuariosCatCache = [];
-
-    function renderizarBadgeRol(rol) {
-      const r = String(rol || '').trim().toLowerCase();
-      if (r === 'admin' || r === 'administrador') {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">ADMIN</span>`;
-      } else if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">JEFATURA LLANTAS</span>`;
-      } else if (r === 'gerencia' || r === 'gerente') {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">GERENCIA</span>`;
-      } else {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">INSPECTOR</span>`;
-      }
-    }
-
-    function renderizarBadgesVistas(vistasVal, rol) {
-      const r = String(rol || '').trim().toLowerCase();
-      if (r === 'admin' || r === 'administrador') {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
-      }
-      let vistas = [];
-      if (Array.isArray(vistasVal)) {
-        vistas = vistasVal.map(s => String(s).trim().toLowerCase()).filter(Boolean);
-      } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
-        vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-      } else {
-        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
-        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'];
-        else vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
-      }
-      const badges = [];
-      if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
-      if (vistas.includes('basedatos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Base Datos</span>');
-      if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
-      if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
-      if (vistas.includes('composicion')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Composición Flota</span>');
-      if (vistas.includes('bodegas')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Bodegas MRP</span>');
-      if (vistas.includes('catalogos')) {
-        const catText = (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') ? 'Catálogos & Límites' : 'Catálogos (Lectura)';
-        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-50 text-slate-700 border border-slate-200">${catText}</span>`);
-      }
-      return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
-    }
-
-    function renderizarBadgesClientes(clienteAsignadoVal) {
-      let clis = [];
-      if (Array.isArray(clienteAsignadoVal)) {
-        clis = clienteAsignadoVal.map(s => String(s).trim()).filter(Boolean);
-      } else if (typeof clienteAsignadoVal === 'string' && clienteAsignadoVal.trim()) {
-        clis = clienteAsignadoVal.split(',').map(s => s.trim()).filter(Boolean);
-      }
-      if (clis.length === 0) {
-        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Todas las Flotas</span>';
-      }
-      if (clis.length === 1) {
-        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
-      }
-      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${c}</span>`).join('')}</div>`;
-    }
-
-    async function cargarUsuariosCat() {
-      const tbody = document.getElementById('tbodyUsuariosCat');
-      if (!tbody) return;
-
-      if (!esUsuarioAdmin()) {
-        console.warn("Intento de cargar usuarios sin perfil de administrador.");
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="p-6 text-center text-amber-600 font-bold text-xs">
-              <i class="fa-solid fa-lock mr-1"></i>
-              Acceso restringido: Solo los administradores pueden ver y gestionar usuarios.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      // Feedback visual de carga inmediato
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7" class="p-6 text-center text-slate-500">
-            <div class="inline-flex items-center justify-center space-x-2 text-xs font-bold text-slate-600">
-              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 text-base"></i>
-              <span>Cargando lista de usuarios del sistema...</span>
-            </div>
-          </td>
-        </tr>
-      `;
-
-      try {
-        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const res = await fetch('/api/usuarios', { headers });
-
-        if (res.ok) {
-          usuariosCatCache = await res.json();
-          if (!tbody) return;
-          if (!usuariosCatCache || usuariosCatCache.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic text-xs">No hay usuarios registrados. Usa el botón "+ Nuevo Usuario" para crear uno.</td></tr>`;
-            return;
-          }
-          tbody.innerHTML = usuariosCatCache.map(u => `
-            <tr class="hover:bg-slate-50 transition-colors">
-              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
-              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
-              <td class="p-2.5 text-center font-bold uppercase text-[10px]">
-                ${renderizarBadgeRol(u.rol)}
-              </td>
-              <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
-              <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
-              <td class="p-2.5 text-center">
-                ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
-              </td>
-              <td class="p-2.5 text-center">
-                <div class="flex items-center justify-center space-x-1">
-                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
-                    <i class="fa-solid fa-user-pen"></i>
-                  </button>
-                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
-                    <i class="fa-solid fa-key"></i>
-                  </button>
-                  ${String(u.username).toLowerCase() !== 'admin' ? `
-                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
-                  ` : `
-                    <span class="p-1.5 text-slate-300 text-xs" title="Superadmin Protegido"><i class="fa-solid fa-lock"></i></span>
-                  `}
-                </div>
-              </td>
-            </tr>
-          `).join('');
-          console.info(`Usuarios cargados con éxito (${usuariosCatCache.length} registros).`);
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          console.error("Error al obtener usuarios, status:", res.status, errData);
-          if (tbody) {
-            tbody.innerHTML = `
-              <tr>
-                <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
-                  <div><i class="fa-solid fa-triangle-exclamation mr-1"></i> No se pudo cargar los usuarios (${res.status}): ${errData.detail || 'Sesión no válida o sin permisos'}</div>
-                  <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
-                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
-                  </button>
-                </td>
-              </tr>
-            `;
-          }
-        }
-      } catch (e) {
-        console.error("Error de conexión al cargar usuarios:", e);
-        if (tbody) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
-                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${e.message}</div>
-                <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
-                  <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
-                </button>
-              </td>
-            </tr>
-          `;
-        }
-      }
-    }
-
-    // Helpers de Control de Vistas y Asignación de Clientes en Modales
-    function alCambiarRolUsuarioModal(modo) {
-      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
-      const rol = String(document.getElementById(`${pfx}rol`).value || '').trim().toLowerCase();
-      const chkBD = document.getElementById(`${pfx}vista_basedatos`);
-      const chkCat = document.getElementById(`${pfx}vista_catalogos`);
-      const chkPatio = document.getElementById(`${pfx}vista_patio`);
-      const chkDiag = document.getElementById(`${pfx}vista_diagnostico`);
-      const chkKpis = document.getElementById(`${pfx}vista_kpis`);
-      const chkComp = document.getElementById(`${pfx}vista_composicion`);
-      const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
-      const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
-
-      if (rol === 'admin') {
-        // Para admin: acceso total a las vistas
-        if (chkPatio) chkPatio.checked = true;
-        if (chkDiag) chkDiag.checked = true;
-        if (chkKpis) chkKpis.checked = true;
-        if (chkComp) chkComp.checked = true;
-        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
-        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
-        if (lblBD) {
-          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
-          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
-        }
-        if (badgeBD) badgeBD.classList.add('hidden');
-      } else if (rol === 'jefatura') {
-        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Composición, Catálogos)
-        if (chkPatio) chkPatio.checked = true;
-        if (chkDiag) chkDiag.checked = true;
-        if (chkKpis) chkKpis.checked = true;
-        if (chkComp) chkComp.checked = true;
-        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
-        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
-        if (lblBD) {
-          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
-          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
-        }
-        if (badgeBD) badgeBD.classList.add('hidden');
-      } else if (rol === 'gerencia') {
-        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs, Composición)
-        if (chkPatio) chkPatio.checked = false;
-        if (chkDiag) chkDiag.checked = true;
-        if (chkKpis) chkKpis.checked = true;
-        if (chkComp) chkComp.checked = true;
-        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
-        if (chkCat) { chkCat.checked = false; chkCat.disabled = false; }
-        if (lblBD) {
-          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
-          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
-        }
-        if (badgeBD) badgeBD.classList.add('hidden');
-      } else {
-        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos y composición
-        if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
-        if (lblBD) {
-          lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
-          lblBD.classList.add('text-slate-400', 'bg-slate-100');
-        }
-        if (badgeBD) badgeBD.classList.remove('hidden');
-
-        // Catálogos y Composición disponible para inspector
-        if (chkCat) { chkCat.disabled = false; }
-      }
-    }
-
-    function toggleClientesTodosModal(modo) {
-      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
-      const chk = document.getElementById(`${pfx}todas_flotas`);
-      const cont = document.getElementById(modo === 'nuevo' ? 'usr_contenedor_clientes_nuevo' : 'edit_usr_contenedor_clientes');
-      if (chk && cont) {
-        if (chk.checked) {
-          cont.classList.add('hidden');
-        } else {
-          cont.classList.remove('hidden');
-        }
-      }
-    }
-
-    async function poblarListaCheckboxesClientesModal(modo, clientesSeleccionados = []) {
-      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
-      const cont = document.getElementById(contId);
-      if (!cont) return;
-
-      let clientesDisponibles = [];
-      try {
-        const res = await fetch('/api/valores-campo?campo=cliente');
-        if (res.ok) {
-          clientesDisponibles = await res.json();
-        }
-      } catch(e) {}
-
-      // Combinar con los ya seleccionados para no perder ningún valor histórico
-      const setTotal = new Set();
-      (clientesSeleccionados || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim().toUpperCase()); });
-      (clientesDisponibles || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim().toUpperCase()); });
-
-      const lista = Array.from(setTotal).sort((a, b) => a.localeCompare(b));
-      if (lista.length === 0) {
-        cont.innerHTML = '<p class="text-slate-400 italic text-[11px] p-2">No hay clientes registrados en el catálogo. Puedes escribir uno abajo.</p>';
-        return;
-      }
-
-      const selSet = new Set((clientesSeleccionados || []).map(s => s.trim().toLowerCase()));
-      cont.innerHTML = lista.map(c => {
-        const isChecked = selSet.has(c.toLowerCase());
-        return `
-          <label class="flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors">
-            <input type="checkbox" value="${c}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" ${isChecked ? 'checked' : ''}>
-            <span class="font-medium">${c}</span>
-          </label>
-        `;
-      }).join('');
-    }
-
-    function agregarClienteCustomModal(modo) {
-      const inpId = modo === 'nuevo' ? 'usr_cliente_custom_nuevo' : 'edit_usr_cliente_custom';
-      const inp = document.getElementById(inpId);
-      if (!inp) return;
-      const val = inp.value.trim().toUpperCase();
-      if (!val) return;
-
-      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
-      const cont = document.getElementById(contId);
-      if (!cont) return;
-
-      // Verificar si ya existe el checkbox
-      const existentes = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).map(el => el.value.toLowerCase());
-      if (existentes.includes(val.toLowerCase())) {
-        const chk = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).find(el => el.value.toLowerCase() === val.toLowerCase());
-        if (chk) chk.checked = true;
-      } else {
-        const lbl = document.createElement('label');
-        lbl.className = 'flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors';
-        lbl.innerHTML = `
-          <input type="checkbox" value="${val}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" checked>
-          <span class="font-medium">${val}</span>
-        `;
-        cont.prepend(lbl);
-      }
-      inp.value = '';
-    }
-
-    function obtenerVistasSeleccionadasModal(modo) {
-      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
-      const rol = document.getElementById(`${pfx}rol`).value;
-      if (rol === 'admin') {
-        return 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos';
-      }
-      const vistas = [];
-      if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
-      if (document.getElementById(`${pfx}vista_basedatos`)?.checked && (rol === 'jefatura' || rol === 'gerencia')) vistas.push('basedatos');
-      if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
-      if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
-      if (document.getElementById(`${pfx}vista_composicion`)?.checked) vistas.push('composicion');
-      if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
-      // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
-      if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
-      return vistas.join(',');
-    }
-
-    function obtenerClientesSeleccionadosModal(modo) {
-      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
-      const chkTodas = document.getElementById(`${pfx}todas_flotas`);
-      if (chkTodas && chkTodas.checked) {
-        return '';
-      }
-      const checkboxes = document.querySelectorAll(`.chk-cli-modal-${modo}:checked`);
-      const seleccionados = Array.from(checkboxes).map(c => c.value.trim()).filter(Boolean);
-      return seleccionados.join(', ');
-    }
-
-    function configurarClientesUsuarioEnInspeccion() {
-      if (!usuarioActual) return;
-      const selCli = document.getElementById('cliente');
-      const badgeFijo = document.getElementById('badgeClienteAsignadoFijo');
-      if (!selCli) return;
-
-      let rawClis = [];
-      if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
-        rawClis = usuarioActual.clientes_asignados;
-      } else if (usuarioActual.cliente_asignado && typeof usuarioActual.cliente_asignado === 'string') {
-        rawClis = usuarioActual.cliente_asignado.split(',');
-      }
-
-      // Normalizar a mayúsculas limpias y deduplicar insensible a mayúsculas
-      const mapClis = new Map();
-      rawClis.forEach(c => {
-        const clean = String(c || '').trim().toUpperCase();
-        if (clean && !mapClis.has(clean)) {
-          mapClis.set(clean, clean);
-        }
-      });
-      const clis = Array.from(mapClis.values()).sort();
-
-      if (!esUsuarioAdmin() && clis.length === 1) {
-        // REGLA: Si es solo un cliente, en la inspección aparecerá predeterminado y fijo
-        const cliUnico = clis[0];
-
-        let existeOpcion = false;
-        for (let i = 0; i < selCli.options.length; i++) {
-          if (selCli.options[i].value.toUpperCase() === cliUnico) {
-            existeOpcion = true;
-            selCli.selectedIndex = i;
-            break;
-          }
-        }
-        if (!existeOpcion) {
-          const opt = document.createElement('option');
-          opt.value = cliUnico;
-          opt.textContent = cliUnico;
-          opt.selected = true;
-          selCli.appendChild(opt);
-        }
-        selCli.value = cliUnico;
-        selCli.disabled = true;
-        selCli.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
-        selCli.classList.remove('bg-slate-50');
-
-        if (badgeFijo) {
-          badgeFijo.classList.remove('hidden');
-          badgeFijo.innerHTML = `<i class="fa-solid fa-lock text-[9px] mr-1"></i><span>${cliUnico}</span>`;
-        }
-
-        alCambiarClienteMobile();
-      } else if (!esUsuarioAdmin() && clis.length > 1) {
-        // REGLA: Múltiples clientes asignados
-        selCli.disabled = false;
-        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
-        selCli.classList.add('bg-slate-50');
-
-        if (badgeFijo) {
-          badgeFijo.classList.remove('hidden');
-          badgeFijo.innerHTML = `<i class="fa-solid fa-building-user text-[9px] mr-1"></i><span>${clis.length} Flotas</span>`;
-        }
-
-        const valorPrevio = selCli.value ? selCli.value.trim().toUpperCase() : '';
-        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
-        clis.forEach(c => {
-          const isSel = (valorPrevio && valorPrevio === c);
-          html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
-        });
-        selCli.innerHTML = html;
-        if (valorPrevio && clis.includes(valorPrevio)) {
-          selCli.value = valorPrevio;
-        }
-      } else {
-        // Administrador o Todas las flotas
-        selCli.disabled = false;
-        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
-        selCli.classList.add('bg-slate-50');
-        if (badgeFijo) badgeFijo.classList.add('hidden');
-      }
-    }
-
-    function abrirModalNuevoUsuario() {
-      document.getElementById('usr_username').value = '';
-      document.getElementById('usr_nombre').value = '';
-      document.getElementById('usr_pass').value = '';
-      document.getElementById('usr_rol').value = 'inspector';
-      document.getElementById('usr_vista_patio').checked = true;
-      document.getElementById('usr_vista_diagnostico').checked = true;
-      document.getElementById('usr_vista_kpis').checked = true;
-      document.getElementById('usr_vista_composicion').checked = true;
-      document.getElementById('usr_vista_catalogos').checked = true;
-      document.getElementById('usr_todas_flotas').checked = true;
-      document.getElementById('usr_cliente_custom_nuevo').value = '';
-      toggleClientesTodosModal('nuevo');
-      alCambiarRolUsuarioModal('nuevo');
-      poblarListaCheckboxesClientesModal('nuevo', []);
-
-      // Solo el admin puede asignar el rol admin
-      const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
-      if (optAdminNuevo) {
-        optAdminNuevo.disabled = !esUsuarioAdmin();
-      }
-
-      const modal = document.getElementById('modalNuevoUsuario');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function cerrarModalNuevoUsuario() {
-      const modal = document.getElementById('modalNuevoUsuario');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    async function guardarNuevoUsuario() {
-      const u = document.getElementById('usr_username').value.trim();
-      const n = document.getElementById('usr_nombre').value.trim();
-      const p = document.getElementById('usr_pass').value.trim();
-      if (!u || !n || !p) {
-        alert('Por favor completa todos los campos del usuario.');
-        return;
-      }
-      if (p.length < 4) {
-        alert('La contraseña debe tener al menos 4 caracteres.');
-        return;
-      }
-      const rol = document.getElementById('usr_rol').value;
-      if (rol === 'admin' && !esUsuarioAdmin()) {
-        alert('Solo un administrador puede crear usuarios con rol Administrador.');
-        return;
-      }
-
-      const vistas = obtenerVistasSeleccionadasModal('nuevo');
-      const cliente = obtenerClientesSeleccionadosModal('nuevo');
-
-      try {
-        const res = await fetch('/api/usuarios', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            username: u,
-            nombre_completo: n,
-            password: p,
-            rol: rol,
-            cliente_asignado: cliente,
-            vistas_permitidas: vistas
-          })
-        });
-        if (res.ok) {
-          cerrarModalNuevoUsuario();
-          mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
-          cargarUsuariosCat();
-        } else {
-          const d = await res.json();
-          mostrarToast(d.detail || 'Error al crear usuario', true);
-        }
-      } catch (e) {
-        mostrarToast('Error de conexión con el servidor', true);
-      }
-    }
-
-    function abrirModalEditarUsuario(username) {
-      const u = usuariosCatCache.find(x => x.username.toLowerCase() === username.toLowerCase());
-      if (!u) return;
-      document.getElementById('edit_usr_username').value = u.username;
-      document.getElementById('edit_usr_nombre').value = u.nombre_completo;
-      document.getElementById('edit_usr_rol').value = u.rol;
-      document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
-      document.getElementById('edit_usr_cliente_custom').value = '';
-
-      const errBox = document.getElementById('edit_usr_error');
-      if (errBox) errBox.classList.add('hidden');
-
-      const esSuperAdmin = u.username.toLowerCase() === 'admin';
-      document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
-      document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
-
-      // Solo el admin puede asignar el rol admin
-      const optAdminEdit = document.querySelector('#edit_usr_rol option[value="admin"]');
-      if (optAdminEdit) {
-        optAdminEdit.disabled = !esUsuarioAdmin();
-      }
-
-      alCambiarRolUsuarioModal('editar');
-
-      // Vistas permitidas
-      let vistas = [];
-      if (Array.isArray(u.vistas_permitidas)) {
-        vistas = u.vistas_permitidas.map(s => String(s).trim().toLowerCase());
-      } else if (typeof u.vistas_permitidas === 'string' && u.vistas_permitidas.trim()) {
-        vistas = u.vistas_permitidas.split(',').map(s => s.trim().toLowerCase());
-      } else {
-        vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'catalogos'];
-      }
-      document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
-      if (document.getElementById('edit_usr_vista_basedatos')) {
-        document.getElementById('edit_usr_vista_basedatos').checked = vistas.includes('basedatos') && u.rol !== 'inspector';
-      }
-      document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
-      document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
-      if (document.getElementById('edit_usr_vista_composicion')) {
-        document.getElementById('edit_usr_vista_composicion').checked = vistas.includes('composicion');
-      }
-      document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
-
-      // Clientes asignados
-      let clis = [];
-      if (Array.isArray(u.clientes_asignados) && u.clientes_asignados.length > 0) {
-        clis = u.clientes_asignados;
-      } else if (u.cliente_asignado) {
-        clis = u.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
-      }
-
-      if (clis.length === 0) {
-        document.getElementById('edit_usr_todas_flotas').checked = true;
-      } else {
-        document.getElementById('edit_usr_todas_flotas').checked = false;
-      }
-      toggleClientesTodosModal('editar');
-      poblarListaCheckboxesClientesModal('editar', clis);
-
-      const modal = document.getElementById('modalEditarUsuario');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function cerrarModalEditarUsuario() {
-      const modal = document.getElementById('modalEditarUsuario');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    async function guardarEdicionUsuario() {
-      const username = document.getElementById('edit_usr_username').value.trim();
-      const nombre = document.getElementById('edit_usr_nombre').value.trim();
-      const rol = document.getElementById('edit_usr_rol').value;
-      const activo = document.getElementById('edit_usr_activo').value === '1';
-      const vistas = obtenerVistasSeleccionadasModal('editar');
-      const cliente = obtenerClientesSeleccionadosModal('editar');
-      const errBox = document.getElementById('edit_usr_error');
-      if (errBox) errBox.classList.add('hidden');
-
-      if (!nombre) {
-        if (errBox) {
-          errBox.textContent = 'El nombre completo es obligatorio.';
-          errBox.classList.remove('hidden');
-        }
-        return;
-      }
-
-      if (rol === 'admin' && !esUsuarioAdmin()) {
-        if (errBox) {
-          errBox.textContent = 'Solo un administrador puede asignar el rol Administrador.';
-          errBox.classList.remove('hidden');
-        }
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/usuarios/${username}`, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            nombre_completo: nombre,
-            rol: rol,
-            cliente_asignado: cliente,
-            vistas_permitidas: vistas,
-            activo: activo
-          })
-        });
-        const d = await res.json();
-        if (res.ok) {
-          if (usuarioActual && usuarioActual.username.toLowerCase() === username.toLowerCase()) {
-            usuarioActual.nombre_completo = nombre;
-            usuarioActual.rol = rol;
-            usuarioActual.cliente_asignado = cliente;
-            usuarioActual.clientes_asignados = cliente ? cliente.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [];
-            usuarioActual.vistas_permitidas = vistas;
-            localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
-            localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
-            actualizarUIUsuario();
-            configurarClientesUsuarioEnInspeccion();
-          }
-
-          cerrarModalEditarUsuario();
-          mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
-          cargarUsuariosCat();
-          sincronizarUsuarioActualSesion();
-        } else {
-          if (errBox) {
-            errBox.textContent = d.detail || 'Error al actualizar el usuario.';
-            errBox.classList.remove('hidden');
-          }
-        }
-      } catch (e) {
-        if (errBox) {
-          errBox.textContent = 'Error de conexión con el servidor.';
-          errBox.classList.remove('hidden');
-        }
-      }
-    }
-
-    let targetResetUser = null;
-
-    function abrirModalResetPassword(username) {
-      targetResetUser = username;
-      document.getElementById('reset_usr_label').textContent = username;
-      document.getElementById('reset_nueva_password').value = '';
-      document.getElementById('reset_confirmar_password').value = '';
-      const errBox = document.getElementById('reset_password_error');
-      if (errBox) errBox.classList.add('hidden');
-
-      const modal = document.getElementById('modalResetPassword');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function cerrarModalResetPassword() {
-      targetResetUser = null;
-      const modal = document.getElementById('modalResetPassword');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function togglePasswordVisibility(inputId, iconId) {
-      const inp = document.getElementById(inputId);
-      const ico = document.getElementById(iconId);
-      if (!inp || !ico) return;
-      if (inp.type === 'password') {
-        inp.type = 'text';
-        ico.classList.remove('fa-eye');
-        ico.classList.add('fa-eye-slash');
-      } else {
-        inp.type = 'password';
-        ico.classList.remove('fa-eye-slash');
-        ico.classList.add('fa-eye');
-      }
-    }
-
-    async function ejecutarResetPassword() {
-      if (!targetResetUser) return;
-      const p1 = document.getElementById('reset_nueva_password').value.trim();
-      const p2 = document.getElementById('reset_confirmar_password').value.trim();
-      const errBox = document.getElementById('reset_password_error');
-      if (errBox) errBox.classList.add('hidden');
-
-      if (!p1 || p1.length < 4) {
-        if (errBox) {
-          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
-          errBox.classList.remove('hidden');
-        }
-        return;
-      }
-
-      if (p1 !== p2) {
-        if (errBox) {
-          errBox.textContent = 'Las contraseñas no coinciden. Por favor verifícalas.';
-          errBox.classList.remove('hidden');
-        }
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/usuarios/${targetResetUser}/reset-password`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ nueva_password: p1 })
-        });
-        const d = await res.json();
-        if (res.ok) {
-          cerrarModalResetPassword();
-          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
-        } else {
-          if (errBox) {
-            errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
-            errBox.classList.remove('hidden');
-          }
-        }
-      } catch (e) {
-        if (errBox) {
-          errBox.textContent = 'Error de conexión con el servidor.';
-          errBox.classList.remove('hidden');
-        }
-      }
-    }
-
-    async function eliminarUsuarioCat(username) {
-      if (!confirm(`¿Eliminar al usuario "${username}"?`)) return;
-      const res = await fetch(`/api/usuarios/${username}`, { method: 'DELETE' });
-      if (res.ok) {
-        mostrarToast(`Usuario ${username} eliminado.`);
-        cargarUsuariosCat();
-      } else {
-        const d = await res.json();
-        mostrarToast(d.detail || 'Error al eliminar usuario', true);
-      }
-    }
-
-
+```javascript
     // ==========================================
     // FUNCIONES DEL MOTOR DE PATIO Y CAPTURA
     // ==========================================
@@ -38742,7 +35332,6641 @@ if __name__ == '__main__':
     function sincronizarSlotEspecificaciones() {
       // Orden de patio: 1. Cliente -> 2. Diagrama Chasis -> 3. Especificaciones de Llanta -> 4. Mediciones
     }
+```
 
+---
+
+## Archivo: static/js/modulo_basedatos.js
+
+- **Ruta:** `static/js/modulo_basedatos.js`
+- **Descripción:** Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel
+- **Métricas:** 687 líneas | 34,837 bytes (34.0 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
+    // ==========================================
+    // VISTA 2: BASE DE INSPECCIONES (CRUD, FILTROS & EXCEL)
+    // ==========================================
+    let bdFiltrosPoblados = false;
+
+    async function cargarBaseInspecciones() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
+      }
+      try {
+        const res = await fetch('/api/inspecciones');
+        if (res.ok) {
+          cacheTodasInspecciones = await res.json();
+          const bTotal = document.getElementById('badgeTotalInspecciones');
+          if (bTotal) bTotal.textContent = cacheTodasInspecciones.length;
+          const lTotal = document.getElementById('lblTotalBD');
+          if (lTotal) lTotal.textContent = cacheTodasInspecciones.length;
+          poblarSelectoresFiltroBD(cacheTodasInspecciones);
+          filtrarTablaBD();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
+        }
+      } catch (e) {
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+        }
+        mostrarToast('Error al cargar inspecciones desde el servidor', true);
+      }
+    }
+
+    function poblarSelectoresFiltroBD(data) {
+      if (!Array.isArray(data)) return;
+
+      const selCli = document.getElementById('filtroBDCliente');
+      const selOp = document.getElementById('filtroBDOperacion');
+      const selTip = document.getElementById('filtroBDTipologia');
+      const selMar = document.getElementById('filtroBDMarca');
+
+      if (!selCli || !selOp || !selTip || !selMar) return;
+
+      // Guardar selecciones actuales
+      const valCli = selCli.value || 'TODOS';
+      const valOp = selOp.value || 'TODOS';
+      const valTip = selTip.value || 'TODOS';
+      const valMar = selMar.value || 'TODOS';
+
+      // Extraer valores únicos no vacíos
+      const clientes = Array.from(new Set(data.map(r => (r.cliente || '').trim()).filter(Boolean))).sort();
+      const operaciones = Array.from(new Set(data.map(r => (r.tipo_operacion || '').trim()).filter(Boolean))).sort();
+      const tipologias = Array.from(new Set(data.map(r => (r.tipologia || '').trim()).filter(Boolean))).sort();
+      const marcas = Array.from(new Set(data.map(r => (r.marca || '').trim()).filter(Boolean))).sort();
+
+      selCli.innerHTML = '<option value="TODOS">Todos los Clientes</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+      selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+      selTip.innerHTML = '<option value="TODOS">Todas las Tipologías</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
+      selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+
+      // Restaurar si aún existen
+      if (clientes.includes(valCli)) selCli.value = valCli;
+      if (operaciones.includes(valOp)) selOp.value = valOp;
+      if (tipologias.includes(valTip)) selTip.value = valTip;
+      if (marcas.includes(valMar)) selMar.value = valMar;
+
+      actualizarCombosSedesBD();
+    }
+
+    function actualizarCombosSedesBD() {
+      const selCli = document.getElementById('filtroBDCliente');
+      const selSede = document.getElementById('filtroBDSede');
+      if (!selSede) return;
+
+      const valCli = selCli ? (selCli.value || 'TODOS') : 'TODOS';
+      const valSedeActual = selSede.value || 'TODOS';
+
+      const sedes = Array.from(new Set(
+        cacheTodasInspecciones
+          .filter(r => (valCli === 'TODOS' || (r.cliente || '').toLowerCase() === valCli.toLowerCase()))
+          .map(r => (r.subcliente || '').trim())
+          .filter(Boolean)
+      )).sort();
+
+      selSede.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
+        selSede.value = valSedeActual;
+      } else {
+        selSede.value = 'TODOS';
+      }
+    }
+
+    function onCambioFiltroBDCliente() {
+      actualizarCombosSedesBD();
+      filtrarTablaBD();
+    }
+
+    let paginaActualBD = 1;
+    const ITEMS_POR_PAGINA_BD = 25;
+    let cacheFiltradasBD = [];
+
+    function filtrarTablaBD() {
+      paginaActualBD = 1;
+      aplicarFiltrosYRenderizarBD();
+    }
+
+    function cambiarPaginaBD(nuevaPagina) {
+      const totalPaginas = Math.ceil(cacheFiltradasBD.length / ITEMS_POR_PAGINA_BD) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualBD = nuevaPagina;
+      renderizarTablaBD();
+      const contTabla = document.querySelector('#vista-basedatos .overflow-x-auto');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
+    function aplicarFiltrosYRenderizarBD() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      if (!tbody) return;
+
+      const q = (document.getElementById('filtroTextoBD')?.value || '').trim().toLowerCase();
+      const fDesde = document.getElementById('filtroBDFechaDesde')?.value || '';
+      const fHasta = document.getElementById('filtroBDFechaHasta')?.value || '';
+      const cli = document.getElementById('filtroBDCliente')?.value || 'TODOS';
+      const sede = document.getElementById('filtroBDSede')?.value || 'TODOS';
+      const op = document.getElementById('filtroBDOperacion')?.value || 'TODOS';
+      const tip = document.getElementById('filtroBDTipologia')?.value || 'TODOS';
+      const marca = document.getElementById('filtroBDMarca')?.value || 'TODOS';
+      const vida = document.getElementById('filtroBDVida')?.value || 'TODOS';
+      const semaforo = document.getElementById('filtroBDSemaforo')?.value || 'TODOS';
+
+      // Conteo de filtros activos
+      let filtrosActivos = 0;
+      if (q) filtrosActivos++;
+      if (fDesde) filtrosActivos++;
+      if (fHasta) filtrosActivos++;
+      if (cli !== 'TODOS') filtrosActivos++;
+      if (sede !== 'TODOS') filtrosActivos++;
+      if (op !== 'TODOS') filtrosActivos++;
+      if (tip !== 'TODOS') filtrosActivos++;
+      if (marca !== 'TODOS') filtrosActivos++;
+      if (vida !== 'TODOS') filtrosActivos++;
+      if (semaforo !== 'TODOS') filtrosActivos++;
+
+      const badgeFiltros = document.getElementById('badgeFiltrosActivosBD');
+      if (badgeFiltros) {
+        if (filtrosActivos > 0) {
+          badgeFiltros.textContent = `${filtrosActivos} filtro${filtrosActivos > 1 ? 's' : ''} activo${filtrosActivos > 1 ? 's' : ''}`;
+          badgeFiltros.classList.remove('hidden');
+        } else {
+          badgeFiltros.classList.add('hidden');
+        }
+      }
+
+      cacheFiltradasBD = cacheTodasInspecciones.filter(r => {
+        // 1. Filtro Texto Libre
+        if (q) {
+          const matchTexto = (r.placa || '').toLowerCase().includes(q) ||
+                             (r.cliente || '').toLowerCase().includes(q) ||
+                             (r.subcliente || '').toLowerCase().includes(q) ||
+                             (r.numero_interno || '').toLowerCase().includes(q) ||
+                             (r.marca || '').toLowerCase().includes(q) ||
+                             (r.diseno || '').toLowerCase().includes(q) ||
+                             (r.dimension || '').toLowerCase().includes(q) ||
+                             (r.novedades || '').toLowerCase().includes(q) ||
+                             (r.usuario_registro || '').toLowerCase().includes(q);
+          if (!matchTexto) return false;
+        }
+
+        // 2. Rango de Fechas
+        if (fDesde && r.fecha && r.fecha < fDesde) return false;
+        if (fHasta && r.fecha && r.fecha > fHasta) return false;
+
+        // 3. Cliente
+        if (cli !== 'TODOS' && (r.cliente || '').toLowerCase() !== cli.toLowerCase()) return false;
+
+        // 3.1 Sede (subcliente)
+        if (sede !== 'TODOS' && (r.subcliente || '').toLowerCase() !== sede.toLowerCase()) return false;
+
+        // 4. Operación
+        if (op !== 'TODOS' && (r.tipo_operacion || '').toLowerCase() !== op.toLowerCase()) return false;
+
+        // 5. Tipología
+        if (tip !== 'TODOS' && (r.tipologia || '').toLowerCase() !== tip.toLowerCase()) return false;
+
+        // 6. Marca
+        if (marca !== 'TODOS' && (r.marca || '').toLowerCase() !== marca.toLowerCase()) return false;
+
+        // 7. Condición / Vida
+        if (vida !== 'TODOS') {
+          const vNorm = (r.vida || '').toLowerCase();
+          if (!vNorm.includes(vida.toLowerCase())) return false;
+        }
+
+        // 8. Semáforo / Desgaste & Presión
+        if (semaforo !== 'TODOS') {
+          const pExt = parseFloat(r.prof_ext) || 0;
+          const pCent = parseFloat(r.prof_cent) || 0;
+          const pInt = parseFloat(r.prof_int) || 0;
+          const profValidas = [pExt, pCent, pInt].filter(p => p > 0);
+          const minP = profValidas.length > 0 ? Math.min(...profValidas) : 0;
+          const psiVal = parseFloat(r.psi) || 0;
+
+          if (semaforo === 'CRITICO' && !(minP > 0 && minP <= 3.0)) return false;
+          if (semaforo === 'ALERTA' && !(minP > 3.0 && minP <= 5.0)) return false;
+          if (semaforo === 'OPTIMO' && !(minP > 5.0)) return false;
+          if (semaforo === 'PSI_ANORMAL' && (psiVal >= 90 && psiVal <= 120)) return false;
+        }
+
+        return true;
+      });
+
+      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.length;
+      document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
+
+      renderizarTablaBD();
+    }
+
+    function renderizarTablaBD() {
+      const tbody = document.getElementById('tbodyInspecciones');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionBD');
+      if (!tbody) return;
+
+      if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="25" class="p-12 text-center text-slate-400">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <i class="fa-solid fa-filter-circle-xmark text-3xl text-slate-300"></i>
+                <span class="font-bold text-slate-600">No se encontraron inspecciones con los filtros seleccionados</span>
+                <span class="text-xs text-slate-400">Intenta cambiar los términos de búsqueda o restablecer los filtros</span>
+                <button type="button" onclick="limpiarFiltrosBD()" class="mt-2 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs rounded-xl border border-blue-200 transition-all">
+                  Restablecer Filtros
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        return;
+      }
+
+      // Cálculo de Paginación de 25 resultados
+      const totalRegistros = cacheFiltradasBD.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_BD) || 1;
+      if (paginaActualBD > totalPaginas) paginaActualBD = totalPaginas;
+      if (paginaActualBD < 1) paginaActualBD = 1;
+
+      const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, totalRegistros);
+      const paginaItems = cacheFiltradasBD.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(r => {
+        const pExt = parseFloat(r.prof_ext) || 0;
+        const pCent = parseFloat(r.prof_cent) || 0;
+        const pInt = parseFloat(r.prof_int) || 0;
+        const profValidas = [pExt, pCent, pInt].filter(p => p > 0);
+        const minP = profValidas.length > 0 ? Math.min(...profValidas) : 0;
+        
+        let colorDesgaste = 'text-slate-700 font-medium';
+        let badgeAlerta = '';
+        if (minP > 0 && minP <= 3.0) {
+          colorDesgaste = 'text-rose-600 font-black';
+          badgeAlerta = '<span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-800">RETIRO</span>';
+        } else if (minP > 3.0 && minP <= 5.0) {
+          colorDesgaste = 'text-amber-600 font-bold';
+        }
+
+        const fotos = obtenerListaFotos(r.foto_novedad);
+        const tieneFotos = fotos.length > 0;
+        const htmlBotonFotos = tieneFotos ? `
+          <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${fotos.length} foto(s) de evidencia de forma ordenada">
+            <i class="fa-solid fa-camera text-blue-600 text-[11px]"></i>
+            <span>Ver foto${fotos.length > 1 ? 's' : ''} (${fotos.length})</span>
+          </button>
+        ` : `<span class="text-slate-300 font-medium text-xs">Sin fotos</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
+            <td class="p-2.5 text-center whitespace-nowrap">
+              ${tieneFotos ? `
+                <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+              ` : ''}
+              ${esAdminOJefatura() ? `
+                <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </td>
+            <td class="p-2.5 font-mono text-slate-600">${r.fecha || '-'}</td>
+            <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
+            <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
+            <td class="p-2.5">${r.tipo_operacion || '-'}</td>
+            <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${r.placa || '-'}</td>
+            <td class="p-2.5 font-bold text-slate-800">${r.numero_interno || '-'}</td>
+            <td class="p-2.5 text-center font-black">
+              <span class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-800 font-mono text-xs">
+                ${r.posicion}
+              </span>
+            </td>
+            <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
+            <td class="p-2.5">${r.tipologia || '-'}</td>
+            <td class="p-2.5 font-bold text-slate-800">${r.marca || '-'}</td>
+            <td class="p-2.5">${r.diseno || '-'}</td>
+            <td class="p-2.5 font-mono text-[11px]">${r.dimension || '-'}</td>
+            <td class="p-2.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${
+                (r.vida || '').toLowerCase().includes('reen') || (r.banda_reen && r.banda_reen !== '-') 
+                  ? 'bg-purple-50 text-purple-700' 
+                  : 'bg-blue-50 text-blue-700'
+              }">
+                ${(r.vida && r.vida !== '-') ? r.vida : (r.banda_reen && r.banda_reen !== '-' ? 'REENCAUCHE' : 'ORIGINAL')}
+              </span>
+            </td>
+            <td class="p-2.5 text-slate-500">${r.banda_reen || '-'}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_ext}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_cent}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_int}${badgeAlerta}</td>
+            <td class="p-2.5 text-center font-mono font-bold ${
+              (parseFloat(r.psi) < 90 || parseFloat(r.psi) > 120) ? 'text-amber-600 bg-amber-50/60 rounded' : 'text-slate-700'
+            }">${r.psi}</td>
+            <td class="p-2.5 max-w-xs truncate" title="${escapeHtml(r.novedades || '')}">
+              ${escapeHtml(r.novedades) || '-'}
+            </td>
+            <td class="p-2.5 text-center whitespace-nowrap">
+              ${htmlBotonFotos}
+            </td>
+            <td class="p-2.5 text-right font-mono text-slate-600">$${(r.precio || 0).toLocaleString()}</td>
+            <td class="p-2.5 text-center font-mono text-slate-400">${r.prof_inicial || 0}</td>
+            <td class="p-2.5 text-right font-mono text-slate-400">${(r.km_montaje || 0).toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin);
+    }
+
+    function actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionBD');
+      const spanInicio = document.getElementById('pagInicioBD');
+      const spanFin = document.getElementById('pagFinBD');
+      const spanTotal = document.getElementById('pagTotalBD');
+      const controles = document.getElementById('controlesPaginacionBD');
+
+      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
+
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+      contenedor.classList.remove('hidden');
+
+      spanInicio.textContent = (inicio + 1).toLocaleString();
+      spanFin.textContent = fin.toLocaleString();
+      spanTotal.textContent = totalRegistros.toLocaleString();
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualBD <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualBD <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(${paginaActualBD - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualBD - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualBD + 1);
+
+        if (paginaActualBD <= 3) {
+          end = 4;
+        } else if (paginaActualBD >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualBD) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaBD(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualBD >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(${paginaActualBD + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualBD >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaBD(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
+
+    function limpiarTextoFiltroBD() {
+      const input = document.getElementById('filtroTextoBD');
+      if (input) {
+        input.value = '';
+        filtrarTablaBD();
+      }
+    }
+
+    function limpiarFiltrosBD() {
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('filtroTextoBD', '');
+      setVal('filtroBDFechaDesde', '');
+      setVal('filtroBDFechaHasta', '');
+      setVal('filtroBDCliente', 'TODOS');
+      setVal('filtroBDSede', 'TODOS');
+      setVal('filtroBDOperacion', 'TODOS');
+      setVal('filtroBDTipologia', 'TODOS');
+      setVal('filtroBDMarca', 'TODOS');
+      setVal('filtroBDVida', 'TODOS');
+      setVal('filtroBDSemaforo', 'TODOS');
+      actualizarCombosSedesBD();
+      filtrarTablaBD();
+      mostrarToast('Filtros de búsqueda restablecidos.');
+    }
+
+    async function abrirModalEditarInspeccion(id) {
+      try {
+        const res = await fetch(`/api/inspecciones/${id}`);
+        if (!res.ok) throw new Error('No se pudo obtener el registro');
+        const d = await res.json();
+        
+        document.getElementById('edit_id').value = d.id;
+        document.getElementById('lblEditSubtitulo').textContent = `ID: ${d.id} | Vehículo: ${d.placa} | Posición: ${d.posicion}`;
+        document.getElementById('edit_fecha').value = d.fecha || '';
+        document.getElementById('edit_cliente').value = d.cliente || '';
+        document.getElementById('edit_subcliente').value = d.subcliente || '';
+        document.getElementById('edit_tipo_operacion').value = d.tipo_operacion || '';
+        document.getElementById('edit_placa').value = d.placa || '';
+        document.getElementById('edit_posicion').value = d.posicion || 1;
+        document.getElementById('edit_numero_interno').value = d.numero_interno || '';
+        document.getElementById('edit_kilometraje').value = d.kilometraje || 0;
+        document.getElementById('edit_tipologia').value = d.tipologia || '';
+        document.getElementById('edit_marca').value = d.marca || '';
+        document.getElementById('edit_diseno').value = d.diseno || '';
+        document.getElementById('edit_dimension').value = d.dimension || '';
+        const vEd = String(d.vida || 'Original').trim();
+        const selEditVida = document.getElementById('edit_vida');
+        if (selEditVida) {
+          selEditVida.value = vEd.toLowerCase().includes('reen') ? 'Reencauche' : 'Original';
+        }
+        document.getElementById('edit_banda_reen').value = d.banda_reen || '';
+        document.getElementById('edit_psi').value = d.psi || 100;
+        document.getElementById('edit_prof_ext').value = d.prof_ext || 0;
+        document.getElementById('edit_prof_cent').value = d.prof_cent || 0;
+        document.getElementById('edit_prof_int').value = d.prof_int || 0;
+        document.getElementById('edit_prof_inicial').value = d.prof_inicial || 0;
+        document.getElementById('edit_precio').value = d.precio || 0;
+        document.getElementById('edit_km_montaje').value = d.km_montaje || 0;
+        document.getElementById('edit_novedades').value = d.novedades || '';
+        fotosEdicionActuales = obtenerListaFotos(d.foto_novedad);
+        actualizarUIFotosEdicion();
+
+        document.getElementById('modalEditarInspeccion').classList.remove('hidden');
+        document.getElementById('modalEditarInspeccion').classList.add('flex');
+      } catch (e) {
+        mostrarToast('Error al cargar datos para edición', true);
+      }
+    }
+
+    function cerrarModalEditarInspeccion() {
+      const m = document.getElementById('modalEditarInspeccion');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+      fotosEdicionActuales = [];
+    }
+
+    async function guardarEdicionInspeccion(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit_id').value;
+      const subVal = (document.getElementById('edit_subcliente')?.value || '').trim();
+      if (!subVal) {
+        mostrarToast('⚠️ La Sede / Subcliente es un campo obligatorio', true);
+        document.getElementById('edit_subcliente')?.focus();
+        return;
+      }
+      const payload = {
+        fecha: document.getElementById('edit_fecha').value,
+        cliente: document.getElementById('edit_cliente').value,
+        subcliente: document.getElementById('edit_subcliente').value,
+        tipo_operacion: document.getElementById('edit_tipo_operacion').value,
+        placa: document.getElementById('edit_placa').value.trim().toUpperCase(),
+        posicion: parseInt(document.getElementById('edit_posicion').value) || 1,
+        numero_interno: document.getElementById('edit_numero_interno').value.trim().toUpperCase(),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
+        kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
+        tipologia: document.getElementById('edit_tipologia').value,
+        marca: document.getElementById('edit_marca').value,
+        diseno: document.getElementById('edit_diseno').value,
+        dimension: document.getElementById('edit_dimension').value,
+        vida: (document.getElementById('edit_vida')?.value || 'Original').trim() || 'Original',
+        banda_reen: document.getElementById('edit_banda_reen').value,
+        psi: parseFloat(document.getElementById('edit_psi').value) || 100,
+        prof_ext: parseFloat(document.getElementById('edit_prof_ext').value) || 0,
+        prof_cent: parseFloat(document.getElementById('edit_prof_cent').value) || 0,
+        prof_int: parseFloat(document.getElementById('edit_prof_int').value) || 0,
+        prof_inicial: parseFloat(document.getElementById('edit_prof_inicial').value) || 0,
+        precio: parseFloat(document.getElementById('edit_precio').value) || 0,
+        km_montaje: parseFloat(document.getElementById('edit_km_montaje').value) || 0,
+        novedades: document.getElementById('edit_novedades').value,
+        foto_novedad: document.getElementById('edit_foto_novedad_base64')?.value || ''
+      };
+
+
+      try {
+        const res = await fetch(`/api/inspecciones/${id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalEditarInspeccion();
+          mostrarToast(`✅ Registro ID ${id} actualizado correctamente.`);
+          cargarBaseInspecciones();
+        } else {
+          mostrarToast(d.detail || d.message || 'Error al actualizar', true);
+        }
+      } catch (err) {
+        mostrarToast('Error de red al actualizar la inspección', true);
+      }
+    }
+
+    async function eliminarInspeccion(id, placa, pos) {
+      if (!confirm(`¿Eliminar la inspección ID ${id} (Vehículo ${placa}, Posición ${pos})?`)) return;
+      try {
+        const res = await fetch(`/api/inspecciones/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`🗑️ Registro ID ${id} eliminado.`);
+          cargarBaseInspecciones();
+        } else {
+          mostrarToast('No se pudo eliminar el registro', true);
+        }
+      } catch (e) {
+        mostrarToast('Error al intentar eliminar', true);
+      }
+    }
+
+    // Funciones de Excel
+    function abrirModalImportarExcel() {
+      const m = document.getElementById('modalImportarExcel');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function cerrarModalImportarExcel() {
+      const m = document.getElementById('modalImportarExcel');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+    function descargarPlantillaExcel() {
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/plantilla-excel${q}`;
+    }
+    function exportarInspeccionesExcel() {
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
+      window.location.href = `/api/inspecciones/exportar-excel${q}`;
+    }
+
+    // Zona Drag and Drop Excel
+    const dropZone = document.getElementById('dropZoneExcel');
+    const fileInput = document.getElementById('fileExcelInput');
+    if (dropZone && fileInput) {
+      dropZone.onclick = () => fileInput.click();
+      dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('border-emerald-500', 'bg-emerald-50'); };
+      dropZone.ondragleave = () => { dropZone.classList.remove('border-emerald-500', 'bg-emerald-50'); };
+      dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-emerald-500', 'bg-emerald-50');
+        if (e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          alSeleccionarArchivoExcel({ target: fileInput });
+        }
+      };
+    }
+
+    function alSeleccionarArchivoExcel(e) {
+      const f = e.target.files[0];
+      const lbl = document.getElementById('lblArchivoSeleccionado');
+      const btn = document.getElementById('btnSubirExcel');
+      if (f) {
+        lbl.textContent = `Archivo seleccionado: ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+        btn.disabled = false;
+      } else {
+        lbl.textContent = 'Formatos permitidos: .xlsx, .xls';
+        btn.disabled = true;
+      }
+    }
+
+    async function ejecutarImportarExcel() {
+      const f = fileInput.files[0];
+      if (!f) return;
+      const btn = document.getElementById('btnSubirExcel');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando...';
+
+      const formData = new FormData();
+      formData.append('file', f);
+
+      try {
+        const res = await fetch('/api/inspecciones/importar-excel', {
+          method: 'POST',
+          body: formData
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalImportarExcel();
+          mostrarToast(`🎉 ${d.message || 'Importación completada'}`);
+          cargarBaseInspecciones();
+        } else {
+          mostrarToast(d.detail || 'Error al procesar el archivo Excel', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de red al subir el archivo', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Subir e Importar';
+      }
+    }
+```
+
+---
+
+## Archivo: static/js/modulo_kpis.js
+
+- **Ruta:** `static/js/modulo_kpis.js`
+- **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
+- **Métricas:** 1946 líneas | 83,884 bytes (81.9 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
+    // =========================================================================
+    // CONTROLADOR DE LA SUITE ANALÍTICA DE 20 KPIS (5 PESTAÑAS HOMOLOGADAS)
+    // =========================================================================
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 2);
+      Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
+      Chart.defaults.color = '#475569';
+      if (typeof ChartDataLabels !== 'undefined') {
+        try {
+          Chart.register(ChartDataLabels);
+        } catch (e) {
+          console.warn('ChartDataLabels ya registrado o error:', e);
+        }
+      }
+    }
+
+    let modoLicenciaSuite = 'FULL'; // 'LIGHT' o 'FULL'
+    let datosSuite20Actuales = null;
+    let subpestanaKpiActiva = 1;
+    let agrupacionKpi14Actual = 'marca';
+    const instanciasChartsSuite = {};
+
+    function formatCO_Miles(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      return Math.round(num).toLocaleString('es-CO');
+    }
+
+    function formatCO_Moneda(num) {
+      if (num === null || num === undefined || isNaN(num)) return '$ 0';
+      return '$ ' + Math.round(num).toLocaleString('es-CO');
+    }
+
+    function formatCO_Decimal(num, dec = 1) {
+      if (num === null || num === undefined || isNaN(num)) return '0,0';
+      return Number(num).toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    }
+
+    const animacionCascadaStandard = {
+      duration: 850,
+      easing: 'easeOutQuart',
+      delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 35 : 0
+    };
+
+    function pillDatalabelConfig(bgColor = 'rgba(15, 23, 42, 0.88)', textColor = '#ffffff', formatter = null) {
+      return {
+        display: (ctx) => {
+          const ds = ctx.dataset;
+          if (ds && ds.data && ds.data.length > 10) {
+            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1);
+          }
+          return true;
+        },
+        backgroundColor: bgColor,
+        borderRadius: 5,
+        color: textColor,
+        font: { weight: '800', size: 10 },
+        padding: { top: 2, bottom: 2, left: 6, right: 6 },
+        formatter: formatter || ((val) => (val !== null && val !== undefined) ? formatCO_Miles(val) : '')
+      };
+    }
+
+    function destruirChartSuite(chartId) {
+      if (instanciasChartsSuite[chartId]) {
+        try {
+          instanciasChartsSuite[chartId].destroy();
+        } catch (e) {}
+        delete instanciasChartsSuite[chartId];
+      }
+    }
+
+    function exportarGraficoPngHd(canvasId, filename = 'grafico_kpi') {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) {
+        mostrarToast('Gráfico no disponible para exportar', true);
+        return;
+      }
+      try {
+        const link = document.createElement('a');
+        link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+        mostrarToast('📷 Gráfico HD exportado correctamente');
+      } catch (e) {
+        console.error('Error exportando PNG:', e);
+        mostrarToast('No se pudo exportar la imagen', true);
+      }
+    }
+
+    function exportarMrpExcel() {
+      const cli = document.getElementById('filtroKpiCliente')?.value || '';
+      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
+      const op = document.getElementById('filtroKpiOperacion')?.value || '';
+      const params = new URLSearchParams();
+      if (cli && cli !== 'TODOS') params.append('cliente', cli);
+      if (sub && sub !== 'TODOS') params.append('subcliente', sub);
+      if (op && op !== 'TODOS') params.append('tipo_operacion', op);
+
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) params.append('token', tok);
+
+      window.location.href = `/api/kpis/exportar-mrp-excel?${params.toString()}`;
+    }
+
+    function cambiarSubpestanaKpis(num) {
+      subpestanaKpiActiva = num;
+      for (let i = 1; i <= 5; i++) {
+        const sub = document.getElementById(`subvista-kpi-${i}`);
+        const btn = document.getElementById(`btnSubtabKpi${i}`);
+        if (sub) {
+          if (i === num) sub.classList.remove('hidden');
+          else sub.classList.add('hidden');
+        }
+        if (btn) {
+          const iconBox = btn.querySelector('.subtab-icon-box');
+          const title = btn.querySelector('.text-left span:first-child');
+          const subTitle = btn.querySelector('.subtab-kpi-sub');
+          if (i === num) {
+            btn.className = 'subtab-kpi-btn px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-md shadow-indigo-950/20 flex items-center space-x-2.5 shrink-0 transition-all scale-[1.02] cursor-pointer';
+            if (iconBox) iconBox.className = 'subtab-icon-box w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs shrink-0 transition-colors';
+            if (title) title.className = 'block font-bold text-xs tracking-tight text-white';
+            if (subTitle) subTitle.className = 'subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90';
+          } else {
+            btn.className = 'subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer';
+            if (iconBox) iconBox.className = 'subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors';
+            if (title) title.className = 'block font-bold text-xs tracking-tight text-slate-700';
+            if (subTitle) subTitle.className = 'subtab-kpi-sub block text-[9.5px] font-mono text-slate-400';
+          }
+        }
+      }
+
+      sincronizarAvisosLicenciaSubpestanas();
+
+      if (datosSuite20Actuales) {
+        renderizarSubpestanaActiva(num, datosSuite20Actuales);
+      }
+    }
+
+    function sincronizarAvisosLicenciaSubpestanas() {
+      const esLight = (modoLicenciaSuite === 'LIGHT');
+      const av3 = document.getElementById('bloqueAvisoLicenciaKpi3');
+      const av4 = document.getElementById('bloqueAvisoLicenciaKpi4');
+      const av5 = document.getElementById('bloqueAvisoLicenciaKpi5');
+      if (av3) av3.classList.toggle('hidden', !esLight);
+      if (av4) av4.classList.toggle('hidden', !esLight);
+      if (av5) av5.classList.toggle('hidden', !esLight);
+
+      // En LIGHT, ocultar KPI 01 padrón o banner
+      const kpi01Banner = document.getElementById('kpi01-banner');
+      if (kpi01Banner) kpi01Banner.classList.toggle('hidden', esLight);
+    }
+
+    function cambiarModoLicenciaSuite(nuevoModo) {
+      modoLicenciaSuite = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'FULL';
+      const badge = document.getElementById('badgeLicenciaActiva');
+      const btnLight = document.getElementById('btnModoLight');
+      const btnPro = document.getElementById('btnModoPro');
+
+      if (modoLicenciaSuite === 'LIGHT') {
+        if (badge) {
+          badge.textContent = 'LICENCIA LIGHT (OPERATIVA)';
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 border border-amber-400/40';
+        }
+        if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-amber-500 text-slate-950 shadow transition-all';
+        if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all';
+      } else {
+        if (badge) {
+          badge.textContent = 'LICENCIA FULL / PRO';
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-700 border border-sky-400/40';
+        }
+        if (btnPro) btnPro.className = 'px-2.5 py-1 rounded-lg font-extrabold bg-blue-600 text-white shadow transition-all';
+        if (btnLight) btnLight.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all';
+      }
+
+      sincronizarAvisosLicenciaSubpestanas();
+      cargarSuite20Kpis();
+    }
+
+    function cambiarAgrupacionKpi14(nuevaAgrup) {
+      agrupacionKpi14Actual = nuevaAgrup || 'marca';
+      cargarSuite20Kpis();
+    }
+
+    function abrirModalPlacasPendientesKpi01() {
+      const m = document.getElementById('modalPlacasPendientesKpi01');
+      if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      }
+    }
+
+    function cerrarModalPlacasPendientesKpi01() {
+      const m = document.getElementById('modalPlacasPendientesKpi01');
+      if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      }
+    }
+
+    async function cargarSuite20Kpis() {
+      try {
+        const cliVal = document.getElementById('filtroKpiCliente')?.value || '';
+        const sedeVal = document.getElementById('filtroKpiSubcliente')?.value || '';
+        const opVal = document.getElementById('filtroKpiOperacion')?.value || '';
+        const tipVal = document.getElementById('filtroKpiTipologia')?.value || '';
+        const marVal = document.getElementById('filtroKpiMarca')?.value || '';
+        const dimVal = document.getElementById('filtroKpiDimension')?.value || '';
+        const ejeVal = document.getElementById('filtroKpiEjeTemporal')?.value || 'mes';
+
+        const params = new URLSearchParams();
+        if (cliVal && cliVal !== 'TODOS') params.append('cliente', cliVal);
+        if (sedeVal && sedeVal !== 'TODOS') params.append('subcliente', sedeVal);
+        if (opVal && opVal !== 'TODOS') params.append('tipo_operacion', opVal);
+        if (tipVal && tipVal !== 'TODOS') params.append('tipologia', tipVal);
+        if (marVal && marVal !== 'TODOS') params.append('marca', marVal);
+        if (dimVal && dimVal !== 'TODOS') params.append('dimension', dimVal);
+        params.append('eje_temporal', ejeVal);
+        params.append('agrupar_kpi14', agrupacionKpi14Actual);
+        params.append('licencia', modoLicenciaSuite);
+
+        const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const headers = tok ? { 'Authorization': `Bearer ${tok}` } : {};
+
+        const res = await fetch(`/api/kpis/suite-20?${params.toString()}`, { headers });
+        if (!res.ok) {
+          console.warn('No se pudo cargar la suite de 20 KPIs, status:', res.status);
+          return;
+        }
+
+        const data = await res.json();
+        datosSuite20Actuales = data;
+
+        // Si el backend dictamina licencia del cliente, sincronizar si no se forzó manual
+        if (data.licencia && data.licencia !== modoLicenciaSuite) {
+          // mantenemos modo actual
+        }
+
+        renderizarTodaLaSuite20(data);
+
+      } catch (err) {
+        console.error('Error al cargar la Suite de 20 KPIs:', err);
+      }
+    }
+
+    function renderizarTodaLaSuite20(data) {
+      if (!data) return;
+      sincronizarAvisosLicenciaSubpestanas();
+      if (data.ahorro_roi || data.resumen_ahorro_roi) {
+        renderizarBannerAhorroRoi(data.ahorro_roi || data.resumen_ahorro_roi);
+      }
+      renderizarSubpestanaActiva(subpestanaKpiActiva, data);
+    }
+
+    function renderizarSubpestanaActiva(num, data) {
+      if (!data) return;
+      switch (num) {
+        case 1:
+          if (data.kpi_01) renderizarKpi01(data.kpi_01);
+          if (data.kpi_02) renderChartKpi02(data.kpi_02);
+          if (data.kpi_03) renderChartKpi03(data.kpi_03);
+          if (data.kpi_04) renderChartKpi04(data.kpi_04);
+          break;
+        case 2:
+          if (data.kpi_05) renderKpi05(data.kpi_05);
+          if (data.kpi_06) renderKpi06(data.kpi_06);
+          if (data.kpi_07) renderKpi07(data.kpi_07);
+          if (data.kpi_08) renderKpi08(data.kpi_08);
+          if (data.kpi_09) renderKpi09(data.kpi_09);
+          if (data.kpi_10) renderChartKpi10(data.kpi_10);
+          if (data.kpi_11) renderChartKpi11(data.kpi_11);
+          break;
+        case 3:
+          if (modoLicenciaSuite === 'FULL') {
+            if (data.kpi_12) renderKpi12(data.kpi_12);
+            if (data.kpi_13) renderChartKpi13(data.kpi_13);
+            if (data.kpi_14) renderChartKpi14(data.kpi_14);
+            if (data.kpi_15) renderChartKpi15(data.kpi_15);
+            if (data.kpi_16) renderChartKpi16(data.kpi_16);
+          }
+          break;
+        case 4:
+          if (modoLicenciaSuite === 'FULL') {
+            if (data.kpi_17) renderKpi17(data.kpi_17);
+            if (data.kpi_18) renderChartKpi18(data.kpi_18);
+            if (data.kpi_19) renderChartKpi19(data.kpi_19);
+          }
+          break;
+        case 5:
+          if (modoLicenciaSuite === 'FULL') {
+            if (data.kpi_20) renderKpi20(data.kpi_20);
+          }
+          break;
+      }
+    }
+
+    // ==========================================
+    // RENDERERS SUB-PESTAÑA 1 (KPI 01 AL 04)
+    // ==========================================
+
+    // KPI 01: Cumplimiento de Inspección vs Parque
+    function renderizarKpi01(d) {
+      if (!d) return;
+      const pct = Math.min(100, Math.max(0, d.porcentaje_cumplimiento || 0));
+      const elPct = document.getElementById('kpi01_cumplimiento_pct');
+      const elAudPad = document.getElementById('kpi01_auditados_padron');
+      const elBar = document.getElementById('kpi01_barra_progreso');
+      const elBtnTxt = document.getElementById('btnKpi01Texto');
+
+      if (elPct) elPct.textContent = `${formatCO_Decimal(pct, 1)}%`;
+      if (elAudPad) elAudPad.textContent = `${formatCO_Miles(d.vehiculos_inspeccionados)} / ${formatCO_Miles(d.total_padron_activo)}`;
+      if (elBar) elBar.style.width = `${pct}%`;
+      const numPend = (d.placas_pendientes || []).length;
+      if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${numPend})`;
+
+      // Llenar tabla del modal
+      const tbody = document.getElementById('tbodyModalPlacasPendientes');
+      if (tbody) {
+        if (!d.placas_pendientes || d.placas_pendientes.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">¡Excelente! El 100% de los vehículos del padrón han sido inspeccionados.</td></tr>';
+        } else {
+          tbody.innerHTML = (d.placas_pendientes || []).slice(0, 25).map(p => `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-black text-slate-900 font-mono">${p.placa || '-'}</td>
+              <td class="p-2.5 text-slate-600">${p.cliente || '-'} ${p.subcliente ? `/ ${p.subcliente}` : ''}</td>
+              <td class="p-2.5 text-slate-600">${p.tipologia || '-'}</td>
+              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${p.estado_padron || 'Activo'}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
+    }
+
+    // KPI 02: Volumen Auditado Mes a Mes (Mixto Doble Eje)
+    function renderChartKpi02(ds) {
+      destruirChartSuite('kpi02');
+      const ctx = document.getElementById('canvasKpi02_volumen');
+      if (!ctx || !ds) return;
+
+      const badgeRazon = document.getElementById('kpi02_badge_razon');
+      if (badgeRazon && ds.promedio_llantas_por_vehiculo !== undefined) {
+        badgeRazon.textContent = `Promedio: ${formatCO_Decimal(ds.promedio_llantas_por_vehiculo, 1)} llantas/vehículo`;
+      }
+
+      const gradientBar = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
+      gradientBar.addColorStop(0, '#3b82f6');
+      gradientBar.addColorStop(1, '#1d4ed8');
+
+      instanciasChartsSuite['kpi02'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Llantas Rodando',
+              data: ds.llantas || [],
+              backgroundColor: gradientBar,
+              borderRadius: 6,
+              borderSkipped: false,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff')
+            },
+            {
+              type: 'line',
+              label: 'Vehículos Auditados',
+              data: ds.vehiculos || [],
+              borderColor: '#10b981',
+              backgroundColor: '#10b981',
+              borderWidth: 2.8,
+              tension: 0.35,
+              pointBackgroundColor: '#10b981',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              yAxisID: 'y1',
+              datalabels: pillDatalabelConfig('rgba(6, 95, 70, 0.9)', '#ffffff')
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              cornerRadius: 10,
+              padding: 12,
+              callbacks: {
+                afterBody: (items) => {
+                  const idx = items[0].dataIndex;
+                  const ll = ds.llantas?.[idx] || 0;
+                  const vh = ds.vehiculos?.[idx] || 1;
+                  const rz = vh > 0 ? (ll / vh).toFixed(1) : '0';
+                  return `Razón: ${rz} llantas/vehículo`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Total Llantas', font: { weight: 'bold', size: 10 } },
+              grace: '15%',
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'Vehículos', font: { weight: 'bold', size: 10 } },
+              grace: '15%',
+              grid: { drawOnChartArea: false },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // KPI 03: % Reencauche (Meta 70%) y Unidades por Ciclo
+    function renderChartKpi03(ds) {
+      destruirChartSuite('kpi03_pct');
+      destruirChartSuite('kpi03_ciclos');
+      const ctxPct = document.getElementById('canvasKpi03_pct');
+      const ctxCiclos = document.getElementById('canvasKpi03_ciclos');
+      if (!ds) return;
+
+      // Badge meta
+      const badge = document.getElementById('kpi03_badge_meta');
+      const meta = ds.meta_porcentaje || 70.0;
+      const ultimoPct = (ds.porcentajes && ds.porcentajes.length > 0) ? ds.porcentajes[ds.porcentajes.length - 1] : 0;
+      if (badge) {
+        if (ultimoPct >= meta) {
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+          badge.textContent = `🟢 Meta Cumplida (${formatCO_Decimal(ultimoPct, 1)}%)`;
+        } else if (ultimoPct >= meta - 15) {
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300';
+          badge.textContent = `🟡 Alerta Meta (${formatCO_Decimal(ultimoPct, 1)}%)`;
+        } else {
+          badge.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
+          badge.textContent = `🔴 Crítico (${formatCO_Decimal(ultimoPct, 1)}%)`;
+        }
+      }
+
+      // Subpanel A: Línea % Reencauche con umbral 70%
+      if (ctxPct) {
+        const lineaMeta = (ds.labels || []).map(() => meta);
+        instanciasChartsSuite['kpi03_pct'] = new Chart(ctxPct, {
+          type: 'line',
+          data: {
+            labels: ds.labels || [],
+            datasets: [
+              {
+                label: '% Reencauche',
+                data: ds.porcentajes || [],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                borderWidth: 2.8,
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                datalabels: pillDatalabelConfig('rgba(6, 95, 70, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)}%`)
+              },
+              {
+                label: `Meta (${meta}%)`,
+                data: lineaMeta,
+                borderColor: '#ef4444',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: false,
+                datalabels: { display: false }
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 12, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } }
+            },
+            scales: {
+              y: {
+                min: 0,
+                max: 100,
+                ticks: { callback: (v) => `${v}%` },
+                grid: { color: 'rgba(226, 232, 240, 0.6)' }
+              },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // Subpanel B: Barras Apiladas por Ciclo
+      if (ctxCiclos && ds.ciclos) {
+        const c = ds.ciclos;
+        instanciasChartsSuite['kpi03_ciclos'] = new Chart(ctxCiclos, {
+          type: 'bar',
+          data: {
+            labels: ds.labels || [],
+            datasets: [
+              { label: 'Original', data: c.original || [], backgroundColor: '#3b82f6', borderRadius: 4 },
+              { label: 'R1', data: c.r1 || [], backgroundColor: '#10b981', borderRadius: 4 },
+              { label: 'R2', data: c.r2 || [], backgroundColor: '#f59e0b', borderRadius: 4 },
+              { label: 'R3+', data: c.r3_mas || [], backgroundColor: '#8b5cf6', borderRadius: 4 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 20, right: 8, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
+              datalabels: { display: false }
+            },
+            scales: {
+              x: { stacked: true, ticks: { font: { weight: 'bold', size: 10 } } },
+              y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(226, 232, 240, 0.6)' } }
+            }
+          }
+        });
+      }
+    }
+
+    // KPI 04: Composición de Flota (Tipología, Marca, Dimensión)
+    function renderChartKpi04(ds) {
+      destruirChartSuite('kpi04_tip');
+      destruirChartSuite('kpi04_mar');
+      destruirChartSuite('kpi04_dim');
+      if (!ds) return;
+
+      const dsTip = ds.tipologias || ds.tipologia;
+      const dsMar = ds.marcas || ds.marca;
+      const dsDim = ds.dimensiones || ds.dimension;
+
+      // Columna A: Tipología Vehicular (Barras Horizontales)
+      const ctxTip = document.getElementById('canvasKpi04_tipologia');
+      if (ctxTip && dsTip) {
+        instanciasChartsSuite['kpi04_tip'] = new Chart(ctxTip, {
+          type: 'bar',
+          data: {
+            labels: dsTip.labels || [],
+            datasets: [{
+              label: 'Vehículos',
+              data: dsTip.valores || [],
+              backgroundColor: '#6366f1',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { right: 20 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff')
+            },
+            scales: {
+              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
+            }
+          }
+        });
+      }
+
+      // Columna B: Marcas de Llanta (Barras Verticales)
+      const ctxMar = document.getElementById('canvasKpi04_marca');
+      if (ctxMar && dsMar) {
+        instanciasChartsSuite['kpi04_mar'] = new Chart(ctxMar, {
+          type: 'bar',
+          data: {
+            labels: dsMar.labels || [],
+            datasets: [{
+              label: 'Llantas',
+              data: dsMar.valores || [],
+              backgroundColor: '#0ea5e9',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 24 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              datalabels: pillDatalabelConfig('rgba(14, 165, 233, 0.9)', '#ffffff')
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // Columna C: Dimensión y Diseño (Donut)
+      const ctxDim = document.getElementById('canvasKpi04_dimension');
+      if (ctxDim && dsDim) {
+        instanciasChartsSuite['kpi04_dim'] = new Chart(ctxDim, {
+          type: 'doughnut',
+          data: {
+            labels: dsDim.labels || [],
+            datasets: [{
+              data: dsDim.valores || [],
+              backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+              datalabels: {
+                display: 'auto',
+                color: '#fff',
+                font: { weight: 'bold', size: 10 },
+                formatter: (val, ctx) => {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
+                  return `${pct}%`;
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // ==========================================
+    // INTELIGENCIA DE AHORRO FINANCIERO & ROI (BANNER & MODAL CAMBIAZOS)
+    // ==========================================
+    let ultimasAlertasCambiazo = [];
+
+    function renderizarBannerAhorroRoi(ahorroData) {
+      if (!ahorroData) return;
+      ultimasAlertasCambiazo = ahorroData.alertas_cambiazo_serial || [];
+
+      const totalFmt = formatCO_Moneda(ahorroData.ahorro_potencial_total_cop || 0) + ' COP';
+      const cascosFmt = formatCO_Moneda(ahorroData.ahorro_salvamento_cascos_cop || 0) + ' COP';
+      const alinFmt = formatCO_Moneda(ahorroData.ahorro_alineacion_oportuna_cop || 0) + ' COP';
+      const combFmt = formatCO_Moneda(ahorroData.ahorro_combustible_anual_psi_cop || 0) + ' COP';
+      const cantCambiazos = ahorroData.total_alertas_cambiazo !== undefined ? ahorroData.total_alertas_cambiazo : (ultimasAlertasCambiazo.length || 0);
+      const cascosCant = ahorroData.cascos_en_ventana_salvamento || 0;
+
+      // Banner en Vista KPIs
+      const elTot = document.getElementById('banner_kpi_ahorro_total');
+      if (elTot) elTot.textContent = totalFmt;
+      const elCas = document.getElementById('banner_kpi_ahorro_cascos');
+      if (elCas) elCas.textContent = cascosFmt;
+      const elAlin = document.getElementById('banner_kpi_ahorro_alineacion');
+      if (elAlin) elAlin.textContent = alinFmt;
+      const elComb = document.getElementById('banner_kpi_ahorro_combustible');
+      if (elComb) elComb.textContent = combFmt;
+      const elNumC = document.getElementById('banner_kpi_cambiazos_num');
+      if (elNumC) elNumC.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Caso' : ' Casos');
+      const elBdgC = document.getElementById('badge_cambiazos_total');
+      if (elBdgC) elBdgC.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Caso' : ' Casos');
+      const elBdgS = document.getElementById('badge_cascos_salvamento');
+      if (elBdgS) elBdgS.textContent = cascosCant + (cascosCant === 1 ? ' Casco' : ' Cascos');
+
+      // Banner en Vista Diagnóstico
+      const elDiagTot = document.getElementById('diag_ahorro_total_cop');
+      if (elDiagTot) elDiagTot.textContent = totalFmt;
+      const elDiagBdg = document.getElementById('diag_badge_cambiazos');
+      if (elDiagBdg) elDiagBdg.textContent = cantCambiazos + (cantCambiazos === 1 ? ' Cambiazo' : ' Cambiazos');
+    }
+
+    function abrirModalAlertasCambiazo() {
+      const modal = document.getElementById('modalAlertasCambiazo');
+      const tbody = document.getElementById('tbodyAlertasCambiazo');
+      const lblTotal = document.getElementById('lblTotalCambiazosModal');
+      if (!modal || !tbody) return;
+
+      if (!ultimasAlertasCambiazo || ultimasAlertasCambiazo.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-check text-emerald-500 mr-2 text-base"></i>No se detectaron discrepancias ni sustituciones no autorizadas de serial en la flota</td></tr>';
+        if (lblTotal) lblTotal.textContent = 'Total: 0 discrepancias detectadas';
+      } else {
+        tbody.innerHTML = ultimasAlertasCambiazo.map(a => `
+          <tr class="hover:bg-rose-50/50 transition-colors">
+            <td class="p-2.5 font-bold text-slate-900">${a.placa || ''}</td>
+            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${a.posicion || ''}</td>
+            <td class="p-2.5 font-mono text-slate-400 line-through">${a.serial_anterior || ''}</td>
+            <td class="p-2.5 font-mono font-bold text-rose-600">${a.serial_actual || ''}</td>
+            <td class="p-2.5 text-right font-mono font-bold">${a.prof_actual_min || 0} mm</td>
+            <td class="p-2.5 text-slate-400 text-xs">${a.fecha_anterior || ''}</td>
+            <td class="p-2.5 text-slate-700 font-semibold text-xs">${a.fecha_actual || ''}</td>
+            <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Sustitución sin Kardex</span></td>
+          </tr>
+        `).join('');
+        if (lblTotal) lblTotal.textContent = `Total: ${ultimasAlertasCambiazo.length} discrepancias detectadas`;
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalAlertasCambiazo() {
+      const modal = document.getElementById('modalAlertasCambiazo');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    // ==========================================
+    // RENDERERS SUB-PESTAÑA 2 (KPI 05 AL 11)
+    // ==========================================
+
+    // KPI 05: Cuadro de Cambios + Heatmap Placa vs Posición + Regla Direccional
+    function renderKpi05(d) {
+      if (!d) return;
+
+      // Nivel 1: Tabla Cruzada Dimensión vs Eje
+      const tbodyCruz = document.getElementById('tbodyKpi05_cruzada');
+      if (tbodyCruz) {
+        if (!d.tabla_cruzada || d.tabla_cruzada.length === 0) {
+          tbodyCruz.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Sin retiros requeridos</td></tr>';
+        } else {
+          tbodyCruz.innerHTML = d.tabla_cruzada.map(r => `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold text-slate-800">${r.dimension || '-'}</td>
+              <td class="p-2.5 text-center font-mono">${r.direccional || 0}</td>
+              <td class="p-2.5 text-center font-mono">${r.traccion || 0}</td>
+              <td class="p-2.5 text-center font-mono">${r.arrastre || 0}</td>
+              <td class="p-2.5 text-right font-black font-mono text-rose-700 bg-rose-50/50">${r.total || 0}</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // Nivel 1: Gráfico Barras Retiros Mensuales
+      destruirChartSuite('kpi05_ret');
+      const ctxRet = document.getElementById('canvasKpi05_retiros');
+      if (ctxRet && d.retiros_mensuales) {
+        const rm = d.retiros_mensuales;
+        instanciasChartsSuite['kpi05_ret'] = new Chart(ctxRet, {
+          type: 'bar',
+          data: {
+            labels: rm.labels || [],
+            datasets: [{
+              label: 'Retiros Mensuales',
+              data: rm.valores || [],
+              backgroundColor: '#ef4444',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 22 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff')
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
+            }
+          }
+        });
+      }
+
+      // Nivel 2: Heatmap Placa vs Posición 1..12
+      const tbodyHeat = document.getElementById('tbodyKpi05_heatmap');
+      if (tbodyHeat) {
+        if (!d.matriz_posiciones || d.matriz_posiciones.length === 0) {
+          tbodyHeat.innerHTML = '<tr><td colspan="13" class="p-4 text-center text-slate-400">Sin registros de posiciones</td></tr>';
+        } else {
+          tbodyHeat.innerHTML = d.matriz_posiciones.map(r => {
+            const celdas = [1,2,3,4,5,6,7,8,9,10,11,12].map(pos => {
+              const info = r.posiciones ? r.posiciones[String(pos)] : null;
+              if (!info || info.prof === null || info.prof === undefined) {
+                return '<td class="p-2 bg-slate-50 text-slate-300">-</td>';
+              }
+              const prof = info.prof;
+              const lim = info.limite || 3.0;
+              let bg = 'bg-emerald-50 text-emerald-800 border-emerald-100';
+              if (prof <= lim) {
+                bg = 'bg-rose-500 text-white font-black shadow-xs';
+              } else if (prof <= lim + 2.0) {
+                bg = 'bg-amber-400 text-slate-900 font-bold';
+              }
+              const title = `Pos ${pos}: ${prof}mm (Límite: ${lim}mm)${info.alerta_par_direccional ? ' ⚠️ Par Direccional' : ''}`;
+              return `<td class="p-2 ${bg} border border-white" title="${title}">${prof}</td>`;
+            }).join('');
+
+            return `
+              <tr class="hover:bg-slate-100 transition-colors">
+                <td class="p-2 text-left font-bold text-slate-900 sticky left-0 bg-white border-r border-slate-200">${r.placa || '-'}</td>
+                ${celdas}
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    // KPI 06: Seguimiento de Alineación y Pérdida
+    function renderKpi06(d) {
+      if (!d) return;
+
+      destruirChartSuite('kpi06_alin');
+      const ctx = document.getElementById('canvasKpi06_alineacion');
+      if (ctx && d.historico) {
+        const h = d.historico;
+        instanciasChartsSuite['kpi06_alin'] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: h.labels || [],
+            datasets: [
+              { label: '% Alineación OK', data: h.pct_ok || [], backgroundColor: '#0ea5e9', borderRadius: 4 },
+              { label: '% Desalineadas', data: h.pct_alerta || [], backgroundColor: '#dc2626', borderRadius: 4 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
+              datalabels: { display: false }
+            },
+            scales: {
+              x: { stacked: true },
+              y: { stacked: true, min: 0, max: 100, ticks: { callback: (v) => `${v}%` } }
+            }
+          }
+        });
+      }
+
+      // Tabla Detallada por Placa
+      const tbody = document.getElementById('tbodyKpi06_perdidaPlaca');
+      if (tbody) {
+        if (!d.tabla_perdidas || d.tabla_perdidas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Sin vehículos desalineados</td></tr>';
+        } else {
+          tbody.innerHTML = d.tabla_perdidas.map(r => `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
+              <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos1_mm, 1)}</td>
+              <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos2_mm, 1)}</td>
+              <td class="p-2.5 text-center font-mono font-black text-rose-600">${formatCO_Decimal(r.total_mm, 1)} mm</td>
+              <td class="p-2.5 text-right font-mono font-bold text-slate-900">${modoLicenciaSuite === 'FULL' ? formatCO_Moneda(r.perdida_pesos) : 'Modo LIGHT'}</td>
+              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${r.accion || 'Alinear Dirección'}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
+    }
+
+    // KPI 07: Plan de Rotaciones Tándem y Tráiler
+    function renderKpi07(d) {
+      if (!d) return;
+      const tbody = document.getElementById('tbodyKpi07_rotaciones');
+      if (tbody) {
+        if (!d.rotaciones_sugeridas || d.rotaciones_sugeridas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Desgaste equilibrado: no se requieren rotaciones en este corte</td></tr>';
+        } else {
+          tbody.innerHTML = d.rotaciones_sugeridas.map(r => `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
+              <td class="p-2.5 text-center font-medium text-indigo-700 font-mono">${r.esquema || 'P3 ↔ P9 / P4 ↔ P10'}</td>
+              <td class="p-2.5 text-center font-mono font-black text-amber-600">&Delta; ${formatCO_Decimal(r.delta_ejes_mm, 1)} mm</td>
+              <td class="p-2.5 text-center">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${r.estado === 'Reincidente' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+                  ${r.estado || 'Solucionada'}
+                </span>
+              </td>
+            </tr>
+          `).join('');
+        }
+      }
+    }
+
+    // KPI 08: Duales Mal Apareados + Cruce con Bodega 2
+    function renderKpi08(d) {
+      if (!d) return;
+
+      destruirChartSuite('kpi08_apar');
+      const ctx = document.getElementById('canvasKpi08_apareo');
+      if (ctx && d.frecuencia_mensual) {
+        const fm = d.frecuencia_mensual;
+        instanciasChartsSuite['kpi08_apar'] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: fm.labels || [],
+            datasets: [{
+              label: 'Pachas Desapareadas',
+              data: fm.valores || [],
+              backgroundColor: '#f43f5e',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              datalabels: pillDatalabelConfig('rgba(244, 63, 94, 0.9)', '#ffffff')
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
+            }
+          }
+        });
+      }
+
+      // Tarjetas de Cruce con Bodega 2
+      const cont = document.getElementById('contenedorKpi08_crucesB2');
+      if (cont) {
+        if (!d.cruces_bodega2 || d.cruces_bodega2.length === 0) {
+          cont.innerHTML = '<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-center text-xs">Sin pachas con desbalance &gt; 3 mm</div>';
+        } else {
+          cont.innerHTML = d.cruces_bodega2.map(c => `
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+              <div>
+                <span class="font-mono font-black text-slate-900">${c.placa || '-'}</span>
+                <span class="text-slate-500 ml-1.5">${c.pacha || 'P3-P4'} (&Delta; ${formatCO_Decimal(c.diferencia_mm, 1)} mm)</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-indigo-600 font-bold block">Bodega 2: ${c.llanta_b2_sugerida || 'Stock disponible'}</span>
+                <span class="text-[10px] text-slate-500 font-mono">${c.milimetraje_b2 || 0} mm</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    // KPI 09: Presiones PSI y Combustible
+    function renderKpi09(d) {
+      if (!d) return;
+
+      destruirChartSuite('kpi09_psi');
+      const ctx = document.getElementById('canvasKpi09_psi');
+      if (ctx && d.distribucion) {
+        const dist = d.distribucion;
+        instanciasChartsSuite['kpi09_psi'] = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Baja Severa (<-15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (>+10%)'],
+            datasets: [{
+              data: [dist.baja_severa || 0, dist.baja_moderada || 0, dist.correcta || 0, dist.sobrepresion || 0],
+              backgroundColor: ['#dc2626', '#f59e0b', '#10b981', '#6366f1']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+              datalabels: {
+                color: '#fff',
+                font: { weight: 'bold', size: 10 },
+                formatter: (val, ctx) => {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  return total > 0 ? `${((val / total) * 100).toFixed(0)}%` : '';
+                }
+              }
+            }
+          }
+        });
+      }
+
+      const elGalones = document.getElementById('kpi09_galones_diesel');
+      if (elGalones) {
+        elGalones.textContent = `${formatCO_Miles(d.galones_desperdiciados_mes || 0)} gal/mes`;
+      }
+    }
+
+    // KPI 10: Pareto de Novedades y Taller
+    function renderChartKpi10(d) {
+      destruirChartSuite('kpi10_pareto');
+      const ctx = document.getElementById('canvasKpi10_pareto');
+      if (!ctx || !d) return;
+
+      const elEfect = document.getElementById('kpi10_efectividad_badge');
+      if (elEfect && d.efectividad_taller_pct !== undefined) {
+        elEfect.textContent = `Efectividad: ${formatCO_Decimal(d.efectividad_taller_pct, 1)}%`;
+      }
+
+      instanciasChartsSuite['kpi10_pareto'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: d.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Frecuencia Novedades',
+              data: d.frecuencias || [],
+              backgroundColor: '#a855f7',
+              borderRadius: 4,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(168, 85, 247, 0.9)', '#ffffff')
+            },
+            {
+              type: 'line',
+              label: '% Acumulado (Pareto)',
+              data: d.acumulado_pct || [],
+              borderColor: '#f59e0b',
+              backgroundColor: '#f59e0b',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              yAxisID: 'y1',
+              datalabels: { display: false }
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 24, right: 12, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Cantidad' } },
+            y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => `${v}%` } },
+            x: { ticks: { font: { weight: 'bold', size: 10 } } }
+          }
+        }
+      });
+    }
+
+    // KPI 11: Impacto Económico Interanual (mm vs $)
+    function renderChartKpi11(d) {
+      destruirChartSuite('kpi11_impacto');
+      const ctx = document.getElementById('canvasKpi11_impacto');
+      if (!d) return;
+
+      const elMm = document.getElementById('kpi11_mm_perdidos');
+      const elPesos = document.getElementById('kpi11_pesos_perdidos');
+      if (elMm) elMm.textContent = `${formatCO_Decimal(d.total_mm_perdidos || 0, 1)} mm`;
+      if (elPesos) {
+        elPesos.textContent = (modoLicenciaSuite === 'FULL') ? formatCO_Moneda(d.impacto_economico_total || 0) : 'Modo LIGHT';
+      }
+
+      if (ctx) {
+        const datasets = [
+          {
+            type: 'bar',
+            label: 'Milímetros Perdidos',
+            data: d.mm_mes || [],
+            backgroundColor: '#f43f5e',
+            borderRadius: 6,
+            yAxisID: 'y',
+            datalabels: pillDatalabelConfig('rgba(244, 63, 94, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+          }
+        ];
+
+        if (modoLicenciaSuite === 'FULL') {
+          datasets.push({
+            type: 'line',
+            label: 'Pérdida Monetaria ($ COP)',
+            data: d.pesos_mes || [],
+            borderColor: '#f97316',
+            backgroundColor: '#f97316',
+            borderWidth: 2.8,
+            tension: 0.35,
+            pointRadius: 4,
+            yAxisID: 'y1',
+            datalabels: pillDatalabelConfig('rgba(249, 115, 22, 0.9)', '#ffffff', (v) => formatCO_Moneda(v))
+          });
+        }
+
+        instanciasChartsSuite['kpi11_impacto'] = new Chart(ctx, {
+          data: {
+            labels: d.labels || [],
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } }
+            },
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: 'Milímetros Perdidos' }, ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} mm` } },
+              y1: {
+                display: (modoLicenciaSuite === 'FULL'),
+                beginAtZero: true,
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: 'Pérdida Económica ($)' },
+                ticks: { callback: (v) => formatCO_Moneda(v) }
+              },
+              x: { ticks: { font: { weight: 'bold', size: 11 } } }
+            }
+          }
+        });
+      }
+    }
+
+    // ==========================================
+    // RENDERERS SUB-PESTAÑA 3 (KPI 12 AL 16) [SOLO FULL]
+    // ==========================================
+
+    // KPI 12: Las 4 Tarjetas Maestras de Desempeño de Flota
+    function renderKpi12(d) {
+      if (!d) return;
+      const elMmG = document.getElementById('kpi12_mm_gastados');
+      const elProfAct = document.getElementById('kpi12_prof_actual');
+      const elPctDesg = document.getElementById('kpi12_pct_desgaste');
+      const elBarDesg = document.getElementById('kpi12_barra_desgaste');
+      const elKmRec = document.getElementById('kpi12_km_recorridos');
+
+      if (elMmG) elMmG.textContent = `${formatCO_Decimal(d.mm_gastados || 0, 1)} mm`;
+      if (elProfAct) elProfAct.textContent = `${formatCO_Decimal(d.profundidad_actual || 0, 1)} mm`;
+
+      const pct = Math.min(100, Math.max(0, d.pct_desgaste || 0));
+      if (elPctDesg) elPctDesg.textContent = `${formatCO_Decimal(pct, 1)}%`;
+      if (elBarDesg) {
+        elBarDesg.style.width = `${pct}%`;
+        if (pct < 60) {
+          elBarDesg.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
+        } else if (pct < 85) {
+          elBarDesg.className = 'h-full bg-amber-500 rounded-full transition-all duration-500';
+        } else {
+          elBarDesg.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
+        }
+      }
+      if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} km`;
+    }
+
+    // KPI 13: Km Rodados Reales vs. Proyección Final al Límite de Retiro
+    function renderChartKpi13(ds) {
+      destruirChartSuite('kpi13_comparativo');
+      const ctx = document.getElementById('canvasKpi13_comparativo');
+      if (!ctx || !ds) return;
+
+      const gradientReales = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+      gradientReales.addColorStop(0, '#2563eb');
+      gradientReales.addColorStop(1, '#1d4ed8');
+
+      const gradientProy = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+      gradientProy.addColorStop(0, 'rgba(96, 165, 250, 0.7)');
+      gradientProy.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
+
+      instanciasChartsSuite['kpi13_comparativo'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              label: 'Km Reales Rodados',
+              data: ds.km_reales || [],
+              backgroundColor: gradientReales,
+              borderColor: '#1e40af',
+              borderWidth: 1.5,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+            },
+            {
+              label: 'Proyección Final al Retiro',
+              data: ds.proyeccion_final || [],
+              backgroundColor: gradientProy,
+              borderColor: '#2563eb',
+              borderWidth: 1.5,
+              borderDash: [4, 4],
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              cornerRadius: 10,
+              padding: 12,
+              callbacks: {
+                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`,
+                afterBody: (items) => {
+                  const idx = items[0].dataIndex;
+                  const r = ds.km_reales?.[idx] || 0;
+                  const p = ds.proyeccion_final?.[idx] || 0;
+                  const dif = Math.max(0, p - r);
+                  return `Vida Remanente Est.: ${formatCO_Miles(dif)} km`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grace: '15%',
+              title: { display: true, text: 'Kilómetros', font: { weight: 'bold', size: 10 } },
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // KPI 14: Tríada Multidimensional Sincronizada (Proyección, Km/mm, CPK)
+    function renderChartKpi14(ds) {
+      destruirChartSuite('kpi14_proy');
+      destruirChartSuite('kpi14_kmmm');
+      destruirChartSuite('kpi14_cpk');
+      if (!ds) return;
+
+      const sel = document.getElementById('selAgrupacionKpi14');
+      if (sel && ds.agrupacion_actual && sel.value !== ds.agrupacion_actual) {
+        sel.value = ds.agrupacion_actual;
+      }
+
+      const labels = ds.labels || [];
+
+      // 1. Proyección Km Final (Índigo)
+      const ctxProy = document.getElementById('canvasKpi14_proy');
+      if (ctxProy) {
+        const gradProy = ctxProy.getContext('2d').createLinearGradient(0, 0, 0, 240);
+        gradProy.addColorStop(0, '#6366f1');
+        gradProy.addColorStop(1, '#4338ca');
+
+        instanciasChartsSuite['kpi14_proy'] = new Chart(ctxProy, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Proy. Km Final',
+              data: ds.proyeccion_km || [],
+              backgroundColor: gradProy,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} km` } }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // 2. Rendimiento Km/mm (Esmeralda)
+      const ctxKmmm = document.getElementById('canvasKpi14_kmmm');
+      if (ctxKmmm) {
+        const gradKmmm = ctxKmmm.getContext('2d').createLinearGradient(0, 0, 0, 240);
+        gradKmmm.addColorStop(0, '#10b981');
+        gradKmmm.addColorStop(1, '#047857');
+
+        instanciasChartsSuite['kpi14_kmmm'] = new Chart(ctxKmmm, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Rendimiento Km/mm',
+              data: ds.km_mm || [],
+              backgroundColor: gradKmmm,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(4, 120, 87, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} km/mm`)
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `Rendimiento: ${formatCO_Decimal(c.raw, 1)} km/mm` } }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Decimal(v, 1), font: { size: 9 } } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // 3. Costo por Kilómetro CPK (Púrpura)
+      const ctxCpk = document.getElementById('canvasKpi14_cpk');
+      if (ctxCpk) {
+        const gradCpk = ctxCpk.getContext('2d').createLinearGradient(0, 0, 0, 240);
+        gradCpk.addColorStop(0, '#a855f7');
+        gradCpk.addColorStop(1, '#7e22ce');
+
+        instanciasChartsSuite['kpi14_cpk'] = new Chart(ctxCpk, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'CPK ($/km)',
+              data: ds.cpk || [],
+              backgroundColor: gradCpk,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(126, 34, 206, 0.9)', '#ffffff', (v) => `$ ${formatCO_Decimal(v, 2)}`)
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `CPK: $ ${formatCO_Decimal(c.raw, 2)} COP/km` } }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 1)}`, font: { size: 9 } } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+    }
+
+    // KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Filtro Madurez >= 1.5mm)
+    function renderChartKpi15(ds) {
+      destruirChartSuite('kpi15_potencial');
+      const ctx = document.getElementById('canvasKpi15_potencial');
+      if (!ctx || !ds) return;
+
+      const badgeBrecha = document.getElementById('kpi15_brecha_badge');
+      if (badgeBrecha && ds.brecha_promedio_total !== undefined) {
+        const br = ds.brecha_promedio_total;
+        badgeBrecha.textContent = `Brecha: ${formatCO_Decimal(br, 1)}%`;
+        if (br < 15) {
+          badgeBrecha.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+        } else if (br < 30) {
+          badgeBrecha.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300';
+        } else {
+          badgeBrecha.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
+        }
+      }
+
+      const gradProm = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+      gradProm.addColorStop(0, 'rgba(37, 99, 235, 0.85)');
+      gradProm.addColorStop(1, 'rgba(29, 78, 216, 0.7)');
+
+      instanciasChartsSuite['kpi15_potencial'] = new Chart(ctx, {
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Proyección Promedio',
+              data: ds.promedio || [],
+              backgroundColor: gradProm,
+              borderColor: '#1d4ed8',
+              borderWidth: 1.5,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.85)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: 'Máximo Alcanzado',
+              data: ds.maximo || [],
+              borderColor: '#0284c7',
+              backgroundColor: '#0284c7',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(2, 132, 199, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: 'Mínimo / Peor Desempeño',
+              data: ds.minimo || [],
+              borderColor: '#f59e0b',
+              backgroundColor: '#f59e0b',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.25,
+              datalabels: pillDatalabelConfig('rgba(217, 119, 6, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              cornerRadius: 10,
+              padding: 12,
+              callbacks: {
+                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grace: '15%',
+              title: { display: true, text: 'Kilómetros', font: { weight: 'bold', size: 10 } },
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // KPI 16: Curva de Proyección por Rango de Desgaste (Madurez del Caucho)
+    function renderChartKpi16(ds) {
+      destruirChartSuite('kpi16_rangos');
+      const ctx = document.getElementById('canvasKpi16_rangos');
+      if (!ctx || !ds) return;
+
+      instanciasChartsSuite['kpi16_rangos'] = new Chart(ctx, {
+        data: {
+          labels: ds.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Llantas en Banda',
+              data: ds.conteo_llantas || [],
+              backgroundColor: 'rgba(129, 140, 248, 0.65)',
+              borderColor: '#6366f1',
+              borderWidth: 1.5,
+              borderRadius: 6,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: 'Proyección Promedio (km)',
+              data: ds.proyeccion_promedio || [],
+              borderColor: '#4f46e5',
+              backgroundColor: 'rgba(79, 70, 229, 0.12)',
+              fill: true,
+              borderWidth: 2.8,
+              pointRadius: 4,
+              tension: 0.35,
+              yAxisID: 'y1',
+              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              cornerRadius: 10,
+              padding: 12
+            }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              beginAtZero: true,
+              grace: '15%',
+              title: { display: true, text: 'Cantidad de Llantas', font: { weight: 'bold', size: 10 } },
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              beginAtZero: true,
+              grace: '15%',
+              title: { display: true, text: 'Proyección (km)', font: { weight: 'bold', size: 10 } },
+              grid: { drawOnChartArea: false },
+              ticks: { callback: (v) => `${formatCO_Miles(v)} km` }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 10 } } }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // RENDERERS SUB-PESTAÑA 4 (KPI 17 AL 19) [SOLO FULL]
+    // ==========================================
+
+    // KPI 17: Indicadores Globales FVU
+    function renderKpi17(d) {
+      if (!d) return;
+      const elCant = document.getElementById('kpi17_cantidad_fvu');
+      const elIr = document.getElementById('kpi17_ir_fvu');
+      const elPctReen = document.getElementById('kpi17_pct_reenc_fvu');
+
+      if (elCant) elCant.textContent = `${formatCO_Miles(d.cantidad_fvu || 0)} llantas`;
+      if (elIr) elIr.textContent = formatCO_Decimal(d.indice_reencauchabilidad_ir || 0, 2);
+      if (elPctReen) elPctReen.textContent = `${formatCO_Decimal(d.pct_reencauche_fvu || 0, 1)}%`;
+
+      destruirChartSuite('kpi17_lineas');
+      const ctx = document.getElementById('canvasKpi17_lineas');
+      if (!ctx || !d.grafico_12m) return;
+
+      const g = d.grafico_12m;
+      const gradBar = ctx.getContext('2d').createLinearGradient(0, 0, 0, 240);
+      gradBar.addColorStop(0, '#f43f5e');
+      gradBar.addColorStop(1, '#be123c');
+
+      instanciasChartsSuite['kpi17_lineas'] = new Chart(ctx, {
+        data: {
+          labels: g.labels || [],
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Bajas FVU (Llantas)',
+              data: g.cantidad || [],
+              backgroundColor: gradBar,
+              borderRadius: 6,
+              yAxisID: 'y',
+              datalabels: pillDatalabelConfig('rgba(190, 18, 60, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            },
+            {
+              type: 'line',
+              label: 'Índice Reencauchabilidad (I.R.)',
+              data: g.ir || [],
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              fill: true,
+              borderWidth: 2.8,
+              pointRadius: 4,
+              tension: 0.35,
+              yAxisID: 'y1',
+              datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => formatCO_Decimal(v, 2))
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              cornerRadius: 10,
+              padding: 12
+            }
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              beginAtZero: true,
+              grace: '15%',
+              title: { display: true, text: 'Llantas FVU', font: { weight: 'bold', size: 10 } },
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              beginAtZero: true,
+              grace: '15%',
+              title: { display: true, text: 'I.R. FVU', font: { weight: 'bold', size: 10 } },
+              grid: { drawOnChartArea: false },
+              ticks: { callback: (v) => formatCO_Decimal(v, 1) }
+            },
+            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (+ Alerta Garantía)
+    function renderChartKpi18(d) {
+      destruirChartSuite('kpi18_marca');
+      destruirChartSuite('kpi18_ciclo');
+      destruirChartSuite('kpi18_causal');
+      if (!d) return;
+
+      // Badge garantía
+      const badgeGarantia = document.getElementById('kpi18_badge_garantia');
+      const numGar = (d.alertas_garantia || []).length;
+      if (badgeGarantia) {
+        badgeGarantia.textContent = `${numGar} en Garantía (<30%)`;
+        if (numGar > 0) {
+          badgeGarantia.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 animate-pulse';
+        } else {
+          badgeGarantia.className = 'text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200';
+        }
+      }
+
+      // A. Bajas por Marca (Barras)
+      const ctxMarca = document.getElementById('canvasKpi18_marca');
+      if (ctxMarca && d.por_marca) {
+        const gradM = ctxMarca.getContext('2d').createLinearGradient(0, 0, 0, 220);
+        gradM.addColorStop(0, '#f43f5e');
+        gradM.addColorStop(1, '#e11d48');
+
+        instanciasChartsSuite['kpi18_marca'] = new Chart(ctxMarca, {
+          type: 'bar',
+          data: {
+            labels: d.por_marca.labels || [],
+            datasets: [{
+              label: 'Bajas FVU',
+              data: d.por_marca.valores || [],
+              backgroundColor: gradM,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(225, 29, 72, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 24, right: 8, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `Llantas dadas de baja: ${formatCO_Miles(c.raw)}` } }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', ticks: { font: { size: 9 } } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // B. Por Ciclo de Vida (Barras Agrupadas)
+      const ctxCiclo = document.getElementById('canvasKpi18_ciclo');
+      if (ctxCiclo && d.por_ciclo) {
+        const coloresCiclos = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+        instanciasChartsSuite['kpi18_ciclo'] = new Chart(ctxCiclo, {
+          type: 'bar',
+          data: {
+            labels: d.por_ciclo.labels || [],
+            datasets: [{
+              label: 'Ciclo de Fallo',
+              data: d.por_ciclo.valores || [],
+              backgroundColor: coloresCiclos,
+              borderRadius: 6,
+              datalabels: pillDatalabelConfig('rgba(15, 23, 42, 0.85)', '#ffffff', (v) => formatCO_Miles(v))
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 24, right: 8, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `Llantas: ${formatCO_Miles(c.raw)}` } }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', ticks: { font: { size: 9 } } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // C. Causales de Daño (Doughnut interactiva)
+      const ctxCausal = document.getElementById('canvasKpi18_causal');
+      if (ctxCausal && d.por_causal) {
+        const paletaCausales = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b', '#10b981', '#ec4899'];
+        instanciasChartsSuite['kpi18_causal'] = new Chart(ctxCausal, {
+          type: 'doughnut',
+          data: {
+            labels: d.por_causal.labels || [],
+            datasets: [{
+              data: d.por_causal.valores || [],
+              backgroundColor: paletaCausales.slice(0, (d.por_causal.labels || []).length),
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { weight: 'bold', size: 9 } } },
+              tooltip: {
+                callbacks: {
+                  label: (c) => {
+                    const idx = c.dataIndex;
+                    const pct = d.por_causal.porcentajes?.[idx] || 0;
+                    return ` ${c.label}: ${formatCO_Miles(c.raw)} llantas (${pct}%)`;
+                  }
+                }
+              },
+              datalabels: {
+                color: '#ffffff',
+                font: { weight: '800', size: 9 },
+                formatter: (val, ctx) => {
+                  const idx = ctx.dataIndex;
+                  const pct = d.por_causal.porcentajes?.[idx] || 0;
+                  return pct >= 8 ? `${pct}%` : '';
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // KPI 19: Profundidad de Retiro (Líneas) y Dispersión por mm (Burbujas)
+    function renderChartKpi19(d) {
+      destruirChartSuite('kpi19_lineas');
+      destruirChartSuite('kpi19_burbujas');
+      if (!d) return;
+
+      // 1. Gráfico de 3 Líneas (Máx, Prom, Mín)
+      const ctxLineas = document.getElementById('canvasKpi19_lineas');
+      if (ctxLineas && d.grafico_lineas) {
+        const gl = d.grafico_lineas;
+        instanciasChartsSuite['kpi19_lineas'] = new Chart(ctxLineas, {
+          type: 'line',
+          data: {
+            labels: gl.labels || [],
+            datasets: [
+              {
+                label: 'Prof. Máxima (mm)',
+                data: gl.maximo || [],
+                borderColor: '#ef4444',
+                backgroundColor: '#ef4444',
+                borderWidth: 2.2,
+                pointRadius: 4,
+                tension: 0.25,
+                datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+              },
+              {
+                label: 'Prof. Promedio (mm)',
+                data: gl.promedio || [],
+                borderColor: '#3b82f6',
+                backgroundColor: '#3b82f6',
+                borderWidth: 2.5,
+                pointRadius: 4,
+                tension: 0.25,
+                datalabels: pillDatalabelConfig('rgba(59, 130, 246, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+              },
+              {
+                label: 'Prof. Mínima (mm)',
+                data: gl.minimo || [],
+                borderColor: '#64748b',
+                backgroundColor: '#64748b',
+                borderWidth: 2,
+                pointRadius: 4,
+                tension: 0.25,
+                datalabels: pillDatalabelConfig('rgba(100, 116, 139, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } },
+              tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatCO_Decimal(c.raw, 1)} mm` } }
+            },
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: 'Milímetros' }, ticks: { callback: (v) => `${formatCO_Decimal(v, 1)} mm` } },
+              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            }
+          }
+        });
+      }
+
+      // 2. Gráfico de Burbujas (Dispersión mm vs Dinero Perdido)
+      const ctxBurbujas = document.getElementById('canvasKpi19_burbujas');
+      if (ctxBurbujas && d.burbujas_dispersion) {
+        instanciasChartsSuite['kpi19_burbujas'] = new Chart(ctxBurbujas, {
+          type: 'bubble',
+          data: {
+            datasets: [{
+              label: 'Dispersión Retiro FVU',
+              data: d.burbujas_dispersion || [],
+              backgroundColor: 'rgba(239, 68, 68, 0.6)',
+              borderColor: '#dc2626',
+              borderWidth: 1.5,
+              datalabels: {
+                display: true,
+                formatter: (val) => val.cantidad > 0 ? `${val.x}mm (${val.cantidad})` : '',
+                font: { weight: 'bold', size: 9 },
+                color: '#1e293b',
+                align: 'top'
+              }
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 24, right: 16, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) => {
+                    const raw = c.raw;
+                    return `Profundidad: ${raw.x} mm | Llantas: ${raw.cantidad} | Scrap: ${formatCO_Moneda(raw.y)}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: { display: true, text: 'Milímetros al Salir a FVU (mm)', font: { weight: 'bold', size: 10 } },
+                min: 0,
+                max: 20,
+                ticks: { stepSize: 2 }
+              },
+              y: {
+                title: { display: true, text: 'Dinero Scrap Perdido ($ COP)', font: { weight: 'bold', size: 10 } },
+                beginAtZero: true,
+                ticks: { callback: (v) => formatCO_Moneda(v) }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // ==========================================
+    // RENDERERS SUB-PESTAÑA 5 (KPI 20) [SOLO FULL]
+    // ==========================================
+
+    // KPI 20: Matriz de Evaluación de Necesidades vs Las 7 Bodegas (MRP)
+    function renderKpi20(d) {
+      destruirChartSuite('kpi20_mrp');
+      const ctx = document.getElementById('canvasKpi20_mrp');
+      const tbody = document.getElementById('tbodyKpi20_mrp');
+      if (!d) return;
+
+      // 1. Gráfico Superior de Barras Comparativas por Dimensión
+      if (ctx && d.grafico_comparativo) {
+        const gc = d.grafico_comparativo;
+        instanciasChartsSuite['kpi20_mrp'] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: gc.labels || [],
+            datasets: [
+              {
+                label: 'Necesidad Bruta Total',
+                data: gc.necesidad_bruta || [],
+                backgroundColor: '#ef4444',
+                borderRadius: 6,
+                datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+              },
+              {
+                label: 'Stock Disponible (B1+B2+B3x0.9+B4)',
+                data: gc.stock_disponible || [],
+                backgroundColor: '#10b981',
+                borderRadius: 6,
+                datalabels: pillDatalabelConfig('rgba(16, 185, 129, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+              },
+              {
+                label: 'Compra Neta Sugerida',
+                data: gc.compra_neta || [],
+                backgroundColor: '#6366f1',
+                borderRadius: 6,
+                datalabels: pillDatalabelConfig('rgba(99, 102, 241, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+              tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                cornerRadius: 10,
+                padding: 12
+              }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', title: { display: true, text: 'Cantidad de Llantas' } },
+              x: { ticks: { font: { weight: 'bold', size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // 2. Gran Tabla Maestra MRP de 12 Columnas
+      if (tbody) {
+        if (!d.matriz_mrp || d.matriz_mrp.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="12" class="p-6 text-center text-slate-400">No hay datos de inventario o necesidades para los filtros seleccionados.</td></tr>';
+        } else {
+          tbody.innerHTML = d.matriz_mrp.map(m => {
+            const tieneCompra = (m.compra_neta_sugerida || 0) > 0;
+            return `
+              <tr class="hover:bg-slate-50 transition-colors">
+                <!-- Demanda -->
+                <td class="p-2.5 font-black text-slate-900 font-mono">${m.dimension || '-'}</td>
+                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.demanda_flota)}</td>
+                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.reposicion_bajas_fvu)}</td>
+                <td class="p-2.5 text-center text-slate-500 font-mono">+${formatCO_Miles(m.margen_seguridad)}</td>
+                <td class="p-2.5 text-center font-black bg-rose-50 text-rose-700 font-mono">${formatCO_Miles(m.necesidad_bruta)}</td>
+                <!-- Bodegas -->
+                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b1)}</td>
+                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b2)}</td>
+                <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${m.stock_b3})</span></td>
+                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b4)}</td>
+                <td class="p-2.5 text-center font-black bg-emerald-50 text-emerald-700 font-mono">${formatCO_Miles(m.stock_disponible)}</td>
+                <!-- Compra -->
+                <td class="p-2.5 text-center font-black ${tieneCompra ? 'bg-amber-100 text-amber-900 border border-amber-300 rounded-lg' : 'text-slate-400'} font-mono">${formatCO_Miles(m.compra_neta_sugerida)}</td>
+                <td class="p-2.5 text-right font-black text-indigo-700 font-mono">${formatCO_Moneda(m.presupuesto_estimado_cop)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    }
+```
+
+---
+
+## Archivo: static/js/modulo_diagnostico.js
+
+- **Ruta:** `static/js/modulo_diagnostico.js`
+- **Descripción:** Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes
+- **Métricas:** 968 líneas | 51,187 bytes (50.0 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
+    // ==========================================
+    // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO
+    // ==========================================
+    // ==========================================
+    // VISTA 3: PLANES DE ACCIÓN & DIAGNÓSTICO (V3.5 ENTERPRISE)
+    // ==========================================
+    let paginaActualDiag = 1;
+    const ITEMS_POR_PAGINA_DIAG = 25;
+    let cacheFiltradasDiag = [];
+
+    // Helper reactivo para compatibilidad total con IDs oficiales del manual y clásicos
+    function getDiagEl(idNuevo, idClasico) {
+      return document.getElementById(idNuevo) || (idClasico ? document.getElementById(idClasico) : null);
+    }
+    function getDiagVal(idNuevo, idClasico, defaultVal = '') {
+      const el = getDiagEl(idNuevo, idClasico);
+      return el ? (el.value || defaultVal) : defaultVal;
+    }
+
+    async function cargarDiagnostico() {
+      const tbody = getDiagEl('tbody_diagnostico_web', 'tbodyDiagnostico');
+      const tbodyMat = getDiagEl('tbody_semaforo_matriz_flota', 'tbodyMatrizSemaforos');
+      if (tbody && (!cacheDiagnostico || cacheDiagnostico.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando diagnósticos de flota...</td></tr>';
+      }
+      if (tbodyMat && (!cacheMatrizSemaforos || !cacheMatrizSemaforos.filas)) {
+        tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-indigo-600"></i>Cargando matriz de semáforos por posición...</td></tr>';
+      }
+      try {
+        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde');
+        const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta');
+        const qParams = new URLSearchParams();
+        if (fDesde) qParams.append('fecha_desde', fDesde);
+        if (fHasta) qParams.append('fecha_hasta', fHasta);
+        const qs = qParams.toString() ? `?${qParams.toString()}` : '';
+
+        const [res, resMat] = await Promise.all([
+          fetch(`/api/diagnostico${qs}`, { headers }),
+          fetch(`/api/diagnostico/matriz-semaforos${qs}`, { headers })
+        ]);
+        if (res.ok) {
+          cacheDiagnostico = await res.json();
+        }
+        if (resMat.ok) {
+          cacheMatrizSemaforos = await resMat.json();
+        }
+
+        // Consultar indicadores de Ahorro ROI para el banner en diagnóstico
+        try {
+          const resGraf = await fetch(`/api/diagnostico/graficos${qs}`, { headers });
+          if (resGraf.ok) {
+            const dataGraf = await resGraf.json();
+            if (dataGraf.ahorro_roi || dataGraf.resumen_ahorro_roi) {
+              renderizarBannerAhorroRoi(dataGraf.ahorro_roi || dataGraf.resumen_ahorro_roi);
+            }
+          }
+        } catch (_) {}
+        if (res.ok) {
+          actualizarCombosFiltroDiagnostico();
+          filtrarTablaDiagnostico();
+        } else if (res.status === 401) {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. Inicia sesión para ver los diagnósticos.</td></tr>';
+          if (tbodyMat) tbodyMat.innerHTML = '<tr><td colspan="16" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada.</td></tr>';
+        } else {
+          if (tbody) tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar diagnósticos (HTTP ${res.status}). <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+        }
+      } catch (e) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión con el servidor. <button onclick="cargarDiagnostico()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+        if (typeof mostrarToast === 'function') mostrarToast('Error al cargar diagnóstico de flota', true);
+      }
+    }
+
+    function onCambioRangoFechasDiagnostico() {
+      cargarDiagnostico();
+    }
+
+    function actualizarCombosFiltroDiagnostico() {
+      const selCli = getDiagEl('filtro_diag_cliente', 'filtroDiagCliente');
+      const selOp = getDiagEl('filtro_diag_operacion', 'filtroDiagOperacion');
+
+      const clientes = Array.from(new Set(cacheDiagnostico.map(r => r.Cliente ? String(r.Cliente).trim().toUpperCase() : '').filter(Boolean))).sort();
+      const operaciones = Array.from(new Set(cacheDiagnostico.map(r => r.Operación).filter(Boolean))).sort();
+
+      if (selCli) {
+        const valCli = selCli.value || 'Todos';
+        selCli.innerHTML = '<option value="Todos">Todos los Clientes</option>' +
+          clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (clientes.includes(valCli)) selCli.value = valCli;
+      }
+
+      actualizarCombosSedesDiagnostico();
+
+      if (selOp) {
+        const valOp = selOp.value || 'Todos';
+        selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
+          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+        if (operaciones.includes(valOp)) selOp.value = valOp;
+      }
+    }
+
+    function actualizarCombosSedesDiagnostico() {
+      const selCli = getDiagEl('filtro_diag_cliente', 'filtroDiagCliente');
+      const selSede = getDiagEl('filtro_diag_subcliente', 'filtroDiagSede');
+      if (!selSede) return;
+
+      const valCli = selCli ? (selCli.value || 'Todos') : 'Todos';
+      const valCliNorm = valCli.trim().toUpperCase();
+      const valSedeActual = selSede.value || 'Todos';
+
+      const sedes = Array.from(new Set(
+        cacheDiagnostico
+          .filter(r => (valCliNorm === 'TODOS' || String(r.Cliente || '').trim().toUpperCase() === valCliNorm))
+          .map(r => r.Subcliente)
+          .filter(Boolean)
+      )).sort();
+
+      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
+        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
+        selSede.value = valSedeActual;
+      } else {
+        selSede.value = 'Todos';
+      }
+    }
+
+    function onCambioFiltrosDiagnostico() {
+      filtrarTablaDiagnostico();
+    }
+
+    function onCambioFiltroDiagCliente() {
+      actualizarCombosSedesDiagnostico();
+      filtrarTablaDiagnostico();
+    }
+
+    function filtrarDiagnosticoPorCard(tipoAlerta) {
+      const sel = getDiagEl('filtro_diag_accion', 'filtroDiagAlerta');
+      if (sel) {
+        sel.value = tipoAlerta;
+        filtrarTablaDiagnostico();
+      }
+    }
+
+    function cambiarPaginaDiag(nuevaPagina) {
+      const totalPaginas = Math.ceil(cacheFiltradasDiag.length / ITEMS_POR_PAGINA_DIAG) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualDiag = nuevaPagina;
+      renderizarTablaDiagnostico();
+      const contTabla = document.getElementById('contenedorTablaDiagnostico');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
+    function filtrarTablaDiagnostico() {
+      const cli = getDiagVal('filtro_diag_cliente', 'filtroDiagCliente', 'Todos');
+      const sede = getDiagVal('filtro_diag_subcliente', 'filtroDiagSede', 'Todos');
+      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion', 'Todos');
+      const accion = getDiagVal('filtro_diag_accion', 'filtroDiagAlerta', 'Todos');
+      const busqueda = getDiagVal('filtro_diag_busqueda', 'filtroDiagPlaca', '').trim().toLowerCase();
+
+      // Actualizar botón de Consolidado Flota según el cliente y sede filtrados
+      const btnCons = document.getElementById('btnConsolidadoDiag');
+      const lblCons = document.getElementById('lblConsolidadoDiag');
+      if (lblCons) {
+        if (cli && cli !== 'Todos') {
+          let texto = `Consolidado Flota (${cli}`;
+          if (sede && sede !== 'Todos') {
+            texto += ` - ${sede}`;
+          }
+          texto += `)`;
+          lblCons.textContent = texto;
+          if (btnCons) btnCons.title = `Generar Consolidado PDF para la flota de ${cli}${sede && sede !== 'Todos' ? ' · Sede ' + sede : ''}`;
+        } else {
+          lblCons.textContent = 'Consolidado Flota PDF';
+          if (btnCons) btnCons.title = 'Selecciona un cliente en el filtro para generar su consolidado de flota';
+        }
+      }
+
+      const cliNorm = String(cli || 'Todos').trim().toUpperCase();
+      const sedeNorm = String(sede || 'Todos').trim().toUpperCase();
+      const opNorm = String(op || 'Todos').trim().toUpperCase();
+
+      // 1. Filtrar por ámbito de flota (Cliente, Sede, Operación y Placa/Búsqueda)
+      const flotaFiltrada = (cacheDiagnostico || []).filter(r => {
+        if (cliNorm !== 'TODOS' && String(r.Cliente || '').trim().toUpperCase() !== cliNorm) return false;
+        if (sedeNorm !== 'TODOS' && String(r.Subcliente || '').trim().toUpperCase() !== sedeNorm) return false;
+        if (opNorm !== 'TODOS' && String(r.Operación || '').trim().toUpperCase() !== opNorm) return false;
+        if (busqueda && !String(r['Vehículo/Placa'] || '').toLowerCase().includes(busqueda)) return false;
+        return true;
+      });
+
+      // 2. Conteo métrico de las 5 tarjetas KPI según el estándar de la Sección 4
+      const kpiVehiculos = new Set(flotaFiltrada.map(r => r['Vehículo/Placa'])).size;
+      const kpiRetiroYA = flotaFiltrada.reduce((acc, r) => acc + (Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0)), 0);
+      const kpiProximas = flotaFiltrada.reduce((acc, r) => acc + (Number(r.Cant_Proximas) || 0), 0);
+      const kpiAlineacionDual = flotaFiltrada.filter(r => 
+        r.Plan_Alineacion === 'SÍ' || 
+        r.Plan_Dual_Mal_Apareado === 'SÍ' || 
+        r.Plan_Rotacion === 'SÍ' || 
+        r.Badge_Rotacion === 'AUTO-AJUSTE'
+      ).length;
+      const kpiPresion = flotaFiltrada.reduce((acc, r) => acc + (Number(r.Cant_Presiones) || (r.Plan_Calibracion_PSI === 'SÍ' ? 1 : 0)), 0);
+
+      // Actualizar valores en el DOM (oficiales y alias)
+      const setCardTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setCardTxt('cardDiagTotal', kpiVehiculos);
+      setCardTxt('diag_kpi_vehiculos', kpiVehiculos);
+      setCardTxt('cardDiagCambio', kpiRetiroYA);
+      setCardTxt('diag_kpi_retiro_ya', kpiRetiroYA);
+      setCardTxt('cardDiagProximas', kpiProximas);
+      setCardTxt('diag_kpi_proximas', kpiProximas);
+      setCardTxt('cardDiagAlineacion', kpiAlineacionDual);
+      setCardTxt('diag_kpi_alineacion_dual', kpiAlineacionDual);
+      setCardTxt('cardDiagPresion', kpiPresion);
+      setCardTxt('diag_kpi_presion', kpiPresion);
+
+      // Resaltar tarjeta seleccionada según el filtro de acción
+      const mapCards = {
+        'Todos': 'cardBoxTotal',
+        'Retiro Inmediato': 'cardBoxCambio',
+        'Cambio': 'cardBoxCambio',
+        'Próximas a Cambio': 'cardBoxProximas',
+        'Proximas': 'cardBoxProximas',
+        'Alineación': 'cardBoxAlineacion',
+        'Alineacion': 'cardBoxAlineacion',
+        'Dual': 'cardBoxAlineacion',
+        'Rotaciones': 'cardBoxAlineacion',
+        'Presión': 'cardBoxPresion',
+        'Presion': 'cardBoxPresion'
+      };
+      ['cardBoxTotal', 'cardBoxCambio', 'cardBoxProximas', 'cardBoxAlineacion', 'cardBoxPresion'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+      });
+      const activeId = mapCards[accion];
+      if (activeId && accion !== 'Todos') {
+        const el = document.getElementById(activeId);
+        if (el) el.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+      }
+
+      // 3. Filtrar por acción específica (8 opciones oficiales + alias clásicos)
+      const filtradas = flotaFiltrada.filter(r => {
+        const cCambios = Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0);
+        const cProx = Number(r.Cant_Proximas) || 0;
+        const esAlin = r.Plan_Alineacion === 'SÍ';
+        const esDual = r.Plan_Dual_Mal_Apareado === 'SÍ';
+        const esRot = r.Plan_Rotacion === 'SÍ' || r.Badge_Rotacion === 'AUTO-AJUSTE';
+        const cPres = Number(r.Cant_Presiones) || (r.Plan_Calibracion_PSI === 'SÍ' ? 1 : 0);
+
+        if (accion === 'Retiro Inmediato' || accion === 'Cambio') {
+          return cCambios > 0;
+        }
+        if (accion === 'Próximas a Cambio' || accion === 'Proximas') {
+          return cProx > 0;
+        }
+        if (accion === 'Estado OK' || accion === 'OK') {
+          return cCambios === 0 && !esAlin && !esDual && !esRot && cPres === 0;
+        }
+        if (accion === 'Rotaciones') {
+          return esRot;
+        }
+        if (accion === 'Alineación' || accion === 'Alineacion') {
+          return esAlin;
+        }
+        if (accion === 'Dual') {
+          return esDual;
+        }
+        if (accion === 'Presión' || accion === 'Presion') {
+          return cPres > 0;
+        }
+        if (accion === 'Alerta') {
+          return cCambios > 0 || cProx > 0 || esAlin || esDual || esRot || cPres > 0;
+        }
+        return true;
+      });
+
+      // Ordenar de la inspección más reciente a la más antigua (y secundariamente por placa)
+      filtradas.sort((a, b) => {
+        const fechaA = String(a.Fecha || '').trim();
+        const fechaB = String(b.Fecha || '').trim();
+        if (fechaA !== fechaB) {
+          return fechaB.localeCompare(fechaA);
+        }
+        return String(a['Vehículo/Placa'] || '').localeCompare(String(b['Vehículo/Placa'] || ''));
+      });
+
+      // Sincronizar tooltip de exportación de diagnóstico a Excel
+      const btnExp = document.getElementById('btnExportarDiagExcel');
+      const hayFiltros = (cliNorm !== 'TODOS' || sedeNorm !== 'TODOS' || opNorm !== 'TODOS' || (accion && accion !== 'Todos') || Boolean(busqueda));
+      if (btnExp) {
+        btnExp.title = hayFiltros 
+          ? `Exportar reporte Excel aplicando los filtros activos (${filtradas.length} vehículos)` 
+          : `Exportar diagnóstico completo de flota en Excel (${kpiVehiculos} vehículos)`;
+      }
+
+      // Asignar a la caché de diagnóstico filtrado y renderizar página 1
+      cacheFiltradasDiag = filtradas;
+      paginaActualDiag = 1;
+      renderizarTablaDiagnostico();
+
+      // Actualizar automáticamente la Matriz de Semáforos por Posición
+      renderizarMatrizSemaforos(cli, sede, op, busqueda);
+    }
+
+    function renderizarTablaDiagnostico() {
+      const tbody = getDiagEl('tbody_diagnostico_web', 'tbodyDiagnostico');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionDiag');
+      if (!tbody) return;
+
+      if (!cacheFiltradasDiag || cacheFiltradasDiag.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 font-medium">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        return;
+      }
+
+      // Cálculo de Paginación de 25 registros
+      const totalRegistros = cacheFiltradasDiag.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_DIAG) || 1;
+      if (paginaActualDiag > totalPaginas) paginaActualDiag = totalPaginas;
+      if (paginaActualDiag < 1) paginaActualDiag = 1;
+
+      const inicio = (paginaActualDiag - 1) * ITEMS_POR_PAGINA_DIAG;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_DIAG, totalRegistros);
+      const paginaItems = cacheFiltradasDiag.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(r => {
+        const cantCambios = Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0);
+        const cantProx = Number(r.Cant_Proximas) || 0;
+        const esAlin = r.Plan_Alineacion === 'SÍ';
+        const esDual = r.Plan_Dual_Mal_Apareado === 'SÍ';
+        const esRotAuto = r.Badge_Rotacion === 'AUTO-AJUSTE';
+        const esRot = r.Plan_Rotacion === 'SÍ';
+
+        const bgRow = cantCambios > 0 ? 'bg-rose-50/50' : (esAlin || esDual || cantProx > 0) ? 'bg-amber-50/40' : '';
+
+        // Bloques de prescripción formateados (Sección 5 Columna 11)
+        let bloquesHtml = '';
+        if (Array.isArray(r.Bloques_Recomendaciones) && r.Bloques_Recomendaciones.length > 0) {
+          bloquesHtml = `<div class="flex flex-col gap-1 max-w-sm whitespace-normal">` +
+            r.Bloques_Recomendaciones.map(b => {
+              let cls = 'bg-slate-50 text-slate-700 border-slate-200';
+              let ico = 'fa-circle-info';
+              if (b.tipo === 'CAMBIO_YA' || b.tipo === 'RETIRO' || b.tipo === 'PAR_DIRECCIONAL') {
+                cls = 'bg-rose-50 text-rose-800 border-rose-200 font-bold';
+                ico = 'fa-triangle-exclamation text-rose-600';
+              } else if (b.tipo === 'PROXIMO' || b.tipo === 'PROXIMA') {
+                cls = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
+                ico = 'fa-clock text-amber-600';
+              } else if (b.tipo === 'ALINEACION') {
+                cls = 'bg-orange-50 text-orange-800 border-orange-200 font-medium';
+                ico = 'fa-arrows-left-right text-orange-600';
+              } else if (b.tipo === 'DUAL') {
+                cls = 'bg-purple-50 text-purple-800 border-purple-200 font-medium';
+                ico = 'fa-scale-unbalanced text-purple-600';
+              } else if (b.tipo === 'AUTO_AJUSTE') {
+                cls = 'bg-indigo-50 text-indigo-800 border-indigo-200 font-bold';
+                ico = 'fa-rotate text-indigo-600';
+              } else if (b.tipo === 'ROTACION' || b.tipo === 'EQUIS_LARGA' || b.tipo === 'ROTACION_IRREGULAR' || b.tipo === 'ROTACION_ESCALONADO') {
+                cls = 'bg-blue-50 text-blue-800 border-blue-200 font-medium';
+                ico = 'fa-arrows-rotate text-blue-600';
+              } else if (b.tipo === 'PRESION') {
+                cls = 'bg-cyan-50 text-cyan-800 border-cyan-200 font-medium';
+                ico = 'fa-gauge text-cyan-600';
+              } else if (b.tipo === 'OK') {
+                cls = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
+                ico = 'fa-check text-emerald-600';
+              }
+              return `<span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded border ${cls} leading-snug">
+                        <i class="fa-solid ${ico} mr-1.5 shrink-0 text-[9px]"></i>
+                        <span>${b.texto}</span>
+                      </span>`;
+            }).join('') +
+          `</div>`;
+        } else {
+          const lineas = [];
+          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${r.Detalle_Cambio}</span>`);
+          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${r.Detalle_Proximas}</span>`);
+          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${r.Detalle_Alineacion}</span>`);
+          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${r.Detalle_Dual}</span>`);
+          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${r.Detalle_Auto_Ajuste}</span>`);
+          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${r.Detalle_Calibracion_PSI}</span>`);
+          if (lineas.length === 0) lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
+          bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
+        }
+
+        return `
+          <tr class="${bgRow} hover:bg-slate-100 transition-colors">
+            <!-- 1. Placa -->
+            <td class="p-2.5 font-black text-slate-900">
+              <div>${r['Vehículo/Placa']}</div>
+              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${r.Fecha}</div>` : ''}
+            </td>
+            <!-- 2. Cliente / Sede -->
+            <td class="p-2.5">
+              <div class="font-bold text-slate-800">${r.Cliente || '-'}</div>
+              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${r.Subcliente}</div>` : ''}
+            </td>
+            <!-- 3. Tipología -->
+            <td class="p-2.5">
+              <div class="font-bold text-slate-700">${r.Tipo || '-'}</div>
+              ${r.Operación ? `<div class="text-[10px] text-slate-400">${r.Operación}</div>` : ''}
+            </td>
+            <!-- 4. Inspeccionadas -->
+            <td class="p-2.5 text-center">
+              <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold font-mono text-xs">
+                ${r['Llantas Inspeccionadas'] || 0}
+              </span>
+            </td>
+            <!-- 5. Límite Retiro -->
+            <td class="p-2.5 text-center font-mono font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
+            <!-- 6. Alineación -->
+            <td class="p-2.5 text-center">
+              ${esAlin 
+                ? '<span class="bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
+                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
+            </td>
+            <!-- 7. Dual Parejas -->
+            <td class="p-2.5 text-center">
+              ${esDual 
+                ? '<span class="bg-purple-100 text-purple-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
+                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
+            </td>
+            <!-- 8. Cambio YA -->
+            <td class="p-2.5 text-center">
+              ${cantCambios > 0 
+                ? `<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px] animate-pulse">URGENTE (${cantCambios})</span>` 
+                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
+            </td>
+            <!-- 9. Próximas -->
+            <td class="p-2.5 text-center">
+              ${cantProx > 0 
+                ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">PRÓXIMO (${cantProx})</span>` 
+                : '<span class="text-slate-400 font-mono text-[11px]">0</span>'}
+            </td>
+            <!-- 10. Rotación -->
+            <td class="p-2.5 text-center">
+              ${esRotAuto 
+                ? '<span class="bg-indigo-100 text-indigo-800 font-black px-2 py-0.5 rounded-full text-[10px]">AUTO-AJUSTE</span>' 
+                : esRot 
+                  ? '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
+                  : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
+            </td>
+            <!-- 11. Detalles & Recomendaciones -->
+            <td class="p-2.5">${bloquesHtml}</td>
+            <!-- 12. Plan PDF -->
+            <td class="p-2.5 text-center">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}', '${r.Cliente || ''}', '${r.Tipo || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
+                <i class="fa-solid fa-file-pdf mr-1"></i>PDF
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin);
+    }
+
+    function actualizarBarraPaginacionDiag(totalRegistros, totalPaginas, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionDiag');
+      const spanInicio = document.getElementById('pagInicioDiag');
+      const spanFin = document.getElementById('pagFinDiag');
+      const spanTotal = document.getElementById('pagTotalDiag');
+      const controles = document.getElementById('controlesPaginacionDiag');
+
+      if (!contenedor || !spanInicio || !spanFin || !spanTotal || !controles) return;
+
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+      contenedor.classList.remove('hidden');
+
+      spanInicio.textContent = (inicio + 1).toLocaleString();
+      spanFin.textContent = fin.toLocaleString();
+      spanTotal.textContent = totalRegistros.toLocaleString();
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualDiag <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualDiag <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualDiag - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualDiag + 1);
+
+        if (paginaActualDiag <= 3) {
+          end = 4;
+        } else if (paginaActualDiag >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualDiag) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaDiag(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualDiag >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${paginaActualDiag + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualDiag >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaDiag(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
+
+    let paginaActualMatriz = 1;
+    const ITEMS_POR_PAGINA_MATRIZ = 25;
+    let cacheFiltradasMatriz = [];
+
+    function renderizarMatrizSemaforos(cli, sede, op, placa) {
+      const thead = getDiagEl('thead_semaforo_matriz_flota', 'theadMatrizSemaforos');
+      const tbody = getDiagEl('tbody_semaforo_matriz_flota', 'tbodyMatrizSemaforos');
+      const tfoot = getDiagEl('tfoot_semaforo_matriz_flota', 'tfootMatrizSemaforos');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionMatriz');
+      if (!tbody) return;
+
+      // Obtener filas de matriz: sincronizadas desde cacheFiltradasDiag si tiene Llantas_Posiciones, o fallback a cacheMatrizSemaforos
+      let filasFiltradas = [];
+      const posiciones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+      if (cacheFiltradasDiag && cacheFiltradasDiag.length > 0 && cacheFiltradasDiag[0].Llantas_Posiciones) {
+        filasFiltradas = cacheFiltradasDiag.map(r => {
+          const mapPos = {};
+          if (Array.isArray(r.Llantas_Posiciones)) {
+            r.Llantas_Posiciones.forEach(lp => {
+              const semNorm = String(lp.semaforo || '').trim().toLowerCase();
+              const col = semNorm === 'verde' ? 'verde' : semNorm === 'amarillo' ? 'amarillo' : semNorm === 'rojo' ? 'rojo' : 'gris';
+              mapPos[lp.posicion] = {
+                color: col,
+                pb: lp.prof_min !== undefined ? lp.prof_min : 0.0,
+                numero_interno: lp.numero_interno || '',
+                psi: lp.psi,
+                dimension: lp.dimension,
+                eje: lp.posicion <= 2 ? 'Direccional' : 'Tracción/Arrastre',
+                limite: r.Limite_Retiro_mm || 3.0
+              };
+            });
+          } else if (typeof r.Llantas_Posiciones === 'object') {
+            Object.assign(mapPos, r.Llantas_Posiciones);
+          }
+          return {
+            placa: r['Vehículo/Placa'],
+            cliente: r.Cliente,
+            subcliente: r.Subcliente,
+            tipologia: r.Tipo,
+            limite: r.Limite_Retiro_mm || 3.0,
+            posiciones: mapPos
+          };
+        });
+      } else if (cacheMatrizSemaforos && cacheMatrizSemaforos.filas) {
+        const cliNorm = String(cli || 'Todos').trim().toUpperCase();
+        const sedeNorm = String(sede || 'Todos').trim().toUpperCase();
+        const opNorm = String(op || 'Todos').trim().toUpperCase();
+        const placaNorm = String(placa || '').trim().toLowerCase();
+
+        filasFiltradas = cacheMatrizSemaforos.filas.filter(r => {
+          if (cliNorm !== 'TODOS' && String(r.cliente || '').trim().toUpperCase() !== cliNorm) return false;
+          if (sedeNorm !== 'TODOS' && String(r.subcliente || '').trim().toUpperCase() !== sedeNorm) return false;
+          if (opNorm !== 'TODOS' && String(r.tipo_operacion || '').trim().toUpperCase() !== opNorm) return false;
+          if (placaNorm && !String(r.placa || '').toLowerCase().includes(placaNorm)) return false;
+          return true;
+        });
+      }
+
+      cacheFiltradasMatriz = filasFiltradas;
+
+      // Encabezado estándar de la matriz de semáforos
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th class="p-2.5 text-left font-bold sticky left-0 z-30 bg-slate-900 min-w-[95px] shadow-sm">Placa</th>
+            <th class="p-2.5 text-left font-bold min-w-[130px]">Cliente / Sede</th>
+            <th class="p-2.5 text-left font-bold min-w-[110px]">Tipología</th>
+            <th class="p-2.5 text-center font-bold min-w-[75px]">Límite</th>
+            ${posiciones.map(p => `<th class="p-2 text-center font-black min-w-[55px] border-l border-slate-800" title="Posición ${p}">P${p}</th>`).join('')}
+            <th class="p-2.5 text-center font-bold min-w-[95px] border-l border-slate-800">🔴/🟡/🟢</th>
+          </tr>
+        `;
+      }
+
+      if (filasFiltradas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="17" class="p-8 text-center text-slate-400 font-medium">No se encontraron vehículos que coincidan con los filtros aplicados.</td></tr>`;
+        if (tfoot) tfoot.innerHTML = '';
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        return;
+      }
+
+      // Cálculos globales sobre TODAS las filas filtradas
+      const posTotales = {};
+      posiciones.forEach(p => {
+        posTotales[p] = { rojo: 0, amarillo: 0, verde: 0, gris: 0, total: 0 };
+      });
+      const globalTot = { rojo: 0, amarillo: 0, verde: 0, gris: 0 };
+
+      filasFiltradas.forEach(r => {
+        posiciones.forEach(p => {
+          const cel = r.posiciones ? (r.posiciones[p] || r.posiciones[String(p)]) : null;
+          if (cel) {
+            const col = cel.color;
+            if (col === 'rojo') { posTotales[p].rojo++; globalTot.rojo++; }
+            else if (col === 'amarillo') { posTotales[p].amarillo++; globalTot.amarillo++; }
+            else if (col === 'verde') { posTotales[p].verde++; globalTot.verde++; }
+            else { posTotales[p].gris++; globalTot.gris++; }
+            posTotales[p].total++;
+          }
+        });
+      });
+
+      // Paginación de 25 vehículos por página
+      const totalRegistros = filasFiltradas.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MATRIZ) || 1;
+      if (paginaActualMatriz > totalPaginas) paginaActualMatriz = totalPaginas;
+      if (paginaActualMatriz < 1) paginaActualMatriz = 1;
+
+      const inicio = (paginaActualMatriz - 1) * ITEMS_POR_PAGINA_MATRIZ;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_MATRIZ, totalRegistros);
+      const paginaItems = filasFiltradas.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(r => {
+        let cRojo = 0, cAmar = 0, cVerde = 0;
+        const celdasPos = posiciones.map(p => {
+          const cel = r.posiciones ? (r.posiciones[p] || r.posiciones[String(p)]) : null;
+          if (!cel) {
+            return '<td class="p-1.5 text-center text-slate-300 font-mono border-l border-slate-100">-</td>';
+          }
+          const pb = cel.pb !== undefined ? cel.pb : (cel.p_min !== undefined ? cel.p_min : 0.0);
+          const col = cel.color;
+          if (col === 'rojo') cRojo++;
+          else if (col === 'amarillo') cAmar++;
+          else if (col === 'verde') cVerde++;
+
+          let badgeClass = '';
+          let dotColor = '';
+          if (col === 'rojo') {
+            badgeClass = 'bg-rose-100 text-rose-800 border-rose-300 font-black';
+            dotColor = 'bg-rose-600 animate-pulse';
+          } else if (col === 'amarillo') {
+            badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+            dotColor = 'bg-amber-500';
+          } else if (col === 'verde') {
+            badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+            dotColor = 'bg-emerald-500';
+          } else {
+            badgeClass = 'bg-slate-100 text-slate-500 border-slate-200 font-medium';
+            dotColor = 'bg-slate-400';
+          }
+
+          const valTxt = pb > 0 ? pb.toFixed(1) : '0.0';
+          const numInterno = cel.numero_interno || cel.serie || '';
+          const lim = cel.limite !== undefined ? cel.limite : (r.limite || 3.0);
+          const tooltip = `Pos P${p} (${cel.eje || 'Eje'}) | PB: ${valTxt} mm | Límite: ${lim} mm | ${cel.estado || ''} ${cel.accion ? '- ' + cel.accion : ''} ${cel.marca ? '| ' + cel.marca : ''} ${numInterno ? '| #' + numInterno : ''} ${cel.psi ? '| ' + cel.psi + ' PSI' : ''}`.trim();
+
+          return `
+            <td class="p-1 text-center border-l border-slate-100" title="${tooltip}">
+              <div class="inline-flex flex-col items-center justify-center">
+                <span class="inline-flex items-center justify-center space-x-1 px-1.5 py-0.5 rounded-md border text-[11px] font-mono ${badgeClass} cursor-help shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+                  <span>${valTxt}</span>
+                </span>
+                ${numInterno ? `<span class="text-[9px] text-slate-400 font-mono truncate max-w-[50px] leading-tight" title="Serial/Interno: ${numInterno}">#${numInterno}</span>` : ''}
+              </div>
+            </td>
+          `;
+        }).join('');
+
+        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
+        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
+        const limTxt = (r.limite ? Number(r.limite).toFixed(1) : '3.0') + ' mm';
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${r.placa}</td>
+            <td class="p-2.5 text-left font-bold text-slate-700">${r.cliente || '-'}${subClienteTxt}</td>
+            <td class="p-2.5 text-left text-slate-600 text-[11px]">${tipoTxt}</td>
+            <td class="p-2 text-center font-mono font-bold text-slate-600">${limTxt}</td>
+            ${celdasPos}
+            <td class="p-2 text-center border-l border-slate-100 font-mono text-xs whitespace-nowrap">
+              <span class="text-rose-700 font-black">${cRojo}</span> /
+              <span class="text-amber-700 font-bold">${cAmar}</span> /
+              <span class="text-emerald-700 font-bold">${cVerde}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (tfoot) {
+        tfoot.innerHTML = `
+          <tr class="bg-slate-100 text-slate-800 border-t-2 border-slate-300">
+            <td class="p-2.5 text-left font-black sticky left-0 z-10 bg-slate-100 shadow-2xs">TOTALES FLOTA</td>
+            <td class="p-2.5 text-left text-[11px] text-slate-500 font-bold">${filasFiltradas.length} Vehículos</td>
+            <td class="p-2.5 text-left text-[10px] text-slate-500 font-bold">🔴/🟡/🟢</td>
+            <td class="p-2 text-center text-slate-400 font-mono">-</td>
+            ${posiciones.map(p => {
+              const t = posTotales[p];
+              return `
+                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos P${p}: ${t.rojo} Retiro Urgente, ${t.amarillo} Próxima a Cambio, ${t.verde} Óptima">
+                  <span class="text-rose-700 font-black">${t.rojo}</span>/<span class="text-amber-700 font-bold">${t.amarillo}</span>/<span class="text-emerald-700 font-bold">${t.verde}</span>
+                </td>
+              `;
+            }).join('')}
+            <td class="p-2 text-center border-l border-slate-200 font-mono font-black text-xs whitespace-nowrap">
+              <span class="text-rose-700">${globalTot.rojo}</span> /
+              <span class="text-amber-700">${globalTot.amarillo}</span> /
+              <span class="text-emerald-700">${globalTot.verde}</span>
+            </td>
+          </tr>
+        `;
+      }
+
+      actualizarBarraPaginacionMatriz(totalRegistros, inicio, fin);
+    }
+
+    function cambiarPaginaMatriz(nuevaPagina) {
+      const totalRegistros = cacheFiltradasMatriz ? cacheFiltradasMatriz.length : 0;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MATRIZ) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualMatriz = nuevaPagina;
+      
+      const cli = getDiagVal('filtro_diag_cliente', 'filtroDiagCliente');
+      const sede = getDiagVal('filtro_diag_subcliente', 'filtroDiagSede');
+      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion');
+      const placa = getDiagVal('filtro_diag_busqueda', 'filtroDiagPlaca');
+      renderizarMatrizSemaforos(cli, sede, op, placa);
+
+      const contTabla = document.querySelector('#contenedorMatrizSemaforosFlota');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
+    function actualizarBarraPaginacionMatriz(totalRegistros, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionMatriz');
+      const lblInicio = document.getElementById('pagInicioMatriz');
+      const lblFin = document.getElementById('pagFinMatriz');
+      const lblTotal = document.getElementById('pagTotalMatriz');
+      const controles = document.getElementById('controlesPaginacionMatriz');
+
+      if (!contenedor || !controles) return;
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+
+      contenedor.classList.remove('hidden');
+      if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
+      if (lblFin) lblFin.textContent = fin.toLocaleString();
+      if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
+
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MATRIZ) || 1;
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualMatriz <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaMatriz(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualMatriz <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaMatriz(${paginaActualMatriz - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualMatriz - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualMatriz + 1);
+
+        if (paginaActualMatriz <= 3) {
+          end = 4;
+        } else if (paginaActualMatriz >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualMatriz) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaMatriz(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualMatriz >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaMatriz(${paginaActualMatriz + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualMatriz >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaMatriz(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
+
+    function limpiarFiltrosDiagnostico() {
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('filtro_diag_cliente', 'Todos');
+      setVal('filtroDiagCliente', 'Todos');
+      actualizarCombosSedesDiagnostico();
+      setVal('filtro_diag_subcliente', 'Todos');
+      setVal('filtroDiagSede', 'Todos');
+      setVal('filtro_diag_operacion', 'Todos');
+      setVal('filtroDiagOperacion', 'Todos');
+      setVal('filtro_diag_fecha_desde', '');
+      setVal('filtroDiagFechaDesde', '');
+      setVal('filtro_diag_fecha_hasta', '');
+      setVal('filtroDiagFechaHasta', '');
+      setVal('filtro_diag_accion', 'Todos');
+      setVal('filtroDiagAlerta', 'Todos');
+      setVal('filtro_diag_busqueda', '');
+      setVal('filtroDiagPlaca', '');
+      cargarDiagnostico();
+      if (typeof mostrarToast === 'function') mostrarToast('Filtros de diagnóstico restablecidos.');
+    }
+
+    function exportarDiagnosticoExcel() {
+      const cli = getDiagVal('filtro_diag_cliente', 'filtroDiagCliente', 'Todos');
+      const sede = getDiagVal('filtro_diag_subcliente', 'filtroDiagSede', 'Todos');
+      const op = getDiagVal('filtro_diag_operacion', 'filtroDiagOperacion', 'Todos');
+      const accion = getDiagVal('filtro_diag_accion', 'filtroDiagAlerta', 'Todos');
+      const busqueda = getDiagVal('filtro_diag_busqueda', 'filtroDiagPlaca', '').trim();
+      const fDesde = getDiagVal('filtro_diag_fecha_desde', 'filtroDiagFechaDesde', '').trim();
+      const fHasta = getDiagVal('filtro_diag_fecha_hasta', 'filtroDiagFechaHasta', '').trim();
+
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+
+      const params = new URLSearchParams();
+      if (tok) params.append('token', tok);
+      if (cli && cli !== 'Todos') params.append('cliente', cli);
+      if (sede && sede !== 'Todos') params.append('subcliente', sede);
+      if (op && op !== 'Todos') params.append('tipo_operacion', op);
+      if (accion && accion !== 'Todos') params.append('alerta', accion);
+      if (busqueda) params.append('placa', busqueda);
+      if (fDesde) params.append('fecha_desde', fDesde);
+      if (fHasta) params.append('fecha_hasta', fHasta);
+
+      const btn = document.getElementById('btnExportarDiagExcel');
+      const lbl = document.getElementById('lblExportarDiagExcel');
+      const origText = lbl ? lbl.innerHTML : 'Exportar Diagnóstico';
+
+      if (lbl) {
+        lbl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i>Generando...`;
+      }
+      if (btn) btn.disabled = true;
+
+      const descFiltro = (cli !== 'Todos' || sede !== 'Todos' || op !== 'Todos' || accion !== 'Todos' || busqueda || fDesde || fHasta)
+        ? 'con los filtros seleccionados'
+        : 'de toda la flota';
+
+      if (typeof mostrarToast === 'function') {
+        mostrarToast(`Generando archivo Excel ${descFiltro}...`, 'info');
+      }
+
+      window.location.href = `/api/diagnostico/exportar-excel?${params.toString()}`;
+
+      setTimeout(() => {
+        if (lbl) lbl.innerHTML = origText;
+        if (btn) btn.disabled = false;
+      }, 3000);
+    }
+```
+
+---
+
+## Archivo: static/js/modulo_trazabilidad.js
+
+- **Ruta:** `static/js/modulo_trazabilidad.js`
+- **Descripción:** Módulo Trazabilidad: Historial y caracterización de flota
+- **Métricas:** 1209 líneas | 58,471 bytes (57.1 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
+    // ==========================================
+    // VISTA 4: TRAZABILIDAD & KPIS DE LLANTAS
+    // ==========================================
+    let kpisFiltrosPoblados = false;
+    let paginaActualKpis = 1;
+    const ITEMS_POR_PAGINA_KPIS = 25;
+
+    async function cargarKpis() {
+      const tbody = document.getElementById('tbodyKpis');
+      if (tbody && (!cacheKpis || cacheKpis.length === 0)) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="20" class="p-8 text-center text-slate-500 font-bold text-xs">
+              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 mr-2 text-sm"></i>
+              Cargando métricas de trazabilidad y KPIs...
+            </td>
+          </tr>
+        `;
+      }
+
+      const qNum = (document.getElementById('filtroKpiNumero')?.value || '').trim();
+      const cli = document.getElementById('filtroKpiCliente')?.value || '';
+      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
+      const op = document.getElementById('filtroKpiOperacion')?.value || '';
+      const marca = document.getElementById('filtroKpiMarca')?.value || '';
+
+      const params = new URLSearchParams();
+      if (qNum) params.append('numero_interno', qNum);
+      if (cli && cli !== 'TODOS') params.append('cliente', cli);
+      if (sub && sub !== 'TODOS') params.append('subcliente', sub);
+      if (op && op !== 'TODOS') params.append('tipo_operacion', op);
+      if (marca && marca !== 'TODOS') params.append('marca', marca);
+
+      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+      try {
+        const res = await fetch(`/api/kpis-llantas?${params.toString()}`, { headers });
+        if (res.ok) {
+          cacheKpis = await res.json();
+          poblarSelectoresFiltroKpis(cacheKpis);
+          renderizarTablaKpis();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no válida o expirada. Por favor inicia sesión nuevamente.</td></tr>`;
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar métricas (${res.status}). <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+          }
+        }
+      } catch (e) {
+        console.error('Error en cargarKpis:', e);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-wifi mr-2"></i>Error al procesar métricas de KPIs. <button onclick="cargarKpis()" class="ml-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+        }
+        mostrarToast('Error al cargar métricas de KPIs: ' + (e.message || ''), true);
+      }
+    }
+
+    function poblarSelectoresFiltroKpis(data) {
+      const selCli = document.getElementById('filtroKpiCliente');
+      const selSub = document.getElementById('filtroKpiSubcliente');
+      const selOp = document.getElementById('filtroKpiOperacion');
+      const selMar = document.getElementById('filtroKpiMarca');
+
+      const valCliActual = selCli ? (selCli.value || 'TODOS') : 'TODOS';
+      const valSubActual = selSub ? (selSub.value || 'TODOS') : 'TODOS';
+      const valOpActual = selOp ? (selOp.value || 'TODOS') : 'TODOS';
+      const valMarActual = selMar ? (selMar.value || 'TODOS') : 'TODOS';
+
+      // Detectar clientes asignados del usuario si es inspector
+      let clisAsignados = [];
+      if (usuarioActual && !esUsuarioAdmin()) {
+        if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
+          clisAsignados = usuarioActual.clientes_asignados.map(c => String(c).trim()).filter(Boolean);
+        } else if (usuarioActual.cliente_asignado) {
+          clisAsignados = usuarioActual.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+
+      // Clientes disponibles
+      let clientes = [];
+      if (data && data.length > 0) {
+        clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
+      }
+      if (clisAsignados.length > 0) {
+        clisAsignados.forEach(c => {
+          if (!clientes.some(x => x.toLowerCase() === c.toLowerCase())) clientes.push(c);
+        });
+        clientes.sort();
+      }
+
+      if (selCli) {
+        if (clisAsignados.length === 1) {
+          const unico = clisAsignados[0];
+          selCli.innerHTML = `<option value="${unico}" selected>${unico} (Fijo)</option>`;
+          selCli.disabled = true;
+          selCli.classList.add('bg-slate-100', 'cursor-not-allowed');
+        } else {
+          selCli.disabled = false;
+          selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+          const lblTodos = clisAsignados.length > 1 ? 'Todas Mis Flotas Asignadas' : 'Todos los Clientes';
+          selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
+            clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valCliActual && clientes.includes(valCliActual)) {
+            selCli.value = valCliActual;
+          } else {
+            selCli.value = 'TODOS';
+          }
+        }
+      }
+
+      // Subclientes / Sedes disponibles (filtrados por cliente si está seleccionado)
+      const cliFiltro = selCli ? selCli.value : 'TODOS';
+      const dataSedes = (cliFiltro && cliFiltro !== 'TODOS')
+        ? (data || []).filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
+        : (data || []);
+      const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
+      if (selSub) {
+        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+        if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
+        else selSub.value = 'TODOS';
+      }
+
+      // Operaciones
+      const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
+      if (selOp) {
+        selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' +
+          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+        if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
+        else selOp.value = 'TODOS';
+      }
+
+      // Marcas
+      const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
+      if (selMar) {
+        selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
+        else selMar.value = 'TODOS';
+      }
+
+      kpisFiltrosPoblados = true;
+    }
+
+    function renderizarTablaKpis() {
+      const tbody = document.getElementById('tbodyKpis');
+      const contenedorPaginacion = document.getElementById('contenedorPaginacionKpis');
+      const data = cacheKpis;
+
+      const elTotal = document.getElementById('cardKpiTotal');
+      const elKm = document.getElementById('cardKpiKmProm');
+      const elCpk = document.getElementById('cardKpiCpkProm');
+      const elProy = document.getElementById('cardKpiProyProm');
+
+      if (!data || data.length === 0) {
+        if (elTotal) elTotal.textContent = '0';
+        if (elKm) elKm.textContent = '0.0';
+        if (elCpk) elCpk.textContent = '$0.0000';
+        if (elProy) elProy.textContent = '0 km';
+        if (tbody) tbody.innerHTML = `<tr><td colspan="20" class="p-8 text-center text-slate-400">No hay datos de rendimiento coincidentes con los filtros.</td></tr>`;
+        if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        return;
+      }
+
+      // Cálculo de promedios para tarjetas sobre el TOTAL de datos
+      const km_mms = data.map(d => d.km_por_mm).filter(v => v > 0);
+      const cpks = data.map(d => d.cpk).filter(v => v > 0);
+      const proys = data.map(d => d.proyeccion_total_km).filter(v => v > 0);
+
+      const prom_km_mm = km_mms.length ? (km_mms.reduce((a, b) => a + b, 0) / km_mms.length) : 0;
+      const prom_cpk = cpks.length ? (cpks.reduce((a, b) => a + b, 0) / cpks.length) : 0;
+      const prom_proy = proys.length ? (proys.reduce((a, b) => a + b, 0) / proys.length) : 0;
+
+      if (elTotal) elTotal.textContent = data.length.toLocaleString();
+      if (elKm) elKm.textContent = prom_km_mm.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
+      if (elCpk) elCpk.textContent = `$${prom_cpk.toFixed(4)}`;
+      if (elProy) elProy.textContent = `${Math.round(prom_proy).toLocaleString()} km`;
+
+      // Paginación estricta de 25 registros por página
+      const totalRegistros = data.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_KPIS) || 1;
+      if (paginaActualKpis > totalPaginas) paginaActualKpis = totalPaginas;
+      if (paginaActualKpis < 1) paginaActualKpis = 1;
+
+      const inicio = (paginaActualKpis - 1) * ITEMS_POR_PAGINA_KPIS;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_KPIS, totalRegistros);
+      const paginaItems = data.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(d => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-2.5 font-black text-slate-900">${d.numero_interno || '-'}</td>
+          <td class="p-2.5 font-bold text-blue-700">${d.placa || '-'}</td>
+          <td class="p-2.5 text-center font-bold">${d.posicion}</td>
+          <td class="p-2.5">${d.marca} ${d.diseno}</td>
+          <td class="p-2.5">${d.dimension || '-'}</td>
+          <td class="p-2.5">${d.vida || '-'}</td>
+          <td class="p-2.5">${d.banda_reen || '-'}</td>
+          <td class="p-2.5 text-center font-mono">${d.prof_inicial} mm</td>
+          <td class="p-2.5 text-center font-mono font-bold">${d.prof_actual_min} mm</td>
+          <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
+          <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
+          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm} mm</td>
+          <td class="p-2.5 text-center font-mono">${(d.porcentaje_desgaste || 0).toFixed(1)}%</td>
+          <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+          <td class="p-2.5 text-right font-mono">$${(d.precio || 0).toLocaleString()}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$${(d.cpk || 0).toFixed(4)}</td>
+          <td class="p-2.5 text-right font-mono">${Math.round(d.proyeccion_total_km || 0).toLocaleString()}</td>
+          <td class="p-2.5 text-right font-mono">$${(d.cpk_proyectado || 0).toFixed(4)}</td>
+          <td class="p-2.5 text-right font-mono font-black text-purple-700">${Math.round(d.km_restantes || 0).toLocaleString()} km</td>
+        </tr>
+      `).join('');
+
+      actualizarBarraPaginacionKpis(totalRegistros, inicio, fin);
+    }
+
+    function cambiarPaginaKpis(nuevaPagina) {
+      const totalRegistros = cacheKpis ? cacheKpis.length : 0;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_KPIS) || 1;
+      if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+      paginaActualKpis = nuevaPagina;
+      renderizarTablaKpis();
+      const contTabla = document.querySelector('#vista-kpis .overflow-x-auto');
+      if (contTabla) contTabla.scrollTop = 0;
+    }
+
+    function actualizarBarraPaginacionKpis(totalRegistros, inicio, fin) {
+      const contenedor = document.getElementById('contenedorPaginacionKpis');
+      const lblInicio = document.getElementById('pagInicioKpis');
+      const lblFin = document.getElementById('pagFinKpis');
+      const lblTotal = document.getElementById('pagTotalKpis');
+      const controles = document.getElementById('controlesPaginacionKpis');
+
+      if (!contenedor || !controles) return;
+      if (totalRegistros === 0) {
+        contenedor.classList.add('hidden');
+        return;
+      }
+
+      contenedor.classList.remove('hidden');
+      if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
+      if (lblFin) lblFin.textContent = fin.toLocaleString();
+      if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
+
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_KPIS) || 1;
+
+      let html = '';
+
+      // Botón Primero
+      const deshabilitarPrimero = paginaActualKpis <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaKpis(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Anterior
+      const deshabilitarAnt = paginaActualKpis <= 1;
+      html += `
+        <button type="button" onclick="cambiarPaginaKpis(${paginaActualKpis - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[11px]"></i>
+          <span class="hidden sm:inline">Ant</span>
+        </button>
+      `;
+
+      // Botones numéricos de página
+      const paginas = [];
+      if (totalPaginas <= 7) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+      } else {
+        paginas.push(1);
+        let start = Math.max(2, paginaActualKpis - 1);
+        let end = Math.min(totalPaginas - 1, paginaActualKpis + 1);
+
+        if (paginaActualKpis <= 3) {
+          end = 4;
+        } else if (paginaActualKpis >= totalPaginas - 2) {
+          start = totalPaginas - 3;
+        }
+
+        if (start > 2) paginas.push('...');
+        for (let i = start; i <= end; i++) paginas.push(i);
+        if (end < totalPaginas - 1) paginas.push('...');
+        paginas.push(totalPaginas);
+      }
+
+      paginas.forEach(p => {
+        if (p === '...') {
+          html += `<span class="w-6 h-8 flex items-center justify-center text-slate-400 font-bold text-xs select-none">...</span>`;
+        } else if (p === paginaActualKpis) {
+          html += `
+            <button type="button" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs shadow-sm flex items-center justify-center cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="cambiarPaginaKpis(${p})" class="w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-xs shadow-xs transition-all flex items-center justify-center cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      // Botón Siguiente
+      const deshabilitarSig = paginaActualKpis >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaKpis(${paginaActualKpis + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="inline-flex items-center space-x-1 px-2.5 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Página siguiente">
+          <span class="hidden sm:inline">Sig</span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+      `;
+
+      // Botón Último
+      const deshabilitarUltimo = paginaActualKpis >= totalPaginas;
+      html += `
+        <button type="button" onclick="cambiarPaginaKpis(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-8 h-8 rounded-xl border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-xs cursor-pointer active:scale-95'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[11px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
+
+    function alCambiarFiltroKpiCliente() {
+      const selCli = document.getElementById('filtroKpiCliente');
+      const selSub = document.getElementById('filtroKpiSubcliente');
+      const cliFiltro = selCli ? selCli.value : 'TODOS';
+      if (selSub && cacheKpis && cacheKpis.length > 0) {
+        const dataSedes = (cliFiltro && cliFiltro !== 'TODOS')
+          ? cacheKpis.filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
+          : cacheKpis;
+        const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
+        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+        selSub.value = 'TODOS';
+      }
+      cargarSuite20Kpis();
+      cargarKpis();
+    }
+
+    function limpiarFiltrosKpis() {
+      const elNum = document.getElementById('filtroKpiNumero');
+      if (elNum) elNum.value = '';
+      const selCli = document.getElementById('filtroKpiCliente');
+      if (selCli && !selCli.disabled) {
+        selCli.value = 'TODOS';
+      }
+      const selSub = document.getElementById('filtroKpiSubcliente');
+      if (selSub) selSub.value = 'TODOS';
+      const selOp = document.getElementById('filtroKpiOperacion');
+      if (selOp) selOp.value = 'TODOS';
+      const selTip = document.getElementById('filtroKpiTipologia');
+      if (selTip) selTip.value = 'TODOS';
+      const selMar = document.getElementById('filtroKpiMarca');
+      if (selMar) selMar.value = 'TODOS';
+      const selDim = document.getElementById('filtroKpiDimension');
+      if (selDim) selDim.value = 'TODOS';
+      const selEje = document.getElementById('filtroKpiEjeTemporal');
+      if (selEje) selEje.value = 'mes';
+
+      cargarSuite20Kpis();
+      cargarKpis();
+    }
+
+    function exportarKpisExcel() {
+      const qNum = (document.getElementById('filtroKpiNumero')?.value || '').trim();
+      const cli = document.getElementById('filtroKpiCliente')?.value || '';
+      const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
+      const op = document.getElementById('filtroKpiOperacion')?.value || '';
+      const marca = document.getElementById('filtroKpiMarca')?.value || '';
+
+      const params = new URLSearchParams();
+      if (qNum) params.append('numero_interno', qNum);
+      if (cli && cli !== 'TODOS') params.append('cliente', cli);
+      if (sub && sub !== 'TODOS') params.append('subcliente', sub);
+      if (op && op !== 'TODOS') params.append('tipo_operacion', op);
+      if (marca && marca !== 'TODOS') params.append('marca', marca);
+
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      if (tok) params.append('token', tok);
+
+      window.location.href = `/api/kpis-llantas/exportar-excel?${params.toString()}`;
+    }
+
+    // =========================================================================
+    // VISTA: COMPOSICIÓN & CARACTERIZACIÓN DE FLOTA (v3.5 ENTERPRISE) - SCRIPTS
+    // =========================================================================
+    let cacheComposicionLlantas = [];
+    let chartsComposicion = { vida: null, marca: null, dimension: null, diseno: null };
+
+    function normalizarTextoComp(val, fallback = 'SIN ESPECIFICAR') {
+      return String(val || '').trim().toUpperCase() || fallback;
+    }
+
+    function esLlantaReencauchadaComp(vidaStr) {
+      const v = String(vidaStr || '').trim().toLowerCase();
+      return ['reenc', '1r', '2r', '3r', '4r', 'r1', 'r2', 'r3', 'renov'].some(token => v.includes(token));
+    }
+
+    async function cargarComposicionFlotaWeb(forzarRecarga = false) {
+      if (!forzarRecarga && cacheComposicionLlantas && cacheComposicionLlantas.length > 0) {
+        renderizarComposicionFlotaWeb();
+        return;
+      }
+
+      const tbody = document.getElementById('tbody_composicion_flota');
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-3"><div class="w-8 h-8 rounded-full border-3 border-cyan-500 border-t-transparent animate-spin"></div><p class="text-xs font-bold text-slate-600">Consultando composición de flota en tiempo real...</p></div></td></tr>`;
+      }
+
+      const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+      try {
+        const res = await fetch('/api/kpis-llantas', { headers });
+        if (res.ok) {
+          const raw = await res.json();
+          cacheComposicionLlantas = (Array.isArray(raw) ? raw : []).map(item => ({
+            ...item,
+            marca: normalizarTextoComp(item.marca, 'GENÉRICA'),
+            diseno: normalizarTextoComp(item.diseno, 'ESTÁNDAR'),
+            dimension: normalizarTextoComp(item.dimension, 'ESTÁNDAR'),
+            cliente: normalizarTextoComp(item.cliente, 'FLOTA GENERAL'),
+            subcliente: normalizarTextoComp(item.subcliente, 'SEDE PRINCIPAL'),
+            vida: normalizarTextoComp(item.vida, 'ORIGINAL'),
+            tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase()
+          }));
+
+          poblarFiltrosComposicionCascada();
+          renderizarComposicionFlotaWeb();
+        } else if (res.status === 401) {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-2 max-w-sm mx-auto"><div class="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 text-lg shadow-2xs"><i class="fa-solid fa-lock"></i></div><p class="text-xs font-bold text-amber-800">Sesión no válida o expirada</p><p class="text-[11px] text-slate-500">Por favor, inicie sesión nuevamente para acceder a los datos de composición.</p></div></td></tr>`;
+          }
+        } else {
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto"><div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 text-lg shadow-2xs"><i class="fa-solid fa-triangle-exclamation"></i></div><p class="text-xs font-bold text-rose-700">Error al consultar composición (${res.status})</p><button type="button" onclick="cargarComposicionFlotaWeb(true)" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">Reintentar</button></div></td></tr>`;
+          }
+        }
+      } catch (e) {
+        console.error('Error al cargarComposicionFlotaWeb:', e);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="8" class="p-10 text-center"><div class="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto"><div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 text-lg shadow-2xs"><i class="fa-solid fa-wifi"></i></div><p class="text-xs font-bold text-rose-700">Error de red al consultar composición de flota</p><button type="button" onclick="cargarComposicionFlotaWeb(true)" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">Reintentar</button></div></td></tr>`;
+        }
+      }
+    }
+
+    function poblarFiltrosComposicionCascada() {
+      const selCli = document.getElementById('filtro_comp_cliente');
+      if (!selCli) return;
+
+      const valorCliPrevio = selCli.value || 'TODOS';
+      const clientesUnicos = Array.from(new Set(cacheComposicionLlantas.map(x => x.cliente).filter(Boolean))).sort();
+
+      let htmlCli = '<option value="TODOS">Todos los Clientes</option>';
+      clientesUnicos.forEach(c => {
+        htmlCli += `<option value="${c}">${c}</option>`;
+      });
+      selCli.innerHTML = htmlCli;
+
+      if (clientesUnicos.includes(valorCliPrevio)) {
+        selCli.value = valorCliPrevio;
+      } else {
+        selCli.value = 'TODOS';
+      }
+
+      poblarFiltrosSecundariosComposicion();
+    }
+
+    function poblarFiltrosSecundariosComposicion() {
+      const cli = document.getElementById('filtro_comp_cliente')?.value || 'TODOS';
+      const conjunto = (cli && cli !== 'TODOS')
+        ? cacheComposicionLlantas.filter(x => x.cliente === cli)
+        : cacheComposicionLlantas;
+
+      const selSub = document.getElementById('filtro_comp_subcliente');
+      const selMarca = document.getElementById('filtro_comp_marca');
+      const selDim = document.getElementById('filtro_comp_dimension');
+      const selDis = document.getElementById('filtro_comp_diseno');
+
+      const rellenarSelect = (el, lista, etiquetaTodos) => {
+        if (!el) return;
+        const prev = el.value || 'TODOS';
+        let h = `<option value="TODOS">${etiquetaTodos}</option>`;
+        lista.forEach(val => {
+          h += `<option value="${val}">${val}</option>`;
+        });
+        el.innerHTML = h;
+        if (lista.includes(prev)) el.value = prev;
+        else el.value = 'TODOS';
+      };
+
+      const subs = Array.from(new Set(conjunto.map(x => x.subcliente).filter(Boolean))).sort();
+      const marcas = Array.from(new Set(conjunto.map(x => x.marca).filter(Boolean))).sort();
+      const dims = Array.from(new Set(conjunto.map(x => x.dimension).filter(Boolean))).sort();
+      const disenos = Array.from(new Set(conjunto.map(x => x.diseno).filter(Boolean))).sort();
+
+      rellenarSelect(selSub, subs, 'Todas las Sedes');
+      rellenarSelect(selMarca, marcas, 'Todas las Marcas');
+      rellenarSelect(selDim, dims, 'Todas las Medidas');
+      rellenarSelect(selDis, disenos, 'Todos los Diseños');
+    }
+
+    function alCambiarClienteComposicion() {
+      poblarFiltrosSecundariosComposicion();
+      renderizarComposicionFlotaWeb();
+    }
+
+    function seleccionarEjeRapidoComposicion(tipoEje) {
+      const selEje = document.getElementById('filtro_comp_tipo_eje');
+      if (selEje) selEje.value = tipoEje;
+      sincronizarBotonesEjeComposicion(tipoEje);
+      renderizarComposicionFlotaWeb();
+    }
+
+    function alCambiarTipoEjeSelectComposicion() {
+      const selEje = document.getElementById('filtro_comp_tipo_eje');
+      const tipo = selEje ? selEje.value : 'TODOS';
+      sincronizarBotonesEjeComposicion(tipo);
+      renderizarComposicionFlotaWeb();
+    }
+
+    function sincronizarBotonesEjeComposicion(tipoActivo) {
+      const botones = ['TODOS', 'direccional', 'traccion', 'libre'];
+      botones.forEach(b => {
+        const btn = document.getElementById(`btn_eje_comp_${b}`);
+        if (!btn) return;
+        if (b === tipoActivo) {
+          btn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm border border-slate-200/80 cursor-pointer';
+        } else {
+          btn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 cursor-pointer';
+        }
+      });
+    }
+
+    function limpiarFiltrosComposicion() {
+      const selCli = document.getElementById('filtro_comp_cliente');
+      const selSub = document.getElementById('filtro_comp_subcliente');
+      const selEje = document.getElementById('filtro_comp_tipo_eje');
+      const selVida = document.getElementById('filtro_comp_vida');
+      const selMar = document.getElementById('filtro_comp_marca');
+      const selDim = document.getElementById('filtro_comp_dimension');
+      const selDis = document.getElementById('filtro_comp_diseno');
+
+      if (selCli) selCli.value = 'TODOS';
+      if (selSub) selSub.value = 'TODOS';
+      if (selEje) selEje.value = 'TODOS';
+      if (selVida) selVida.value = 'TODAS';
+      if (selMar) selMar.value = 'TODOS';
+      if (selDim) selDim.value = 'TODOS';
+      if (selDis) selDis.value = 'TODOS';
+
+      sincronizarBotonesEjeComposicion('TODOS');
+      poblarFiltrosSecundariosComposicion();
+      renderizarComposicionFlotaWeb();
+    }
+
+    function renderizarComposicionFlotaWeb() {
+      const cli = document.getElementById('filtro_comp_cliente')?.value || 'TODOS';
+      const sub = document.getElementById('filtro_comp_subcliente')?.value || 'TODOS';
+      const eje = document.getElementById('filtro_comp_tipo_eje')?.value || 'TODOS';
+      const vida = document.getElementById('filtro_comp_vida')?.value || 'TODAS';
+      const marca = document.getElementById('filtro_comp_marca')?.value || 'TODOS';
+      const dim = document.getElementById('filtro_comp_dimension')?.value || 'TODOS';
+      const dis = document.getElementById('filtro_comp_diseno')?.value || 'TODOS';
+
+      // 1. Filtrado Reactivo en Memoria con Reglas de Negocio
+      const dataFiltrada = cacheComposicionLlantas.filter(llanta => {
+        if (cli !== 'TODOS' && llanta.cliente !== cli) return false;
+        if (sub !== 'TODOS' && llanta.subcliente !== sub) return false;
+
+        // Regla Especial de Ejes y Repuesto (Sección 7 del Manual):
+        // Si se filtra por un eje operativo ('direccional', 'traccion', 'libre'),
+        // las llantas de repuesto ('repuesto') NO se suman; solo se incluyen en 'TODOS'.
+        if (eje !== 'TODOS') {
+          if (llanta.tipo_eje === 'repuesto' || llanta.tipo_eje !== eje) return false;
+        }
+
+        if (vida !== 'TODAS') {
+          const esReenc = esLlantaReencauchadaComp(llanta.vida);
+          if (vida === 'ORIGINAL' && esReenc) return false;
+          if (vida === 'REENCAUCHE' && !esReenc) return false;
+        }
+
+        if (marca !== 'TODOS' && llanta.marca !== marca) return false;
+        if (dim !== 'TODOS' && llanta.dimension !== dim) return false;
+        if (dis !== 'TODOS' && llanta.diseno !== dis) return false;
+        return true;
+      });
+
+      const totalLlantas = dataFiltrada.length;
+      const placasSet = new Set(dataFiltrada.map(x => x.placa).filter(Boolean));
+      const totalVehiculos = placasSet.size;
+
+      // 2. Agregaciones y Mapas
+      let cntReenc = 0;
+      let cntOrig = 0;
+      const mapaMarcas = {};
+      const mapaDimensiones = {};
+      const mapaDisenos = {};
+      const mapaCombinaciones = {};
+
+      dataFiltrada.forEach(llanta => {
+        const esReenc = esLlantaReencauchadaComp(llanta.vida);
+        if (esReenc) cntReenc++; else cntOrig++;
+
+        mapaMarcas[llanta.marca] = (mapaMarcas[llanta.marca] || 0) + 1;
+        mapaDimensiones[llanta.dimension] = (mapaDimensiones[llanta.dimension] || 0) + 1;
+        mapaDisenos[llanta.diseno] = (mapaDisenos[llanta.diseno] || 0) + 1;
+
+        const keyComb = `${llanta.marca}|||${llanta.diseno}|||${llanta.dimension}`;
+        if (!mapaCombinaciones[keyComb]) {
+          mapaCombinaciones[keyComb] = {
+            marca: llanta.marca,
+            diseno: llanta.diseno,
+            dimension: llanta.dimension,
+            orig: 0,
+            reenc: 0,
+            total: 0,
+            sumaProf: 0,
+            cantProf: 0
+          };
+        }
+        const c = mapaCombinaciones[keyComb];
+        if (esReenc) c.reenc++; else c.orig++;
+        c.total++;
+        const pMin = parseFloat(llanta.prof_actual_min || 0);
+        if (pMin > 0) {
+          c.sumaProf += pMin;
+          c.cantProf++;
+        }
+      });
+
+      // 3. Actualización de las 6 Tarjetas Resumen de KPIs (Scorecards) con Protección Div/0
+      const elTotLlantas = document.getElementById('comp_kpi_total_llantas');
+      const elTotVeh = document.getElementById('comp_kpi_total_vehiculos');
+      const elPctReenc = document.getElementById('comp_kpi_pct_reenc');
+      const elCntReenc = document.getElementById('comp_kpi_cnt_reenc');
+      const elPctOrig = document.getElementById('comp_kpi_pct_orig');
+      const elCntOrig = document.getElementById('comp_kpi_cnt_orig');
+      const elTopMarca = document.getElementById('comp_kpi_top_marca');
+      const elSubMarca = document.getElementById('comp_kpi_sub_marca');
+      const elTopDim = document.getElementById('comp_kpi_top_dim');
+      const elSubDim = document.getElementById('comp_kpi_sub_dim');
+      const elTopDis = document.getElementById('comp_kpi_top_diseno');
+      const elSubDis = document.getElementById('comp_kpi_sub_diseno');
+
+      if (elTotLlantas) elTotLlantas.textContent = totalLlantas;
+      if (elTotVeh) elTotVeh.textContent = `${totalVehiculos} vehículo(s) activo(s)`;
+
+      if (totalLlantas === 0) {
+        if (elPctReenc) elPctReenc.textContent = '0.0%';
+        if (elCntReenc) elCntReenc.textContent = '0 llanta(s) reencauchada(s)';
+        if (elPctOrig) elPctOrig.textContent = '0.0%';
+        if (elCntOrig) elCntOrig.textContent = '0 llanta(s) originales';
+        if (elTopMarca) elTopMarca.textContent = '—';
+        if (elSubMarca) elSubMarca.textContent = '0 llantas (0.0%)';
+        if (elTopDim) elTopDim.textContent = '—';
+        if (elSubDim) elSubDim.textContent = '0 llantas (0.0%)';
+        if (elTopDis) elTopDis.textContent = '—';
+        if (elSubDis) elSubDis.textContent = '0 llantas montadas (0.0%)';
+      } else {
+        const pctR = ((cntReenc / totalLlantas) * 100).toFixed(1);
+        const pctO = ((cntOrig / totalLlantas) * 100).toFixed(1);
+        if (elPctReenc) elPctReenc.textContent = `${pctR}%`;
+        if (elCntReenc) elCntReenc.textContent = `${cntReenc} llanta(s) reencauchada(s)`;
+        if (elPctOrig) elPctOrig.textContent = `${pctO}%`;
+        if (elCntOrig) elCntOrig.textContent = `${cntOrig} llanta(s) originales`;
+
+        const arrM = Object.entries(mapaMarcas).sort((a, b) => b[1] - a[1]);
+        const arrDm = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
+        const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
+
+        if (arrM.length > 0) {
+          const [mNom, mCant] = arrM[0];
+          const mPct = ((mCant / totalLlantas) * 100).toFixed(1);
+          if (elTopMarca) elTopMarca.textContent = mNom;
+          if (elSubMarca) elSubMarca.textContent = `${mCant} llantas (${mPct}%)`;
+        }
+        if (arrDm.length > 0) {
+          const [dNom, dCant] = arrDm[0];
+          const dPct = ((dCant / totalLlantas) * 100).toFixed(1);
+          if (elTopDim) elTopDim.textContent = dNom;
+          if (elSubDim) elSubDim.textContent = `${dCant} llantas (${dPct}%)`;
+        }
+        if (arrDs.length > 0) {
+          const [sNom, sCant] = arrDs[0];
+          const sPct = ((sCant / totalLlantas) * 100).toFixed(1);
+          if (elTopDis) elTopDis.textContent = sNom;
+          if (elSubDis) elSubDis.textContent = `${sCant} llantas montadas (${sPct}%)`;
+        }
+      }
+
+      // 4. Panel de Auditoría: "Las 4 Reglas de Oro de Negocio" (Sección 8 del Manual)
+      // Regla de Oro 1: Cero Reencauches en Dirección
+      const llantasDireccionales = dataFiltrada.filter(x => x.tipo_eje === 'direccional');
+      const totalDir = llantasDireccionales.length;
+      const reencEnDir = llantasDireccionales.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const pctReencDir = totalDir > 0 ? ((reencEnDir / totalDir) * 100).toFixed(1) : '0.0';
+
+      const cardR1 = document.getElementById('card_regla_oro_1');
+      const badgeR1 = document.getElementById('badge_regla_oro_1');
+      const titR1 = document.getElementById('txt_regla_oro_1_titulo');
+      const descR1 = document.getElementById('txt_regla_oro_1_desc');
+
+      if (reencEnDir > 0) {
+        if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-rose-50 border-rose-300 shadow-sm';
+        if (badgeR1) {
+          badgeR1.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white animate-pulse';
+          badgeR1.textContent = 'INCUMPLIDA';
+        }
+        if (titR1) {
+          titR1.className = 'text-xs font-black text-rose-900';
+          titR1.textContent = '🚨 REGLA DE ORO 1 INCUMPLIDA';
+        }
+        if (descR1) {
+          descR1.className = 'text-[11px] text-rose-800 mt-0.5 leading-snug font-medium';
+          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0.0%.`;
+        }
+      } else {
+        if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-300 shadow-sm';
+        if (badgeR1) {
+          badgeR1.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-600 text-white';
+          badgeR1.textContent = 'CUMPLIDA (0.0%)';
+        }
+        if (titR1) {
+          titR1.className = 'text-xs font-black text-emerald-900';
+          titR1.textContent = '✅ Regla de Oro 1 Cumplida';
+        }
+        if (descR1) {
+          descR1.className = 'text-[11px] text-emerald-800 mt-0.5 leading-snug';
+          descR1.textContent = '0.0% Reencauches en Dirección. Cumplimiento estricto de seguridad vial.';
+        }
+      }
+
+      // Regla de Oro 2: Adopción Renovado Remolques y Tracción
+      const llantasLibres = dataFiltrada.filter(x => x.tipo_eje === 'libre');
+      const reencLibres = llantasLibres.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const pctLibres = llantasLibres.length > 0 ? ((reencLibres / llantasLibres.length) * 100).toFixed(1) : '0.0';
+
+      const llantasTrac = dataFiltrada.filter(x => x.tipo_eje === 'traccion');
+      const reencTrac = llantasTrac.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const pctTrac = llantasTrac.length > 0 ? ((reencTrac / llantasTrac.length) * 100).toFixed(1) : '0.0';
+
+      const badgeR2 = document.getElementById('badge_regla_oro_2');
+      const descR2 = document.getElementById('txt_regla_oro_2_desc');
+      if (badgeR2 && descR2) {
+        badgeR2.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800';
+        badgeR2.textContent = `Rem ${pctLibres}% | Trac ${pctTrac}%`;
+        descR2.textContent = `Madurez: Remolque ${pctLibres}% (Meta >70%), Tracción ${pctTrac}% (Meta 50%-65%).`;
+      }
+
+      // Regla de Oro 3: Índice de Dispersión Dimensional
+      const arrDimsTotal = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
+      const cardR3 = document.getElementById('card_regla_oro_3');
+      const badgeR3 = document.getElementById('badge_regla_oro_3');
+      const titR3 = document.getElementById('txt_regla_oro_3_titulo');
+      const descR3 = document.getElementById('txt_regla_oro_3_desc');
+
+      if (arrDimsTotal.length > 0 && totalLlantas > 0) {
+        const topDimPct = (arrDimsTotal[0][1] / totalLlantas) * 100;
+        const totalDimsDistintas = arrDimsTotal.length;
+        if (topDimPct < 70 && totalDimsDistintas > 4) {
+          if (cardR3) cardR3.className = 'p-3 rounded-2xl border transition-all duration-300 bg-amber-50 border-amber-300 shadow-sm';
+          if (badgeR3) {
+            badgeR3.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500 text-white';
+            badgeR3.textContent = 'ALTA DISPERSIÓN';
+          }
+          if (titR3) titR3.textContent = '⚠️ Dispersión Dimensional';
+          if (descR3) descR3.textContent = `Medida líder concentra ${topDimPct.toFixed(1)}% con ${totalDimsDistintas} medidas activas. Se sugiere racionalizar.`;
+        } else {
+          if (cardR3) cardR3.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-200';
+          if (badgeR3) {
+            badgeR3.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800';
+            badgeR3.textContent = 'ESTANDARIZADA';
+          }
+          if (titR3) titR3.textContent = '✅ Estandarización Óptima';
+          if (descR3) descR3.textContent = `Medida principal concentra ${topDimPct.toFixed(1)}% en ${totalDimsDistintas} dimensión(es).`;
+        }
+      }
+
+      // 5. Renderizado de Gráficos Chart.js HD (Sección 5 del Manual)
+      renderizarGraficosComposicion({
+        cntOrig,
+        cntReenc,
+        mapaMarcas,
+        mapaDimensiones,
+        mapaDisenos,
+        totalLlantas
+      });
+
+      // 6. Renderizado de la Matriz de Inventario [Marca × Diseño × Medida]
+      renderizarMatrizComposicion(mapaCombinaciones, totalLlantas);
+    }
+
+    function renderizarGraficosComposicion({ cntOrig, cntReenc, mapaMarcas, mapaDimensiones, mapaDisenos, totalLlantas }) {
+      if (typeof Chart === 'undefined') return;
+
+      const tooltipStyleHD = {
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        titleColor: '#f8fafc',
+        bodyColor: '#e2e8f0',
+        borderColor: 'rgba(255, 255, 255, 0.12)',
+        borderWidth: 1,
+        padding: 10,
+        boxPadding: 4,
+        cornerRadius: 8,
+        displayColors: true
+      };
+
+      // Gráfico 1: Condición / Vida de Llanta por Eje (Doughnut cutout: '62%')
+      const cvVida = document.getElementById('chartCompVidaEje');
+      if (cvVida) {
+        if (chartsComposicion.vida) chartsComposicion.vida.destroy();
+        const ctxVida = cvVida.getContext('2d');
+        const totVida = cntOrig + cntReenc;
+
+        if (totVida === 0) {
+          chartsComposicion.vida = new Chart(ctxVida, {
+            type: 'doughnut',
+            data: {
+              labels: ['Sin llantas registradas'],
+              datasets: [{
+                data: [1],
+                backgroundColor: ['#f1f5f9'],
+                borderWidth: 1,
+                borderColor: '#e2e8f0'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '62%',
+              plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } } },
+                tooltip: { enabled: false }
+              }
+            }
+          });
+        } else {
+          const pOrig = ((cntOrig / totVida) * 100).toFixed(1);
+          const pReenc = ((cntReenc / totVida) * 100).toFixed(1);
+
+          chartsComposicion.vida = new Chart(ctxVida, {
+            type: 'doughnut',
+            data: {
+              labels: [`Original (${pOrig}%)`, `Reencauche (${pReenc}%)`],
+              datasets: [{
+                data: [cntOrig, cntReenc],
+                backgroundColor: ['#3b82f6', '#10b981'],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '62%',
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: 'bold' } }
+                },
+                tooltip: {
+                  ...tooltipStyleHD,
+                  callbacks: {
+                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Gráfico 2: Participación por Marca — Top 7 (Doughnut cutout: '58%')
+      const cvMarcas = document.getElementById('chartCompMarcas');
+      if (cvMarcas) {
+        if (chartsComposicion.marca) chartsComposicion.marca.destroy();
+        const ctxMarcas = cvMarcas.getContext('2d');
+
+        if (totalLlantas === 0) {
+          chartsComposicion.marca = new Chart(ctxMarcas, {
+            type: 'doughnut',
+            data: {
+              labels: ['Sin datos'],
+              datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 1, borderColor: '#e2e8f0' }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '58%',
+              plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } } },
+                tooltip: { enabled: false }
+              }
+            }
+          });
+        } else {
+          const arrM = Object.entries(mapaMarcas).sort((a, b) => b[1] - a[1]);
+          const top7M = arrM.slice(0, 7);
+          const otrosM = arrM.slice(7).reduce((acc, curr) => acc + curr[1], 0);
+          if (otrosM > 0) top7M.push(['OTROS', otrosM]);
+
+          const paletaMarcas = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#94a3b8'];
+          const labelsM = top7M.map(([m, cnt]) => {
+            const p = ((cnt / totalLlantas) * 100).toFixed(1);
+            return `${m} (${p}%)`;
+          });
+          const dataM = top7M.map(([, cnt]) => cnt);
+
+          chartsComposicion.marca = new Chart(ctxMarcas, {
+            type: 'doughnut',
+            data: {
+              labels: labelsM,
+              datasets: [{
+                data: dataM,
+                backgroundColor: paletaMarcas.slice(0, top7M.length),
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '58%',
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
+                },
+                tooltip: {
+                  ...tooltipStyleHD,
+                  callbacks: {
+                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Gráfico 3: Distribución por Dimensión — Top 6 (Pie 360°)
+      const cvDim = document.getElementById('chartCompDimensiones');
+      if (cvDim) {
+        if (chartsComposicion.dimension) chartsComposicion.dimension.destroy();
+        const ctxDim = cvDim.getContext('2d');
+
+        if (totalLlantas === 0) {
+          chartsComposicion.dimension = new Chart(ctxDim, {
+            type: 'pie',
+            data: {
+              labels: ['Sin datos'],
+              datasets: [{ data: [1], backgroundColor: ['#f1f5f9'], borderWidth: 1, borderColor: '#e2e8f0' }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } } },
+                tooltip: { enabled: false }
+              }
+            }
+          });
+        } else {
+          const arrD = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
+          const top6D = arrD.slice(0, 6);
+          const otrosD = arrD.slice(6).reduce((acc, curr) => acc + curr[1], 0);
+          if (otrosD > 0) top6D.push(['OTRAS', otrosD]);
+
+          const paletaDim = ['#7c3aed', '#0891b2', '#d97706', '#059669', '#1d4ed8', '#c026d3', '#94a3b8'];
+          const labelsD = top6D.map(([d, cnt]) => {
+            const p = ((cnt / totalLlantas) * 100).toFixed(1);
+            return `${d} (${p}%)`;
+          });
+          const dataD = top6D.map(([, cnt]) => cnt);
+
+          chartsComposicion.dimension = new Chart(ctxDim, {
+            type: 'pie',
+            data: {
+              labels: labelsD,
+              datasets: [{
+                data: dataD,
+                backgroundColor: paletaDim.slice(0, top6D.length),
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
+                },
+                tooltip: {
+                  ...tooltipStyleHD,
+                  callbacks: {
+                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Gráfico 4: Top Diseños de Rodamiento — Top 6 (Bar Vertical)
+      const cvDis = document.getElementById('chartCompDisenos');
+      if (cvDis) {
+        if (chartsComposicion.diseno) chartsComposicion.diseno.destroy();
+        const ctxDis = cvDis.getContext('2d');
+
+        if (totalLlantas === 0) {
+          chartsComposicion.diseno = new Chart(ctxDis, {
+            type: 'bar',
+            data: {
+              labels: ['Sin datos'],
+              datasets: [{ label: 'Llantas Montadas', data: [0], backgroundColor: '#f1f5f9' }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: { y: { beginAtZero: true, max: 10 } },
+              plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+          });
+        } else {
+          const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
+          const top6Ds = arrDs.slice(0, 6);
+          const labelsDs = top6Ds.map(([ds]) => ds);
+          const dataDs = top6Ds.map(([, cnt]) => cnt);
+
+          chartsComposicion.diseno = new Chart(ctxDis, {
+            type: 'bar',
+            data: {
+              labels: labelsDs,
+              datasets: [{
+                label: 'Llantas Montadas',
+                data: dataDs,
+                backgroundColor: '#f59e0b',
+                borderRadius: 6,
+                borderSkipped: false
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  ...tooltipStyleHD,
+                  callbacks: {
+                    label: (ctx) => {
+                      const cnt = ctx.raw;
+                      const p = ((cnt / totalLlantas) * 100).toFixed(1);
+                      return ` ${cnt} llantas (${p}%)`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { font: { size: 10, weight: '600' } }
+                },
+                y: {
+                  beginAtZero: true,
+                  ticks: { precision: 0 }
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+
+    function renderizarMatrizComposicion(mapaCombinaciones, totalLlantasFlota) {
+      const tbody = document.getElementById('tbody_composicion_flota');
+      const badgeComb = document.getElementById('badge_comp_combinaciones');
+      if (!tbody) return;
+
+      const combinaciones = Object.values(mapaCombinaciones).sort((a, b) => b.total - a.total);
+      if (badgeComb) {
+        badgeComb.textContent = `${combinaciones.length} combinaciones activas`;
+      }
+
+      if (combinaciones.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="p-10 text-center">
+              <div class="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xl shadow-inner">
+                  <i class="fa-solid fa-filter-circle-xmark"></i>
+                </div>
+                <p class="text-sm font-bold text-slate-800">No hay neumáticos con los filtros seleccionados</p>
+                <p class="text-xs text-slate-500">Prueba ajustando los criterios de búsqueda o limpiando los filtros para ver toda la flota activa.</p>
+                <button type="button" onclick="limpiarFiltrosComposicion()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5">
+                  <i class="fa-solid fa-rotate-left text-[11px]"></i>
+                  <span>Restablecer Filtros</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      combinaciones.forEach(c => {
+        const pctFlota = totalLlantasFlota > 0 ? ((c.total / totalLlantasFlota) * 100).toFixed(1) : '0.0';
+        let profPromText = '—';
+        let semaforoProf = 'text-slate-600 bg-slate-100 border border-slate-200';
+        let semaforoDot = 'bg-slate-400';
+
+        if (c.cantProf > 0) {
+          const prom = (c.sumaProf / c.cantProf);
+          profPromText = `${prom.toFixed(1)} mm`;
+          if (prom >= 9.0) {
+            semaforoProf = 'text-emerald-700 bg-emerald-50 border border-emerald-200/80';
+            semaforoDot = 'bg-emerald-500';
+          } else if (prom >= 5.0) {
+            semaforoProf = 'text-amber-700 bg-amber-50 border border-amber-200/80';
+            semaforoDot = 'bg-amber-500';
+          } else {
+            semaforoProf = 'text-rose-700 bg-rose-50 border border-rose-200/80 font-bold';
+            semaforoDot = 'bg-rose-500 animate-pulse';
+          }
+        }
+
+        html += `
+          <tr class="hover:bg-cyan-50/40 transition-colors duration-150 border-b border-slate-100 last:border-b-0">
+            <td class="p-3 font-bold text-slate-900">${c.marca}</td>
+            <td class="p-3 text-slate-800 font-semibold">${c.diseno}</td>
+            <td class="p-3 font-mono text-slate-600 text-[11px]">${c.dimension}</td>
+            <td class="p-3 text-center text-blue-600 font-bold">${c.orig}</td>
+            <td class="p-3 text-center text-emerald-600 font-bold">${c.reenc}</td>
+            <td class="p-3 text-center text-slate-900 font-black">${c.total}</td>
+            <td class="p-3 text-center text-indigo-600 font-extrabold">${pctFlota}%</td>
+            <td class="p-3 text-center">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black ${semaforoProf}">
+                <span class="w-1.5 h-1.5 rounded-full ${semaforoDot}"></span>
+                <span>${profPromText}</span>
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function exportarComposicionExcel() {
+      const tbody = document.getElementById('tbody_composicion_flota');
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      if (rows.length === 0 || rows[0].innerText.includes('No se encontraron') || rows[0].innerText.includes('Cargando')) {
+        mostrarToast('No hay datos disponibles en la matriz para exportar', true);
+        return;
+      }
+
+      let csv = '\uFEFF';
+      csv += 'Marca;Diseño;Dimensión;Original;Reencauche;Total Llantas;% Part. Flota;Prof. Promedio\r\n';
+
+      rows.forEach(tr => {
+        const cols = Array.from(tr.querySelectorAll('td')).map(td => {
+          let text = td.innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
+          return `"${text.replace(/"/g, '""')}"`;
+        });
+        if (cols.length === 8) {
+          csv += cols.join(';') + '\r\n';
+        }
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const now = new Date();
+      const fechaStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Composicion_Flota_TireAnalyze_${fechaStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      mostrarToast('✅ Matriz de Composición de Flota exportada exitosamente');
+    }
+```
+
+---
+
+## Archivo: static/js/modulo_catalogos.js
+
+- **Ruta:** `static/js/modulo_catalogos.js`
+- **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
+- **Métricas:** 1759 líneas | 85,781 bytes (83.8 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
+    // ==========================================
+    // VISTA 5: GESTIÓN DE CATÁLOGOS & CONFIGURACIÓN
+    // ==========================================
+    let cacheDirectorioClientes = [];
+
+    function mostrarSubtabCat(subtab) {
+      const esAdmin = esUsuarioAdmin();
+      const puedeVerClientes = esAdminOJefatura();
+      if (subtab === 'usuarios' && !esAdmin) {
+        subtab = 'operaciones';
+      }
+      if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
+        subtab = 'operaciones';
+      }
+      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'usuarios'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`cat-seccion-${t}`);
+        if (sec) sec.classList.add('hidden');
+        const btn = document.getElementById(`subtab-btn-${t}`);
+        if (btn) btn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200';
+      });
+      const secAct = document.getElementById(`cat-seccion-${subtab}`);
+      if (secAct) secAct.classList.remove('hidden');
+      const btnAct = document.getElementById(`subtab-btn-${subtab}`);
+      if (btnAct) btnAct.className = 'px-3 py-1.5 rounded-xl bg-slate-900 text-white';
+
+      // Cargar los datos de la subpestaña seleccionada
+      if (subtab === 'directorio_clientes' && puedeVerClientes) {
+        cargarDirectorioClientesCat();
+      } else if (subtab === 'usuarios' && esAdmin) {
+        cargarUsuariosCat();
+      } else if (subtab === 'clientes' && puedeVerClientes) {
+        cargarClientesLimCat();
+      } else if (subtab === 'marcas_cliente' && puedeVerClientes) {
+        cargarMarcasClienteCat();
+      } else if (subtab === 'operaciones') {
+        cargarOperacionesCat();
+      } else if (subtab === 'tipologias') {
+        cargarTipologiasCat();
+      } else if (subtab === 'modelos') {
+        cargarModelosCat();
+      }
+    }
+
+    async function cargarGestionCatalogos() {
+      if (esAdminOJefatura()) {
+        cargarDirectorioClientesCat();
+        cargarClientesLimCat();
+        cargarMarcasClienteCat();
+      }
+      cargarOperacionesCat();
+      cargarTipologiasCat();
+      cargarModelosCat();
+      if (esUsuarioAdmin()) {
+        cargarUsuariosCat();
+      }
+    }
+
+    async function cargarDirectorioClientesCat() {
+      try {
+        const res = await fetch('/api/clientes-directorio');
+        if (res.ok) {
+          cacheDirectorioClientes = await res.json();
+          renderizarDirectorioClientes(cacheDirectorioClientes);
+        } else {
+          const tbody = document.getElementById('tbodyDirectorioClientesCat');
+          if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-rose-500 font-bold">Error al cargar clientes desde el servidor.</td></tr>`;
+        }
+      } catch (e) {
+        console.error('Error cargando directorio de clientes:', e);
+        const tbody = document.getElementById('tbodyDirectorioClientesCat');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-rose-500 font-bold">Error de conexión al cargar clientes.</td></tr>`;
+      }
+    }
+
+    function renderizarDirectorioClientes(lista) {
+      const tbody = document.getElementById('tbodyDirectorioClientesCat');
+      if (!tbody) return;
+
+      const totalClientes = lista ? lista.length : 0;
+      let totalVehiculos = 0;
+      let totalInspecciones = 0;
+      (lista || []).forEach(c => {
+        totalVehiculos += (c.vehiculos_count || 0);
+        totalInspecciones += (c.inspecciones_count || 0);
+      });
+
+      if (document.getElementById('kpiTotalClientesCat')) {
+        document.getElementById('kpiTotalClientesCat').textContent = totalClientes;
+      }
+      if (document.getElementById('kpiTotalVehiculosCat')) {
+        document.getElementById('kpiTotalVehiculosCat').textContent = `${totalVehiculos} veh (${totalInspecciones} insp)`;
+      }
+
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400 italic font-medium">No se encontraron clientes registrados con el filtro aplicado</td></tr>`;
+        return;
+      }
+
+      const puedeEditar = esAdminOJefatura();
+      tbody.innerHTML = lista.map(c => {
+        const licBadge = (c.tipo_licencia === 'PRO') 
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">PRO (Bodegas & MRP)</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">LIGHT</span>';
+
+        const reqMes = (c.requiere_mes_siguiente !== false && c.requiere_mes_siguiente !== 0);
+        const diasNum = c.dias_espera_inspeccion || 20;
+        const freqBadge = reqMes
+          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200" title="Mes siguiente y mínimo ${diasNum} días transcurridos">📅 Mes sig. + ${diasNum}d</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Habilita exactamente a los ${diasNum} días de la última inspección">⚡ ${diasNum}d corridos</span>`;
+
+        const subChips = (c.subclientes && c.subclientes.length > 0)
+          ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${s}</span>`).join('')
+          : '<span class="text-slate-400 italic text-[11px]">Principal</span>';
+
+        const serialCliSeguro = String(c.cliente || '').replace(/'/g, "\\'");
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-3">
+              <div class="font-black text-slate-900 flex items-center space-x-1.5">
+                <i class="fa-solid fa-building text-slate-400 text-xs"></i>
+                <span>${c.cliente}</span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? c.fecha_actualizacion.slice(0, 10) : 'Al día'}</div>
+            </td>
+            <td class="p-3 text-center">${licBadge}</td>
+            <td class="p-3 text-center font-mono font-black text-rose-700">${Number(c.limite_retiro_mm || 3.0).toFixed(1)} mm</td>
+            <td class="p-3 text-center">${freqBadge}</td>
+            <td class="p-3 max-w-[200px]">${subChips}</td>
+            <td class="p-3 text-center">
+              <span class="font-bold text-slate-800">${c.vehiculos_count || 0}</span>
+              <span class="text-[10px] text-slate-400 block">${c.inspecciones_count || 0} insp</span>
+            </td>
+            <td class="p-3 text-center">
+              <span class="font-black ${c.llantas_count > 0 ? 'text-blue-700' : 'text-slate-400'}">${c.llantas_count || 0}</span>
+            </td>
+            <td class="p-3 text-center">
+              <span class="font-bold text-slate-700">${c.marcas_count || 0}</span>
+            </td>
+            <td class="p-3 text-slate-600 max-w-[180px] truncate" title="${escapeHtml(c.observaciones || '')}">${escapeHtml(c.observaciones) || '-'}</td>
+            <td class="p-3 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                ${puedeEditar ? `
+                  <button type="button" onclick="abrirModalEditarCliente('${serialCliSeguro}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg font-bold text-xs transition-colors" title="Editar configuración del cliente">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="irAAsociarMarcaCliente('${serialCliSeguro}')" class="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg font-bold text-xs transition-colors" title="Parametrizar marcas autorizadas">
+                    <i class="fa-solid fa-tags"></i>
+                  </button>
+                  ${(c.inspecciones_count === 0 && c.llantas_count === 0) ? `
+                    <button type="button" onclick="eliminarClienteDirectorio('${serialCliSeguro}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg font-bold text-xs transition-colors" title="Eliminar cliente sin historial">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  ` : `
+                    <span class="p-1.5 text-slate-300 text-xs cursor-not-allowed" title="Cliente con historial operativo protegido">
+                      <i class="fa-solid fa-lock"></i>
+                    </span>
+                  `}
+                ` : '<span class="text-slate-400 text-xs italic">Ver</span>'}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filtrarDirectorioClientesCat(texto) {
+      const q = String(texto || '').trim().toUpperCase();
+      if (!q) {
+        renderizarDirectorioClientes(cacheDirectorioClientes);
+        return;
+      }
+      const filtrados = cacheDirectorioClientes.filter(c => {
+        return c.cliente.includes(q) || 
+               (c.subclientes_str && c.subclientes_str.toUpperCase().includes(q)) ||
+               (c.observaciones && c.observaciones.toUpperCase().includes(q));
+      });
+      renderizarDirectorioClientes(filtrados);
+    }
+
+    function abrirModalNuevoCliente() {
+      document.getElementById('tituloModalCliente').textContent = 'Agregar Nuevo Cliente / Flota';
+      document.getElementById('btnGuardarClienteTexto').textContent = 'Guardar Cliente';
+      document.getElementById('nuevo_cliente_nombre').value = '';
+      document.getElementById('nuevo_cliente_nombre').readOnly = false;
+      document.getElementById('nuevo_cliente_licencia').value = 'PRO';
+      document.getElementById('nuevo_cliente_limite').value = '3.0';
+      document.getElementById('nuevo_cliente_dias_inspeccion').value = '20';
+      document.getElementById('nuevo_cliente_regla_frecuencia').value = 'mes_siguiente';
+      document.getElementById('nuevo_cliente_subclientes').value = 'Principal';
+      document.getElementById('nuevo_cliente_observaciones').value = '';
+
+      document.getElementById('modalNuevoCliente').classList.remove('hidden');
+      document.getElementById('modalNuevoCliente').classList.add('flex');
+    }
+
+    function abrirModalEditarCliente(clienteNom) {
+      const clean = String(clienteNom || '').trim().toUpperCase();
+      const cli = cacheDirectorioClientes.find(c => c.cliente === clean);
+      if (!cli) return;
+
+      document.getElementById('tituloModalCliente').textContent = `Editar Configuración: ${cli.cliente}`;
+      document.getElementById('btnGuardarClienteTexto').textContent = 'Actualizar Cambios';
+      document.getElementById('nuevo_cliente_nombre').value = cli.cliente;
+      document.getElementById('nuevo_cliente_nombre').readOnly = true;
+      document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'PRO';
+      document.getElementById('nuevo_cliente_limite').value = cli.limite_retiro_mm || '3.0';
+      document.getElementById('nuevo_cliente_dias_inspeccion').value = cli.dias_espera_inspeccion || 20;
+      const esCorridos = (cli.requiere_mes_siguiente === false || cli.requiere_mes_siguiente === 0);
+      document.getElementById('nuevo_cliente_regla_frecuencia').value = esCorridos ? 'dias_corridos' : 'mes_siguiente';
+      document.getElementById('nuevo_cliente_subclientes').value = (cli.subclientes && cli.subclientes.length > 0) ? cli.subclientes.join(', ') : 'Principal';
+      document.getElementById('nuevo_cliente_observaciones').value = cli.observaciones || '';
+
+      document.getElementById('modalNuevoCliente').classList.remove('hidden');
+      document.getElementById('modalNuevoCliente').classList.add('flex');
+    }
+
+    function cerrarModalNuevoCliente() {
+      document.getElementById('modalNuevoCliente').classList.add('hidden');
+      document.getElementById('modalNuevoCliente').classList.remove('flex');
+    }
+
+    async function guardarNuevoCliente(e) {
+      e.preventDefault();
+      const nom = document.getElementById('nuevo_cliente_nombre').value.trim().toUpperCase();
+      if (!nom) {
+        mostrarToast('⚠️ Ingrese el nombre del cliente o flota', true);
+        return;
+      }
+
+      const payload = {
+        cliente: nom,
+        tipo_licencia: document.getElementById('nuevo_cliente_licencia').value,
+        limite_retiro_mm: parseFloat(document.getElementById('nuevo_cliente_limite').value) || 3.0,
+        dias_espera_inspeccion: parseInt(document.getElementById('nuevo_cliente_dias_inspeccion').value) || 20,
+        requiere_mes_siguiente: document.getElementById('nuevo_cliente_regla_frecuencia').value === 'mes_siguiente',
+        subclientes: document.getElementById('nuevo_cliente_subclientes').value.trim(),
+        observaciones: document.getElementById('nuevo_cliente_observaciones').value.trim()
+      };
+
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+        const res = await fetch('/api/clientes-directorio', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const resp = await res.json();
+        if (res.ok && (resp.ok || resp.status === 'ok')) {
+          mostrarToast(`✅ Cliente '${nom}' guardado exitosamente`);
+          cerrarModalNuevoCliente();
+          await cargarDirectorioClientesCat();
+          if (typeof cargarCatalogos === 'function') {
+            await cargarCatalogos();
+          }
+        } else {
+          mostrarToast('❌ Error: ' + (resp.detail || resp.mensaje || 'No se pudo guardar el cliente'), true);
+        }
+      } catch (err) {
+        console.error('Error al guardar cliente:', err);
+        mostrarToast('❌ Error de conexión al guardar cliente', true);
+      }
+    }
+
+    async function eliminarClienteDirectorio(clienteNom) {
+      if (!confirm(`¿Está seguro de eliminar el cliente '${clienteNom}'? Esta acción solo se permite si el cliente no tiene inspecciones ni llantas en bodega.`)) {
+        return;
+      }
+      try {
+        const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch(`/api/clientes-directorio/${encodeURIComponent(clienteNom)}`, {
+          method: 'DELETE',
+          headers
+        });
+        const resp = await res.json();
+        if (res.ok && (resp.ok || resp.status === 'ok')) {
+          mostrarToast(`✅ Cliente '${clienteNom}' eliminado exitosamente`);
+          await cargarDirectorioClientesCat();
+          if (typeof cargarCatalogos === 'function') {
+            await cargarCatalogos();
+          }
+        } else {
+          mostrarToast('❌ ' + (resp.detail || resp.mensaje || 'No se pudo eliminar el cliente'), true);
+        }
+      } catch (err) {
+        console.error('Error al eliminar cliente:', err);
+        mostrarToast('❌ Error de comunicación con el servidor', true);
+      }
+    }
+
+    function irAAsociarMarcaCliente(clienteNom) {
+      mostrarSubtabCat('marcas_cliente');
+      const filtro = document.getElementById('filtroCatMarcaCliente');
+      if (filtro) {
+        filtro.value = clienteNom;
+        filtrarMarcasClienteCat();
+      }
+    }
+
+    async function cargarOperacionesCat() {
+      const res = await fetch('/api/operaciones');
+      if (res.ok) {
+        const ops = await res.json();
+        const box = document.getElementById('listaOperacionesCat');
+        const puedeEditar = esAdminOJefatura();
+        box.innerHTML = ops.map(op => `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+            <span class="font-bold text-slate-800">${op}</span>
+            ${puedeEditar ? `
+              <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+    }
+
+    async function eliminarOperacionCat(nombre) {
+      if (!confirm(`¿Eliminar la operación "${nombre}"?`)) return;
+      const res = await fetch(`/api/operaciones?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast('Operación eliminada.');
+        cargarOperacionesCat();
+      }
+    }
+
+    let tipologiaEditando = null;
+    let catalogoModelosCache = [];
+    let modeloEditandoId = null;
+    let catalogoLimitesCache = [];
+    let limiteClienteEditandoId = null;
+
+    async function cargarTipologiasCat() {
+      const res = await fetch('/api/tipologias');
+      if (res.ok) {
+        const tips = await res.json();
+        const box = document.getElementById('listaTipologiasCat');
+        const puedeEditar = esAdminOJefatura();
+        box.innerHTML = tips.map(t => {
+          return `
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:shadow-sm transition-all flex flex-col justify-between">
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
+                  <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                </div>
+                <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
+              </div>
+              ${puedeEditar ? `
+                <div class="pt-2 border-t border-slate-200/70 flex items-center justify-end space-x-1.5">
+                  <button type="button" onclick="abrirModalEditarTipologia('${encodeURIComponent(JSON.stringify(t))}')" class="px-2.5 py-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center space-x-1 transition-all" title="Editar Tipología">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Editar</span>
+                  </button>
+                  <button type="button" onclick="eliminarTipologiaCat('${encodeURIComponent(t.nombre)}')" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg flex items-center space-x-1 transition-all" title="Eliminar Tipología">
+                    <i class="fa-solid fa-trash"></i>
+                    <span>Eliminar</span>
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    async function eliminarTipologiaCat(nombreEncoded) {
+      const nombre = decodeURIComponent(nombreEncoded);
+      if (!confirm(`¿Estás seguro de eliminar la tipología "${nombre}"?\nEsta acción sólo se completará si no está en uso por ningún vehículo o inspección en la base de datos.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/tipologias?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`✅ Tipología "${nombre}" eliminada correctamente.`);
+          cargarTipologiasCat();
+          cargarCatalogos();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          const msg = data.detail || `No se pudo eliminar la tipología "${nombre}".`;
+          alert(`⚠️ ${msg}`);
+        }
+      } catch (err) {
+        alert('Error de conexión al intentar eliminar la tipología.');
+      }
+    }
+
+        function actualizarBarraPaginacionGenerica(sufijo, totalRegistros, inicio, fin, paginaActual, totalPaginas, fnCambioNombre) {
+      const contenedor = document.getElementById(`contenedorPaginacion${sufijo}`);
+      const lblInicio = document.getElementById(`pagInicio${sufijo}`);
+      const lblFin = document.getElementById(`pagFin${sufijo}`);
+      const lblTotal = document.getElementById(`pagTotal${sufijo}`);
+      const controles = document.getElementById(`controlesPaginacion${sufijo}`);
+
+      if (!contenedor || !controles) return;
+      if (totalRegistros <= 25 && totalPaginas <= 1) {
+        contenedor.classList.remove('hidden');
+        if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
+        if (lblFin) lblFin.textContent = fin.toLocaleString();
+        if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
+        controles.innerHTML = '<span class="text-xs text-slate-400 font-bold px-2 py-1">Pág 1 de 1</span>';
+        return;
+      }
+
+      contenedor.classList.remove('hidden');
+      if (lblInicio) lblInicio.textContent = (inicio + 1).toLocaleString();
+      if (lblFin) lblFin.textContent = fin.toLocaleString();
+      if (lblTotal) lblTotal.textContent = totalRegistros.toLocaleString();
+
+      let html = '';
+      const deshabilitarPrimero = paginaActual <= 1;
+      html += `
+        <button type="button" onclick="${fnCambioNombre}(1)" ${deshabilitarPrimero ? 'disabled' : ''}
+          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarPrimero ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
+          }" title="Primera página">
+          <i class="fa-solid fa-angles-left text-[10px]"></i>
+        </button>
+      `;
+
+      const deshabilitarAnt = paginaActual <= 1;
+      html += `
+        <button type="button" onclick="${fnCambioNombre}(${paginaActual - 1})" ${deshabilitarAnt ? 'disabled' : ''}
+          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarAnt ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
+          }" title="Página anterior">
+          <i class="fa-solid fa-chevron-left text-[10px]"></i>
+        </button>
+      `;
+
+      for (let i = 1; i <= totalPaginas; i++) {
+        if (i === paginaActual) {
+          html += `<button type="button" class="w-7 h-7 rounded-lg bg-blue-600 text-white font-black text-xs shadow-2xs flex items-center justify-center cursor-default">${i}</button>`;
+        } else {
+          html += `<button type="button" onclick="${fnCambioNombre}(${i})" class="w-7 h-7 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 font-bold text-xs shadow-2xs flex items-center justify-center cursor-pointer">${i}</button>`;
+        }
+      }
+
+      const deshabilitarSig = paginaActual >= totalPaginas;
+      html += `
+        <button type="button" onclick="${fnCambioNombre}(${paginaActual + 1})" ${deshabilitarSig ? 'disabled' : ''}
+          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarSig ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
+          }" title="Página siguiente">
+          <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        </button>
+      `;
+
+      const deshabilitarUltimo = paginaActual >= totalPaginas;
+      html += `
+        <button type="button" onclick="${fnCambioNombre}(${totalPaginas})" ${deshabilitarUltimo ? 'disabled' : ''}
+          class="w-7 h-7 rounded-lg border border-slate-200 text-xs font-bold transition-all flex items-center justify-center ${
+            deshabilitarUltimo ? 'text-slate-300 bg-slate-50 cursor-not-allowed opacity-50' : 'text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 shadow-2xs cursor-pointer'
+          }" title="Última página">
+          <i class="fa-solid fa-angles-right text-[10px]"></i>
+        </button>
+      `;
+
+      controles.innerHTML = html;
+    }
+
+    let paginaActualModelosCat = 1;
+    const ITEMS_POR_PAGINA_MODELOS = 25;
+
+    async function cargarModelosCat() {
+      const res = await fetch('/api/modelos-llanta');
+      if (res.ok) {
+        catalogoModelosCache = await res.json();
+        paginaActualModelosCat = 1;
+        renderizarTablaModelosCat();
+      }
+    }
+
+    function renderizarTablaModelosCat() {
+      const tbody = document.getElementById('tbodyModelosCat');
+      const contenedor = document.getElementById('contenedorPaginacionModelosCat');
+      if (!tbody) return;
+
+      const lista = catalogoModelosCache || [];
+      if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">No hay modelos de llanta registrados</td></tr>`;
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+      }
+
+      const totalRegistros = lista.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MODELOS) || 1;
+      if (paginaActualModelosCat > totalPaginas) paginaActualModelosCat = totalPaginas;
+      if (paginaActualModelosCat < 1) paginaActualModelosCat = 1;
+
+      const inicio = (paginaActualModelosCat - 1) * ITEMS_POR_PAGINA_MODELOS;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_MODELOS, totalRegistros);
+      const paginaItems = lista.slice(inicio, fin);
+      const puedeEditar = esAdminOJefatura();
+
+      tbody.innerHTML = paginaItems.map(m => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-2.5 font-bold">${m.tipo_llanta}</td>
+          <td class="p-2.5 font-black text-slate-900">${m.marca}</td>
+          <td class="p-2.5 font-bold text-slate-800">${m.diseno}</td>
+          <td class="p-2.5 text-slate-700">${m.dimension}</td>
+          <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
+          <td class="p-2.5 text-slate-500">${m.descripcion || '-'}</td>
+          <td class="p-2.5 text-center">
+            ${puedeEditar ? `
+              <div class="flex items-center justify-center space-x-1">
+                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar modelo y sincronizar prof. inicial en BD">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent(m.marca + ' ' + m.diseno)}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar modelo del catálogo">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            ` : '-'}
+          </td>
+        </tr>
+      `).join('');
+
+      actualizarBarraPaginacionGenerica('ModelosCat', totalRegistros, inicio, fin, paginaActualModelosCat, totalPaginas, 'cambiarPaginaModelosCat');
+    }
+
+    function cambiarPaginaModelosCat(p) {
+      paginaActualModelosCat = p;
+      renderizarTablaModelosCat();
+    }
+
+    function abrirModalNuevoModelo() {
+      modeloEditandoId = null;
+      const elTit = document.getElementById('tituloModalModelo');
+      if (elTit) elTit.textContent = 'Nuevo Modelo de Llanta';
+      const elNota = document.getElementById('notaSincronizarModelo');
+      if (elNota) elNota.classList.add('hidden');
+      const elBtn = document.getElementById('btnGuardarModeloTexto');
+      if (elBtn) elBtn.textContent = 'Guardar';
+      document.getElementById('mod_tipo').value = 'Nueva';
+      document.getElementById('mod_marca').value = '';
+      document.getElementById('mod_diseno').value = '';
+      document.getElementById('mod_dimension').value = '295/80R22.5';
+      document.getElementById('mod_prof').value = '';
+      document.getElementById('mod_desc').value = '';
+      document.getElementById('modalNuevoModelo').classList.remove('hidden');
+      document.getElementById('modalNuevoModelo').classList.add('flex');
+    }
+
+    function abrirModalEditarModelo(id) {
+      const m = catalogoModelosCache.find(x => x.id === id);
+      if (!m) return;
+      modeloEditandoId = id;
+      const elTit = document.getElementById('tituloModalModelo');
+      if (elTit) elTit.textContent = `Editar Modelo: ${m.marca} ${m.diseno}`;
+      const elNota = document.getElementById('notaSincronizarModelo');
+      if (elNota) elNota.classList.remove('hidden');
+      const elBtn = document.getElementById('btnGuardarModeloTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Cambios';
+      document.getElementById('mod_tipo').value = m.tipo_llanta;
+      document.getElementById('mod_marca').value = m.marca;
+      document.getElementById('mod_diseno').value = m.diseno;
+      document.getElementById('mod_dimension').value = m.dimension;
+      document.getElementById('mod_prof').value = m.prof_inicial;
+      document.getElementById('mod_desc').value = m.descripcion || '';
+      document.getElementById('modalNuevoModelo').classList.remove('hidden');
+      document.getElementById('modalNuevoModelo').classList.add('flex');
+    }
+
+    function cerrarModalNuevoModelo() {
+      document.getElementById('modalNuevoModelo').classList.add('hidden');
+      document.getElementById('modalNuevoModelo').classList.remove('flex');
+    }
+
+    async function guardarNuevoModelo() {
+      const p = parseFloat(document.getElementById('mod_prof').value);
+      if (!p || p <= 0) {
+        alert('Ingresa una profundidad inicial válida (mayor a 0)');
+        return;
+      }
+      const item = {
+        tipo_llanta: document.getElementById('mod_tipo').value,
+        marca: document.getElementById('mod_marca').value.trim().toUpperCase(),
+        diseno: document.getElementById('mod_diseno').value.trim().toUpperCase(),
+        dimension: document.getElementById('mod_dimension').value.trim().toUpperCase(),
+        prof_inicial: p,
+        descripcion: document.getElementById('mod_desc').value.trim()
+      };
+      if (!item.marca || !item.diseno) {
+        alert('Marca y Diseño son obligatorios');
+        return;
+      }
+
+      if (modeloEditandoId) {
+        const payload = {
+          id: modeloEditandoId,
+          ...item,
+          actualizar_bd: true
+        };
+        try {
+          const res = await fetch('/api/modelos-llanta', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            cerrarModalNuevoModelo();
+            const msgSinc = data.filas_actualizadas > 0 
+              ? ` Se actualizó la prof. inicial (${data.prof_inicial} mm) en ${data.filas_actualizadas} inspección(es) de la base de datos.` 
+              : '';
+            mostrarToast(`✅ Modelo "${item.marca} ${item.diseno}" actualizado.${msgSinc}`);
+            cargarModelosCat();
+            if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Error al actualizar el modelo de llanta.');
+          }
+        } catch (e) {
+          alert('Error de conexión al actualizar el modelo.');
+        }
+      } else {
+        const res = await fetch('/api/modelos-llanta', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(item)
+        });
+        if (res.ok) {
+          cerrarModalNuevoModelo();
+          mostrarToast('✅ Modelo guardado en catálogo.');
+          cargarModelosCat();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al guardar el modelo de llanta.');
+        }
+      }
+    }
+
+    async function eliminarModeloCat(id, nombreEncoded) {
+      const nombre = decodeURIComponent(nombreEncoded);
+      if (!confirm(`¿Eliminar el modelo "${nombre}" del catálogo?`)) return;
+      try {
+        const res = await fetch(`/api/modelos-llanta/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`✅ Modelo "${nombre}" eliminado del catálogo.`);
+          cargarModelosCat();
+        } else {
+          alert('Error al eliminar el modelo.');
+        }
+      } catch (e) {
+        alert('Error de conexión al eliminar modelo.');
+      }
+    }
+
+    let paginaActualLimitesCat = 1;
+    const ITEMS_POR_PAGINA_LIMITES = 25;
+
+    async function cargarClientesLimCat() {
+      const res = await fetch('/api/configuraciones-clientes');
+      if (res.ok) {
+        catalogoLimitesCache = await res.json();
+        paginaActualLimitesCat = 1;
+        renderizarTablaLimitesCat();
+      }
+    }
+
+    function renderizarTablaLimitesCat() {
+      const tbody = document.getElementById('tbodyClientesLimCat');
+      const contenedor = document.getElementById('contenedorPaginacionLimitesCat');
+      if (!tbody) return;
+
+      const lista = catalogoLimitesCache || [];
+      if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+      }
+
+      const totalRegistros = lista.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_LIMITES) || 1;
+      if (paginaActualLimitesCat > totalPaginas) paginaActualLimitesCat = totalPaginas;
+      if (paginaActualLimitesCat < 1) paginaActualLimitesCat = 1;
+
+      const inicio = (paginaActualLimitesCat - 1) * ITEMS_POR_PAGINA_LIMITES;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_LIMITES, totalRegistros);
+      const paginaItems = lista.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(c => {
+        let badgeEje = '';
+        const ejeUpper = (c.eje || 'TODOS').toUpperCase();
+        if (ejeUpper === 'DIRECCIONAL') {
+          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">DIRECCIONAL</span>';
+        } else if (ejeUpper === 'TRACCIÓN' || ejeUpper === 'TRACCION') {
+          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">TRACCIÓN</span>';
+        } else if (ejeUpper === 'LIBRE') {
+          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">LIBRE</span>';
+        } else if (ejeUpper === 'REPUESTO') {
+          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">REPUESTO</span>';
+        } else {
+          badgeEje = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 border border-slate-300">TODOS</span>';
+        }
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
+            <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
+            <td class="p-2.5 text-center">${badgeEje}</td>
+            <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
+            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
+            <td class="p-2.5 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar límite de retiro">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionGenerica('LimitesCat', totalRegistros, inicio, fin, paginaActualLimitesCat, totalPaginas, 'cambiarPaginaLimitesCat');
+    }
+
+    function cambiarPaginaLimitesCat(p) {
+      paginaActualLimitesCat = p;
+      renderizarTablaLimitesCat();
+    }
+
+    function abrirModalLimiteCliente() {
+      limiteClienteEditandoId = null;
+      const elTit = document.getElementById('tituloModalLimiteCliente');
+      if (elTit) elTit.textContent = 'Límite de Retiro por Cliente y Eje';
+      const elBtn = document.getElementById('btnGuardarLimiteTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Límite';
+      document.getElementById('lim_cliente').value = '';
+      document.getElementById('lim_subcliente').value = 'TODOS';
+      document.getElementById('lim_eje').value = 'TODOS';
+      document.getElementById('lim_mm').value = '3.0';
+      document.getElementById('lim_obs').value = '';
+      document.getElementById('modalLimiteCliente').classList.remove('hidden');
+      document.getElementById('modalLimiteCliente').classList.add('flex');
+    }
+
+    function abrirModalEditarLimiteCliente(id) {
+      const c = catalogoLimitesCache.find(x => x.id === id);
+      if (!c) return;
+      limiteClienteEditandoId = id;
+      const elTit = document.getElementById('tituloModalLimiteCliente');
+      if (elTit) elTit.textContent = `Editar Límite: ${c.cliente}`;
+      const elBtn = document.getElementById('btnGuardarLimiteTexto');
+      if (elBtn) elBtn.textContent = 'Guardar Cambios';
+      document.getElementById('lim_cliente').value = c.cliente;
+      document.getElementById('lim_subcliente').value = c.subcliente || 'TODOS';
+      document.getElementById('lim_eje').value = (c.eje || 'TODOS').toUpperCase();
+      document.getElementById('lim_mm').value = c.limite_retiro_mm;
+      document.getElementById('lim_obs').value = c.observaciones || '';
+      document.getElementById('modalLimiteCliente').classList.remove('hidden');
+      document.getElementById('modalLimiteCliente').classList.add('flex');
+    }
+
+    function cerrarModalLimiteCliente() {
+      document.getElementById('modalLimiteCliente').classList.add('hidden');
+      document.getElementById('modalLimiteCliente').classList.remove('flex');
+    }
+
+    async function guardarLimiteCliente() {
+      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
+      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
+      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
+      const mm = parseFloat(document.getElementById('lim_mm').value);
+      const obs = document.getElementById('lim_obs').value.trim().toUpperCase();
+      if (!cli || isNaN(mm)) {
+        alert('Por favor completa el cliente y el límite en mm');
+        return;
+      }
+
+      if (limiteClienteEditandoId) {
+        const payload = {
+          id: limiteClienteEditandoId,
+          cliente: cli,
+          subcliente: sub,
+          eje: eje,
+          limite_retiro_mm: mm,
+          observaciones: obs
+        };
+        try {
+          const res = await fetch('/api/configuraciones-clientes', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            cerrarModalLimiteCliente();
+            mostrarToast(`✅ Límite actualizado para ${cli} (${sub} - ${eje}) a ${mm} mm.`);
+            cargarClientesLimCat();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.detail || 'Error al actualizar el límite de cliente');
+          }
+        } catch (e) {
+          alert('Error de conexión al actualizar límite.');
+        }
+      } else {
+        const res = await fetch('/api/configuraciones-clientes', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            cliente: cli,
+            subcliente: sub,
+            eje: eje,
+            limite_retiro_mm: mm,
+            observaciones: obs
+          })
+        });
+        if (res.ok) {
+          cerrarModalLimiteCliente();
+          mostrarToast(`✅ Límite para ${cli} (${sub} - ${eje}) guardado en ${mm} mm.`);
+          cargarClientesLimCat();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al guardar el límite de cliente');
+        }
+      }
+    }
+
+    async function eliminarLimiteCliente(id) {
+      if (!confirm('¿Deseas eliminar esta política de límite de retiro?')) return;
+      const res = await fetch(`/api/configuraciones-clientes/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast('Límite eliminado.');
+        cargarClientesLimCat();
+      }
+    }
+
+    // ==========================================
+    // GESTIÓN DE MARCAS POR CLIENTE (CATÁLOGOS)
+    // ==========================================
+    let marcasClienteCatCache = [];
+
+    async function cargarMarcasClienteCat() {
+      try {
+        const res = await fetch('/api/configuracion-marcas-cliente');
+        if (!res.ok) return;
+        marcasClienteCatCache = await res.json();
+
+        // Poblar selector de filtro por cliente
+        const selFiltro = document.getElementById('filtroCatMarcaCliente');
+        if (selFiltro) {
+          const valPrevio = selFiltro.value;
+          const clientesUnicos = Array.from(new Set(marcasClienteCatCache.map(m => m.cliente))).sort();
+          selFiltro.innerHTML = `<option value="">TODOS LOS CLIENTES (${clientesUnicos.length})</option>` +
+            clientesUnicos.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valPrevio) selFiltro.value = valPrevio;
+        }
+
+        filtrarMarcasClienteCat();
+      } catch (err) {
+        console.error("Error al cargar marcas cliente en catálogos:", err);
+      }
+    }
+
+    function filtrarMarcasClienteCat() {
+      const cliSel = (document.getElementById('filtroCatMarcaCliente')?.value || '').trim().toUpperCase();
+      let filtradas = marcasClienteCatCache;
+      if (cliSel) {
+        filtradas = marcasClienteCatCache.filter(m => m.cliente === cliSel);
+      }
+      renderizarTablaMarcasCliente(filtradas);
+    }
+
+    let paginaActualMarcasCat = 1;
+    const ITEMS_POR_PAGINA_MARCAS = 25;
+    let cacheFiltradasMarcasCat = [];
+
+    function renderizarTablaMarcasCliente(lista) {
+      const tbody = document.getElementById('tbodyMarcasClienteCat');
+      const contador = document.getElementById('contadorMarcasClienteCat');
+      const contenedor = document.getElementById('contenedorPaginacionMarcasCat');
+      cacheFiltradasMarcasCat = lista || [];
+
+      if (contador) contador.textContent = `Total: ${lista ? lista.length : 0} asociaciones (25 por página)`;
+      if (!tbody) return;
+
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="p-6 text-center text-slate-400">
+              <i class="fa-solid fa-tags text-2xl mb-2 text-slate-300 block"></i>
+              No hay marcas parametrizadas para este cliente aún. Haz clic en "Asociar Marca a Cliente".
+            </td>
+          </tr>
+        `;
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+      }
+
+      const totalRegistros = lista.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_MARCAS) || 1;
+      if (paginaActualMarcasCat > totalPaginas) paginaActualMarcasCat = totalPaginas;
+      if (paginaActualMarcasCat < 1) paginaActualMarcasCat = 1;
+
+      const inicio = (paginaActualMarcasCat - 1) * ITEMS_POR_PAGINA_MARCAS;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_MARCAS, totalRegistros);
+      const paginaItems = lista.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(item => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="p-2.5 font-bold text-slate-900">${item.cliente}</td>
+          <td class="p-2.5">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
+              <i class="fa-solid fa-tag mr-1 text-[10px]"></i>
+              ${item.marca}
+            </span>
+          </td>
+          <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
+          <td class="p-2.5 text-center">
+            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors" title="Desvincular marca de este cliente">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      actualizarBarraPaginacionGenerica('MarcasCat', totalRegistros, inicio, fin, paginaActualMarcasCat, totalPaginas, 'cambiarPaginaMarcasCat');
+    }
+
+    function cambiarPaginaMarcasCat(p) {
+      paginaActualMarcasCat = p;
+      renderizarTablaMarcasCliente(cacheFiltradasMarcasCat);
+    }
+
+    async function abrirModalAsociarMarcaCliente(clientePref = '') {
+      const cliInput = document.getElementById('asoc_marca_cliente');
+      const marcaInput = document.getElementById('asoc_marca_nombre');
+      if (cliInput) {
+        const selFiltro = document.getElementById('filtroCatMarcaCliente');
+        cliInput.value = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
+      }
+      if (marcaInput) marcaInput.value = '';
+
+      // Cargar todas las marcas del catálogo en datalist
+      try {
+        const res = await fetch('/api/valores-campo?campo=marca&todas=true');
+        if (res.ok) {
+          const marcas = await res.json();
+          const dl = document.getElementById('dl_marcas_todas');
+          if (dl) dl.innerHTML = marcas.map(m => `<option value="${m}">`).join('');
+        }
+      } catch (e) {}
+
+      const modal = document.getElementById('modalAsociarMarcaCliente');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function cerrarModalAsociarMarcaCliente() {
+      const modal = document.getElementById('modalAsociarMarcaCliente');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    async function guardarAsociacionMarcaCliente() {
+      const cli = (document.getElementById('asoc_marca_cliente')?.value || '').trim().toUpperCase();
+      const marca = (document.getElementById('asoc_marca_nombre')?.value || '').trim();
+      if (!cli || !marca) {
+        alert('Por favor ingresa tanto el Cliente como la Marca');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/configuracion-marcas-cliente', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ cliente: cli, marca: marca })
+        });
+        if (res.ok) {
+          cerrarModalAsociarMarcaCliente();
+          mostrarToast(`✅ Marca '${marca}' asociada a '${cli}'.`);
+          await cargarMarcasClienteCat();
+          // Si el patio tiene seleccionado a este cliente, refrescar marcas de patio
+          const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
+          if (cliPatio === cli) {
+            actualizarMarcasCliente(cli);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al asociar marca');
+        }
+      } catch (err) {
+        alert('Error de conexión al asociar marca');
+      }
+    }
+
+    async function eliminarMarcaClientePorId(id, cliente, marca) {
+      if (!confirm(`¿Deseas desvincular la marca '${marca}' del cliente '${cliente}'?`)) return;
+      try {
+        const res = await fetch(`/api/configuracion-marcas-cliente/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast(`Marca '${marca}' desvinculada de '${cliente}'.`);
+          await cargarMarcasClienteCat();
+          const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
+          if (cliPatio === cliente) {
+            actualizarMarcasCliente(cliente);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || 'Error al eliminar asociación');
+        }
+      } catch (err) {
+        alert('Error de conexión al desvincular marca');
+      }
+    }
+
+    let usuariosCatCache = [];
+
+    function renderizarBadgeRol(rol) {
+      const r = String(rol || '').trim().toLowerCase();
+      if (r === 'admin' || r === 'administrador') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">ADMIN</span>`;
+      } else if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">JEFATURA LLANTAS</span>`;
+      } else if (r === 'gerencia' || r === 'gerente') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">GERENCIA</span>`;
+      } else {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">INSPECTOR</span>`;
+      }
+    }
+
+    function renderizarBadgesVistas(vistasVal, rol) {
+      const r = String(rol || '').trim().toLowerCase();
+      if (r === 'admin' || r === 'administrador') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Acceso Total (Admin)</span>`;
+      }
+      let vistas = [];
+      if (Array.isArray(vistasVal)) {
+        vistas = vistasVal.map(s => String(s).trim().toLowerCase()).filter(Boolean);
+      } else if (typeof vistasVal === 'string' && vistasVal.trim()) {
+        vistas = vistasVal.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      } else {
+        if (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') vistas = ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
+        else if (r === 'gerencia' || r === 'gerente') vistas = ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'];
+        else vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'];
+      }
+      const badges = [];
+      if (vistas.includes('patio')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Patio</span>');
+      if (vistas.includes('basedatos')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Base Datos</span>');
+      if (vistas.includes('diagnostico')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Diag</span>');
+      if (vistas.includes('kpis')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200">KPIs</span>');
+      if (vistas.includes('composicion')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200">Composición Flota</span>');
+      if (vistas.includes('bodegas')) badges.push('<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Bodegas MRP</span>');
+      if (vistas.includes('catalogos')) {
+        const catText = (r === 'jefatura' || r === 'jefe' || r === 'jefe_llantas') ? 'Catálogos & Límites' : 'Catálogos (Lectura)';
+        badges.push(`<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-50 text-slate-700 border border-slate-200">${catText}</span>`);
+      }
+      return badges.length > 0 ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : `<span class="text-slate-400 italic text-[10px]">Sin vistas</span>`;
+    }
+
+    function renderizarBadgesClientes(clienteAsignadoVal) {
+      let clis = [];
+      if (Array.isArray(clienteAsignadoVal)) {
+        clis = clienteAsignadoVal.map(s => String(s).trim()).filter(Boolean);
+      } else if (typeof clienteAsignadoVal === 'string' && clienteAsignadoVal.trim()) {
+        clis = clienteAsignadoVal.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (clis.length === 0) {
+        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Todas las Flotas</span>';
+      }
+      if (clis.length === 1) {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
+      }
+      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${c}</span>`).join('')}</div>`;
+    }
+
+    async function cargarUsuariosCat() {
+      const tbody = document.getElementById('tbodyUsuariosCat');
+      if (!tbody) return;
+
+      if (!esUsuarioAdmin()) {
+        console.warn("Intento de cargar usuarios sin perfil de administrador.");
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="p-6 text-center text-amber-600 font-bold text-xs">
+              <i class="fa-solid fa-lock mr-1"></i>
+              Acceso restringido: Solo los administradores pueden ver y gestionar usuarios.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Feedback visual de carga inmediato
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="p-6 text-center text-slate-500">
+            <div class="inline-flex items-center justify-center space-x-2 text-xs font-bold text-slate-600">
+              <i class="fa-solid fa-circle-notch fa-spin text-indigo-600 text-base"></i>
+              <span>Cargando lista de usuarios del sistema...</span>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      try {
+        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/api/usuarios', { headers });
+
+        if (res.ok) {
+          usuariosCatCache = await res.json();
+          if (!tbody) return;
+          if (!usuariosCatCache || usuariosCatCache.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic text-xs">No hay usuarios registrados. Usa el botón "+ Nuevo Usuario" para crear uno.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = usuariosCatCache.map(u => `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
+              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
+              <td class="p-2.5 text-center font-bold uppercase text-[10px]">
+                ${renderizarBadgeRol(u.rol)}
+              </td>
+              <td class="p-2.5">${renderizarBadgesVistas(u.vistas_permitidas, u.rol)}</td>
+              <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
+              <td class="p-2.5 text-center">
+                ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
+              </td>
+              <td class="p-2.5 text-center">
+                <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
+                    <i class="fa-solid fa-user-pen"></i>
+                  </button>
+                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
+                    <i class="fa-solid fa-key"></i>
+                  </button>
+                  ${String(u.username).toLowerCase() !== 'admin' ? `
+                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  ` : `
+                    <span class="p-1.5 text-slate-300 text-xs" title="Superadmin Protegido"><i class="fa-solid fa-lock"></i></span>
+                  `}
+                </div>
+              </td>
+            </tr>
+          `).join('');
+          console.info(`Usuarios cargados con éxito (${usuariosCatCache.length} registros).`);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.error("Error al obtener usuarios, status:", res.status, errData);
+          if (tbody) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
+                  <div><i class="fa-solid fa-triangle-exclamation mr-1"></i> No se pudo cargar los usuarios (${res.status}): ${errData.detail || 'Sesión no válida o sin permisos'}</div>
+                  <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
+                  </button>
+                </td>
+              </tr>
+            `;
+          }
+        }
+      } catch (e) {
+        console.error("Error de conexión al cargar usuarios:", e);
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
+                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${e.message}</div>
+                <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
+                  <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
+                </button>
+              </td>
+            </tr>
+          `;
+        }
+      }
+    }
+
+    // Helpers de Control de Vistas y Asignación de Clientes en Modales
+    function alCambiarRolUsuarioModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const rol = String(document.getElementById(`${pfx}rol`).value || '').trim().toLowerCase();
+      const chkBD = document.getElementById(`${pfx}vista_basedatos`);
+      const chkCat = document.getElementById(`${pfx}vista_catalogos`);
+      const chkPatio = document.getElementById(`${pfx}vista_patio`);
+      const chkDiag = document.getElementById(`${pfx}vista_diagnostico`);
+      const chkKpis = document.getElementById(`${pfx}vista_kpis`);
+      const chkComp = document.getElementById(`${pfx}vista_composicion`);
+      const lblBD = document.getElementById(`lbl_${pfx}vista_basedatos`);
+      const badgeBD = document.getElementById(`badge_${pfx}vista_basedatos`);
+
+      if (rol === 'admin') {
+        // Para admin: acceso total a las vistas
+        if (chkPatio) chkPatio.checked = true;
+        if (chkDiag) chkDiag.checked = true;
+        if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+      } else if (rol === 'jefatura') {
+        // Para Jefatura: acceso técnico completo por defecto (Patio, BD, Diag, KPIs, Composición, Catálogos)
+        if (chkPatio) chkPatio.checked = true;
+        if (chkDiag) chkDiag.checked = true;
+        if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = true; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+      } else if (rol === 'gerencia') {
+        // Para Gerencia: enfoque ejecutivo de auditoría y análisis (BD, Diag, KPIs, Composición)
+        if (chkPatio) chkPatio.checked = false;
+        if (chkDiag) chkDiag.checked = true;
+        if (chkKpis) chkKpis.checked = true;
+        if (chkComp) chkComp.checked = true;
+        if (chkBD) { chkBD.checked = true; chkBD.disabled = false; }
+        if (chkCat) { chkCat.checked = false; chkCat.disabled = false; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-400', 'bg-slate-100');
+          lblBD.classList.add('text-slate-700', 'bg-white', 'cursor-pointer');
+        }
+        if (badgeBD) badgeBD.classList.add('hidden');
+      } else {
+        // Para inspector: NUNCA tiene acceso a basedatos. SÍ puede consultar catalogos y composición
+        if (chkBD) { chkBD.checked = false; chkBD.disabled = true; }
+        if (lblBD) {
+          lblBD.classList.remove('text-slate-700', 'bg-white', 'cursor-pointer');
+          lblBD.classList.add('text-slate-400', 'bg-slate-100');
+        }
+        if (badgeBD) badgeBD.classList.remove('hidden');
+
+        // Catálogos y Composición disponible para inspector
+        if (chkCat) { chkCat.disabled = false; }
+      }
+    }
+
+    function toggleClientesTodosModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chk = document.getElementById(`${pfx}todas_flotas`);
+      const cont = document.getElementById(modo === 'nuevo' ? 'usr_contenedor_clientes_nuevo' : 'edit_usr_contenedor_clientes');
+      if (chk && cont) {
+        if (chk.checked) {
+          cont.classList.add('hidden');
+        } else {
+          cont.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function poblarListaCheckboxesClientesModal(modo, clientesSeleccionados = []) {
+      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
+      const cont = document.getElementById(contId);
+      if (!cont) return;
+
+      let clientesDisponibles = [];
+      try {
+        const res = await fetch('/api/valores-campo?campo=cliente');
+        if (res.ok) {
+          clientesDisponibles = await res.json();
+        }
+      } catch(e) {}
+
+      // Combinar con los ya seleccionados para no perder ningún valor histórico
+      const setTotal = new Set();
+      (clientesSeleccionados || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim().toUpperCase()); });
+      (clientesDisponibles || []).forEach(c => { if (c && c.trim()) setTotal.add(c.trim().toUpperCase()); });
+
+      const lista = Array.from(setTotal).sort((a, b) => a.localeCompare(b));
+      if (lista.length === 0) {
+        cont.innerHTML = '<p class="text-slate-400 italic text-[11px] p-2">No hay clientes registrados en el catálogo. Puedes escribir uno abajo.</p>';
+        return;
+      }
+
+      const selSet = new Set((clientesSeleccionados || []).map(s => s.trim().toLowerCase()));
+      cont.innerHTML = lista.map(c => {
+        const isChecked = selSet.has(c.toLowerCase());
+        return `
+          <label class="flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors">
+            <input type="checkbox" value="${c}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" ${isChecked ? 'checked' : ''}>
+            <span class="font-medium">${c}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function agregarClienteCustomModal(modo) {
+      const inpId = modo === 'nuevo' ? 'usr_cliente_custom_nuevo' : 'edit_usr_cliente_custom';
+      const inp = document.getElementById(inpId);
+      if (!inp) return;
+      const val = inp.value.trim().toUpperCase();
+      if (!val) return;
+
+      const contId = modo === 'nuevo' ? 'usr_lista_clientes_check_nuevo' : 'edit_usr_lista_clientes_check';
+      const cont = document.getElementById(contId);
+      if (!cont) return;
+
+      // Verificar si ya existe el checkbox
+      const existentes = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).map(el => el.value.toLowerCase());
+      if (existentes.includes(val.toLowerCase())) {
+        const chk = Array.from(cont.querySelectorAll(`.chk-cli-modal-${modo}`)).find(el => el.value.toLowerCase() === val.toLowerCase());
+        if (chk) chk.checked = true;
+      } else {
+        const lbl = document.createElement('label');
+        lbl.className = 'flex items-center space-x-2 text-slate-800 text-xs cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors';
+        lbl.innerHTML = `
+          <input type="checkbox" value="${val}" class="chk-cli-modal-${modo} rounded text-blue-600 focus:ring-blue-500" checked>
+          <span class="font-medium">${val}</span>
+        `;
+        cont.prepend(lbl);
+      }
+      inp.value = '';
+    }
+
+    function obtenerVistasSeleccionadasModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const rol = document.getElementById(`${pfx}rol`).value;
+      if (rol === 'admin') {
+        return 'patio,basedatos,diagnostico,kpis,composicion,bodegas,catalogos';
+      }
+      const vistas = [];
+      if (document.getElementById(`${pfx}vista_patio`)?.checked) vistas.push('patio');
+      if (document.getElementById(`${pfx}vista_basedatos`)?.checked && (rol === 'jefatura' || rol === 'gerencia')) vistas.push('basedatos');
+      if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
+      if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
+      if (document.getElementById(`${pfx}vista_composicion`)?.checked) vistas.push('composicion');
+      if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
+      // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
+      if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
+      return vistas.join(',');
+    }
+
+    function obtenerClientesSeleccionadosModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chkTodas = document.getElementById(`${pfx}todas_flotas`);
+      if (chkTodas && chkTodas.checked) {
+        return '';
+      }
+      const checkboxes = document.querySelectorAll(`.chk-cli-modal-${modo}:checked`);
+      const seleccionados = Array.from(checkboxes).map(c => c.value.trim()).filter(Boolean);
+      return seleccionados.join(', ');
+    }
+
+    function configurarClientesUsuarioEnInspeccion() {
+      if (!usuarioActual) return;
+      const selCli = document.getElementById('cliente');
+      const badgeFijo = document.getElementById('badgeClienteAsignadoFijo');
+      if (!selCli) return;
+
+      let rawClis = [];
+      if (Array.isArray(usuarioActual.clientes_asignados) && usuarioActual.clientes_asignados.length > 0) {
+        rawClis = usuarioActual.clientes_asignados;
+      } else if (usuarioActual.cliente_asignado && typeof usuarioActual.cliente_asignado === 'string') {
+        rawClis = usuarioActual.cliente_asignado.split(',');
+      }
+
+      // Normalizar a mayúsculas limpias y deduplicar insensible a mayúsculas
+      const mapClis = new Map();
+      rawClis.forEach(c => {
+        const clean = String(c || '').trim().toUpperCase();
+        if (clean && !mapClis.has(clean)) {
+          mapClis.set(clean, clean);
+        }
+      });
+      const clis = Array.from(mapClis.values()).sort();
+
+      if (!esUsuarioAdmin() && clis.length === 1) {
+        // REGLA: Si es solo un cliente, en la inspección aparecerá predeterminado y fijo
+        const cliUnico = clis[0];
+
+        let existeOpcion = false;
+        for (let i = 0; i < selCli.options.length; i++) {
+          if (selCli.options[i].value.toUpperCase() === cliUnico) {
+            existeOpcion = true;
+            selCli.selectedIndex = i;
+            break;
+          }
+        }
+        if (!existeOpcion) {
+          const opt = document.createElement('option');
+          opt.value = cliUnico;
+          opt.textContent = cliUnico;
+          opt.selected = true;
+          selCli.appendChild(opt);
+        }
+        selCli.value = cliUnico;
+        selCli.disabled = true;
+        selCli.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+        selCli.classList.remove('bg-slate-50');
+
+        if (badgeFijo) {
+          badgeFijo.classList.remove('hidden');
+          badgeFijo.innerHTML = `<i class="fa-solid fa-lock text-[9px] mr-1"></i><span>${cliUnico}</span>`;
+        }
+
+        alCambiarClienteMobile();
+      } else if (!esUsuarioAdmin() && clis.length > 1) {
+        // REGLA: Múltiples clientes asignados
+        selCli.disabled = false;
+        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        selCli.classList.add('bg-slate-50');
+
+        if (badgeFijo) {
+          badgeFijo.classList.remove('hidden');
+          badgeFijo.innerHTML = `<i class="fa-solid fa-building-user text-[9px] mr-1"></i><span>${clis.length} Flotas</span>`;
+        }
+
+        const valorPrevio = selCli.value ? selCli.value.trim().toUpperCase() : '';
+        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
+        clis.forEach(c => {
+          const isSel = (valorPrevio && valorPrevio === c);
+          html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
+        });
+        selCli.innerHTML = html;
+        if (valorPrevio && clis.includes(valorPrevio)) {
+          selCli.value = valorPrevio;
+        }
+      } else {
+        // Administrador o Todas las flotas
+        selCli.disabled = false;
+        selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        selCli.classList.add('bg-slate-50');
+        if (badgeFijo) badgeFijo.classList.add('hidden');
+      }
+    }
+
+    function abrirModalNuevoUsuario() {
+      document.getElementById('usr_username').value = '';
+      document.getElementById('usr_nombre').value = '';
+      document.getElementById('usr_pass').value = '';
+      document.getElementById('usr_rol').value = 'inspector';
+      document.getElementById('usr_vista_patio').checked = true;
+      document.getElementById('usr_vista_diagnostico').checked = true;
+      document.getElementById('usr_vista_kpis').checked = true;
+      document.getElementById('usr_vista_composicion').checked = true;
+      document.getElementById('usr_vista_catalogos').checked = true;
+      document.getElementById('usr_todas_flotas').checked = true;
+      document.getElementById('usr_cliente_custom_nuevo').value = '';
+      toggleClientesTodosModal('nuevo');
+      alCambiarRolUsuarioModal('nuevo');
+      poblarListaCheckboxesClientesModal('nuevo', []);
+
+      // Solo el admin puede asignar el rol admin
+      const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
+      if (optAdminNuevo) {
+        optAdminNuevo.disabled = !esUsuarioAdmin();
+      }
+
+      const modal = document.getElementById('modalNuevoUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalNuevoUsuario() {
+      const modal = document.getElementById('modalNuevoUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function guardarNuevoUsuario() {
+      const u = document.getElementById('usr_username').value.trim();
+      const n = document.getElementById('usr_nombre').value.trim();
+      const p = document.getElementById('usr_pass').value.trim();
+      if (!u || !n || !p) {
+        alert('Por favor completa todos los campos del usuario.');
+        return;
+      }
+      if (p.length < 4) {
+        alert('La contraseña debe tener al menos 4 caracteres.');
+        return;
+      }
+      const rol = document.getElementById('usr_rol').value;
+      if (rol === 'admin' && !esUsuarioAdmin()) {
+        alert('Solo un administrador puede crear usuarios con rol Administrador.');
+        return;
+      }
+
+      const vistas = obtenerVistasSeleccionadasModal('nuevo');
+      const cliente = obtenerClientesSeleccionadosModal('nuevo');
+
+      try {
+        const res = await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            username: u,
+            nombre_completo: n,
+            password: p,
+            rol: rol,
+            cliente_asignado: cliente,
+            vistas_permitidas: vistas
+          })
+        });
+        if (res.ok) {
+          cerrarModalNuevoUsuario();
+          mostrarToast(`✅ Usuario "${u}" creado exitosamente.`);
+          cargarUsuariosCat();
+        } else {
+          const d = await res.json();
+          mostrarToast(d.detail || 'Error al crear usuario', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión con el servidor', true);
+      }
+    }
+
+    function abrirModalEditarUsuario(username) {
+      const u = usuariosCatCache.find(x => x.username.toLowerCase() === username.toLowerCase());
+      if (!u) return;
+      document.getElementById('edit_usr_username').value = u.username;
+      document.getElementById('edit_usr_nombre').value = u.nombre_completo;
+      document.getElementById('edit_usr_rol').value = u.rol;
+      document.getElementById('edit_usr_activo').value = u.activo ? '1' : '0';
+      document.getElementById('edit_usr_cliente_custom').value = '';
+
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const esSuperAdmin = u.username.toLowerCase() === 'admin';
+      document.getElementById('edit_usr_rol').disabled = esSuperAdmin;
+      document.getElementById('edit_usr_activo').disabled = esSuperAdmin;
+
+      // Solo el admin puede asignar el rol admin
+      const optAdminEdit = document.querySelector('#edit_usr_rol option[value="admin"]');
+      if (optAdminEdit) {
+        optAdminEdit.disabled = !esUsuarioAdmin();
+      }
+
+      alCambiarRolUsuarioModal('editar');
+
+      // Vistas permitidas
+      let vistas = [];
+      if (Array.isArray(u.vistas_permitidas)) {
+        vistas = u.vistas_permitidas.map(s => String(s).trim().toLowerCase());
+      } else if (typeof u.vistas_permitidas === 'string' && u.vistas_permitidas.trim()) {
+        vistas = u.vistas_permitidas.split(',').map(s => s.trim().toLowerCase());
+      } else {
+        vistas = ['patio', 'diagnostico', 'kpis', 'composicion', 'catalogos'];
+      }
+      document.getElementById('edit_usr_vista_patio').checked = vistas.includes('patio');
+      if (document.getElementById('edit_usr_vista_basedatos')) {
+        document.getElementById('edit_usr_vista_basedatos').checked = vistas.includes('basedatos') && u.rol !== 'inspector';
+      }
+      document.getElementById('edit_usr_vista_diagnostico').checked = vistas.includes('diagnostico');
+      document.getElementById('edit_usr_vista_kpis').checked = vistas.includes('kpis');
+      if (document.getElementById('edit_usr_vista_composicion')) {
+        document.getElementById('edit_usr_vista_composicion').checked = vistas.includes('composicion');
+      }
+      document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
+
+      // Clientes asignados
+      let clis = [];
+      if (Array.isArray(u.clientes_asignados) && u.clientes_asignados.length > 0) {
+        clis = u.clientes_asignados;
+      } else if (u.cliente_asignado) {
+        clis = u.cliente_asignado.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      if (clis.length === 0) {
+        document.getElementById('edit_usr_todas_flotas').checked = true;
+      } else {
+        document.getElementById('edit_usr_todas_flotas').checked = false;
+      }
+      toggleClientesTodosModal('editar');
+      poblarListaCheckboxesClientesModal('editar', clis);
+
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalEditarUsuario() {
+      const modal = document.getElementById('modalEditarUsuario');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function guardarEdicionUsuario() {
+      const username = document.getElementById('edit_usr_username').value.trim();
+      const nombre = document.getElementById('edit_usr_nombre').value.trim();
+      const rol = document.getElementById('edit_usr_rol').value;
+      const activo = document.getElementById('edit_usr_activo').value === '1';
+      const vistas = obtenerVistasSeleccionadasModal('editar');
+      const cliente = obtenerClientesSeleccionadosModal('editar');
+      const errBox = document.getElementById('edit_usr_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!nombre) {
+        if (errBox) {
+          errBox.textContent = 'El nombre completo es obligatorio.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (rol === 'admin' && !esUsuarioAdmin()) {
+        if (errBox) {
+          errBox.textContent = 'Solo un administrador puede asignar el rol Administrador.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${username}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            nombre_completo: nombre,
+            rol: rol,
+            cliente_asignado: cliente,
+            vistas_permitidas: vistas,
+            activo: activo
+          })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          if (usuarioActual && usuarioActual.username.toLowerCase() === username.toLowerCase()) {
+            usuarioActual.nombre_completo = nombre;
+            usuarioActual.rol = rol;
+            usuarioActual.cliente_asignado = cliente;
+            usuarioActual.clientes_asignados = cliente ? cliente.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [];
+            usuarioActual.vistas_permitidas = vistas;
+            localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
+            localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
+            actualizarUIUsuario();
+            configurarClientesUsuarioEnInspeccion();
+          }
+
+          cerrarModalEditarUsuario();
+          mostrarToast(`✅ Usuario "${username}" actualizado correctamente.`);
+          cargarUsuariosCat();
+          sincronizarUsuarioActualSesion();
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al actualizar el usuario.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    let targetResetUser = null;
+
+    function abrirModalResetPassword(username) {
+      targetResetUser = username;
+      document.getElementById('reset_usr_label').textContent = username;
+      document.getElementById('reset_nueva_password').value = '';
+      document.getElementById('reset_confirmar_password').value = '';
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function cerrarModalResetPassword() {
+      targetResetUser = null;
+      const modal = document.getElementById('modalResetPassword');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      if (!inp || !ico) return;
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.classList.remove('fa-eye');
+        ico.classList.add('fa-eye-slash');
+      } else {
+        inp.type = 'password';
+        ico.classList.remove('fa-eye-slash');
+        ico.classList.add('fa-eye');
+      }
+    }
+
+    async function ejecutarResetPassword() {
+      if (!targetResetUser) return;
+      const p1 = document.getElementById('reset_nueva_password').value.trim();
+      const p2 = document.getElementById('reset_confirmar_password').value.trim();
+      const errBox = document.getElementById('reset_password_error');
+      if (errBox) errBox.classList.add('hidden');
+
+      if (!p1 || p1.length < 4) {
+        if (errBox) {
+          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (p1 !== p2) {
+        if (errBox) {
+          errBox.textContent = 'Las contraseñas no coinciden. Por favor verifícalas.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/usuarios/${targetResetUser}/reset-password`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ nueva_password: p1 })
+        });
+        const d = await res.json();
+        if (res.ok) {
+          cerrarModalResetPassword();
+          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
+        } else {
+          if (errBox) {
+            errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (errBox) {
+          errBox.textContent = 'Error de conexión con el servidor.';
+          errBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function eliminarUsuarioCat(username) {
+      if (!confirm(`¿Eliminar al usuario "${username}"?`)) return;
+      const res = await fetch(`/api/usuarios/${username}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast(`Usuario ${username} eliminado.`);
+        cargarUsuariosCat();
+      } else {
+        const d = await res.json();
+        mostrarToast(d.detail || 'Error al eliminar usuario', true);
+      }
+    }
+```
+
+---
+
+## Archivo: static/js/modulo_bodegas.js
+
+- **Ruta:** `static/js/modulo_bodegas.js`
+- **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
+- **Métricas:** 2005 líneas | 107,929 bytes (105.4 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
     // ==============================================================
     // MÓDULO: LAS 7 BODEGAS, KARDEX Y BALANCE MRP (KPI 20) [PRO]
     // ==============================================================
@@ -40746,8 +43970,18 @@ if __name__ == '__main__':
         alert('Error en dictamen: ' + err.message);
       }
     }
+```
 
+---
 
+## Archivo: static/js/app_init.js
+
+- **Ruta:** `static/js/app_init.js`
+- **Descripción:** Módulo Init: Inicialización controlada en DOMContentLoaded
+- **Métricas:** 19 líneas | 734 bytes (0.7 KB)
+- **Lenguaje:** `javascript`
+
+```javascript
     // Inicialización al cargar DOM
     window.addEventListener('DOMContentLoaded', () => {
       sincronizarSlotEspecificaciones();
@@ -40767,1367 +44001,6 @@ if __name__ == '__main__':
       }
       actualizarIndicadorConexionOffline();
     });
-  </script>
-</body>
-</html>
-```
-
----
-
-## Archivo: templates/preview_chasis.html
-
-- **Ruta:** `templates/preview_chasis.html`
-- **Descripción:** Visor interactivo y banco de pruebas de renderizado de tipologías de chasis
-- **Métricas:** 1346 líneas | 72,799 bytes (71.1 KB)
-- **Lenguaje:** `html`
-
-```html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vista Previa: Inspección de Patio — Chasis y Mediciones</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background-color: #F8FAFC;
-      color: #0F172A;
-    }
-    .font-mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .touch-target { min-height: 44px; }
-
-    /* Ruedas Interactivas SVG */
-    .tire-interactive-node {
-      cursor: pointer;
-      outline: none;
-      user-select: none;
-    }
-    .tire-interactive-node:hover .tire-rubber-body {
-      filter: brightness(1.18);
-    }
-    .tire-interactive-node:focus-visible .tire-selection-ring {
-      stroke: #2563EB !important;
-      stroke-width: 3px !important;
-    }
-
-    /* Placeholders con alto contraste (mínimo 4.5:1 contra fondo blanco) */
-    input::placeholder, textarea::placeholder {
-      color: #475569 !important;
-      opacity: 1 !important;
-    }
-
-    /* Scrollbars suaves */
-    .custom-scroll::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scroll::-webkit-scrollbar-track {
-      background: #F1F5F9;
-      border-radius: 3px;
-    }
-    .custom-scroll::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
-      border-radius: 3px;
-    }
-
-    /* Selector de posición activo en chips */
-    .pos-btn.active {
-      background-color: #2563EB !important;
-      color: #FFFFFF !important;
-      border-color: #1D4ED8 !important;
-      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.35);
-    }
-  </style>
-</head>
-<body class="min-h-screen text-slate-800 pb-16">
-
-  <!-- ============================================================== -->
-  <!-- BARRA DE HERRAMIENTAS DE PRUEBA Y AUDITORÍA DE LA VISTA PREVIA -->
-  <!-- ============================================================== -->
-  <header class="sticky top-0 z-50 bg-slate-900 text-white shadow-md border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center space-x-3">
-        <span class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm">
-          <i class="fa-solid fa-eye"></i>
-        </span>
-        <div>
-          <h1 class="text-sm font-black tracking-tight flex items-center space-x-2">
-            <span>VISTA PREVIA: INSPECCIÓN DE PATIO</span>
-            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950 uppercase">Pre-Integración</span>
-          </h1>
-          <p class="text-xs text-slate-400">Verificación de Chasis, Mediciones y Columna Derecha Sticky</p>
-        </div>
-      </div>
-
-      <!-- Controles de Simulación de Escenarios -->
-      <div class="flex items-center flex-wrap gap-2 text-xs">
-        <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
-          <label for="selTipologiaPrueba" class="font-bold text-slate-300">Tipología:</label>
-          <select id="selTipologiaPrueba" onchange="cambiarTipologiaPrueba(this.value)" class="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-            <option value="Cabezote (6x4)" selected>Cabezote (6x4) - 10 llantas</option>
-            <option value="Camión Sencillo (4x2)">Camión Sencillo (4x2) - 6 llantas</option>
-            <option value="Volqueta Dobletroque (6x4)">Volqueta Dobletroque (6x4)</option>
-            <option value="Trailer (2 Ejes - 8 Llantas + Repuesto)">Trailer (2 Ejes + Repuesto)</option>
-            <option value="Cabezote (Cuatro Manos / 8x4)">Cuatro Manos (8x4)</option>
-            <option value="Liviano / Camioneta (4x2)">Liviano (4x2) - 4 llantas</option>
-          </select>
-        </div>
-
-        <div class="flex items-center space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
-          <button type="button" onclick="aplicarEscenario(0)" id="btnEsc0" class="px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white hover:bg-slate-600" title="0 llantas registradas">0 Registradas</button>
-          <button type="button" onclick="aplicarEscenario(1)" id="btnEsc1" class="px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700" title="Algunas llantas registradas y 1 con novedad">Algunas (con novedad)</button>
-          <button type="button" onclick="aplicarEscenario(2)" id="btnEsc2" class="px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700" title="Todas las llantas registradas">Todas Registradas</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- ============================================================== -->
-  <!-- CONTENEDOR PRINCIPAL DE INSPECCIÓN DE PATIO                     -->
-  <!-- ============================================================== -->
-  <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
-
-    <!-- MODULO CLIENTE, OPERACIÓN & VEHÍCULO (Encabezado General) -->
-    <div id="moduloCliente" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
-          <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-            <i class="fa-solid fa-building"></i>
-          </div>
-          <span class="text-xs sm:text-sm">Datos del Cliente, Operación & Vehículo</span>
-        </div>
-      </div>
-
-      <!-- Contenedor a 2 Columnas en Web (md:grid-cols-2) y 2 Columnas Compacto en Móvil -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
-        
-        <!-- COLUMNA 1: CLIENTE & INSPECCIÓN -->
-        <div class="space-y-2.5">
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Cliente / Empresa</label>
-              <input type="text" id="cliente" value="Transportes Andes S.A.S" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Sede / Subcliente</label>
-              <input type="text" id="subcliente" value="Patio Principal - Bogotá" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Inspección</label>
-            <input type="text" id="fecha" value="2026-10-12" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-          </div>
-        </div>
-
-        <!-- COLUMNA 2: VEHÍCULO & OPERACIÓN -->
-        <div class="space-y-2.5 pt-2 md:pt-0 border-t md:border-t-0 md:border-l md:pl-5 border-slate-100">
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo *</label>
-              <input type="text" id="placa" value="XYZ789" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Tipología</label>
-              <input type="text" id="lblTipologiaNombre" value="Cabezote (6x4)" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
-              <input type="number" id="kilometraje" value="128500" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Tipo de Operación</label>
-              <input type="text" id="tipo_operacion" value="Carga Seca" readonly class="w-full touch-target px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ============================================================ -->
-    <!-- CUADRÍCULA PRINCIPAL: CHASIS (IZQ) & COLUMNA DERECHA STICKY  -->
-    <!-- ============================================================ -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-
-      <!-- ========================================================== -->
-      <!-- COLUMNA IZQUIERDA: DIAGRAMA DE CHASIS INTERACTIVO (lg: 7 cols) -->
-      <!-- ========================================================== -->
-      <div id="moduloChasis" class="lg:col-span-7 bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/90 space-y-4">
-
-        <!-- CABECERA DEL CHASIS -->
-        <div class="space-y-1.5 pb-2 border-b border-slate-100">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
-              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fa-solid fa-truck"></i>
-              </div>
-              <!-- Sin numeración '3.' -->
-              <span class="text-sm font-extrabold text-slate-900">Diagrama de Chasis Interactivo</span>
-            </div>
-            <span id="badgeContadorProgreso" class="px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200/60 font-mono">
-              0 de 10
-            </span>
-          </div>
-
-          <div class="flex items-baseline justify-between pt-1">
-            <h3 id="lblTituloConfiguracion" class="text-base font-black text-slate-900 tracking-tight">
-              Cabezote (6x4)
-            </h3>
-            <div class="flex items-center space-x-1.5">
-              <button type="button" onclick="irPosicionAnterior()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center text-xs border border-slate-200 transition-all" title="Llanta Anterior">
-                <i class="fa-solid fa-chevron-left"></i>
-              </button>
-              <span class="text-xs font-bold text-slate-600 font-mono px-1">Pos: <b id="lblPosPill" class="text-blue-600 font-black text-sm">1</b></span>
-              <button type="button" onclick="irPosicionSiguiente()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold flex items-center justify-center text-xs border border-slate-200 transition-all" title="Siguiente Llanta">
-                <i class="fa-solid fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Barra de Progreso Fina -->
-          <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-            <div id="barraProgresoChasis" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%;"></div>
-          </div>
-        </div>
-
-        <!-- FILA DE ORIENTACIÓN ESPACIAL: JUSTO SOBRE EL PRIMER EJE -->
-        <div class="flex items-center justify-between px-4 py-2 bg-slate-100/70 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 border border-slate-200/80">
-          <span class="flex items-center space-x-1">
-            <i class="fa-solid fa-arrow-left text-[11px] text-slate-400"></i>
-            <span>IZQUIERDA</span>
-          </span>
-          <span class="flex items-center space-x-1.5 text-slate-700 font-black">
-            <i class="fa-solid fa-arrow-up text-blue-600"></i>
-            <span>FRENTE</span>
-          </span>
-          <span class="flex items-center space-x-1">
-            <span>DERECHA</span>
-            <i class="fa-solid fa-arrow-right text-[11px] text-slate-400"></i>
-          </span>
-        </div>
-
-        <!-- CONTENEDOR DINÁMICO DE FILAS DE EJES -->
-        <div id="contenedorChasisEjes" class="space-y-4 pt-1"></div>
-
-        <!-- SECCIÓN DE REPUESTO INDEPENDIENTE (Si aplica) -->
-        <div id="seccionRepuestoChasis" class="pt-3 border-t border-slate-100 flex items-center justify-between">
-          <div class="space-y-0.5">
-            <h4 class="text-xs font-black text-slate-800">Repuesto</h4>
-            <p class="text-xs text-slate-400 font-medium">Posición independiente</p>
-          </div>
-          <div id="contenedorCajaRepuestoChasis" class="flex items-center space-x-3"></div>
-        </div>
-
-        <!-- LEYENDA TÉCNICA CLARA Y ACCESIBLE (Mínimo 12px) -->
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-center flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-slate-600">
-          <!-- Pendiente -->
-          <span class="flex items-center space-x-2">
-            <span class="w-3.5 h-3.5 rounded-full border border-slate-400 bg-white"></span>
-            <span>Pendiente</span>
-          </span>
-
-          <!-- Registrada (Insignia check verde y texto 'Registrada') -->
-          <span class="flex items-center space-x-2">
-            <span class="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-black">
-              <i class="fa-solid fa-check"></i>
-            </span>
-            <span class="text-emerald-800">Registrada</span>
-          </span>
-
-          <!-- Con Novedad (Insignia ! ámbar y texto 'Con Novedad') -->
-          <span class="flex items-center space-x-2">
-            <span class="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black">
-              !
-            </span>
-            <span class="text-amber-800">Con Novedad</span>
-          </span>
-
-          <!-- Seleccionada (Contorno azul de 2.5px y fondo tenue) -->
-          <span class="flex items-center space-x-2">
-            <span class="w-3.5 h-5 rounded-md border-[2.5px] border-blue-600 bg-blue-50"></span>
-            <span class="text-blue-700">Seleccionada</span>
-          </span>
-        </div>
-
-        <!-- SELECTOR ALTERNATIVO PLEGABLE EN ESCRITORIO -->
-        <div class="hidden lg:block pt-2 border-t border-slate-100">
-          <details class="group bg-slate-50/70 border border-slate-200 rounded-xl overflow-hidden text-xs">
-            <summary class="px-3 py-2 cursor-pointer font-bold text-slate-600 hover:text-slate-900 flex items-center justify-between select-none">
-              <span class="flex items-center space-x-2">
-                <i class="fa-solid fa-layer-group text-slate-400"></i>
-                <span>Selector alternativo</span>
-              </span>
-              <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
-            </summary>
-            <div id="gridBotonesEscritorioPlegable" class="p-3 pt-1 border-t border-slate-200/70 space-y-2"></div>
-          </details>
-        </div>
-
-        <!-- BOTÓN DE AUSENCIA DE REPUESTO -->
-        <div id="boxBtnSinRepuesto" class="pt-1 border-t border-slate-100 flex items-center justify-center">
-          <button type="button" id="btnSinRepuesto" onclick="toggleSinRepuesto()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl border border-slate-200 transition-all flex items-center space-x-1.5">
-            <i class="fa-solid fa-ban text-slate-400"></i>
-            <span id="txtBtnSinRepuesto">Marcar: Vehículo sin llanta de repuesto</span>
-          </button>
-        </div>
-
-      </div>
-
-      <!-- ========================================================== -->
-      <!-- COLUMNA DERECHA: RESUMEN + ESPECIFICACIONES + MEDICIONES    -->
-      <!-- Comportamiento: STICKY EN PANTALLAS GRANDES (lg:sticky lg:top-16) -->
-      <!-- ========================================================== -->
-      <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-16 lg:self-start">
-
-        <!-- 1. RESUMEN DE LA POSICIÓN SELECCIONADA (Subido a Columna Derecha) -->
-        <div id="panelResumenPosicion" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 transition-all">
-          <!-- Renderizado dinámicamente -->
-        </div>
-
-        <!-- 2. ESPECIFICACIONES DE LA LLANTA (Subido a Columna Derecha) -->
-        <!-- Sin numeración '2.' -->
-        <div id="moduloEspecificaciones" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
-              <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fa-solid fa-ring"></i>
-              </div>
-              <span class="text-xs sm:text-sm font-extrabold">Especificaciones de la Llanta</span>
-            </div>
-            <span id="badgeHistorialPrevia" class="text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
-              <i class="fa-solid fa-clock-rotate-left mr-1"></i>Catálogo Activo
-            </span>
-          </div>
-
-          <!-- Campos de Especificaciones Compactos y Prácticos -->
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Marca</label>
-              <input type="text" id="marca" value="MICHELIN" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Diseño</label>
-              <input type="text" id="diseno" value="X MULTI D" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
-              <select id="dimension" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="295/80R22.5" selected>295/80R22.5</option>
-                <option value="11R22.5">11R22.5</option>
-                <option value="12R22.5">12R22.5</option>
-                <option value="315/80R22.5">315/80R22.5</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Vida / Condición</label>
-              <select id="vida" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
-                <option value="Original" selected>Original</option>
-                <option value="Reencauche 1">Reencauche 1</option>
-                <option value="Reencauche 2">Reencauche 2</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. MEDICIONES DE LA LLANTA -->
-        <!-- Sin numeración '4.' -->
-        <div id="moduloMediciones" class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
-
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-            <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
-              <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-                <i class="fa-solid fa-gauge-high"></i>
-              </div>
-              <span class="text-xs sm:text-sm font-extrabold">Mediciones de la Llanta</span>
-            </div>
-            <input type="hidden" id="posicion" value="1">
-            <span id="badgeLimiteRetiro" class="text-xs bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full border border-slate-200">
-              Límite Retiro: <b id="lblMmRetiroCliente">3.0</b> mm
-            </span>
-          </div>
-
-          <!-- FILA 1 DE MEDICIONES: EXT, CENT, INT EN UNA FILA DE TRES CON SUFIJO 'mm' INTERNO -->
-          <div class="space-y-1.5">
-            <span class="block text-xs font-bold text-slate-600">Profundidades de Labrado (mm):</span>
-            
-            <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
-              <!-- Prof. Ext -->
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Ext *</label>
-                <div class="relative flex items-center">
-                  <input type="number" id="prof_ext" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
-                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
-                    oninput="evaluarSugerenciaCambio();">
-                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
-                </div>
-              </div>
-
-              <!-- Prof. Cent -->
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Cent *</label>
-                <div class="relative flex items-center">
-                  <input type="number" id="prof_cent" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
-                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
-                    oninput="evaluarSugerenciaCambio();">
-                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
-                </div>
-              </div>
-
-              <!-- Prof. Int -->
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Int *</label>
-                <div class="relative flex items-center">
-                  <input type="number" id="prof_int" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal"
-                    class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
-                    oninput="evaluarSugerenciaCambio();">
-                  <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- FILA 2 DE MEDICIONES: PRESIÓN (PSI) EN FILA APARTE CON SUFIJO 'PSI' INTERNO -->
-          <div class="space-y-1.5 pt-1 border-t border-slate-100">
-            <label class="block text-xs font-bold text-slate-700">Presión Calibrada (PSI) *</label>
-            <div class="flex items-center space-x-3">
-              <div class="relative flex-1 sm:max-w-xs flex items-center">
-                <input type="number" id="psi" step="1" min="0" max="160" value="100" placeholder="100" inputmode="numeric"
-                  class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-600 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
-                <span class="absolute right-3 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">PSI</span>
-              </div>
-
-              <div class="text-xs text-slate-500 font-medium hidden sm:block">
-                Presión estándar recomendada
-              </div>
-            </div>
-
-            <!-- CHIPS DE PSI EN ESTILO NEUTRO (Mínimo 12px) -->
-            <div class="pt-2 flex items-center flex-wrap gap-1.5">
-              <span class="text-xs font-bold text-slate-500 mr-1 flex items-center space-x-1">
-                <i class="fa-solid fa-gauge text-slate-400 text-xs"></i>
-                <span>Presets PSI:</span>
-              </span>
-              <button type="button" onclick="setPsiRapido(90)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">90</button>
-              <button type="button" onclick="setPsiRapido(100)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">100</button>
-              <button type="button" onclick="setPsiRapido(105)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">105</button>
-              <button type="button" onclick="setPsiRapido(110)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">110</button>
-              <button type="button" onclick="setPsiRapido(115)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">115</button>
-              <button type="button" onclick="setPsiRapido(120)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all active:scale-95">120</button>
-            </div>
-          </div>
-
-          <!-- Alerta Reactiva de Sugerencia de Retiro -->
-          <div id="alertaRetiroInmediato" class="hidden p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs font-bold flex items-center space-x-2">
-            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
-            <span>¡ALERTA TÉCNICA: Esta llanta alcanzó el límite de retiro (<span id="lblMmAlerta">3.0</span> mm). Requiere cambio programado.</span>
-          </div>
-
-          <!-- NOVEDADES / OBSERVACIÓN CON CHIPS RÁPIDOS NEUTROS & LIMPIAR SIN ROJO INTENSO -->
-          <div class="space-y-2 pt-2 border-t border-slate-100">
-            <label class="block text-xs font-semibold text-slate-700">Novedades / Daños / Observaciones</label>
-            <input type="text" id="novedades" placeholder="ej. Desgaste irregular, corte en banda, baja presión, filtración..."
-              class="w-full touch-target px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-600 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
-              oninput="evaluarHabilitarFotoNovedad()">
-
-            <!-- CHIPS RÁPIDOS EN ESTILO NEUTRO SUAVE (Mínimo 12px) -->
-            <div class="flex items-center flex-wrap gap-1.5 pt-0.5">
-              <span class="text-xs text-slate-500 font-bold mr-1">Rápidos:</span>
-              <button type="button" onclick="agregarNovedadRapida('Desgaste irregular')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Desgaste irregular</button>
-              <button type="button" onclick="agregarNovedadRapida('Desgaste escalonado')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Desgaste escalonado</button>
-              <button type="button" onclick="agregarNovedadRapida('Corte en costado')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Corte en costado</button>
-              <button type="button" onclick="agregarNovedadRapida('Corte en banda')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Corte en banda</button>
-              <button type="button" onclick="agregarNovedadRapida('Baja presión')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Baja presión</button>
-              <button type="button" onclick="agregarNovedadRapida('Filtración')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Filtración</button>
-              <button type="button" onclick="agregarNovedadRapida('Daño en pestaña')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all">Daño en pestaña</button>
-              <!-- Botón Limpiar: Neutro suave sin rojo intenso -->
-              <button type="button" onclick="limpiarNovedades()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 transition-all" title="Borrar observación">
-                <i class="fa-solid fa-eraser mr-1"></i>Limpiar
-              </button>
-            </div>
-
-            <!-- MÓDULO REACTIVO DE EVIDENCIAS FOTOGRÁFICAS -->
-            <div id="boxAdjuntarFotoNovedad" class="hidden pt-2 border-t border-slate-100 space-y-2">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-600">
-                <span class="flex items-center space-x-1.5 text-blue-700">
-                  <i class="fa-solid fa-camera"></i>
-                  <span>Evidencias Fotográficas:</span>
-                </span>
-                <span class="text-xs text-slate-400 font-normal">1 o varias fotos</span>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="simularAdjuntarFoto()" class="flex-1 py-2.5 px-3 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs rounded-xl border border-blue-200/90 flex items-center justify-center space-x-2 transition-all">
-                  <i class="fa-solid fa-camera-retro text-sm"></i>
-                  <span id="txtBtnCamaraNovedad">Tomar Foto o Subir Evidencia</span>
-                </button>
-              </div>
-
-              <!-- Miniaturas de Fotos -->
-              <div id="previewFotoNovedadBox" class="hidden rounded-xl border border-blue-200 bg-blue-50/40 p-2.5 space-y-2">
-                <div class="flex items-center justify-between text-xs">
-                  <span id="lblConteoFotosAdjuntas" class="font-bold text-slate-800">1 imagen adjunta</span>
-                  <span class="text-xs text-emerald-700 font-bold flex items-center space-x-1">
-                    <i class="fa-solid fa-circle-check text-xs"></i>
-                    <span>Lista para guardar</span>
-                  </span>
-                </div>
-                <div id="gridPreviewFotosNovedad" class="flex flex-wrap gap-2 pt-1"></div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- BOTONES DE ACCIÓN (Guardar & Siguiente Llanta) -->
-          <div class="flex items-center space-x-3 pt-2">
-            <button type="button" onclick="guardarPosicionSimulada()" class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
-              <i class="fa-solid fa-circle-check text-base"></i>
-              <span>Guardar & Siguiente Llanta</span>
-            </button>
-            <button type="button" onclick="limpiarCamposMediciones()" class="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-200 transition-all" title="Limpiar mediciones">
-              <i class="fa-solid fa-eraser"></i>
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </main>
-
-  <!-- ============================================================== -->
-  <!-- LÓGICA JAVASCRIPT DE VISTA PREVIA Y SIMULACIÓN                 -->
-  <!-- ============================================================== -->
-  <script>
-    // Estado en memoria de la simulación
-    let posicionActiva = 1;
-    let tipologiaActual = 'Cabezote (6x4)';
-    let posicionesInspeccionadas = new Set();
-    let posicionesConNovedad = new Map(); // pos -> textoNovedad
-    let fotosNovedad = new Map(); // pos -> array de fotos
-    let sinRepuesto = false;
-
-    // Diccionario de normalización de roles (EXT, INT, DIR, REP, SEN)
-    function normalizarRolRueda(rol) {
-      if (!rol) return '';
-      const r = String(rol).trim().toUpperCase();
-      if (r.includes('DIR')) return 'DIR';
-      if (r.includes('EXT')) return 'EXT';
-      if (r.includes('INT')) return 'INT';
-      if (r.includes('REP')) return 'REP';
-      if (r.includes('SEN') || r.includes('LIB')) return 'SEN';
-      return r;
-    }
-
-    // Diccionario de etiquetas visibles normalizado con tildes
-    function normalizarEtiquetaTipo(tipo) {
-      if (!tipo) return 'Rodante';
-      const t = String(tipo).trim().toLowerCase();
-      if (t === 'traccion' || t === 'tracción') return 'Tracción';
-      if (t === 'direccional') return 'Direccional';
-      if (t === 'libre') return 'Libre';
-      if (t === 'repuesto') return 'Repuesto';
-      if (t === 'sencilla') return 'Sencilla';
-      return tipo.charAt(0).toUpperCase() + tipo.slice(1);
-    }
-
-    function obtenerTextoRolLargo(rol) {
-      const r = normalizarRolRueda(rol);
-      if (r === 'EXT') return 'Exterior (EXT)';
-      if (r === 'INT') return 'Interior (INT)';
-      if (r === 'DIR') return 'Direccional (DIR)';
-      if (r === 'REP') return 'Repuesto (REP)';
-      if (r === 'SEN') return 'Sencilla (SEN)';
-      return rol || 'Estándar';
-    }
-
-    // Catálogo base de esquemas para simulación independiente
-    const esquemasPorTipologia = {
-      'Cabezote (6x4)': {
-        total: 10,
-        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        esquema: [
-          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
-          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] },
-          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 7, lado: 'izq', rol: 'ext' }, { pos: 8, lado: 'izq', rol: 'int' }, { pos: 9, lado: 'der', rol: 'int' }, { pos: 10, lado: 'der', rol: 'ext' }] }
-        ]
-      },
-      'Camión Sencillo (4x2)': {
-        total: 6,
-        posiciones: [1, 2, 3, 4, 5, 6],
-        esquema: [
-          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
-          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] }
-        ]
-      },
-      'Volqueta Dobletroque (6x4)': {
-        total: 10,
-        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        esquema: [
-          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
-          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'ext' }, { pos: 4, lado: 'izq', rol: 'int' }, { pos: 5, lado: 'der', rol: 'int' }, { pos: 6, lado: 'der', rol: 'ext' }] },
-          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 7, lado: 'izq', rol: 'ext' }, { pos: 8, lado: 'izq', rol: 'int' }, { pos: 9, lado: 'der', rol: 'int' }, { pos: 10, lado: 'der', rol: 'ext' }] }
-        ]
-      },
-      'Trailer (2 Ejes - 8 Llantas + Repuesto)': {
-        total: 9,
-        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 99],
-        esquema: [
-          { eje: 1, tipo: 'libre', posiciones: [{ pos: 1, lado: 'izq', rol: 'ext' }, { pos: 2, lado: 'izq', rol: 'int' }, { pos: 3, lado: 'der', rol: 'int' }, { pos: 4, lado: 'der', rol: 'ext' }] },
-          { eje: 2, tipo: 'libre', posiciones: [{ pos: 5, lado: 'izq', rol: 'ext' }, { pos: 6, lado: 'izq', rol: 'int' }, { pos: 7, lado: 'der', rol: 'int' }, { pos: 8, lado: 'der', rol: 'ext' }] },
-          { eje: 99, tipo: 'repuesto', posiciones: [{ pos: 99, lado: 'centro', rol: 'rep' }] }
-        ]
-      },
-      'Cabezote (Cuatro Manos / 8x4)': {
-        total: 12,
-        posiciones: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        esquema: [
-          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
-          { eje: 2, tipo: 'direccional', posiciones: [{ pos: 3, lado: 'izq', rol: 'direccional' }, { pos: 4, lado: 'der', rol: 'direccional' }] },
-          { eje: 3, tipo: 'traccion', posiciones: [{ pos: 5, lado: 'izq', rol: 'ext' }, { pos: 6, lado: 'izq', rol: 'int' }, { pos: 7, lado: 'der', rol: 'int' }, { pos: 8, lado: 'der', rol: 'ext' }] },
-          { eje: 4, tipo: 'traccion', posiciones: [{ pos: 9, lado: 'izq', rol: 'ext' }, { pos: 10, lado: 'izq', rol: 'int' }, { pos: 11, lado: 'der', rol: 'int' }, { pos: 12, lado: 'der', rol: 'ext' }] }
-        ]
-      },
-      'Liviano / Camioneta (4x2)': {
-        total: 4,
-        posiciones: [1, 2, 3, 4],
-        esquema: [
-          { eje: 1, tipo: 'direccional', posiciones: [{ pos: 1, lado: 'izq', rol: 'direccional' }, { pos: 2, lado: 'der', rol: 'direccional' }] },
-          { eje: 2, tipo: 'traccion', posiciones: [{ pos: 3, lado: 'izq', rol: 'sencilla' }, { pos: 4, lado: 'der', rol: 'sencilla' }] }
-        ]
-      }
-    };
-
-    function obtenerConfigActual() {
-      return esquemasPorTipologia[tipologiaActual] || esquemasPorTipologia['Cabezote (6x4)'];
-    }
-
-    // Coordenadas SVG
-    function distribuirEjeReferencia(eje) {
-      const posiciones = eje.posiciones || [];
-      const izquierda = posiciones.filter(p => p.lado === 'izq');
-      const derecha = posiciones.filter(p => p.lado === 'der');
-
-      if (izquierda.length === 1 && derecha.length === 1) {
-        return [
-          { posicion: izquierda[0], x: 112, y: 12 },
-          { posicion: derecha[0], x: 408, y: 12 }
-        ];
-      }
-
-      if (izquierda.length === 2 && derecha.length === 2) {
-        function obtenerUnica(lado, rol) {
-          const match = lado.filter(p => String(p.rol).toUpperCase().includes(rol));
-          if (match.length === 1) return match[0];
-          return (rol === 'EXT') ? lado[0] : lado[1];
-        }
-        return [
-          { posicion: obtenerUnica(izquierda, 'EXT'), x: 96, y: 12 },
-          { posicion: obtenerUnica(izquierda, 'INT'), x: 150, y: 12 },
-          { posicion: obtenerUnica(derecha, 'INT'), x: 370, y: 12 },
-          { posicion: obtenerUnica(derecha, 'EXT'), x: 424, y: 12 }
-        ];
-      }
-
-      const res = [];
-      izquierda.forEach((p, idx) => {
-        const x = (izquierda.length === 1) ? 112 : (96 + idx * 54);
-        res.push({ posicion: p, x, y: 12 });
-      });
-      derecha.forEach((p, idx) => {
-        const x = (derecha.length === 1) ? 408 : (370 + idx * 54);
-        res.push({ posicion: p, x, y: 12 });
-      });
-      return res;
-    }
-
-    // ==============================================================
-    // GENERACIÓN DE SVG DE EJES (Fiel a los nuevos requerimientos)
-    // 1. Neumáticos SIEMPRE en grafito (sin relleno verde/naranja y sin halo)
-    // 2. Insignia check verde para registrada, '!' ámbar para novedad
-    // 3. Medallón numérico exterior con el color del estado
-    // 4. Selección: contorno azul 2.5px más fondo azul muy tenue #EFF6FF
-    // 5. Roles en mayúsculas (EXT, INT, DIR), 10.5px, sans-serif
-    // ==============================================================
-    function generarSvgFilaEje(eje, posActual) {
-      const items = distribuirEjeReferencia(eje);
-      const ejeId = eje.eje;
-
-      let svg = `
-        <svg viewBox="0 0 560 158" width="100%" height="auto" class="max-w-[560px] overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <!-- Gradiente de Caucho Grafito Neutro Fijo (Siempre usado para todas las llantas) -->
-            <linearGradient id="gradRubber_eje_${ejeId}" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#1E293B"/>
-              <stop offset="15%" stop-color="#334155"/>
-              <stop offset="50%" stop-color="#1E293B"/>
-              <stop offset="85%" stop-color="#334155"/>
-              <stop offset="100%" stop-color="#0F172A"/>
-            </linearGradient>
-
-            <!-- Gradiente Cilíndrico Metálico del Eje Central -->
-            <linearGradient id="gradAxleTube_eje_${ejeId}" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#94A3B8"/>
-              <stop offset="25%" stop-color="#E2E8F0"/>
-              <stop offset="55%" stop-color="#CBD5E1"/>
-              <stop offset="85%" stop-color="#94A3B8"/>
-              <stop offset="100%" stop-color="#64748B"/>
-            </linearGradient>
-
-            <linearGradient id="gradAcopleCenter_eje_${ejeId}" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#F1F5F9"/>
-              <stop offset="50%" stop-color="#CBD5E1"/>
-              <stop offset="100%" stop-color="#94A3B8"/>
-            </linearGradient>
-          </defs>
-
-          <!-- Tubo Metálico Horizontal de Chasis -->
-          <g id="eje_metalico_${ejeId}">
-            <line x1="120" y1="58.5" x2="440" y2="58.5" stroke="#CBD5E1" stroke-width="2" opacity="0.6"/>
-            <rect x="120" y="52.5" width="320" height="6.5" rx="1.5" fill="url(#gradAxleTube_eje_${ejeId})" stroke="#94A3B8" stroke-width="0.75"/>
-            <rect x="162" y="50" width="3.5" height="11.5" rx="1" fill="#E2E8F0" stroke="#64748B" stroke-width="0.75"/>
-            <rect x="394" y="50" width="3.5" height="11.5" rx="1" fill="#E2E8F0" stroke="#64748B" stroke-width="0.75"/>
-            <rect x="267" y="47.5" width="26" height="16.5" rx="3.5" fill="url(#gradAcopleCenter_eje_${ejeId})" stroke="#64748B" stroke-width="1.2"/>
-            <circle cx="280" cy="55.75" r="7.5" fill="#E2E8F0" stroke="#475569" stroke-width="1.2"/>
-            <circle cx="280" cy="55.75" r="2.5" fill="#334155"/>
-            <circle cx="270" cy="50.5" r="1.2" fill="#475569"/>
-            <circle cx="290" cy="50.5" r="1.2" fill="#475569"/>
-            <circle cx="270" cy="61" r="1.2" fill="#475569"/>
-            <circle cx="290" cy="61" r="1.2" fill="#475569"/>
-          </g>
-      `;
-
-      items.forEach(item => {
-        const p = item.posicion;
-        const x = item.x;
-        const y = item.y; // 12
-        const esSeleccionada = (p.pos === posActual);
-        const tieneNovedad = posicionesConNovedad.has(p.pos);
-        const esRegistrada = posicionesInspeccionadas.has(p.pos);
-        const textoNovedad = tieneNovedad ? posicionesConNovedad.get(p.pos) : '';
-
-        // Caucho SIEMPRE en grafito, sin halos ni tintes de color
-        const fillCaucho = `url(#gradRubber_eje_${ejeId})`;
-        const strokeCaucho = '#0F172A';
-        const strokeWidthCaucho = '1.25';
-        const colorSurcos = '#0F172A';
-
-        let ariaTitle = `Llanta posición ${p.pos}, rol ${normalizarRolRueda(p.rol)}`;
-        if (tieneNovedad) ariaTitle += ` - Con Novedad: ${textoNovedad}`;
-        else if (esRegistrada) ariaTitle += ` - Registrada`;
-
-        svg += `
-          <g id="neumatico_node_${p.pos}" class="tire-interactive-node" onclick="seleccionarPosicion(${p.pos})" role="button" tabindex="0" aria-label="${ariaTitle}">
-            <title>${ariaTitle}</title>
-
-            <!-- A. Anillo y Fondo de Selección Activa: Contorno azul 2.5px más fondo azul muy tenue (#EFF6FF) -->
-            ${esSeleccionada ? `
-              <rect x="${x - 5}" y="${y - 5}" width="50" height="102" rx="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="2.5" class="tire-selection-ring"/>
-            ` : ''}
-
-            <!-- B. Sombra suave bajo el neumático -->
-            <ellipse cx="${x + 20}" cy="${y + 93}" rx="17" ry="3.5" fill="#000000" opacity="0.18"/>
-
-            <!-- C. Silueta Principal del Neumático (SIEMPRE GRAFITO) -->
-            <rect x="${x}" y="${y}" width="40" height="92" rx="8" fill="${fillCaucho}" stroke="${strokeCaucho}" stroke-width="${strokeWidthCaucho}" class="tire-rubber-body"/>
-
-            <!-- D. Surcos Longitudinales -->
-            <line x1="${x + 13}" y1="${y + 5}" x2="${x + 13}" y2="${y + 87}" stroke="${colorSurcos}" stroke-width="2" stroke-linecap="round"/>
-            <line x1="${x + 27}" y1="${y + 5}" x2="${x + 27}" y2="${y + 87}" stroke="${colorSurcos}" stroke-width="2" stroke-linecap="round"/>
-        `;
-
-        // Ranuras en hombros
-        for (let cutY = y + 10; cutY <= y + 82; cutY += 9) {
-          svg += `
-            <line x1="${x + 2}" y1="${cutY}" x2="${x + 10}" y2="${cutY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.85"/>
-            <line x1="${x + 30}" y1="${cutY}" x2="${x + 38}" y2="${cutY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.85"/>
-          `;
-        }
-
-        // Tacos centrales
-        for (let tY = y + 14; tY <= y + 78; tY += 14) {
-          svg += `
-            <line x1="${x + 16}" y1="${tY}" x2="${x + 24}" y2="${tY}" stroke="${colorSurcos}" stroke-width="1.2" opacity="0.6"/>
-          `;
-        }
-
-        // ============================================================
-        // INSIGNIAS SUPERIORES DE ESTADO (Check verde o '!' ámbar)
-        // ============================================================
-        if (tieneNovedad) {
-          svg += `
-            <!-- Insignia: '!' Ámbar para Con Novedad -->
-            <g id="badge_warn_${p.pos}">
-              <circle cx="${x + 32}" cy="${y + 8.5}" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.6"/>
-              <line x1="${x + 32}" y1="${y + 4.8}" x2="${x + 32}" y2="${y + 9}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="${x + 32}" cy="${y + 11.8}" r="1" fill="#FFFFFF"/>
-            </g>
-          `;
-        } else if (esRegistrada) {
-          svg += `
-            <!-- Insignia: Check Verde para Registrada -->
-            <g id="badge_ok_${p.pos}">
-              <circle cx="${x + 32}" cy="${y + 8.5}" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.6"/>
-              <path d="M ${x + 29.5} ${y + 8.5} L ${x + 31.5} ${y + 10.5} L ${x + 34.5} ${y + 6.8}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-          `;
-        }
-
-        // ============================================================
-        // MEDALLÓN NUMÉRICO EXTERIOR CON EL COLOR DEL ESTADO
-        // Registrada: #ECFDF5 / #10B981
-        // Con Novedad: #FFFBEB / #F59E0B
-        // Pendiente: #F8FAFC / #E2E8F0
-        // Selección: Anillo exterior azul de 2.5px si está seleccionada
-        // ============================================================
-        const cxNum = x + 20;
-        const cyNum = 125;
-        let fillCirculo = '#F8FAFC';
-        let strokeCirculo = '#CBD5E1';
-        let strokeWidthNum = '1.2';
-        let fillTexto = '#1E293B';
-
-        if (tieneNovedad) {
-          fillCirculo = '#FFFBEB';
-          strokeCirculo = '#F59E0B';
-          strokeWidthNum = '2';
-          fillTexto = '#B45309';
-        } else if (esRegistrada) {
-          fillCirculo = '#ECFDF5';
-          strokeCirculo = '#10B981';
-          strokeWidthNum = '2';
-          fillTexto = '#047857';
-        }
-
-        // Selección resalta con anillo azul prominente de 2.5px visible en cualquier estado
-        let ringSeleccionNum = '';
-        if (esSeleccionada) {
-          ringSeleccionNum = `
-            <circle cx="${cxNum}" cy="${cyNum}" r="15" fill="none" stroke="#2563EB" stroke-width="2.5" opacity="0.95"/>
-          `;
-        }
-
-        svg += `
-          <!-- Medallón Numérico Exterior -->
-          ${ringSeleccionNum}
-          <circle cx="${cxNum}" cy="${cyNum}" r="12" fill="${fillCirculo}" stroke="${strokeCirculo}" stroke-width="${strokeWidthNum}"/>
-          <text x="${cxNum}" y="${cyNum + 0.5}" font-size="11.5" font-weight="800" fill="${fillTexto}" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="central">
-            ${p.pos}
-          </text>
-
-          <!-- ROLES BAJO LA RUEDA: EXT, INT, DIR en mayúsculas, 10.5px, sans-serif -->
-          <text x="${cxNum}" y="148" font-size="10.5" font-weight="700" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" text-anchor="middle" letter-spacing="0.5">
-            ${normalizarRolRueda(p.rol)}
-          </text>
-
-        </g>
-        `;
-      });
-
-      svg += `</svg>`;
-      return svg;
-    }
-
-    // SVG Repuesto Fiel
-    function generarCajaRepuestoHtml(pos, rol, posActual) {
-      const esSeleccionada = (pos === posActual);
-      const tieneNovedad = posicionesConNovedad.has(pos);
-      const esRegistrada = posicionesInspeccionadas.has(pos);
-
-      const div = document.createElement('div');
-      div.className = `tire-repuesto-card p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center ${
-        esSeleccionada ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-500 shadow-sm' : 'bg-[#F8FAFC] border-slate-200 hover:bg-slate-100'
-      } ${sinRepuesto ? 'opacity-30 line-through' : ''}`;
-      div.onclick = () => seleccionarPosicion(pos);
-
-      div.innerHTML = `
-        <svg viewBox="0 0 40 92" width="28" height="64" class="overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="gradRubberRep_${pos}" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#1E293B"/>
-              <stop offset="20%" stop-color="#334155"/>
-              <stop offset="50%" stop-color="#1E293B"/>
-              <stop offset="80%" stop-color="#334155"/>
-              <stop offset="100%" stop-color="#0F172A"/>
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="40" height="92" rx="8" fill="url(#gradRubberRep_${pos})" stroke="#0F172A" stroke-width="1.25"/>
-          <line x1="13" y1="5" x2="13" y2="87" stroke="#0F172A" stroke-width="2"/>
-          <line x1="27" y1="5" x2="27" y2="87" stroke="#0F172A" stroke-width="2"/>
-          ${tieneNovedad ? `
-            <circle cx="32" cy="8.5" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.5"/>
-            <line x1="32" y1="5" x2="32" y2="9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="32" cy="11.5" r="0.9" fill="#FFFFFF"/>
-          ` : esRegistrada ? `
-            <circle cx="32" cy="8.5" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.5"/>
-            <path d="M 29.5 8.5 L 31.5 10.5 L 34.5 6.8" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          ` : ''}
-        </svg>
-
-        <span class="mt-1.5 font-sans text-xs font-black flex items-center space-x-1 ${
-          tieneNovedad ? 'text-amber-700' : esRegistrada ? 'text-emerald-700' : 'text-slate-800'
-        }">
-          <span>${pos}</span>
-          ${tieneNovedad ? '<span class="text-[10px]">!</span>' : esRegistrada ? '<span class="text-[10px]">✓</span>' : ''}
-        </span>
-        <span class="text-[10px] font-bold text-slate-500 uppercase">REP</span>
-      `;
-
-      return div;
-    }
-
-    // ==============================================================
-    // RENDERIZADO DEL RESUMEN EN COLUMNA DERECHA
-    // Muestra: 'Eje 2 · Lado derecho · Exterior'
-    // Muestra 'Registrada' UNA SOLA VEZ
-    // ==============================================================
-    function renderizarResumenPosicion(posActual) {
-      const panel = document.getElementById('panelResumenPosicion');
-      if (!panel) return;
-
-      const cfg = obtenerConfigActual();
-      let posData = null;
-      let ejeData = null;
-
-      for (const e of cfg.esquema) {
-        for (const p of (e.posiciones || [])) {
-          if (p.pos === posActual) {
-            posData = p;
-            ejeData = e;
-            break;
-          }
-        }
-        if (posData) break;
-      }
-
-      if (!posData || !ejeData) {
-        panel.innerHTML = `
-          <div class="flex items-center space-x-2 text-slate-500 font-bold text-xs">
-            <span>Posición ${posActual} activa</span>
-          </div>
-        `;
-        return;
-      }
-
-      const esRep = (ejeData.eje === 99 || (ejeData.tipo || '').toLowerCase() === 'repuesto');
-      const tipoNormalizado = normalizarEtiquetaTipo(ejeData.tipo);
-      const nombreEje = esRep ? 'Soporte de Repuesto' : `Eje ${ejeData.eje} · ${tipoNormalizado}`;
-      const ladoTexto = posData.lado === 'izq' ? 'Lado Izquierdo' : posData.lado === 'der' ? 'Lado Derecho' : 'Soporte Central';
-      const rolTexto = obtenerTextoRolLargo(posData.rol);
-
-      const tieneNovedad = posicionesConNovedad.has(posActual);
-      const esRegistrada = posicionesInspeccionadas.has(posActual);
-      const textoNovedad = tieneNovedad ? posicionesConNovedad.get(posActual) : '';
-
-      // Badge de estado único en el resumen
-      let badgeEstadoHtml = '';
-      if (tieneNovedad) {
-        badgeEstadoHtml = `
-          <span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center space-x-1.5 shadow-xs">
-            <span class="w-3.5 h-3.5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">!</span>
-            <span>Con Novedad</span>
-          </span>
-        `;
-      } else if (esRegistrada) {
-        badgeEstadoHtml = `
-          <span class="px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center space-x-1.5 shadow-xs">
-            <i class="fa-solid fa-check text-emerald-600 text-xs"></i>
-            <span>Registrada</span>
-          </span>
-        `;
-      } else {
-        badgeEstadoHtml = `
-          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center space-x-1">
-            <i class="fa-solid fa-clock text-slate-400 text-[10px]"></i>
-            <span>Pendiente</span>
-          </span>
-        `;
-      }
-
-      panel.innerHTML = `
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <span class="w-9 h-9 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-base font-mono shadow-md shadow-blue-500/20">
-              ${posActual}
-            </span>
-            <div>
-              <div class="font-extrabold text-slate-900 text-xs sm:text-sm">
-                ${nombreEje} · ${ladoTexto}
-              </div>
-              <div class="text-xs text-slate-500 font-medium">
-                Posición: <b class="text-slate-800">${rolTexto}</b>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            ${badgeEstadoHtml}
-          </div>
-        </div>
-
-        ${tieneNovedad ? `
-          <div class="mt-2.5 text-xs text-amber-900 font-bold bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 flex items-center space-x-2">
-            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xs"></i>
-            <span>Novedad: ${textoNovedad}</span>
-          </div>
-        ` : ''}
-      `;
-    }
-
-    // ==============================================================
-    // RENDERIZADO DEL DIAGRAMA COMPLETO DE EJES
-    // ==============================================================
-    function renderizarChasis() {
-      const contenedor = document.getElementById('contenedorChasisEjes');
-      if (!contenedor) return;
-      contenedor.innerHTML = '';
-
-      const cfg = obtenerConfigActual();
-      const posActual = posicionActiva;
-
-      // Actualizar contador y progreso
-      const totalPos = cfg.posiciones.length;
-      const regCount = cfg.posiciones.filter(p => posicionesInspeccionadas.has(p)).length;
-      document.getElementById('badgeContadorProgreso').textContent = `${regCount} de ${totalPos}`;
-      document.getElementById('barraProgresoChasis').style.width = `${(regCount / totalPos) * 100}%`;
-      document.getElementById('lblPosPill').textContent = posActual;
-
-      const ejesRodantes = cfg.esquema.filter(e => e.eje !== 99 && (e.tipo || '').toLowerCase() !== 'repuesto');
-      const ejeRepuesto = cfg.esquema.find(e => e.eje === 99 || (e.tipo || '').toLowerCase() === 'repuesto');
-
-      ejesRodantes.forEach((eje, idx) => {
-        const filaDiv = document.createElement('div');
-        filaDiv.className = `space-y-1.5 pb-3 ${idx < ejesRodantes.length - 1 ? 'border-b border-slate-100' : ''}`;
-
-        // Encabezado del eje: Diccionario de etiquetas visibles corregido (Tracción, Direccional, Libre)
-        const headerFila = document.createElement('div');
-        headerFila.className = 'flex items-center space-x-2 text-xs text-slate-500 pl-1';
-        const tipoNormalizado = normalizarEtiquetaTipo(eje.tipo);
-
-        headerFila.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span class="font-black text-slate-800">Eje ${eje.eje}</span>
-          <span class="text-slate-300">•</span>
-          <span class="font-bold text-slate-600">${tipoNormalizado}</span>
-        `;
-        filaDiv.appendChild(headerFila);
-
-        // SVG del eje
-        const svgBox = document.createElement('div');
-        svgBox.className = 'w-full flex justify-center';
-        svgBox.innerHTML = generarSvgFilaEje(eje, posActual);
-        filaDiv.appendChild(svgBox);
-
-        contenedor.appendChild(filaDiv);
-      });
-
-      // Repuesto
-      const secRepuesto = document.getElementById('seccionRepuestoChasis');
-      const cajaRepuesto = document.getElementById('contenedorCajaRepuestoChasis');
-      const boxBtnSinRep = document.getElementById('boxBtnSinRepuesto');
-
-      if (ejeRepuesto && ejeRepuesto.posiciones && ejeRepuesto.posiciones.length > 0) {
-        secRepuesto.classList.remove('hidden');
-        boxBtnSinRep.classList.remove('hidden');
-        cajaRepuesto.innerHTML = '';
-        ejeRepuesto.posiciones.forEach(p => {
-          cajaRepuesto.appendChild(generarCajaRepuestoHtml(p.pos, p.rol || 'REP', posActual));
-        });
-      } else {
-        secRepuesto.classList.add('hidden');
-        boxBtnSinRep.classList.add('hidden');
-      }
-
-      // Renderizar resumen de la posición seleccionada
-      renderizarResumenPosicion(posActual);
-
-      // Renderizar carrusel móvil y selector alternativo escritorio
-      renderizarSelectoresAuxiliares();
-    }
-
-    function renderizarSelectoresAuxiliares() {
-      const cfg = obtenerConfigActual();
-      const posActual = posicionActiva;
-
-      // 1. Móvil
-      const mobCont = document.getElementById('carruselLlantasMobile');
-      if (mobCont) {
-        mobCont.innerHTML = '';
-        cfg.posiciones.forEach(p => {
-          const esSel = (p === posActual);
-          const tieneNov = posicionesConNovedad.has(p);
-          const esReg = posicionesInspeccionadas.has(p);
-
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = `flex-shrink-0 w-11 h-12 rounded-xl border flex flex-col items-center justify-center font-bold text-xs transition-all ${
-            esSel ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300' :
-            tieneNov ? 'bg-amber-50 text-amber-900 border-amber-300' :
-            esReg ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
-            'bg-white text-slate-700 border-slate-200'
-          }`;
-          btn.onclick = () => seleccionarPosicion(p);
-          btn.innerHTML = `
-            <span>${p}</span>
-            <span class="text-[10px] opacity-80">${tieneNov ? '!' : esReg ? '✓' : '•'}</span>
-          `;
-          mobCont.appendChild(btn);
-        });
-      }
-
-      // 2. Escritorio dentro de bloque plegable
-      const dskCont = document.getElementById('gridBotonesEscritorioPlegable');
-      if (dskCont) {
-        dskCont.innerHTML = '';
-        const flexBox = document.createElement('div');
-        flexBox.className = 'flex flex-wrap gap-1.5';
-        cfg.posiciones.forEach(p => {
-          const esSel = (p === posActual);
-          const tieneNov = posicionesConNovedad.has(p);
-          const esReg = posicionesInspeccionadas.has(p);
-
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = `px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
-            esSel ? 'bg-blue-600 text-white border-blue-600' :
-            tieneNov ? 'bg-amber-50 text-amber-900 border-amber-300' :
-            esReg ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
-            'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-          }`;
-          btn.onclick = () => seleccionarPosicion(p);
-          btn.innerHTML = `Llanta ${p} ${tieneNov ? '(!)' : esReg ? '(✓)' : ''}`;
-          flexBox.appendChild(btn);
-        });
-        dskCont.appendChild(flexBox);
-      }
-    }
-
-    // ==============================================================
-    // INTERACCIÓN Y NAVEGACIÓN
-    // ==============================================================
-    function seleccionarPosicion(p) {
-      posicionActiva = p;
-      document.getElementById('posicion').value = p;
-
-      // Cargar valores simulados o limpiar
-      if (posicionesInspeccionadas.has(p)) {
-        document.getElementById('prof_ext').value = '11.5';
-        document.getElementById('prof_cent').value = '11.2';
-        document.getElementById('prof_int').value = '11.0';
-        document.getElementById('psi').value = '105';
-      } else {
-        document.getElementById('prof_ext').value = '';
-        document.getElementById('prof_cent').value = '';
-        document.getElementById('prof_int').value = '';
-        document.getElementById('psi').value = '100';
-      }
-
-      const nov = posicionesConNovedad.get(p) || '';
-      document.getElementById('novedades').value = nov;
-      evaluarHabilitarFotoNovedad();
-
-      renderizarChasis();
-    }
-
-    function irPosicionAnterior() {
-      const cfg = obtenerConfigActual();
-      const idx = cfg.posiciones.indexOf(posicionActiva);
-      if (idx > 0) seleccionarPosicion(cfg.posiciones[idx - 1]);
-      else seleccionarPosicion(cfg.posiciones[cfg.posiciones.length - 1]);
-    }
-
-    function irPosicionSiguiente() {
-      const cfg = obtenerConfigActual();
-      const idx = cfg.posiciones.indexOf(posicionActiva);
-      if (idx !== -1 && idx + 1 < cfg.posiciones.length) seleccionarPosicion(cfg.posiciones[idx + 1]);
-      else seleccionarPosicion(cfg.posiciones[0]);
-    }
-
-    function setPsiRapido(val) {
-      document.getElementById('psi').value = val;
-    }
-
-    function agregarNovedadRapida(texto) {
-      const input = document.getElementById('novedades');
-      const val = input.value.trim();
-      if (!val) input.value = texto;
-      else if (!val.includes(texto)) input.value = `${val}, ${texto}`;
-      evaluarHabilitarFotoNovedad();
-    }
-
-    function limpiarNovedades() {
-      document.getElementById('novedades').value = '';
-      evaluarHabilitarFotoNovedad();
-    }
-
-    function evaluarHabilitarFotoNovedad() {
-      const val = document.getElementById('novedades').value.trim();
-      const box = document.getElementById('boxAdjuntarFotoNovedad');
-      if (val.length > 0) box.classList.remove('hidden');
-      else box.classList.add('hidden');
-    }
-
-    function simularAdjuntarFoto() {
-      const p = posicionActiva;
-      const list = fotosNovedad.get(p) || [];
-      list.push('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="%232563EB"><rect width="60" height="60" rx="8" fill="%23DBEAFE"/><text x="30" y="35" font-size="10" text-anchor="middle" fill="%231E40AF">FOTO</text></svg>');
-      fotosNovedad.set(p, list);
-      actualizarMiniaturasFotos(p);
-    }
-
-    function actualizarMiniaturasFotos(p) {
-      const list = fotosNovedad.get(p) || [];
-      const box = document.getElementById('previewFotoNovedadBox');
-      const grid = document.getElementById('gridPreviewFotosNovedad');
-      const lbl = document.getElementById('lblConteoFotosAdjuntas');
-
-      if (list.length > 0) {
-        box.classList.remove('hidden');
-        lbl.textContent = `${list.length} imagen(es) adjunta(s)`;
-        grid.innerHTML = '';
-        list.forEach((img, i) => {
-          const thumb = document.createElement('div');
-          thumb.className = 'w-12 h-12 rounded-lg bg-blue-100 border border-blue-300 flex items-center justify-center text-[10px] font-bold text-blue-800';
-          thumb.textContent = `IMG ${i + 1}`;
-          grid.appendChild(thumb);
-        });
-      } else {
-        box.classList.add('hidden');
-      }
-    }
-
-    function guardarPosicionSimulada() {
-      const p = posicionActiva;
-      posicionesInspeccionadas.add(p);
-      const nov = document.getElementById('novedades').value.trim();
-      if (nov) posicionesConNovedad.set(p, nov);
-      else posicionesConNovedad.delete(p);
-
-      irPosicionSiguiente();
-
-      // En móvil: apenas guarde y pase a la siguiente, subir suavemente y mostrar el diagrama de chasis
-      if (window.innerWidth < 1024) {
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-          document.activeElement.blur();
-        }
-        setTimeout(() => {
-          const modChasis = document.getElementById('moduloChasis');
-          if (modChasis) {
-            modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 120);
-      }
-    }
-
-    function limpiarCamposMediciones() {
-      document.getElementById('prof_ext').value = '';
-      document.getElementById('prof_cent').value = '';
-      document.getElementById('prof_int').value = '';
-      document.getElementById('psi').value = '100';
-      document.getElementById('novedades').value = '';
-      evaluarHabilitarFotoNovedad();
-    }
-
-    function toggleSinRepuesto() {
-      sinRepuesto = !sinRepuesto;
-      const btnTxt = document.getElementById('txtBtnSinRepuesto');
-      if (sinRepuesto) btnTxt.textContent = 'Repuesto deshabilitado (Vehículo sin repuesto)';
-      else btnTxt.textContent = 'Marcar: Vehículo sin llanta de repuesto';
-      renderizarChasis();
-    }
-
-    function evaluarSugerenciaCambio() {
-      const ext = parseFloat(document.getElementById('prof_ext').value) || 0;
-      const cent = parseFloat(document.getElementById('prof_cent').value) || 0;
-      const int = parseFloat(document.getElementById('prof_int').value) || 0;
-      const alerta = document.getElementById('alertaRetiroInmediato');
-      if ((ext > 0 && ext <= 3.0) || (cent > 0 && cent <= 3.0) || (int > 0 && int <= 3.0)) {
-        alerta.classList.remove('hidden');
-      } else {
-        alerta.classList.add('hidden');
-      }
-    }
-
-    // ==============================================================
-    // CONTROLADORES DE PRUEBAS DE AUDITORÍA (Escenarios 0, 1, 2)
-    // ==============================================================
-    function cambiarTipologiaPrueba(tip) {
-      tipologiaActual = tip;
-      document.getElementById('lblTipologiaNombre').value = tip;
-      document.getElementById('lblTituloConfiguracion').textContent = tip;
-      const cfg = obtenerConfigActual();
-      posicionActiva = cfg.posiciones[0];
-      posicionesInspeccionadas.clear();
-      posicionesConNovedad.clear();
-      fotosNovedad.clear();
-      renderizarChasis();
-    }
-
-    function aplicarEscenario(esc) {
-      const cfg = obtenerConfigActual();
-      posicionesInspeccionadas.clear();
-      posicionesConNovedad.clear();
-      fotosNovedad.clear();
-
-      ['btnEsc0', 'btnEsc1', 'btnEsc2'].forEach(id => {
-        const b = document.getElementById(id);
-        b.className = 'px-2.5 py-1 rounded-lg font-bold transition-all text-slate-300 hover:bg-slate-700';
-      });
-
-      if (esc === 0) {
-        // 0 Llantas registradas
-        document.getElementById('btnEsc0').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
-        posicionActiva = cfg.posiciones[0];
-      } else if (esc === 1) {
-        // Algunas registradas y con novedad
-        document.getElementById('btnEsc1').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
-        // Registramos primeras 2
-        if (cfg.posiciones.length >= 1) posicionesInspeccionadas.add(cfg.posiciones[0]);
-        if (cfg.posiciones.length >= 2) posicionesInspeccionadas.add(cfg.posiciones[1]);
-        // Posición 3 con novedad
-        if (cfg.posiciones.length >= 3) {
-          posicionesInspeccionadas.add(cfg.posiciones[2]);
-          posicionesConNovedad.set(cfg.posiciones[2], 'Corte superficial en banda');
-        }
-        // Seleccionamos posición 4 (o la última)
-        posicionActiva = cfg.posiciones[Math.min(3, cfg.posiciones.length - 1)];
-      } else if (esc === 2) {
-        // Todas registradas
-        document.getElementById('btnEsc2').className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-slate-700 text-white';
-        cfg.posiciones.forEach((p, idx) => {
-          posicionesInspeccionadas.add(p);
-          if (idx === 1) posicionesConNovedad.set(p, 'Desgaste irregular hombro');
-        });
-        // Posición 1 activa seleccionada
-        posicionActiva = cfg.posiciones[0];
-      }
-
-      seleccionarPosicion(posicionActiva);
-    }
-
-    // Inicializar al cargar
-    window.addEventListener('DOMContentLoaded', () => {
-      aplicarEscenario(1); // Iniciar con escenario ilustrativo 'Algunas (con novedad)'
-    });
-  </script>
-</body>
-</html>
 ```
 
 ---

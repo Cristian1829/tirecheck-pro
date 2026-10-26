@@ -32,7 +32,8 @@ FILES_SPEC = [
     ("docs/implementar kpis.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación técnica de la Suite Integral de 20 KPIs, pestañas analíticas y balance de compras MRP"),
     ("docs/prompt_antigravity_ide_implementaci_n_de_las_7_bodegas_y_hoja_de_vida_de_neum_ticos.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía maestra del sistema de Las 7 Bodegas, Hoja de Vida, Kardex y Balance MRP"),
     ("docs/detalle de vh.md", "2. Arquitectura y Documentación Técnica", "markdown", "Especificación de ficha técnica vehicular y planes de mantenimiento preventivo y correctivo"),
-    ("evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md", "2. Arquitectura y Documentación Técnica", "markdown", "Evaluación técnica y reglas de automatización de placas, esquemas y llantas"),
+    ("GUIA_DESPLIEGUE_PRODUCCION.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía maestra de integración continua y despliegue a producción con GitHub y Railway"),
+    ("docs/evaluaci_n_t_cnica_y_prompt_para_antigravity_automatizaci_n_de_placa_y_llantas.md", "2. Arquitectura y Documentación Técnica", "markdown", "Evaluación técnica y reglas de automatización de placas, esquemas y llantas"),
     ("docs/GUIA_DESPLIEGUE_RENDER.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía paso a paso para desplegar TireAnalyze Pro en Render.com de forma gratuita"),
     ("docs/AGENTS.md", "2. Arquitectura y Documentación Técnica", "markdown", "Guía especializada para Agentes de IA: invariantes del sistema, reglas críticas y no regresión"),
     ("docs/ARCHITECTURE.md", "2. Arquitectura y Documentación Técnica", "markdown", "Arquitectura en capas, diagrama C4, flujos de inspección y persistencia de datos"),
@@ -52,9 +53,20 @@ FILES_SPEC = [
     ("fotos_informe.py", "3. Núcleo Backend & API REST", "python", "Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF"),
     ("app.py", "3. Núcleo Backend & API REST", "python", "Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario"),
 
-    # 4. Frontend Web SPA & Plantillas
-    ("templates/index.html", "4. Frontend Web SPA & Plantillas", "html", "Aplicación Web SPA integral: HTML5, CSS Glassmorphism y JavaScript modular (Patio, Base, Diagnósticos, Composición de Flota v3.5, 7 Bodegas y Kardex, Suite 20 KPIs, Catálogos, Modo Offline)"),
+    # 4. Frontend Web SPA, Módulos JavaScript & Plantillas
+    ("templates/index.html", "4. Frontend Web SPA & Plantillas", "html", "Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista"),
+    ("templates/servicios_v3.html", "4. Frontend Web SPA & Plantillas", "html", "Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura"),
+    ("templates/servicios.html", "4. Frontend Web SPA & Plantillas", "html", "Plantilla de servicios activa en producción"),
     ("templates/preview_chasis.html", "4. Frontend Web SPA & Plantillas", "html", "Visor interactivo y banco de pruebas de renderizado de tipologías de chasis"),
+    ("static/js/app_core.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación"),
+    ("static/js/modulo_patio.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos"),
+    ("static/js/modulo_basedatos.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel"),
+    ("static/js/modulo_kpis.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión"),
+    ("static/js/modulo_diagnostico.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes"),
+    ("static/js/modulo_trazabilidad.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Trazabilidad: Historial y caracterización de flota"),
+    ("static/js/modulo_catalogos.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías"),
+    ("static/js/modulo_bodegas.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP"),
+    ("static/js/app_init.js", "4. Frontend Web SPA & Plantillas", "javascript", "Módulo Init: Inicialización controlada en DOMContentLoaded"),
 
     # 5. Suite de Pruebas Automatizadas (Pytest)
     ("tests/conftest.py", "5. Suite de Pruebas Automatizadas (Pytest)", "python", "Configuración de fixtures y base de datos SQLite en memoria para tests aislados"),
