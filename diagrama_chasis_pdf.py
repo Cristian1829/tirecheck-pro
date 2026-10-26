@@ -85,7 +85,8 @@ def _estado(info, limite):
     """Prioridad: bajo límite (rojo) > desalineación / novedad (ámbar) > registrada (verde) > pendiente (gris)."""
     if not info.get("registrada"): return "pend", PEND
     pm = info.get("p_min")
-    if pm is not None and pm <= limite: return "critico", CRITICO
+    lim = info.get("limite_retiro") or limite  # límite del eje de esa posición
+    if pm is not None and pm <= lim: return "critico", CRITICO
     
     # Desgaste irregular por alineación (abs(prof_ext - prof_int) >= 2.0 mm)
     p_ext = info.get("prof_ext")
@@ -125,7 +126,7 @@ def _dibujar_llanta(d, x, y_top, pos, rol, info, limite):
         d.add(String(x, y_val, _num(info.get("p_min")), fontName="Helvetica-Bold", fontSize=VAL_FS,
                      fillColor=CRITICO if estado == "critico" else TINTA, textAnchor="middle"))
 
-def dibujar_diagrama_chasis(esquema, filas, limite_retiro=3.0, width=540):
+def dibujar_diagrama_chasis(esquema, filas, limite_retiro=3.0, width=540, texto_limite=None):
     """esquema: lista de ejes [{'eje','tipo','posiciones':[{'pos','lado','rol'}]}]; filas: inspecciones de la placa."""
     info = {}
     for f in filas:
@@ -136,7 +137,8 @@ def dibujar_diagrama_chasis(esquema, filas, limite_retiro=3.0, width=540):
             "p_min": profundidad_minima(f),
             "prof_ext": f.get("prof_ext"),
             "prof_int": f.get("prof_int"),
-            "novedades": nov
+            "novedades": nov,
+            "limite_retiro": f.get("limite_retiro"),
         }
     rodantes = [e for e in esquema if e.get("eje") != 99 and str(e.get("tipo", "")).lower() != "repuesto"]
     repuestos = [e for e in esquema if e.get("eje") == 99 or str(e.get("tipo", "")).lower() == "repuesto"]
@@ -184,6 +186,6 @@ def dibujar_diagrama_chasis(esquema, filas, limite_retiro=3.0, width=540):
         d.add(Circle(x + 3.6, y_l + 2.3, 3.6, fillColor=colors.white, strokeColor=col, strokeWidth=1.2))
         d.add(String(x + 11, y_l, etiqueta, fontName="Helvetica", fontSize=6.5, fillColor=_c("#334155")))
         x += 11 + stringWidth(etiqueta, "Helvetica", 6.5) + 16
-    d.add(String(MARGEN_X + 4, 6.0, f"Valor bajo cada llanta: profundidad mínima (mm). Rojo: menor o igual al límite de retiro ({_num(limite_retiro)} mm).",
+    d.add(String(MARGEN_X + 4, 6.0, f"Valor bajo cada llanta: profundidad mínima (mm). Rojo: menor o igual al límite de retiro ({texto_limite or _num(limite_retiro) + ' mm'}).",
                  fontName="Helvetica", fontSize=6, fillColor=GRIS))
     return d

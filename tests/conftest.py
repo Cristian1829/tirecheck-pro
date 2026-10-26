@@ -10,6 +10,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import database
 import server
 
+
+@pytest.fixture(autouse=True)
+def hoy_fijo(monkeypatch):
+    """
+    Las pruebas usan fechas fijas (p. ej. noviembre 2026). Se fija "hoy" al 31/12/2027 para que
+    el candado de fechas futuras no dependa del día en que se ejecuta la suite.
+    """
+    from datetime import date
+    monkeypatch.setattr(database, "_hoy_bogota", lambda: date(2027, 12, 31))
+
+
 @pytest.fixture
 def test_db():
     """

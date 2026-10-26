@@ -982,7 +982,10 @@
 
       const elGalones = document.getElementById('kpi09_galones_diesel');
       if (elGalones) {
-        elGalones.textContent = `${formatCO_Miles(d.galones_desperdiciados_mes || 0)} gal/mes`;
+        // Estimado con parámetros de referencia; las llantas sin lectura de PSI no entran al cálculo
+        const sinLectura = Number(d.llantas_sin_lectura_psi) || 0;
+        elGalones.textContent = `${formatCO_Miles(d.galones_desperdiciados_mes || 0)} gal/mes (estimado)`;
+        elGalones.title = sinLectura > 0 ? `${sinLectura} llanta(s) sin lectura de PSI no se incluyen` : '';
       }
     }
 
@@ -994,7 +997,10 @@
 
       const elEfect = document.getElementById('kpi10_efectividad_badge');
       if (elEfect && d.efectividad_taller_pct !== undefined) {
-        elEfect.textContent = `Efectividad: ${formatCO_Decimal(d.efectividad_taller_pct, 1)}%`;
+        // null = no hay mes anterior con alertas para comparar
+        elEfect.textContent = d.efectividad_taller_pct === null
+          ? 'Efectividad: sin histórico'
+          : `Efectividad: ${formatCO_Decimal(d.efectividad_taller_pct, 1)}%`;
       }
 
       instanciasChartsSuite['kpi10_pareto'] = new Chart(ctx, {

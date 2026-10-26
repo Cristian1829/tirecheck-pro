@@ -65,14 +65,14 @@ def punto_color(hex_color: str) -> str:
 def normalizar_rol_pdf(rol):
     return dg._rol(rol)
 
-def dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=3.0, width=540):
+def dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=3.0, width=540, texto_limite=None):
     try:
         esquema = database.obtener_esquema_tipologia(tipologia)
     except Exception:
         esquema = None
     if not esquema:
         return Spacer(1, 5)
-    return dg.dibujar_diagrama_chasis(esquema, filas, limite_retiro, width)
+    return dg.dibujar_diagrama_chasis(esquema, filas, limite_retiro, width, texto_limite=texto_limite)
 
 BANNER_IMG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "banner_tireanalyze_hd.png")
 if not os.path.exists(BANNER_IMG_PATH):
@@ -443,7 +443,22 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     except Exception:
         inspector_nombre = inspector_usr
 
-    limite_retiro = database.obtener_limite_retiro_cliente(cliente) or 3.0
+    limite_retiro = database.obtener_limite_retiro_cliente(cliente, subcliente) or 3.0
+
+    # Límite de cada llanta según el eje de su posición (reglas por eje de Catálogos)
+    lim_posicion = database.construir_resolver_limite_posicion()
+    max_pos_veh = max([int(f.get('posicion', 0) or 0) for f in filas] or [0])
+    limites_por_eje = {}
+    for f in filas:
+        pos_f = int(f.get('posicion', 0) or 0)
+        f['limite_retiro'] = lim_posicion(cliente, subcliente, tipologia, pos_f, max_pos_veh)
+        eje_f = lim_posicion.tipo_eje(tipologia, pos_f, max_pos_veh).capitalize()
+        limites_por_eje.setdefault(eje_f, f['limite_retiro'])
+    # Texto del límite: uno solo si todos los ejes usan el mismo, o el detalle por eje
+    if len(set(limites_por_eje.values())) <= 1:
+        texto_limite = f"{format_num_es(next(iter(limites_por_eje.values()), limite_retiro))} mm"
+    else:
+        texto_limite = ", ".join(f"{eje.lower()} {format_num_es(v)} mm" for eje, v in limites_por_eje.items())
 
     # Usar dg.profundidad_minima como ÚNICA definición de profundidad mínima
     for f in filas:
@@ -483,30 +498,30 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     for f in filas:
         p = int(f.get('posicion', 0))
         p_m = f.get('p_min')
-        if p_m is not None and p_m <= limite_retiro:
-            llantas_cambio.append((p, p_m))
+        if p_m is not None and p_m <= f['limite_retiro']:
+            llantas_cambio.append((p, p_m, f['limite_retiro']))
     n_cambios = len(llantas_cambio)
 
     if n_cambios > 3:
         # Agrupación inteligente de alertas de cambio cuando son más de 3
-        pos_cambio_str = ", ".join(str(p) for p, _ in llantas_cambio)
-        pos_detalles = ", ".join(f"Posición {p}" for p, _ in llantas_cambio)
+        pos_cambio_str = ", ".join(str(p) for p, _, _ in llantas_cambio)
+        pos_detalles = ", ".join(f"Posición {p}" for p, _, _ in llantas_cambio)
         alertas_lista.append({
             'grupo': 'retiro',
             'tipo': 'Cambio',
             'tipo_color': '#DC2626',
             'posicion': pos_cambio_str,
-            'detalle': f"Retirar llantas en {pos_detalles} (remanente <= {format_num_es(limite_retiro)} mm de límite).",
+            'detalle': f"Retirar llantas en {pos_detalles} (remanente en o bajo el límite: {texto_limite}).",
             'accion': 'Retirar las llantas de estas posiciones y programar su cambio.'
         })
     else:
-        for p, p_m in llantas_cambio:
+        for p, p_m, lim_p in llantas_cambio:
             alertas_lista.append({
                 'grupo': 'retiro',
                 'tipo': 'Cambio',
                 'tipo_color': '#DC2626',
                 'posicion': str(p),
-                'detalle': f"Retirar llanta en Posición {p} (remanente {format_num_es(p_m)} mm <= {format_num_es(limite_retiro)} mm de límite).",
+                'detalle': f"Retirar llanta en Posición {p} (remanente {format_num_es(p_m)} mm <= {format_num_es(lim_p)} mm de límite).",
                 'accion': 'Retirar la llanta y programar su cambio.'
             })
 
@@ -608,6 +623,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'km_str': km_str,
         'inspector_nombre': inspector_nombre,
         'limite_retiro': limite_retiro,
+        'texto_limite': texto_limite,
         'esquema': esquema,
         'filas': filas,
         'total_auditadas': total_auditadas,
@@ -639,6 +655,7 @@ def renderizar_informe(datos) -> bytes:
     km_str = datos['km_str']
     inspector_nombre = datos['inspector_nombre']
     limite_retiro = datos['limite_retiro']
+    texto_limite = datos.get('texto_limite') or f"{format_num_es(limite_retiro)} mm"
     total_auditadas = datos['total_auditadas']
     total_posiciones = datos['total_posiciones']
     p_min_global = datos['p_min_global']
@@ -697,7 +714,7 @@ def renderizar_informe(datos) -> bytes:
     data_meta = [
         [celda_meta("CLIENTE", cliente), celda_meta("SEDE", subcliente), celda_meta("OPERACIÓN", operacion)],
         [celda_meta("PLACA", placa), celda_meta("TIPOLOGÍA", tipologia), celda_meta("KILOMETRAJE", km_str)],
-        [celda_meta("FECHA DE INSPECCIÓN", fecha_insp_fmt), celda_meta("INSPECTOR", inspector_nombre), celda_meta("LÍMITE DE RETIRO DEL CLIENTE", f"{format_num_es(limite_retiro)} mm")]
+        [celda_meta("FECHA DE INSPECCIÓN", fecha_insp_fmt), celda_meta("INSPECTOR", inspector_nombre), celda_meta("LÍMITE DE RETIRO DEL CLIENTE", texto_limite)]
     ]
     t_meta = Table(data_meta, colWidths=[180, 180, 180])
     t_meta.setStyle(TableStyle([
@@ -827,7 +844,7 @@ def renderizar_informe(datos) -> bytes:
     # SECCIÓN 4: DISTRIBUCIÓN POR EJES (DIAGRAMA CHASIS VECTORIAL)
     # =========================================================================
     tit_chasis = Paragraph("Distribución por ejes", style_sec_tit)
-    drawing_chasis = dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=limite_retiro, width=540)
+    drawing_chasis = dibujar_diagrama_chasis_reportlab(tipologia, filas, limite_retiro=limite_retiro, width=540, texto_limite=texto_limite)
     elements.append(KeepTogether([tit_chasis, drawing_chasis, Spacer(1, 4)]))
 
     # =========================================================================
@@ -904,7 +921,7 @@ def renderizar_informe(datos) -> bytes:
             p_cen = f.get('prof_cent')
             p_int = f.get('prof_int')
 
-            es_cambio = (p_min is not None and p_min <= limite_retiro)
+            es_cambio = (p_min is not None and p_min <= (f.get('limite_retiro') or limite_retiro))
             novedad_texto = str(f.get('novedades') or '').strip()
             tiene_novedad_real = es_novedad_alerta(novedad_texto)
 
@@ -1072,7 +1089,7 @@ def renderizar_informe(datos) -> bytes:
     obs_lines = []
     if n_cambios > 0:
         pos_cambios = [str(a['posicion']) for a in alertas_lista if a['tipo'] == 'Cambio']
-        obs_lines.append(f"Se recomienda programar el retiro de la(s) llanta(s) en posición {', '.join(pos_cambios)} por encontrarse en o por debajo del límite de retiro ({format_num_es(limite_retiro)} mm).")
+        obs_lines.append(f"Se recomienda programar el retiro de la(s) llanta(s) en posición {', '.join(pos_cambios)} por encontrarse en o por debajo del límite de retiro ({texto_limite}).")
     if n_ali > 0:
         es_trailer_tip = ('trailer' in tipologia.lower() or 'remolque' in tipologia.lower() or 'semirremolque' in tipologia.lower())
         if es_trailer_tip:
@@ -1098,7 +1115,7 @@ def renderizar_informe(datos) -> bytes:
     # =========================================================================
     elements.append(Paragraph("Criterios de diagnóstico aplicados", style_sec_tit))
     criterios_html = f"""
-    <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({format_num_es(limite_retiro)} mm).<br/>
+    <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({texto_limite}).<br/>
     <b>Alineación y geometría de ejes:</b> diferencia de 2,0 mm o más entre la profundidad exterior e interior en llantas direccionales o en ejes de trailer / eje libre.<br/>
     <b>Dual mal apareado:</b> diferencia de más de 2,5 mm entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
     <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
@@ -1258,10 +1275,13 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         if fecha_hasta and fecha_hasta != 'Todos':
             df_insp = df_insp[df_insp['fecha'].astype(str).str.slice(0, 10) <= str(fecha_hasta)]
 
+    df_insp = database.filtrar_fechas_validas(df_insp)
     if df_insp.empty:
         raise ValueError("No se encontraron inspecciones con los filtros seleccionados.")
 
     df_analisis = database.analizar_inspecciones_df(df_insp)
+    # El semáforo cuenta cada llanta una vez (su última medición del período); antes sumaba todas las inspecciones
+    df_insp = df_insp.sort_values(['fecha', 'id'], ascending=[False, False]).drop_duplicates(['placa', 'posicion']).copy()
 
     # Métricas Globales
     total_vehiculos = df_analisis['Vehículo/Placa'].nunique() if not df_analisis.empty else 0
@@ -1271,8 +1291,12 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     
     # Cálculos llanta a llanta con dg.profundidad_minima
     df_insp['p_min'] = df_insp.apply(lambda r: dg.profundidad_minima(r.to_dict()), axis=1)
-    llantas_retiro = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] <= limite_def)])
-    llantas_proximo = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] > limite_def) & (df_insp['p_min'] <= limite_def + 2.0)])
+    lim_posicion = database.construir_resolver_limite_posicion()
+    max_pos_placa = df_insp.groupby('placa')['posicion'].max().to_dict()
+    df_insp['lim_eje'] = df_insp.apply(lambda r: lim_posicion(r.get('cliente'), r.get('subcliente'), r.get('tipologia'),
+                                                              int(r.get('posicion') or 0), max_pos_placa.get(r.get('placa'))), axis=1)
+    llantas_retiro = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] <= df_insp['lim_eje'])])
+    llantas_proximo = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] > df_insp['lim_eje']) & (df_insp['p_min'] <= df_insp['lim_eje'] + 2.0)])
     llantas_optimas = total_llantas - llantas_retiro - llantas_proximo
 
     pct_retiro = (llantas_retiro / total_llantas * 100) if total_llantas > 0 else 0

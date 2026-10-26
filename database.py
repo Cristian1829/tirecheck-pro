@@ -2360,6 +2360,30 @@ def es_posicion_direccional(tipologia, posicion):
         return pos in [1, 2, 3, 4]
     return pos in [1, 2]
 
+ANIO_MINIMO_INSPECCION = 2000
+
+
+def _hoy_bogota() -> date:
+    """Fecha de hoy en Bogotá (función aparte para que las pruebas puedan fijarla)."""
+    return datetime.now(BOGOTA_TZ).date()
+
+
+def es_fecha_inspeccion_valida(fecha) -> bool:
+    """True si la fecha (YYYY-MM-DD...) es real: desde el año 2000 y no posterior a hoy (hora Bogotá)."""
+    try:
+        f = datetime.strptime(str(fecha).strip()[:10], '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return False
+    return f.year >= ANIO_MINIMO_INSPECCION and f <= _hoy_bogota()
+
+
+def filtrar_fechas_validas(df: pd.DataFrame) -> pd.DataFrame:
+    """Quita de los análisis las inspecciones con fecha futura o imposible (siguen visibles en la Base para corregirlas)."""
+    if df is None or df.empty or 'fecha' not in df.columns:
+        return df
+    return df[df['fecha'].apply(es_fecha_inspeccion_valida)]
+
+
 def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_masivo=False):
     """
     Evalúa los candados de seguridad de inspección:
@@ -2380,6 +2404,14 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
         return {'valido': False, 'mensaje': 'Por favor ingresa la Placa del vehículo.'}
 
     fecha_str = str(datos.get('fecha', datetime.now().strftime('%Y-%m-%d'))).strip()
+
+    # Candado 0: Fecha real (ni futura ni con año imposible): las fechas fuera de rango
+    # aparecían como meses "Feb 12" o "Nov 26" en las gráficas y movían el corte de los KPIs
+    if fecha_str and not es_fecha_inspeccion_valida(fecha_str):
+        return {
+            'valido': False,
+            'mensaje': f'⛔ CANDADO DE SEGURIDAD: La fecha de inspección ({fecha_str[:10]}) no es válida. Debe estar entre el año {ANIO_MINIMO_INSPECCION} y hoy.'
+        }
     km_actual = to_float(datos.get('kilometraje', 0))
     posicion = to_int(datos.get('posicion', 1))
     tipologia_val = str(datos.get('tipologia', '')).strip()
@@ -3103,6 +3135,8 @@ def analizar_inspecciones_df(df_inspecciones):
 
     resultados = []
     resolver_limite = _construir_cache_limites_retiro()
+    # Límite por llanta según el eje de su posición (direccional / tracción / libre)
+    lim_posicion = construir_resolver_limite_posicion()
     llantas_b2_usadas = set()
 
     # Precarga en memoria de llantas disponibles en BODEGA_2_RECAMBIO (Eliminación de N+1)
@@ -3142,7 +3176,11 @@ def analizar_inspecciones_df(df_inspecciones):
         max_pos = group['posicion'].max() if not group.empty else 0
         es_cuatro_manos = ('cuatro manos' in t_veh.lower() or (max_pos >= 12 and 'cabezote' in t_veh.lower()))
 
+        # Límite general del cliente (referencia en tablas); cada llanta usa el de su eje con lim(pos)
         limite_cambio_cliente = resolver_limite(cliente, subcliente)
+
+        def lim(pos, _cli=cliente, _sub=subcliente, _tip=t_veh, _max=max_pos):
+            return lim_posicion(_cli, _sub, _tip, pos, _max)
 
         # 1. Plan 1 — Retiro Inmediato (Cambio YA) y Plan 3 — Próximas a Cambio
         plan_cambio = False
@@ -3158,13 +3196,14 @@ def analizar_inspecciones_df(df_inspecciones):
             pos_r = int(r['posicion'])
             pb_r = to_float(r['prof_min'])
             # Plan 1: 0 < P_min <= Limite_Retiro_Cliente
-            if 0 < pb_r <= limite_cambio_cliente:
+            lim_r = lim(pos_r)
+            if 0 < pb_r <= lim_r:
                 plan_cambio = True
                 cant_cambios += 1
                 posiciones_retiro.add(pos_r)
-                detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
+                detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {lim_r:.1f}mm)")
             # Plan 3: Limite_Retiro < P_min <= Limite_Retiro + 2.0 mm
-            elif limite_cambio_cliente < pb_r <= (limite_cambio_cliente + 2.0):
+            elif lim_r < pb_r <= (lim_r + 2.0):
                 cant_proximas += 1
                 detalles_proximas.append(f"Pos {pos_r} ({pb_r:.1f} mm)")
 
@@ -3181,8 +3220,8 @@ def analizar_inspecciones_df(df_inspecciones):
                 pa_ini = pa_ini_raw if pa_ini_raw > 0 else 16.0
                 pb_ini = pb_ini_raw if pb_ini_raw > 0 else 16.0
 
-                pa_ret = (0 < pa_val <= limite_cambio_cliente)
-                pb_ret = (0 < pb_val <= limite_cambio_cliente)
+                pa_ret = (0 < pa_val <= lim(pd_a))
+                pb_ret = (0 < pb_val <= lim(pd_b))
 
                 if pa_ret and not pb_ret and (pb_ini - pb_val) >= 3.0:
                     plan_cambio = True
@@ -3256,7 +3295,7 @@ def analizar_inspecciones_df(df_inspecciones):
                             if ll["cliente"] == cliente
                             and (not ll["reservada_para_placa"] or ll["reservada_para_placa"] == placa)
                             and ll["dimension"] == dim_dual
-                            and ll["prof_actual_min"] > (limite_cambio_cliente + 1.5)
+                            and ll["prof_actual_min"] > (lim(pos_baja) + 1.5)
                             and abs(ll["prof_actual_min"] - mm_alta) <= 1.5
                             and ll["numero_interno"] not in llantas_b2_usadas
                         ]
@@ -3273,18 +3312,18 @@ def analizar_inspecciones_df(df_inspecciones):
                     except Exception:
                         pass
 
-                a_para_cambio = (0 < pb_a <= limite_cambio_cliente)
-                b_para_cambio = (0 < pb_b <= limite_cambio_cliente)
+                a_para_cambio = (0 < pb_a <= lim(p_a))
+                b_para_cambio = (0 < pb_b <= lim(p_b))
 
                 # Si ya hay una llanta concreta de Bodega 2 para esa posición, el rango genérico sobra
-                if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0) and p_a not in posiciones_con_cruce_b2:
-                    r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
+                if a_para_cambio and not b_para_cambio and pb_b >= (lim(p_b) + 2.0) and p_a not in posiciones_con_cruce_b2:
+                    r_min = max(lim(p_a) + 1.0, pb_b - 1.0)
                     r_max = pb_b + 1.0
                     recomendaciones_dual.append(
                         f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
-                elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0) and p_b not in posiciones_con_cruce_b2:
-                    r_min = max(limite_cambio_cliente + 1.0, pb_a - 1.0)
+                elif b_para_cambio and not a_para_cambio and pb_a >= (lim(p_a) + 2.0) and p_b not in posiciones_con_cruce_b2:
+                    r_min = max(lim(p_b) + 1.0, pb_a - 1.0)
                     r_max = pb_a + 1.0
                     recomendaciones_dual.append(
                         f"Pos {p_b} en retiro ({pb_b:.1f} mm) vs Pos {p_a} ({pb_a:.1f} mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
@@ -3408,11 +3447,12 @@ def analizar_inspecciones_df(df_inspecciones):
             psi_val = round(to_float(r.get('psi', 0)), 0)
             dim_val = str(r.get('dimension') or '').strip()
 
-            if 0 < pb_r <= limite_cambio_cliente:
+            lim_sem = lim(pos_r)
+            if 0 < pb_r <= lim_sem:
                 sem = 'ROJO'
-            elif limite_cambio_cliente < pb_r <= (limite_cambio_cliente + 2.0):
+            elif lim_sem < pb_r <= (lim_sem + 2.0):
                 sem = 'AMARILLO'
-            elif pb_r > (limite_cambio_cliente + 2.0):
+            elif pb_r > (lim_sem + 2.0):
                 sem = 'VERDE'
             else:
                 sem = 'GRIS'
@@ -3895,6 +3935,28 @@ def obtener_tipo_eje_posicion(tipologia, posicion, max_pos=None, mapa_tipologias
         if pos in (1, 2):
             return 'DIRECCIONAL'
         return 'TRACCIÓN'
+
+def construir_resolver_limite_posicion(conn=None):
+    """
+    Límite de retiro de UNA llanta según cliente, sede y el eje real de su posición
+    (DIRECCIONAL / TRACCIÓN / LIBRE según el esquema de la tipología).
+    Antes varias pantallas pasaban el número de posición o ningún eje y las reglas por eje
+    configuradas en Catálogos (ej. direccional 4,5 mm) nunca se aplicaban.
+    Retorna lim(cliente, subcliente, tipologia, posicion, max_pos=None) -> float,
+    con lim.tipo_eje(tipologia, posicion, max_pos=None) -> str.
+    """
+    resolver = _construir_cache_limites_retiro(conn=conn)
+    mapa = _cargar_mapa_tipologias_ejes(conn=conn)
+
+    def tipo_eje(tipologia, posicion, max_pos=None):
+        return obtener_tipo_eje_posicion(tipologia, posicion, max_pos=max_pos, mapa_tipologias=mapa)
+
+    def lim(cliente, subcliente, tipologia, posicion, max_pos=None):
+        return resolver(cliente, subcliente or 'TODOS', tipo_eje(tipologia, posicion, max_pos))
+
+    lim.tipo_eje = tipo_eje
+    return lim
+
 
 def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
     """
@@ -5058,8 +5120,8 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
                 params.append(str(v_val).strip())
 
         query += " ORDER BY numero_interno ASC, fecha ASC, id ASC"
-        df = pd.read_sql_query(query, conn, params=params)
-        resolver_limite = _construir_cache_limites_retiro(conn=conn)
+        df = filtrar_fechas_validas(pd.read_sql_query(query, conn, params=params))
+        lim_posicion = construir_resolver_limite_posicion(conn=conn)
 
     if df.empty:
         return []
@@ -5105,7 +5167,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
         cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
         subcliente_nom = str(ultima.get('subcliente', '') or primera.get('subcliente', '')).strip()
-        limite_cambio = resolver_limite(cliente_nom, subcliente_nom)
+        # Límite según el eje de la posición actual de la llanta (reglas por eje de Catálogos)
+        limite_cambio = lim_posicion(cliente_nom, subcliente_nom,
+                                     str(ultima.get('tipologia') or primera.get('tipologia') or ''),
+                                     int(to_float(ultima.get('posicion', 1))))
 
         # Proyección útil de vida calculada hasta el límite de cambio programado por cliente (por defecto 3.0 mm)
         mm_utiles = max(0.0, prof_ini - limite_cambio) if prof_ini > limite_cambio else 0.0
@@ -5585,6 +5650,114 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
     return defaults
 
 
+# =============================================================================
+# REFERENCIAS PARA CÁLCULOS ECONÓMICOS (sin valores inventados)
+# =============================================================================
+# Parámetros de referencia del modelo de combustible. Son supuestos explícitos (no datos de la
+# flota): se reportan como "estimado" en la respuesta para que la interfaz lo indique.
+COMBUSTIBLE_GAL_BASE_VEHICULO_MES = 8.5    # galones de referencia del modelo por vehículo afectado
+COMBUSTIBLE_PENALIDAD_POR_10PCT = 0.015    # fracción adicional por cada 10 % de subinflado
+PRECIO_GALON_ACPM_COP = 10500.0
+VALOR_CASCO_REFERENCIA_COP = 950000.0      # valor de referencia de un casco reencauchable
+VENTANA_SALVAMENTO_MM = 1.2                # mm sobre el límite en que el casco aún es reencauchable
+
+
+def construir_referencias_llanta(df: pd.DataFrame):
+    """
+    Precio y profundidad inicial de referencia cuando la inspección no los trae.
+    - Precio: mediana de precios reales del mismo cliente y dimensión; si no hay, de la dimensión.
+    - Profundidad inicial: catálogo de modelos (marca, diseño, dimensión, vida).
+    Si no hay referencia retorna None y la llanta queda fuera del cálculo (antes se usaban
+    $1.450.000 y 16/18 mm fijos, que inventaban montos y desgastes).
+    """
+    med_cli_dim, med_dim = {}, {}
+    if df is not None and not df.empty and 'precio' in df.columns:
+        d = df[pd.to_numeric(df['precio'], errors='coerce').fillna(0) > 0].copy()
+        if not d.empty:
+            d['_cli'] = d['cliente'].astype(str).str.strip().str.upper()
+            d['_dim'] = d['dimension'].astype(str).str.strip().str.upper()
+            d['_pr'] = pd.to_numeric(d['precio'], errors='coerce')
+            med_cli_dim = d.groupby(['_cli', '_dim'])['_pr'].median().to_dict()
+            med_dim = d.groupby('_dim')['_pr'].median().to_dict()
+
+    def ref_precio(cliente, dimension):
+        clave_dim = str(dimension or '').strip().upper()
+        v = med_cli_dim.get((str(cliente or '').strip().upper(), clave_dim)) or med_dim.get(clave_dim)
+        return float(v) if v and v > 0 else None
+
+    cache_pini = {}
+
+    def ref_prof_inicial(marca, diseno, dimension, vida):
+        clave = (str(marca or '').upper(), str(diseno or '').upper(), str(dimension or '').upper(), str(vida or '').upper())
+        if clave not in cache_pini:
+            try:
+                v = buscar_profundidad_inicial(marca, diseno, dimension, 'Reencauche' if re.search(r'R\d|REENC', clave[3]) else 'Original')
+            except Exception:
+                v = None
+            cache_pini[clave] = float(v) if v and to_float(v) > 0 else None
+        return cache_pini[clave]
+
+    return ref_precio, ref_prof_inicial
+
+
+def estimar_combustible_subinflado(df_corte: pd.DataFrame, col_delta: str = 'calc_delta_psi_pct') -> dict:
+    """
+    Única fórmula de combustible desperdiciado por subinflado (antes había dos distintas).
+    Solo cuenta los vehículos que tienen al menos una llanta con subinflado > 5 % (antes se
+    multiplicaba por todos los vehículos) y nunca las llantas sin lectura de PSI.
+    """
+    if df_corte is None or df_corte.empty or col_delta not in df_corte.columns:
+        return {'galones_mes': 0.0, 'costo_mes_cop': 0.0, 'vehiculos_afectados': 0, 'estimado': True}
+    sub = df_corte[pd.to_numeric(df_corte[col_delta], errors='coerce') < -5.0]
+    if sub.empty:
+        return {'galones_mes': 0.0, 'costo_mes_cop': 0.0, 'vehiculos_afectados': 0, 'estimado': True}
+    vehiculos = int(sub['placa'].nunique())
+    subinflado_prom = abs(float(pd.to_numeric(sub[col_delta], errors='coerce').mean()))
+    galones = vehiculos * COMBUSTIBLE_GAL_BASE_VEHICULO_MES * (subinflado_prom / 10.0) * COMBUSTIBLE_PENALIDAD_POR_10PCT
+    return {'galones_mes': round(galones, 1), 'costo_mes_cop': round(galones * PRECIO_GALON_ACPM_COP),
+            'vehiculos_afectados': vehiculos, 'estimado': True}
+
+
+def calcular_ahorro_potencial(df_corte: pd.DataFrame, col_perdida_alin: str) -> dict:
+    """
+    Potencial de ahorro con una sola fórmula para Diagnóstico y KPIs (antes había dos distintas).
+    df_corte: una medición por llanta con calc_p_min, calc_lim_retiro, calc_es_reencauche,
+    calc_delta_psi_pct, la columna de pérdida por alineación y calc_precio_estimado (opcional).
+    - Cascos salvables: llantas originales entre su límite de retiro y límite + 1,2 mm (antes la
+      ventana era 3,0-4,2 mm fija aunque el cliente retire a 4,0 mm).
+    - Alineación oportuna: valor del caucho que se está perdiendo por desgaste irregular
+      (antes se valoraba todo el caucho restante de la llanta).
+    - Combustible: estimar_combustible_subinflado(), 12 meses.
+    """
+    vacio = {"cascos_en_ventana_salvamento": 0, "ahorro_salvamento_cascos_cop": 0,
+             "ahorro_alineacion_oportuna_cop": 0, "ahorro_combustible_anual_psi_cop": 0,
+             "ahorro_potencial_total_cop": 0, "llantas_con_precio_estimado": 0,
+             "llantas_sin_precio": 0, "valores_estimados": True}
+    if df_corte is None or df_corte.empty or 'calc_p_min' not in df_corte.columns:
+        return vacio
+    p_min = pd.to_numeric(df_corte['calc_p_min'], errors='coerce')
+    lim = pd.to_numeric(df_corte['calc_lim_retiro'], errors='coerce')
+    originales = ~df_corte['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in df_corte.columns else True
+    cascos = int(((p_min > lim) & (p_min <= lim + VENTANA_SALVAMENTO_MM) & originales).sum())
+    ahorro_cascos = round(cascos * VALOR_CASCO_REFERENCIA_COP)
+    ahorro_alin = round(float(pd.to_numeric(df_corte[col_perdida_alin], errors='coerce').sum())) if col_perdida_alin in df_corte.columns else 0
+    ahorro_comb = round(estimar_combustible_subinflado(df_corte)['costo_mes_cop'] * 12.0)
+    precio_est = int(df_corte['calc_precio_estimado'].sum()) if 'calc_precio_estimado' in df_corte.columns else 0
+    sin_precio = int(pd.to_numeric(df_corte['calc_precio'], errors='coerce').isna().sum()) if 'calc_precio' in df_corte.columns else 0
+    return {
+        "cascos_en_ventana_salvamento": cascos,
+        "ahorro_salvamento_cascos_cop": ahorro_cascos,
+        "ahorro_alineacion_oportuna_cop": ahorro_alin,
+        "ahorro_combustible_anual_psi_cop": ahorro_comb,
+        "ahorro_potencial_total_cop": round(ahorro_cascos + ahorro_alin + ahorro_comb),
+        "llantas_con_precio_estimado": precio_est,
+        "llantas_sin_precio": sin_precio,
+        # Valor de casco y parámetros de combustible son referencias, no datos de la flota
+        "valores_estimados": True,
+        "valor_casco_referencia_cop": VALOR_CASCO_REFERENCIA_COP,
+    }
+
+
 def _mes_a_espanol(val_str: str) -> str:
     """Convierte '2025-01' o '2025-01-15' a formato 'Ene 25'."""
     meses = {
@@ -5670,7 +5843,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
     }
 
     try:
-        df_raw = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
+        df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False))
         if df_raw.empty:
             return resultado
 
@@ -5729,6 +5902,10 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
         resolver_limite = _construir_cache_limites_retiro()
         mapa_tips = _cargar_mapa_tipologias_ejes()
+        ref_precio, ref_prof_inicial = construir_referencias_llanta(df_raw)
+        _col = lambda c: [str(x or '').strip() for x in (df[c].tolist() if c in df else [''] * n_rows)]
+        marca_list_g, diseno_list_g, dim_list_g, vida_list_g = _col('marca'), _col('diseno'), _col('dimension'), _col('vida')
+        delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
 
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
@@ -5748,7 +5925,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
         for idx in range(n_rows):
             pos = pos_list[idx]
-            es_dir = (pos in (1, 2))
+            # Eje real según el esquema de la tipología (no asumir que Pos 1-2 siempre es direccional)
+            es_dir = (obtener_tipo_eje_posicion(tip_list[idx], pos, mapa_tipologias=mapa_tips) == 'DIRECCIONAL')
             pe = pe_list[idx]
             pc = pc_list[idx]
             pi = pi_list[idx]
@@ -5760,8 +5938,14 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             p_min_col.append(p_min)
 
             # 2. Profundidad inicial y límite de retiro dinámico desde el catálogo
-            p_ini = pini_list[idx] if pini_list[idx] > 0 else (16.0 if es_dir else 18.0)
-            p_ini_col.append(p_ini)
+            # Profundidad inicial real o del catálogo (antes 16/18 mm fijos inventaban desgaste)
+            p_ini = pini_list[idx] if pini_list[idx] > 0 else ref_prof_inicial(marca_list_g[idx], diseno_list_g[idx], dim_list_g[idx], vida_list_g[idx])
+            p_ini_col.append(p_ini if p_ini is not None else float('nan'))
+            # Precio real o mediana real del cliente/dimensión; si no hay, sin dato (antes $1.450.000 fijo)
+            pr_real = precio_list[idx] if precio_list[idx] > 0 else None
+            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx])
+            precio_col.append(pr if pr else float('nan'))
+            precio_estimado_col.append(pr_real is None and pr is not None)
 
             cli_row = cli_list[idx] or cliente or ''
             sub_row = sub_list[idx] or subcliente or ''
@@ -5772,13 +5956,14 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
                 lim_ret = mm_retiro_dir if es_dir else mm_retiro_trac
             lim_retiro_col.append(lim_ret)
 
-            mm_ut = max(1.0, p_ini - lim_ret)
+            if p_ini is None or p_min <= 0:
+                mm_ut = d_mm = pct_d = float('nan')
+            else:
+                mm_ut = max(1.0, p_ini - lim_ret)
+                d_mm = max(0.0, p_ini - p_min)
+                pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             mm_utiles_col.append(mm_ut)
-
-            d_mm = max(0.0, p_ini - p_min)
             delta_mm_col.append(d_mm)
-
-            pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             pct_desgaste_col.append(pct_d)
 
             # 3. Kilometraje y blindaje de asentamiento (Corrección 2)
@@ -5803,9 +5988,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
             km_rodados_col.append(km_rod)
 
-            asent = (d_mm < 0.5) or (km_rod < 500.0)
+            asent = (d_mm != d_mm) or (d_mm < 0.5) or (km_rod < 500.0)
             es_asentamiento_col.append(asent)
-
 
             if asent:
                 km_mm = 0.0
@@ -5814,15 +5998,14 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             else:
                 km_mm = km_rod / max(0.1, d_mm)
                 proy = km_mm * mm_ut
-                pr = precio_list[idx] if precio_list[idx] > 0 else 1450000.0
-                cpk_val = pr / max(1.0, proy)
+                cpk_val = (pr / max(1.0, proy)) if pr else float('nan')
 
             km_mm_col.append(km_mm)
             proy_total_col.append(proy)
             cpk_col.append(cpk_val)
 
             # 4. Filtro de madurez para techos KPI 15
-            es_mad = (d_mm >= 1.5) or (pct_d >= 10.0)
+            es_mad = (d_mm == d_mm) and ((d_mm >= 1.5) or (pct_d >= 10.0))
             es_madura_col.append(es_mad)
 
             # 5. Desalineación e Impacto Económico
@@ -5830,9 +6013,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             alerta_alin = (dif_hombros >= tol_desalineacion)
             if alerta_alin:
                 mm_perd = max(pe, pc, pi) - min(pe, pc, pi)
-                pr = precio_list[idx] if precio_list[idx] > 0 else 1450000.0
-                costo_mm = pr / mm_ut
-                perd_dinero = mm_perd * costo_mm
+                # Sin precio o sin mm útiles conocidos no se valoriza
+                perd_dinero = mm_perd * (pr / mm_ut) if (pr and mm_ut == mm_ut) else float('nan')
             else:
                 mm_perd = 0.0
                 perd_dinero = 0.0
@@ -5842,9 +6024,12 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
             # 6. Presión PSI Real contra objetivo
             psi_obj = psi_obj_dir if es_dir else psi_obj_trac
+            delta_psi_pct_col.append(((psi - psi_obj) / max(1.0, psi_obj)) * 100.0 if psi > 0 else float('nan'))
             lim_inf = psi_obj * (1.0 - tol_psi_baja / 100.0)
             lim_sup = psi_obj * (1.0 + tol_psi_alta / 100.0)
-            if psi < lim_inf:
+            if psi <= 0:
+                estado_psi = "Sin dato"  # sin lectura: no es baja presión
+            elif psi < lim_inf:
                 estado_psi = "Baja Presión"
             elif psi > lim_sup:
                 estado_psi = "Sobreinflado"
@@ -5874,6 +6059,9 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         df['calc_perdida_dinero'] = perdida_dinero_col
         df['calc_estado_psi'] = estado_psi_col
         df['calc_es_reencauche'] = es_reencauche_col
+        df['calc_delta_psi_pct'] = delta_psi_pct_col
+        df['calc_precio'] = precio_col
+        df['calc_precio_estimado'] = precio_estimado_col
 
         # Columna de corte / periodo temporal (YYYY-MM o número de inspección)
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
@@ -6192,42 +6380,11 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             "min": fvu_min_p
         }
 
-        # Inteligencia de Ahorro Financiero y ROI de Flota
-        cascos_salv = int(len(df_ultimo_corte[
-            (df_ultimo_corte['calc_p_min'] > 3.0) &
-            (df_ultimo_corte['calc_p_min'] <= 4.2) &
-            (df_ultimo_corte['vida'].astype(str).str.upper().str.contains('ORIGINAL', na=False) | ~df_ultimo_corte['calc_es_reencauche'])
-        ])) if (not df_ultimo_corte.empty and 'calc_p_min' in df_ultimo_corte.columns) else 0
-        ahorro_cascos = round(cascos_salv * 950000.0)
-
-        ahorro_alin = 0.0
-        if not df_ultimo_corte.empty and 'calc_mm_perdidos' in df_ultimo_corte.columns:
-            for _, r_al in df_ultimo_corte[df_ultimo_corte['calc_mm_perdidos'] > 0].iterrows():
-                p_min_al = to_float(r_al.get('calc_p_min', 0.0))
-                lim_al = to_float(r_al.get('calc_lim_retiro', 3.0))
-                mm_ut_al = max(1.0, to_float(r_al.get('calc_mm_utiles', 14.0)))
-                pr_al = to_float(r_al.get('precio', 1450000.0), 1450000.0)
-                if pr_al <= 0:
-                    pr_al = 1450000.0
-                ahorro_alin += max(0.0, p_min_al - lim_al) * (pr_al / mm_ut_al)
-        ahorro_alin = round(ahorro_alin)
-
-        ahorro_comb_anual = 0.0
-        if not df_ultimo_corte.empty and 'calc_estado_psi' in df_ultimo_corte.columns:
-            bajas_psi = df_ultimo_corte[df_ultimo_corte['calc_estado_psi'] == 'Baja Presión']
-            if not bajas_psi.empty:
-                gal_m = df_ultimo_corte['placa'].nunique() * 8.5 * 1.5 * 0.015
-                costo_comb_mes = gal_m * 10500.0
-                ahorro_comb_anual = round(costo_comb_mes * 12.0)
-
-        ahorro_tot = round(ahorro_cascos + ahorro_alin + ahorro_comb_anual)
+        # Inteligencia de Ahorro Financiero y ROI de Flota (misma fórmula que la suite de KPIs)
+        ahorro_calc = calcular_ahorro_potencial(df_ultimo_corte, 'calc_perdida_dinero')
 
         roi_data = {
-            "cascos_en_ventana_salvamento": cascos_salv,
-            "ahorro_salvamento_cascos_cop": ahorro_cascos,
-            "ahorro_alineacion_oportuna_cop": ahorro_alin,
-            "ahorro_combustible_anual_psi_cop": ahorro_comb_anual,
-            "ahorro_potencial_total_cop": ahorro_tot,
+            **ahorro_calc,
             "alertas_cambiazo_serial": [],
             "total_alertas_cambiazo": 0
         }
@@ -6815,6 +6972,60 @@ def listar_inventario_bodegas(filtros: dict = None) -> dict:
     }
 
 
+DIAS_REPOSICION_FVU = 30  # bajas recientes que el MRP debe reponer
+
+
+def _es_llanta_fvu(ll) -> bool:
+    return (ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU')
+            or ll.get('estado_actual') == 'Bodega_7_FVU'
+            or bool(ll.get('causal_baja_fvu')))
+
+
+def contar_bajas_fvu_para_reponer(llantas, dimension, dias=DIAS_REPOSICION_FVU) -> int:
+    """
+    Bajas FVU de una dimensión ocurridas en los últimos `dias`. Antes el MRP sumaba todas las
+    bajas de la historia en cada cálculo y pedía comprar llantas que ya se habían repuesto.
+    La fecha sale de fecha_baja o, si falta, del último movimiento BAJA_FVU / CHATARRIZACION del kardex.
+    """
+    candidatas = [ll for ll in llantas if str(ll.get('dimension', '')).upper() == str(dimension).upper() and _es_llanta_fvu(ll)]
+    if not candidatas:
+        return 0
+    fecha_de = resolver_fecha_baja_fvu()
+    desde = datetime.now(BOGOTA_TZ).date() - timedelta(days=dias)
+    total = 0
+    for ll in candidatas:
+        f_baja = fecha_de(ll)
+        try:
+            if f_baja and datetime.strptime(str(f_baja)[:10], '%Y-%m-%d').date() >= desde:
+                total += 1
+        except ValueError:
+            pass
+    return total
+
+
+def resolver_fecha_baja_fvu():
+    """fecha_de(llanta) -> 'YYYY-MM-DD' de su baja: fecha_baja o el último BAJA_FVU / CHATARRIZACION del kardex."""
+    fechas_kardex = {}
+    try:
+        with get_connection() as conn:
+            for cli, num, f in conn.execute("""
+                SELECT UPPER(TRIM(cliente)), UPPER(TRIM(numero_interno)), MAX(fecha_movimiento)
+                FROM kardex_movimientos_llanta
+                WHERE UPPER(tipo_movimiento) IN ('BAJA_FVU', 'CHATARRIZACION')
+                GROUP BY 1, 2
+            """):
+                fechas_kardex[(cli, num)] = f
+    except Exception:
+        pass
+
+    def fecha_de(ll):
+        clave = (str(ll.get('cliente', '')).strip().upper(), str(ll.get('numero_interno', '')).strip().upper())
+        f = ll.get('fecha_baja') or fechas_kardex.get(clave)
+        return str(f)[:10] if f else None
+
+    return fecha_de
+
+
 def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     """
     Calcula el Balance Ejecutivo de las 7 Bodegas, Inventario Valorizado, Alertas
@@ -6908,7 +7119,7 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     matriz_mrp = []
 
     # Obtener últimas inspecciones por vehículo para evaluar demanda en patio
-    df_raw = obtener_todas_inspecciones(incluir_fotos=False)
+    df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(incluir_fotos=False))
     if not df_raw.empty and cliente and cliente != "TODOS":
         df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
     if not df_raw.empty and subcliente and subcliente != "TODOS":
@@ -6989,15 +7200,7 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
         demanda_flota = demanda_dir + demanda_trac
 
         # 2. Bajas FVU de esta dimensión (Pila Desecho / FVU y Chatarrizadas)
-        ll_dim_fvu = [
-            ll for ll in llantas_todas
-            if str(ll.get('dimension', '')).upper() == dim.upper() and (
-                ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU')
-                or ll.get('estado_actual') == 'Bodega_7_FVU'
-                or bool(ll.get('causal_baja_fvu'))
-            )
-        ]
-        bajas_fvu = len(ll_dim_fvu)
+        bajas_fvu = contar_bajas_fvu_para_reponer(llantas_todas, dim)
 
         # 3. Stock de seguridad
         stock_seg = stock_seg_def
@@ -7060,6 +7263,17 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     }
 
 
+def _redondear(valor, decimales=0):
+    """round() que devuelve None si no hay datos (NaN) en lugar de fallar o mostrar 0."""
+    try:
+        v = float(valor)
+    except (TypeError, ValueError):
+        return None
+    if v != v:
+        return None
+    return round(v, decimales) if decimales else round(v)
+
+
 def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     """
     Calcula la Suite Analítica de los 20 KPIs organizados en las 5 Pestañas Estándar Homologadas
@@ -7107,7 +7321,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     resolver_limite = _construir_cache_limites_retiro()
 
     # 1. Inspecciones históricas
-    df_raw = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
+    df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False))
     if not df_raw.empty:
         df = df_raw.copy()
         if cliente and cliente != "TODOS":
@@ -7143,6 +7357,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         sn_list = [str(x or '').strip().upper() for x in (df['numero_interno'].tolist() if 'numero_interno' in df else ['']*n_rows)]
         vida_list = [str(x or '').strip().upper() for x in (df['vida'].tolist() if 'vida' in df else ['']*n_rows)]
         banda_list = [str(x or '').strip() for x in (df['banda_reen'].tolist() if 'banda_reen' in df else ['']*n_rows)]
+        tip_list_k = [str(x or '').strip() for x in (df['tipologia'].tolist() if 'tipologia' in df else ['']*n_rows)]
+        max_pos_placa = {pl: max(to_int(p) for p in grp['posicion']) for pl, grp in df.groupby(df['placa'].astype(str).str.strip().str.upper())}
+        lim_posicion = construir_resolver_limite_posicion()
+        ref_precio, ref_prof_inicial = construir_referencias_llanta(df_raw)
+        marca_list_k = [str(x or '').strip() for x in (df['marca'].tolist() if 'marca' in df else ['']*n_rows)]
+        diseno_list_k = [str(x or '').strip() for x in (df['diseno'].tolist() if 'diseno' in df else ['']*n_rows)]
+        dim_list_k = [str(x or '').strip() for x in (df['dimension'].tolist() if 'dimension' in df else ['']*n_rows)]
+        precio_estimado_col, pini_sin_dato_col = [], []
 
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
@@ -7169,28 +7391,39 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         for i in range(n_rows):
             pos = pos_list[i]
-            es_dir = (pos in (1, 2))
+            # Eje real según el esquema de la tipología (en tráiler la Pos 1 no es direccional; en 8x4 la 3 y 4 sí)
+            eje_i = lim_posicion.tipo_eje(tip_list_k[i], pos, max_pos_placa.get(placa_list[i]))
+            es_dir = (eje_i == 'DIRECCIONAL')
             pe, pc, pi = pe_list[i], pc_list[i], pi_list[i]
             psi = psi_list[i]
-            pr = precio_list[i] if precio_list[i] > 0 else 1450000.0
+            cli_r = cli_list[i] or cliente or ''
+            sub_r = sub_list[i] or subcliente or ''
+
+            # Precio real; si falta, mediana real del cliente/dimensión; si tampoco hay, sin dato
+            if precio_list[i] > 0:
+                pr, pr_estimado = precio_list[i], False
+            else:
+                pr, pr_estimado = ref_precio(cli_r, dim_list_k[i]), True
+            precio_estimado_col.append(pr_estimado and pr is not None)
 
             positivos = [x for x in (pe, pc, pi) if x > 0]
             p_min = min(positivos) if positivos else 0.0
             p_min_col.append(p_min)
 
-            p_ini = pini_list[i] if pini_list[i] > 0 else (16.0 if es_dir else 18.0)
-            cli_r = cli_list[i] or cliente or ''
-            sub_r = sub_list[i] or subcliente or ''
-            lim_r = resolver_limite(cli_r, sub_r, pos)
+            # Profundidad inicial real o del catálogo; sin ella no se puede medir desgaste
+            p_ini = pini_list[i] if pini_list[i] > 0 else ref_prof_inicial(marca_list_k[i], diseno_list_k[i], dim_list_k[i], vida_list[i])
+            pini_sin_dato_col.append(p_ini is None)
+            lim_r = lim_posicion(cli_r, sub_r, tip_list_k[i], pos, max_pos_placa.get(placa_list[i]))
             lim_retiro_col.append(lim_r)
 
-            mm_ut = max(1.0, p_ini - lim_r)
+            if p_ini is None or p_min <= 0:
+                mm_ut = d_mm = pct_d = float('nan')
+            else:
+                mm_ut = max(1.0, p_ini - lim_r)
+                d_mm = max(0.0, p_ini - p_min)
+                pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             mm_utiles_col.append(mm_ut)
-
-            d_mm = max(0.0, p_ini - p_min)
             delta_mm_col.append(d_mm)
-
-            pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             pct_desgaste_col.append(pct_d)
 
             # Corrección 2: Blindaje de km_rodados eliminando el fallback km_act
@@ -7215,21 +7448,24 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
             km_rodados_col.append(km_rod)
 
-            asent = (d_mm < 0.5) or (km_rod < 500.0)
+            sin_desgaste = (d_mm != d_mm)  # NaN: sin profundidad inicial o sin medición
+            asent = sin_desgaste or (d_mm < 0.5) or (km_rod < 500.0)
             es_asentamiento_col.append(asent)
 
             # Filtro estricto de madurez: desgaste >= 1.5 mm
-            es_mad = (d_mm >= 1.5)
+            es_mad = (not sin_desgaste) and (d_mm >= 1.5)
             es_madura_col.append(es_mad)
 
+            # Sin desgaste suficiente no hay rendimiento ni proyección confiables: sin dato (antes
+            # la proyección de una llanta en asentamiento era su km actual y bajaba los promedios)
             if asent or d_mm <= 0.0:
-                km_mm_val = 0.0
-                proy_val = km_rod
-                cpk_val = 0.0
+                km_mm_val = float('nan')
+                proy_val = float('nan')
+                cpk_val = float('nan')
             else:
                 km_mm_val = km_rod / max(0.1, d_mm)
                 proy_val = km_rod + (max(0.0, p_min - lim_r) * km_mm_val)
-                cpk_val = pr / max(1.0, proy_val)
+                cpk_val = (pr / max(1.0, proy_val)) if pr else float('nan')
 
             km_mm_col.append(km_mm_val)
             proy_total_col.append(proy_val)
@@ -7241,18 +7477,26 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             alerta_alin_col.append(alerta_al)
             if alerta_al:
                 mm_p = max(pe, pc, pi) - min(pe, pc, pi)
-                p_din = mm_p * (pr / mm_ut)
+                # Sin precio o sin mm útiles conocidos no se valoriza (antes se usaban valores fijos)
+                p_din = mm_p * (pr / mm_ut) if (pr and mm_ut == mm_ut) else float('nan')
             else:
                 mm_p = 0.0
                 p_din = 0.0
             mm_perd_alin_col.append(mm_p)
             perd_dinero_alin_col.append(p_din)
 
-            # Presión PSI
+            # Presión PSI (sin lectura = sin dato; antes contaba como -100 % "baja severa")
             p_obj = psi_obj_dir if es_dir else psi_obj_trac
-            d_psi = ((psi - p_obj) / max(1.0, p_obj)) * 100.0
-            delta_psi_pct_col.append(d_psi)
-            if d_psi < -15.0:
+            if psi <= 0:
+                delta_psi_pct_col.append(float('nan'))
+                estado_psi_col.append('Sin dato')
+                d_psi = None
+            else:
+                d_psi = ((psi - p_obj) / max(1.0, p_obj)) * 100.0
+                delta_psi_pct_col.append(d_psi)
+            if d_psi is None:
+                pass
+            elif d_psi < -15.0:
                 est_psi = 'Baja Severa (< -15%)'
             elif d_psi < -5.0:
                 est_psi = 'Baja Moderada (-15% a -5%)'
@@ -7260,7 +7504,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 est_psi = 'Sobrepresión (> +10%)'
             else:
                 est_psi = 'Correcta (±5%)'
-            estado_psi_col.append(est_psi)
+            if d_psi is not None:
+                estado_psi_col.append(est_psi)
 
             # Vida / Reencauche
             v_raw = vida_list[i]
@@ -7295,6 +7540,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_estado_psi'] = estado_psi_col
         df['calc_es_reencauche'] = es_reencauche_col
         df['calc_vida_norm'] = vida_norm_col
+        df['calc_precio_estimado'] = precio_estimado_col
+        df['calc_pini_sin_dato'] = pini_sin_dato_col
+        # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
+        df['calc_precio'] = [p if p > 0 else ref_precio(c, d) for p, c, d in zip(precio_list, cli_list, dim_list_k)]
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
@@ -7348,7 +7597,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         periodo_reciente = ""
         placas_insp_mes = set()
 
-    vehiculos_auditados_mes = len(placas_insp_mes)
+    # Solo cuentan las placas del padrón: antes las inspeccionadas fuera del padrón inflaban el
+    # numerador (ej. 177 de 35) y el cumplimiento quedaba en 100 % aunque faltaran vehículos
+    placas_padron = {r[0] for r in padron_rows}
+    vehiculos_auditados_mes = len(placas_insp_mes & placas_padron)
+    placas_fuera_padron = len(placas_insp_mes - placas_padron)
     cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / max(1, total_padron)) * 100.0), 1) if total_padron > 0 else 100.0
 
     placas_pendientes = []
@@ -7390,6 +7643,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "total_padron_activo": total_padron,
         "placas_pendientes": placas_pendientes,
         "placas_pendientes_cnt": len(placas_pendientes),
+        "placas_inspeccionadas_fuera_padron": placas_fuera_padron,
         "periodo_corte": _mes_a_espanol(periodo_reciente) if periodo_reciente else "Actual"
     }
 
@@ -7664,18 +7918,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                         'detalle': f'P3-P4 ↔ P9-P10 / P5-P6 ↔ P7-P8 (Δ {round(dif, 1)} mm)',
                         'esquema': f'P3-P4 ↔ P9-P10 / P5-P6 ↔ P7-P8',
                         'delta_ejes_mm': round(dif, 1),
-                        'estado': 'Reincidente' if dif >= 2.5 else 'Solucionada'
+                        # Sin historial de ejecución no se puede afirmar si se solucionó
+                        'estado': 'Pendiente'
                     })
-            p_trail = grp_p[grp_p['posicion'] >= 11]
-            if len(p_trail) >= 4:
-                ordenes_rotacion.append({
-                    'placa': pl,
-                    'tipo': 'Tráiler Eje 2 < Eje 1 < Eje 3',
-                    'detalle': 'Ajuste de profundidad entre ejes de tráiler',
-                    'esquema': 'Ajuste de profundidad entre ejes de tráiler',
-                    'delta_ejes_mm': 1.8,
-                    'estado': 'Solucionada'
-                })
+            # (Se eliminó una orden de tráiler con diferencia fija de 1,8 mm y estado "Solucionada"
+            #  que se agregaba a cualquier vehículo con 4+ posiciones >= 11, sin medir nada)
 
     kpi_07 = {
         "disponible": True,
@@ -7752,18 +7999,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         cnt_mod = int((df_patio['calc_estado_psi'] == 'Baja Moderada (-15% a -5%)').sum())
         cnt_ok = int((df_patio['calc_estado_psi'] == 'Correcta (±5%)').sum())
         cnt_sob = int((df_patio['calc_estado_psi'] == 'Sobrepresión (> +10%)').sum())
+        cnt_sin_dato = int((df_patio['calc_estado_psi'] == 'Sin dato').sum())
         tot_psi = max(1, cnt_sev + cnt_mod + cnt_ok + cnt_sob)
         pct_calibracion = round((cnt_ok / tot_psi) * 100.0, 1)
 
-        sub_llantas = df_patio[df_patio['calc_delta_psi_pct'] < -5.0]
-        if not sub_llantas.empty:
-            subpresion_prom = abs(sub_llantas['calc_delta_psi_pct'].mean())
-            galones_desp = round(df_patio['placa'].nunique() * 8.5 * (subpresion_prom / 10.0) * 0.015, 1)
-        else:
-            galones_desp = 0.0
-        costo_comb_cop = round(galones_desp * 10500.0)
+        comb_k9 = estimar_combustible_subinflado(df_patio)
+        galones_desp = comb_k9['galones_mes']
+        costo_comb_cop = comb_k9['costo_mes_cop']
     else:
-        cnt_sev, cnt_mod, cnt_ok, cnt_sob = 0, 0, 0, 0
+        cnt_sev, cnt_mod, cnt_ok, cnt_sob, cnt_sin_dato = 0, 0, 0, 0, 0
         pct_calibracion = 100.0
         galones_desp = 0.0
         costo_comb_cop = 0.0
@@ -7780,6 +8024,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             "sobrepresion": cnt_sob
         },
         "pct_calibracion_correcta": pct_calibracion,
+        "llantas_sin_lectura_psi": cnt_sin_dato,
         "galones_combustible_desperdiciados_mes": galones_desp,
         "galones_desperdiciados_mes": galones_desp,
         "costo_combustible_desperdiciado_cop": costo_comb_cop
@@ -7855,9 +8100,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 corregidas = max(0, len(alerta_ant_keys) - persistentes)
                 efectividad_taller = round((corregidas / len(alerta_ant_keys)) * 100.0, 1)
             else:
-                efectividad_taller = round(min(100.0, max(75.0, 100.0 - (tot_nov / max(1, len(df_patio))) * 15.0)), 1)
+                efectividad_taller = None  # el mes anterior no tuvo alertas: no hay qué medir
         else:
-            efectividad_taller = round(min(100.0, max(75.0, 100.0 - (tot_nov / max(1, len(df_patio))) * 15.0)), 1)
+            efectividad_taller = None  # sin mes anterior no se puede medir (antes se mostraba un valor de relleno 75-100 %)
     else:
         labels_nov = ['Sin Novedades']
         frec_nov = [0]
@@ -7876,23 +8121,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     # =========================================================================
     # KPI 11: Impacto Económico Interanual (Pérdida Integral: Alineación + Duales + Combustible)
+    # Una sola fórmula para cada mes y para el total. El total es la pérdida vigente con la
+    # última medición de cada llanta (antes sumaba todas las inspecciones y repetía llantas,
+    # por eso no cuadraba con la gráfica).
     # =========================================================================
-    dinero_alin_tot = round(float(df['calc_perd_dinero_alin'].sum())) if not df.empty else 0.0
-    mm_perd_tot_k11 = round(float(df['calc_mm_perd_alin'].sum()), 1) if not df.empty else 0.0
-
-    dinero_duales_tot = 0.0
-    dinero_comb_tot = 0.0
-
-    mm_perdidos_mes = []
-    dinero_perdido_mes = []
-    for m in meses_k2:
-        df_m = df[df['periodo_mes'] == m].sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
-        mm_m = round(float(df_m['calc_mm_perd_alin'].sum()), 1)
-        din_alin_m = float(df_m['calc_perd_dinero_alin'].sum())
-
-        # Pérdida por duales mal apareados en el mes
-        din_duales_m = 0.0
-        for _, grp_v in df_m.groupby('placa'):
+    def _perdidas_corte(df_c):
+        """(mm alineación, $ alineación, $ duales, $ combustible) de un corte con una medición por llanta."""
+        if df_c is None or df_c.empty:
+            return 0.0, 0.0, 0.0, 0.0
+        mm_c = float(df_c['calc_mm_perd_alin'].sum())
+        din_alin_c = float(df_c['calc_perd_dinero_alin'].sum())
+        din_duales_c = 0.0
+        for _, grp_v in df_c.groupby('placa'):
             for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
                 r_i = grp_v[grp_v['posicion'] == p_izq]
                 r_d = grp_v[grp_v['posicion'] == p_der]
@@ -7901,25 +8141,23 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                     pd_val = to_float(r_d['calc_p_min'].values[0])
                     delta_d = abs(pi_val - pd_val)
                     if delta_d >= tol_apareo:
-                        pr_d = to_float(r_i['precio'].values[0], 1450000.0)
-                        mm_ut_d = to_float(r_i['calc_mm_utiles'].values[0], 14.0)
-                        din_duales_m += (delta_d - 2.0) * (pr_d / max(1.0, mm_ut_d))
+                        pr_d = to_float(r_i['calc_precio'].values[0], 0.0)
+                        mm_ut_d = to_float(r_i['calc_mm_utiles'].values[0], 0.0)
+                        if pr_d > 0 and mm_ut_d > 0:  # sin precio o mm útiles no se valoriza
+                            din_duales_c += (delta_d - 2.0) * (pr_d / mm_ut_d)
+        din_comb_c = estimar_combustible_subinflado(df_c)['costo_mes_cop']
+        return mm_c, din_alin_c, din_duales_c, din_comb_c
 
-        # Desperdicio de combustible ACPM en el mes
-        sub_m = df_m[df_m['calc_delta_psi_pct'] < -5.0]
-        if not sub_m.empty:
-            subpresion_prom = abs(sub_m['calc_delta_psi_pct'].mean())
-            gal_m = df_m['placa'].nunique() * 8.5 * (subpresion_prom / 10.0) * 0.015
-            din_comb_m = gal_m * 10500.0
-        else:
-            din_comb_m = 0.0
+    mm_perdidos_mes = []
+    dinero_perdido_mes = []
+    for m in meses_k2:
+        df_m = df[df['periodo_mes'] == m].sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
+        mm_m, din_alin_m, din_duales_m, din_comb_m = _perdidas_corte(df_m)
+        mm_perdidos_mes.append(round(mm_m, 1))
+        dinero_perdido_mes.append(round(din_alin_m + din_duales_m + din_comb_m) if es_full else 0)
 
-        perd_tot_m = round(din_alin_m + din_duales_m + din_comb_m)
-        mm_perdidos_mes.append(mm_m)
-        dinero_perdido_mes.append(perd_tot_m if es_full else 0)
-        dinero_duales_tot += din_duales_m
-        dinero_comb_tot += din_comb_m
-
+    mm_perd_vig, dinero_alin_tot, dinero_duales_tot, dinero_comb_tot = _perdidas_corte(df_patio if not df.empty else None)
+    mm_perd_tot_k11 = round(mm_perd_vig, 1)
     dinero_perd_tot_k11 = round(dinero_alin_tot + dinero_duales_tot + dinero_comb_tot)
 
     kpi_11 = {
@@ -7946,10 +8184,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 12: 4 Tarjetas Maestras de Desempeño de Flota (SOLO FULL)
     # =========================================================================
     if not df_patio.empty and es_full:
-        mm_gast_k12 = round(float(df_patio['calc_desgaste_mm'].mean()), 1)
-        prof_act_k12 = round(float(df_patio['calc_p_min'].mean()), 1)
-        pct_desg_k12 = round(float(df_patio['calc_pct_desgaste'].mean()), 1)
-        km_rec_k12 = round(float(df_patio['calc_km_rodados'].mean()))
+        mm_gast_k12 = _redondear(df_patio['calc_desgaste_mm'].mean(), 1)
+        prof_act_k12 = _redondear(df_patio['calc_p_min'].mean(), 1)
+        pct_desg_k12 = _redondear(df_patio['calc_pct_desgaste'].mean(), 1)
+        km_rec_k12 = _redondear(df_patio['calc_km_rodados'].mean())
     else:
         mm_gast_k12, prof_act_k12, pct_desg_k12, km_rec_k12 = 0.0, 0.0, 0.0, 0
 
@@ -7967,10 +8205,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     labels_k13, km_reales_k13, proy_final_k13 = [], [], []
     if not df_patio.empty and es_full:
-        for mk, grp_mk in df_patio.groupby('marca'):
+        # Solo llantas con desgaste suficiente para proyectar (igual que el KPI 14)
+        for mk, grp_mk in df_patio[~df_patio['calc_es_asentamiento']].groupby('marca'):
             labels_k13.append(str(mk) or 'Otras')
-            km_reales_k13.append(round(float(grp_mk['calc_km_rodados'].mean())))
-            proy_final_k13.append(round(float(grp_mk['calc_proy_total'].mean())))
+            km_reales_k13.append(_redondear(grp_mk['calc_km_rodados'].mean()))
+            proy_final_k13.append(_redondear(grp_mk['calc_proy_total'].mean()))
 
     kpi_13 = {
         "disponible": es_full,
@@ -8007,9 +8246,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             for g_nom, grp_g in df_validas.groupby(grp_col):
                 lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
                 labels_k14.append(lbl_fmt or 'General')
-                proy_k14.append(round(float(grp_g['calc_proy_total'].mean())))
-                kmmm_k14.append(round(float(grp_g['calc_km_mm'].mean()), 1))
-                cpk_k14.append(round(float(grp_g['calc_cpk'].mean()), 2))
+                proy_k14.append(_redondear(grp_g['calc_proy_total'].mean()))
+                kmmm_k14.append(_redondear(grp_g['calc_km_mm'].mean(), 1))
+                cpk_k14.append(_redondear(grp_g['calc_cpk'].mean(), 2))
 
     kpi_14 = {
         "disponible": es_full,
@@ -8027,13 +8266,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     labels_k15, prom_k15, max_k15, min_k15, brecha_k15 = [], [], [], [], []
     if not df_patio.empty and es_full:
         # Filtro estricto de madurez sobre última foto de patio: SOLO llantas con calc_desgaste_mm >= 1.5
-        df_maduras = df_patio[df_patio['calc_desgaste_mm'] >= 1.5]
+        df_maduras = df_patio[(df_patio['calc_desgaste_mm'] >= 1.5) & df_patio['calc_proy_total'].notna()]
         if not df_maduras.empty:
             for mk, grp_mk in df_maduras.groupby('marca'):
                 labels_k15.append(str(mk) or 'Otras')
-                pr_val = round(float(grp_mk['calc_proy_total'].mean()))
-                mx_val = round(float(grp_mk['calc_proy_total'].max()))
-                mn_val = round(float(grp_mk['calc_proy_total'].min()))
+                pr_val = _redondear(grp_mk['calc_proy_total'].mean())
+                mx_val = _redondear(grp_mk['calc_proy_total'].max())
+                mn_val = _redondear(grp_mk['calc_proy_total'].min())
                 br_pct = round(((mx_val - pr_val) / max(1.0, mx_val)) * 100.0, 1)
                 prom_k15.append(pr_val)
                 max_k15.append(mx_val)
@@ -8066,7 +8305,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         b5 = df_patio[df_patio['calc_pct_desgaste'] >= 100.0]
         bandas = [b1, b2, b3, b4, b5]
         conteo_k16 = [len(b) for b in bandas]
-        proy_k16 = [round(float(b['calc_proy_total'].mean())) if not b.empty else 0 for b in bandas]
+        proy_k16 = [_redondear(b['calc_proy_total'].mean()) if not b.empty else 0 for b in bandas]
 
     kpi_16 = {
         "disponible": es_full,
@@ -8090,10 +8329,19 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         ir_fvu = 0.0
         pct_reen_fvu = 0.0
 
-    fvu_12m_cant = [0] * len(labels_k2)
-    fvu_12m_ir = [ir_fvu] * len(labels_k2)
-    if cant_fvu > 0 and labels_k2:
-        fvu_12m_cant[-1] = cant_fvu
+    # Serie mensual real según la fecha de cada baja (antes: total acumulado en el último mes
+    # y el mismo IR repetido en todos los meses). Meses sin bajas: 0 bajas e IR sin dato.
+    fecha_baja_de = resolver_fecha_baja_fvu()
+    fvu_por_mes = {}
+    for ll in llantas_fvu:
+        f_b = fecha_baja_de(ll)
+        if f_b:
+            fvu_por_mes.setdefault(f_b[:7], []).append(ll)
+    fvu_12m_cant = [len(fvu_por_mes.get(m, [])) for m in meses_k2]
+    fvu_12m_ir = [
+        round(sum(to_int(ll.get('num_reencauches', 0)) + 1 for ll in fvu_por_mes[m]) / len(fvu_por_mes[m]), 2) if fvu_por_mes.get(m) else None
+        for m in meses_k2
+    ]
 
     kpi_17 = {
         "disponible": es_full,
@@ -8185,13 +8433,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 'cantidad': h_val['count']
             })
 
-        all_pb = [to_float(ll.get('prof_actual_min', 0.0)) for ll in llantas_fvu]
-        max_b = round(max(all_pb), 1) if all_pb else 0.0
-        prom_b = round(sum(all_pb) / max(1, len(all_pb)), 1) if all_pb else 0.0
-        min_b = round(min(all_pb), 1) if all_pb else 0.0
-        max_baja = [max_b] * len(labels_k2)
-        prom_baja = [prom_b] * len(labels_k2)
-        min_baja = [min_b] * len(labels_k2)
+        # Profundidad de baja por mes real (antes: el mismo valor global repetido en cada mes)
+        for m in meses_k2:
+            pb_m = [to_float(ll.get('prof_actual_min', 0.0)) for ll in fvu_por_mes.get(m, [])]
+            max_baja.append(round(max(pb_m), 1) if pb_m else None)
+            prom_baja.append(round(sum(pb_m) / len(pb_m), 1) if pb_m else None)
+            min_baja.append(round(min(pb_m), 1) if pb_m else None)
 
     kpi_19 = {
         "disponible": es_full,
@@ -8279,14 +8526,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         demanda_flota = dem_dir + dem_trac
         # Corrección 3 y 4: Unificación de estados FVU y sincronización con balance MRP
-        bajas_fvu = len([
-            ll for ll in llantas_maestro_todas
-            if str(ll.get('dimension', '')).upper() == dim_item.upper() and (
-                ll.get('ubicacion_bodega') in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU')
-                or ll.get('estado_actual') == 'Bodega_7_FVU'
-                or bool(ll.get('causal_baja_fvu'))
-            )
-        ])
+        bajas_fvu = contar_bajas_fvu_para_reponer(llantas_maestro_todas, dim_item)
 
         # Margen de Seguridad (15%): ceil((demanda + bajas) * 0.15)
         margen_seguridad = math.ceil((demanda_flota + bajas_fvu) * 0.15)
@@ -8364,33 +8604,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     # PARTE 2: INTELIGENCIA DE AHORRO FINANCIERO, ROI Y DETECCIÓN DE CAMBIAZOS
     # =========================================================================
-    cascos_en_salvamento = 0
-    ahorro_alineacion_cop = 0.0
-    if not df_patio.empty:
-        # 1. Cascos en ventana de salvamento: 3.0 < P_min <= 4.2 y vida_actual == 'Original'
-        df_cascos = df_patio[
-            (df_patio['calc_p_min'] > 3.0) &
-            (df_patio['calc_p_min'] <= 4.2) &
-            (df_patio['calc_vida_norm'] == 'Original')
-        ]
-        cascos_en_salvamento = int(len(df_cascos))
-
-        # 2. Ahorro alineación oportuna: caucho útil remanente que se evita perder
-        df_alin_alerta = df_patio[df_patio['calc_alerta_alin']]
-        for _, r_al in df_alin_alerta.iterrows():
-            p_min_al = to_float(r_al.get('calc_p_min', 0.0))
-            lim_al = to_float(r_al.get('calc_lim_retiro', 3.0))
-            mm_ut_al = max(1.0, to_float(r_al.get('calc_mm_utiles', 14.0)))
-            pr_al = to_float(r_al.get('precio', 1450000.0), 1450000.0)
-            if pr_al <= 0:
-                pr_al = 1450000.0
-            mm_remanente = max(0.0, p_min_al - lim_al)
-            ahorro_alineacion_cop += mm_remanente * (pr_al / mm_ut_al)
-
-    ahorro_salvamento_cop = round(cascos_en_salvamento * 950000.0)
-    ahorro_alineacion_cop = round(ahorro_alineacion_cop)
-    ahorro_combustible_anual_cop = round(costo_comb_cop * 12.0)
-    ahorro_potencial_total_cop = round(ahorro_salvamento_cop + ahorro_alineacion_cop + ahorro_combustible_anual_cop)
+    ahorro_calc = calcular_ahorro_potencial(df_patio, 'calc_perd_dinero_alin')
 
     # 3. Detector de Discrepancias / Posibles Cambiazos en Ruta
     alertas_cambiazo_serial = []
@@ -8452,11 +8666,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                         })
 
     ahorro_roi = {
-        "cascos_en_ventana_salvamento": cascos_en_salvamento,
-        "ahorro_salvamento_cascos_cop": ahorro_salvamento_cop,
-        "ahorro_alineacion_oportuna_cop": ahorro_alineacion_cop,
-        "ahorro_combustible_anual_psi_cop": ahorro_combustible_anual_cop,
-        "ahorro_potencial_total_cop": ahorro_potencial_total_cop,
+        **ahorro_calc,
         "alertas_cambiazo_serial": alertas_cambiazo_serial,
         "total_alertas_cambiazo": len(alertas_cambiazo_serial)
     }

@@ -771,7 +771,8 @@ def api_diagnostico(
 ):
     try:
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-        df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
+        # Las fechas futuras o imposibles se excluyen de los análisis (siguen en la Base para corregirlas)
+        df = database.filtrar_fechas_validas(database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False))
         if not df.empty and 'fecha' in df.columns:
             if fecha_desde and str(fecha_desde).strip():
                 df = df[df['fecha'].astype(str).str[:10] >= str(fecha_desde).strip()]
@@ -807,7 +808,8 @@ def api_diagnostico_matriz_semaforos(
                     raise HTTPException(status_code=403, detail="No tiene permisos para ver la matriz de este cliente")
 
         filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-        df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
+        # Las fechas futuras o imposibles se excluyen de los análisis (siguen en la Base para corregirlas)
+        df = database.filtrar_fechas_validas(database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False))
         if df.empty:
             return {
                 "posiciones": [],
@@ -971,7 +973,7 @@ def api_exportar_diagnostico_excel(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-    df_insp = database.obtener_todas_inspecciones(usuario=filtro_u)
+    df_insp = database.filtrar_fechas_validas(database.obtener_todas_inspecciones(usuario=filtro_u))
 
     # Validar permisos de asignación de cliente
     rol = str(usuario_actual.get("rol", "")).strip().lower()
