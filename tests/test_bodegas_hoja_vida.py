@@ -7,6 +7,22 @@ Implementación según sección 6 del prompt.
 import pytest
 import database
 
+
+def _montar_y_desmontar(cliente, serial, destino, prof, placa="AUX-001", posicion=5, km_ini=1000.0, km_fin=2000.0):
+    """Lleva una llanta de bodega a un vehículo y la desmonta hacia `destino` (flujo válido)."""
+    r = database.montar_llanta_taller({"placa": placa, "posicion": posicion, "numero_interno": serial,
+                                       "cliente_propietario": cliente, "odometro_vehiculo": km_ini})
+    assert r.get("ok"), r
+    r = database.desmontar_llanta_taller({"numero_interno": serial, "cliente_propietario": cliente,
+                                          "bodega_destino": destino, "profundidad": prof, "odometro_vehiculo": km_fin})
+    assert r.get("ok"), r
+
+
+def _despachar(cliente, serial):
+    r = database.despachar_lote_planta_reencauche({"numeros_internos": [serial], "cliente_propietario": cliente,
+                                                    "proveedor_planta": "Renovadora", "guia_remision": "GUIA-T"})
+    assert r.get("ok"), r
+
 def test_ingreso_lote_bodega1_y_montaje_desmonte_patio(auth_client, test_db):
     cliente = "TRANSPORTES DEL SUR"
     database.guardar_licencia_cliente(cliente, "PRO")
@@ -68,12 +84,12 @@ def test_ingreso_lote_bodega1_y_montaje_desmonte_patio(auth_client, test_db):
     assert resp_desm.status_code == 200, resp_desm.text
     d_desm = resp_desm.json()
     assert d_desm["status"] == "ok"
-    assert d_desm["bodega_nombre"] == "Bodega_3_Reencauche"
+    assert d_desm["bodega_nombre"] == "BODEGA_3_REENCAUCHE"
 
     # Verificar inventario en Bodega 3
     hv = database.obtener_hoja_vida_llanta("LL-1050", cliente)
     assert hv["ok"] is True
-    assert hv["estado_actual"]["estado"] == "Bodega_3_Reencauche"
+    assert hv["estado_actual"]["estado"] == "Enviada a Reencauche"
     assert hv["estado_actual"]["prof_min_actual"] == 3.2
     assert hv["metricas_consolidadas"]["km_totales"] == 50000.0  # 95000 - 45000
 
@@ -93,12 +109,7 @@ def test_ciclo_completo_planta_reencauche_reparacion_y_garantia(auth_client, tes
         "prof_inicial_nueva": 16.0,
         "precio_compra_inicial": 1600000.0
     })
-    database.desmontar_llanta_taller({
-        "numero_interno": "LL-2001",
-        "cliente_propietario": cliente,
-        "bodega_destino": "Bodega_3_Reencauche",
-        "profundidad": 3.0
-    })
+    _montar_y_desmontar(cliente, "LL-2001", "Bodega_3_Reencauche", 3.0)
 
     # 1. Despachar a planta (Bodega 3 -> Bodega 4)
     resp_desp = auth_client.post("/api/bodegas/despacho-planta", json={
@@ -112,7 +123,7 @@ def test_ciclo_completo_planta_reencauche_reparacion_y_garantia(auth_client, tes
     assert resp_desp.json()["despachadas"] == 1
 
     hv4 = database.obtener_hoja_vida_llanta("LL-2001", cliente)
-    assert hv4["estado_actual"]["estado"] == "Bodega_4_EnPlanta"
+    assert hv4["estado_actual"]["ubicacion_bodega"] == "BODEGA_3_REENCAUCHE"
 
     # 2. Retorno de planta (Bodega 4 -> Bodega 2) con nuevo ciclo
     resp_ret = auth_client.post("/api/bodegas/retorno-reencauche", json={
@@ -129,19 +140,14 @@ def test_ciclo_completo_planta_reencauche_reparacion_y_garantia(auth_client, tes
     assert d_ret["ciclo_actual"] == 2
 
     hv2 = database.obtener_hoja_vida_llanta("LL-2001", cliente)
-    assert hv2["estado_actual"]["estado"] == "Bodega_2_Reutilizable"
+    assert hv2["estado_actual"]["ubicacion_bodega"] == "BODEGA_4_REENCAUCHADAS"
     assert hv2["estado_actual"]["ciclo_vida"] == "R1"
     assert hv2["estado_actual"]["prof_min_actual"] == 17.0
     assert len(hv2["desglose_por_ciclos"]) == 2
 
     # 3. Reparación en Bodega 5
     # Trasladar a Bodega 5 y finalizar reparación
-    database.desmontar_llanta_taller({
-        "numero_interno": "LL-2001",
-        "cliente_propietario": cliente,
-        "bodega_destino": "Bodega_5_Reparacion",
-        "profundidad": 16.5
-    })
+    _montar_y_desmontar(cliente, "LL-2001", "Bodega_5_Reparacion", 16.5, placa="AUX-002")
     resp_rep = auth_client.post("/api/bodegas/finalizar-reparacion", json={
         "numero_interno": "LL-2001",
         "cliente_propietario": cliente,
@@ -151,15 +157,11 @@ def test_ciclo_completo_planta_reencauche_reparacion_y_garantia(auth_client, tes
     })
     assert resp_rep.status_code == 200
     hv_rep = database.obtener_hoja_vida_llanta("LL-2001", cliente)
-    assert hv_rep["estado_actual"]["estado"] == "Bodega_2_Reutilizable"
+    # Reencauchada reparada vuelve a Bodega 4
+    assert hv_rep["estado_actual"]["ubicacion_bodega"] == "BODEGA_4_REENCAUCHADAS"
 
-    # 4. Dictamen de garantía hacia Bodega 7
-    database.desmontar_llanta_taller({
-        "numero_interno": "LL-2001",
-        "cliente_propietario": cliente,
-        "bodega_destino": "Bodega_6_Garantia",
-        "profundidad": 15.0
-    })
+    # 4. Dictamen de garantía: la llanta queda en FVU (Bodega 6) hasta su disposición final con acta
+    _montar_y_desmontar(cliente, "LL-2001", "Bodega_6_Garantia", 15.0, placa="AUX-003")
     resp_gar = auth_client.post("/api/bodegas/dictamen-garantia", json={
         "numero_interno": "LL-2001",
         "cliente_propietario": cliente,
@@ -169,7 +171,7 @@ def test_ciclo_completo_planta_reencauche_reparacion_y_garantia(auth_client, tes
     })
     assert resp_gar.status_code == 200
     hv_gar = database.obtener_hoja_vida_llanta("LL-2001", cliente)
-    assert hv_gar["estado_actual"]["estado"] == "Bodega_7_FVU"
+    assert hv_gar["estado_actual"]["ubicacion_bodega"] == "BODEGA_6_FVU"
 
 
 def test_endpoint_hoja_vida_json_exacto(auth_client, test_db):
@@ -204,6 +206,7 @@ def test_endpoint_hoja_vida_json_exacto(auth_client, test_db):
     })
 
     # 2. Reencauche Ciclo 2 (72.500 km, costo $720.000)
+    _despachar(cliente, "LL-1045")
     database.recepcionar_llanta_reencauchada({
         "numero_interno": "LL-1045",
         "cliente_propietario": cliente,
@@ -265,8 +268,11 @@ def test_candado_direccional_y_desmonte_automatico_en_montaje(auth_client, test_
         "marca_origen": "CONTINENTAL",
         "diseno_origen": "HDR2",
         "dimension": "295/80R22.5",
+        "prof_inicial_nueva": 20.0,
         "precio_compra_inicial": 1400000.0
     })
+    _montar_y_desmontar(cliente, "REEN-01", "Bodega_3_Reencauche", 4.0, placa="AUX-004")
+    _despachar(cliente, "REEN-01")
     database.recepcionar_llanta_reencauchada({
         "numero_interno": "REEN-01",
         "cliente_propietario": cliente,
@@ -295,7 +301,8 @@ def test_candado_direccional_y_desmonte_automatico_en_montaje(auth_client, test_
         "cliente_propietario": cliente,
         "marca_origen": "MICHELIN",
         "diseno_origen": "X-LINE",
-        "dimension": "295/80R22.5"
+        "dimension": "295/80R22.5",
+        "prof_inicial_nueva": 17.0
     })
     auth_client.post("/api/taller/montar", json={
         "placa": "DIR-101",
@@ -317,12 +324,12 @@ def test_candado_direccional_y_desmonte_automatico_en_montaje(auth_client, test_
 
     # Verificar que REEN-01 quedó Montada en Posición 3
     hv_reen = database.obtener_hoja_vida_llanta("REEN-01", cliente)
-    assert hv_reen["estado_actual"]["estado"] == "Montada"
+    assert hv_reen["estado_actual"]["ubicacion_bodega"] == "MONTADA_OPERACION"
     assert hv_reen["estado_actual"]["posicion"] == 3
 
     # Y verificar que LL-ORIG1 fue desmontada automáticamente hacia Bodega 2 Reutilizable
     hv_orig = database.obtener_hoja_vida_llanta("LL-ORIG1", cliente)
-    assert hv_orig["estado_actual"]["estado"] == "Bodega_2_Reutilizable"
+    assert hv_orig["estado_actual"]["ubicacion_bodega"] == "BODEGA_2_RECAMBIO"
     assert hv_orig["estado_actual"]["posicion"] == 0
     assert hv_orig["metricas_consolidadas"]["km_totales"] == 10000.0  # 60000 - 50000
 

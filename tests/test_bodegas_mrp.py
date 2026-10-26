@@ -211,6 +211,7 @@ def test_calculo_mrp_kpi20_y_par_direccional(test_db, auth_client):
         "ubicacion_bodega": "BODEGA_1_NUEVAS",
         "marca": "MICHELIN",
         "dimension": dim,
+        "prof_inicial": 18.0,
         "costo_compra": 1500000.0
     })
 
@@ -279,7 +280,8 @@ def test_montaje_desmonte_automatico_conflicto_posicion(test_db, auth_client):
         "numero_interno": "LL-A-ORIGINAL",
         "ubicacion_bodega": "BODEGA_1_NUEVAS",
         "marca": "BRIDGESTONE",
-        "dimension": "295/80R22.5"
+        "dimension": "295/80R22.5",
+        "prof_inicial": 18.0
     })
     auth_client.post("/api/bodegas/movimiento", json={
         "cliente": cliente,
@@ -302,7 +304,8 @@ def test_montaje_desmonte_automatico_conflicto_posicion(test_db, auth_client):
         "numero_interno": "LL-B-REEMPLAZO",
         "ubicacion_bodega": "BODEGA_1_NUEVAS",
         "marca": "MICHELIN",
-        "dimension": "295/80R22.5"
+        "dimension": "295/80R22.5",
+        "prof_inicial": 18.0
     })
     res_b = auth_client.post("/api/bodegas/movimiento", json={
         "cliente": cliente,
@@ -404,6 +407,7 @@ def test_reserva_apareo_dual_kpi08_y_liberacion_al_montar(test_db, auth_client):
         "ubicacion_bodega": "BODEGA_2_RECAMBIO",
         "marca": "MICHELIN",
         "dimension": "295/80R22.5",
+        "prof_inicial": 18.0,
         "prof_actual_min": 10.0
     })
 

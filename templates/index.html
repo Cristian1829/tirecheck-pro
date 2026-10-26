@@ -1032,8 +1032,13 @@
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Vida / Condición</label>
                   <select id="vida" onchange="validarVida(); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                    <option value="">Seleccione la vida…</option>
                     <option value="Original">Original (Nueva)</option>
-                    <option value="Reencauche">Reencauche</option>
+                    <option value="R1">Reencauche 1 (R1)</option>
+                    <option value="R2">Reencauche 2 (R2)</option>
+                    <option value="R3">Reencauche 3 (R3)</option>
+                    <option value="R4">Reencauche 4 (R4)</option>
+                    <option value="R5">Reencauche 5 (R5)</option>
                   </select>
                   <div id="badgeDireccionalOriginal" class="hidden mt-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center space-x-1.5">
                     <i class="fa-solid fa-shield-halved text-amber-600"></i>
@@ -3506,6 +3511,24 @@
           </div>
           <div class="flex items-center space-x-1" id="controlesPaginacionMarcasCat"></div>
         </div>
+
+        <!-- Máximo de reencauches por cliente y marca -->
+        <div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+          <div>
+            <span class="text-xs font-bold text-slate-800">Máximo de reencauches por cliente y marca</span>
+            <p class="text-[11px] text-slate-500">Una llanta que ya alcanzó el máximo no puede despacharse otra vez a la planta. "TODAS" aplica a las marcas sin regla propia; sin regla no hay tope.</p>
+          </div>
+          <form onsubmit="guardarMaximoReencaucheCat(event)" class="flex flex-wrap items-end gap-2">
+            <input type="text" id="maxreen_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+            <input type="text" id="maxreen_marca" placeholder="Marca (TODAS)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+            <input type="number" id="maxreen_valor" required min="0" max="10" step="1" placeholder="Máx." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
+            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          </form>
+          <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Marca</th><th class="p-2 text-center">Máx. reencauches</th><th class="p-2 text-center">Acciones</th></tr></thead>
+            <tbody id="tbodyMaximosReencauche" class="divide-y divide-slate-100 bg-white"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Subtab 5: Gestión de Usuarios -->
@@ -3972,7 +3995,7 @@
             <option value="BODEGA_4_REENCAUCHADAS">✨ Bodega 4: Retorno de Reencauche Lista</option>
             <option value="BODEGA_5_REPARACION">🔧 Bodega 5: Enviar a Taller / Vulcanizadora</option>
             <option value="BODEGA_6_FVU">⚠️ Bodega 6: Dar de Baja (Desecho FVU Prematuro)</option>
-            <option value="BODEGA_7_CHATARRIZADA">♻️ Bodega 7: Chatarrización / Acta Ambiental</option>
+            <option value="BODEGA_7_CHATARRIZADA">♻️ Bodega 7: Disposición final (retiro por empresa ambiental, con acta)</option>
           </select>
         </div>
 
@@ -3998,13 +4021,20 @@
             <label class="block text-xs font-bold text-blue-900 mb-1">Profundidad Actual (mm)</label>
             <input type="number" step="0.1" id="mover_prof_montaje" placeholder="ej. 18.0" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
+          <!-- Reingreso de una llanta en FVU o disposición final: trazabilidad obligatoria -->
+          <div id="boxMoverReingreso" class="hidden col-span-2 space-y-2 p-2.5 bg-rose-50 rounded-xl border border-rose-200">
+            <p class="text-[11px] font-bold text-rose-900">Reingreso de una llanta dada de baja: registre motivo, responsable y foto.</p>
+            <textarea id="mover_motivo_reingreso" rows="2" placeholder="Motivo del reingreso (ej. reparada y aprobada por vulcanizadora)" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-semibold text-slate-900"></textarea>
+            <input type="text" id="mover_responsable_reingreso" placeholder="Responsable que autoriza" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-semibold text-slate-900">
+            <input type="file" id="mover_foto_reingreso" accept="image/*" capture="environment" class="w-full text-xs">
+          </div>
         </div>
 
         <!-- Campos para DESMONTE A RECAMBIO (B2) -->
         <div id="boxMoverRecambio" class="hidden p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2">
           <div>
             <label class="block text-xs font-bold text-emerald-900 mb-1">Profundidad de Desmonte (mm) *</label>
-            <input type="number" step="0.1" id="mover_prof_recambio" value="8.0" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="0.1" id="mover_prof_recambio" placeholder="mm medidos al desmontar" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
             <label class="block text-xs font-bold text-emerald-900 mb-1">Motivo de Desmonte</label>
@@ -4033,7 +4063,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-teal-900 mb-1">Nueva Profundidad Inicial (mm) *</label>
-            <input type="number" step="0.1" id="mover_nueva_prof" value="20.0" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="0.1" id="mover_nueva_prof" placeholder="mm de la banda nueva" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
             <label class="block text-xs font-bold text-teal-900 mb-1">Costo del Reencauche ($) *</label>
@@ -4223,8 +4253,13 @@
           <div>
             <label class="font-bold text-slate-600">Vida</label>
             <select id="edit_vida" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
-              <option value="Original">Original</option>
-              <option value="Reencauche">Reencauche</option>
+              <option value="">Seleccione la vida…</option>
+              <option value="Original">Original (Nueva)</option>
+              <option value="R1">Reencauche 1 (R1)</option>
+              <option value="R2">Reencauche 2 (R2)</option>
+              <option value="R3">Reencauche 3 (R3)</option>
+              <option value="R4">Reencauche 4 (R4)</option>
+              <option value="R5">Reencauche 5 (R5)</option>
             </select>
           </div>
           <div><label class="font-bold text-slate-600">Banda Reen</label><input type="text" id="edit_banda_reen" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
@@ -5247,8 +5282,8 @@
             <option value="Bodega_2_Reutilizable">Bodega 2: Reutilizable / Recambio (Para otro camión)</option>
             <option value="Bodega_3_Reencauche">Bodega 3: Por Enviar a Reencauche (Carcasa útil)</option>
             <option value="Bodega_5_Reparacion">Bodega 5: Reparación Mayor / Vulcanizadora</option>
-            <option value="Bodega_6_Garantia">Bodega 6: Reclamación de Garantía (Falla de fábrica)</option>
-            <option value="Bodega_7_FVU">Bodega 7: Fin de Vida Útil / Scrap (Baja definitiva)</option>
+            <option value="Bodega_6_Garantia">Bodega 6: FVU – Reclamación de garantía (falla de fábrica)</option>
+            <option value="BODEGA_6_FVU">Bodega 6: FVU / Desecho (fin de vida útil)</option>
           </select>
         </div>
 
@@ -5602,11 +5637,11 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Prof. Banda Nueva (mm)</label>
-            <input type="number" step="0.1" id="ret_prof_banda" value="18.0" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+            <input type="number" step="0.1" id="ret_prof_banda" required placeholder="mm de la banda nueva" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Costo Factura Renovado ($)</label>
-            <input type="number" step="1000" id="ret_costo" value="720000" required class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+            <input type="number" step="1000" id="ret_costo" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
         </div>
 
@@ -5674,11 +5709,11 @@
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">% Reconocido por el Fabricante</label>
-          <input type="number" step="1" min="0" max="100" id="gar_pct" value="70" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+          <input type="number" step="1" min="0" max="100" id="gar_pct" placeholder="% reconocido" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Valor Acreditado / Nota Crédito ($ COP)</label>
-          <input type="number" step="1000" id="gar_valor" value="1050000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+          <input type="number" step="1000" id="gar_valor" placeholder="Valor de la nota crédito" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div class="flex justify-end space-x-2 pt-2 border-t">
           <button type="button" onclick="cerrarModalDictamenGarantia()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold">Cancelar</button>

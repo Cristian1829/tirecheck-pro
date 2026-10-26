@@ -410,7 +410,7 @@
 
     function esLlantaReencauchadaComp(vidaStr) {
       const v = String(vidaStr || '').trim().toLowerCase();
-      return ['reenc', '1r', '2r', '3r', '4r', 'r1', 'r2', 'r3', 'renov'].some(token => v.includes(token));
+      return /^r\d+$/.test(v) || /^\d+r$/.test(v) || ['reenc', 'renov'].some(token => v.includes(token));
     }
 
     async function cargarComposicionFlotaWeb(forzarRecarga = false) {

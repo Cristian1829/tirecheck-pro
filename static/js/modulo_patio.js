@@ -1927,24 +1927,18 @@
       const p = parseInt(pos) || 1;
       const esDir = esPosicionDireccionalActual(p);
       const selVida = document.getElementById('vida');
-      const optReencauche = selVida ? selVida.querySelector('option[value="Reencauche"]') : null;
+      const optsReencauche = selVida ? Array.from(selVida.querySelectorAll('option')).filter(o => /^R\d+$/.test(o.value)) : [];
       const badge = document.getElementById('badgeDireccionalOriginal');
 
       if (esDir) {
-        if (optReencauche) {
-          optReencauche.disabled = true;
-          optReencauche.classList.add('text-slate-400');
-        }
-        if (selVida && selVida.value === 'Reencauche') {
+        optsReencauche.forEach(o => { o.disabled = true; o.classList.add('text-slate-400'); });
+        if (selVida && esVidaReencauche(selVida.value)) {
           selVida.value = 'Original';
           validarVida();
         }
         if (badge) badge.classList.remove('hidden');
       } else {
-        if (optReencauche) {
-          optReencauche.disabled = false;
-          optReencauche.classList.remove('text-slate-400');
-        }
+        optsReencauche.forEach(o => { o.disabled = false; o.classList.remove('text-slate-400'); });
         if (badge) badge.classList.add('hidden');
       }
     }
@@ -2431,8 +2425,9 @@
               }
             }
             const vLt = String(lt.vida || 'Original').trim();
-            const esReenLt = vLt.toLowerCase().includes('reen') || Boolean(lt.banda_reen);
-            asignarValorSelect('vida', esReenLt ? 'Reencauche' : 'Original');
+            const vidaLt = vidaExactaLlanta(vLt, lt.banda_reen);
+            const esReenLt = vidaLt !== 'Original';
+            asignarValorSelect('vida', vidaLt);
             if (lt.banda_reen && esReenLt) {
               asignarValorSelect('banda_reen', lt.banda_reen);
             }
@@ -2540,8 +2535,9 @@
                 asignarValorSelect('dimension', d.datos.dimension);
               }
               const vDato = String(d.datos.vida || 'Original').trim();
-              const esReenDato = vDato.toLowerCase().includes('reen') || Boolean(d.datos.banda_reen);
-              asignarValorSelect('vida', esReenDato ? 'Reencauche' : 'Original');
+              const vidaDato = vidaExactaLlanta(vDato, d.datos.banda_reen);
+              const esReenDato = vidaDato !== 'Original';
+              asignarValorSelect('vida', vidaDato);
               if (d.datos.banda_reen && esReenDato) {
                 asignarValorSelect('banda_reen', d.datos.banda_reen);
               }
@@ -2628,8 +2624,9 @@
                 if (boxBanda) boxBanda.classList.add('hidden');
               } else {
                 const vDatoPos = String(d.datos.vida || 'Original').trim();
-                const esReenPos = vDatoPos.toLowerCase().includes('reen') || Boolean(d.datos.banda_reen);
-                asignarValorSelect('vida', esReenPos ? 'Reencauche' : 'Original');
+                const vidaPos = vidaExactaLlanta(vDatoPos, d.datos.banda_reen);
+                const esReenPos = vidaPos !== 'Original';
+                asignarValorSelect('vida', vidaPos);
                 if (esReenPos) {
                   if (boxBanda) boxBanda.classList.remove('hidden');
                   if (d.datos.banda_reen) {
@@ -2796,10 +2793,11 @@
       const pos = parseInt(document.getElementById('posicion')?.value) || 1;
       const selVida = document.getElementById('vida');
       if (selVida) {
-        if (!selVida.value || (selVida.value !== 'Original' && selVida.value !== 'Reencauche')) {
-          selVida.value = 'Original';
+        // Vacío = pendiente de elegir (no se asume Original); solo se aceptan Original y R1, R2…
+        if (selVida.value && selVida.value !== 'Original' && !/^R\d+$/.test(selVida.value)) {
+          selVida.value = '';
         }
-        if (selVida.value === 'Reencauche' && esPosicionDireccionalActual(pos)) {
+        if (esVidaReencauche(selVida.value) && esPosicionDireccionalActual(pos)) {
           selVida.value = 'Original';
           mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
         }
@@ -2807,7 +2805,7 @@
       const vida = selVida ? selVida.value : 'Original';
       const boxBanda = document.getElementById('box_banda');
       if (boxBanda) {
-        if (vida === 'Reencauche') {
+        if (esVidaReencauche(vida)) {
           boxBanda.classList.remove('hidden');
           poblarSelect('banda_reen', '/api/valores-campo?campo=banda_reen', 'ej. BDM Bandag (Seleccionar banda)');
         } else {
@@ -2967,7 +2965,12 @@
       }
       document.getElementById('prof_inicial').value = m.prof_inicial;
       if (m.tipo_llanta === 'Reencauche') {
-        document.getElementById('vida').value = 'Reencauche';
+        // Modelo de banda de reencauche: la vida debe ser R1, R2…; si estaba en Original se deja por elegir
+        const selV = document.getElementById('vida');
+        if (!esVidaReencauche(selV.value)) {
+          selV.value = '';
+          mostrarToast('Seleccione el número de reencauche (R1, R2…) de esta llanta');
+        }
         validarVida();
       }
       document.getElementById('boxSugerenciasCatalogo').classList.add('hidden');

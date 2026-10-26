@@ -33,6 +33,7 @@
         cargarClientesLimCat();
       } else if (subtab === 'marcas_cliente' && puedeVerClientes) {
         cargarMarcasClienteCat();
+        cargarMaximosReencaucheCat();
       } else if (subtab === 'operaciones') {
         cargarOperacionesCat();
       } else if (subtab === 'tipologias') {
@@ -839,6 +840,47 @@
     // GESTIÓN DE MARCAS POR CLIENTE (CATÁLOGOS)
     // ==========================================
     let marcasClienteCatCache = [];
+
+    // Máximo de reencauches por cliente y marca
+    async function cargarMaximosReencaucheCat() {
+      const tbody = document.getElementById('tbodyMaximosReencauche');
+      if (!tbody) return;
+      try {
+        const res = await fetch('/api/configuracion-reencauche');
+        const lista = res.ok ? await res.json() : [];
+        tbody.innerHTML = lista.length ? lista.map(r => {
+          const cli = String(r.cliente).replace(/'/g, "\\'"), mar = String(r.marca).replace(/'/g, "\\'");
+          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2">${r.marca}</td>
+            <td class="p-2 text-center font-mono font-bold">${r.max_reencauches}</td>
+            <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+        }).join('') : '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin reglas: no hay tope de reencauches</td></tr>';
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
+      }
+    }
+
+    async function guardarMaximoReencaucheCat(ev) {
+      ev.preventDefault();
+      const body = {
+        cliente: document.getElementById('maxreen_cliente').value.trim().toUpperCase(),
+        marca: (document.getElementById('maxreen_marca').value.trim() || 'TODAS').toUpperCase(),
+        max_reencauches: parseInt(document.getElementById('maxreen_valor').value, 10)
+      };
+      const res = await fetch('/api/configuracion-reencauche', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar la regla'), true);
+        return;
+      }
+      mostrarToast('✅ Regla de reencauches guardada');
+      cargarMaximosReencaucheCat();
+    }
+
+    async function eliminarMaximoReencaucheCat(cliente, marca) {
+      if (!confirm(`¿Eliminar el máximo de reencauches de ${cliente} / ${marca}?`)) return;
+      await fetch(`/api/configuracion-reencauche?cliente=${encodeURIComponent(cliente)}&marca=${encodeURIComponent(marca)}`, { method: 'DELETE' });
+      cargarMaximosReencaucheCat();
+    }
 
     async function cargarMarcasClienteCat() {
       try {

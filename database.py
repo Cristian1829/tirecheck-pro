@@ -11,6 +11,7 @@ import hmac
 import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
+from typing import Optional
 import sys
 import catalogo_modelos_colombia
 import estructura_ejes as ee
@@ -182,30 +183,40 @@ def asegurar_columna_vistas_permitidas(conn):
 
 def normalizar_vida_y_banda(vida_input, banda_input=''):
     """
-    Normaliza de forma estricta y determinista los valores de Vida y Banda de Reencauche:
-    - Retorna tupla (vida_final, banda_final) con vida_final en ('ORIGINAL', 'REENCAUCHE').
-    - Si vida viene vacía, nula, '-' o inválida:
-        * Si tiene banda de reencauche especificada -> 'REENCAUCHE'.
-        * En cualquier otro caso -> 'ORIGINAL'.
-    - Si vida es 'ORIGINAL' -> banda_final siempre es '' (vacía).
-    - Si vida es 'REENCAUCHE' -> banda_final es la banda en mayúsculas limpia.
+    Normaliza Vida y Banda de reencauche guardando la vida EXACTA:
+    - Retorna (vida_final, banda_final) con vida_final en 'ORIGINAL', 'R1', 'R2', … (antes todo
+      reencauche quedaba como 'REENCAUCHE' y se perdía en qué vida iba la llanta).
+    - 'REENCAUCHE' sin número solo queda para datos antiguos que no lo traen.
+    - Con vida vacía: si trae banda es reencauche (sin número); si no, Original.
+    - En Original la banda siempre queda vacía.
     """
     v_raw = str(vida_input or '').strip().upper()
     b_raw = str(banda_input or '').strip().upper()
     if b_raw in ('-', 'NONE', 'NAN', 'NULL', 'NO APLICA', 'N/A'):
         b_raw = ''
 
+    m = re.search(r'^R\s*(\d+)$|REENCAUCHE\s*(\d+)|^(\d+)\s*R$', v_raw)
     if v_raw in ('ORIGINAL', 'ORIG', 'NUEVA') or 'ORIG' in v_raw:
         vida_final = 'ORIGINAL'
-    elif v_raw in ('REENCAUCHE', 'REEN', 'RECAUCHE', 'R1', 'R2', 'R3', 'R4') or 'REEN' in v_raw:
-        vida_final = 'REENCAUCHE'
-    elif b_raw:
+    elif m:
+        n = int(next(g for g in m.groups() if g))
+        vida_final = f'R{n}' if n > 0 else 'ORIGINAL'
+    elif v_raw in ('REENCAUCHE', 'REEN', 'RECAUCHE') or 'REEN' in v_raw or b_raw:
         vida_final = 'REENCAUCHE'
     else:
         vida_final = 'ORIGINAL'
 
-    banda_final = b_raw if vida_final == 'REENCAUCHE' else ''
+    banda_final = b_raw if vida_final != 'ORIGINAL' else ''
     return vida_final, banda_final
+
+
+def indice_vida(vida) -> Optional[int]:
+    """Original = 0, R1 = 1, R2 = 2…; None si es reencauche sin número (dato antiguo)."""
+    v = str(vida or '').strip().upper()
+    if v in ('', 'ORIGINAL'):
+        return 0
+    m = re.match(r'^R(\d+)$', v)
+    return int(m.group(1)) if m else None
 
 def inicializar_bd():
     verificar_y_poblar_seed()
@@ -539,6 +550,18 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_bodega ON llantas_maestro (cliente, ubicacion_bodega, dimension)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_serial ON llantas_maestro (numero_interno, cliente)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_serial_cliente ON kardex_movimientos_llanta (cliente, numero_interno, fecha_movimiento DESC)")
+        # Máximo de reencauches por cliente y marca ('TODAS' = regla general del cliente)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS configuracion_reencauche (
+                cliente TEXT NOT NULL,
+                marca TEXT NOT NULL DEFAULT 'TODAS',
+                max_reencauches INTEGER NOT NULL,
+                UNIQUE(cliente, marca)
+            )
+        """)
+        # Foto de soporte del movimiento (p. ej. reingreso de una llanta dada de baja)
+        if "foto_soporte" not in [r[1] for r in cursor.execute("PRAGMA table_info(kardex_movimientos_llanta)").fetchall()]:
+            cursor.execute("ALTER TABLE kardex_movimientos_llanta ADD COLUMN foto_soporte TEXT DEFAULT ''")
 
         # Migración automática de columnas para llantas_maestro según especificación de 7 Bodegas y Hoja de Vida
         cursor.execute("PRAGMA table_info(llantas_maestro)")
@@ -812,6 +835,8 @@ def inicializar_bd():
             sincronizar_hoja_vida_desde_inspecciones(conn)
         except Exception as e_shv:
             pass
+        # Estados de llanta y movimientos a un solo vocabulario y una sola fuente (una vez)
+        migrar_normalizar_estados_llantas(conn)
 
         conn.commit()
 
@@ -1199,7 +1224,7 @@ def migrar_normalizar_vida_llantas(conn=None):
         cur.execute("""
             UPDATE inspecciones
             SET vida = 'REENCAUCHE'
-            WHERE UPPER(TRIM(vida)) IN ('REENCAUCHE', 'REEN', 'RECAUCHE', 'R1', 'R2', 'R3', 'R4') AND vida != 'REENCAUCHE'
+            WHERE UPPER(TRIM(vida)) IN ('REENCAUCHE', 'REEN', 'RECAUCHE') AND vida != 'REENCAUCHE'  -- R1, R2… se conservan (vida exacta)
         """)
 
         # 4. Asegurar coherencia en llantas_maestro
@@ -1666,17 +1691,17 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
             tipo_veh = str(r[4] or '').strip().upper()
             marca = str(r[5] or '').strip().upper()
             diseno = str(r[6] or '').strip().upper()
-            dim = str(r[7] or '295/80R22.5').strip().upper()
-            vida = str(r[8] or 'Original').strip()
+            dim = str(r[7] or '').strip().upper()
+            vida = vida_llanta(r[8])
             banda = str(r[9] or '').strip().upper()
             pe = to_float(r[10])
             pc = to_float(r[11])
             pi = to_float(r[12])
-            psi = to_float(r[13], 100.0)
+            psi = to_float(r[13], 0.0)  # sin lectura = sin dato (antes 100 PSI)
             km_act = to_float(r[14])
             km_mont = to_float(r[15])
             pr = to_float(r[16], 0.0)
-            p_ini = to_float(r[17], 18.0)
+            p_ini = to_float(r[17], 0.0)  # sin dato (antes 18 mm)
             subc = str(r[18] or '').strip().upper()
             tipo_op = str(r[19] or '').strip().upper()
             fecha_insp = str(r[20] or '')
@@ -1751,8 +1776,17 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                         ))
 
                 if ubi != 'MONTADA_OPERACION':
-                    # Si la llanta ya está chatarrizada, nunca vuelve a operación
-                    if ubi == 'BODEGA_7_CHATARRIZADA':
+                    # Una llanta en planta, en FVU o en disposición final no se monta sola por aparecer en una
+                    # inspección: se registra la inconsistencia para revisarla (el reingreso exige trazabilidad)
+                    origen = ubicacion_canonica(ubi) or ubi
+                    if validar_transicion_llanta(origen, MONTADA, enviada_planta=False, reingreso={}):
+                        txt = f"Inconsistencia: inspección del {str(fecha_insp)[:10]} la registra montada en {placa} pos {pos} pero está en {nombre_ubicacion(origen)}"
+                        if not c.execute("SELECT 1 FROM llantas_novedades_registro WHERE UPPER(numero_interno) = ? AND observacion = ?",
+                                         (serial, txt)).fetchone():
+                            c.execute("""INSERT INTO llantas_novedades_registro (fecha_deteccion, numero_interno, cliente_propietario,
+                                         tipo_novedad, categoria_severidad, estado_novedad, placa, posicion, observacion)
+                                         VALUES (?, ?, ?, 'Inconsistencia de inventario', 'Alta', 'Activa', ?, ?, ?)""",
+                                      (str(fecha_insp)[:10], serial, cli, placa, pos, txt))
                         continue
 
                     # Consultar fecha del último movimiento registrado en Kardex
@@ -2481,7 +2515,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
     vida_val, banda_val = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     datos['vida'] = vida_val
     datos['banda_reen'] = banda_val
-    if es_posicion_direccional(tipologia_val, posicion) and vida_val == 'REENCAUCHE':
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val != 'ORIGINAL':
         return {
             'valido': False,
             'mensaje': (
@@ -2504,6 +2538,35 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
         cursor = c.cursor()
         # Mes de inspección (YYYY-MM)
         mes_inspeccion = fecha_str[:7] if len(fecha_str) >= 7 else datetime.now().strftime('%Y-%m')
+
+        # Candado 1.4: Secuencia de vida de la llanta. Una reencauchada no vuelve a Original ni a una vida
+        # anterior, y una llanta solo avanza una vida a la vez (Original -> R1 -> R2…): saltar vidas
+        # significa un reencauche no registrado o un error de digitación.
+        if num_interno and num_interno != 'SN':
+            q_prev = """SELECT vida, fecha FROM inspecciones
+                        WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(cliente)) = UPPER(TRIM(?)) AND fecha <= ?"""
+            p_prev = [num_interno, str(datos.get('cliente', '')).strip(), fecha_str]
+            if excluir_id:
+                q_prev += " AND id != ?"
+                p_prev.append(excluir_id)
+            cursor.execute(q_prev + " ORDER BY fecha DESC, id DESC LIMIT 1", p_prev)
+            prev = cursor.fetchone()
+            if prev:
+                v_prev = normalizar_vida_y_banda(prev[0])[0]
+                i_prev, i_new = indice_vida(v_prev), indice_vida(vida_val)
+                nombre = lambda v: 'Original' if v == 'ORIGINAL' else ('Reencauche' if v == 'REENCAUCHE' else v)
+                if v_prev != 'ORIGINAL' and vida_val == 'ORIGINAL':
+                    return {'valido': False, 'mensaje': (
+                        f'⛔ CANDADO DE VIDA: La llanta {num_interno} ya figura como {nombre(v_prev)} '
+                        f'(inspección del {str(prev[1])[:10]}); una llanta reencauchada no puede volver a Original.')}
+                if i_prev is not None and i_new is not None and i_new < i_prev:
+                    return {'valido': False, 'mensaje': (
+                        f'⛔ CANDADO DE VIDA: La llanta {num_interno} ya figura como {nombre(v_prev)} '
+                        f'(inspección del {str(prev[1])[:10]}); no puede pasar a {nombre(vida_val)}.')}
+                if i_prev is not None and i_new is not None and i_new > i_prev + 1:
+                    return {'valido': False, 'mensaje': (
+                        f'⛔ CANDADO DE VIDA: La llanta {num_interno} figura como {nombre(v_prev)}; '
+                        f'solo puede pasar a R{i_prev + 1}, no a {nombre(vida_val)}. Verifique la vida o registre el reencauche faltante.')}
 
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
         # En la versión LIGHT se permite ingresar las veces que sea necesario la palabra "SN" (Sin Número).
@@ -3551,6 +3614,265 @@ def analizar_inspecciones_df(df_inspecciones):
             na_position='last'
         ).drop(columns=['_sort_fecha']).reset_index(drop=True)
     return df_res
+
+# =============================================================================
+# CICLO DE VIDA DE LA LLANTA: ubicaciones oficiales, transiciones y kardex único
+# =============================================================================
+# ubicacion_bodega es el estado oficial de la llanta; estado_actual es solo su nombre visible.
+# Bodegas y Taller usan estas mismas funciones (antes cada módulo tenía su propio vocabulario).
+UBICACIONES_LLANTA = {
+    'BODEGA_1_NUEVAS': 'En Stock - Nueva',
+    'BODEGA_2_RECAMBIO': 'En Stock - Reutilizable',
+    'BODEGA_3_REENCAUCHE': 'Enviada a Reencauche',
+    'BODEGA_4_REENCAUCHADAS': 'En Stock - Reencauchada',
+    'BODEGA_5_REPARACION': 'En Reparación Mayor',
+    'BODEGA_6_FVU': 'FVU / Desecho',
+    'BODEGA_7_CHATARRIZADA': 'Disposición Final / Chatarrizada',
+    'MONTADA_OPERACION': 'Montada en Vehículo',
+}
+MONTADA = 'MONTADA_OPERACION'
+
+# Nombres antiguos (Taller, datos demo y alias) -> ubicación oficial
+_ALIAS_UBICACION = {
+    'MONTADA': MONTADA, 'MONTADA_EN_VEHICULO': MONTADA, 'MONTADA_EN_OPERACION': MONTADA, 'MONTADA_OPERACION': MONTADA,
+    'BODEGA_1_NUEVAS': 'BODEGA_1_NUEVAS', 'EN_STOCK_NUEVA': 'BODEGA_1_NUEVAS', 'NUEVA': 'BODEGA_1_NUEVAS',
+    'NUEVAS': 'BODEGA_1_NUEVAS', 'B1': 'BODEGA_1_NUEVAS', 'PULMON_NUEVAS': 'BODEGA_1_NUEVAS',
+    'BODEGA_2_REUTILIZABLE': 'BODEGA_2_RECAMBIO', 'BODEGA_2_RECAMBIO': 'BODEGA_2_RECAMBIO',
+    'EN_STOCK_REUTILIZABLE': 'BODEGA_2_RECAMBIO', 'REUTILIZABLE': 'BODEGA_2_RECAMBIO', 'RECAMBIO': 'BODEGA_2_RECAMBIO',
+    'B2': 'BODEGA_2_RECAMBIO',
+    'BODEGA_3_REENCAUCHE': 'BODEGA_3_REENCAUCHE', 'ENVIADA_A_REENCAUCHE': 'BODEGA_3_REENCAUCHE',
+    'CASCO_DISPONIBLE': 'BODEGA_3_REENCAUCHE', 'TRANSITO_A_REENCAUCHE': 'BODEGA_3_REENCAUCHE',
+    'REENCAUCHE': 'BODEGA_3_REENCAUCHE', 'B3': 'BODEGA_3_REENCAUCHE',
+    'BODEGA_4_ENPLANTA': 'BODEGA_3_REENCAUCHE', 'EN_PLANTA': 'BODEGA_3_REENCAUCHE', 'PLANTA': 'BODEGA_3_REENCAUCHE',
+    'EN_RENOVADO': 'BODEGA_3_REENCAUCHE', 'EN_PLANTA_REENCAUCHADORA': 'BODEGA_3_REENCAUCHE',
+    'BODEGA_4_REENCAUCHADAS': 'BODEGA_4_REENCAUCHADAS', 'EN_STOCK_REENCAUCHADA': 'BODEGA_4_REENCAUCHADAS',
+    'DISPONIBLE': 'BODEGA_4_REENCAUCHADAS', 'BODEGA_LLANTAS_LISTAS': 'BODEGA_4_REENCAUCHADAS', 'B4': 'BODEGA_4_REENCAUCHADAS',
+    'BODEGA_5_REPARACION': 'BODEGA_5_REPARACION', 'EN_REPARACION_MAYOR': 'BODEGA_5_REPARACION',
+    'REPARACION': 'BODEGA_5_REPARACION', 'B5': 'BODEGA_5_REPARACION',
+    'BODEGA_6_FVU': 'BODEGA_6_FVU', 'BODEGA_6_GARANTIA': 'BODEGA_6_FVU', 'GARANTIA': 'BODEGA_6_FVU',
+    'DICTAMEN_PENDIENTE': 'BODEGA_6_FVU', 'GARANTIAS_DICTAMEN': 'BODEGA_6_FVU', 'FVU_DESECHO': 'BODEGA_6_FVU',
+    'FVU': 'BODEGA_6_FVU', 'DESECHO': 'BODEGA_6_FVU', 'BODEGA_7_FVU': 'BODEGA_6_FVU', 'BAJA_FVU': 'BODEGA_6_FVU',
+    'CHATARRA_SCRAP': 'BODEGA_6_FVU', 'CHATARRA': 'BODEGA_6_FVU', 'B6': 'BODEGA_6_FVU', 'B7': 'BODEGA_6_FVU',
+    'BODEGA_7_CHATARRIZADA': 'BODEGA_7_CHATARRIZADA', 'DISPOSICION_FINAL_CHATARRIZADA': 'BODEGA_7_CHATARRIZADA',
+    'DISPOSICION_FINAL': 'BODEGA_7_CHATARRIZADA', 'CHATARRIZADA': 'BODEGA_7_CHATARRIZADA',
+}
+_ALIAS_EN_PLANTA = {'BODEGA_4_ENPLANTA', 'EN_PLANTA', 'PLANTA', 'EN_RENOVADO', 'EN_PLANTA_REENCAUCHADORA'}
+_ALIAS_GARANTIA = {'BODEGA_6_GARANTIA', 'GARANTIA', 'DICTAMEN_PENDIENTE', 'GARANTIAS_DICTAMEN'}
+
+# Transiciones permitidas entre ubicaciones (origen -> destinos)
+TRANSICIONES_LLANTA = {
+    'BODEGA_1_NUEVAS': {MONTADA, 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'},
+    'BODEGA_2_RECAMBIO': {MONTADA, 'BODEGA_3_REENCAUCHE', 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'},
+    'BODEGA_3_REENCAUCHE': {'BODEGA_4_REENCAUCHADAS', 'BODEGA_2_RECAMBIO', 'BODEGA_6_FVU'},
+    'BODEGA_4_REENCAUCHADAS': {MONTADA, 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'},
+    'BODEGA_5_REPARACION': {'BODEGA_2_RECAMBIO', 'BODEGA_3_REENCAUCHE', 'BODEGA_4_REENCAUCHADAS', MONTADA, 'BODEGA_6_FVU'},
+    # FVU en dos fases: desmontada para FVU (6) y retirada por la empresa ambiental (7). Desde
+    # cualquiera de las dos puede volver a montarse solo dejando trazabilidad (motivo, responsable, foto).
+    'BODEGA_6_FVU': {'BODEGA_7_CHATARRIZADA', MONTADA},
+    'BODEGA_7_CHATARRIZADA': {MONTADA},
+    MONTADA: {MONTADA, 'BODEGA_2_RECAMBIO', 'BODEGA_3_REENCAUCHE', 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'},
+}
+
+
+def _clave_estado(valor) -> str:
+    """'7. Chatarra / Scrap' -> 'CHATARRA_SCRAP'; 'Montada en Vehículo' -> 'MONTADA_EN_VEHICULO'."""
+    s = ''.join(c for c in unicodedata.normalize('NFD', str(valor or '')) if unicodedata.category(c) != 'Mn')
+    s = re.sub(r'^\s*\d+\s*[.)-]\s*', '', s.strip().upper())
+    return re.sub(r'[^A-Z0-9]+', '_', s).strip('_')
+
+
+def nombre_ubicacion(codigo) -> str:
+    return UBICACIONES_LLANTA.get(codigo, str(codigo or ''))
+
+
+def ubicacion_canonica(ubicacion='', estado='', acta='', fecha_disposicion='') -> str:
+    """
+    Ubicación oficial a partir de cualquier nombre antiguo. Se prefiere ubicacion_bodega y, si no se
+    reconoce, estado_actual. Disposición final (Bodega 7) exige acta o fecha de disposición: sin ella
+    la llanta sigue en la primera fase del FVU (Bodega 6).
+    """
+    codigo = _ALIAS_UBICACION.get(_clave_estado(ubicacion)) or _ALIAS_UBICACION.get(_clave_estado(estado)) or ''
+    con_acta = bool(str(acta or '').strip() or str(fecha_disposicion or '').strip())
+    if codigo == 'BODEGA_7_CHATARRIZADA' and not con_acta:
+        codigo = 'BODEGA_6_FVU'
+    elif con_acta and codigo in ('', 'BODEGA_6_FVU'):
+        codigo = 'BODEGA_7_CHATARRIZADA'  # FVU con acta ambiental = ya en disposición final
+    return codigo
+
+
+def validar_transicion_llanta(origen, destino, enviada_planta=False, reingreso=None, acta='') -> Optional[str]:
+    """
+    Retorna None si el paso está permitido, o el mensaje que explica por qué no.
+    - Retorno de reencauche solo si la llanta fue despachada a la planta.
+    - Volver a montar una llanta dada de baja (Bodega 6 o 7) exige motivo, responsable y foto.
+    - Disposición final (Bodega 7) exige el acta de la empresa ambiental.
+    """
+    if destino not in UBICACIONES_LLANTA:
+        return f"Destino inválido: {destino}"
+    if origen not in UBICACIONES_LLANTA:
+        return f"La llanta está en una ubicación no reconocida ({origen}); corrija su estado antes de moverla"
+    if origen == destino and destino != MONTADA:
+        return f"La llanta ya se encuentra en {nombre_ubicacion(destino)}"
+    if destino not in TRANSICIONES_LLANTA.get(origen, set()):
+        return f"⛔ No se permite pasar de {nombre_ubicacion(origen)} a {nombre_ubicacion(destino)}"
+    if origen == 'BODEGA_3_REENCAUCHE' and destino == 'BODEGA_4_REENCAUCHADAS' and not enviada_planta:
+        return "⛔ La llanta no ha sido despachada a la planta de reencauche: no puede recibirse como reencauchada"
+    if origen in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA') and destino == MONTADA:
+        r = reingreso or {}
+        faltan = [n for n, k in (('motivo', 'motivo'), ('responsable', 'responsable'), ('foto', 'foto')) if not str(r.get(k) or '').strip()]
+        if faltan:
+            return "⛔ Para volver a montar una llanta dada de baja registre " + ", ".join(faltan) + " del reingreso"
+    if destino == 'BODEGA_7_CHATARRIZADA' and not str(acta or '').strip():
+        return "⛔ La disposición final exige el número de acta de la empresa ambiental"
+    return None
+
+
+def registrar_kardex(cursor, numero_interno, cliente, origen, destino, tipo, fecha=None, subcliente='',
+                     placa='', posicion=0, vida='', prof=0.0, km=0.0, costo=0.0, proveedor='', motivo='',
+                     documento='', usuario='', foto=''):
+    """Único registro de movimientos de la llanta (kardex), usado por Bodegas y Taller."""
+    cursor.execute("""
+        INSERT INTO kardex_movimientos_llanta (
+            fecha_movimiento, cliente, subcliente, numero_interno, bodega_origen, bodega_destino,
+            tipo_movimiento, placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo, costo_asociado,
+            proveedor, causal_o_motivo, documento_soporte, usuario_registro, foto_soporte
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        fecha or datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d'), str(cliente or '').upper(), subcliente or '',
+        str(numero_interno or '').upper(), origen or '', destino or '', tipo, placa or '', to_int(posicion),
+        vida or '', to_float(prof), to_float(km), to_float(costo), proveedor or '', motivo or '', documento or '',
+        usuario or '', foto or ''
+    ))
+
+
+def vida_llanta(vida='', num_reencauches=None, ciclo=None) -> str:
+    """
+    Vida exacta de la llanta: 'Original', 'R1', 'R2'… Acepta los formatos antiguos ('ORIGINAL', 'NUEVA',
+    'REENCAUCHE', 'Reencauche 1', 'R2') y, si el texto no trae el número, lo toma de num_reencauches o del ciclo.
+    """
+    v = str(vida or '').strip().upper()
+    m = re.search(r'R\s*(\d+)', v) or re.search(r'REENCAUCHE\s*(\d+)', v)
+    if m:
+        n = int(m.group(1))
+    elif v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') or 'ORIG' in v:
+        n = 0 if not num_reencauches else to_int(num_reencauches)
+    else:  # 'REENCAUCHE' sin número
+        n = max(to_int(num_reencauches), to_int(ciclo, 1) - 1, 1)
+    if v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
+        n = to_int(ciclo, 1) - 1
+    return 'Original' if n <= 0 else f'R{n}'
+
+
+def maximo_reencauches(cliente, marca='') -> Optional[int]:
+    """
+    Máximo de reencauches permitido para el cliente y la marca (configurable por flota y marca).
+    Busca la marca exacta y luego 'TODAS'. Sin configuración retorna None (sin tope).
+    """
+    try:
+        with get_connection() as conn:
+            for m in (str(marca or '').strip().upper(), 'TODAS'):
+                if not m:
+                    continue
+                r = conn.execute("""SELECT max_reencauches FROM configuracion_reencauche
+                                    WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?)) AND UPPER(TRIM(marca)) = ?""",
+                                 (cliente, m)).fetchone()
+                if r and r[0] is not None:
+                    return to_int(r[0])
+    except Exception:
+        pass
+    return None
+
+
+def guardar_maximo_reencauches(cliente, marca, max_reencauches) -> bool:
+    cli, mar = str(cliente or '').strip().upper(), (str(marca or '').strip().upper() or 'TODAS')
+    if not cli or to_int(max_reencauches, -1) < 0:
+        return False
+    with get_connection() as conn:
+        conn.execute("""INSERT INTO configuracion_reencauche (cliente, marca, max_reencauches) VALUES (?, ?, ?)
+                        ON CONFLICT(cliente, marca) DO UPDATE SET max_reencauches = excluded.max_reencauches""",
+                     (cli, mar, to_int(max_reencauches)))
+        conn.commit()
+    return True
+
+
+def listar_maximos_reencauche(cliente='') -> list:
+    with get_connection() as conn:
+        q = "SELECT cliente, marca, max_reencauches FROM configuracion_reencauche"
+        params = []
+        if cliente:
+            q += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            params.append(cliente)
+        return [{"cliente": c, "marca": m, "max_reencauches": n} for c, m, n in conn.execute(q + " ORDER BY cliente, marca", params)]
+
+
+def eliminar_maximo_reencauches(cliente, marca) -> bool:
+    with get_connection() as conn:
+        n = conn.execute("DELETE FROM configuracion_reencauche WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?)) AND UPPER(TRIM(marca)) = UPPER(TRIM(?))",
+                         (cliente, marca)).rowcount
+        conn.commit()
+    return n > 0
+
+
+_TIPO_EQUIVALENTE_KARDEX = {'COMPRA_INGRESO': 'ALTA_NUEVA', 'DESMONTE': 'DESMONTE_RECAMBIO'}
+
+
+def migrar_normalizar_estados_llantas(conn):
+    """
+    Una sola vez: lleva todos los estados antiguos a las ubicaciones oficiales, unifica las columnas
+    duplicadas de Taller (cliente_propietario, marca_origen…) y pasa al kardex los movimientos que
+    solo estaban en llantas_movimientos.
+    """
+    cur = conn.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS _control_migraciones (nombre TEXT PRIMARY KEY, fecha_ejecucion TEXT, filas_afectadas INTEGER)")
+    if cur.execute("SELECT 1 FROM _control_migraciones WHERE nombre = 'normalizar_estados_llantas_v1'").fetchone():
+        return {"status": "already_applied"}
+    filas = cur.execute("""
+        SELECT id, ubicacion_bodega, estado_actual, numero_acta_ambiental, fecha_disposicion, fecha_envio_planta,
+               fecha_ultimo_movimiento, estado_garantia
+        FROM llantas_maestro
+    """).fetchall()
+    cambiadas = 0
+    for (lid, ubi, est, acta, f_disp, f_envio, f_ult, est_gar) in filas:
+        codigo = ubicacion_canonica(ubi, est, acta, f_disp)
+        if not codigo:
+            continue
+        claves = {_clave_estado(ubi), _clave_estado(est)}
+        envio = f_envio
+        if codigo == 'BODEGA_3_REENCAUCHE' and not envio and (claves & _ALIAS_EN_PLANTA or _clave_estado(est) == 'ENVIADA_A_REENCAUCHE'):
+            envio = f_ult or datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
+        gar = est_gar
+        if claves & _ALIAS_GARANTIA and str(est_gar or '').strip() in ('', 'No Aplica'):
+            gar = 'En Reclamación'
+        cur.execute("""UPDATE llantas_maestro SET ubicacion_bodega = ?, estado_actual = ?, fecha_envio_planta = ?,
+                       estado_garantia = ? WHERE id = ?""", (codigo, nombre_ubicacion(codigo), envio, gar, lid))
+        cambiadas += 1
+    # Columnas duplicadas de Taller -> columnas oficiales
+    cur.execute("UPDATE llantas_maestro SET cliente = UPPER(cliente_propietario) WHERE TRIM(IFNULL(cliente, '')) = '' AND TRIM(IFNULL(cliente_propietario, '')) != ''")
+    cur.execute("UPDATE llantas_maestro SET marca = marca_origen WHERE TRIM(IFNULL(marca, '')) = '' AND TRIM(IFNULL(marca_origen, '')) != ''")
+    cur.execute("UPDATE llantas_maestro SET diseno = diseno_origen WHERE TRIM(IFNULL(diseno, '')) = '' AND TRIM(IFNULL(diseno_origen, '')) != ''")
+    # Movimientos que solo estaban en llantas_movimientos (los que Taller no copiaba al kardex)
+    copiados = 0
+    movs = cur.execute("""
+        SELECT fecha_movimiento, numero_interno, cliente_propietario, tipo_movimiento, bodega_origen, bodega_destino,
+               placa_origen, posicion_origen, placa_destino, posicion_destino, odometro_vehiculo,
+               profundidad_momento, costo_asociado, motivo, usuario_responsable
+        FROM llantas_movimientos
+    """).fetchall()
+    for (f, sn, cli, tipo, b_o, b_d, pl_o, po_o, pl_d, po_d, odo, prof, costo, motivo, usr) in movs:
+        tipo_k = _TIPO_EQUIVALENTE_KARDEX.get(tipo, tipo)
+        ya = cur.execute("""SELECT 1 FROM kardex_movimientos_llanta WHERE UPPER(numero_interno) = UPPER(?)
+                            AND SUBSTR(fecha_movimiento, 1, 10) = SUBSTR(?, 1, 10) AND tipo_movimiento IN (?, ?)""",
+                         (sn, f, tipo, tipo_k)).fetchone()
+        if ya:
+            continue
+        registrar_kardex(cur, sn, cli, ubicacion_canonica(b_o) or b_o, ubicacion_canonica(b_d) or b_d, tipo_k,
+                         fecha=str(f or '')[:10], placa=pl_d or pl_o, posicion=po_d or po_o, prof=prof, km=odo,
+                         costo=costo, motivo=motivo, usuario=usr)
+        copiados += 1
+    cur.execute("INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas) VALUES ('normalizar_estados_llantas_v1', datetime('now'), ?)",
+                (cambiadas + copiados,))
+    return {"status": "ok", "llantas": cambiadas, "movimientos_copiados": copiados}
+
 
 if "pytest" not in sys.modules and not os.environ.get("PYTEST_CURRENT_TEST"):
     inicializar_bd()
@@ -6542,26 +6864,29 @@ def crear_llanta_en_bodega(datos: dict) -> dict:
     ubicacion = str(datos.get('ubicacion_bodega', 'BODEGA_1_NUEVAS')).strip().upper()
     marca = str(datos.get('marca', '')).strip().upper()
     diseno = str(datos.get('diseno', '')).strip().upper()
-    dimension = str(datos.get('dimension', '295/80R22.5')).strip().upper()
-    vida = str(datos.get('vida_actual', 'Original')).strip()
+    dimension = str(datos.get('dimension', '')).strip().upper()
+    vida = vida_llanta(datos.get('vida_actual', 'Original'))
     banda = str(datos.get('banda_reen', '')).strip().upper()
-    prof_ini = to_float(datos.get('prof_inicial', 18.0), 18.0)
+    prof_ini = to_float(datos.get('prof_inicial'), 0.0)
+    if prof_ini <= 0 and marca and diseno:
+        prof_ini = to_float(buscar_profundidad_inicial(marca, diseno, dimension, 'Reencauche' if vida != 'Original' else 'Original'), 0.0)
+    # Alta (también carga inicial de inventario): en cualquier bodega salvo montada (entra por inspección
+    # o montaje) y disposición final (exige el acta de la empresa ambiental)
+    ubicacion = ubicacion_canonica(ubicacion) or ubicacion
+    if ubicacion not in UBICACIONES_LLANTA or ubicacion in (MONTADA, 'BODEGA_7_CHATARRIZADA'):
+        return {"ok": False, "mensaje": "El alta se hace en una bodega (1 a 6); el montaje y la disposición final se registran como movimientos"}
+    if not (marca and dimension):
+        return {"ok": False, "mensaje": "Indique marca y dimensión de la llanta (no se asumen valores)"}
+    # La profundidad inicial se exige si la llanta va a volver a rodar (no para cascos en planta ni FVU)
+    if prof_ini <= 0 and ubicacion not in ('BODEGA_3_REENCAUCHE', 'BODEGA_6_FVU'):
+        return {"ok": False, "mensaje": "Indique la profundidad inicial de la llanta (mm)"}
     prof_act = to_float(datos.get('prof_actual_min', prof_ini), prof_ini)
     costo = to_float(datos.get('costo_compra'), 0.0)  # sin precio = 0: la llanta queda fuera de los cálculos en pesos (no se inventa un valor)
     proveedor = str(datos.get('proveedor_actual', '')).strip()
     obs = str(datos.get('observaciones', '')).strip()
     user = str(datos.get('usuario_registro', 'admin')).strip()
 
-    estados_nombre = {
-        'BODEGA_1_NUEVAS': 'En Stock - Nueva',
-        'BODEGA_2_RECAMBIO': 'En Stock - Reutilizable',
-        'BODEGA_3_REENCAUCHE': 'Enviada a Reencauche',
-        'BODEGA_4_REENCAUCHADAS': 'En Stock - Reencauchada',
-        'BODEGA_5_REPARACION': 'En Reparación Mayor',
-        'BODEGA_6_FVU': 'FVU / Desecho',
-        'BODEGA_7_CHATARRIZADA': 'Disposición Final / Chatarrizada',
-        'MONTADA_OPERACION': 'Montada en Vehículo'
-    }
+    estados_nombre = UBICACIONES_LLANTA
     estado_act = estados_nombre.get(ubicacion, 'En Stock - Nueva')
 
     with get_connection() as conn:
@@ -6586,20 +6911,14 @@ def crear_llanta_en_bodega(datos: dict) -> dict:
             proveedor, obs
         ))
         llanta_id = cursor.lastrowid
+        if ubicacion == 'BODEGA_3_REENCAUCHE':  # carga inicial de un casco que ya está en la planta
+            cursor.execute("UPDATE llantas_maestro SET fecha_envio_planta = ? WHERE id = ?",
+                           (datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d'), llanta_id))
 
         # Kardex
-        fecha_mov = datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d')
-        cursor.execute("""
-            INSERT INTO kardex_movimientos_llanta (
-                fecha_movimiento, cliente, subcliente, numero_interno,
-                bodega_origen, bodega_destino, tipo_movimiento,
-                vida_ciclo, prof_min_mm, costo_asociado, proveedor,
-                causal_o_motivo, usuario_registro
-            ) VALUES (?, ?, ?, ?, 'EXTERNO', ?, 'ALTA_NUEVA', ?, ?, ?, ?, 'Alta inicial en inventario de bodega', ?)
-        """, (
-            fecha_mov, cliente, subcliente, numero_interno,
-            ubicacion, vida, prof_act, costo, proveedor, user
-        ))
+        registrar_kardex(cursor, numero_interno, cliente, 'EXTERNO', ubicacion, 'ALTA_NUEVA', subcliente=subcliente,
+                         vida=vida, prof=prof_act, costo=costo, proveedor=proveedor,
+                         motivo='Alta inicial en inventario de bodega', usuario=user)
 
         conn.commit()
 
@@ -6631,17 +6950,10 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
     doc_soporte = str(datos.get('documento_soporte', '')).strip()
     user = str(datos.get('usuario_registro', 'admin')).strip()
 
-    estados_nombre = {
-        'BODEGA_1_NUEVAS': 'En Stock - Nueva',
-        'BODEGA_2_RECAMBIO': 'En Stock - Reutilizable',
-        'BODEGA_3_REENCAUCHE': 'Enviada a Reencauche',
-        'BODEGA_4_REENCAUCHADAS': 'En Stock - Reencauchada',
-        'BODEGA_5_REPARACION': 'En Reparación Mayor',
-        'BODEGA_6_FVU': 'FVU / Desecho',
-        'BODEGA_7_CHATARRIZADA': 'Disposición Final / Chatarrizada',
-        'MONTADA_OPERACION': 'Montada en Vehículo'
-    }
+    estados_nombre = UBICACIONES_LLANTA
 
+    reingreso = {"motivo": datos.get('motivo_reingreso') or causal, "responsable": datos.get('responsable_reingreso') or user,
+                 "foto": datos.get('foto_reingreso') or datos.get('foto_soporte')}
     if bodega_destino not in estados_nombre:
         return {"ok": False, "mensaje": f"Bodega destino inválida: {bodega_destino}"}
 
@@ -6655,25 +6967,32 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             return {"ok": False, "mensaje": f"La llanta {numero_interno} no se encuentra en llantas_maestro"}
 
         cur = dict(zip(col_names, row))
-        bodega_origen = cur['ubicacion_bodega']
+        bodega_origen = ubicacion_canonica(cur.get('ubicacion_bodega'), cur.get('estado_actual'),
+                                           cur.get('numero_acta_ambiental'), cur.get('fecha_disposicion')) or cur.get('ubicacion_bodega')
         subcliente = cur.get('subcliente', '')
 
-        # Corrección 3: Máquina de Estados Estricta (Bloquear Transiciones Absurdas entre Bodegas)
-        if bodega_origen == 'BODEGA_7_CHATARRIZADA':
-            return {"ok": False, "mensaje": "⛔ Una carcasa chatarrizada con acta ambiental tiene baja definitiva y no puede reingresar al inventario."}
-
-        if bodega_origen == bodega_destino:
-            if bodega_destino != 'MONTADA_OPERACION' or (placa == cur.get('placa_actual', '') and posicion == to_int(cur.get('posicion_actual', 0))):
-                return {"ok": False, "mensaje": "La llanta ya se encuentra en esa bodega o posición."}
-
-        if bodega_origen == 'BODEGA_1_NUEVAS' and bodega_destino == 'BODEGA_3_REENCAUCHE':
-            return {"ok": False, "mensaje": "⛔ Una llanta nueva sin rodar no puede ser enviada a reencauche."}
+        # Máquina de estados única (la misma de Taller): transiciones permitidas, retorno de reencauche solo
+        # si fue despachada, reingreso desde FVU con trazabilidad y disposición final con acta
+        if bodega_origen == bodega_destino == 'MONTADA_OPERACION' and placa == cur.get('placa_actual', '') \
+                and posicion == to_int(cur.get('posicion_actual', 0)):
+            return {"ok": False, "mensaje": "La llanta ya se encuentra en esa posición."}
+        error_tr = validar_transicion_llanta(bodega_origen, bodega_destino, enviada_planta=bool(cur.get('fecha_envio_planta')),
+                                             reingreso=reingreso, acta=doc_soporte)
+        if error_tr:
+            return {"ok": False, "mensaje": error_tr}
+        if bodega_destino == 'BODEGA_3_REENCAUCHE':
+            tope = maximo_reencauches(cliente, cur.get('marca'))
+            if tope is not None and to_int(cur.get('num_reencauches', 0)) >= tope:
+                return {"ok": False, "mensaje": f"⛔ La llanta ya tiene {to_int(cur.get('num_reencauches', 0))} reencauche(s); el máximo configurado para {cur.get('marca') or 'esta marca'} es {tope}"}
+        if bodega_origen == 'BODEGA_3_REENCAUCHE' and bodega_destino == 'BODEGA_4_REENCAUCHADAS' and to_float(nueva_prof_ini) <= 0:
+            return {"ok": False, "mensaje": "Indique la profundidad inicial de la banda del reencauche (mm)"}
 
         # Variables mutables
         num_reen = to_int(cur.get('num_reencauches', 0))
-        vida_act = str(cur.get('vida_actual', 'Original'))
-        p_ini = to_float(cur.get('prof_inicial', 18.0))
-        p_act = to_float(cur.get('prof_actual_min', 18.0))
+        vida_act = vida_llanta(cur.get('vida_actual'), num_reen, cur.get('ciclo_actual'))
+        num_reen = max(num_reen, int(vida_act[1:]) if vida_act != 'Original' else 0)
+        p_ini = to_float(cur.get('prof_inicial'), 0.0)
+        p_act = to_float(cur.get('prof_actual_min'), 0.0)
         costo_ciclo = to_float(cur.get('costo_ciclo_actual', 0.0))
         costo_rep_ciclo = to_float(cur.get('costo_reparaciones_ciclo_actual', 0.0))
         costo_acum = to_float(cur.get('costo_acumulado_total', costo_ciclo))
@@ -6719,7 +7038,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             tipo_mov = 'RETORNO_REENCAUCHE'
             num_reen += 1
             vida_act = f"R{num_reen}"
-            p_ini = to_float(nueva_prof_ini, 18.0) if nueva_prof_ini is not None else 18.0
+            p_ini = to_float(nueva_prof_ini)
             p_act = p_ini
             banda = banda_reen or cur.get('banda_reen', '')
             costo_ciclo = max(0.0, costo_asoc)
@@ -6790,7 +7109,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
                 mm_perd = p_act - lim_ret
                 mm_ut = max(1.0, p_ini - lim_ret)
                 costo_mm = (costo_ciclo + costo_rep_ciclo) / mm_ut
-                dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar)
+                dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar) if (costo_ciclo + costo_rep_ciclo) > 0 and p_ini > 0 else None
                 pct_desgaste = max(0.0, (p_ini - p_act) / mm_ut) * 100.0
                 if pct_desgaste < 30.0 and estado_gar in ('No Aplica', ''):
                     estado_gar = 'Posible Garantía'
@@ -6798,7 +7117,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
         # 5. Chatarrización / Disposición Final Ambiental (Bodega 7)
         elif bodega_destino == 'BODEGA_7_CHATARRIZADA':
             tipo_mov = 'CHATARRIZACION'
-            acta_amb = doc_soporte or f"ACTA-{datetime.now(BOGOTA_TZ).strftime('%Y%m')}-{numero_interno}"
+            acta_amb = doc_soporte
             f_disp = fecha_mov
             proveedor_act = proveedor or cur.get('proveedor_actual', '')
             placa_act = ''
@@ -6806,7 +7125,11 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
 
         # 6. Montaje en Vehículo (Hacia MONTADA_OPERACION)
         elif bodega_destino == 'MONTADA_OPERACION':
-            tipo_mov = 'MONTAJE'
+            tipo_mov = 'REINGRESO_MONTAJE' if bodega_origen in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA') else (
+                'ROTACION' if bodega_origen == 'MONTADA_OPERACION' else 'MONTAJE')
+            if tipo_mov == 'REINGRESO_MONTAJE':
+                causal = f"Reingreso desde {nombre_ubicacion(bodega_origen)}: {reingreso['motivo']}"
+                user = reingreso['responsable']
             placa_act = placa
             pos_act = posicion
             if prof_min_in is not None:
@@ -6878,6 +7201,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
                 posicion_actual = ?,
                 vida_actual = ?,
                 num_reencauches = ?,
+                ciclo_actual = ? + 1,
                 banda_reen = ?,
                 prof_inicial = ?,
                 prof_ext = ?,
@@ -6902,28 +7226,18 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             WHERE id = ?
         """, (
             bodega_destino, estado_nuevo, placa_act, pos_act,
-            vida_act, num_reen, banda_reen or cur.get('banda_reen', ''),
+            vida_act, num_reen, num_reen, banda_reen or cur.get('banda_reen', ''),
             p_ini, p_act, p_act, p_act, p_act,
             costo_ciclo, costo_rep_ciclo, costo_acum, km_ciclo,
             f_envio_planta, proveedor_act, causal_baja, mm_perd, dinero_perd,
             estado_gar, acta_amb, f_disp, bodega_destino, bodega_destino, cur['id']
         ))
 
-        # Registrar en Kardex
-        cursor.execute("""
-            INSERT INTO kardex_movimientos_llanta (
-                fecha_movimiento, cliente, subcliente, numero_interno,
-                bodega_origen, bodega_destino, tipo_movimiento,
-                placa, posicion, vida_ciclo, prof_min_mm, km_vehiculo,
-                costo_asociado, proveedor, causal_o_motivo, documento_soporte,
-                usuario_registro
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            fecha_mov, cliente, subcliente, numero_interno,
-            bodega_origen, bodega_destino, tipo_mov,
-            k_placa, k_pos, vida_act, p_act, km_veh,
-            costo_asoc, proveedor_act, causal, doc_soporte, user
-        ))
+        # Registrar en Kardex (fuente oficial de movimientos)
+        registrar_kardex(cursor, numero_interno, cliente, bodega_origen, bodega_destino, tipo_mov, fecha=fecha_mov,
+                         subcliente=subcliente, placa=k_placa, posicion=k_pos, vida=vida_act, prof=p_act, km=km_veh,
+                         costo=costo_asoc, proveedor=proveedor_act, motivo=causal, documento=doc_soporte, usuario=user,
+                         foto=(reingreso['foto'] if tipo_mov == 'REINGRESO_MONTAJE' else ''))
 
         conn.commit()
 

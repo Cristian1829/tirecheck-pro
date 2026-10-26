@@ -1666,6 +1666,34 @@ def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(r
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
     return sanitizar_nativos({"status": "ok", "mensaje": "Marca desvinculada del cliente"})
 
+class MaximoReencaucheItem(BaseModel):
+    cliente: str
+    marca: str = "TODAS"
+    max_reencauches: int
+
+
+@app.get("/api/configuracion-reencauche")
+def api_listar_maximos_reencauche(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    return database.listar_maximos_reencauche(cliente)
+
+
+@app.post("/api/configuracion-reencauche")
+def api_guardar_maximo_reencauche(item: MaximoReencaucheItem, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    cliente = _resolver_cliente_usuario(usuario_actual, item.cliente)
+    if not database.guardar_maximo_reencauches(cliente, item.marca, item.max_reencauches):
+        raise HTTPException(status_code=400, detail="Indique cliente y un máximo de reencauches válido (0 o más)")
+    return {"status": "ok"}
+
+
+@app.delete("/api/configuracion-reencauche")
+def api_eliminar_maximo_reencauche(cliente: str, marca: str = "TODAS", usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    if not database.eliminar_maximo_reencauches(cliente, marca):
+        raise HTTPException(status_code=404, detail="No existe esa regla")
+    return {"status": "ok"}
+
+
 @app.post("/api/configuraciones-clientes/licencia")
 def api_guardar_licencia_cliente(item: ConfigLicenciaClienteItem, admin: dict = Depends(requerir_admin)):
     ok = database.guardar_licencia_cliente(item.cliente, item.tipo_licencia, item.plantilla_kpis_json)
@@ -1954,11 +1982,11 @@ class AltaLlantaBodegaItem(BaseModel):
     ubicacion_bodega: str = "BODEGA_1_NUEVAS"
     marca: str
     diseno: str = ""
-    dimension: str = "295/80R22.5"
+    dimension: str = ""  # sin valores asumidos: el alta exige la medida real
     vida_actual: str = "Original"
     banda_reen: str = ""
-    prof_inicial: float = 18.0
-    prof_actual_min: float = 18.0
+    prof_inicial: Optional[float] = None  # sin dato se toma del catálogo del modelo, si existe
+    prof_actual_min: Optional[float] = None
     costo_compra: Optional[float] = None  # sin precio: la llanta se excluye de los cálculos en pesos
     proveedor_actual: str = ""
     observaciones: str = ""
@@ -1978,6 +2006,10 @@ class MovimientoBodegaItem(BaseModel):
     proveedor: str = ""
     causal_o_motivo: str = ""
     documento_soporte: str = ""
+    # Reingreso de una llanta en FVU o disposición final: trazabilidad obligatoria
+    motivo_reingreso: str = ""
+    responsable_reingreso: str = ""
+    foto_reingreso: str = ""
 
 class GestionGarantiaItem(BaseModel):
     cliente: str

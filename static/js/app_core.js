@@ -235,6 +235,29 @@
       }
     }
 
+    // Vida exacta de la llanta: 'Original', 'R1', 'R2'…; '' si es reencauche sin número (dato antiguo)
+    function vidaExactaLlanta(vida, banda) {
+      const v = String(vida || '').trim().toUpperCase();
+      const m = v.match(/^R\s*(\d+)$/) || v.match(/REENCAUCHE\s*(\d+)/);
+      if (m) return parseInt(m[1], 10) > 0 ? 'R' + parseInt(m[1], 10) : 'Original';
+      if (!v || v.includes('ORIG') || v === 'NUEVA') return (banda && String(banda).trim() && String(banda).trim() !== '-') ? '' : 'Original';
+      return '';
+    }
+    function esVidaReencauche(vida) {
+      const v = String(vida || '').trim().toUpperCase();
+      return v !== '' && v !== 'ORIGINAL' && !v.includes('ORIG') && v !== 'NUEVA';
+    }
+
+    // Profundidad máxima local (misma tabla por rin del servidor; sin conexión no hay catálogo)
+    const PROF_MAXIMA_POR_RIN_LOCAL = {13: 12, 14: 12, 15: 14, 16: 16, 17: 16, 17.5: 18, 19.5: 22, 20: 24, 22.5: 27, 24: 30, 24.5: 30};
+    function profundidadMaximaLocal(dimension) {
+      const m = String(dimension || '').trim().toUpperCase().match(/(?:R|-|\s)(\d{2}(?:\.\d)?)\s*(?:LT|C)?\s*$/);
+      if (!m) return 27;
+      const rin = parseFloat(m[1]);
+      if (rin >= 25) return 120;
+      return PROF_MAXIMA_POR_RIN_LOCAL[rin] || 27;
+    }
+
     // Helper para validación local de candados de seguridad en el navegador
     function validarCandadosOfflineLocal(payload) {
       const pExt = parseFloat(payload.prof_ext) || 0;
@@ -242,12 +265,18 @@
       const pInt = parseFloat(payload.prof_int) || 0;
       const profs = [pExt, pCent, pInt];
 
-      // 1. Profundidades > 0 y <= 27.0 mm
-      if (profs.some(p => p > 27.0)) {
+      // 1. Profundidad máxima según el rin de la dimensión (antes 27 mm fijos para todo rin)
+      const profMax = profundidadMaximaLocal(payload.dimension);
+      if (profs.some(p => p > profMax)) {
         return {
           valido: false,
-          mensaje: '⛔ CANDADO DE SEGURIDAD: Ninguna profundidad puede superar los 27.0 mm (Valores ingresados: ' + profs.join(', ') + ').'
+          mensaje: `⛔ CANDADO DE SEGURIDAD: Ninguna profundidad puede superar ${profMax} mm para la medida ${payload.dimension || ''} (Valores ingresados: ${profs.join(', ')}).`
         };
+      }
+
+      // 1.1 La vida exacta es obligatoria (Original, R1, R2…)
+      if (!String(payload.vida || '').trim()) {
+        return { valido: false, mensaje: '⚠️ Seleccione la vida de la llanta (Original, R1, R2…).' };
       }
 
       // 2. prof <= prof_inicial si prof_inicial > 0
@@ -263,7 +292,7 @@
       const pos = parseInt(payload.posicion) || 1;
       const vida = String(payload.vida || 'Original').trim().toUpperCase();
       const tipologia = String(payload.tipologia || '').trim();
-      if (esPosicionDireccionalLocal(tipologia, pos) && vida === 'REENCAUCHE') {
+      if (esPosicionDireccionalLocal(tipologia, pos) && esVidaReencauche(vida)) {
         return {
           valido: false,
           mensaje: `⛔ CANDADO DE SEGURIDAD VIAL: En el eje direccional (Posición ${pos}) no se permite Reencauche, únicamente condición Original.`

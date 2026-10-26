@@ -91,7 +91,7 @@ def test_bloqueo_transiciones_invalidas_y_chatarrizada_inmutable(test_db, auth_c
         "marca": "GOODYEAR",
         "dimension": "295/80R22.5",
         "prof_actual_min": 2.0
-    })
+    }).raise_for_status()
 
     res_chat = auth_client.post("/api/bodegas/movimiento", json={
         "cliente": cliente,
@@ -108,7 +108,7 @@ def test_bloqueo_transiciones_invalidas_y_chatarrizada_inmutable(test_db, auth_c
         "bodega_destino": "BODEGA_2_RECAMBIO"
     })
     assert res_revivir_b2.status_code == 400
-    assert "chatarrizada" in res_revivir_b2.text
+    assert "chatarrizada" in res_revivir_b2.json()["detail"].lower()
 
     # Intentar montar llanta chatarrizada en un camión -> HTTP 400
     res_revivir_mont = auth_client.post("/api/bodegas/movimiento", json={
@@ -118,8 +118,9 @@ def test_bloqueo_transiciones_invalidas_y_chatarrizada_inmutable(test_db, auth_c
         "placa": "TRK-001",
         "posicion": 3
     })
+    # Solo puede volver a montarse dejando trazabilidad del reingreso (motivo, responsable y foto)
     assert res_revivir_mont.status_code == 400
-    assert "chatarrizada" in res_revivir_mont.text
+    assert "foto" in res_revivir_mont.json()["detail"].lower()
 
     # 2. Alta de llanta nueva y probar enviar directo a reencauche (Bodega 3) -> HTTP 400
     auth_client.post("/api/bodegas/alta", json={
@@ -138,7 +139,7 @@ def test_bloqueo_transiciones_invalidas_y_chatarrizada_inmutable(test_db, auth_c
         "bodega_destino": "BODEGA_3_REENCAUCHE"
     })
     assert res_nueva_a_reen.status_code == 400
-    assert "nueva" in res_nueva_a_reen.text
+    assert "nueva" in res_nueva_a_reen.json()["detail"].lower()
 
     # 3. Mover a la misma bodega redundante -> HTTP 400
     res_redundante = auth_client.post("/api/bodegas/movimiento", json={
@@ -320,6 +321,7 @@ def test_contabilidad_exacta_bodega_5_y_reinicio_en_reencauche_bodega_4(test_db,
         "ubicacion_bodega": "BODEGA_1_NUEVAS",
         "marca": "GOODYEAR",
         "dimension": "295/80R22.5",
+        "prof_inicial": 18.0,
         "costo_compra": 1500000.0
     })
 

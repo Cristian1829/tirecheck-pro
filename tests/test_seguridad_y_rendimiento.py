@@ -44,16 +44,11 @@ def test_aislamiento_multitenant_bodegas_mismo_numero_interno(test_db):
     })
     assert res_b.get("ok"), f"Fallo al crear llanta en CLIENTE_B: {res_b}"
 
-    # 3. Trasladar la llanta de CLIENTE_A a BODEGA_2_RECAMBIO
-    mov_a = database.registrar_movimiento_bodega({
-        "cliente": "CLIENTE_A",
-        "numero_interno": "LL-001",
-        "tipo_movimiento": "TRASLADO_INTERNO",
-        "bodega_origen": "BODEGA_1_NUEVAS",
-        "bodega_destino": "BODEGA_2_RECAMBIO",
-        "usuario_registro": "inspector_a"
-    })
-    assert mov_a.get("ok"), f"Fallo movimiento en CLIENTE_A: {mov_a}"
+    # 3. Montar y desmontar la llanta de CLIENTE_A hacia BODEGA_2_RECAMBIO (una nueva no pasa directo a recambio)
+    for destino, extra in (("MONTADA_OPERACION", {"placa": "AAA111", "posicion": 3}), ("BODEGA_2_RECAMBIO", {"prof_min_mm": 12.0})):
+        mov_a = database.registrar_movimiento_bodega({"cliente": "CLIENTE_A", "numero_interno": "LL-001",
+                                                      "bodega_destino": destino, "usuario_registro": "inspector_a", **extra})
+        assert mov_a.get("ok"), f"Fallo movimiento en CLIENTE_A: {mov_a}"
 
     # 4. Despachar a planta de reencauche la llanta LL-001 de CLIENTE_A
     desp_a = database.despachar_lote_planta_reencauche({
@@ -70,7 +65,7 @@ def test_aislamiento_multitenant_bodegas_mismo_numero_interno(test_db):
     assert hv_a.get("ok")
     assert hv_a["ficha_tecnica"]["marca"] == "GOODYEAR"
     assert hv_a["ficha_tecnica"]["cliente"] == "CLIENTE_A"
-    assert hv_a["estado_actual"]["estado"] == "Bodega_4_EnPlanta"
+    assert hv_a["estado_actual"]["ubicacion_bodega"] == "BODEGA_3_REENCAUCHE"
 
     # 6. Consultar Hoja de Vida de LL-001 en CLIENTE_B -> DEBE SEGUIR INTACTA en En Stock - Nueva / BODEGA_1_NUEVAS
     hv_b = database.obtener_hoja_vida_llanta("LL-001", "CLIENTE_B")

@@ -533,27 +533,27 @@
                 <button type="button" onclick="abrirModalKardex('${serialSeguro}')" title="Ver Kardex y Timeline" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300">
                   <i class="fa-solid fa-timeline"></i>
                 </button>
-                ${(ll.ubicacion_bodega === 'BODEGA_3_REENCAUCHE' || ll.estado_actual === 'Bodega_3_Reencauche') ? `
+                ${(ll.ubicacion_bodega === 'BODEGA_3_REENCAUCHE' && !ll.fecha_envio_planta) ? `
                   <button type="button" onclick="abrirModalDespachoPlanta('${serialSeguro}')" title="Despachar a Planta Reencauche" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200">
                     <i class="fa-solid fa-industry"></i>
                   </button>
                 ` : ''}
-                ${(ll.ubicacion_bodega === 'BODEGA_4_REENCAUCHADAS' || ll.estado_actual === 'Bodega_4_EnPlanta') ? `
+                ${(ll.ubicacion_bodega === 'BODEGA_3_REENCAUCHE' && ll.fecha_envio_planta) ? `
                   <button type="button" onclick="abrirModalRetornoReencauche('${serialSeguro}')" title="Recepcionar Reencauche" class="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs border border-teal-200">
                     <i class="fa-solid fa-arrows-spin"></i>
                   </button>
                 ` : ''}
-                ${(ll.ubicacion_bodega === 'BODEGA_5_REPARACION' || ll.estado_actual === 'Bodega_5_Reparacion') ? `
+                ${(ll.ubicacion_bodega === 'BODEGA_5_REPARACION') ? `
                   <button type="button" onclick="abrirModalFinalizarReparacion('${serialSeguro}')" title="Finalizar Reparación" class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs border border-amber-200">
                     <i class="fa-solid fa-wrench"></i>
                   </button>
                 ` : ''}
-                ${(ll.ubicacion_bodega === 'BODEGA_6_FVU' || ll.estado_actual === 'Bodega_6_Garantia') ? `
+                ${(ll.ubicacion_bodega === 'BODEGA_6_FVU') ? `
                   <button type="button" onclick="abrirModalDictamenGarantia('${serialSeguro}')" title="Dictamen de Garantía" class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200">
                     <i class="fa-solid fa-shield-halved"></i>
                   </button>
                 ` : ''}
-                ${(ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA' || ll.estado_actual === 'Bodega_7_FVU') ? `
+                ${(ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') ? `
                   <a href="/api/bodegas/pdf-acta-chatarrizacion/${encodeURIComponent(ll.numero_interno)}" target="_blank" title="Descargar Acta Chatarrización PDF" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 flex items-center">
                     <i class="fa-solid fa-file-pdf"></i>
                   </a>
@@ -774,16 +774,6 @@
       const origen = llanta ? llanta.ubicacion_bodega : '';
       const btnSubmit = document.getElementById('btnSubmitMoverBodega');
 
-      if (origen === 'BODEGA_7_CHATARRIZADA') {
-        selDestino.disabled = true;
-        if (btnSubmit) btnSubmit.classList.add('hidden');
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = '⛔ Llanta Chatarrizada (Baja Definitiva Inmutable)';
-        selDestino.appendChild(opt);
-        return;
-      }
-
       selDestino.disabled = false;
       if (btnSubmit) btnSubmit.classList.remove('hidden');
 
@@ -824,8 +814,10 @@
         destinos.push({ val: 'BODEGA_6_FVU', text: '⚠️ Declarar Irreparable / Baja Bodega 6' });
         destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrizar en Bodega 7 (Acta Ambiental)' });
       } else if (origen === 'BODEGA_6_FVU') {
-        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Chatarrización Final con Acta Ambiental (Bodega 7)' });
-        destinos.push({ val: 'BODEGA_3_REENCAUCHE', text: '🏭 Reconsiderar Carcasa para Envío a Reencauche' });
+        destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Disposición final: retiro por empresa ambiental (con acta)' });
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Reingreso a vehículo (con motivo, responsable y foto)' });
+      } else if (origen === 'BODEGA_7_CHATARRIZADA') {
+        destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Reingreso a vehículo (con motivo, responsable y foto)' });
       } else {
         destinos.push({ val: 'MONTADA_OPERACION', text: '🚚 Montar en Vehículo (Operación)' });
         destinos.push({ val: 'BODEGA_2_RECAMBIO', text: '🔄 Bodega 2: Recambio en Patio' });
@@ -836,7 +828,9 @@
         destinos.push({ val: 'BODEGA_7_CHATARRIZADA', text: '♻️ Bodega 7: Chatarrización' });
       }
 
-      destinos.forEach(d => {
+      // Solo los pasos que la regla permite (la misma tabla que valida el servidor)
+      const permitidos = TRANSICIONES_LLANTA[origen] || [];
+      destinos.filter(d => permitidos.includes(d.val)).forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.val;
         opt.textContent = d.text;
@@ -877,7 +871,8 @@
       if (document.getElementById('mover_planta_reencauche')) document.getElementById('mover_planta_reencauche').value = llanta.proveedor_actual || '';
       if (document.getElementById('mover_remision_reencauche')) document.getElementById('mover_remision_reencauche').value = '';
       if (document.getElementById('mover_banda_reen')) document.getElementById('mover_banda_reen').value = llanta.banda_reen || '';
-      if (document.getElementById('mover_nueva_prof')) document.getElementById('mover_nueva_prof').value = '20.0';
+      if (document.getElementById('mover_nueva_prof')) document.getElementById('mover_nueva_prof').value = '';
+      ['mover_motivo_reingreso', 'mover_responsable_reingreso', 'mover_foto_reingreso'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       if (document.getElementById('mover_costo_reencauche')) document.getElementById('mover_costo_reencauche').value = '';
       if (document.getElementById('mover_proveedor_rep')) document.getElementById('mover_proveedor_rep').value = llanta.proveedor_actual || '';
       if (document.getElementById('mover_motivo_reparacion')) document.getElementById('mover_motivo_reparacion').value = '';
@@ -934,10 +929,37 @@
       document.getElementById('modalMoverBodega').classList.remove('flex');
     }
 
+    // Transiciones permitidas entre ubicaciones (las mismas que valida el servidor)
+    const TRANSICIONES_LLANTA = {
+      BODEGA_1_NUEVAS: ['MONTADA_OPERACION', 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'],
+      BODEGA_2_RECAMBIO: ['MONTADA_OPERACION', 'BODEGA_3_REENCAUCHE', 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'],
+      BODEGA_3_REENCAUCHE: ['BODEGA_4_REENCAUCHADAS', 'BODEGA_2_RECAMBIO', 'BODEGA_6_FVU'],
+      BODEGA_4_REENCAUCHADAS: ['MONTADA_OPERACION', 'BODEGA_5_REPARACION', 'BODEGA_6_FVU'],
+      BODEGA_5_REPARACION: ['BODEGA_2_RECAMBIO', 'BODEGA_3_REENCAUCHE', 'BODEGA_4_REENCAUCHADAS', 'MONTADA_OPERACION', 'BODEGA_6_FVU'],
+      BODEGA_6_FVU: ['BODEGA_7_CHATARRIZADA', 'MONTADA_OPERACION'],
+      BODEGA_7_CHATARRIZADA: ['MONTADA_OPERACION'],
+      MONTADA_OPERACION: ['MONTADA_OPERACION', 'BODEGA_2_RECAMBIO', 'BODEGA_3_REENCAUCHE', 'BODEGA_5_REPARACION', 'BODEGA_6_FVU']
+    };
+    const esLlantaDeBaja = (ll) => ll && (ll.ubicacion_bodega === 'BODEGA_6_FVU' || ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA');
+
+    function leerArchivoComoDataUrl(input) {
+      return new Promise((resolve) => {
+        const f = input?.files?.[0];
+        if (!f) return resolve('');
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ''));
+        r.onerror = () => resolve('');
+        r.readAsDataURL(f);
+      });
+    }
+
     function adaptarCamposModalMover(destino, llanta = null) {
       const serial = document.getElementById('mover_numero_interno')?.value || '';
       const cleanNum = String(serial || '').trim().toUpperCase();
       const ll = llanta || cacheInventarioBodegas.find(l => String(l.numero_interno || '').trim().toUpperCase() === cleanNum);
+      destino = document.getElementById('mover_bodega_destino')?.value || destino;
+      const boxReing = document.getElementById('boxMoverReingreso');
+      if (boxReing) boxReing.classList.toggle('hidden', !(destino === 'MONTADA_OPERACION' && esLlantaDeBaja(ll)));
 
       if (document.getElementById('boxMoverMontaje')) {
         document.getElementById('boxMoverMontaje').classList.toggle('hidden', destino !== 'MONTADA_OPERACION');
@@ -965,9 +987,9 @@
       if (alertaBox) {
         alertaBox.classList.remove('hidden', 'bg-blue-50', 'text-blue-900', 'border-blue-200', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-200', 'bg-amber-50', 'text-amber-900', 'border-amber-200', 'border-amber-300', 'bg-rose-50', 'text-rose-900', 'border-rose-200', 'border-rose-300', 'bg-indigo-50', 'text-indigo-900', 'border-indigo-200', 'bg-teal-50', 'text-teal-900', 'border-teal-200', 'bg-slate-100', 'text-slate-800', 'border-slate-300');
 
-        if (ll && ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
-          alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-slate-100 text-slate-800 border-slate-300 flex items-center space-x-2';
-          alertaBox.innerHTML = '<i class="fa-solid fa-ban text-rose-600 text-base"></i><span>Esta carcasa tiene disposición final ambiental con acta de chatarrización inmutable. No puede trasladarse a ninguna otra bodega.</span>';
+        if (esLlantaDeBaja(ll) && destino === 'MONTADA_OPERACION') {
+          alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-rose-50 text-rose-900 border-rose-300 flex items-center space-x-2';
+          alertaBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i><span>Llanta dada de baja (' + (ll.estado_display || ll.ubicacion_bodega) + '). Solo puede volver a montarse registrando el motivo, el responsable y una foto del reingreso.</span>';
           return;
         }
 
@@ -1006,7 +1028,7 @@
           alertaBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-600"></i><span>Dar de baja en pila de desecho. Si el desgaste fue menor al 30%, se marcará automáticamente para gestión de garantía con fábrica.</span>';
         } else if (destino === 'BODEGA_7_CHATARRIZADA') {
           alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-slate-100 text-slate-800 border-slate-300 flex items-center space-x-2';
-          alertaBox.innerHTML = '<i class="fa-solid fa-recycle text-slate-700"></i><span>Disposición ambiental con acta de chatarrización. Este movimiento es definitivo e inmutable.</span>';
+          alertaBox.innerHTML = '<i class="fa-solid fa-recycle text-slate-700"></i><span>Disposición final: la empresa ambiental retira la llanta. Registre el número de acta que entrega.</span>';
         } else {
           alertaBox.classList.add('hidden');
         }
@@ -1098,7 +1120,11 @@
       } else if (destino === 'BODEGA_4_REENCAUCHADAS') {
         const inpBanda = document.getElementById('mover_banda_reen');
         payload.banda_reen = inpBanda?.value.trim().toUpperCase() || '';
-        payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof')?.value) || 20.0;
+        payload.nueva_prof_inicial = parseFloat(document.getElementById('mover_nueva_prof')?.value) || null;
+        if (!payload.nueva_prof_inicial) {
+          mostrarToast('⚠️ Ingrese la profundidad de la banda nueva (mm)', true);
+          return;
+        }
         payload.costo_asociado = parseFloat(document.getElementById('mover_costo_reencauche')?.value) || 0.0;
         payload.prof_min_mm = payload.nueva_prof_inicial;
         if (!payload.banda_reen) {
@@ -1121,6 +1147,19 @@
       } else if (destino === 'BODEGA_7_CHATARRIZADA') {
         payload.documento_soporte = document.getElementById('mover_acta_ambiental')?.value.trim() || '';
         payload.proveedor = document.getElementById('mover_gestor_ambiental')?.value.trim() || '';
+        if (!payload.documento_soporte) {
+          mostrarToast('⚠️ Ingrese el número de acta de la empresa ambiental', true);
+          return;
+        }
+      }
+      if (destino === 'MONTADA_OPERACION' && esLlantaDeBaja(ll)) {
+        payload.motivo_reingreso = document.getElementById('mover_motivo_reingreso')?.value.trim() || '';
+        payload.responsable_reingreso = document.getElementById('mover_responsable_reingreso')?.value.trim() || '';
+        payload.foto_reingreso = await leerArchivoComoDataUrl(document.getElementById('mover_foto_reingreso'));
+        if (!payload.motivo_reingreso || !payload.responsable_reingreso || !payload.foto_reingreso) {
+          mostrarToast('⚠️ Para el reingreso registre motivo, responsable y foto', true);
+          return;
+        }
       }
 
       try {
@@ -1752,7 +1791,7 @@
       // Botón Acta PDF si está en FVU
       const btnActa = document.getElementById('btnHvPdfActa');
       if (btnActa) {
-        if (data.estado_actual === 'Bodega_7_FVU' || data.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
+        if (data.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA' || data.estado_actual?.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
           btnActa.classList.remove('hidden');
         } else {
           btnActa.classList.add('hidden');
@@ -1967,8 +2006,9 @@
       const serial = document.getElementById('ret_numero_interno').value;
       const prov = document.getElementById('ret_proveedor_banda').value;
       const dis = document.getElementById('ret_diseno_banda').value;
-      const prof = parseFloat(document.getElementById('ret_prof_banda').value) || 18.0;
-      const costo = parseFloat(document.getElementById('ret_costo').value) || 720000;
+      const prof = parseFloat(document.getElementById('ret_prof_banda').value) || null;
+      const costo = parseFloat(document.getElementById('ret_costo').value) || null;  // sin precio: se excluye de los costos
+      if (!prof) { alert('Ingrese la profundidad de la banda nueva (mm)'); return; }
       const fac = document.getElementById('ret_factura').value;
 
       try {
@@ -1987,7 +2027,7 @@
         const data = await res.json();
         if (data.ok) {
           cerrarModalRetornoReencauche();
-          alert(`Reencauche recibido con éxito para ${serial}. Ciclo ${data.ciclo_actual || 2} activo.`);
+          alert(`Reencauche recibido para ${serial}: queda como ${data.vida || 'reencauchada'} en Bodega 4.`);
           if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
         } else {
           alert('Error: ' + (data.message || data.mensaje));

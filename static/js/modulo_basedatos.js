@@ -193,8 +193,8 @@
 
         // 7. Condición / Vida
         if (vida !== 'TODOS') {
-          const vNorm = (r.vida || '').toLowerCase();
-          if (!vNorm.includes(vida.toLowerCase())) return false;
+          const esReen = esVidaReencauche(r.vida) || (r.banda_reen && r.banda_reen !== '-');
+          if (vida === 'Reencauche' ? !esReen : esReen) return false;
         }
 
         // 8. Semáforo / Desgaste & Presión
@@ -316,7 +316,7 @@
             <td class="p-2.5 font-mono text-[11px]">${r.dimension || '-'}</td>
             <td class="p-2.5">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${
-                (r.vida || '').toLowerCase().includes('reen') || (r.banda_reen && r.banda_reen !== '-') 
+                esVidaReencauche(r.vida) || (r.banda_reen && r.banda_reen !== '-') 
                   ? 'bg-purple-50 text-purple-700' 
                   : 'bg-blue-50 text-blue-700'
               }">
@@ -503,10 +503,10 @@
         const vEd = String(d.vida || 'Original').trim();
         const selEditVida = document.getElementById('edit_vida');
         if (selEditVida) {
-          selEditVida.value = vEd.toLowerCase().includes('reen') ? 'Reencauche' : 'Original';
+          selEditVida.value = vidaExactaLlanta(vEd, d.banda_reen);
         }
         document.getElementById('edit_banda_reen').value = d.banda_reen || '';
-        document.getElementById('edit_psi').value = d.psi || 100;
+        document.getElementById('edit_psi').value = d.psi || '';  // sin lectura queda vacío (antes 100 PSI inventados)
         document.getElementById('edit_prof_ext').value = d.prof_ext || 0;
         document.getElementById('edit_prof_cent').value = d.prof_cent || 0;
         document.getElementById('edit_prof_int').value = d.prof_int || 0;
@@ -554,9 +554,9 @@
         marca: document.getElementById('edit_marca').value,
         diseno: document.getElementById('edit_diseno').value,
         dimension: document.getElementById('edit_dimension').value,
-        vida: (document.getElementById('edit_vida')?.value || 'Original').trim() || 'Original',
+        vida: (document.getElementById('edit_vida')?.value || '').trim(),
         banda_reen: document.getElementById('edit_banda_reen').value,
-        psi: parseFloat(document.getElementById('edit_psi').value) || 100,
+        psi: parseFloat(document.getElementById('edit_psi').value) || 0,
         prof_ext: parseFloat(document.getElementById('edit_prof_ext').value) || 0,
         prof_cent: parseFloat(document.getElementById('edit_prof_cent').value) || 0,
         prof_int: parseFloat(document.getElementById('edit_prof_int').value) || 0,
