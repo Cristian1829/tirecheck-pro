@@ -381,19 +381,21 @@ def recomendaciones_motor(r_an, limite_retiro) -> list:
 
     # Presión fuera de rango
     for parte in _partes(r_an.get('Detalle_Calibracion_PSI')):
-        m = re.search(r'Pos (\d+) \((\d+) PSI, (alta|baja)\)', parte)
+        # Formato del motor: "Pos 6 (84 PSI, baja; objetivo 100)" (objetivo según el eje y el cliente)
+        m = re.search(r'Pos (\d+) \((\d+) PSI, (alta|baja)(?:; objetivo (\d+))?\)', parte)
+        objetivo = m.group(4) if (m and m.group(4)) else str(PSI_OBJETIVO)
         if m and m.group(3) == 'alta':
             agregar('presion', 'Presión alta', '#0284C7', m.group(1),
-                    f"{m.group(2)} PSI, por encima de {int(PSI_OBJETIVO * 1.1)} PSI.",
-                    f"Ajustar a {PSI_OBJETIVO} PSI en frío.")
+                    f"{m.group(2)} PSI, por encima del rango del eje (objetivo {objetivo} PSI).",
+                    f"Ajustar a {objetivo} PSI en frío.")
         elif m:
             agregar('presion', 'Presión baja', '#0284C7', m.group(1),
-                    f"{m.group(2)} PSI, por debajo de {int(PSI_OBJETIVO * 0.9)} PSI.",
-                    f"Inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+                    f"{m.group(2)} PSI, por debajo del rango del eje (objetivo {objetivo} PSI).",
+                    f"Inflar a {objetivo} PSI en frío y revisar válvula y posibles fugas.")
         else:
             agregar('presion', 'Presión baja', '#0284C7', _posiciones_en(parte),
                     "El inspector reportó baja presión.",
-                    f"Medir e inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+                    "Medir e inflar a la presión objetivo del eje en frío y revisar válvula y posibles fugas.")
 
     return filas
 
@@ -402,6 +404,20 @@ def ordenar_por_grupo(alertas):
     """Ordena las alertas según GRUPOS_DIAGNOSTICO conservando el orden interno de cada grupo."""
     orden = {g: i for i, (g, _) in enumerate(GRUPOS_DIAGNOSTICO)}
     return sorted(alertas, key=lambda a: orden.get(a.get('grupo'), len(orden)))
+
+
+ABREV_EJE = {'DIRECCIONAL': 'Dir', 'TRACCIÓN': 'Trac', 'LIBRE': 'Libre', 'REPUESTO': 'Rep'}
+
+
+def minima_por_eje(filas) -> list:
+    """[(eje, mínima, límite)] en orden de eje: la llanta más crítica de cada tipo de eje."""
+    res = []
+    for eje in ('DIRECCIONAL', 'TRACCIÓN', 'LIBRE', 'REPUESTO'):
+        del_eje = [f for f in filas if f.get('eje') == eje and (f.get('p_min') or 0) > 0]
+        if del_eje:
+            critica = min(del_eje, key=lambda f: f['p_min'])
+            res.append((eje, critica['p_min'], critica.get('limite_retiro')))
+    return res
 
 
 def construir_datos_informe(placa, fecha=None) -> dict:
@@ -447,13 +463,13 @@ def construir_datos_informe(placa, fecha=None) -> dict:
 
     # Límite de cada llanta según el eje de su posición (reglas por eje de Catálogos)
     lim_posicion = database.construir_resolver_limite_posicion()
-    max_pos_veh = max([int(f.get('posicion', 0) or 0) for f in filas] or [0])
+    posiciones_veh = [int(f.get('posicion', 0) or 0) for f in filas]
     limites_por_eje = {}
     for f in filas:
         pos_f = int(f.get('posicion', 0) or 0)
-        f['limite_retiro'] = lim_posicion(cliente, subcliente, tipologia, pos_f, max_pos_veh)
-        eje_f = lim_posicion.tipo_eje(tipologia, pos_f, max_pos_veh).capitalize()
-        limites_por_eje.setdefault(eje_f, f['limite_retiro'])
+        f['limite_retiro'] = lim_posicion(cliente, subcliente, tipologia, pos_f, posiciones_veh)
+        f['eje'] = lim_posicion.tipo_eje(tipologia, pos_f, posiciones_veh)
+        limites_por_eje.setdefault(f['eje'].capitalize(), f['limite_retiro'])
     # Texto del límite: uno solo si todos los ejes usan el mismo, o el detalle por eje
     if len(set(limites_por_eje.values())) <= 1:
         texto_limite = f"{format_num_es(next(iter(limites_por_eje.values()), limite_retiro))} mm"
@@ -632,6 +648,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'p_min_global': p_min_global,
         'pos_min_global': pos_min_global,
         'p_prom_global': p_prom_global,
+        'minima_por_eje': minima_por_eje(filas),
         'alertas_lista': alertas_lista,
         'n_cambios': n_cambios,
         'n_ali': n_ali,
@@ -735,7 +752,12 @@ def renderizar_informe(datos) -> bytes:
     col_kpi_min = '#DC2626' if (p_min_global is not None and p_min_global <= limite_retiro) else '#0F172A'
 
     txt_pmin_glo = f"{format_num_es(p_min_global)} mm" if p_min_global is not None else "—"
-    txt_prom_glo = f"{format_num_es(p_prom_global)} mm" if p_prom_global is not None else "—"
+    # Mínima por eje (la llanta más crítica de cada eje) en lugar del promedio de mínimas
+    partes_eje = []
+    for eje, minima, lim_e in datos.get('minima_por_eje', []):
+        color_e = '#DC2626' if (lim_e is not None and minima <= lim_e) else '#0F172A'
+        partes_eje.append(f"<font color='{color_e}'>{ABREV_EJE.get(eje, eje)} {format_num_es(minima)}</font>")
+    txt_prom_glo = " · ".join(partes_eje) if partes_eje else "—"
     # Desglose por grupo, solo con los grupos que tienen alertas
     conteo_grupo = {}
     for a in alertas_lista:
@@ -750,13 +772,13 @@ def renderizar_informe(datos) -> bytes:
         [
             Paragraph(f"<font color='#0F172A'><b>{total_auditadas} de {total_posiciones}</b></font>", style_kpi_num),
             Paragraph(f"<font color='{col_kpi_min}'><b>{txt_pmin_glo}</b></font>", style_kpi_num),
-            Paragraph(f"<font color='#0F172A'><b>{txt_prom_glo}</b></font>", style_kpi_num),
+            Paragraph(f"<b>{txt_prom_glo}</b>", ParagraphStyle('KpiEje', parent=style_kpi_num, fontSize=9.5 if len(partes_eje) > 2 else 11, leading=13)),
             Paragraph(f"<font color='{col_kpi_alerta}'><b>{total_alertas}</b></font>", style_kpi_num),
         ],
         [
             Paragraph("Posiciones inspeccionadas", style_kpi_lbl),
             Paragraph(f"Profundidad mínima (posición {pos_min_global})", style_kpi_lbl),
-            Paragraph("Promedio de profundidades mínimas", style_kpi_lbl),
+            Paragraph("Profundidad mínima por eje (mm)", style_kpi_lbl),
             Paragraph(desglose_alertas_txt, style_kpi_lbl),
         ]
     ]
@@ -1292,9 +1314,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     # Cálculos llanta a llanta con dg.profundidad_minima
     df_insp['p_min'] = df_insp.apply(lambda r: dg.profundidad_minima(r.to_dict()), axis=1)
     lim_posicion = database.construir_resolver_limite_posicion()
-    max_pos_placa = df_insp.groupby('placa')['posicion'].max().to_dict()
+    posiciones_placa = df_insp.groupby('placa')['posicion'].apply(lambda x: [int(v or 0) for v in x]).to_dict()
     df_insp['lim_eje'] = df_insp.apply(lambda r: lim_posicion(r.get('cliente'), r.get('subcliente'), r.get('tipologia'),
-                                                              int(r.get('posicion') or 0), max_pos_placa.get(r.get('placa'))), axis=1)
+                                                              int(r.get('posicion') or 0), posiciones_placa.get(r.get('placa'))), axis=1)
+    df_insp['eje'] = df_insp.apply(lambda r: lim_posicion.tipo_eje(r.get('tipologia'), int(r.get('posicion') or 0),
+                                                                   posiciones_placa.get(r.get('placa'))), axis=1)
     llantas_retiro = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] <= df_insp['lim_eje'])])
     llantas_proximo = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] > df_insp['lim_eje']) & (df_insp['p_min'] <= df_insp['lim_eje'] + 2.0)])
     llantas_optimas = total_llantas - llantas_retiro - llantas_proximo
@@ -1427,8 +1451,47 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(t_sem)
     elements.append(Spacer(1, 8))
 
-    # 2. PLANES DE ACCIÓN REQUERIDOS EN LA FLOTA
-    elements.append(Paragraph("2. Resumen Consolidado de Planes de Acción y Novedades", style_seccion))
+    # 2. ESTADO POR EJE: cada eje con su límite asignado y su llanta más crítica (mínima)
+    elements.append(Paragraph("2. Estado por Eje", style_seccion))
+    filas_eje = [[Paragraph(f"<b>{t}</b>", style_cell_header) for t in
+                  ("EJE", "LLANTAS", "EN RETIRO", "PRÓXIMAS", "MÍNIMA (LLANTA MÁS CRÍTICA)", "LÍMITE APLICADO")]]
+    nombres_eje = {'DIRECCIONAL': 'Direccional', 'TRACCIÓN': 'Tracción', 'LIBRE': 'Libre / Arrastre', 'REPUESTO': 'Repuesto', 'TODOS': 'Sin eje definido'}
+    for eje_k in ('DIRECCIONAL', 'TRACCIÓN', 'LIBRE', 'REPUESTO', 'TODOS'):
+        d_e = df_insp[df_insp['eje'] == eje_k]
+        if d_e.empty:
+            continue
+        medidas = d_e[d_e['p_min'].notna() & (d_e['p_min'] > 0)]
+        en_retiro = int((medidas['p_min'] <= medidas['lim_eje']).sum())
+        proximas = int(((medidas['p_min'] > medidas['lim_eje']) & (medidas['p_min'] <= medidas['lim_eje'] + 2.0)).sum())
+        if not medidas.empty:
+            critica = medidas.loc[medidas['p_min'].idxmin()]
+            txt_min = f"{format_num_es(critica['p_min'])} mm · {critica['placa']} Pos {int(critica['posicion'])}"
+        else:
+            txt_min = "—"
+        lims = sorted(set(round(float(v), 1) for v in d_e['lim_eje']))
+        txt_lim = f"{format_num_es(lims[0])} mm" if len(lims) == 1 else f"{format_num_es(lims[0])} a {format_num_es(lims[-1])} mm"
+        filas_eje.append([
+            Paragraph(f"<b>{nombres_eje[eje_k]}</b>", style_cell_body),
+            Paragraph(str(len(d_e)), style_cell_body),
+            Paragraph(f"<b>{en_retiro}</b>", style_cell_alert if en_retiro else style_cell_body),
+            Paragraph(str(proximas), style_cell_body),
+            Paragraph(txt_min, style_cell_alert if en_retiro else style_cell_body),
+            Paragraph(txt_lim, style_cell_body),
+        ])
+    t_ejes = Table(filas_eje, colWidths=[95, 50, 60, 60, 175, 100])
+    t_ejes.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_ejes)
+    elements.append(Spacer(1, 8))
+
+    # 3. PLANES DE ACCIÓN REQUERIDOS EN LA FLOTA
+    elements.append(Paragraph("3. Resumen Consolidado de Planes de Acción y Novedades", style_seccion))
     planes_data = [
         [
             Paragraph("<b>PLAN DE ACCIÓN TÉCNICO</b>", style_cell_header),
@@ -1468,7 +1531,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph("<b>Calibración de Presión de Aire</b>", style_cell_body),
             Paragraph(f"<b>{veh_psi}</b>", style_cell_alert if veh_psi > 0 else style_cell_body),
-            Paragraph("Vehículos con alguna llanta fuera del rango 90–110 PSI (baja o alta) o con baja presión reportada.", style_cell_body)
+            Paragraph("Vehículos con alguna llanta fuera de la tolerancia de la presión objetivo de su eje (baja o alta) o con baja presión reportada.", style_cell_body)
         ]
     ]
     t_planes = Table(planes_data, colWidths=[180, 80, 280])
@@ -1484,7 +1547,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(Spacer(1, 8))
 
     # 3. LISTADO DETALLADO DE VEHÍCULOS Y PLANES DE ACCIÓN
-    elements.append(Paragraph(f"3. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
+    elements.append(Paragraph(f"4. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
     matriz_data = [
         [
             Paragraph("<b>Vehículo</b>", style_cell_header),
@@ -1591,7 +1654,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     # 4. MATRIZ DE SEMÁFOROS POR POSICIÓN (POLÍTICA DE RETIRO POR CLIENTE, SEDE Y EJE)
     matriz_pos = database.calcular_matriz_semaforos_posicion(df_insp)
     if matriz_pos and matriz_pos.get('filas'):
-        elements.append(Paragraph("4. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
+        elements.append(Paragraph("5. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
         leyenda_sem = (
             "<b>Umbrales Técnicos por Eje:</b> "
             f"{punto_color('#dc2626')} <font color='#b91c1c'><b>Retiro Inmediato (PB ≤ Límite)</b></font> · "

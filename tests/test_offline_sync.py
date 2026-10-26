@@ -268,7 +268,8 @@ def test_sincronizar_lote_parcial_aisla_rechazo_candado(test_db, auth_client):
     rechazo = res["rechazadas"][0]
     assert rechazo["posicion"] == 2
     assert rechazo["placa"] == placa_parcial
-    assert "27.0 mm" in rechazo["motivo"]
+    # El tope depende del modelo en catálogo o del rin (ya no es 27 mm para todo)
+    assert "ninguna profundidad puede superar" in rechazo["motivo"]
 
     # Verificar que en SQLite se guardaron las 2 válidas y NO la rechazada
     with database.get_connection() as conn:

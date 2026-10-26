@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 22:10:11`
+- **Fecha de Generación:** `2026-10-25 22:43:30`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `56,258` líneas
-- **Tamaño Total de Código Fuente:** `2799.4 KB` (`2,866,592` bytes)
+- **Líneas Totales de Código:** `56,285` líneas
+- **Tamaño Total de Código Fuente:** `2806.5 KB` (`2,873,831` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -433,10 +433,10 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2293 | 100.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9498 | 456.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 9441 | 457.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2046 | 99.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2109 | 103.1 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -452,8 +452,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.8 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4054 | 182.2 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1952 | 82.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
-| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 968 | 50.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1953 | 82.5 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1209 | 57.1 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1759 | 83.8 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2077 | 108.9 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
@@ -469,7 +469,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_auditoria_bodegas_sentido_negocio.py](#archivo-teststest-auditoria-bodegas-sentido-negociopy) | `python` | 527 | 21.7 KB | Auditoría de consistencia de negocio para bodegas y ciclo de vida |
 | [tests/test_composicion_flota.py](#archivo-teststest-composicion-flotapy) | `python` | 337 | 11.2 KB | Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario |
 | [tests/test_detalle_vehiculos_planes.py](#archivo-teststest-detalle-vehiculos-planespy) | `python` | 136 | 7.0 KB | Pruebas del módulo de detalle vehicular y planes de mantenimiento |
-| [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 505 | 19.3 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
+| [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 506 | 19.5 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
 | [tests/test_matriz_semaforos.py](#archivo-teststest-matriz-semaforospy) | `python` | 316 | 12.3 KB | Pruebas de matriz de semáforos de desgaste por eje y flota |
 | [tests/test_migracion_pext_ciudad_limpia.py](#archivo-teststest-migracion-pext-ciudad-limpiapy) | `python` | 213 | 8.1 KB | Pruebas de migración y normalización para Ciudad Limpia |
 | [tests/test_precision_graficos_ground_truth.py](#archivo-teststest-precision-graficos-ground-truthpy) | `python` | 529 | 23.7 KB | Pruebas de auditoría de gráficos ground truth y métricas matemáticas |
@@ -6082,7 +6082,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9498 líneas | 467,122 bytes (456.2 KB)
+- **Métricas:** 9441 líneas | 468,795 bytes (457.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6100,6 +6100,7 @@ import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 import sys
+import estructura_ejes as ee
 
 try:
     from zoneinfo import ZoneInfo
@@ -8450,6 +8451,44 @@ def es_posicion_direccional(tipologia, posicion):
 
 ANIO_MINIMO_INSPECCION = 2000
 
+# Profundidad máxima de banda por diámetro de rin (mm), usada cuando el modelo no está en el
+# catálogo. Antes había un único tope de 27 mm pensado para rin 22.5. Rin >= 25 es OTR / minero.
+PROF_MAXIMA_POR_RIN = {13: 12.0, 14: 12.0, 15: 14.0, 16: 16.0, 17: 16.0, 17.5: 18.0, 19.5: 22.0,
+                       20: 24.0, 22.5: 27.0, 24: 30.0, 24.5: 30.0}
+PROF_MAXIMA_OTR = 120.0
+PROF_MAXIMA_SIN_RIN = 27.0
+TOLERANCIA_MEDICION_MM = 1.0  # margen de error humano de medición (Reglas de negocio)
+
+
+def rin_de_dimension(dimension):
+    """'295/80R22.5' -> 22.5, '11R22.5' -> 22.5, '12.00R24' -> 24.0, '7.50-16' -> 16.0; None si no se reconoce."""
+    m = re.search(r'(?:R|-|\s)(\d{2}(?:\.\d)?)\s*(?:LT|C)?\s*$', str(dimension or '').strip().upper())
+    return float(m.group(1)) if m else None
+
+
+def profundidad_maxima_permitida(marca='', diseno='', dimension='', vida='Original'):
+    """
+    (máximo_mm, origen): profundidad inicial del modelo en el catálogo + tolerancia de medición;
+    si el modelo no está, el máximo según el rin de la dimensión; si tampoco, 27 mm.
+    """
+    if str(marca or '').strip() and str(diseno or '').strip():
+        try:
+            p_cat = to_float(buscar_profundidad_inicial(marca, diseno, dimension, vida), 0.0)
+        except Exception:
+            p_cat = 0.0
+        if p_cat > 0:
+            return p_cat + TOLERANCIA_MEDICION_MM, f"profundidad del modelo {marca} {diseno} en catálogo ({p_cat:.1f} mm) + {TOLERANCIA_MEDICION_MM:.1f} mm"
+    rin = rin_de_dimension(dimension)
+    if rin is None:
+        return PROF_MAXIMA_SIN_RIN, "máximo general"
+    if rin >= 25:
+        return PROF_MAXIMA_OTR, f"rin {rin:g} (OTR)"
+    tope = PROF_MAXIMA_POR_RIN.get(rin)
+    if tope is None:
+        cercano = min(PROF_MAXIMA_POR_RIN, key=lambda k: abs(k - rin))
+        tope = PROF_MAXIMA_POR_RIN[cercano]
+    return tope, f"rin {rin:g}"
+
 
 def _hoy_bogota() -> date:
     """Fecha de hoy en Bogotá (función aparte para que las pruebas puedan fijarla)."""
@@ -8511,12 +8550,14 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
     p_int = to_float(datos.get('prof_int', 0))
     profs = [p_ext, p_cent, p_int]
 
-    # Candado 1: Límite de profundidad (máximo físico 27.0 mm)
-    if any(p > 27.0 for p in profs):
+    # Candado 1: Profundidad máxima según el modelo del catálogo o el rin de la dimensión
+    # (antes 27 mm fijos para cualquier llanta, pensado solo para rin 22.5)
+    prof_max, origen_max = profundidad_maxima_permitida(datos.get('marca'), datos.get('diseno'), dimension, datos.get('vida') or 'Original')
+    if any(p > prof_max for p in profs):
         dim_txt = f"En dimensión {dimension}, n" if dimension else "N"
         return {
             'valido': False,
-            'mensaje': f'⛔ CANDADO DE SEGURIDAD: {dim_txt}inguna profundidad puede superar los 27.0 mm (Valores ingresados: {profs}).'
+            'mensaje': f'⛔ CANDADO DE SEGURIDAD: {dim_txt}inguna profundidad puede superar los {prof_max:.1f} mm ({origen_max}). Valores ingresados: {profs}.'
         }
 
     # Candado 1.2: Ninguna profundidad puede superar la Profundidad Inicial de la llanta
@@ -9093,84 +9134,39 @@ def _texto_alineacion(pos: int, diff: float, en_retiro: bool) -> str:
         return f"Pos {pos} (dif {diff:.1f} mm): Revisar alineación (llanta programada para retiro)"
     return f"Pos {pos} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación"
 
-def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_manos: bool, posiciones_retiro=None) -> dict:
+def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, estructura, posiciones_retiro=None) -> dict:
     """
-    Motor Avanzado de Auto-Ajuste Interno (Versión 3.5 Enterprise).
-    Aplica las 4 Reglas Físicas de Optimización de Chasis:
-    1. Direccionamiento en Eje Direccional (mayor altura a Pos 1 o Pos 3 en 8x4).
-    2. Mayor Altura al Exterior en Pachas Duales (Pos Int vs Pos Ext).
-    3. Jerarquía de Ejes en Tráiler 2E (Eje 1 Delantero <= Eje 2 Trasero).
-    4. Jerarquía en Tráiler 3E / Tridem (Eje 2 Central < Eje 1 Delantero < Eje 3 Trasero).
-
-    Las posiciones en `posiciones_retiro` se desmontan, así que no participan
-    en ningún cruce ni inversión (evita "retirar Pos 1" y "cruzar P1 ↔ P2" a la vez).
+    Motor de Auto-Ajuste por ejes, a partir de la estructura de la tipología:
+    1. Eje direccional: la llanta de mayor altura a la izquierda.
+    2. Duales: la llanta de mayor altura al exterior.
+    3. Ejes libres de remolque (2 ejes): eje 1 <= eje 2. (3 ejes): eje 2 < eje 1 < eje 3.
+    Las alturas son la profundidad mínima de cada llanta y, por eje, la mínima del eje.
+    Las posiciones en `posiciones_retiro` se desmontan y no participan en ningún cruce.
     """
     instrucciones = []
-    if group_df.empty:
+    if group_df.empty or estructura is None:
         return {'instrucciones': [], 'tiene_auto_ajuste': False}
-
-    t_lower = (t_veh or '').lower()
-    es_trailer = 'trailer' in t_lower or 'remolque' in t_lower
     excluir = set(posiciones_retiro or ())
+    pos_map = {int(r['posicion']): to_float(r.get('prof_min', 0)) for _, r in group_df.iterrows()
+               if int(r['posicion']) not in excluir and to_float(r.get('prof_min', 0)) > 0}
 
-    pos_map = {}
-    for _, r in group_df.iterrows():
-        p = int(r['posicion'])
-        if p in excluir:
-            continue
-        p_val = to_float(r.get('prof_min', 0))
-        pos_map[p] = p_val
+    for izq, der in estructura.pares_direccionales():
+        if izq in pos_map and der in pos_map and (pos_map[der] - pos_map[izq]) >= 0.5:
+            instrucciones.append(f"Auto-Ajuste Dirección: Cruzar P{izq} ↔ P{der} (mayor altura a Izquierda Pos {izq})")
 
-    # 1. Regla 1 — Direccionamiento en Eje Direccional
-    if not es_trailer:
-        if 1 in pos_map and 2 in pos_map:
-            p1 = pos_map[1]
-            p2 = pos_map[2]
-            if (p2 - p1) >= 0.5:
-                instrucciones.append("Auto-Ajuste Dirección: Cruzar P1 ↔ P2 (mayor altura a Izquierda Pos 1)")
+    for interior, exterior in estructura.duales():
+        if interior in pos_map and exterior in pos_map and (pos_map[interior] - pos_map[exterior]) >= 0.5:
+            instrucciones.append(f"Auto-Ajuste Pacha: Invertir Pos {interior} ↔ Pos {exterior} (mayor altura al Exterior)")
 
-        if es_cuatro_manos and 3 in pos_map and 4 in pos_map:
-            p3 = pos_map[3]
-            p4 = pos_map[4]
-            if (p4 - p3) >= 0.5:
-                instrucciones.append("Auto-Ajuste Dirección: Cruzar P3 ↔ P4 (mayor altura a Izquierda Pos 3)")
-
-    # 2. Regla 2 — Mayor Altura al Exterior en Pachas Duales
-    if es_trailer:
-        pares_ext_int = [(1, 2), (4, 3), (5, 6), (8, 7), (9, 10), (12, 11)]
-    elif es_cuatro_manos:
-        pares_ext_int = [(5, 6), (8, 7), (9, 10), (12, 11)]
-    else:
-        pares_ext_int = [(3, 4), (6, 5), (7, 8), (10, 9)]
-
-    for p_ext, p_int in pares_ext_int:
-        if p_ext in pos_map and p_int in pos_map:
-            v_ext = pos_map[p_ext]
-            v_int = pos_map[p_int]
-            if (v_int - v_ext) >= 0.5:
-                instrucciones.append(f"Auto-Ajuste Pacha: Invertir Pos {p_int} ↔ Pos {p_ext} (mayor altura al Exterior)")
-
-    # 3. Regla 3 y 4 — Jerarquía de Ejes en Tráileres
-    if es_trailer:
-        max_pos = max(pos_map.keys()) if pos_map else 0
-        es_tridem = ('3' in t_lower or 'tridem' in t_lower or max_pos > 8)
-        if not es_tridem and max_pos <= 8:
-            eje1_vals = [pos_map[p] for p in [1, 2, 3, 4] if p in pos_map]
-            eje2_vals = [pos_map[p] for p in [5, 6, 7, 8] if p in pos_map]
-            if eje1_vals and eje2_vals:
-                prom1 = sum(eje1_vals) / len(eje1_vals)
-                prom2 = sum(eje2_vals) / len(eje2_vals)
-                if (prom1 - prom2) >= 1.5:
-                    instrucciones.append("Auto-Ajuste Tráiler 2E: Pasar llantas de mayor altura al Eje 2 Trasero (Eje 1 < Eje 2)")
-        elif es_tridem or max_pos > 8:
-            eje1_vals = [pos_map[p] for p in [1, 2, 3, 4] if p in pos_map]
-            eje2_vals = [pos_map[p] for p in [5, 6, 7, 8] if p in pos_map]
-            eje3_vals = [pos_map[p] for p in [9, 10, 11, 12] if p in pos_map]
-            if eje1_vals and eje2_vals and eje3_vals:
-                prom1 = sum(eje1_vals) / len(eje1_vals)
-                prom2 = sum(eje2_vals) / len(eje2_vals)
-                prom3 = sum(eje3_vals) / len(eje3_vals)
-                if ((prom2 - prom1) >= 1.5) or ((prom1 - prom3) >= 1.5) or ((prom2 - prom3) >= 1.5):
+    ejes_libres = estructura.ejes_de(ee.LIBRE)
+    if ejes_libres and not estructura.ejes_de(ee.TRACCION):
+        minimos = [min([pos_map[p] for p in e['posiciones'] if p in pos_map] or [None] , key=lambda v: v if v is not None else 99) for e in ejes_libres]
+        if None not in minimos:
+            if len(minimos) == 2 and (minimos[0] - minimos[1]) >= 1.5:
+                instrucciones.append("Auto-Ajuste Tráiler 2E: Pasar llantas de mayor altura al Eje 2 Trasero (Eje 1 < Eje 2)")
+            elif len(minimos) == 3:
+                e1, e2, e3 = minimos
+                if (e2 - e1) >= 1.5 or (e1 - e3) >= 1.5 or (e2 - e3) >= 1.5:
                     instrucciones.append("Auto-Ajuste Tráiler 3E: Reubicar llantas para respetar jerarquía Tridem (Eje 2 Central < Eje 1 Delantero < Eje 3 Trasero)")
 
     return {'instrucciones': instrucciones, 'tiene_auto_ajuste': len(instrucciones) > 0}
@@ -9223,6 +9219,7 @@ def analizar_inspecciones_df(df_inspecciones):
 
     resultados = []
     resolver_limite = _construir_cache_limites_retiro()
+    cfg_por_cliente = {}
     # Límite por llanta según el eje de su posición (direccional / tracción / libre)
     lim_posicion = construir_resolver_limite_posicion()
     llantas_b2_usadas = set()
@@ -9261,14 +9258,33 @@ def analizar_inspecciones_df(df_inspecciones):
         op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
         operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip().upper()
 
-        max_pos = group['posicion'].max() if not group.empty else 0
-        es_cuatro_manos = ('cuatro manos' in t_veh.lower() or (max_pos >= 12 and 'cabezote' in t_veh.lower()))
+        # Estructura de ejes del vehículo según su tipología: de aquí salen direccionales,
+        # duales, ejes libres y repuestos (antes se suponía por número de posición o por nombre)
+        est = lim_posicion.estructura(t_veh, group['posicion'].tolist())
+        if cliente not in cfg_por_cliente:
+            cfg_por_cliente[cliente] = obtener_configuracion_avanzada_cliente(cliente)
+        cfg = cfg_por_cliente[cliente]
+        tol_alin = to_float(cfg.get('tolerancia_desalineacion_hombros_mm', 2.0), 2.0)
+        tol_dual = to_float(cfg.get('tolerancia_mal_apareo_pacha_mm', 2.5), 2.5)
+        dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
+        umbral_equis = to_float(cfg.get('umbral_diferencia_rotacion_ejes_mm', 3.0), 3.0)
+        psi_obj_eje = {
+            ee.DIRECCIONAL: to_float(cfg.get('psi_objetivo_direccional', 110.0), 110.0),
+            ee.TRACCION: to_float(cfg.get('psi_objetivo_traccion', 100.0), 100.0),
+            ee.LIBRE: to_float(cfg.get('psi_objetivo_arrastre', 100.0), 100.0),
+        }
+        tol_psi_baja = to_float(cfg.get('tolerancia_psi_baja_pct', 10.0), 10.0)
+        tol_psi_alta = to_float(cfg.get('tolerancia_psi_alta_pct', 10.0), 10.0)
 
         # Límite general del cliente (referencia en tablas); cada llanta usa el de su eje con lim(pos)
         limite_cambio_cliente = resolver_limite(cliente, subcliente)
+        posiciones_vehiculo = group['posicion'].tolist()
 
-        def lim(pos, _cli=cliente, _sub=subcliente, _tip=t_veh, _max=max_pos):
-            return lim_posicion(_cli, _sub, _tip, pos, _max)
+        def lim(pos, _cli=cliente, _sub=subcliente, _tip=t_veh, _pos=posiciones_vehiculo):
+            return lim_posicion(_cli, _sub, _tip, pos, _pos)
+
+        fila_pos = {int(r['posicion']): r for _, r in group.iterrows()}
+        pmin_pos = {pos: to_float(r['prof_min']) for pos, r in fila_pos.items()}
 
         # 1. Plan 1 — Retiro Inmediato (Cambio YA) y Plan 3 — Próximas a Cambio
         plan_cambio = False
@@ -9280,177 +9296,143 @@ def analizar_inspecciones_df(df_inspecciones):
         # recomendación debe proponer rotarlas o cruzarlas
         posiciones_retiro = set()
 
-        for _, r in group.iterrows():
-            pos_r = int(r['posicion'])
-            pb_r = to_float(r['prof_min'])
-            # Plan 1: 0 < P_min <= Limite_Retiro_Cliente
+        for pos_r in sorted(fila_pos):
+            pb_r = pmin_pos[pos_r]
             lim_r = lim(pos_r)
             if 0 < pb_r <= lim_r:
                 plan_cambio = True
                 cant_cambios += 1
                 posiciones_retiro.add(pos_r)
                 detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {lim_r:.1f}mm)")
-            # Plan 3: Limite_Retiro < P_min <= Limite_Retiro + 2.0 mm
             elif lim_r < pb_r <= (lim_r + 2.0):
                 cant_proximas += 1
                 detalles_proximas.append(f"Pos {pos_r} ({pb_r:.1f} mm)")
 
-        # 2. Plan 2 — Regla Especial de Par Direccional
-        pares_dir = [(1, 2), (3, 4)] if es_cuatro_manos else [(1, 2)] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower() or 'bus' in t_veh.lower()) else []
-        for pd_a, pd_b in pares_dir:
-            ta = group[group['posicion'] == pd_a]
-            tb = group[group['posicion'] == pd_b]
-            if not ta.empty and not tb.empty:
-                pa_val = to_float(ta['prof_min'].values[0])
-                pb_val = to_float(tb['prof_min'].values[0])
-                pa_ini_raw = to_float(ta['prof_inicial'].values[0] if 'prof_inicial' in ta.columns else 0, 0)
-                pb_ini_raw = to_float(tb['prof_inicial'].values[0] if 'prof_inicial' in tb.columns else 0, 0)
-                pa_ini = pa_ini_raw if pa_ini_raw > 0 else 16.0
-                pb_ini = pb_ini_raw if pb_ini_raw > 0 else 16.0
+        # 2. Plan 2 — Par direccional: cada eje direccional de la estructura
+        for pd_a, pd_b in est.pares_direccionales():
+            if pd_a not in fila_pos or pd_b not in fila_pos:
+                continue
+            pa_val, pb_val = pmin_pos[pd_a], pmin_pos[pd_b]
+            pa_ini = to_float(fila_pos[pd_a].get('prof_inicial', 0), 0)
+            pb_ini = to_float(fila_pos[pd_b].get('prof_inicial', 0), 0)
+            pa_ret = (0 < pa_val <= lim(pd_a))
+            pb_ret = (0 < pb_val <= lim(pd_b))
+            # Sin profundidad inicial real no se puede medir el desgaste de la pareja: no se aplica
+            if pa_ret and not pb_ret and pb_ini > 0 and (pb_ini - pb_val) >= dif_par_dir:
+                plan_cambio = True
+                posiciones_retiro.add(pd_b)
+                detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_b} ({pb_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
+            elif pb_ret and not pa_ret and pa_ini > 0 and (pa_ini - pa_val) >= dif_par_dir:
+                plan_cambio = True
+                posiciones_retiro.add(pd_a)
+                detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_a} ({pa_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
 
-                pa_ret = (0 < pa_val <= lim(pd_a))
-                pb_ret = (0 < pb_val <= lim(pd_b))
-
-                if pa_ret and not pb_ret and (pb_ini - pb_val) >= 3.0:
-                    plan_cambio = True
-                    posiciones_retiro.add(pd_b)
-                    detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_b} ({pb_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
-                elif pb_ret and not pa_ret and (pa_ini - pa_val) >= 3.0:
-                    plan_cambio = True
-                    posiciones_retiro.add(pd_a)
-                    detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_a} ({pa_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
-
-        # 3. Plan 4 — Alineación Direccional (Delta Hombros >= 2.0 mm)
+        # 3. Plan 4 — Alineación: ejes direccionales y ejes libres de la estructura
         plan_alineacion = False
         detalles_alineacion = []
-        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower() or 'bus' in t_veh.lower():
-            pos_dir = [1, 2, 3, 4] if es_cuatro_manos else [1, 2]
-            for p in pos_dir:
-                r = group[group['posicion'] == p]
-                if not r.empty:
-                    diff = abs(r['prof_int'].values[0] - r['prof_ext'].values[0])
-                    if diff >= 2.0:
-                        plan_alineacion = True
-                        detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
-        elif 'trailer' in t_veh.lower() or 'remolque' in t_veh.lower():
-            for _, r in group.iterrows():
-                diff = abs(r['prof_int'] - r['prof_ext'])
-                if diff >= 2.0:
-                    plan_alineacion = True
-                    p = int(r['posicion'])
-                    detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
+        for p in est.posiciones_alineacion():
+            if p not in fila_pos:
+                continue
+            pe_a = to_float(fila_pos[p].get('prof_ext', 0))
+            pi_a = to_float(fila_pos[p].get('prof_int', 0))
+            if pe_a <= 0 or pi_a <= 0:
+                continue  # sin las dos lecturas de hombro no se puede evaluar
+            diff = abs(pi_a - pe_a)
+            if diff >= tol_alin:
+                plan_alineacion = True
+                detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
 
-        # 4. Plan 5 — Mal Apareo en Pachas (Delta Pacha > 2.5 mm o dimensiones distintas)
+        # 4. Plan 5 — Duales de la estructura (diferencia de mínimas > tolerancia o medidas distintas)
         plan_dual = False
         detalles_dual = []
         recomendaciones_dual = []
         posiciones_con_cruce_b2 = set()
 
-        pairs = [(3,4), (5,6), (7,8), (9,10)] if ('cabezote' in t_veh.lower() and not es_cuatro_manos) else \
-                [(5,6), (7,8), (9,10), (11,12)] if ('cabezote' in t_veh.lower() and es_cuatro_manos) else \
-                [(1,2), (3,4), (5,6), (7,8), (9,10), (11,12)]
+        for interior, exterior in est.duales():
+            p_a, p_b = min(interior, exterior), max(interior, exterior)
+            if p_a not in fila_pos or p_b not in fila_pos:
+                continue
+            pb_a, pb_b = pmin_pos[p_a], pmin_pos[p_b]
+            dim_a = str(fila_pos[p_a].get('dimension') or '').strip()
+            dim_b = str(fila_pos[p_b].get('dimension') or '').strip()
 
-        for p_a, p_b in pairs:
-            t_a = group[group['posicion'] == p_a]
-            t_b = group[group['posicion'] == p_b]
-            if not t_a.empty and not t_b.empty:
-                pb_a = to_float(t_a['prof_min'].values[0])
-                pb_b = to_float(t_b['prof_min'].values[0])
-                dim_a = str(t_a['dimension'].values[0]).strip()
-                dim_b = str(t_b['dimension'].values[0]).strip()
+            diff_pb = abs(pb_a - pb_b)
+            razones = []
+            if diff_pb > tol_dual:
+                razones.append(f"desgaste dif {diff_pb:.1f} mm ({pb_a:.1f} vs {pb_b:.1f})")
+            if dim_a and dim_b and dim_a != dim_b:
+                razones.append(f"dims distintas ({dim_a} vs {dim_b})")
 
-                diff_pb = abs(pb_a - pb_b)
-                razones = []
-                if diff_pb > 2.5:
-                    razones.append(f"desgaste dif {diff_pb:.1f} mm ({pb_a:.1f} vs {pb_b:.1f})")
-                if dim_a and dim_b and dim_a != dim_b:
-                    razones.append(f"dims distintas ({dim_a} vs {dim_b})")
+            if razones:
+                plan_dual = True
+                detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
 
-                if razones:
-                    plan_dual = True
-                    detalles_dual.append(f"Dual {p_a}-{p_b}: {', '.join(razones)}")
+                # Cruce Inteligente con Bodega 2 en memoria (O(1) amortizado sin N+1)
+                try:
+                    mm_alta = max(pb_a, pb_b)
+                    mm_baja = min(pb_a, pb_b)
+                    pos_baja = p_b if pb_a >= pb_b else p_a
+                    dim_dual = (dim_a or dim_b).strip().upper()
 
-                    # Cruce Inteligente con Bodega 2 en memoria (O(1) amortizado sin N+1)
-                    try:
-                        mm_alta = max(pb_a, pb_b)
-                        pos_alta = p_a if pb_a >= pb_b else p_b
-                        mm_baja = min(pb_a, pb_b)
-                        pos_baja = p_b if pb_a >= pb_b else p_a
-                        dim_dual = (dim_a or dim_b).strip().upper()
+                    candidatas_b2 = [
+                        ll for ll in llantas_b2_disponibles
+                        if ll["cliente"] == cliente
+                        and (not ll["reservada_para_placa"] or ll["reservada_para_placa"] == placa)
+                        and ll["dimension"] == dim_dual
+                        and ll["prof_actual_min"] > (lim(pos_baja) + 1.5)
+                        and abs(ll["prof_actual_min"] - mm_alta) <= 1.5
+                        and ll["numero_interno"] not in llantas_b2_usadas
+                    ]
+                    candidatas_b2.sort(key=lambda x: abs(x["prof_actual_min"] - mm_alta))
 
-                        candidatas_b2 = [
-                            ll for ll in llantas_b2_disponibles
-                            if ll["cliente"] == cliente
-                            and (not ll["reservada_para_placa"] or ll["reservada_para_placa"] == placa)
-                            and ll["dimension"] == dim_dual
-                            and ll["prof_actual_min"] > (lim(pos_baja) + 1.5)
-                            and abs(ll["prof_actual_min"] - mm_alta) <= 1.5
-                            and ll["numero_interno"] not in llantas_b2_usadas
-                        ]
-                        candidatas_b2.sort(key=lambda x: abs(x["prof_actual_min"] - mm_alta))
+                    # Si ambas llantas del dual salen por retiro no hay referencia para emparejar
+                    if candidatas_b2 and not (p_a in posiciones_retiro and p_b in posiciones_retiro):
+                        cand_b2 = candidatas_b2[0]
+                        llantas_b2_usadas.add(cand_b2["numero_interno"])
+                        posiciones_con_cruce_b2.add(pos_baja)
+                        recomendaciones_dual.append(
+                            f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2['numero_interno']} ({cand_b2['prof_actual_min']:.1f} mm) disponible en Bodega 2 (Recambio)."
+                        )
+                except Exception:
+                    pass
 
-                        # Si ambas llantas del dual salen por retiro no hay referencia para emparejar
-                        if candidatas_b2 and not (p_a in posiciones_retiro and p_b in posiciones_retiro):
-                            cand_b2 = candidatas_b2[0]
-                            llantas_b2_usadas.add(cand_b2["numero_interno"])
-                            posiciones_con_cruce_b2.add(pos_baja)
-                            recomendaciones_dual.append(
-                                f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2['numero_interno']} ({cand_b2['prof_actual_min']:.1f} mm) disponible en Bodega 2 (Recambio)."
-                            )
-                    except Exception:
-                        pass
+            a_para_cambio = (0 < pb_a <= lim(p_a))
+            b_para_cambio = (0 < pb_b <= lim(p_b))
 
-                a_para_cambio = (0 < pb_a <= lim(p_a))
-                b_para_cambio = (0 < pb_b <= lim(p_b))
+            # Si ya hay una llanta concreta de Bodega 2 para esa posición, el rango genérico sobra
+            if a_para_cambio and not b_para_cambio and pb_b >= (lim(p_b) + 2.0) and p_a not in posiciones_con_cruce_b2:
+                r_min = max(lim(p_a) + 1.0, pb_b - 1.0)
+                r_max = pb_b + 1.0
+                recomendaciones_dual.append(
+                    f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
+                )
+            elif b_para_cambio and not a_para_cambio and pb_a >= (lim(p_a) + 2.0) and p_b not in posiciones_con_cruce_b2:
+                r_min = max(lim(p_b) + 1.0, pb_a - 1.0)
+                r_max = pb_a + 1.0
+                recomendaciones_dual.append(
+                    f"Pos {p_b} en retiro ({pb_b:.1f} mm) vs Pos {p_a} ({pb_a:.1f} mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
+                )
 
-                # Si ya hay una llanta concreta de Bodega 2 para esa posición, el rango genérico sobra
-                if a_para_cambio and not b_para_cambio and pb_b >= (lim(p_b) + 2.0) and p_a not in posiciones_con_cruce_b2:
-                    r_min = max(lim(p_a) + 1.0, pb_b - 1.0)
-                    r_max = pb_b + 1.0
-                    recomendaciones_dual.append(
-                        f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
-                    )
-                elif b_para_cambio and not a_para_cambio and pb_a >= (lim(p_a) + 2.0) and p_b not in posiciones_con_cruce_b2:
-                    r_min = max(lim(p_b) + 1.0, pb_a - 1.0)
-                    r_max = pb_a + 1.0
-                    recomendaciones_dual.append(
-                        f"Pos {p_b} en retiro ({pb_b:.1f} mm) vs Pos {p_a} ({pb_a:.1f} mm): Se recomienda instalar en Pos {p_b} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
-                    )
-
-        # 5. Plan 6 — Rotación en Equis Larga (Tracción 6x4 / 8x4)
-        pos_map_num = {int(row['posicion']): to_float(row['prof_min']) for _, row in group.iterrows()}
+        # 5. Plan 6 — Rotación en Equis Larga entre los dos ejes de tracción de la estructura.
+        # Se compara la mínima de cada eje (la llanta más gastada), no el promedio. El cruce
+        # mueve las 8 llantas: todas deben estar medidas y ninguna salir del vehículo.
         plan_rotacion_equis_larga = False
         detalles_rot_equis = []
+        ejes_trac = est.ejes_de(ee.TRACCION)
+        if len(ejes_trac) == 2:
+            cruce = est.cruce_equis(*ejes_trac)
+            pos_equis = [p for par in cruce for p in par]
+            pos_ocupadas = posiciones_retiro | posiciones_con_cruce_b2
+            if cruce and all(pmin_pos.get(p, 0) > 0 for p in pos_equis) and not (pos_ocupadas & set(pos_equis)):
+                min_e1 = min(pmin_pos[p] for p in ejes_trac[0]['posiciones'])
+                min_e2 = min(pmin_pos[p] for p in ejes_trac[1]['posiciones'])
+                diff_ejes = abs(min_e1 - min_e2)
+                if diff_ejes >= umbral_equis:
+                    plan_rotacion_equis_larga = True
+                    cruces_txt = ", ".join(f"{a}↔{b}" for a, b in cruce[:-1]) + f" y {cruce[-1][0]}↔{cruce[-1][1]}"
+                    detalles_rot_equis.append(f"Cruzar Pos {cruces_txt} (dif entre ejes {diff_ejes:.1f} mm)")
 
-        # El cruce en equis mueve las 8 llantas de tracción: solo se propone si todas están
-        # medidas y ninguna sale del vehículo (retiro o reemplazo desde Bodega 2)
-        pos_ocupadas = posiciones_retiro | posiciones_con_cruce_b2
-        pos_equis = [5, 6, 7, 8, 9, 10, 11, 12] if es_cuatro_manos else [3, 4, 5, 6, 7, 8, 9, 10]
-        equis_viable = all(p in pos_map_num for p in pos_equis) and not (pos_ocupadas & set(pos_equis))
-
-        if equis_viable and ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()):
-            if not es_cuatro_manos:
-                e1_vals = [pos_map_num[p] for p in [3, 4, 5, 6] if p in pos_map_num]
-                e2_vals = [pos_map_num[p] for p in [7, 8, 9, 10] if p in pos_map_num]
-                if len(e1_vals) >= 2 and len(e2_vals) >= 2:
-                    prom_e1 = sum(e1_vals) / len(e1_vals)
-                    prom_e2 = sum(e2_vals) / len(e2_vals)
-                    diff_ejes = abs(prom_e1 - prom_e2)
-                    if diff_ejes >= 2.0:
-                        plan_rotacion_equis_larga = True
-                        detalles_rot_equis.append(f"Cruzar Pos 3↔9, 4↔10, 5↔7 y 6↔8 (dif entre ejes {diff_ejes:.1f} mm)")
-            else:
-                e1_vals = [pos_map_num[p] for p in [5, 6, 7, 8] if p in pos_map_num]
-                e2_vals = [pos_map_num[p] for p in [9, 10, 11, 12] if p in pos_map_num]
-                if len(e1_vals) >= 2 and len(e2_vals) >= 2:
-                    prom_e1 = sum(e1_vals) / len(e1_vals)
-                    prom_e2 = sum(e2_vals) / len(e2_vals)
-                    diff_ejes = abs(prom_e1 - prom_e2)
-                    if diff_ejes >= 2.0:
-                        plan_rotacion_equis_larga = True
-                        detalles_rot_equis.append(f"Cruzar Pos 5↔11, 6↔12, 7↔9 y 8↔10 (dif entre ejes {diff_ejes:.1f} mm)")
-
-        # 6. Alertas Adicionales: Desgaste Irregular, Escalonado y Calibración de Presión (Plan 7)
+        # 6. Desgaste irregular / escalonado (no direccional ni repuesto) y presión por eje
         plan_rotacion_irregular = False
         detalles_rot_irregular = []
         plan_rotacion_escalonado = False
@@ -9458,40 +9440,40 @@ def analizar_inspecciones_df(df_inspecciones):
         plan_calibracion_psi = False
         detalles_calibracion = []
         cant_presiones = 0
-        psi_objetivo = 100.0
-        psi_min = psi_objetivo * 0.90
-        psi_max = psi_objetivo * 1.10
 
-        pos_direccionales = [1, 2, 3, 4] if es_cuatro_manos else [1, 2] if ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower() or 'bus' in t_veh.lower()) else []
-
-        for _, r in group.iterrows():
-            pos_i = int(r['posicion'])
+        for pos_i in sorted(fila_pos):
+            r = fila_pos[pos_i]
+            eje_i = est.tipo_eje(pos_i)
             nov_i = str(r.get('novedades', '') or '').lower()
             psi_i = to_float(r.get('psi', 0))
             p_ext = to_float(r.get('prof_ext', 0))
             p_int = to_float(r.get('prof_int', 0))
-            diff_ext_int = abs(p_ext - p_int)
+            diff_ext_int = abs(p_ext - p_int) if (p_ext > 0 and p_int > 0) else 0.0
 
-            if pos_i not in pos_direccionales and pos_i not in posiciones_retiro:
+            if eje_i not in (ee.DIRECCIONAL, ee.REPUESTO) and pos_i not in posiciones_retiro:
                 tiene_obs_irregular = ('desgaste irregular' in nov_i or 'desgaste disparejo' in nov_i or 'irregular' in nov_i)
-                if diff_ext_int >= 2.0 or tiene_obs_irregular:
+                if diff_ext_int >= tol_alin or tiene_obs_irregular:
                     plan_rotacion_irregular = True
-                    motivo = f"dif ext/int {diff_ext_int:.1f} mm" if diff_ext_int >= 2.0 else "observación 'desgaste irregular'"
+                    motivo = f"dif ext/int {diff_ext_int:.1f} mm" if diff_ext_int >= tol_alin else "observación 'desgaste irregular'"
                     detalles_rot_irregular.append(f"Pos {pos_i} ({motivo})")
 
-            if 'escalonado' in nov_i or 'diente de sierra' in nov_i:
+            if eje_i != ee.REPUESTO and ('escalonado' in nov_i or 'diente de sierra' in nov_i):
                 plan_rotacion_escalonado = True
                 detalles_rot_escalonado.append(f"Pos {pos_i} (desgaste escalonado)")
 
-            # Plan 7 — Calibración de Presión (no aplica a llantas que se desmontan)
+            # Plan 7 — Presión según el objetivo del eje y las tolerancias del cliente
+            # (no aplica a llantas que se desmontan)
             if pos_i in posiciones_retiro:
                 continue
+            psi_obj = psi_obj_eje.get(eje_i, psi_obj_eje[ee.TRACCION])
+            psi_min = psi_obj * (1.0 - tol_psi_baja / 100.0)
+            psi_max = psi_obj * (1.0 + tol_psi_alta / 100.0)
             if psi_i > 0:
                 if psi_i < psi_min or psi_i > psi_max:
                     cant_presiones += 1
                     plan_calibracion_psi = True
                     sentido = 'alta' if psi_i > psi_max else 'baja'
-                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI, {sentido})")
+                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI, {sentido}; objetivo {psi_obj:.0f})")
             elif 'baja presion' in nov_i or 'baja presión' in nov_i:
                 cant_presiones += 1
                 plan_calibracion_psi = True
@@ -9513,7 +9495,7 @@ def analizar_inspecciones_df(df_inspecciones):
 
         # 7. Motor Avanzado de Auto-Ajuste Interno (Sección 7 del Manual)
         # Las posiciones que se desmontan para recibir llanta de Bodega 2 tampoco se cruzan
-        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, t_veh, es_cuatro_manos, posiciones_retiro | posiciones_con_cruce_b2)
+        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, est, posiciones_retiro | posiciones_con_cruce_b2)
 
         # Estado del Badge de la Columna 10 (Badge_Rotacion)
         if auto_ajuste_dict['tiene_auto_ajuste']:
@@ -9587,7 +9569,24 @@ def analizar_inspecciones_df(df_inspecciones):
             for det in detalles_calibracion:
                 bloques_recom.append({'tipo': 'PRESION', 'texto': det, 'color': 'azul'})
 
-        desc_tipo = f"{t_veh}{' (Cuatro Manos)' if es_cuatro_manos else ''}"
+        desc_tipo = t_veh
+
+        # Resumen por eje: llantas, mínima (llanta más crítica), retiros y próximas con el límite de cada eje
+        resumen_ejes = []
+        for tipo_r in (ee.DIRECCIONAL, ee.TRACCION, ee.LIBRE, ee.REPUESTO, None):
+            pos_r_eje = [p for p in sorted(fila_pos) if est.tipo_eje(p) == tipo_r]
+            if not pos_r_eje:
+                continue
+            vals_r = [pmin_pos[p] for p in pos_r_eje if pmin_pos[p] > 0]
+            lims_r = sorted({round(lim(p), 1) for p in pos_r_eje})
+            resumen_ejes.append({
+                'eje': tipo_r or 'SIN EJE',
+                'llantas': len(pos_r_eje),
+                'minima': round(min(vals_r), 1) if vals_r else None,
+                'retiro': sum(1 for p in pos_r_eje if 0 < pmin_pos[p] <= lim(p)),
+                'proximas': sum(1 for p in pos_r_eje if lim(p) < pmin_pos[p] <= lim(p) + 2.0),
+                'limite_mm': lims_r[0] if len(lims_r) == 1 else lims_r,
+            })
 
         resultados.append({
             'Vehículo/Placa': placa,
@@ -9627,7 +9626,10 @@ def analizar_inspecciones_df(df_inspecciones):
             'Detalle_Dimensiones_Heterogeneas': "; ".join(detalles_dims_heterogeneas) if detalles_dims_heterogeneas else "OK",
             'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK",
             'Bloques_Recomendaciones': bloques_recom,
-            'Llantas_Posiciones': llantas_posiciones
+            'Llantas_Posiciones': llantas_posiciones,
+            'Resumen_Ejes': resumen_ejes,
+            # True si la tipología no está en el catálogo y la estructura de ejes se dedujo
+            'Tipologia_Inferida': bool(est.inferida)
         })
 
     df_res = pd.DataFrame(resultados)
@@ -10024,25 +10026,80 @@ def obtener_tipo_eje_posicion(tipologia, posicion, max_pos=None, mapa_tipologias
             return 'DIRECCIONAL'
         return 'TRACCIÓN'
 
+def construir_resolver_estructura(conn=None):
+    """
+    estructura(tipologia, posiciones=()) -> ee.EstructuraVehiculo con los ejes del vehículo según
+    el esquema de su tipología en el catálogo. El nombre se empareja sin tildes, mayúsculas ni
+    signos ("CAMION SENCILLO 4X2" = "Camión Sencillo (4x2)"). Si la tipología no existe en el
+    catálogo se infiere una estructura aproximada y queda registrada en estructura.inferidas
+    para avisar que hay que crearla bien en Catálogos.
+    """
+    def _cargar(c):
+        filas = c.execute("SELECT nombre, esquema_json FROM catalogo_tipologias").fetchall()
+        catalogo = {}
+        for nombre, esquema_txt in filas:
+            try:
+                esquema = json.loads(esquema_txt or '[]')
+            except (ValueError, TypeError):
+                esquema = []
+            if nombre and esquema:
+                catalogo[ee.clave_tipologia(nombre)] = ee.EstructuraVehiculo(esquema, nombre=nombre)
+        return catalogo
+
+    if conn is not None:
+        catalogo = _cargar(conn)
+    else:
+        with get_connection() as c:
+            catalogo = _cargar(c)
+    cache = {}
+
+    def estructura(tipologia, posiciones=()):
+        clave = ee.clave_tipologia(tipologia)
+        if clave in catalogo:
+            return catalogo[clave]
+        # Coincidencia parcial solo si es única (ej. "cabezote6x4especial" -> "cabezote6x4")
+        candidatos = [k for k in catalogo if clave and (k in clave or clave in k)]
+        if len(candidatos) == 1:
+            return catalogo[candidatos[0]]
+        presentes = tuple(sorted({int(p) for p in posiciones if str(p).strip() not in ('', 'None', 'nan')}))
+        k_cache = (clave, presentes[-1] if presentes else 0)
+        if k_cache not in cache:
+            cache[k_cache] = ee.estructura_inferida(tipologia, presentes)
+            estructura.inferidas.add(str(tipologia or '(sin tipología)'))
+        return cache[k_cache]
+
+    estructura.inferidas = set()
+    return estructura
+
+
+def _posiciones_ref(posiciones, posicion):
+    """Acepta la lista de posiciones del vehículo o la posición máxima (compatibilidad)."""
+    if isinstance(posiciones, (int, float)) and not isinstance(posiciones, bool) and posiciones > 0:
+        return range(1, int(posiciones) + 1)
+    return posiciones or [posicion]
+
+
 def construir_resolver_limite_posicion(conn=None):
     """
-    Límite de retiro de UNA llanta según cliente, sede y el eje real de su posición
-    (DIRECCIONAL / TRACCIÓN / LIBRE según el esquema de la tipología).
-    Antes varias pantallas pasaban el número de posición o ningún eje y las reglas por eje
-    configuradas en Catálogos (ej. direccional 4,5 mm) nunca se aplicaban.
-    Retorna lim(cliente, subcliente, tipologia, posicion, max_pos=None) -> float,
-    con lim.tipo_eje(tipologia, posicion, max_pos=None) -> str.
+    Límite de retiro de UNA llanta según los parámetros asignados en Catálogos (cliente, sede y
+    eje) y el eje real de su posición tomado de la estructura de la tipología.
+    Retorna lim(cliente, subcliente, tipologia, posicion, posiciones=()) -> float, con:
+      lim.tipo_eje(tipologia, posicion, posiciones=()) -> 'DIRECCIONAL' | 'TRACCIÓN' | 'LIBRE' | 'REPUESTO'
+      lim.estructura(tipologia, posiciones=()) -> ee.EstructuraVehiculo
     """
     resolver = _construir_cache_limites_retiro(conn=conn)
-    mapa = _cargar_mapa_tipologias_ejes(conn=conn)
+    estructura = construir_resolver_estructura(conn=conn)
 
-    def tipo_eje(tipologia, posicion, max_pos=None):
-        return obtener_tipo_eje_posicion(tipologia, posicion, max_pos=max_pos, mapa_tipologias=mapa)
+    def tipo_eje(tipologia, posicion, posiciones=()):
+        est = estructura(tipologia, _posiciones_ref(posiciones, posicion))
+        return est.tipo_eje(posicion) or 'TODOS'
 
-    def lim(cliente, subcliente, tipologia, posicion, max_pos=None):
-        return resolver(cliente, subcliente or 'TODOS', tipo_eje(tipologia, posicion, max_pos))
+    def lim(cliente, subcliente, tipologia, posicion, posiciones=()):
+        return resolver(cliente, subcliente or 'TODOS', tipo_eje(tipologia, posicion, posiciones))
 
     lim.tipo_eje = tipo_eje
+    lim.estructura = lambda tipologia, posiciones=(): estructura(tipologia, posiciones)
+    lim.inferidas = estructura.inferidas
     return lim
 
 
@@ -10078,6 +10135,7 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
 
     resolver_limite = _construir_cache_limites_retiro(conn=conn)
     mapa_tips = _cargar_mapa_tipologias_ejes(conn=conn)
+    lim_posicion_m = construir_resolver_limite_posicion(conn=conn)
 
     df = df_inspecciones.copy()
     if 'posicion' not in df.columns or 'placa' not in df.columns:
@@ -10134,7 +10192,8 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
                 pb = 0.0
 
             # B. Jerarquía Dinámica del Límite de Retiro
-            eje_tipo = obtener_tipo_eje_posicion(tip, pos, max_pos=max_p, mapa_tipologias=mapa_tips)
+            # Eje según la estructura de la tipología del vehículo
+            eje_tipo = lim_posicion_m.tipo_eje(tip, pos, group_ult['posicion'].tolist())
             limite = resolver_limite(cli, sub, eje_tipo)
 
             # C. Umbrales del Semáforo
@@ -11216,6 +11275,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
     resultados = []
     cache_esquemas = {}
+    # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
+    ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
+    posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
+        lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
     for num, group in df.groupby('numero_interno'):
         group = group.sort_values(by=['fecha', 'id'])
         primera = group.iloc[0]
@@ -11256,9 +11319,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
         subcliente_nom = str(ultima.get('subcliente', '') or primera.get('subcliente', '')).strip()
         # Límite según el eje de la posición actual de la llanta (reglas por eje de Catálogos)
+        pos_ult = int(to_float(ultima.get('posicion', 1)))
         limite_cambio = lim_posicion(cliente_nom, subcliente_nom,
-                                     str(ultima.get('tipologia') or primera.get('tipologia') or ''),
-                                     int(to_float(ultima.get('posicion', 1))))
+                                     str(ultima.get('tipologia') or primera.get('tipologia') or ''), pos_ult,
+                                     posiciones_por_placa.get(str(ultima['placa']).strip().upper(), [pos_ult]))
 
         # Proyección útil de vida calculada hasta el límite de cambio programado por cliente (por defecto 3.0 mm)
         mm_utiles = max(0.0, prof_ini - limite_cambio) if prof_ini > limite_cambio else 0.0
@@ -11285,7 +11349,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         tip_norm = str(ultima.get('tipologia') or primera.get('tipologia') or '').strip().upper()
         pos_int = int(to_float(ultima.get('posicion', 1)))
 
-        tipo_eje = determinar_tipo_eje_posicion(tip_norm, pos_int, cache_esquemas)
+        # Eje según la estructura de la tipología (mismas etiquetas que usa Composición de Flota)
+        eje_est = lim_posicion.tipo_eje(tip_norm, pos_int, posiciones_por_placa.get(str(ultima['placa']).strip().upper(), [pos_int]))
+        tipo_eje = {'DIRECCIONAL': 'direccional', 'TRACCIÓN': 'traccion', 'LIBRE': 'libre', 'REPUESTO': 'repuesto'}.get(
+            eje_est, determinar_tipo_eje_posicion(tip_norm, pos_int, cache_esquemas))
 
         resultados.append({
             'numero_interno': num,
@@ -11693,6 +11760,8 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
         "diferencia_minima_par_direccional_mm": 3.0,
         "dias_espera_inspeccion": 20,
         "requiere_mes_siguiente": False if 'CIUDAD LIMPIA' in str(cliente).upper() else True,
+        "porcentaje_aprobacion_reencauche": 85.0,
+        "stock_seguridad_default": 4,
         "plantilla_kpis_json": "{}"
     }
     if not cliente or str(cliente).strip().upper() == 'TODOS':
@@ -11708,7 +11777,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                        tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm,
                        umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm,
                        dias_espera_inspeccion, requiere_mes_siguiente,
-                       plantilla_kpis_json
+                       plantilla_kpis_json, porcentaje_aprobacion_reencauche, stock_seguridad_default
                 FROM configuracion_avanzada_cliente
                 WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))
             """, (cliente,))
@@ -11722,9 +11791,13 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                     "tolerancia_desalineacion_hombros_mm", "tolerancia_mal_apareo_pacha_mm",
                     "umbral_diferencia_rotacion_ejes_mm", "diferencia_minima_par_direccional_mm",
                     "dias_espera_inspeccion", "requiere_mes_siguiente",
-                    "plantilla_kpis_json"
+                    "plantilla_kpis_json", "porcentaje_aprobacion_reencauche", "stock_seguridad_default"
                 ]
                 d = dict(zip(cols, row))
+                # Valores no asignados toman el recomendado (antes estos dos nunca se leían de la base)
+                for k_def in ("porcentaje_aprobacion_reencauche", "stock_seguridad_default"):
+                    if d.get(k_def) is None:
+                        d[k_def] = defaults[k_def]
                 d["cliente"] = cliente
                 if d.get("dias_espera_inspeccion") is None:
                     d["dias_espera_inspeccion"] = defaults["dias_espera_inspeccion"]
@@ -11990,10 +12063,13 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
         resolver_limite = _construir_cache_limites_retiro()
         mapa_tips = _cargar_mapa_tipologias_ejes()
+        lim_posicion_g = construir_resolver_limite_posicion()
+        posiciones_placa_g = df.groupby(df['placa'].astype(str).str.strip().str.upper())['posicion'].apply(list).to_dict()
         ref_precio, ref_prof_inicial = construir_referencias_llanta(df_raw)
         _col = lambda c: [str(x or '').strip() for x in (df[c].tolist() if c in df else [''] * n_rows)]
         marca_list_g, diseno_list_g, dim_list_g, vida_list_g = _col('marca'), _col('diseno'), _col('dimension'), _col('vida')
         delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
+        alerta_alin_col_g = []
 
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
@@ -12014,7 +12090,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         for idx in range(n_rows):
             pos = pos_list[idx]
             # Eje real según el esquema de la tipología (no asumir que Pos 1-2 siempre es direccional)
-            es_dir = (obtener_tipo_eje_posicion(tip_list[idx], pos, mapa_tipologias=mapa_tips) == 'DIRECCIONAL')
+            eje_g = lim_posicion_g.tipo_eje(tip_list[idx], pos, posiciones_placa_g.get(placa_list[idx], [pos]))
+            es_dir = (eje_g == 'DIRECCIONAL')
             pe = pe_list[idx]
             pc = pc_list[idx]
             pi = pi_list[idx]
@@ -12038,7 +12115,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             cli_row = cli_list[idx] or cliente or ''
             sub_row = sub_list[idx] or subcliente or ''
             tip_row = tip_list[idx]
-            eje_tipo = obtener_tipo_eje_posicion(tip_row, pos, mapa_tipologias=mapa_tips)
+            eje_tipo = eje_g
             lim_ret = resolver_limite(cli_row, sub_row, eje_tipo)
             if lim_ret <= 0:
                 lim_ret = mm_retiro_dir if es_dir else mm_retiro_trac
@@ -12096,10 +12173,12 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             es_mad = (d_mm == d_mm) and ((d_mm >= 1.5) or (pct_d >= 10.0))
             es_madura_col.append(es_mad)
 
-            # 5. Desalineación e Impacto Económico
-            dif_hombros = abs(pe - pi)
-            alerta_alin = (dif_hombros >= tol_desalineacion)
-            if alerta_alin:
+            # 5. Desalineación e Impacto Económico (ejes direccionales y libres, con ambas lecturas)
+            dif_hombros = abs(pe - pi) if (pe > 0 and pi > 0) else 0.0
+            alerta_alin = (eje_g in (ee.DIRECCIONAL, ee.LIBRE)) and (dif_hombros >= tol_desalineacion)
+            alerta_alin_col_g.append(alerta_alin)
+            # Pérdida de caucho por desgaste disparejo en cualquier eje que rueda (igual que KPIs)
+            if eje_g != ee.REPUESTO and dif_hombros >= tol_desalineacion:
                 mm_perd = max(pe, pc, pi) - min(pe, pc, pi)
                 # Sin precio o sin mm útiles conocidos no se valoriza
                 perd_dinero = mm_perd * (pr / mm_ut) if (pr and mm_ut == mm_ut) else float('nan')
@@ -12148,6 +12227,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         df['calc_estado_psi'] = estado_psi_col
         df['calc_es_reencauche'] = es_reencauche_col
         df['calc_delta_psi_pct'] = delta_psi_pct_col
+        df['calc_alerta_alin'] = alerta_alin_col_g
         df['calc_precio'] = precio_col
         df['calc_precio_estimado'] = precio_estimado_col
 
@@ -12194,7 +12274,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             reenc_cnt = int(df_ultimo_corte['calc_es_reencauche'].sum())
             pct_reenc = round((reenc_cnt / max(1, llantas_cnt)) * 100.0, 1)
 
-            ok_alin_cnt = int((df_ultimo_corte['calc_mm_perdidos'] == 0.0).sum())
+            ok_alin_cnt = int((~df_ultimo_corte['calc_alerta_alin'].astype(bool)).sum())
             pct_alin_ok = round((ok_alin_cnt / max(1, llantas_cnt)) * 100.0, 1)
 
             resultado["kpis"] = {
@@ -12392,7 +12472,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
             # KPI 06: Alineación % Alerta vs % OK
             total_ll = len(df_p)
-            alerta_cnt = int((df_p['calc_mm_perdidos'] > 0).sum())
+            alerta_cnt = int(df_p['calc_alerta_alin'].astype(bool).sum())
             pct_al = round((alerta_cnt / max(1, total_ll)) * 100.0, 1)
             pct_o = round(100.0 - pct_al, 1)
             alerta_p.append(pct_al)
@@ -13114,6 +13194,110 @@ def resolver_fecha_baja_fvu():
     return fecha_de
 
 
+def preparar_corte_mrp(df_inspecciones: pd.DataFrame, lim_posicion=None) -> pd.DataFrame:
+    """
+    Última medición de cada llanta con su mínima, límite de retiro y eje según la estructura
+    de la tipología (columnas calc_p_min, calc_lim_retiro, calc_eje). Base de la demanda del MRP.
+    """
+    if df_inspecciones is None or df_inspecciones.empty:
+        return pd.DataFrame()
+    lim_posicion = lim_posicion or construir_resolver_limite_posicion()
+    df_c = df_inspecciones.sort_values(['fecha', 'id'], ascending=[False, False]).drop_duplicates(['placa', 'posicion']).copy()
+    posiciones_placa = df_c.groupby('placa')['posicion'].apply(list).to_dict()
+    p_mins, lims, ejes = [], [], []
+    for _, r in df_c.iterrows():
+        vals = [v for v in (to_float(r.get('prof_ext')), to_float(r.get('prof_cent')), to_float(r.get('prof_int'))) if v > 0]
+        pos = to_int(r.get('posicion'))
+        posiciones = posiciones_placa.get(r.get('placa'), [pos])
+        p_mins.append(min(vals) if vals else 0.0)
+        lims.append(lim_posicion(r.get('cliente'), r.get('subcliente'), r.get('tipologia'), pos, posiciones))
+        ejes.append(lim_posicion.tipo_eje(r.get('tipologia'), pos, posiciones))
+    df_c['calc_p_min'], df_c['calc_lim_retiro'], df_c['calc_eje'] = p_mins, lims, ejes
+    return df_c
+
+
+def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones, lim_posicion=None) -> list:
+    """
+    Matriz MRP única para Bodegas y el KPI 20 (antes había dos con reglas distintas).
+    - Demanda direccional: llantas de ejes DIRECCIONALES (según la estructura de la tipología) en
+      o bajo su límite de retiro, más el ajuste de par direccional. Solo se cubre con nuevas.
+    - Demanda de tracción / libre / repuesto: resto de llantas en o bajo su límite.
+    - Reposición: bajas FVU de los últimos DIAS_REPOSICION_FVU días.
+    - Stock de seguridad: el parámetro del cliente.
+    """
+    lim_posicion = lim_posicion or construir_resolver_limite_posicion()
+    pct_aprob = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
+    stock_seg = to_int(cfg.get('stock_seguridad_default', 4), 4)
+    dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
+    limite_base_cliente = _construir_cache_limites_retiro()(cfg.get('cliente') or '')
+
+    def contar(ubicacion, dim, filtro=lambda ll: True):
+        return len([ll for ll in llantas if str(ll.get('dimension', '')).upper() == dim.upper()
+                    and ll.get('ubicacion_bodega') == ubicacion and filtro(ll)])
+
+    filas = []
+    for dim in dimensiones:
+        dem_dir, dem_otros = 0, 0
+        if df_corte is not None and not df_corte.empty:
+            for placa, grp in df_corte.groupby('placa'):
+                est = lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist())
+                por_pos = {to_int(r['posicion']): r for _, r in grp.iterrows()}
+                en_dim = lambda r: str(r.get('dimension', '')).strip().upper() == dim.upper()
+                for pos, r in por_pos.items():
+                    if en_dim(r) and 0 < to_float(r['calc_p_min']) <= to_float(r['calc_lim_retiro']):
+                        if r['calc_eje'] == ee.DIRECCIONAL:
+                            dem_dir += 1
+                        else:
+                            dem_otros += 1
+                for izq, der in est.pares_direccionales():
+                    if izq not in por_pos or der not in por_pos:
+                        continue
+                    a, b = por_pos[izq], por_pos[der]
+                    a_ret = 0 < to_float(a['calc_p_min']) <= to_float(a['calc_lim_retiro'])
+                    b_ret = 0 < to_float(b['calc_p_min']) <= to_float(b['calc_lim_retiro'])
+                    pareja = b if (a_ret and not b_ret) else a if (b_ret and not a_ret) else None
+                    if pareja is not None and en_dim(pareja):
+                        p_ini = to_float(pareja.get('prof_inicial'), 0.0)
+                        if p_ini > 0 and (p_ini - to_float(pareja['calc_p_min'])) >= dif_par_dir:
+                            dem_dir += 1  # ajuste de par direccional
+
+        bajas_fvu = contar_bajas_fvu_para_reponer(llantas, dim)
+        b1 = contar('BODEGA_1_NUEVAS', dim)
+        b2 = contar('BODEGA_2_RECAMBIO', dim, lambda ll: not ll.get('reservada_para_placa'))
+        lim_b2 = limite_base_cliente  # una llanta de recambio sirve si está sobre el límite asignado al cliente
+        b2_utiles = contar('BODEGA_2_RECAMBIO', dim, lambda ll: not ll.get('reservada_para_placa') and to_float(ll.get('prof_actual_min', 0.0)) > lim_b2)
+        b3 = contar('BODEGA_3_REENCAUCHE', dim)
+        b4 = contar('BODEGA_4_REENCAUCHADAS', dim)
+        b5 = contar('BODEGA_5_REPARACION', dim)
+        retorno_planta = int(math.floor(b3 * (pct_aprob / 100.0)))
+
+        demanda = dem_dir + dem_otros
+        necesidad_bruta = demanda + bajas_fvu + stock_seg
+        compra_nuevas_dir = max(0, dem_dir - b1)            # dirección solo con llantas nuevas
+        b1_restante = max(0, b1 - dem_dir)
+        necesidad_no_dir = dem_otros + bajas_fvu + stock_seg
+        stock_util_no_dir = b1_restante + b2_utiles + b4 + retorno_planta + b5
+        compra_adicional = max(0, necesidad_no_dir - stock_util_no_dir)
+        stock_disponible = b1 + b2_utiles + b4 + retorno_planta + b5
+        filas.append({
+            'dimension': dim,
+            'demanda_flota': demanda, 'demanda_direccional': dem_dir, 'demanda_traccion': dem_otros,
+            'reposicion_bajas_fvu': bajas_fvu,
+            'stock_seguridad': stock_seg, 'margen_seguridad': stock_seg,
+            'necesidad_bruta': necesidad_bruta,
+            'b1_nuevas': b1, 'stock_b1': b1, 'b1_restante': b1_restante,
+            'b2_recambio_libres': b2, 'b2_recambio_libres_utiles': b2_utiles, 'stock_b2': b2_utiles,
+            'b3_planta': b3, 'stock_b3': b3, 'retorno_planta_estimado': retorno_planta, 'stock_b3_util': retorno_planta,
+            'b4_reenc_listas': b4, 'stock_b4': b4, 'b5_reparacion': b5, 'stock_b5': b5,
+            'stock_disponible_util': stock_disponible, 'stock_disponible': stock_disponible,
+            'stock_util_no_direccional': stock_util_no_dir,
+            'compra_neta_sugerida': compra_nuevas_dir + compra_adicional,
+            'compra_nuevas_direccional': compra_nuevas_dir,
+            'compra_adicional_reencauche': compra_adicional, 'compra_traccion_reencauche': compra_adicional,
+        })
+    return filas
+
+
 def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     """
     Calcula el Balance Ejecutivo de las 7 Bodegas, Inventario Valorizado, Alertas
@@ -13204,143 +13388,15 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     if dimension_filtro and dimension_filtro != 'TODAS':
         dimensiones_set = [d for d in dimensiones_set if d.upper() == dimension_filtro.upper()] or [dimension_filtro]
 
-    matriz_mrp = []
-
-    # Obtener últimas inspecciones por vehículo para evaluar demanda en patio
+    # Demanda con la estructura de ejes y los límites configurados (función única con el KPI 20)
     df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(incluir_fotos=False))
     if not df_raw.empty and cliente and cliente != "TODOS":
         df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
     if not df_raw.empty and subcliente and subcliente != "TODOS":
         df_raw = df_raw[df_raw['subcliente'].astype(str).str.upper().str.strip() == subcliente]
-
-    # Agrupar última inspección por placa
-    df_patio = pd.DataFrame()
-    if not df_raw.empty:
-        corte_vehiculos = []
-        for _, grp in df_raw.groupby('placa'):
-            f_max = grp['fecha'].astype(str).max()
-            g_f = grp[grp['fecha'].astype(str) == f_max]
-            corte_vehiculos.append(g_f)
-        if corte_vehiculos:
-            df_patio = pd.concat(corte_vehiculos, ignore_index=True)
-
-    for dim in dimensiones_set:
-        # 1. Demanda en patio por límite de retiro y par direccional
-        demanda_dir = 0
-        demanda_trac = 0
-
-        if not df_patio.empty:
-            df_dim = df_patio[df_patio['dimension'].astype(str).str.upper().str.strip() == dim.upper()]
-            for placa_v, grp_p in df_dim.groupby('placa'):
-                pos_list = [to_int(p) for p in grp_p['posicion']]
-                # Evaluar par direccional (pos 1 y 2)
-                p1 = grp_p[grp_p['posicion'] == 1]
-                p2 = grp_p[grp_p['posicion'] == 2]
-
-                p1_ret = False
-                p2_ret = False
-                p1_min = 99.0
-                p2_min = 99.0
-                p1_ini = 18.0
-                p2_ini = 18.0
-
-                if not p1.empty:
-                    pe = to_float(p1['prof_ext'].values[0])
-                    pc = to_float(p1['prof_cent'].values[0])
-                    pi = to_float(p1['prof_int'].values[0])
-                    p1_ini = to_float(p1['prof_inicial'].values[0], 18.0)
-                    vals = [x for x in (pe, pc, pi) if x > 0]
-                    p1_min = min(vals) if vals else 0.0
-                    p1_ret = (p1_min <= lim_dir)
-
-                if not p2.empty:
-                    pe = to_float(p2['prof_ext'].values[0])
-                    pc = to_float(p2['prof_cent'].values[0])
-                    pi = to_float(p2['prof_int'].values[0])
-                    p2_ini = to_float(p2['prof_inicial'].values[0], 18.0)
-                    vals = [x for x in (pe, pc, pi) if x > 0]
-                    p2_min = min(vals) if vals else 0.0
-                    p2_ret = (p2_min <= lim_dir)
-
-                # Si ambas están en retiro
-                if p1_ret and p2_ret:
-                    demanda_dir += 2
-                # Si exactamente 1 está en retiro: regla de ajuste par direccional
-                elif p1_ret and not p2_ret:
-                    demanda_dir += 1
-                    if (p2_ini - p2_min) > dif_par_dir:
-                        demanda_dir += 1  # Ajuste par direccional
-                elif p2_ret and not p1_ret:
-                    demanda_dir += 1
-                    if (p1_ini - p1_min) > dif_par_dir:
-                        demanda_dir += 1  # Ajuste par direccional
-
-                # Posiciones de tracción / arrastre (pos > 2)
-                for _, row_tr in grp_p[grp_p['posicion'] > 2].iterrows():
-                    pe = to_float(row_tr['prof_ext'])
-                    pc = to_float(row_tr['prof_cent'])
-                    pi = to_float(row_tr['prof_int'])
-                    vals = [x for x in (pe, pc, pi) if x > 0]
-                    p_m = min(vals) if vals else 0.0
-                    if p_m <= lim_trac:
-                        demanda_trac += 1
-
-        demanda_flota = demanda_dir + demanda_trac
-
-        # 2. Bajas FVU de esta dimensión (Pila Desecho / FVU y Chatarrizadas)
-        bajas_fvu = contar_bajas_fvu_para_reponer(llantas_todas, dim)
-
-        # 3. Stock de seguridad
-        stock_seg = stock_seg_def
-
-        # 4. Necesidad Bruta
-        necesidad_bruta = demanda_flota + bajas_fvu + stock_seg
-
-        # 5. Disponibilidad en Bodegas
-        b1_nuevas = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_1_NUEVAS'])
-        b2_recambio_libres = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')])
-        b2_recambio_libres_utiles = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa') and to_float(ll.get('prof_actual_min', 0.0)) > lim_trac])
-        b3_planta = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_3_REENCAUCHE'])
-        b4_reenc_listas = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_4_REENCAUCHADAS'])
-        b5_reparacion = len([ll for ll in llantas_todas if ll.get('dimension', '').upper() == dim.upper() and ll.get('ubicacion_bodega') == 'BODEGA_5_REPARACION'])
-
-        retorno_planta_estimado = int(math.floor(b3_planta * (pct_aprob / 100.0)))
-
-        # Balance de Eje Direccional (Corrección 1: Prohibido cubrir Demanda Direccional con Reencauches)
-        compra_nuevas_dir = max(0, demanda_dir - b1_nuevas)
-        b1_restante = max(0, b1_nuevas - demanda_dir)
-
-        # Balance de Tracción / Arrastre + Stock de Seguridad + Reposición FVU
-        necesidad_no_dir = demanda_trac + bajas_fvu + stock_seg
-        stock_util_no_dir = b1_restante + b2_recambio_libres_utiles + b4_reenc_listas + retorno_planta_estimado + b5_reparacion
-        compra_adicional_reenc = max(0, necesidad_no_dir - stock_util_no_dir)
-
-        # Compra Neta Total Sugerida (KPI 20)
-        compra_neta = compra_nuevas_dir + compra_adicional_reenc
-        stock_disponible_util = b1_nuevas + b2_recambio_libres_utiles + b4_reenc_listas + retorno_planta_estimado + b5_reparacion
-
-        matriz_mrp.append({
-            'dimension': dim,
-            'demanda_flota': demanda_flota,
-            'demanda_direccional': demanda_dir,
-            'demanda_traccion': demanda_trac,
-            'reposicion_bajas_fvu': bajas_fvu,
-            'stock_seguridad': stock_seg,
-            'necesidad_bruta': necesidad_bruta,
-            'b1_nuevas': b1_nuevas,
-            'b1_restante': b1_restante,
-            'b2_recambio_libres': b2_recambio_libres,
-            'b2_recambio_libres_utiles': b2_recambio_libres_utiles,
-            'b3_planta': b3_planta,
-            'retorno_planta_estimado': retorno_planta_estimado,
-            'b4_reenc_listas': b4_reenc_listas,
-            'b5_reparacion': b5_reparacion,
-            'stock_disponible_util': stock_disponible_util,
-            'stock_util_no_direccional': stock_util_no_dir,
-            'compra_neta_sugerida': compra_neta,
-            'compra_nuevas_direccional': compra_nuevas_dir,
-            'compra_adicional_reencauche': compra_adicional_reenc
-        })
+    lim_posicion = construir_resolver_limite_posicion()
+    df_corte = preparar_corte_mrp(df_raw, lim_posicion)
+    matriz_mrp = calcular_matriz_mrp(llantas_todas, df_corte, cfg, dimensiones_set, lim_posicion)
 
     return {
         "licencia": licencia,
@@ -13398,6 +13454,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     rango_amarillo = to_float(cfg.get('rango_semaforo_amarillo_mm', 2.0), 2.0)
     psi_obj_dir = to_float(cfg.get('psi_objetivo_direccional', 110.0), 110.0)
     psi_obj_trac = to_float(cfg.get('psi_objetivo_traccion', 100.0), 100.0)
+    psi_obj_arr = to_float(cfg.get('psi_objetivo_arrastre', 100.0), 100.0)
+    umbral_equis = to_float(cfg.get('umbral_diferencia_rotacion_ejes_mm', 3.0), 3.0)
     tol_psi_baja = to_float(cfg.get('tolerancia_psi_baja_pct', 10.0), 10.0)
     tol_psi_alta = to_float(cfg.get('tolerancia_psi_alta_pct', 10.0), 10.0)
     tol_desalineacion = to_float(cfg.get('tolerancia_desalineacion_hombros_mm', 2.0), 2.0)
@@ -13407,6 +13465,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     stock_seg_default = to_int(cfg.get('stock_seguridad_default', 4), 4)
 
     resolver_limite = _construir_cache_limites_retiro()
+    lim_posicion = construir_resolver_limite_posicion()
 
     # 1. Inspecciones históricas
     df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False))
@@ -13446,13 +13505,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         vida_list = [str(x or '').strip().upper() for x in (df['vida'].tolist() if 'vida' in df else ['']*n_rows)]
         banda_list = [str(x or '').strip() for x in (df['banda_reen'].tolist() if 'banda_reen' in df else ['']*n_rows)]
         tip_list_k = [str(x or '').strip() for x in (df['tipologia'].tolist() if 'tipologia' in df else ['']*n_rows)]
-        max_pos_placa = {pl: max(to_int(p) for p in grp['posicion']) for pl, grp in df.groupby(df['placa'].astype(str).str.strip().str.upper())}
+        # Posiciones registradas por placa: con ellas se resuelve la estructura de ejes del vehículo
+        max_pos_placa = {pl: sorted({to_int(p) for p in grp['posicion']}) for pl, grp in df.groupby(df['placa'].astype(str).str.strip().str.upper())}
         lim_posicion = construir_resolver_limite_posicion()
         ref_precio, ref_prof_inicial = construir_referencias_llanta(df_raw)
         marca_list_k = [str(x or '').strip() for x in (df['marca'].tolist() if 'marca' in df else ['']*n_rows)]
         diseno_list_k = [str(x or '').strip() for x in (df['diseno'].tolist() if 'diseno' in df else ['']*n_rows)]
         dim_list_k = [str(x or '').strip() for x in (df['dimension'].tolist() if 'dimension' in df else ['']*n_rows)]
         precio_estimado_col, pini_sin_dato_col = [], []
+        eje_col = []
 
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
@@ -13482,6 +13543,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             # Eje real según el esquema de la tipología (en tráiler la Pos 1 no es direccional; en 8x4 la 3 y 4 sí)
             eje_i = lim_posicion.tipo_eje(tip_list_k[i], pos, max_pos_placa.get(placa_list[i]))
             es_dir = (eje_i == 'DIRECCIONAL')
+            eje_col.append(eje_i)
             pe, pc, pi = pe_list[i], pc_list[i], pi_list[i]
             psi = psi_list[i]
             cli_r = cli_list[i] or cliente or ''
@@ -13559,11 +13621,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             proy_total_col.append(proy_val)
             cpk_col.append(cpk_val)
 
-            # Alineación
-            dif_hombros = abs(pe - pi)
-            alerta_al = (dif_hombros >= tol_desalineacion)
+            # Alineación: solo en ejes direccionales y libres (en tracción el desgaste entre
+            # hombros es desgaste irregular, no alineación) y con las dos lecturas de hombro
+            dif_hombros = abs(pe - pi) if (pe > 0 and pi > 0) else 0.0
+            alerta_al = (eje_i in (ee.DIRECCIONAL, ee.LIBRE)) and (dif_hombros >= tol_desalineacion)
             alerta_alin_col.append(alerta_al)
-            if alerta_al:
+            # La pérdida de caucho por desgaste disparejo cuenta en cualquier eje que rueda
+            # (en tracción la causa es rotación/irregular, no alineación, pero los mm se pierden igual)
+            if eje_i != ee.REPUESTO and dif_hombros >= tol_desalineacion:
                 mm_p = max(pe, pc, pi) - min(pe, pc, pi)
                 # Sin precio o sin mm útiles conocidos no se valoriza (antes se usaban valores fijos)
                 p_din = mm_p * (pr / mm_ut) if (pr and mm_ut == mm_ut) else float('nan')
@@ -13574,7 +13639,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             perd_dinero_alin_col.append(p_din)
 
             # Presión PSI (sin lectura = sin dato; antes contaba como -100 % "baja severa")
-            p_obj = psi_obj_dir if es_dir else psi_obj_trac
+            p_obj = psi_obj_dir if es_dir else (psi_obj_arr if eje_i == ee.LIBRE else psi_obj_trac)
             if psi <= 0:
                 delta_psi_pct_col.append(float('nan'))
                 estado_psi_col.append('Sin dato')
@@ -13582,13 +13647,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             else:
                 d_psi = ((psi - p_obj) / max(1.0, p_obj)) * 100.0
                 delta_psi_pct_col.append(d_psi)
+            # Fuera de norma = fuera de las tolerancias del cliente (las mismas de Diagnóstico)
             if d_psi is None:
                 pass
-            elif d_psi < -15.0:
+            elif d_psi < -max(15.0, tol_psi_baja):
                 est_psi = 'Baja Severa (< -15%)'
-            elif d_psi < -5.0:
+            elif d_psi < -tol_psi_baja:
                 est_psi = 'Baja Moderada (-15% a -5%)'
-            elif d_psi > 10.0:
+            elif d_psi > tol_psi_alta:
                 est_psi = 'Sobrepresión (> +10%)'
             else:
                 est_psi = 'Correcta (±5%)'
@@ -13629,6 +13695,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_es_reencauche'] = es_reencauche_col
         df['calc_vida_norm'] = vida_norm_col
         df['calc_precio_estimado'] = precio_estimado_col
+        df['calc_eje'] = eje_col
+        df['calc_es_repuesto'] = [e == ee.REPUESTO for e in eje_col]
         df['calc_pini_sin_dato'] = pini_sin_dato_col
         # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
         df['calc_precio'] = [p if p > 0 else ref_precio(c, d) for p, c, d in zip(precio_list, cli_list, dim_list_k)]
@@ -13638,8 +13706,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         # CORRECCIÓN 1: Construcción de df_patio al inicio (deduplicado por placa y posición, tomando última inspección)
         df_patio = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Los repuestos no ruedan: no entran a desgaste, rendimiento ni proyecciones
+        df_rodante = df_patio[~df_patio['calc_es_repuesto']].copy()
     else:
         df_patio = pd.DataFrame()
+        df_rodante = pd.DataFrame()
 
 
     # 2. Padrón de vehículos
@@ -13839,90 +13910,78 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     }
 
     # =========================================================================
-    # KPI 05: Cuadro de Cambios + Matriz Placa vs Posición + Regla Direccional
+    # KPI 05 a 08 con la estructura de ejes de cada vehículo (tipología del catálogo):
+    # direccionales, duales y ejes de tracción salen del esquema, no del número de posición.
+    # Las series mensuales cuentan una medición por llanta y mes.
     # =========================================================================
+    def _una_por_llanta(df_m):
+        return df_m.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
+
+    def _estructura_placa(grp):
+        tip = str(grp['tipologia'].iloc[0] if 'tipologia' in grp else '')
+        return lim_posicion.estructura(tip, grp['posicion'].tolist())
+
+    nombres_eje_k5 = {ee.DIRECCIONAL: 'direccional', ee.TRACCION: 'traccion', ee.LIBRE: 'arrastre', ee.REPUESTO: 'repuesto'}
+
+    # KPI 05: Cuadro de Cambios + Matriz Placa vs Posición + Regla Direccional
     matriz_calor_k5 = []
     tot_cambios_k5 = 0
     ajuste_par_dir_k5 = 0
     retiros_por_dim_eje = {}
 
-
     if not df_patio.empty:
         for pl, grp_p in df_patio.groupby('placa'):
+            est_p = _estructura_placa(grp_p)
             sub_pl = str(grp_p['subcliente'].iloc[0] if 'subcliente' in grp_p else '').strip()
+            filas_p = {to_int(r['posicion']): r for _, r in grp_p.iterrows()}
             pos_dict = {}
-            p1_min = 99.0
-            p2_min = 99.0
-            p1_ret = False
-            p2_ret = False
-            p1_ini = 18.0
-            p2_ini = 18.0
-
-            for pos_idx in range(1, 13):
-                row_pos = grp_p[grp_p['posicion'] == pos_idx]
-                if not row_pos.empty:
-                    p_min_val = to_float(row_pos['calc_p_min'].values[0])
-                    lim_val = to_float(row_pos['calc_lim_retiro'].values[0], 3.0)
-                    p_ini_val = to_float(row_pos['prof_inicial'].values[0], 18.0)
-                    dim_val = str(row_pos['dimension'].values[0]).strip().upper() or '295/80R22.5'
-
-                    if p_min_val <= lim_val:
-                        estado_semaforo = 'ROJO'
-                        tot_cambios_k5 += 1
-                        eje_tipo = 'direccional' if pos_idx in (1, 2) else ('traccion' if pos_idx <= 10 else 'arrastre')
-                        if dim_val not in retiros_por_dim_eje:
-                            retiros_por_dim_eje[dim_val] = {'direccional': 0, 'traccion': 0, 'arrastre': 0, 'total': 0}
-                        retiros_por_dim_eje[dim_val][eje_tipo] += 1
-                        retiros_por_dim_eje[dim_val]['total'] += 1
-                    elif p_min_val <= lim_val + rango_amarillo:
-                        estado_semaforo = 'AMARILLO'
-                    else:
-                        estado_semaforo = 'VERDE'
-
-                    pos_dict[pos_idx] = {'prof_min': round(p_min_val, 1), 'estado': estado_semaforo}
-
-                    if pos_idx == 1:
-                        p1_min = p_min_val
-                        p1_ret = (p_min_val <= lim_val)
-                        p1_ini = p_ini_val
-                    elif pos_idx == 2:
-                        p2_min = p_min_val
-                        p2_ret = (p_min_val <= lim_val)
-                        p2_ini = p_ini_val
+            for pos_idx in sorted(set(est_p.posiciones(incluir_repuesto=True)) | set(filas_p)):
+                r = filas_p.get(pos_idx)
+                if r is None:
+                    pos_dict[pos_idx] = {'prof_min': None, 'estado': 'VACIO', 'eje': est_p.tipo_eje(pos_idx)}
+                    continue
+                p_min_val = to_float(r['calc_p_min'])
+                lim_val = to_float(r['calc_lim_retiro'], 3.0)
+                dim_val = str(r['dimension']).strip().upper() or 'SIN MEDIDA'
+                if 0 < p_min_val <= lim_val:
+                    estado_semaforo = 'ROJO'
+                    tot_cambios_k5 += 1
+                    eje_tipo = nombres_eje_k5.get(r['calc_eje'], 'traccion')
+                    tabla = retiros_por_dim_eje.setdefault(dim_val, {'direccional': 0, 'traccion': 0, 'arrastre': 0, 'repuesto': 0, 'total': 0})
+                    tabla[eje_tipo] += 1
+                    tabla['total'] += 1
+                elif p_min_val <= lim_val + rango_amarillo:
+                    estado_semaforo = 'AMARILLO'
                 else:
-                    pos_dict[pos_idx] = {'prof_min': None, 'estado': 'VACIO'}
+                    estado_semaforo = 'VERDE'
+                pos_dict[pos_idx] = {'prof_min': round(p_min_val, 1), 'estado': estado_semaforo, 'eje': r['calc_eje']}
 
-            # Regla Par Direccional
-            if p1_ret and not p2_ret:
-                if (p2_ini - p2_min) > dif_par_dir:
+            # Regla Par Direccional en cada eje direccional (misma regla que Diagnóstico)
+            for izq, der in est_p.pares_direccionales():
+                if izq not in filas_p or der not in filas_p:
+                    continue
+                datos_par = []
+                for pos_par in (izq, der):
+                    r = filas_p[pos_par]
+                    datos_par.append((to_float(r['calc_p_min']), to_float(r['calc_lim_retiro'], 3.0), to_float(r['prof_inicial'], 0.0)))
+                (a_min, a_lim, a_ini), (b_min, b_lim, b_ini) = datos_par
+                a_ret, b_ret = (0 < a_min <= a_lim), (0 < b_min <= b_lim)
+                if a_ret and not b_ret and b_ini > 0 and (b_ini - b_min) >= dif_par_dir:
                     ajuste_par_dir_k5 += 1
-            elif p2_ret and not p1_ret:
-                if (p1_ini - p1_min) > dif_par_dir:
+                elif b_ret and not a_ret and a_ini > 0 and (a_ini - a_min) >= dif_par_dir:
                     ajuste_par_dir_k5 += 1
 
-            matriz_calor_k5.append({
-                'placa': pl,
-                'subcliente': sub_pl,
-                'posiciones': pos_dict
-            })
+            matriz_calor_k5.append({'placa': pl, 'subcliente': sub_pl, 'posiciones': pos_dict,
+                                    'tipologia_inferida': est_p.inferida})
 
-    tabla_dim_eje = []
-    for dim_k, d_val in sorted(retiros_por_dim_eje.items()):
-        tabla_dim_eje.append({
-            'dimension': dim_k,
-            'direccional': d_val['direccional'],
-            'traccion': d_val['traccion'],
-            'arrastre': d_val['arrastre'],
-            'total': d_val['total']
-        })
+    tabla_dim_eje = [dict(dimension=dim_k, **d_val) for dim_k, d_val in sorted(retiros_por_dim_eje.items())]
     if not tabla_dim_eje:
-        tabla_dim_eje.append({'dimension': '295/80R22.5', 'direccional': 0, 'traccion': 0, 'arrastre': 0, 'total': 0})
+        tabla_dim_eje.append({'dimension': '-', 'direccional': 0, 'traccion': 0, 'arrastre': 0, 'repuesto': 0, 'total': 0})
 
     retiros_mensuales_k5 = []
     for m in meses_k2:
-        df_m = df[df['periodo_mes'] == m]
-        cnt_ret = int((df_m['calc_p_min'] <= df_m['calc_lim_retiro']).sum())
-        retiros_mensuales_k5.append(cnt_ret)
+        df_m = _una_por_llanta(df[df['periodo_mes'] == m])
+        retiros_mensuales_k5.append(int(((df_m['calc_p_min'] > 0) & (df_m['calc_p_min'] <= df_m['calc_lim_retiro'])).sum()))
 
     kpi_05 = {
         "disponible": True,
@@ -13936,41 +13995,40 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "ajuste_par_direccional_cnt": ajuste_par_dir_k5
     }
 
-    # =========================================================================
-    # KPI 06: Seguimiento de Alineación y Rotar Dirección
-    # =========================================================================
+    # KPI 06: Alineación en ejes direccionales y libres
     pct_ok_alin = []
     pct_alerta_alin = []
     for m in meses_k2:
-        df_m = df[df['periodo_mes'] == m]
+        df_m = _una_por_llanta(df[df['periodo_mes'] == m])
+        df_m = df_m[df_m['calc_eje'].isin([ee.DIRECCIONAL, ee.LIBRE])]
         tot_m = max(1, len(df_m))
         al_cnt = int(df_m['calc_alerta_alin'].sum())
-        ok_cnt = tot_m - al_cnt
-        pct_ok_alin.append(round((ok_cnt / tot_m) * 100.0, 1))
+        pct_ok_alin.append(round(((tot_m - al_cnt) / tot_m) * 100.0, 1))
         pct_alerta_alin.append(round((al_cnt / tot_m) * 100.0, 1))
 
     tabla_perdida_placas = []
     if not df_patio.empty:
         for pl, grp_p in df_patio.groupby('placa'):
-            p1 = grp_p[grp_p['posicion'] == 1]
-            p2 = grp_p[grp_p['posicion'] == 2]
-            mm1 = to_float(p1['calc_mm_perd_alin'].values[0]) if not p1.empty else 0.0
-            mm2 = to_float(p2['calc_mm_perd_alin'].values[0]) if not p2.empty else 0.0
-            din1 = to_float(p1['calc_perd_dinero_alin'].values[0]) if not p1.empty else 0.0
-            din2 = to_float(p2['calc_perd_dinero_alin'].values[0]) if not p2.empty else 0.0
-            tot_mm = mm1 + mm2
-            tot_din = din1 + din2
-            if tot_mm > 0.0 or (p1.empty and p2.empty):
+            est_p = _estructura_placa(grp_p)
+            pares = est_p.pares_direccionales()
+            pos_dir = est_p.posiciones(ee.DIRECCIONAL)
+            if not pos_dir:
+                continue
+            grp_dir = grp_p[grp_p['posicion'].astype(int).isin(pos_dir)]
+            mm_pos = {to_int(r['posicion']): to_float(r['calc_mm_perd_alin']) for _, r in grp_dir.iterrows()}
+            tot_mm = sum(mm_pos.values())
+            tot_din = float(pd.to_numeric(grp_dir['calc_perd_dinero_alin'], errors='coerce').sum())
+            if tot_mm > 0.0:
+                izq, der = pares[0] if pares else (pos_dir[0], pos_dir[-1])
                 tabla_perdida_placas.append({
                     'placa': pl,
-                    'pos1_mm': round(mm1, 1),
-                    'pos2_mm': round(mm2, 1),
+                    'pos1_mm': round(mm_pos.get(izq, 0.0), 1),
+                    'pos2_mm': round(mm_pos.get(der, 0.0), 1),
                     'total_mm': round(tot_mm, 1),
                     'perdida_dinero': round(tot_din),
                     'perdida_pesos': round(tot_din),
-                    'accion': 'Alinear y Rotar Dirección' if tot_mm >= 2.0 else 'Monitorear'
+                    'accion': 'Alinear y Rotar Dirección' if tot_mm >= tol_desalineacion else 'Monitorear'
                 })
-
     tabla_perdida_placas.sort(key=lambda x: x['total_mm'], reverse=True)
 
     kpi_06 = {
@@ -13978,39 +14036,36 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "labels": labels_k2,
         "pct_ok": pct_ok_alin,
         "pct_alerta": pct_alerta_alin,
-        "historico": {
-            "labels": labels_k2,
-            "pct_ok": pct_ok_alin,
-            "pct_alerta": pct_alerta_alin
-        },
+        "historico": {"labels": labels_k2, "pct_ok": pct_ok_alin, "pct_alerta": pct_alerta_alin},
         "tabla_perdida_placas": tabla_perdida_placas[:25],
         "tabla_perdidas": tabla_perdida_placas[:25]
     }
 
-    # =========================================================================
-    # KPI 07: Plan de Rotaciones Tándem (Equis Larga) y Tráiler
-    # =========================================================================
+    # KPI 07: Rotación en equis entre los dos ejes de tracción (mínima de cada eje)
     ordenes_rotacion = []
     if not df_patio.empty:
         for pl, grp_p in df_patio.groupby('placa'):
-            p_eje1 = grp_p[grp_p['posicion'].isin([3, 4, 5, 6])]
-            p_eje2 = grp_p[grp_p['posicion'].isin([7, 8, 9, 10])]
-            if not p_eje1.empty and not p_eje2.empty:
-                m1 = p_eje1['calc_p_min'].mean()
-                m2 = p_eje2['calc_p_min'].mean()
-                dif = abs(m1 - m2)
-                if dif >= 1.5:
-                    ordenes_rotacion.append({
-                        'placa': pl,
-                        'tipo': 'Equis Larga Tándem',
-                        'detalle': f'P3-P4 ↔ P9-P10 / P5-P6 ↔ P7-P8 (Δ {round(dif, 1)} mm)',
-                        'esquema': f'P3-P4 ↔ P9-P10 / P5-P6 ↔ P7-P8',
-                        'delta_ejes_mm': round(dif, 1),
-                        # Sin historial de ejecución no se puede afirmar si se solucionó
-                        'estado': 'Pendiente'
-                    })
-            # (Se eliminó una orden de tráiler con diferencia fija de 1,8 mm y estado "Solucionada"
-            #  que se agregaba a cualquier vehículo con 4+ posiciones >= 11, sin medir nada)
+            est_p = _estructura_placa(grp_p)
+            ejes_t = est_p.ejes_de(ee.TRACCION)
+            if len(ejes_t) != 2:
+                continue
+            cruce = est_p.cruce_equis(*ejes_t)
+            pmin_p = {to_int(r['posicion']): to_float(r['calc_p_min']) for _, r in grp_p.iterrows()}
+            if not cruce or not all(pmin_p.get(p, 0) > 0 for par in cruce for p in par):
+                continue
+            min_1 = min(pmin_p[p] for p in ejes_t[0]['posiciones'])
+            min_2 = min(pmin_p[p] for p in ejes_t[1]['posiciones'])
+            dif = abs(min_1 - min_2)
+            if dif >= umbral_equis:
+                esquema_txt = ", ".join(f"P{a}↔P{b}" for a, b in cruce)
+                ordenes_rotacion.append({
+                    'placa': pl,
+                    'tipo': 'Equis Larga Tándem',
+                    'detalle': f'{esquema_txt} (Δ mínimas {round(dif, 1)} mm)',
+                    'esquema': esquema_txt,
+                    'delta_ejes_mm': round(dif, 1),
+                    'estado': 'Pendiente'  # sin historial de ejecución no se afirma que se solucionó
+                })
 
     kpi_07 = {
         "disponible": True,
@@ -14018,58 +14073,44 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "rotaciones_sugeridas": ordenes_rotacion[:25]
     }
 
-    # =========================================================================
-    # KPI 08: Duales Mal Apareados (> 2.5 mm) + Cruce con Bodega 2
-    # =========================================================================
+    # KPI 08: Duales mal apareados de la estructura + cruce con Bodega 2
+    def _duales_desapareados(grp_v):
+        est_v = _estructura_placa(grp_v)
+        pmin_v = {to_int(r['posicion']): r for _, r in grp_v.iterrows()}
+        res = []
+        for interior, exterior in est_v.duales():
+            if interior in pmin_v and exterior in pmin_v:
+                a_val = to_float(pmin_v[interior]['calc_p_min'])
+                b_val = to_float(pmin_v[exterior]['calc_p_min'])
+                if a_val > 0 and b_val > 0 and abs(a_val - b_val) > tol_apareo:
+                    res.append((interior, exterior, a_val, b_val, pmin_v[interior]))
+        return res
+
     desapareos_mes = []
     for m in meses_k2:
-        df_m = df[df['periodo_mes'] == m]
-        cnt_des = 0
-        for _, grp_v in df_m.groupby('placa'):
-            for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
-                r_i = grp_v[grp_v['posicion'] == p_izq]
-                r_d = grp_v[grp_v['posicion'] == p_der]
-                if not r_i.empty and not r_d.empty:
-                    pi_val = to_float(r_i['calc_p_min'].values[0])
-                    pd_val = to_float(r_d['calc_p_min'].values[0])
-                    if abs(pi_val - pd_val) >= tol_apareo:
-                        cnt_des += 1
-        desapareos_mes.append(cnt_des)
+        df_m = _una_por_llanta(df[df['periodo_mes'] == m])
+        desapareos_mes.append(sum(len(_duales_desapareados(grp_v)) for _, grp_v in df_m.groupby('placa')))
 
     llantas_b2 = [ll for ll in llantas_maestro_todas if ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')]
-
     tarjetas_cruce_b2 = []
     if not df_patio.empty:
         for pl, grp_p in df_patio.groupby('placa'):
-            for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
-                r_i = grp_p[grp_p['posicion'] == p_izq]
-                r_d = grp_p[grp_p['posicion'] == p_der]
-                if not r_i.empty and not r_d.empty:
-                    pi_val = to_float(r_i['calc_p_min'].values[0])
-                    pd_val = to_float(r_d['calc_p_min'].values[0])
-                    delta = abs(pi_val - pd_val)
-                    if delta >= tol_apareo:
-                        dim_p = str(r_i['dimension'].values[0]).strip().upper()
-                        sano_mm = max(pi_val, pd_val)
-                        cand = None
-                        for b2_item in llantas_b2:
-                            if str(b2_item.get('dimension', '')).strip().upper() == dim_p:
-                                b2_mm = to_float(b2_item.get('prof_actual_min', 0.0))
-                                if abs(b2_mm - sano_mm) <= 1.5:
-                                    cand = b2_item
-                                    break
-                        sug_txt = f"{cand.get('numero_interno', 'LL-B2')} ({round(to_float(cand.get('prof_actual_min')), 1)} mm)" if cand else "Sin stock compatible en Bodega 2"
-                        tarjetas_cruce_b2.append({
-                            'placa': pl,
-                            'pacha': f"P{p_izq}-P{p_der}",
-                            'posiciones': f"P{p_izq}-P{p_der}",
-                            'delta_mm': round(delta, 1),
-                            'diferencia_mm': round(delta, 1),
-                            'dimension': dim_p,
-                            'llanta_bodega2_sugerida': sug_txt,
-                            'llanta_b2_sugerida': sug_txt,
-                            'milimetraje_b2': round(sano_mm, 1)
-                        })
+            for interior, exterior, a_val, b_val, r_int in _duales_desapareados(grp_p):
+                delta = abs(a_val - b_val)
+                dim_p = str(r_int['dimension']).strip().upper()
+                sano_mm = max(a_val, b_val)
+                cand = next((b2 for b2 in llantas_b2
+                             if str(b2.get('dimension', '')).strip().upper() == dim_p
+                             and abs(to_float(b2.get('prof_actual_min', 0.0)) - sano_mm) <= 1.5), None)
+                sug_txt = f"{cand.get('numero_interno', 'LL-B2')} ({round(to_float(cand.get('prof_actual_min')), 1)} mm)" if cand else "Sin stock compatible en Bodega 2"
+                pacha = f"P{min(interior, exterior)}-P{max(interior, exterior)}"
+                tarjetas_cruce_b2.append({
+                    'placa': pl, 'pacha': pacha, 'posiciones': pacha,
+                    'delta_mm': round(delta, 1), 'diferencia_mm': round(delta, 1),
+                    'dimension': dim_p,
+                    'llanta_bodega2_sugerida': sug_txt, 'llanta_b2_sugerida': sug_txt,
+                    'milimetraje_b2': round(sano_mm, 1)
+                })
 
     kpi_08 = {
         "disponible": True,
@@ -14221,18 +14262,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         din_alin_c = float(df_c['calc_perd_dinero_alin'].sum())
         din_duales_c = 0.0
         for _, grp_v in df_c.groupby('placa'):
-            for p_izq, p_der in [(3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]:
-                r_i = grp_v[grp_v['posicion'] == p_izq]
-                r_d = grp_v[grp_v['posicion'] == p_der]
-                if not r_i.empty and not r_d.empty:
-                    pi_val = to_float(r_i['calc_p_min'].values[0])
-                    pd_val = to_float(r_d['calc_p_min'].values[0])
-                    delta_d = abs(pi_val - pd_val)
-                    if delta_d >= tol_apareo:
-                        pr_d = to_float(r_i['calc_precio'].values[0], 0.0)
-                        mm_ut_d = to_float(r_i['calc_mm_utiles'].values[0], 0.0)
-                        if pr_d > 0 and mm_ut_d > 0:  # sin precio o mm útiles no se valoriza
-                            din_duales_c += (delta_d - 2.0) * (pr_d / mm_ut_d)
+            for _int, _ext, a_val, b_val, r_int in _duales_desapareados(grp_v):
+                pr_d = to_float(r_int['calc_precio'], 0.0)
+                mm_ut_d = to_float(r_int['calc_mm_utiles'], 0.0)
+                if pr_d > 0 and mm_ut_d > 0:  # sin precio o mm útiles no se valoriza
+                    din_duales_c += (abs(a_val - b_val) - tol_apareo) * (pr_d / mm_ut_d)
         din_comb_c = estimar_combustible_subinflado(df_c)['costo_mes_cop']
         return mm_c, din_alin_c, din_duales_c, din_comb_c
 
@@ -14271,13 +14305,20 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     # KPI 12: 4 Tarjetas Maestras de Desempeño de Flota (SOLO FULL)
     # =========================================================================
-    if not df_patio.empty and es_full:
-        mm_gast_k12 = _redondear(df_patio['calc_desgaste_mm'].mean(), 1)
-        prof_act_k12 = _redondear(df_patio['calc_p_min'].mean(), 1)
-        pct_desg_k12 = _redondear(df_patio['calc_pct_desgaste'].mean(), 1)
-        km_rec_k12 = _redondear(df_patio['calc_km_rodados'].mean())
+    # Profundidad: la mínima de la flota (la llanta más crítica), no el promedio.
+    # Desgaste: el de la llanta más gastada. Los promedios quedan como dato de referencia.
+    if not df_rodante.empty and es_full:
+        p_validas = df_rodante['calc_p_min'][df_rodante['calc_p_min'] > 0]
+        mm_gast_k12 = _redondear(df_rodante['calc_desgaste_mm'].max(), 1)
+        prof_act_k12 = _redondear(p_validas.min(), 1)
+        pct_desg_k12 = _redondear(df_rodante['calc_pct_desgaste'].max(), 1)
+        km_rec_k12 = _redondear(df_rodante['calc_km_rodados'].mean())
+        promedios_k12 = {"mm_gastados": _redondear(df_rodante['calc_desgaste_mm'].mean(), 1),
+                         "profundidad_actual": _redondear(p_validas.mean(), 1),
+                         "pct_desgaste": _redondear(df_rodante['calc_pct_desgaste'].mean(), 1)}
     else:
         mm_gast_k12, prof_act_k12, pct_desg_k12, km_rec_k12 = 0.0, 0.0, 0.0, 0
+        promedios_k12 = {}
 
     kpi_12 = {
         "disponible": es_full,
@@ -14285,7 +14326,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "mm_gastados": mm_gast_k12,
         "profundidad_actual": prof_act_k12,
         "pct_desgaste": pct_desg_k12,
-        "km_recorridos": km_rec_k12
+        "km_recorridos": km_rec_k12,
+        "criterio": "minima",
+        "promedios_referencia": promedios_k12
     }
 
     # =========================================================================
@@ -14294,7 +14337,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     labels_k13, km_reales_k13, proy_final_k13 = [], [], []
     if not df_patio.empty and es_full:
         # Solo llantas con desgaste suficiente para proyectar (igual que el KPI 14)
-        for mk, grp_mk in df_patio[~df_patio['calc_es_asentamiento']].groupby('marca'):
+        for mk, grp_mk in df_rodante[~df_rodante['calc_es_asentamiento']].groupby('marca'):
             labels_k13.append(str(mk) or 'Otras')
             km_reales_k13.append(_redondear(grp_mk['calc_km_rodados'].mean()))
             proy_final_k13.append(_redondear(grp_mk['calc_proy_total'].mean()))
@@ -14312,7 +14355,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     labels_k14, proy_k14, kmmm_k14, cpk_k14 = [], [], [], []
     if es_full:
-        df_base_14 = df if agrupar_kpi14 in ('fechas', 'inspeccion') else df_patio
+        df_base_14 = (df[~df['calc_es_repuesto']] if not df.empty else df) if agrupar_kpi14 in ('fechas', 'inspeccion') else df_rodante
         if not df_base_14.empty:
             df_validas = df_base_14[~df_base_14['calc_es_asentamiento']]
             if df_validas.empty:
@@ -14324,7 +14367,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 grp_col = 'fecha_str'
             elif agrupar_kpi14 == 'eje':
                 df_validas = df_validas.copy()
-                df_validas['eje_agrup'] = df_validas['posicion'].apply(lambda p: 'Direccional' if p in (1, 2) else ('Tracción' if p <= 10 else 'Arrastre'))
+                df_validas['eje_agrup'] = df_validas['calc_eje'].map({ee.DIRECCIONAL: 'Direccional', ee.TRACCION: 'Tracción', ee.LIBRE: 'Libre / Arrastre'}).fillna('Sin eje')
                 grp_col = 'eje_agrup'
             elif agrupar_kpi14 == 'tipologia':
                 grp_col = 'tipologia'
@@ -14354,7 +14397,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     labels_k15, prom_k15, max_k15, min_k15, brecha_k15 = [], [], [], [], []
     if not df_patio.empty and es_full:
         # Filtro estricto de madurez sobre última foto de patio: SOLO llantas con calc_desgaste_mm >= 1.5
-        df_maduras = df_patio[(df_patio['calc_desgaste_mm'] >= 1.5) & df_patio['calc_proy_total'].notna()]
+        df_maduras = df_rodante[(df_rodante['calc_desgaste_mm'] >= 1.5) & df_rodante['calc_proy_total'].notna()]
         if not df_maduras.empty:
             for mk, grp_mk in df_maduras.groupby('marca'):
                 labels_k15.append(str(mk) or 'Otras')
@@ -14386,11 +14429,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     conteo_k16 = [0, 0, 0, 0, 0]
     proy_k16 = [0, 0, 0, 0, 0]
     if not df_patio.empty and es_full:
-        b1 = df_patio[df_patio['calc_pct_desgaste'] <= 40.0]
-        b2 = df_patio[(df_patio['calc_pct_desgaste'] > 40.0) & (df_patio['calc_pct_desgaste'] <= 60.0)]
-        b3 = df_patio[(df_patio['calc_pct_desgaste'] > 60.0) & (df_patio['calc_pct_desgaste'] <= 80.0)]
-        b4 = df_patio[(df_patio['calc_pct_desgaste'] > 80.0) & (df_patio['calc_pct_desgaste'] < 100.0)]
-        b5 = df_patio[df_patio['calc_pct_desgaste'] >= 100.0]
+        b1 = df_rodante[df_rodante['calc_pct_desgaste'] <= 40.0]
+        b2 = df_rodante[(df_rodante['calc_pct_desgaste'] > 40.0) & (df_rodante['calc_pct_desgaste'] <= 60.0)]
+        b3 = df_rodante[(df_rodante['calc_pct_desgaste'] > 60.0) & (df_rodante['calc_pct_desgaste'] <= 80.0)]
+        b4 = df_rodante[(df_rodante['calc_pct_desgaste'] > 80.0) & (df_rodante['calc_pct_desgaste'] < 100.0)]
+        b5 = df_rodante[df_rodante['calc_pct_desgaste'] >= 100.0]
         bandas = [b1, b2, b3, b4, b5]
         conteo_k16 = [len(b) for b in bandas]
         proy_k16 = [_redondear(b['calc_proy_total'].mean()) if not b.empty else 0 for b in bandas]
@@ -14569,112 +14612,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     if dimension and dimension != 'TODOS':
         dims_mrp = [d for d in dims_mrp if d.upper() == dimension.upper()] or [dimension]
 
-    matriz_mrp = []
-    lbl_mrp, nec_mrp, stk_mrp, cmp_mrp = [], [], [], []
-
-    for dim_item in dims_mrp:
-        dem_dir = 0
-        dem_trac = 0
-        if not df_patio.empty:
-            df_dim_p = df_patio[df_patio['dimension'].astype(str).str.upper().str.strip() == dim_item.upper()]
-            for pl, grp_v in df_dim_p.groupby('placa'):
-                p1 = grp_v[grp_v['posicion'] == 1]
-                p2 = grp_v[grp_v['posicion'] == 2]
-                p1_ret = False
-                p2_ret = False
-                p1_min = 99.0
-                p2_min = 99.0
-                p1_ini = 18.0
-                p2_ini = 18.0
-                if not p1.empty:
-                    p1_min = to_float(p1['calc_p_min'].values[0])
-                    p1_ret = (p1_min <= mm_retiro_dir)
-                    p1_ini = to_float(p1['prof_inicial'].values[0], 18.0)
-                if not p2.empty:
-                    p2_min = to_float(p2['calc_p_min'].values[0])
-                    p2_ret = (p2_min <= mm_retiro_dir)
-                    p2_ini = to_float(p2['prof_inicial'].values[0], 18.0)
-
-                if p1_ret and p2_ret:
-                    dem_dir += 2
-                elif p1_ret and not p2_ret:
-                    dem_dir += 1
-                    if (p2_ini - p2_min) > dif_par_dir:
-                        dem_dir += 1
-                elif p2_ret and not p1_ret:
-                    dem_dir += 1
-                    if (p1_ini - p1_min) > dif_par_dir:
-                        dem_dir += 1
-
-                for _, r_tr in grp_v[grp_v['posicion'] > 2].iterrows():
-                    p_val = to_float(r_tr['calc_p_min'])
-                    lim_tr = to_float(r_tr['calc_lim_retiro'], mm_retiro_trac)
-                    if p_val <= lim_tr:
-                        dem_trac += 1
-
-        demanda_flota = dem_dir + dem_trac
-        # Corrección 3 y 4: Unificación de estados FVU y sincronización con balance MRP
-        bajas_fvu = contar_bajas_fvu_para_reponer(llantas_maestro_todas, dim_item)
-
-        # Margen de Seguridad (15%): ceil((demanda + bajas) * 0.15)
-        margen_seguridad = math.ceil((demanda_flota + bajas_fvu) * 0.15)
-        if demanda_flota == 0 and bajas_fvu == 0:
-            margen_seguridad = stock_seg_default
-
-        necesidad_bruta = demanda_flota + bajas_fvu + margen_seguridad
-
-        # Stock Disponible en Bodegas
-        b1_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_1_NUEVAS'])
-        b2_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_2_RECAMBIO' and not ll.get('reservada_para_placa')])
-        b3_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_3_REENCAUCHE'])
-        b4_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_4_REENCAUCHADAS'])
-        b5_cnt = len([ll for ll in llantas_maestro_todas if str(ll.get('dimension', '')).upper() == dim_item.upper() and ll.get('ubicacion_bodega') == 'BODEGA_5_REPARACION'])
-
-        stock_b3_util = int(math.floor(b3_cnt * (pct_aprob_reenc / 100.0)))
-
-        # Corrección 4: Candado Direccional exacto
-        compra_nuevas_dir = max(0, dem_dir - b1_cnt)
-        b1_restante = max(0, b1_cnt - dem_dir)
-
-        # Necesidad No Direccional (Tracción + Bajas + Margen)
-        necesidad_no_dir = dem_trac + bajas_fvu + margen_seguridad
-        stock_util_no_dir = b1_restante + b2_cnt + b4_cnt + stock_b3_util + b5_cnt
-        compra_trac_reenc = max(0, necesidad_no_dir - stock_util_no_dir)
-
-        compra_neta = compra_nuevas_dir + compra_trac_reenc
-        stock_disponible = b1_cnt + b2_cnt + stock_b3_util + b4_cnt + b5_cnt
-        presupuesto_cop = (compra_nuevas_dir * 1850000.0) + (compra_trac_reenc * 750000.0)
-
-        matriz_mrp.append({
-            'dimension': dim_item,
-            'demanda_flota': demanda_flota,
-            'demanda_direccional': dem_dir,
-            'demanda_traccion': dem_trac,
-            'reposicion_bajas_fvu': bajas_fvu,
-            'margen_seguridad': margen_seguridad,
-            'stock_seguridad': margen_seguridad,
-            'necesidad_bruta': necesidad_bruta,
-            'stock_b1': b1_cnt,
-            'b1_nuevas': b1_cnt,
-            'b1_restante': b1_restante,
-            'stock_b2': b2_cnt,
-            'stock_b3': b3_cnt,
-            'stock_b3_util': stock_b3_util,
-            'stock_b4': b4_cnt,
-            'stock_b5': b5_cnt,
-            'stock_disponible': stock_disponible,
-            'stock_util_no_direccional': stock_util_no_dir,
-            'compra_neta_sugerida': compra_neta,
-            'compra_nuevas_direccional': compra_nuevas_dir,
-            'compra_traccion_reencauche': compra_trac_reenc,
-            'compra_adicional_reencauche': compra_trac_reenc,
-            'presupuesto_estimado_cop': presupuesto_cop
-        })
-
-        lbl_mrp.append(dim_item)
-        nec_mrp.append(necesidad_bruta)
-        stk_mrp.append(stock_disponible)
-        cmp_mrp.append(compra_neta)
+    # Misma matriz que la vista de Bodegas (antes se calculaba aparte con otras reglas)
+    matriz_mrp = calcular_matriz_mrp(llantas_maestro_todas, df_patio, cfg, dims_mrp, lim_posicion) if es_full else []
+    lbl_mrp = [m['dimension'] for m in matriz_mrp]
+    nec_mrp = [m['necesidad_bruta'] for m in matriz_mrp]
+    stk_mrp = [m['stock_disponible'] for m in matriz_mrp]
+    cmp_mrp = [m['compra_neta_sugerida'] for m in matriz_mrp]
 
     kpi_20 = {
         "disponible": es_full,
@@ -17269,7 +17212,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 2046 líneas | 101,659 bytes (99.3 KB)
+- **Métricas:** 2109 líneas | 105,619 bytes (103.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17656,19 +17599,21 @@ def recomendaciones_motor(r_an, limite_retiro) -> list:
 
     # Presión fuera de rango
     for parte in _partes(r_an.get('Detalle_Calibracion_PSI')):
-        m = re.search(r'Pos (\d+) \((\d+) PSI, (alta|baja)\)', parte)
+        # Formato del motor: "Pos 6 (84 PSI, baja; objetivo 100)" (objetivo según el eje y el cliente)
+        m = re.search(r'Pos (\d+) \((\d+) PSI, (alta|baja)(?:; objetivo (\d+))?\)', parte)
+        objetivo = m.group(4) if (m and m.group(4)) else str(PSI_OBJETIVO)
         if m and m.group(3) == 'alta':
             agregar('presion', 'Presión alta', '#0284C7', m.group(1),
-                    f"{m.group(2)} PSI, por encima de {int(PSI_OBJETIVO * 1.1)} PSI.",
-                    f"Ajustar a {PSI_OBJETIVO} PSI en frío.")
+                    f"{m.group(2)} PSI, por encima del rango del eje (objetivo {objetivo} PSI).",
+                    f"Ajustar a {objetivo} PSI en frío.")
         elif m:
             agregar('presion', 'Presión baja', '#0284C7', m.group(1),
-                    f"{m.group(2)} PSI, por debajo de {int(PSI_OBJETIVO * 0.9)} PSI.",
-                    f"Inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+                    f"{m.group(2)} PSI, por debajo del rango del eje (objetivo {objetivo} PSI).",
+                    f"Inflar a {objetivo} PSI en frío y revisar válvula y posibles fugas.")
         else:
             agregar('presion', 'Presión baja', '#0284C7', _posiciones_en(parte),
                     "El inspector reportó baja presión.",
-                    f"Medir e inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+                    "Medir e inflar a la presión objetivo del eje en frío y revisar válvula y posibles fugas.")
 
     return filas
 
@@ -17677,6 +17622,20 @@ def ordenar_por_grupo(alertas):
     """Ordena las alertas según GRUPOS_DIAGNOSTICO conservando el orden interno de cada grupo."""
     orden = {g: i for i, (g, _) in enumerate(GRUPOS_DIAGNOSTICO)}
     return sorted(alertas, key=lambda a: orden.get(a.get('grupo'), len(orden)))
+
+
+ABREV_EJE = {'DIRECCIONAL': 'Dir', 'TRACCIÓN': 'Trac', 'LIBRE': 'Libre', 'REPUESTO': 'Rep'}
+
+
+def minima_por_eje(filas) -> list:
+    """[(eje, mínima, límite)] en orden de eje: la llanta más crítica de cada tipo de eje."""
+    res = []
+    for eje in ('DIRECCIONAL', 'TRACCIÓN', 'LIBRE', 'REPUESTO'):
+        del_eje = [f for f in filas if f.get('eje') == eje and (f.get('p_min') or 0) > 0]
+        if del_eje:
+            critica = min(del_eje, key=lambda f: f['p_min'])
+            res.append((eje, critica['p_min'], critica.get('limite_retiro')))
+    return res
 
 
 def construir_datos_informe(placa, fecha=None) -> dict:
@@ -17722,13 +17681,13 @@ def construir_datos_informe(placa, fecha=None) -> dict:
 
     # Límite de cada llanta según el eje de su posición (reglas por eje de Catálogos)
     lim_posicion = database.construir_resolver_limite_posicion()
-    max_pos_veh = max([int(f.get('posicion', 0) or 0) for f in filas] or [0])
+    posiciones_veh = [int(f.get('posicion', 0) or 0) for f in filas]
     limites_por_eje = {}
     for f in filas:
         pos_f = int(f.get('posicion', 0) or 0)
-        f['limite_retiro'] = lim_posicion(cliente, subcliente, tipologia, pos_f, max_pos_veh)
-        eje_f = lim_posicion.tipo_eje(tipologia, pos_f, max_pos_veh).capitalize()
-        limites_por_eje.setdefault(eje_f, f['limite_retiro'])
+        f['limite_retiro'] = lim_posicion(cliente, subcliente, tipologia, pos_f, posiciones_veh)
+        f['eje'] = lim_posicion.tipo_eje(tipologia, pos_f, posiciones_veh)
+        limites_por_eje.setdefault(f['eje'].capitalize(), f['limite_retiro'])
     # Texto del límite: uno solo si todos los ejes usan el mismo, o el detalle por eje
     if len(set(limites_por_eje.values())) <= 1:
         texto_limite = f"{format_num_es(next(iter(limites_por_eje.values()), limite_retiro))} mm"
@@ -17907,6 +17866,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'p_min_global': p_min_global,
         'pos_min_global': pos_min_global,
         'p_prom_global': p_prom_global,
+        'minima_por_eje': minima_por_eje(filas),
         'alertas_lista': alertas_lista,
         'n_cambios': n_cambios,
         'n_ali': n_ali,
@@ -18010,7 +17970,12 @@ def renderizar_informe(datos) -> bytes:
     col_kpi_min = '#DC2626' if (p_min_global is not None and p_min_global <= limite_retiro) else '#0F172A'
 
     txt_pmin_glo = f"{format_num_es(p_min_global)} mm" if p_min_global is not None else "—"
-    txt_prom_glo = f"{format_num_es(p_prom_global)} mm" if p_prom_global is not None else "—"
+    # Mínima por eje (la llanta más crítica de cada eje) en lugar del promedio de mínimas
+    partes_eje = []
+    for eje, minima, lim_e in datos.get('minima_por_eje', []):
+        color_e = '#DC2626' if (lim_e is not None and minima <= lim_e) else '#0F172A'
+        partes_eje.append(f"<font color='{color_e}'>{ABREV_EJE.get(eje, eje)} {format_num_es(minima)}</font>")
+    txt_prom_glo = " · ".join(partes_eje) if partes_eje else "—"
     # Desglose por grupo, solo con los grupos que tienen alertas
     conteo_grupo = {}
     for a in alertas_lista:
@@ -18025,13 +17990,13 @@ def renderizar_informe(datos) -> bytes:
         [
             Paragraph(f"<font color='#0F172A'><b>{total_auditadas} de {total_posiciones}</b></font>", style_kpi_num),
             Paragraph(f"<font color='{col_kpi_min}'><b>{txt_pmin_glo}</b></font>", style_kpi_num),
-            Paragraph(f"<font color='#0F172A'><b>{txt_prom_glo}</b></font>", style_kpi_num),
+            Paragraph(f"<b>{txt_prom_glo}</b>", ParagraphStyle('KpiEje', parent=style_kpi_num, fontSize=9.5 if len(partes_eje) > 2 else 11, leading=13)),
             Paragraph(f"<font color='{col_kpi_alerta}'><b>{total_alertas}</b></font>", style_kpi_num),
         ],
         [
             Paragraph("Posiciones inspeccionadas", style_kpi_lbl),
             Paragraph(f"Profundidad mínima (posición {pos_min_global})", style_kpi_lbl),
-            Paragraph("Promedio de profundidades mínimas", style_kpi_lbl),
+            Paragraph("Profundidad mínima por eje (mm)", style_kpi_lbl),
             Paragraph(desglose_alertas_txt, style_kpi_lbl),
         ]
     ]
@@ -18567,9 +18532,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     # Cálculos llanta a llanta con dg.profundidad_minima
     df_insp['p_min'] = df_insp.apply(lambda r: dg.profundidad_minima(r.to_dict()), axis=1)
     lim_posicion = database.construir_resolver_limite_posicion()
-    max_pos_placa = df_insp.groupby('placa')['posicion'].max().to_dict()
+    posiciones_placa = df_insp.groupby('placa')['posicion'].apply(lambda x: [int(v or 0) for v in x]).to_dict()
     df_insp['lim_eje'] = df_insp.apply(lambda r: lim_posicion(r.get('cliente'), r.get('subcliente'), r.get('tipologia'),
-                                                              int(r.get('posicion') or 0), max_pos_placa.get(r.get('placa'))), axis=1)
+                                                              int(r.get('posicion') or 0), posiciones_placa.get(r.get('placa'))), axis=1)
+    df_insp['eje'] = df_insp.apply(lambda r: lim_posicion.tipo_eje(r.get('tipologia'), int(r.get('posicion') or 0),
+                                                                   posiciones_placa.get(r.get('placa'))), axis=1)
     llantas_retiro = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] <= df_insp['lim_eje'])])
     llantas_proximo = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] > df_insp['lim_eje']) & (df_insp['p_min'] <= df_insp['lim_eje'] + 2.0)])
     llantas_optimas = total_llantas - llantas_retiro - llantas_proximo
@@ -18702,8 +18669,47 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(t_sem)
     elements.append(Spacer(1, 8))
 
-    # 2. PLANES DE ACCIÓN REQUERIDOS EN LA FLOTA
-    elements.append(Paragraph("2. Resumen Consolidado de Planes de Acción y Novedades", style_seccion))
+    # 2. ESTADO POR EJE: cada eje con su límite asignado y su llanta más crítica (mínima)
+    elements.append(Paragraph("2. Estado por Eje", style_seccion))
+    filas_eje = [[Paragraph(f"<b>{t}</b>", style_cell_header) for t in
+                  ("EJE", "LLANTAS", "EN RETIRO", "PRÓXIMAS", "MÍNIMA (LLANTA MÁS CRÍTICA)", "LÍMITE APLICADO")]]
+    nombres_eje = {'DIRECCIONAL': 'Direccional', 'TRACCIÓN': 'Tracción', 'LIBRE': 'Libre / Arrastre', 'REPUESTO': 'Repuesto', 'TODOS': 'Sin eje definido'}
+    for eje_k in ('DIRECCIONAL', 'TRACCIÓN', 'LIBRE', 'REPUESTO', 'TODOS'):
+        d_e = df_insp[df_insp['eje'] == eje_k]
+        if d_e.empty:
+            continue
+        medidas = d_e[d_e['p_min'].notna() & (d_e['p_min'] > 0)]
+        en_retiro = int((medidas['p_min'] <= medidas['lim_eje']).sum())
+        proximas = int(((medidas['p_min'] > medidas['lim_eje']) & (medidas['p_min'] <= medidas['lim_eje'] + 2.0)).sum())
+        if not medidas.empty:
+            critica = medidas.loc[medidas['p_min'].idxmin()]
+            txt_min = f"{format_num_es(critica['p_min'])} mm · {critica['placa']} Pos {int(critica['posicion'])}"
+        else:
+            txt_min = "—"
+        lims = sorted(set(round(float(v), 1) for v in d_e['lim_eje']))
+        txt_lim = f"{format_num_es(lims[0])} mm" if len(lims) == 1 else f"{format_num_es(lims[0])} a {format_num_es(lims[-1])} mm"
+        filas_eje.append([
+            Paragraph(f"<b>{nombres_eje[eje_k]}</b>", style_cell_body),
+            Paragraph(str(len(d_e)), style_cell_body),
+            Paragraph(f"<b>{en_retiro}</b>", style_cell_alert if en_retiro else style_cell_body),
+            Paragraph(str(proximas), style_cell_body),
+            Paragraph(txt_min, style_cell_alert if en_retiro else style_cell_body),
+            Paragraph(txt_lim, style_cell_body),
+        ])
+    t_ejes = Table(filas_eje, colWidths=[95, 50, 60, 60, 175, 100])
+    t_ejes.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_ejes)
+    elements.append(Spacer(1, 8))
+
+    # 3. PLANES DE ACCIÓN REQUERIDOS EN LA FLOTA
+    elements.append(Paragraph("3. Resumen Consolidado de Planes de Acción y Novedades", style_seccion))
     planes_data = [
         [
             Paragraph("<b>PLAN DE ACCIÓN TÉCNICO</b>", style_cell_header),
@@ -18743,7 +18749,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph("<b>Calibración de Presión de Aire</b>", style_cell_body),
             Paragraph(f"<b>{veh_psi}</b>", style_cell_alert if veh_psi > 0 else style_cell_body),
-            Paragraph("Vehículos con alguna llanta fuera del rango 90–110 PSI (baja o alta) o con baja presión reportada.", style_cell_body)
+            Paragraph("Vehículos con alguna llanta fuera de la tolerancia de la presión objetivo de su eje (baja o alta) o con baja presión reportada.", style_cell_body)
         ]
     ]
     t_planes = Table(planes_data, colWidths=[180, 80, 280])
@@ -18759,7 +18765,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(Spacer(1, 8))
 
     # 3. LISTADO DETALLADO DE VEHÍCULOS Y PLANES DE ACCIÓN
-    elements.append(Paragraph(f"3. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
+    elements.append(Paragraph(f"4. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
     matriz_data = [
         [
             Paragraph("<b>Vehículo</b>", style_cell_header),
@@ -18866,7 +18872,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     # 4. MATRIZ DE SEMÁFOROS POR POSICIÓN (POLÍTICA DE RETIRO POR CLIENTE, SEDE Y EJE)
     matriz_pos = database.calcular_matriz_semaforos_posicion(df_insp)
     if matriz_pos and matriz_pos.get('filas'):
-        elements.append(Paragraph("4. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
+        elements.append(Paragraph("5. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
         leyenda_sem = (
             "<b>Umbrales Técnicos por Eje:</b> "
             f"{punto_color('#dc2626')} <font color='#b91c1c'><b>Retiro Inmediato (PB ≤ Límite)</b></font> · "
@@ -36637,7 +36643,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 1952 líneas | 84,333 bytes (82.4 KB)
+- **Métricas:** 1953 líneas | 84,451 bytes (82.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -37597,7 +37603,8 @@ if __name__ == '__main__':
         instanciasChartsSuite['kpi09_psi'] = new Chart(ctx, {
           type: 'doughnut',
           data: {
-            labels: ['Baja Severa (<-15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (>+10%)'],
+            // Rangos según la presión objetivo de cada eje y las tolerancias asignadas al cliente
+            labels: ['Baja severa (< -15 %)', 'Baja (fuera de tolerancia)', 'Correcta (en tolerancia)', 'Alta (fuera de tolerancia)'],
             datasets: [{
               data: [dist.baja_severa || 0, dist.baja_moderada || 0, dist.correcta || 0, dist.sobrepresion || 0],
               backgroundColor: ['#dc2626', '#f59e0b', '#10b981', '#6366f1']
@@ -38600,7 +38607,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_diagnostico.js`
 - **Descripción:** Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes
-- **Métricas:** 968 líneas | 51,187 bytes (50.0 KB)
+- **Métricas:** 987 líneas | 52,486 bytes (51.3 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -38910,6 +38917,24 @@ if __name__ == '__main__':
       renderizarMatrizSemaforos(cli, sede, op, busqueda);
     }
 
+    // Mínima por eje (llanta más crítica de cada eje) y aviso si la tipología no está en el catálogo
+    function resumenEjesDiagHtml(r) {
+      const nombres = { 'DIRECCIONAL': 'Dir', 'TRACCIÓN': 'Trac', 'LIBRE': 'Libre', 'REPUESTO': 'Rep', 'SIN EJE': 'Sin eje' };
+      const ejes = Array.isArray(r.Resumen_Ejes) ? r.Resumen_Ejes : [];
+      const partes = ejes.map(e => {
+        const min = (e.minima === null || e.minima === undefined) ? '—' : Number(e.minima).toFixed(1).replace('.', ',');
+        const color = e.retiro > 0 ? 'text-rose-700 font-black' : (e.proximas > 0 ? 'text-amber-700 font-bold' : 'text-slate-600');
+        return `<span class="${color}">${nombres[e.eje] || e.eje} ${min}</span>`;
+      });
+      let html = partes.length
+        ? `<div class="text-[10px] text-slate-500 mb-1"><i class="fa-solid fa-ruler-vertical mr-1 text-slate-400"></i>Mín. por eje (mm): ${partes.join(' · ')}</div>`
+        : '';
+      if (r.Tipologia_Inferida) {
+        html += `<div class="text-[10px] text-amber-700 mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Tipología "${escapeHtml(r.Tipo || '')}" sin estructura en Catálogos: ejes deducidos</div>`;
+      }
+      return html;
+    }
+
     function renderizarTablaDiagnostico() {
       const tbody = getDiagEl('tbody_diagnostico_web', 'tbodyDiagnostico');
       const contenedorPaginacion = document.getElementById('contenedorPaginacionDiag');
@@ -38990,6 +39015,7 @@ if __name__ == '__main__':
           if (lineas.length === 0) lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
           bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
         }
+        bloquesHtml = resumenEjesDiagHtml(r) + bloquesHtml;
 
         return `
           <tr class="${bgRow} hover:bg-slate-100 transition-colors">
@@ -46685,7 +46711,7 @@ def test_filtro_rango_fechas_en_api_diagnostico(test_db, auth_client):
 
 - **Ruta:** `tests/test_suite_20_kpis_manual.py`
 - **Descripción:** Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP
-- **Métricas:** 505 líneas | 19,779 bytes (19.3 KB)
+- **Métricas:** 506 líneas | 19,968 bytes (19.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -47035,8 +47061,9 @@ def test_kpi15_filtro_madurez_y_kpi20_formula_mrp(test_db, auth_client):
     dem = mrp_dim["demanda_flota"]
     bajas = mrp_dim["reposicion_bajas_fvu"]
 
-    # Margen seguridad = ceil((dem + bajas) * 0.15)
-    margen_esperado = math.ceil((dem + bajas) * 0.15) if (dem + bajas) > 0 else 4
+    # Margen de seguridad = parámetro stock_seguridad_default del cliente (el mismo MRP de Bodegas;
+    # antes el KPI 20 usaba un 15 % fijo y Bodegas el parámetro, y daban compras distintas)
+    margen_esperado = database.obtener_configuracion_avanzada_cliente('FLOTA TEST SUITE').get('stock_seguridad_default', 4) or 4
     assert mrp_dim["margen_seguridad"] == margen_esperado
 
     # Necesidad Bruta = Demanda + Bajas + Margen

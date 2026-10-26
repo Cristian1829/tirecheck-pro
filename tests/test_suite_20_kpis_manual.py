@@ -344,8 +344,9 @@ def test_kpi15_filtro_madurez_y_kpi20_formula_mrp(test_db, auth_client):
     dem = mrp_dim["demanda_flota"]
     bajas = mrp_dim["reposicion_bajas_fvu"]
 
-    # Margen seguridad = ceil((dem + bajas) * 0.15)
-    margen_esperado = math.ceil((dem + bajas) * 0.15) if (dem + bajas) > 0 else 4
+    # Margen de seguridad = parámetro stock_seguridad_default del cliente (el mismo MRP de Bodegas;
+    # antes el KPI 20 usaba un 15 % fijo y Bodegas el parámetro, y daban compras distintas)
+    margen_esperado = database.obtener_configuracion_avanzada_cliente('FLOTA TEST SUITE').get('stock_seguridad_default', 4) or 4
     assert mrp_dim["margen_seguridad"] == margen_esperado
 
     # Necesidad Bruta = Demanda + Bajas + Margen

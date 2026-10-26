@@ -954,7 +954,8 @@
         instanciasChartsSuite['kpi09_psi'] = new Chart(ctx, {
           type: 'doughnut',
           data: {
-            labels: ['Baja Severa (<-15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (>+10%)'],
+            // Rangos según la presión objetivo de cada eje y las tolerancias asignadas al cliente
+            labels: ['Baja severa (< -15 %)', 'Baja (fuera de tolerancia)', 'Correcta (en tolerancia)', 'Alta (fuera de tolerancia)'],
             datasets: [{
               data: [dist.baja_severa || 0, dist.baja_moderada || 0, dist.correcta || 0, dist.sobrepresion || 0],
               backgroundColor: ['#dc2626', '#f59e0b', '#10b981', '#6366f1']

@@ -304,6 +304,24 @@
       renderizarMatrizSemaforos(cli, sede, op, busqueda);
     }
 
+    // Mínima por eje (llanta más crítica de cada eje) y aviso si la tipología no está en el catálogo
+    function resumenEjesDiagHtml(r) {
+      const nombres = { 'DIRECCIONAL': 'Dir', 'TRACCIÓN': 'Trac', 'LIBRE': 'Libre', 'REPUESTO': 'Rep', 'SIN EJE': 'Sin eje' };
+      const ejes = Array.isArray(r.Resumen_Ejes) ? r.Resumen_Ejes : [];
+      const partes = ejes.map(e => {
+        const min = (e.minima === null || e.minima === undefined) ? '—' : Number(e.minima).toFixed(1).replace('.', ',');
+        const color = e.retiro > 0 ? 'text-rose-700 font-black' : (e.proximas > 0 ? 'text-amber-700 font-bold' : 'text-slate-600');
+        return `<span class="${color}">${nombres[e.eje] || e.eje} ${min}</span>`;
+      });
+      let html = partes.length
+        ? `<div class="text-[10px] text-slate-500 mb-1"><i class="fa-solid fa-ruler-vertical mr-1 text-slate-400"></i>Mín. por eje (mm): ${partes.join(' · ')}</div>`
+        : '';
+      if (r.Tipologia_Inferida) {
+        html += `<div class="text-[10px] text-amber-700 mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Tipología "${escapeHtml(r.Tipo || '')}" sin estructura en Catálogos: ejes deducidos</div>`;
+      }
+      return html;
+    }
+
     function renderizarTablaDiagnostico() {
       const tbody = getDiagEl('tbody_diagnostico_web', 'tbodyDiagnostico');
       const contenedorPaginacion = document.getElementById('contenedorPaginacionDiag');
@@ -384,6 +402,7 @@
           if (lineas.length === 0) lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
           bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
         }
+        bloquesHtml = resumenEjesDiagHtml(r) + bloquesHtml;
 
         return `
           <tr class="${bgRow} hover:bg-slate-100 transition-colors">
