@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 19:46:35`
+- **Fecha de Generación:** `2026-10-25 20:15:41`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `55,495` líneas
-- **Tamaño Total de Código Fuente:** `2752.5 KB` (`2,818,609` bytes)
+- **Líneas Totales de Código:** `55,527` líneas
+- **Tamaño Total de Código Fuente:** `2756.9 KB` (`2,823,113` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -397,7 +397,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [requirements.txt](#archivo-requirementstxt) | `text` | 13 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
-| [.gitignore](#archivo-gitignore) | `gitignore` | 45 | 0.6 KB | Reglas de exclusión de Git |
+| [.gitignore](#archivo-gitignore) | `gitignore` | 46 | 0.6 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 22 | 0.2 KB | Reglas de exclusión para compilación de imagen Docker |
 | [Dockerfile](#archivo-dockerfile) | `dockerfile` | 32 | 0.8 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
 | [railway.json](#archivo-railwayjson) | `json` | 12 | 0.3 KB | Configuración de infraestructura y despliegue continuo en Railway (Builder DOCKERFILE) |
@@ -433,11 +433,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2197 | 95.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9248 | 440.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 9281 | 442.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1846 | 85.2 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
-| [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 201 | 10.7 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1856 | 88.0 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 189 | 10.1 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
@@ -547,7 +547,7 @@ pytz>=2024.1
 
 - **Ruta:** `.gitignore`
 - **Descripción:** Reglas de exclusión de Git
-- **Métricas:** 45 líneas | 578 bytes (0.6 KB)
+- **Métricas:** 46 líneas | 587 bytes (0.6 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -582,6 +582,7 @@ ENV/
 # IDE & OS
 .vscode/
 .idea/
+.claude/
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -5985,7 +5986,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9248 líneas | 450,783 bytes (440.2 KB)
+- **Métricas:** 9281 líneas | 452,970 bytes (442.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -8958,7 +8959,13 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
         conn.commit()
     return registros_insertados
 
-def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_manos: bool) -> dict:
+def _texto_alineacion(pos: int, diff: float, en_retiro: bool) -> str:
+    """Una llanta que se va a retirar no se rota: solo queda la revisión de alineación."""
+    if en_retiro:
+        return f"Pos {pos} (dif {diff:.1f} mm): Revisar alineación (llanta programada para retiro)"
+    return f"Pos {pos} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación"
+
+def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_manos: bool, posiciones_retiro=None) -> dict:
     """
     Motor Avanzado de Auto-Ajuste Interno (Versión 3.5 Enterprise).
     Aplica las 4 Reglas Físicas de Optimización de Chasis:
@@ -8966,6 +8973,9 @@ def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_ma
     2. Mayor Altura al Exterior en Pachas Duales (Pos Int vs Pos Ext).
     3. Jerarquía de Ejes en Tráiler 2E (Eje 1 Delantero <= Eje 2 Trasero).
     4. Jerarquía en Tráiler 3E / Tridem (Eje 2 Central < Eje 1 Delantero < Eje 3 Trasero).
+
+    Las posiciones en `posiciones_retiro` se desmontan, así que no participan
+    en ningún cruce ni inversión (evita "retirar Pos 1" y "cruzar P1 ↔ P2" a la vez).
     """
     instrucciones = []
     if group_df.empty:
@@ -8973,10 +8983,13 @@ def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, t_veh: str, es_cuatro_ma
 
     t_lower = (t_veh or '').lower()
     es_trailer = 'trailer' in t_lower or 'remolque' in t_lower
+    excluir = set(posiciones_retiro or ())
 
     pos_map = {}
     for _, r in group_df.iterrows():
         p = int(r['posicion'])
+        if p in excluir:
+            continue
         p_val = to_float(r.get('prof_min', 0))
         pos_map[p] = p_val
 
@@ -9129,6 +9142,9 @@ def analizar_inspecciones_df(df_inspecciones):
         cant_proximas = 0
         detalles_cambio = []
         detalles_proximas = []
+        # Posiciones que se desmontan (retiro o ajuste de par direccional): ninguna otra
+        # recomendación debe proponer rotarlas o cruzarlas
+        posiciones_retiro = set()
 
         for _, r in group.iterrows():
             pos_r = int(r['posicion'])
@@ -9137,6 +9153,7 @@ def analizar_inspecciones_df(df_inspecciones):
             if 0 < pb_r <= limite_cambio_cliente:
                 plan_cambio = True
                 cant_cambios += 1
+                posiciones_retiro.add(pos_r)
                 detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {limite_cambio_cliente:.1f}mm)")
             # Plan 3: Limite_Retiro < P_min <= Limite_Retiro + 2.0 mm
             elif limite_cambio_cliente < pb_r <= (limite_cambio_cliente + 2.0):
@@ -9161,9 +9178,11 @@ def analizar_inspecciones_df(df_inspecciones):
 
                 if pa_ret and not pb_ret and (pb_ini - pb_val) >= 3.0:
                     plan_cambio = True
+                    posiciones_retiro.add(pd_b)
                     detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_b} ({pb_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
                 elif pb_ret and not pa_ret and (pa_ini - pa_val) >= 3.0:
                     plan_cambio = True
+                    posiciones_retiro.add(pd_a)
                     detalles_cambio.append(f"Ajuste Par Direccional: retirar también Pos {pd_a} ({pa_val:.1f} mm) a Bodega 2 Recambio para mantener alturas gemelas en dirección")
 
         # 3. Plan 4 — Alineación Direccional (Delta Hombros >= 2.0 mm)
@@ -9177,18 +9196,20 @@ def analizar_inspecciones_df(df_inspecciones):
                     diff = abs(r['prof_int'].values[0] - r['prof_ext'].values[0])
                     if diff >= 2.0:
                         plan_alineacion = True
-                        detalles_alineacion.append(f"Pos {p} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación")
+                        detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
         elif 'trailer' in t_veh.lower() or 'remolque' in t_veh.lower():
             for _, r in group.iterrows():
                 diff = abs(r['prof_int'] - r['prof_ext'])
                 if diff >= 2.0:
                     plan_alineacion = True
-                    detalles_alineacion.append(f"Pos {int(r['posicion'])} (dif {diff:.1f} mm): Rotar en el mismo rin + alineación")
+                    p = int(r['posicion'])
+                    detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
 
         # 4. Plan 5 — Mal Apareo en Pachas (Delta Pacha > 2.5 mm o dimensiones distintas)
         plan_dual = False
         detalles_dual = []
         recomendaciones_dual = []
+        posiciones_con_cruce_b2 = set()
 
         pairs = [(3,4), (5,6), (7,8), (9,10)] if ('cabezote' in t_veh.lower() and not es_cuatro_manos) else \
                 [(5,6), (7,8), (9,10), (11,12)] if ('cabezote' in t_veh.lower() and es_cuatro_manos) else \
@@ -9233,9 +9254,11 @@ def analizar_inspecciones_df(df_inspecciones):
                         ]
                         candidatas_b2.sort(key=lambda x: abs(x["prof_actual_min"] - mm_alta))
 
-                        if candidatas_b2:
+                        # Si ambas llantas del dual salen por retiro no hay referencia para emparejar
+                        if candidatas_b2 and not (p_a in posiciones_retiro and p_b in posiciones_retiro):
                             cand_b2 = candidatas_b2[0]
                             llantas_b2_usadas.add(cand_b2["numero_interno"])
+                            posiciones_con_cruce_b2.add(pos_baja)
                             recomendaciones_dual.append(
                                 f"Cruce Bodega 2: Desmontar Pos {pos_baja} ({mm_baja:.1f} mm) y MONTAR llanta N° {cand_b2['numero_interno']} ({cand_b2['prof_actual_min']:.1f} mm) disponible en Bodega 2 (Recambio)."
                             )
@@ -9245,13 +9268,14 @@ def analizar_inspecciones_df(df_inspecciones):
                 a_para_cambio = (0 < pb_a <= limite_cambio_cliente)
                 b_para_cambio = (0 < pb_b <= limite_cambio_cliente)
 
-                if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0):
+                # Si ya hay una llanta concreta de Bodega 2 para esa posición, el rango genérico sobra
+                if a_para_cambio and not b_para_cambio and pb_b >= (limite_cambio_cliente + 2.0) and p_a not in posiciones_con_cruce_b2:
                     r_min = max(limite_cambio_cliente + 1.0, pb_b - 1.0)
                     r_max = pb_b + 1.0
                     recomendaciones_dual.append(
                         f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                     )
-                elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0):
+                elif b_para_cambio and not a_para_cambio and pb_a >= (limite_cambio_cliente + 2.0) and p_b not in posiciones_con_cruce_b2:
                     r_min = max(limite_cambio_cliente + 1.0, pb_a - 1.0)
                     r_max = pb_a + 1.0
                     recomendaciones_dual.append(
@@ -9307,7 +9331,7 @@ def analizar_inspecciones_df(df_inspecciones):
             p_int = to_float(r.get('prof_int', 0))
             diff_ext_int = abs(p_ext - p_int)
 
-            if pos_i not in pos_direccionales:
+            if pos_i not in pos_direccionales and pos_i not in posiciones_retiro:
                 tiene_obs_irregular = ('desgaste irregular' in nov_i or 'desgaste disparejo' in nov_i or 'irregular' in nov_i)
                 if diff_ext_int >= 2.0 or tiene_obs_irregular:
                     plan_rotacion_irregular = True
@@ -9318,12 +9342,15 @@ def analizar_inspecciones_df(df_inspecciones):
                 plan_rotacion_escalonado = True
                 detalles_rot_escalonado.append(f"Pos {pos_i} (desgaste escalonado)")
 
-            # Plan 7 — Calibración de Presión
+            # Plan 7 — Calibración de Presión (no aplica a llantas que se desmontan)
+            if pos_i in posiciones_retiro:
+                continue
             if psi_i > 0:
                 if psi_i < psi_min or psi_i > psi_max:
                     cant_presiones += 1
                     plan_calibracion_psi = True
-                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI)")
+                    sentido = 'alta' if psi_i > psi_max else 'baja'
+                    detalles_calibracion.append(f"Pos {pos_i} ({psi_i:.0f} PSI, {sentido})")
             elif 'baja presion' in nov_i or 'baja presión' in nov_i:
                 cant_presiones += 1
                 plan_calibracion_psi = True
@@ -9344,7 +9371,8 @@ def analizar_inspecciones_df(df_inspecciones):
             detalles_dims_heterogeneas.append(f"Dimensiones mixtas ({'; '.join(partes_dims)} - No recomendado mezclar)")
 
         # 7. Motor Avanzado de Auto-Ajuste Interno (Sección 7 del Manual)
-        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, t_veh, es_cuatro_manos)
+        # Las posiciones que se desmontan para recibir llanta de Bodega 2 tampoco se cruzan
+        auto_ajuste_dict = calcular_auto_ajuste_chasis(group, t_veh, es_cuatro_manos, posiciones_retiro | posiciones_con_cruce_b2)
 
         # Estado del Badge de la Columna 10 (Badge_Rotacion)
         if auto_ajuste_dict['tiene_auto_ajuste']:
@@ -9550,7 +9578,8 @@ def es_novedad_alerta(texto: str) -> bool:
     """
     if not texto or not isinstance(texto, str):
         return False
-    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
+    # Separadores como "Normal - sin novedad" o "OK / sin novedades" cuentan como espacios
+    limpio = " ".join(re.sub(r"[\-/,;:.()]+", " ", texto.lower()).split())
     if not limpio:
         return False
     frases_benignas = {
@@ -9558,7 +9587,12 @@ def es_novedad_alerta(texto: str) -> bool:
         'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
         'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
     }
-    return limpio not in frases_benignas
+    if limpio in frases_benignas:
+        return False
+    # Combinaciones de frases benignas: "Normal sin Novedad", "Sin novedad normal", "OK sin novedades"
+    for frase in sorted(frases_benignas, key=len, reverse=True):
+        limpio = re.sub(rf"\b{re.escape(frase)}\b", " ", limpio)
+    return bool(limpio.strip())
 
 def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
     """
@@ -16922,7 +16956,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1846 líneas | 87,288 bytes (85.2 KB)
+- **Métricas:** 1856 líneas | 90,137 bytes (88.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -16950,22 +16984,8 @@ BOGOTA_TZ = ZoneInfo("America/Bogota")
 def ahora_bogota():
     return datetime.now(BOGOTA_TZ)
 
-def es_novedad_alerta(texto: str) -> bool:
-    """
-    Retorna False si el texto está vacío o coincide con observaciones benignas
-    o estados normales ('ok', 'normal', 'desgaste normal y parejo').
-    """
-    if not texto or not isinstance(texto, str):
-        return False
-    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
-    if not limpio:
-        return False
-    frases_benignas = {
-        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
-        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
-        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
-    }
-    return limpio not in frases_benignas
+# Misma regla que la app: "Normal sin Novedad", "OK", etc. no son alertas
+es_novedad_alerta = database.es_novedad_alerta
 
 def formatear_fecha_ddmmyyyy(f_str):
     if not f_str:
@@ -16985,6 +17005,24 @@ def format_num_es(val, decimals=1):
         return f"{float(val):.{decimals}f}".replace('.', ',')
     except (ValueError, TypeError):
         return str(val)
+
+def format_miles_es(val):
+    """Entero con separador de miles colombiano: 246383 -> '246.383'."""
+    try:
+        return f"{float(val):,.0f}".replace(',', '.')
+    except (ValueError, TypeError):
+        return str(val)
+
+# Decimales sueltos ("2.5mm", "dif 3.0 mm", "(2.2 vs 10.4)") pero no medidas de llanta como "R22.5"
+_RE_DECIMAL_EN = re.compile(r'(?<![R/\d.,])(\d{1,3})\.(\d+)(?![\d.])')
+
+def decimales_es(texto: str) -> str:
+    """Pasa a coma decimal los textos que arma el motor de diagnóstico (en formato inglés)."""
+    return _RE_DECIMAL_EN.sub(r'\1,\2', texto or '')
+
+def punto_color(hex_color: str) -> str:
+    """Punto de color para leyendas. Helvetica no tiene emojis (salen como cuadros), ZapfDingbats sí trae el círculo."""
+    return f"<font name='ZapfDingbats' color='{hex_color}'>l</font>"
 
 def normalizar_rol_pdf(rol):
     return dg._rol(rol)
@@ -17326,7 +17364,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             es_trailer_tip = ('trailer' in tipologia.lower() or 'remolque' in tipologia.lower() or 'semirremolque' in tipologia.lower())
             tipo_ali = 'Alineación (Trailer / Eje libre)' if es_trailer_tip else 'Alineación Direccional'
             accion_ali = 'Alinear ejes de remolque y verificar bujes/tensores de suspensión.' if es_trailer_tip else 'Alinear y balancear eje direccional.'
-            detalle_ali_fmt = f"{det_ali} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
+            detalle_ali_fmt = f"{decimales_es(det_ali)} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
 
             alertas_lista.append({
                 'tipo': tipo_ali,
@@ -17340,7 +17378,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
                 'tipo': 'Dual mal apareado',
                 'tipo_color': '#D97706',
                 'posicion': 'Duales',
-                'detalle': str(r_an.get('Detalle_Dual', 'Diferencia en conjunto dual mayor al umbral permitido.')),
+                'detalle': decimales_es(str(r_an.get('Detalle_Dual', 'Diferencia en conjunto dual mayor al umbral permitido.'))),
                 'accion': 'Rotar y aparear.'
             })
 
@@ -17858,7 +17896,7 @@ def renderizar_informe(datos) -> bytes:
     criterios_html = f"""
     <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({format_num_es(limite_retiro)} mm).<br/>
     <b>Alineación y geometría de ejes:</b> diferencia de 2,0 mm o más entre la profundidad exterior e interior en llantas direccionales o en ejes de trailer / eje libre.<br/>
-    <b>Dual mal apareado:</b> diferencia de 2,0 mm o más entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
+    <b>Dual mal apareado:</b> diferencia de más de 2,5 mm entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
     <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
     La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
     """
@@ -17909,7 +17947,7 @@ def formatear_detalles_alertas_pdf(r, limite_def):
     cant_cambios = int(r.get('Cant_Cambios', 0) or (1 if p_cambio == 'SÍ' else 0))
     det_camb = str(r.get('Detalle_Cambio', '') or '').strip()
     if p_cambio == 'SÍ' or (det_camb and det_camb != 'OK'):
-        txt = det_camb if (det_camb and det_camb != 'OK') else f"Posiciones en o bajo límite ({limite_def:.1f} mm)"
+        txt = det_camb if (det_camb and det_camb != 'OK') else f"Posiciones en o bajo límite ({format_num_es(limite_def)} mm)"
         lineas.append(f"• <b><font color='#b91c1c'>[RETIRO URGENTE]</font></b> <font color='#1e293b'>{txt}</font>")
 
     # 2. Próximas a Cambio (+2.0 mm)
@@ -17954,7 +17992,10 @@ def formatear_detalles_alertas_pdf(r, limite_def):
             elif 'en retiro' in p_rec.lower() and 'se recomienda instalar' in p_rec.lower():
                 m = re.search(r'Pos\s+(\d+)\s+en retiro.*?vs\s+Pos\s+(\d+).*?entre\s+([\d\.]+)\s+y\s+([\d\.]+)\s+mm', p_rec)
                 if m:
-                    lineas.append(f"• <b><font color='#4338ca'>[EMPAREJAMIENTO]</font></b> <font color='#1e293b'>Pos {m.group(1)} vs Pos {m.group(2)}: instalar llanta entre {m.group(3)} y {m.group(4)} mm</font>")
+                    lineas.append(
+                        f"• <b><font color='#4338ca'>[EMPAREJAMIENTO]</font></b> <font color='#1e293b'>Reemplazo de Pos {m.group(1)} (en retiro): "
+                        f"montar llanta de {format_num_es(m.group(3))} a {format_num_es(m.group(4))} mm para emparejar con Pos {m.group(2)}</font>"
+                    )
                 else:
                     lineas.append(f"• <b><font color='#4338ca'>[EMPAREJAMIENTO]</font></b> <font color='#1e293b'>{p_rec}</font>")
             else:
@@ -17988,7 +18029,7 @@ def formatear_detalles_alertas_pdf(r, limite_def):
     if not lineas:
         lineas.append("• <b><font color='#15803d'>[VEHÍCULO OK]</font></b> <font color='#15803d'>Sin alertas activas en la inspección.</font>")
 
-    return "<br/>".join(lineas)
+    return decimales_es("<br/>".join(lineas))
 
 def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, operacion=None, usuario=None, fecha_desde=None, fecha_hasta=None):
     """
@@ -18082,18 +18123,21 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         partes_sede.append(f"Sede: {subcliente}")
     if operacion and operacion != 'Todos':
         partes_sede.append(f"Operación: {operacion}")
+    sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las sedes y operaciones"
+
+    # El período va en su propia línea: antes salía bajo la etiqueta "Sede / Operación"
     if fecha and fecha != 'Todos':
-        partes_sede.append(f"Fecha: {fecha}")
+        periodo_txt = formatear_fecha_ddmmyyyy(fecha)
     elif fecha_desde or fecha_hasta:
-        rango = f"{fecha_desde or 'Inicio'} al {fecha_hasta or 'Hoy'}"
-        partes_sede.append(f"Período: {rango}")
-    sub_txt = " · ".join(partes_sede) if partes_sede else "Todas las Sedes y Operaciones"
+        periodo_txt = f"{formatear_fecha_ddmmyyyy(fecha_desde) or 'Inicio'} al {formatear_fecha_ddmmyyyy(fecha_hasta) or 'Hoy'}"
+    else:
+        periodo_txt = "Histórico general"
 
     res_box = [
         [
             Paragraph(f"<b>Cliente / Flota:</b> {cliente_txt}", style_subtitulo),
-            Paragraph(f"<b>Sede / Operación:</b> {sub_txt}", style_subtitulo),
-            Paragraph(f"<b>Límite Retiro Aplicado:</b> {limite_def:.1f} mm", style_subtitulo)
+            Paragraph(f"<b>Sede / Operación:</b> {sub_txt}<br/><b>Período:</b> {periodo_txt}", style_subtitulo),
+            Paragraph(f"<b>Límite Retiro Aplicado:</b> {format_num_es(limite_def)} mm", style_subtitulo)
         ],
         [
             Paragraph(f"<b>Vehículos Inspeccionados:</b> <font color='#2563eb' size=10><b>{total_vehiculos}</b></font>", style_subtitulo),
@@ -18122,21 +18166,21 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             Paragraph("<b>ACCIÓN TÉCNICA RECOMENDADA</b>", style_cell_header)
         ],
         [
-            Paragraph("🔴 <b>Retiro Urgente (<= Límite)</b>", style_cell_alert),
+            Paragraph(f"{punto_color('#dc2626')} <b>Retiro Urgente (≤ Límite)</b>", style_cell_alert),
             Paragraph(f"<b>{llantas_retiro}</b>", style_cell_alert),
-            Paragraph(f"<b>{pct_retiro:.1f}%</b>", style_cell_alert),
-            Paragraph("Programar desmontaje inmediato para evitar daños de carcasa o incidentes viales.", style_cell_body)
+            Paragraph(f"<b>{format_num_es(pct_retiro)}%</b>", style_cell_alert),
+            Paragraph("Programar desmontaje inmediato para proteger la llanta reencauchable y evitar incidentes viales.", style_cell_body)
         ],
         [
-            Paragraph("🟡 <b>Próximo a Cambio (+2.0 mm)</b>", style_cell_body),
+            Paragraph(f"{punto_color('#d97706')} <b>Próximo a Cambio (+2,0 mm)</b>", style_cell_body),
             Paragraph(f"<b>{llantas_proximo}</b>", style_cell_body),
-            Paragraph(f"<b>{pct_proximo:.1f}%</b>", style_cell_body),
+            Paragraph(f"<b>{format_num_es(pct_proximo)}%</b>", style_cell_body),
             Paragraph("Monitorear en 15 a 30 días y alistar stock de reemplazo o reencauche.", style_cell_body)
         ],
         [
-            Paragraph("🟢 <b>Condición Normal / Óptima</b>", style_cell_body),
+            Paragraph(f"{punto_color('#16a34a')} <b>Condición Normal / Óptima</b>", style_cell_body),
             Paragraph(f"<b>{llantas_optimas}</b>", style_cell_body),
-            Paragraph(f"<b>{pct_optimas:.1f}%</b>", style_cell_body),
+            Paragraph(f"<b>{format_num_es(pct_optimas)}%</b>", style_cell_body),
             Paragraph("Mantener presiones recomendadas y rotación preventiva según kilometraje.", style_cell_body)
         ]
     ]
@@ -18166,17 +18210,17 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph("<b>Sugerencia Retiro / Cambio</b>", style_cell_body),
             Paragraph(f"<b>{veh_cambio}</b>", style_cell_alert if veh_cambio > 0 else style_cell_body),
-            Paragraph(f"Vehículos con al menos una llanta en o por debajo de {limite_def:.1f} mm.", style_cell_body)
+            Paragraph(f"Vehículos con al menos una llanta en o por debajo de {format_num_es(limite_def)} mm.", style_cell_body)
         ],
         [
             Paragraph("<b>Alineación y Geometría de Ejes</b>", style_cell_body),
             Paragraph(f"<b>{veh_ali}</b>", style_cell_alert if veh_ali > 0 else style_cell_body),
-            Paragraph("Vehículos con diferencia entre exterior e interior >= 2.0 mm en llantas direccionales o en ejes de trailer / eje libre.", style_cell_body)
+            Paragraph("Vehículos con diferencia entre exterior e interior ≥ 2,0 mm en llantas direccionales o en ejes de trailer / eje libre.", style_cell_body)
         ],
         [
             Paragraph("<b>Emparejamiento / Dual Mal Apareado</b>", style_cell_body),
             Paragraph(f"<b>{veh_dual}</b>", style_cell_alert if veh_dual > 0 else style_cell_body),
-            Paragraph("Vehículos con duales que superan 2.0 mm de diferencia o dimensiones heterogéneas.", style_cell_body)
+            Paragraph("Vehículos con duales que superan 2,5 mm de diferencia o con dimensiones distintas en el par.", style_cell_body)
         ],
         [
             Paragraph("<b>Dimensiones Heterogéneas en Unidad</b>", style_cell_body),
@@ -18186,17 +18230,17 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         [
             Paragraph("<b>Rotación por Desgaste Irregular</b>", style_cell_body),
             Paragraph(f"<b>{veh_rot_irr}</b>", style_cell_alert if veh_rot_irr > 0 else style_cell_body),
-            Paragraph("Llantas en tracción o eje libre con desgaste irregular o disparejo.", style_cell_body)
+            Paragraph("Vehículos con llantas de tracción o eje libre con desgaste irregular o disparejo.", style_cell_body)
         ],
         [
             Paragraph("<b>Rotación por Desgaste Escalonado</b>", style_cell_body),
             Paragraph(f"<b>{veh_rot_esc}</b>", style_cell_alert if veh_rot_esc > 0 else style_cell_body),
-            Paragraph("Llantas con diente de sierra / desgaste escalonado en eje de tracción.", style_cell_body)
+            Paragraph("Vehículos con llantas con diente de sierra / desgaste escalonado en eje de tracción.", style_cell_body)
         ],
         [
             Paragraph("<b>Calibración de Presión de Aire</b>", style_cell_body),
             Paragraph(f"<b>{veh_psi}</b>", style_cell_alert if veh_psi > 0 else style_cell_body),
-            Paragraph("Posiciones con baja presión (< 90 PSI o novedad reportada).", style_cell_body)
+            Paragraph("Vehículos con alguna llanta fuera del rango 90–110 PSI (baja o alta) o con baja presión reportada.", style_cell_body)
         ]
     ]
     t_planes = Table(planes_data, colWidths=[180, 80, 280])
@@ -18249,11 +18293,11 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         km_val = r.get('Km', 0)
         partes_veh = [f"<b>{placa_txt}</b>"]
         if fecha_txt:
-            partes_veh.append(f"<font color='#64748b' size=5.5>{fecha_txt}</font>")
+            partes_veh.append(f"<font color='#64748b' size=5.5>{formatear_fecha_ddmmyyyy(fecha_txt)}</font>")
         try:
             km_num = float(km_val)
             if km_num > 0:
-                partes_veh.append(f"<font color='#94a3b8' size=5.5>{km_num:,.0f} Km</font>")
+                partes_veh.append(f"<font color='#94a3b8' size=5.5>{format_miles_es(km_num)} km</font>")
         except Exception:
             pass
         celda_veh_html = "<br/>".join(partes_veh)
@@ -18322,10 +18366,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         elements.append(Paragraph("4. Matriz de Semáforos por Posición (Desgaste vs Política Técnica)", style_seccion))
         leyenda_sem = (
             "<b>Umbrales Técnicos por Eje:</b> "
-            "<font color='#b91c1c'><b>🔴 Retiro Inmediato (PB ≤ Límite)</b></font> · "
-            "<font color='#b45309'><b>🟡 Próxima a Cambio (+2.0 mm)</b></font> · "
-            "<font color='#15803d'><b>🟢 Estado Óptimo (&gt; Límite + 2mm)</b></font> · "
-            "<font color='#64748b'><b>⚪ Sin Datos / Casco (PB ≤ 0)</b></font>"
+            f"{punto_color('#dc2626')} <font color='#b91c1c'><b>Retiro Inmediato (PB ≤ Límite)</b></font> · "
+            f"{punto_color('#d97706')} <font color='#b45309'><b>Próxima a Cambio (+2,0 mm)</b></font> · "
+            f"{punto_color('#16a34a')} <font color='#15803d'><b>Estado Óptimo (&gt; Límite + 2 mm)</b></font> · "
+            f"{punto_color('#94a3b8')} <font color='#64748b'><b>Sin Datos (PB ≤ 0)</b></font>"
         )
         elements.append(Paragraph(leyenda_sem, style_subtitulo))
         elements.append(Spacer(1, 4))
@@ -18363,7 +18407,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         ]
         for p in pos_list:
             hdr_row.append(Paragraph(f"<b>P{p}</b>", style_sem_hdr))
-        hdr_row.append(Paragraph("<b>🔴/🟡/🟢</b>", style_sem_hdr))
+        hdr_row.append(Paragraph("<b>Retiro / Próx. / Ópt.</b>", style_sem_hdr))
         t_sem_rows.append(hdr_row)
 
         table_styles = [
@@ -18401,7 +18445,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
                         txt_c = '#64748b'
 
                     table_styles.append(('BACKGROUND', (col_pos_table, r_idx), (col_pos_table, r_idx), bg_c))
-                    pb_str = f"{pb_val:.1f}" if pb_val > 0 else "0.0"
+                    pb_str = format_num_es(pb_val) if pb_val > 0 else "0,0"
                     f_row.append(Paragraph(f"<font color='{txt_c}'><b>{pb_str}</b></font>", style_sem_cell))
                 else:
                     f_row.append(Paragraph("<font color='#cbd5e1'>-</font>", style_sem_cell))
@@ -18415,7 +18459,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         tot_row_idx = len(t_sem_rows)
         foot_row = [
             Paragraph("<b>TOTALES</b>", style_sem_text),
-            Paragraph("<b>(R/A/V)</b>", style_sem_hdr)
+            Paragraph("<font color='#475569'><b>Ret. / Próx. / Ópt.</b></font>", style_sem_text)
         ]
         for c_idx, p in enumerate(pos_list):
             t_p = matriz_pos['totales_posicion'].get(p, {'rojo': 0, 'amarillo': 0, 'verde': 0})
@@ -18447,7 +18491,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     cliente_canvas = cliente_txt
     if subcliente and subcliente != 'Todos':
         cliente_canvas += f" ({subcliente})"
-    canvas_maker = obtener_canvas_consolidado_flota(fecha or 'Histórico General', cliente_canvas)
+    canvas_maker = obtener_canvas_consolidado_flota(periodo_txt, cliente_canvas)
     doc.build(elements, canvasmaker=canvas_maker)
     buffer.seek(0)
     return buffer.getvalue()
@@ -18779,7 +18823,7 @@ def generar_pdf_acta_chatarrizacion(datos: dict) -> bytes:
 
 - **Ruta:** `diagrama_chasis_pdf.py`
 - **Descripción:** Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab
-- **Métricas:** 201 líneas | 10,916 bytes (10.7 KB)
+- **Métricas:** 189 líneas | 10,375 bytes (10.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -18819,19 +18863,7 @@ HEADER_H, LEGEND_H = 23.0, 28.0
 X_SEN, X_INT, X_EXT = 111.0, 98.0, 124.0               # duales: centros separados 26 pt (hueco de 8 pt)
 MARGEN_X = 14.0
 
-def es_novedad_alerta(texto: str) -> bool:
-    """Retorna False si el texto está vacío o coincide con observaciones benignas."""
-    if not texto or not isinstance(texto, str):
-        return False
-    limpio = " ".join(texto.strip().lower().split()).rstrip(".;,")
-    if not limpio:
-        return False
-    frases_benignas = {
-        'ok', 'normal', 'sin novedad', 'sin novedades', 'ninguna', 'ninguno',
-        'buen estado', 'desgaste normal', 'desgaste normal y parejo', 'desgaste parejo',
-        'optimo', 'óptimo', 'en buen estado', 'bien', 'sin problema', 'sin problemas'
-    }
-    return limpio not in frases_benignas
+from database import es_novedad_alerta  # misma regla de novedades que la app y el informe
 
 def profundidad_minima(fila):
     """Única definición de profundidad mínima (úsala también en KPIs y tabla)."""
