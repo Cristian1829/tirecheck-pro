@@ -214,6 +214,9 @@ class ClienteDirectorioItem(BaseModel):
     observaciones: Optional[str] = ""
     dias_espera_inspeccion: Optional[int] = 20
     requiere_mes_siguiente: Optional[bool] = True
+    meta_reencauche_pct: Optional[float] = None
+    porcentaje_aprobacion_reencauche: Optional[float] = None
+    stock_seguridad_default: Optional[int] = None
 
 # ==========================================
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)

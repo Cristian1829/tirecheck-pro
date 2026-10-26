@@ -191,6 +191,9 @@
       document.getElementById('nuevo_cliente_licencia').value = 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = '20';
+      document.getElementById('nuevo_cliente_meta_reencauche').value = '70';
+      document.getElementById('nuevo_cliente_aprob_reencauche').value = '85';
+      document.getElementById('nuevo_cliente_stock_seguridad').value = '4';
       document.getElementById('nuevo_cliente_regla_frecuencia').value = 'mes_siguiente';
       document.getElementById('nuevo_cliente_subclientes').value = 'Principal';
       document.getElementById('nuevo_cliente_observaciones').value = '';
@@ -211,6 +214,9 @@
       document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = cli.limite_retiro_mm || '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = cli.dias_espera_inspeccion || 20;
+      document.getElementById('nuevo_cliente_meta_reencauche').value = cli.meta_reencauche_pct ?? 70;
+      document.getElementById('nuevo_cliente_aprob_reencauche').value = cli.porcentaje_aprobacion_reencauche ?? 85;
+      document.getElementById('nuevo_cliente_stock_seguridad').value = cli.stock_seguridad_default ?? 4;
       const esCorridos = (cli.requiere_mes_siguiente === false || cli.requiere_mes_siguiente === 0);
       document.getElementById('nuevo_cliente_regla_frecuencia').value = esCorridos ? 'dias_corridos' : 'mes_siguiente';
       document.getElementById('nuevo_cliente_subclientes').value = (cli.subclientes && cli.subclientes.length > 0) ? cli.subclientes.join(', ') : 'Principal';
@@ -240,6 +246,9 @@
         dias_espera_inspeccion: parseInt(document.getElementById('nuevo_cliente_dias_inspeccion').value) || 20,
         requiere_mes_siguiente: document.getElementById('nuevo_cliente_regla_frecuencia').value === 'mes_siguiente',
         subclientes: document.getElementById('nuevo_cliente_subclientes').value.trim(),
+        meta_reencauche_pct: parseFloat(document.getElementById('nuevo_cliente_meta_reencauche').value),
+        porcentaje_aprobacion_reencauche: parseFloat(document.getElementById('nuevo_cliente_aprob_reencauche').value),
+        stock_seguridad_default: parseInt(document.getElementById('nuevo_cliente_stock_seguridad').value, 10),
         observaciones: document.getElementById('nuevo_cliente_observaciones').value.trim()
       };
 

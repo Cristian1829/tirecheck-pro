@@ -170,8 +170,11 @@
       const cpks = data.map(d => d.cpk).filter(v => v > 0);
       const proys = data.map(d => d.proyeccion_total_km).filter(v => v > 0);
 
-      const prom_km_mm = km_mms.length ? (km_mms.reduce((a, b) => a + b, 0) / km_mms.length) : 0;
-      const prom_cpk = cpks.length ? (cpks.reduce((a, b) => a + b, 0) / cpks.length) : 0;
+      // Flota: Σkm / Σmm y Σcosto / Σkm (antes promedio de cada llanta: una llanta con pocos km lo inflaba)
+      const sum = (arr, f) => arr.reduce((a, d) => a + (Number(f(d)) || 0), 0);
+      const conRend = data.filter(d => d.km_por_mm > 0), conCpk = data.filter(d => d.cpk > 0);
+      const prom_km_mm = sum(conRend, d => d.desgaste_mm) > 0 ? sum(conRend, d => d.km_rodados) / sum(conRend, d => d.desgaste_mm) : 0;
+      const prom_cpk = sum(conCpk, d => d.km_rodados) > 0 ? sum(conCpk, d => d.precio) / sum(conCpk, d => d.km_rodados) : 0;
       const prom_proy = proys.length ? (proys.reduce((a, b) => a + b, 0) / proys.length) : 0;
 
       if (elTotal) elTotal.textContent = data.length.toLocaleString();

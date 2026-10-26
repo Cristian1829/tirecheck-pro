@@ -1891,6 +1891,8 @@
           </select>
         </div>
       </div>
+      <!-- Calidad de datos: qué quedó fuera de los cálculos -->
+      <div id="kpiCalidadDatos" class="hidden mt-2 text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"></div>
 
       <!-- Barra de las 5 Sub-Pestañas Homologadas (Segmented Pill Bar) -->
       <div class="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -1955,6 +1957,17 @@
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
             <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 20</span>
+          </div>
+        </button>
+
+        <!-- 6. Tendencias mensuales (gerencia) -->
+        <button type="button" id="btnSubtabKpi6" onclick="cambiarSubpestanaKpis(6)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <span class="block font-bold text-xs tracking-tight text-slate-700">6. Tendencias</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">Últimos 12 meses</span>
           </div>
         </button>
       </div>
@@ -2122,7 +2135,7 @@
                   <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">KPI 03</span>
                   <h4 class="text-sm font-black text-slate-900">% de Reencauche y Unidades por Ciclo</h4>
                 </div>
-                <p class="text-[11px] text-slate-400">Alineación a Meta del 70% y ciclo de vida (Original, R1, R2, R3+)</p>
+                <p id="kpi03_subtitulo" class="text-[11px] text-slate-400">Alineación a la meta de reencauche del cliente y ciclo de vida (Original, R1, R2, R3+)</p>
               </div>
               <div class="flex items-center space-x-1.5">
                 <span id="kpi03_badge_meta" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Meta 70%</span>
@@ -2992,6 +3005,26 @@
           <!-- Botones de páginas inyectados dinámicamente -->
         </div>
       </div>
+    </div>
+
+    <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
+    <div id="subvista-kpi-6" class="hidden space-y-4">
+      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <h4 class="text-sm font-black text-slate-900">Tendencia de la flota mes a mes</h4>
+          <p class="text-[11px] text-slate-500">Foto de la flota al cierre de cada mes (última inspección de cada posición hasta ese mes).</p>
+        </div>
+        <div class="h-64"><canvas id="canvasTendencias"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr>
+              <th class="p-2 text-left">Mes</th><th class="p-2 text-right">Vehículos inspeccionados</th><th class="p-2 text-right">Presión correcta</th>
+              <th class="p-2 text-right">En límite de retiro</th><th class="p-2 text-right">Prof. mínima prom.</th><th class="p-2 text-right">Alerta alineación</th><th class="p-2 text-right">CPK operativo</th>
+            </tr></thead>
+            <tbody id="tbodyTendencias" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -4692,6 +4725,22 @@
               <option value="dias_corridos">⚡ Solo N días corridos (ej. Ciudad Limpia)</option>
             </select>
             <p class="text-[10px] text-slate-400 mt-0.5">Habilitación por mes o días corridos</p>
+          </div>
+        </div>
+
+        <!-- Metas y parámetros del MRP del cliente -->
+        <div class="grid grid-cols-3 gap-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Meta de reencauche (%)</label>
+            <input type="number" step="1" min="0" max="100" id="nuevo_cliente_meta_reencauche" value="70" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Aprobación en planta (%)</label>
+            <input type="number" step="1" min="0" max="100" id="nuevo_cliente_aprob_reencauche" value="85" title="% de cascos enviados que la planta aprueba y devuelve reencauchados (MRP)" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Stock de seguridad general</label>
+            <input type="number" step="1" min="0" id="nuevo_cliente_stock_seguridad" value="4" title="Se usa por medida cuando no hay reglas por medida y eje" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
           </div>
         </div>
 

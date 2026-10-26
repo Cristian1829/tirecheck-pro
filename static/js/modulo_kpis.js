@@ -105,7 +105,7 @@
 
     function cambiarSubpestanaKpis(num) {
       subpestanaKpiActiva = num;
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 6; i++) {
         const sub = document.getElementById(`subvista-kpi-${i}`);
         const btn = document.getElementById(`btnSubtabKpi${i}`);
         if (sub) {
@@ -246,7 +246,24 @@
       }
     }
 
+    // Aviso de datos excluidos: cada indicador se calcula solo con las llantas que tienen el dato
+    function renderizarCalidadDatosKpi(q) {
+      const el = document.getElementById('kpiCalidadDatos');
+      if (!el) return;
+      if (!q || !q.llantas) { el.classList.add('hidden'); return; }
+      const partes = [];
+      if (q.sin_psi) partes.push(`${q.sin_psi} sin presión (fuera de los indicadores de presión)`);
+      if (q.sin_prof_inicial) partes.push(`${q.sin_prof_inicial} sin profundidad inicial (fuera de desgaste y proyecciones)`);
+      if (q.sin_precio) partes.push(`${q.sin_precio} sin precio (fuera de CPK y pérdidas en pesos)`);
+      if (q.sin_numero_interno) partes.push(`${q.sin_numero_interno} sin número interno (fuera de la trazabilidad por llanta)`);
+      if (q.sin_sede) partes.push(`${q.sin_sede} sin sede`);
+      if (q.fechas_invalidas) partes.push(`${q.fechas_invalidas} inspecciones con fecha inválida excluidas`);
+      el.classList.toggle('hidden', partes.length === 0);
+      el.textContent = partes.length ? `⚠️ De ${q.llantas} llantas analizadas: ${partes.join('; ')}.` : '';
+    }
+
     function renderizarTodaLaSuite20(data) {
+      renderizarCalidadDatosKpi(data.calidad_datos);
       if (!data) return;
       sincronizarAvisosLicenciaSubpestanas();
       if (data.ahorro_roi || data.resumen_ahorro_roi) {
@@ -295,6 +312,9 @@
             if (data.kpi_20) renderKpi20(data.kpi_20);
           }
           break;
+        case 6:
+          if (data.kpi_tendencias) renderTendencias(data.kpi_tendencias);
+          break;
       }
     }
 
@@ -305,13 +325,20 @@
     // KPI 01: Cumplimiento de Inspección vs Parque
     function renderizarKpi01(d) {
       if (!d) return;
-      const pct = Math.min(100, Math.max(0, d.porcentaje_cumplimiento || 0));
+      const sinPadron = d.porcentaje_cumplimiento === null || d.porcentaje_cumplimiento === undefined;
+      const pct = sinPadron ? 0 : Math.min(100, Math.max(0, d.porcentaje_cumplimiento));
       const elPct = document.getElementById('kpi01_cumplimiento_pct');
       const elAudPad = document.getElementById('kpi01_auditados_padron');
       const elBar = document.getElementById('kpi01_barra_progreso');
       const elBtnTxt = document.getElementById('btnKpi01Texto');
 
-      if (elPct) elPct.textContent = `${formatCO_Decimal(pct, 1)}%`;
+      if (elPct) {
+        elPct.textContent = sinPadron ? 'Sin padrón' : `${formatCO_Decimal(pct, 1)}%`;
+        // Sin padrón cargado el parque son los vehículos ya inspeccionados: se avisa
+        elPct.title = d.fuente_padron === 'vehiculos_inspeccionados'
+          ? 'Sin padrón cargado: el parque son los vehículos ya inspeccionados alguna vez (puede faltar alguno)'
+          : (sinPadron ? 'No hay padrón ni vehículos inspeccionados para medir el cumplimiento' : 'Contra el padrón de vehículos del cliente');
+      }
       if (elAudPad) elAudPad.textContent = `${formatCO_Miles(d.vehiculos_inspeccionados)} / ${formatCO_Miles(d.total_padron_activo)}`;
       if (elBar) elBar.style.width = `${pct}%`;
       const numPend = (d.placas_pendientes || []).length;
@@ -437,7 +464,9 @@
 
       // Badge meta
       const badge = document.getElementById('kpi03_badge_meta');
-      const meta = ds.meta_porcentaje || 70.0;
+      const meta = ds.meta_porcentaje ?? 70.0;
+      const sub3 = document.getElementById('kpi03_subtitulo');
+      if (sub3) sub3.textContent = `Alineación a la meta del cliente (${formatCO_Decimal(meta, 0)}%) y ciclo de vida (Original, R1, R2, R3+)`;
       const ultimoPct = (ds.porcentajes && ds.porcentajes.length > 0) ? ds.porcentajes[ds.porcentajes.length - 1] : 0;
       if (badge) {
         if (ultimoPct >= meta) {
@@ -1354,6 +1383,39 @@
           }
         });
       }
+    }
+
+    // Tendencias mensuales (gerencia)
+    function renderTendencias(t) {
+      const meses = (t && t.meses) || [];
+      const pct = v => (v === null || v === undefined) ? '-' : `${formatCO_Decimal(v, 1)}%`;
+      const tb = document.getElementById('tbodyTendencias');
+      if (tb) tb.innerHTML = meses.slice().reverse().map(m => `<tr>
+          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${m.vehiculos_inspeccionados}</td>
+          <td class="p-2 text-right">${pct(m.pct_presion_correcta)}</td><td class="p-2 text-right">${pct(m.pct_en_retiro)}</td>
+          <td class="p-2 text-right">${m.prof_minima_promedio == null ? '-' : formatCO_Decimal(m.prof_minima_promedio, 1) + ' mm'}</td>
+          <td class="p-2 text-right">${pct(m.pct_alerta_alineacion)}</td>
+          <td class="p-2 text-right">${m.cpk_operativo == null ? '-' : '$ ' + formatCO_Decimal(m.cpk_operativo, 1) + ' /' + uMed()}</td></tr>`).join('')
+        || '<tr><td colspan="7" class="p-2 text-slate-400 italic">Sin inspecciones en el periodo</td></tr>';
+      destruirChartSuite('tendencias');
+      const ctx = document.getElementById('canvasTendencias');
+      if (!ctx || !meses.length) return;
+      const serie = (k, label, color) => ({ label, data: meses.map(m => m[k]), borderColor: color, backgroundColor: color, tension: 0.25, spanGaps: true });
+      instanciasChartsSuite['tendencias'] = new Chart(ctx, {
+        type: 'line',
+        data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: [
+          serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
+          serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
+          serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } },
+                   scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } }
+      });
+    }
+
+    function _mesLegible(m) {
+      const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const [a, mm] = String(m || '').split('-');
+      return mm ? `${nombres[parseInt(mm, 10) - 1]} ${a}` : m;
     }
 
     // KPI CPK: los 4 costos por kilómetro (sin dato = sin precio o sin km suficientes)

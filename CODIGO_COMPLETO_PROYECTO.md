@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 13:52:18`
+- **Fecha de Generación:** `2026-10-26 14:09:21`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `57,561` líneas
-- **Tamaño Total de Código Fuente:** `2892.4 KB` (`2,961,846` bytes)
+- **Líneas Totales de Código:** `57,779` líneas
+- **Tamaño Total de Código Fuente:** `2909.4 KB` (`2,979,190` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -130,7 +130,7 @@ CREATE TABLE configuracion_avanzada_cliente (
                 diferencia_minima_par_direccional_mm REAL DEFAULT 3.0,
                 plantilla_kpis_json TEXT DEFAULT '{}',
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            , tolerancia_busqueda_recambio_mm REAL DEFAULT 1.5, tolerancia_simetria_eje_opuesto_mm REAL DEFAULT 3.5, margen_envio_reencauche_desmonte_mm REAL DEFAULT 1.5, modo_rotacion_ejes TEXT DEFAULT 'ESTANDAR_FIJO', porcentaje_aprobacion_reencauche REAL DEFAULT 85.0, stock_seguridad_default INTEGER DEFAULT 4, dias_espera_inspeccion INTEGER DEFAULT 20, requiere_mes_siguiente INTEGER DEFAULT 1);
+            , tolerancia_busqueda_recambio_mm REAL DEFAULT 1.5, tolerancia_simetria_eje_opuesto_mm REAL DEFAULT 3.5, margen_envio_reencauche_desmonte_mm REAL DEFAULT 1.5, modo_rotacion_ejes TEXT DEFAULT 'ESTANDAR_FIJO', porcentaje_aprobacion_reencauche REAL DEFAULT 85.0, stock_seguridad_default INTEGER DEFAULT 4, dias_espera_inspeccion INTEGER DEFAULT 20, requiere_mes_siguiente INTEGER DEFAULT 1, meta_reencauche_pct REAL DEFAULT 70.0);
 
 -- ========================================================
 -- TABLA: configuracion_clientes
@@ -468,8 +468,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2427 | 109.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10274 | 500.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2430 | 109.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10366 | 508.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1302 | 67.1 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2110 | 103.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -481,17 +481,17 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5952 | 399.4 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6001 | 403.1 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1005 | 43.3 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4116 | 185.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1982 | 85.1 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
-| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1209 | 57.1 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1926 | 92.2 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1935 | 93.1 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
@@ -3813,7 +3813,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2427 líneas | 111,961 bytes (109.3 KB)
+- **Métricas:** 2430 líneas | 112,120 bytes (109.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4033,6 +4033,9 @@ class ClienteDirectorioItem(BaseModel):
     observaciones: Optional[str] = ""
     dias_espera_inspeccion: Optional[int] = 20
     requiere_mes_siguiente: Optional[bool] = True
+    meta_reencauche_pct: Optional[float] = None
+    porcentaje_aprobacion_reencauche: Optional[float] = None
+    stock_seguridad_default: Optional[int] = None
 
 # ==========================================
 # SEGURIDAD Y TOKENS STATELESS (HMAC-SHA256)
@@ -6252,7 +6255,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10274 líneas | 512,605 bytes (500.6 KB)
+- **Métricas:** 10366 líneas | 520,369 bytes (508.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6827,6 +6830,9 @@ def inicializar_bd():
                 UNIQUE(cliente, marca, diseno, dimension, tipo, vigente_desde)
             )
         """)
+        # Meta de reencauche del cliente (antes 70 % fijo para todos)
+        if 'meta_reencauche_pct' not in [r[1] for r in cursor.execute("PRAGMA table_info(configuracion_avanzada_cliente)").fetchall()]:
+            cursor.execute("ALTER TABLE configuracion_avanzada_cliente ADD COLUMN meta_reencauche_pct REAL DEFAULT 70.0")
         # Stock de seguridad del MRP por medida y eje (DIRECCIONAL / TRACCION / LIBRE)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS stock_seguridad_mrp (
@@ -8931,7 +8937,13 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
         sql_ant_vehiculo += " ORDER BY fecha DESC, id DESC"
         cursor.execute(sql_ant_vehiculo, tuple(params_ant_v))
         filas_ant = cursor.fetchall()
-        if filas_ant:
+        # Editar una inspección sin cambiar su fecha no es una inspección nueva: no aplica la frecuencia
+        # (antes no se podía corregir ninguna inspección anterior a la última de la placa)
+        misma_fecha_edicion = False
+        if excluir_id is not None:
+            r_orig = cursor.execute("SELECT SUBSTR(fecha, 1, 10) FROM inspecciones WHERE id = ?", (to_int(excluir_id),)).fetchone()
+            misma_fecha_edicion = bool(r_orig and r_orig[0] == fecha_str[:10])
+        if filas_ant and not misma_fecha_edicion:
             f_ult_str = str(filas_ant[0][0]).strip()[:10]
             f_nueva_str = fecha_str[:10]
             if f_nueva_str == f_ult_str:
@@ -8968,27 +8980,31 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                             )
                         }
 
-        # Candado 3: Kilometraje actual no puede ser menor al de la última inspección (solo en captura secuencial)
-        if not es_cargue_masivo:
-            sql_km = """
-                SELECT kilometraje, fecha FROM inspecciones 
-                WHERE placa = ? AND kilometraje > 0
-            """
-            params_km = [placa]
-            if excluir_id is not None:
-                sql_km += " AND id != ?"
-                params_km.append(to_int(excluir_id))
-            sql_km += " ORDER BY fecha DESC, id DESC LIMIT 1"
-
-            cursor.execute(sql_km, tuple(params_km))
-            prev_km_row = cursor.fetchone()
-            if prev_km_row:
-                prev_km = prev_km_row[0]
-                if km_actual > 0 and km_actual < prev_km:
-                    return {
-                        'valido': False,
-                        'mensaje': f'⛔ CANDADO DE KILOMETRAJE: El kilometraje ({km_actual:,.0f} km) no puede ser menor al de la inspección anterior ({prev_km:,.0f} km el {prev_km_row[1]}).'
-                    }
+        # Candado 3: la lectura (km u horas) no retrocede: debe quedar entre la de la inspección anterior y
+        # la de la posterior en fecha. Aplica también a importaciones y ediciones (antes solo a la captura en
+        # patio, y comparaba contra la más reciente aunque se editara una inspección antigua).
+        if km_actual > 0:
+            excl = " AND id != ?" if excluir_id is not None else ""
+            p_excl = [to_int(excluir_id)] if excluir_id is not None else []
+            uni_txt = 'horas' if unidad_medida_placa(placa, c) == 'HORAS' else 'km'
+            prev_km_row = cursor.execute(f"""
+                SELECT kilometraje, SUBSTR(fecha, 1, 10) FROM inspecciones
+                WHERE placa = ? AND kilometraje > 0 AND SUBSTR(fecha, 1, 10) < ?{excl}
+                ORDER BY kilometraje DESC LIMIT 1""", tuple([placa, fecha_str[:10]] + p_excl)).fetchone()
+            if prev_km_row and km_actual < to_float(prev_km_row[0]):
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE KILOMETRAJE: La lectura ({km_actual:,.0f} {uni_txt}) no puede ser menor a la de la inspección anterior ({to_float(prev_km_row[0]):,.0f} {uni_txt} el {prev_km_row[1]}).'
+                }
+            next_km_row = cursor.execute(f"""
+                SELECT kilometraje, SUBSTR(fecha, 1, 10) FROM inspecciones
+                WHERE placa = ? AND kilometraje > 0 AND SUBSTR(fecha, 1, 10) > ?{excl}
+                ORDER BY kilometraje ASC LIMIT 1""", tuple([placa, fecha_str[:10]] + p_excl)).fetchone()
+            if next_km_row and km_actual > to_float(next_km_row[0]):
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE KILOMETRAJE: La lectura ({km_actual:,.0f} {uni_txt}) no puede superar la de la inspección posterior ({to_float(next_km_row[0]):,.0f} {uni_txt} el {next_km_row[1]}).'
+                }
 
         # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm, solo en captura secuencial)
         if not es_cargue_masivo:
@@ -12477,6 +12493,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
         "umbral_diferencia_rotacion_ejes_mm": 3.0,
         "diferencia_minima_par_direccional_mm": 3.0,
         "dias_espera_inspeccion": 20,
+        "meta_reencauche_pct": 70.0,
         "requiere_mes_siguiente": False if 'CIUDAD LIMPIA' in str(cliente).upper() else True,
         "porcentaje_aprobacion_reencauche": 85.0,
         "stock_seguridad_default": 4,
@@ -12495,7 +12512,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                        tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm,
                        umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm,
                        dias_espera_inspeccion, requiere_mes_siguiente,
-                       plantilla_kpis_json, porcentaje_aprobacion_reencauche, stock_seguridad_default
+                       plantilla_kpis_json, porcentaje_aprobacion_reencauche, stock_seguridad_default, meta_reencauche_pct
                 FROM configuracion_avanzada_cliente
                 WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))
             """, (cliente,))
@@ -12509,11 +12526,11 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                     "tolerancia_desalineacion_hombros_mm", "tolerancia_mal_apareo_pacha_mm",
                     "umbral_diferencia_rotacion_ejes_mm", "diferencia_minima_par_direccional_mm",
                     "dias_espera_inspeccion", "requiere_mes_siguiente",
-                    "plantilla_kpis_json", "porcentaje_aprobacion_reencauche", "stock_seguridad_default"
+                    "plantilla_kpis_json", "porcentaje_aprobacion_reencauche", "stock_seguridad_default", "meta_reencauche_pct"
                 ]
                 d = dict(zip(cols, row))
                 # Valores no asignados toman el recomendado (antes estos dos nunca se leían de la base)
-                for k_def in ("porcentaje_aprobacion_reencauche", "stock_seguridad_default"):
+                for k_def in ("porcentaje_aprobacion_reencauche", "stock_seguridad_default", "meta_reencauche_pct"):
                     if d.get(k_def) is None:
                         d[k_def] = defaults[k_def]
                 d["cliente"] = cliente
@@ -13127,7 +13144,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             if total_padron > 0:
                 cumplimiento_pct = round(min(100.0, (vehiculos_cnt / total_padron) * 100.0), 1)
             else:
-                cumplimiento_pct = 100.0
+                cumplimiento_pct = None  # sin padrón no hay cumplimiento que medir
 
             impacto_dinero = round(float(df_ultimo_corte['calc_perdida_dinero'].sum()))
             perdida_mm_tot = round(float(df_ultimo_corte['calc_mm_perdidos'].sum()), 1)
@@ -13151,7 +13168,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             resultado["kpis"] = {
                 "vehiculos": f"{vehiculos_cnt:,} Vehículos".replace(',', '.'),
                 "subVehiculos": f"{llantas_cnt:,} Llantas Auditadas".replace(',', '.'),
-                "cumplimientoParquePct": float(cumplimiento_pct),
+                "cumplimientoParquePct": float(cumplimiento_pct) if cumplimiento_pct is not None else None,
                 "impactoPesos": float(impacto_dinero),
                 "perdidaMm": float(perdida_mm_tot),
                 "proyeccionProm": int(proy_prom),
@@ -14438,12 +14455,24 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
     pct_aprob_reenc = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
     stock_seg_default = to_int(cfg.get('stock_seguridad_default', 4), 4)
+    # Rótulos de presión con los umbrales que realmente se aplican (antes decían ±5 % y -15 % a -5 % fijos)
+    _g = lambda v: f"{v:g}"
+    psi_sev = max(15.0, tol_psi_baja)
+    LBL_PSI_SEV = f"Baja Severa (< -{_g(psi_sev)}%)"
+    LBL_PSI_MOD = f"Baja Moderada (-{_g(psi_sev)}% a -{_g(tol_psi_baja)}%)"
+    LBL_PSI_OK = f"Correcta (-{_g(tol_psi_baja)}% a +{_g(tol_psi_alta)}%)"
+    LBL_PSI_SOB = f"Sobrepresión (> +{_g(tol_psi_alta)}%)"
 
     resolver_limite = _construir_cache_limites_retiro()
     lim_posicion = construir_resolver_limite_posicion()
 
     # 1. Inspecciones históricas
-    df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False))
+    df_todas = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
+    df_raw = filtrar_fechas_validas(df_todas)
+    fechas_invalidas = len(df_todas) - len(df_raw)
+    if cliente and cliente != "TODOS" and not df_todas.empty:
+        fechas_invalidas = int((df_todas['cliente'].astype(str).str.upper().str.strip() == cliente).sum()
+                               - (df_raw['cliente'].astype(str).str.upper().str.strip() == cliente).sum()) if not df_raw.empty else 0
     if not df_raw.empty:
         df = df_raw.copy()
         if cliente and cliente != "TODOS":
@@ -14628,13 +14657,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if d_psi is None:
                 pass
             elif d_psi < -max(15.0, tol_psi_baja):
-                est_psi = 'Baja Severa (< -15%)'
+                est_psi = LBL_PSI_SEV
             elif d_psi < -tol_psi_baja:
-                est_psi = 'Baja Moderada (-15% a -5%)'
+                est_psi = LBL_PSI_MOD
             elif d_psi > tol_psi_alta:
-                est_psi = 'Sobrepresión (> +10%)'
+                est_psi = LBL_PSI_SOB
             else:
-                est_psi = 'Correcta (±5%)'
+                est_psi = LBL_PSI_OK
             if d_psi is not None:
                 estado_psi_col.append(est_psi)
 
@@ -14707,6 +14736,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             par_p.append(subcliente)
         cur.execute(qp, par_p)
         padron_rows = cur.fetchall()
+    # De dónde sale el parque: padrón cargado o, si no hay, los vehículos ya inspeccionados alguna vez
+    fuente_padron = 'padron' if padron_rows else 'vehiculos_inspeccionados'
 
     if not padron_rows:
         with get_connection() as conn:
@@ -14727,6 +14758,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         padron_rows = [(p, '', '', 'Activo') for p in placas_unicas]
 
     total_padron = len(padron_rows)
+    if total_padron == 0:
+        fuente_padron = 'sin_padron'
 
     # Corte más reciente
     if not df.empty:
@@ -14742,7 +14775,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     placas_padron = {r[0] for r in padron_rows}
     vehiculos_auditados_mes = len(placas_insp_mes & placas_padron)
     placas_fuera_padron = len(placas_insp_mes - placas_padron)
-    cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / max(1, total_padron)) * 100.0), 1) if total_padron > 0 else 100.0
+    # Sin parque no hay cumplimiento que medir (antes daba 100 %)
+    cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / total_padron) * 100.0), 1) if total_padron > 0 else None
 
     placas_pendientes = []
     for r in padron_rows:
@@ -14784,6 +14818,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "placas_pendientes": placas_pendientes,
         "placas_pendientes_cnt": len(placas_pendientes),
         "placas_inspeccionadas_fuera_padron": placas_fuera_padron,
+        "fuente_padron": fuente_padron,
         "periodo_corte": _mes_a_espanol(periodo_reciente) if periodo_reciente else "Actual"
     }
 
@@ -14824,14 +14859,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         r3_mes.append(int((df_m['calc_vida_norm'] == 'R3+').sum()))
 
     pct_act_k3 = pct_reenc_mes[-1] if pct_reenc_mes else 0.0
-    estado_meta_k3 = "VERDE" if pct_act_k3 >= 70.0 else ("AMBAR" if pct_act_k3 >= 55.0 else "ROJO")
+    meta_k3 = to_float(cfg.get('meta_reencauche_pct', 70.0), 70.0)  # meta del cliente (antes 70 % fijo)
+    estado_meta_k3 = "VERDE" if pct_act_k3 >= meta_k3 else ("AMBAR" if pct_act_k3 >= meta_k3 - 15.0 else "ROJO")
 
     kpi_03 = {
         "disponible": True,
         "labels": labels_k2,
         "porcentajes": pct_reenc_mes,
         "pct_reencauche": pct_reenc_mes,
-        "meta_porcentaje": 70.0,
+        "meta_porcentaje": meta_k3,
         "ciclos": {
             "original": orig_mes,
             "r1": r1_mes,
@@ -14841,7 +14877,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "subpanel_a": {
             "labels": labels_k2,
             "pct_reencauche": pct_reenc_mes,
-            "meta_pct": 70.0,
+            "meta_pct": meta_k3,
             "estado_meta": estado_meta_k3,
             "pct_actual": pct_act_k3
         },
@@ -15105,10 +15141,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 09: Estado de Presiones (Donut 4 Segmentos) y Ahorro Combustible
     # =========================================================================
     if not df_patio.empty:
-        cnt_sev = int((df_patio['calc_estado_psi'] == 'Baja Severa (< -15%)').sum())
-        cnt_mod = int((df_patio['calc_estado_psi'] == 'Baja Moderada (-15% a -5%)').sum())
-        cnt_ok = int((df_patio['calc_estado_psi'] == 'Correcta (±5%)').sum())
-        cnt_sob = int((df_patio['calc_estado_psi'] == 'Sobrepresión (> +10%)').sum())
+        cnt_sev = int((df_patio['calc_estado_psi'] == LBL_PSI_SEV).sum())
+        cnt_mod = int((df_patio['calc_estado_psi'] == LBL_PSI_MOD).sum())
+        cnt_ok = int((df_patio['calc_estado_psi'] == LBL_PSI_OK).sum())
+        cnt_sob = int((df_patio['calc_estado_psi'] == LBL_PSI_SOB).sum())
         cnt_sin_dato = int((df_patio['calc_estado_psi'] == 'Sin dato').sum())
         tot_psi = max(1, cnt_sev + cnt_mod + cnt_ok + cnt_sob)
         pct_calibracion = round((cnt_ok / tot_psi) * 100.0, 1)
@@ -15124,7 +15160,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     kpi_09 = {
         "disponible": True,
-        "labels": ['Baja Severa (< -15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (> +10%)'],
+        "labels": [LBL_PSI_SEV, LBL_PSI_MOD, LBL_PSI_OK, LBL_PSI_SOB],
         "valores": [cnt_sev, cnt_mod, cnt_ok, cnt_sob],
         "colores": ['#dc2626', '#f59e0b', '#10b981', '#6366f1'],
         "distribucion": {
@@ -15155,10 +15191,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         # 2. Anomalías técnicas detectadas
         anomalias_tecnicas = {
-            'Baja Presión (< -5%)': int((df_patio['calc_delta_psi_pct'] < -5.0).sum()),
-            'Desalineación Hombros (>= 2mm)': int(df_patio['calc_alerta_alin'].sum()),
+            f'Baja Presión (< -{_g(tol_psi_baja)}%)': int((df_patio['calc_delta_psi_pct'] < -tol_psi_baja).sum()),
+            f'Desalineación Hombros (>= {_g(tol_desalineacion)} mm)': int(df_patio['calc_alerta_alin'].sum()),
             'Límite de Retiro Crítico': int((df_patio['calc_p_min'] <= df_patio['calc_lim_retiro']).sum()),
-            'Sobrepresión (> +10%)': int((df_patio['calc_delta_psi_pct'] > 10.0).sum()),
+            LBL_PSI_SOB: int((df_patio['calc_delta_psi_pct'] > tol_psi_alta).sum()),
             'Desgaste Acelerado (>= 80%)': int((df_patio['calc_pct_desgaste'] >= 80.0).sum())
         }
         for k_anom, v_anom in anomalias_tecnicas.items():
@@ -15359,8 +15395,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
                 labels_k14.append(lbl_fmt or 'General')
                 proy_k14.append(_redondear(grp_g['calc_proy_total'].mean()))
-                kmmm_k14.append(_redondear(grp_g['calc_km_mm'].mean(), 1))
-                cpk_k14.append(_redondear(grp_g['calc_cpk'].mean(), 2))
+                # Rendimiento y CPK del grupo = Σkm / Σmm y Σcosto / Σkm proyectados (no promedio por llanta)
+                con_r = grp_g[grp_g['calc_km_mm'].notna()]
+                kmmm_k14.append(_redondear(_div(con_r['calc_km_rodados'].sum(), con_r['calc_desgaste_mm'].sum()), 1))
+                con_c = grp_g[grp_g['calc_cpk'].notna()]
+                cpk_k14.append(_redondear(_div(pd.to_numeric(con_c['calc_precio'], errors='coerce').sum(), con_c['calc_proy_total'].sum()), 2))
 
     kpi_14 = {
         "disponible": es_full,
@@ -15395,6 +15434,49 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 brecha_k15.append(br_pct)
 
     brecha_prom_k15 = round(sum(brecha_k15) / max(1, len(brecha_k15)), 1) if brecha_k15 else 0.0
+
+    # Calidad de datos: cuántas llantas quedan fuera de cada cálculo y por qué (se muestra junto a los KPI)
+    if not df_patio.empty:
+        calidad_datos = {
+            "llantas": int(len(df_patio)),
+            "sin_psi": int((df_patio['calc_estado_psi'] == 'Sin dato').sum()),
+            "sin_prof_inicial": int(df_patio['calc_pini_sin_dato'].astype(bool).sum()) if 'calc_pini_sin_dato' in df_patio else 0,
+            "sin_precio": int(pd.to_numeric(df_patio['calc_precio'], errors='coerce').isna().sum()) if 'calc_precio' in df_patio else 0,
+            "sin_numero_interno": int(df_patio['numero_interno'].fillna('').astype(str).str.strip().str.upper().isin(('', 'SN')).sum()),
+            "sin_sede": int((df_patio['subcliente'].fillna('').astype(str).str.strip() == '').sum()),
+            "fechas_invalidas": int(fechas_invalidas),
+        }
+    else:
+        calidad_datos = {"llantas": 0, "sin_psi": 0, "sin_prof_inicial": 0, "sin_precio": 0, "sin_numero_interno": 0,
+                         "sin_sede": 0, "fechas_invalidas": int(fechas_invalidas)}
+
+    # =========================================================================
+    # Tendencias mensuales (gerencia): foto de la flota al cierre de cada mes, últimos 12 meses
+    # =========================================================================
+    meses_t = []
+    if not df.empty:
+        fechas_t = df['fecha'].astype(str).str[:10]
+        lista_meses_t = sorted({f[:7] for f in fechas_t if re.match(r'^\d{4}-\d{2}', f)})[-12:]
+        for mes_t in lista_meses_t:
+            hasta = df[fechas_t <= f"{mes_t}-31"]
+            foto = hasta.sort_values(['fecha', 'id'], ascending=[False, False]).drop_duplicates(['placa', 'posicion'])
+            foto = foto[~foto['calc_es_repuesto']] if 'calc_es_repuesto' in foto else foto
+            con_psi = foto[foto['calc_estado_psi'] != 'Sin dato']
+            p_min_t = pd.to_numeric(foto['calc_p_min'], errors='coerce')
+            p_min_t = p_min_t[p_min_t > 0]
+            punto = {
+                "mes": mes_t,
+                "llantas": int(len(foto)),
+                "vehiculos_inspeccionados": int(df[fechas_t.str[:7] == mes_t]['placa'].nunique()),
+                "pct_presion_correcta": _redondear(100.0 * (con_psi['calc_estado_psi'] == LBL_PSI_OK).mean(), 1) if len(con_psi) else None,
+                "pct_en_retiro": _redondear(100.0 * (foto['calc_p_min'] <= foto['calc_lim_retiro']).mean(), 1) if len(foto) else None,
+                "prof_minima_promedio": _redondear(p_min_t.mean(), 1) if len(p_min_t) else None,
+                "pct_alerta_alineacion": _redondear(100.0 * foto['calc_alerta_alin'].astype(bool).mean(), 1) if len(foto) else None,
+            }
+            if es_full:
+                punto["cpk_operativo"] = calcular_cpk_llantas(hasta, unidad)["flota"]["cpk_operativo"]
+            meses_t.append(punto)
+    kpi_tendencias = {"disponible": True, "mensaje": "", "meses": meses_t}
 
     # =========================================================================
     # KPI CPK: los 4 costos por kilómetro (operativo, proyectado, total por ciclo, administrativo)
@@ -15725,6 +15807,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "kpi_13": kpi_13,
         "kpi_14": kpi_14,
         "kpi_cpk": kpi_cpk,
+        "calidad_datos": calidad_datos,
+        "kpi_tendencias": kpi_tendencias,
         "base": base,
         "unidad": unidad,
         "kpi_15": kpi_15,
@@ -15799,7 +15883,11 @@ def obtener_directorio_clientes():
 
         # 2. Licenciamiento avanzado (LIGHT vs PRO)
         cursor.execute("SELECT UPPER(TRIM(cliente)), tipo_licencia FROM configuracion_avanzada_cliente")
-        licencias = {r[0]: (r[1] or 'PRO').upper() for r in cursor.fetchall()}
+        licencias = {r[0]: (r[1] or 'LIGHT').upper() for r in cursor.fetchall()}
+        cursor.execute("SELECT UPPER(TRIM(cliente)), meta_reencauche_pct, porcentaje_aprobacion_reencauche, stock_seguridad_default FROM configuracion_avanzada_cliente")
+        parametros_cli = {r[0]: {"meta_reencauche_pct": r[1] if r[1] is not None else 70.0,
+                                 "porcentaje_aprobacion_reencauche": r[2] if r[2] is not None else 85.0,
+                                 "stock_seguridad_default": r[3] if r[3] is not None else 4} for r in cursor.fetchall()}
 
         # 3. Sedes / Subclientes únicos detectados
         subclientes_dict = {}
@@ -15893,6 +15981,7 @@ def obtener_directorio_clientes():
             resultado.append({
                 "cliente": c_nombre,
                 "tipo_licencia": licencias.get(c_nombre, "LIGHT"),
+                **parametros_cli.get(c_nombre, {"meta_reencauche_pct": 70.0, "porcentaje_aprobacion_reencauche": 85.0, "stock_seguridad_default": 4}),
                 "limite_retiro_mm": item["limite_retiro_mm"],
                 "observaciones": item["observaciones"],
                 "fecha_actualizacion": item["fecha_actualizacion"],
@@ -15926,7 +16015,7 @@ def crear_o_actualizar_cliente(datos: dict):
     if not raw_cliente:
         return {"ok": False, "mensaje": "El nombre del cliente o razón social es obligatorio."}
 
-    tipo_licencia = str(datos.get("tipo_licencia", "PRO")).strip().upper()
+    tipo_licencia = str(datos.get("tipo_licencia") or "LIGHT").strip().upper()
     if tipo_licencia not in ("PRO", "LIGHT"):
         tipo_licencia = "PRO"
 
@@ -15981,6 +16070,12 @@ def crear_o_actualizar_cliente(datos: dict):
                 requiere_mes_siguiente = excluded.requiere_mes_siguiente,
                 fecha_actualizacion = CURRENT_TIMESTAMP
         """, (raw_cliente, tipo_licencia, dias_esp, req_mes))
+        # Metas y parámetros del MRP del cliente (solo si vienen en el formulario)
+        for col, val in (("meta_reencauche_pct", datos.get("meta_reencauche_pct")),
+                         ("porcentaje_aprobacion_reencauche", datos.get("porcentaje_aprobacion_reencauche")),
+                         ("stock_seguridad_default", datos.get("stock_seguridad_default"))):
+            if val is not None and str(val).strip() != '' and 0 <= to_float(val, -1) <= (100 if col != "stock_seguridad_default" else 1000):
+                cursor.execute(f"UPDATE configuracion_avanzada_cliente SET {col} = ? WHERE cliente = ?", (to_float(val), raw_cliente))
 
         # 3. Regla global por defecto en configuracion_limites_retiro
         cursor.execute("""
@@ -22986,7 +23081,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 5952 líneas | 408,980 bytes (399.4 KB)
+- **Métricas:** 6001 líneas | 412,778 bytes (403.1 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -24883,6 +24978,8 @@ if __name__ == '__main__':
           </select>
         </div>
       </div>
+      <!-- Calidad de datos: qué quedó fuera de los cálculos -->
+      <div id="kpiCalidadDatos" class="hidden mt-2 text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"></div>
 
       <!-- Barra de las 5 Sub-Pestañas Homologadas (Segmented Pill Bar) -->
       <div class="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -24947,6 +25044,17 @@ if __name__ == '__main__':
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
             <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 20</span>
+          </div>
+        </button>
+
+        <!-- 6. Tendencias mensuales (gerencia) -->
+        <button type="button" id="btnSubtabKpi6" onclick="cambiarSubpestanaKpis(6)" class="subtab-kpi-btn px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/80 flex items-center space-x-2.5 shrink-0 transition-all cursor-pointer">
+          <div class="subtab-icon-box w-7 h-7 rounded-lg bg-slate-200/60 text-slate-500 flex items-center justify-center text-xs shrink-0 transition-colors">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div class="text-left leading-tight">
+            <span class="block font-bold text-xs tracking-tight text-slate-700">6. Tendencias</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">Últimos 12 meses</span>
           </div>
         </button>
       </div>
@@ -25114,7 +25222,7 @@ if __name__ == '__main__':
                   <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">KPI 03</span>
                   <h4 class="text-sm font-black text-slate-900">% de Reencauche y Unidades por Ciclo</h4>
                 </div>
-                <p class="text-[11px] text-slate-400">Alineación a Meta del 70% y ciclo de vida (Original, R1, R2, R3+)</p>
+                <p id="kpi03_subtitulo" class="text-[11px] text-slate-400">Alineación a la meta de reencauche del cliente y ciclo de vida (Original, R1, R2, R3+)</p>
               </div>
               <div class="flex items-center space-x-1.5">
                 <span id="kpi03_badge_meta" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Meta 70%</span>
@@ -25984,6 +26092,26 @@ if __name__ == '__main__':
           <!-- Botones de páginas inyectados dinámicamente -->
         </div>
       </div>
+    </div>
+
+    <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
+    <div id="subvista-kpi-6" class="hidden space-y-4">
+      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <h4 class="text-sm font-black text-slate-900">Tendencia de la flota mes a mes</h4>
+          <p class="text-[11px] text-slate-500">Foto de la flota al cierre de cada mes (última inspección de cada posición hasta ese mes).</p>
+        </div>
+        <div class="h-64"><canvas id="canvasTendencias"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr>
+              <th class="p-2 text-left">Mes</th><th class="p-2 text-right">Vehículos inspeccionados</th><th class="p-2 text-right">Presión correcta</th>
+              <th class="p-2 text-right">En límite de retiro</th><th class="p-2 text-right">Prof. mínima prom.</th><th class="p-2 text-right">Alerta alineación</th><th class="p-2 text-right">CPK operativo</th>
+            </tr></thead>
+            <tbody id="tbodyTendencias" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -27684,6 +27812,22 @@ if __name__ == '__main__':
               <option value="dias_corridos">⚡ Solo N días corridos (ej. Ciudad Limpia)</option>
             </select>
             <p class="text-[10px] text-slate-400 mt-0.5">Habilitación por mes o días corridos</p>
+          </div>
+        </div>
+
+        <!-- Metas y parámetros del MRP del cliente -->
+        <div class="grid grid-cols-3 gap-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Meta de reencauche (%)</label>
+            <input type="number" step="1" min="0" max="100" id="nuevo_cliente_meta_reencauche" value="70" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Aprobación en planta (%)</label>
+            <input type="number" step="1" min="0" max="100" id="nuevo_cliente_aprob_reencauche" value="85" title="% de cascos enviados que la planta aprueba y devuelve reencauchados (MRP)" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Stock de seguridad general</label>
+            <input type="number" step="1" min="0" id="nuevo_cliente_stock_seguridad" value="4" title="Se usa por medida cuando no hay reglas por medida y eje" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
           </div>
         </div>
 
@@ -37691,7 +37835,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 1982 líneas | 87,142 bytes (85.1 KB)
+- **Métricas:** 2044 líneas | 91,512 bytes (89.4 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -37802,7 +37946,7 @@ if __name__ == '__main__':
 
     function cambiarSubpestanaKpis(num) {
       subpestanaKpiActiva = num;
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 6; i++) {
         const sub = document.getElementById(`subvista-kpi-${i}`);
         const btn = document.getElementById(`btnSubtabKpi${i}`);
         if (sub) {
@@ -37943,7 +38087,24 @@ if __name__ == '__main__':
       }
     }
 
+    // Aviso de datos excluidos: cada indicador se calcula solo con las llantas que tienen el dato
+    function renderizarCalidadDatosKpi(q) {
+      const el = document.getElementById('kpiCalidadDatos');
+      if (!el) return;
+      if (!q || !q.llantas) { el.classList.add('hidden'); return; }
+      const partes = [];
+      if (q.sin_psi) partes.push(`${q.sin_psi} sin presión (fuera de los indicadores de presión)`);
+      if (q.sin_prof_inicial) partes.push(`${q.sin_prof_inicial} sin profundidad inicial (fuera de desgaste y proyecciones)`);
+      if (q.sin_precio) partes.push(`${q.sin_precio} sin precio (fuera de CPK y pérdidas en pesos)`);
+      if (q.sin_numero_interno) partes.push(`${q.sin_numero_interno} sin número interno (fuera de la trazabilidad por llanta)`);
+      if (q.sin_sede) partes.push(`${q.sin_sede} sin sede`);
+      if (q.fechas_invalidas) partes.push(`${q.fechas_invalidas} inspecciones con fecha inválida excluidas`);
+      el.classList.toggle('hidden', partes.length === 0);
+      el.textContent = partes.length ? `⚠️ De ${q.llantas} llantas analizadas: ${partes.join('; ')}.` : '';
+    }
+
     function renderizarTodaLaSuite20(data) {
+      renderizarCalidadDatosKpi(data.calidad_datos);
       if (!data) return;
       sincronizarAvisosLicenciaSubpestanas();
       if (data.ahorro_roi || data.resumen_ahorro_roi) {
@@ -37992,6 +38153,9 @@ if __name__ == '__main__':
             if (data.kpi_20) renderKpi20(data.kpi_20);
           }
           break;
+        case 6:
+          if (data.kpi_tendencias) renderTendencias(data.kpi_tendencias);
+          break;
       }
     }
 
@@ -38002,13 +38166,20 @@ if __name__ == '__main__':
     // KPI 01: Cumplimiento de Inspección vs Parque
     function renderizarKpi01(d) {
       if (!d) return;
-      const pct = Math.min(100, Math.max(0, d.porcentaje_cumplimiento || 0));
+      const sinPadron = d.porcentaje_cumplimiento === null || d.porcentaje_cumplimiento === undefined;
+      const pct = sinPadron ? 0 : Math.min(100, Math.max(0, d.porcentaje_cumplimiento));
       const elPct = document.getElementById('kpi01_cumplimiento_pct');
       const elAudPad = document.getElementById('kpi01_auditados_padron');
       const elBar = document.getElementById('kpi01_barra_progreso');
       const elBtnTxt = document.getElementById('btnKpi01Texto');
 
-      if (elPct) elPct.textContent = `${formatCO_Decimal(pct, 1)}%`;
+      if (elPct) {
+        elPct.textContent = sinPadron ? 'Sin padrón' : `${formatCO_Decimal(pct, 1)}%`;
+        // Sin padrón cargado el parque son los vehículos ya inspeccionados: se avisa
+        elPct.title = d.fuente_padron === 'vehiculos_inspeccionados'
+          ? 'Sin padrón cargado: el parque son los vehículos ya inspeccionados alguna vez (puede faltar alguno)'
+          : (sinPadron ? 'No hay padrón ni vehículos inspeccionados para medir el cumplimiento' : 'Contra el padrón de vehículos del cliente');
+      }
       if (elAudPad) elAudPad.textContent = `${formatCO_Miles(d.vehiculos_inspeccionados)} / ${formatCO_Miles(d.total_padron_activo)}`;
       if (elBar) elBar.style.width = `${pct}%`;
       const numPend = (d.placas_pendientes || []).length;
@@ -38134,7 +38305,9 @@ if __name__ == '__main__':
 
       // Badge meta
       const badge = document.getElementById('kpi03_badge_meta');
-      const meta = ds.meta_porcentaje || 70.0;
+      const meta = ds.meta_porcentaje ?? 70.0;
+      const sub3 = document.getElementById('kpi03_subtitulo');
+      if (sub3) sub3.textContent = `Alineación a la meta del cliente (${formatCO_Decimal(meta, 0)}%) y ciclo de vida (Original, R1, R2, R3+)`;
       const ultimoPct = (ds.porcentajes && ds.porcentajes.length > 0) ? ds.porcentajes[ds.porcentajes.length - 1] : 0;
       if (badge) {
         if (ultimoPct >= meta) {
@@ -39051,6 +39224,39 @@ if __name__ == '__main__':
           }
         });
       }
+    }
+
+    // Tendencias mensuales (gerencia)
+    function renderTendencias(t) {
+      const meses = (t && t.meses) || [];
+      const pct = v => (v === null || v === undefined) ? '-' : `${formatCO_Decimal(v, 1)}%`;
+      const tb = document.getElementById('tbodyTendencias');
+      if (tb) tb.innerHTML = meses.slice().reverse().map(m => `<tr>
+          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${m.vehiculos_inspeccionados}</td>
+          <td class="p-2 text-right">${pct(m.pct_presion_correcta)}</td><td class="p-2 text-right">${pct(m.pct_en_retiro)}</td>
+          <td class="p-2 text-right">${m.prof_minima_promedio == null ? '-' : formatCO_Decimal(m.prof_minima_promedio, 1) + ' mm'}</td>
+          <td class="p-2 text-right">${pct(m.pct_alerta_alineacion)}</td>
+          <td class="p-2 text-right">${m.cpk_operativo == null ? '-' : '$ ' + formatCO_Decimal(m.cpk_operativo, 1) + ' /' + uMed()}</td></tr>`).join('')
+        || '<tr><td colspan="7" class="p-2 text-slate-400 italic">Sin inspecciones en el periodo</td></tr>';
+      destruirChartSuite('tendencias');
+      const ctx = document.getElementById('canvasTendencias');
+      if (!ctx || !meses.length) return;
+      const serie = (k, label, color) => ({ label, data: meses.map(m => m[k]), borderColor: color, backgroundColor: color, tension: 0.25, spanGaps: true });
+      instanciasChartsSuite['tendencias'] = new Chart(ctx, {
+        type: 'line',
+        data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: [
+          serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
+          serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
+          serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } },
+                   scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } }
+      });
+    }
+
+    function _mesLegible(m) {
+      const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const [a, mm] = String(m || '').split('-');
+      return mm ? `${nombres[parseInt(mm, 10) - 1]} ${a}` : m;
     }
 
     // KPI CPK: los 4 costos por kilómetro (sin dato = sin precio o sin km suficientes)
@@ -40682,7 +40888,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_trazabilidad.js`
 - **Descripción:** Módulo Trazabilidad: Historial y caracterización de flota
-- **Métricas:** 1209 líneas | 58,469 bytes (57.1 KB)
+- **Métricas:** 1212 líneas | 58,833 bytes (57.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -40858,8 +41064,11 @@ if __name__ == '__main__':
       const cpks = data.map(d => d.cpk).filter(v => v > 0);
       const proys = data.map(d => d.proyeccion_total_km).filter(v => v > 0);
 
-      const prom_km_mm = km_mms.length ? (km_mms.reduce((a, b) => a + b, 0) / km_mms.length) : 0;
-      const prom_cpk = cpks.length ? (cpks.reduce((a, b) => a + b, 0) / cpks.length) : 0;
+      // Flota: Σkm / Σmm y Σcosto / Σkm (antes promedio de cada llanta: una llanta con pocos km lo inflaba)
+      const sum = (arr, f) => arr.reduce((a, d) => a + (Number(f(d)) || 0), 0);
+      const conRend = data.filter(d => d.km_por_mm > 0), conCpk = data.filter(d => d.cpk > 0);
+      const prom_km_mm = sum(conRend, d => d.desgaste_mm) > 0 ? sum(conRend, d => d.km_rodados) / sum(conRend, d => d.desgaste_mm) : 0;
+      const prom_cpk = sum(conCpk, d => d.km_rodados) > 0 ? sum(conCpk, d => d.precio) / sum(conCpk, d => d.km_rodados) : 0;
       const prom_proy = proys.length ? (proys.reduce((a, b) => a + b, 0) / proys.length) : 0;
 
       if (elTotal) elTotal.textContent = data.length.toLocaleString();
@@ -41902,7 +42111,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 1926 líneas | 94,434 bytes (92.2 KB)
+- **Métricas:** 1935 líneas | 95,323 bytes (93.1 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -42099,6 +42308,9 @@ if __name__ == '__main__':
       document.getElementById('nuevo_cliente_licencia').value = 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = '20';
+      document.getElementById('nuevo_cliente_meta_reencauche').value = '70';
+      document.getElementById('nuevo_cliente_aprob_reencauche').value = '85';
+      document.getElementById('nuevo_cliente_stock_seguridad').value = '4';
       document.getElementById('nuevo_cliente_regla_frecuencia').value = 'mes_siguiente';
       document.getElementById('nuevo_cliente_subclientes').value = 'Principal';
       document.getElementById('nuevo_cliente_observaciones').value = '';
@@ -42119,6 +42331,9 @@ if __name__ == '__main__':
       document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = cli.limite_retiro_mm || '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = cli.dias_espera_inspeccion || 20;
+      document.getElementById('nuevo_cliente_meta_reencauche').value = cli.meta_reencauche_pct ?? 70;
+      document.getElementById('nuevo_cliente_aprob_reencauche').value = cli.porcentaje_aprobacion_reencauche ?? 85;
+      document.getElementById('nuevo_cliente_stock_seguridad').value = cli.stock_seguridad_default ?? 4;
       const esCorridos = (cli.requiere_mes_siguiente === false || cli.requiere_mes_siguiente === 0);
       document.getElementById('nuevo_cliente_regla_frecuencia').value = esCorridos ? 'dias_corridos' : 'mes_siguiente';
       document.getElementById('nuevo_cliente_subclientes').value = (cli.subclientes && cli.subclientes.length > 0) ? cli.subclientes.join(', ') : 'Principal';
@@ -42148,6 +42363,9 @@ if __name__ == '__main__':
         dias_espera_inspeccion: parseInt(document.getElementById('nuevo_cliente_dias_inspeccion').value) || 20,
         requiere_mes_siguiente: document.getElementById('nuevo_cliente_regla_frecuencia').value === 'mes_siguiente',
         subclientes: document.getElementById('nuevo_cliente_subclientes').value.trim(),
+        meta_reencauche_pct: parseFloat(document.getElementById('nuevo_cliente_meta_reencauche').value),
+        porcentaje_aprobacion_reencauche: parseFloat(document.getElementById('nuevo_cliente_aprob_reencauche').value),
+        stock_seguridad_default: parseInt(document.getElementById('nuevo_cliente_stock_seguridad').value, 10),
         observaciones: document.getElementById('nuevo_cliente_observaciones').value.trim()
       };
 

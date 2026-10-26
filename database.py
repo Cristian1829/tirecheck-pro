@@ -569,6 +569,9 @@ def inicializar_bd():
                 UNIQUE(cliente, marca, diseno, dimension, tipo, vigente_desde)
             )
         """)
+        # Meta de reencauche del cliente (antes 70 % fijo para todos)
+        if 'meta_reencauche_pct' not in [r[1] for r in cursor.execute("PRAGMA table_info(configuracion_avanzada_cliente)").fetchall()]:
+            cursor.execute("ALTER TABLE configuracion_avanzada_cliente ADD COLUMN meta_reencauche_pct REAL DEFAULT 70.0")
         # Stock de seguridad del MRP por medida y eje (DIRECCIONAL / TRACCION / LIBRE)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS stock_seguridad_mrp (
@@ -2673,7 +2676,13 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
         sql_ant_vehiculo += " ORDER BY fecha DESC, id DESC"
         cursor.execute(sql_ant_vehiculo, tuple(params_ant_v))
         filas_ant = cursor.fetchall()
-        if filas_ant:
+        # Editar una inspección sin cambiar su fecha no es una inspección nueva: no aplica la frecuencia
+        # (antes no se podía corregir ninguna inspección anterior a la última de la placa)
+        misma_fecha_edicion = False
+        if excluir_id is not None:
+            r_orig = cursor.execute("SELECT SUBSTR(fecha, 1, 10) FROM inspecciones WHERE id = ?", (to_int(excluir_id),)).fetchone()
+            misma_fecha_edicion = bool(r_orig and r_orig[0] == fecha_str[:10])
+        if filas_ant and not misma_fecha_edicion:
             f_ult_str = str(filas_ant[0][0]).strip()[:10]
             f_nueva_str = fecha_str[:10]
             if f_nueva_str == f_ult_str:
@@ -2710,27 +2719,31 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                             )
                         }
 
-        # Candado 3: Kilometraje actual no puede ser menor al de la última inspección (solo en captura secuencial)
-        if not es_cargue_masivo:
-            sql_km = """
-                SELECT kilometraje, fecha FROM inspecciones 
-                WHERE placa = ? AND kilometraje > 0
-            """
-            params_km = [placa]
-            if excluir_id is not None:
-                sql_km += " AND id != ?"
-                params_km.append(to_int(excluir_id))
-            sql_km += " ORDER BY fecha DESC, id DESC LIMIT 1"
-
-            cursor.execute(sql_km, tuple(params_km))
-            prev_km_row = cursor.fetchone()
-            if prev_km_row:
-                prev_km = prev_km_row[0]
-                if km_actual > 0 and km_actual < prev_km:
-                    return {
-                        'valido': False,
-                        'mensaje': f'⛔ CANDADO DE KILOMETRAJE: El kilometraje ({km_actual:,.0f} km) no puede ser menor al de la inspección anterior ({prev_km:,.0f} km el {prev_km_row[1]}).'
-                    }
+        # Candado 3: la lectura (km u horas) no retrocede: debe quedar entre la de la inspección anterior y
+        # la de la posterior en fecha. Aplica también a importaciones y ediciones (antes solo a la captura en
+        # patio, y comparaba contra la más reciente aunque se editara una inspección antigua).
+        if km_actual > 0:
+            excl = " AND id != ?" if excluir_id is not None else ""
+            p_excl = [to_int(excluir_id)] if excluir_id is not None else []
+            uni_txt = 'horas' if unidad_medida_placa(placa, c) == 'HORAS' else 'km'
+            prev_km_row = cursor.execute(f"""
+                SELECT kilometraje, SUBSTR(fecha, 1, 10) FROM inspecciones
+                WHERE placa = ? AND kilometraje > 0 AND SUBSTR(fecha, 1, 10) < ?{excl}
+                ORDER BY kilometraje DESC LIMIT 1""", tuple([placa, fecha_str[:10]] + p_excl)).fetchone()
+            if prev_km_row and km_actual < to_float(prev_km_row[0]):
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE KILOMETRAJE: La lectura ({km_actual:,.0f} {uni_txt}) no puede ser menor a la de la inspección anterior ({to_float(prev_km_row[0]):,.0f} {uni_txt} el {prev_km_row[1]}).'
+                }
+            next_km_row = cursor.execute(f"""
+                SELECT kilometraje, SUBSTR(fecha, 1, 10) FROM inspecciones
+                WHERE placa = ? AND kilometraje > 0 AND SUBSTR(fecha, 1, 10) > ?{excl}
+                ORDER BY kilometraje ASC LIMIT 1""", tuple([placa, fecha_str[:10]] + p_excl)).fetchone()
+            if next_km_row and km_actual > to_float(next_km_row[0]):
+                return {
+                    'valido': False,
+                    'mensaje': f'⛔ CANDADO DE KILOMETRAJE: La lectura ({km_actual:,.0f} {uni_txt}) no puede superar la de la inspección posterior ({to_float(next_km_row[0]):,.0f} {uni_txt} el {next_km_row[1]}).'
+                }
 
         # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm, solo en captura secuencial)
         if not es_cargue_masivo:
@@ -6219,6 +6232,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
         "umbral_diferencia_rotacion_ejes_mm": 3.0,
         "diferencia_minima_par_direccional_mm": 3.0,
         "dias_espera_inspeccion": 20,
+        "meta_reencauche_pct": 70.0,
         "requiere_mes_siguiente": False if 'CIUDAD LIMPIA' in str(cliente).upper() else True,
         "porcentaje_aprobacion_reencauche": 85.0,
         "stock_seguridad_default": 4,
@@ -6237,7 +6251,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                        tolerancia_desalineacion_hombros_mm, tolerancia_mal_apareo_pacha_mm,
                        umbral_diferencia_rotacion_ejes_mm, diferencia_minima_par_direccional_mm,
                        dias_espera_inspeccion, requiere_mes_siguiente,
-                       plantilla_kpis_json, porcentaje_aprobacion_reencauche, stock_seguridad_default
+                       plantilla_kpis_json, porcentaje_aprobacion_reencauche, stock_seguridad_default, meta_reencauche_pct
                 FROM configuracion_avanzada_cliente
                 WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))
             """, (cliente,))
@@ -6251,11 +6265,11 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
                     "tolerancia_desalineacion_hombros_mm", "tolerancia_mal_apareo_pacha_mm",
                     "umbral_diferencia_rotacion_ejes_mm", "diferencia_minima_par_direccional_mm",
                     "dias_espera_inspeccion", "requiere_mes_siguiente",
-                    "plantilla_kpis_json", "porcentaje_aprobacion_reencauche", "stock_seguridad_default"
+                    "plantilla_kpis_json", "porcentaje_aprobacion_reencauche", "stock_seguridad_default", "meta_reencauche_pct"
                 ]
                 d = dict(zip(cols, row))
                 # Valores no asignados toman el recomendado (antes estos dos nunca se leían de la base)
-                for k_def in ("porcentaje_aprobacion_reencauche", "stock_seguridad_default"):
+                for k_def in ("porcentaje_aprobacion_reencauche", "stock_seguridad_default", "meta_reencauche_pct"):
                     if d.get(k_def) is None:
                         d[k_def] = defaults[k_def]
                 d["cliente"] = cliente
@@ -6869,7 +6883,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             if total_padron > 0:
                 cumplimiento_pct = round(min(100.0, (vehiculos_cnt / total_padron) * 100.0), 1)
             else:
-                cumplimiento_pct = 100.0
+                cumplimiento_pct = None  # sin padrón no hay cumplimiento que medir
 
             impacto_dinero = round(float(df_ultimo_corte['calc_perdida_dinero'].sum()))
             perdida_mm_tot = round(float(df_ultimo_corte['calc_mm_perdidos'].sum()), 1)
@@ -6893,7 +6907,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             resultado["kpis"] = {
                 "vehiculos": f"{vehiculos_cnt:,} Vehículos".replace(',', '.'),
                 "subVehiculos": f"{llantas_cnt:,} Llantas Auditadas".replace(',', '.'),
-                "cumplimientoParquePct": float(cumplimiento_pct),
+                "cumplimientoParquePct": float(cumplimiento_pct) if cumplimiento_pct is not None else None,
                 "impactoPesos": float(impacto_dinero),
                 "perdidaMm": float(perdida_mm_tot),
                 "proyeccionProm": int(proy_prom),
@@ -8180,12 +8194,24 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
     pct_aprob_reenc = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
     stock_seg_default = to_int(cfg.get('stock_seguridad_default', 4), 4)
+    # Rótulos de presión con los umbrales que realmente se aplican (antes decían ±5 % y -15 % a -5 % fijos)
+    _g = lambda v: f"{v:g}"
+    psi_sev = max(15.0, tol_psi_baja)
+    LBL_PSI_SEV = f"Baja Severa (< -{_g(psi_sev)}%)"
+    LBL_PSI_MOD = f"Baja Moderada (-{_g(psi_sev)}% a -{_g(tol_psi_baja)}%)"
+    LBL_PSI_OK = f"Correcta (-{_g(tol_psi_baja)}% a +{_g(tol_psi_alta)}%)"
+    LBL_PSI_SOB = f"Sobrepresión (> +{_g(tol_psi_alta)}%)"
 
     resolver_limite = _construir_cache_limites_retiro()
     lim_posicion = construir_resolver_limite_posicion()
 
     # 1. Inspecciones históricas
-    df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False))
+    df_todas = obtener_todas_inspecciones(usuario=usuario, incluir_fotos=False)
+    df_raw = filtrar_fechas_validas(df_todas)
+    fechas_invalidas = len(df_todas) - len(df_raw)
+    if cliente and cliente != "TODOS" and not df_todas.empty:
+        fechas_invalidas = int((df_todas['cliente'].astype(str).str.upper().str.strip() == cliente).sum()
+                               - (df_raw['cliente'].astype(str).str.upper().str.strip() == cliente).sum()) if not df_raw.empty else 0
     if not df_raw.empty:
         df = df_raw.copy()
         if cliente and cliente != "TODOS":
@@ -8370,13 +8396,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if d_psi is None:
                 pass
             elif d_psi < -max(15.0, tol_psi_baja):
-                est_psi = 'Baja Severa (< -15%)'
+                est_psi = LBL_PSI_SEV
             elif d_psi < -tol_psi_baja:
-                est_psi = 'Baja Moderada (-15% a -5%)'
+                est_psi = LBL_PSI_MOD
             elif d_psi > tol_psi_alta:
-                est_psi = 'Sobrepresión (> +10%)'
+                est_psi = LBL_PSI_SOB
             else:
-                est_psi = 'Correcta (±5%)'
+                est_psi = LBL_PSI_OK
             if d_psi is not None:
                 estado_psi_col.append(est_psi)
 
@@ -8449,6 +8475,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             par_p.append(subcliente)
         cur.execute(qp, par_p)
         padron_rows = cur.fetchall()
+    # De dónde sale el parque: padrón cargado o, si no hay, los vehículos ya inspeccionados alguna vez
+    fuente_padron = 'padron' if padron_rows else 'vehiculos_inspeccionados'
 
     if not padron_rows:
         with get_connection() as conn:
@@ -8469,6 +8497,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         padron_rows = [(p, '', '', 'Activo') for p in placas_unicas]
 
     total_padron = len(padron_rows)
+    if total_padron == 0:
+        fuente_padron = 'sin_padron'
 
     # Corte más reciente
     if not df.empty:
@@ -8484,7 +8514,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     placas_padron = {r[0] for r in padron_rows}
     vehiculos_auditados_mes = len(placas_insp_mes & placas_padron)
     placas_fuera_padron = len(placas_insp_mes - placas_padron)
-    cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / max(1, total_padron)) * 100.0), 1) if total_padron > 0 else 100.0
+    # Sin parque no hay cumplimiento que medir (antes daba 100 %)
+    cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / total_padron) * 100.0), 1) if total_padron > 0 else None
 
     placas_pendientes = []
     for r in padron_rows:
@@ -8526,6 +8557,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "placas_pendientes": placas_pendientes,
         "placas_pendientes_cnt": len(placas_pendientes),
         "placas_inspeccionadas_fuera_padron": placas_fuera_padron,
+        "fuente_padron": fuente_padron,
         "periodo_corte": _mes_a_espanol(periodo_reciente) if periodo_reciente else "Actual"
     }
 
@@ -8566,14 +8598,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         r3_mes.append(int((df_m['calc_vida_norm'] == 'R3+').sum()))
 
     pct_act_k3 = pct_reenc_mes[-1] if pct_reenc_mes else 0.0
-    estado_meta_k3 = "VERDE" if pct_act_k3 >= 70.0 else ("AMBAR" if pct_act_k3 >= 55.0 else "ROJO")
+    meta_k3 = to_float(cfg.get('meta_reencauche_pct', 70.0), 70.0)  # meta del cliente (antes 70 % fijo)
+    estado_meta_k3 = "VERDE" if pct_act_k3 >= meta_k3 else ("AMBAR" if pct_act_k3 >= meta_k3 - 15.0 else "ROJO")
 
     kpi_03 = {
         "disponible": True,
         "labels": labels_k2,
         "porcentajes": pct_reenc_mes,
         "pct_reencauche": pct_reenc_mes,
-        "meta_porcentaje": 70.0,
+        "meta_porcentaje": meta_k3,
         "ciclos": {
             "original": orig_mes,
             "r1": r1_mes,
@@ -8583,7 +8616,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "subpanel_a": {
             "labels": labels_k2,
             "pct_reencauche": pct_reenc_mes,
-            "meta_pct": 70.0,
+            "meta_pct": meta_k3,
             "estado_meta": estado_meta_k3,
             "pct_actual": pct_act_k3
         },
@@ -8847,10 +8880,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 09: Estado de Presiones (Donut 4 Segmentos) y Ahorro Combustible
     # =========================================================================
     if not df_patio.empty:
-        cnt_sev = int((df_patio['calc_estado_psi'] == 'Baja Severa (< -15%)').sum())
-        cnt_mod = int((df_patio['calc_estado_psi'] == 'Baja Moderada (-15% a -5%)').sum())
-        cnt_ok = int((df_patio['calc_estado_psi'] == 'Correcta (±5%)').sum())
-        cnt_sob = int((df_patio['calc_estado_psi'] == 'Sobrepresión (> +10%)').sum())
+        cnt_sev = int((df_patio['calc_estado_psi'] == LBL_PSI_SEV).sum())
+        cnt_mod = int((df_patio['calc_estado_psi'] == LBL_PSI_MOD).sum())
+        cnt_ok = int((df_patio['calc_estado_psi'] == LBL_PSI_OK).sum())
+        cnt_sob = int((df_patio['calc_estado_psi'] == LBL_PSI_SOB).sum())
         cnt_sin_dato = int((df_patio['calc_estado_psi'] == 'Sin dato').sum())
         tot_psi = max(1, cnt_sev + cnt_mod + cnt_ok + cnt_sob)
         pct_calibracion = round((cnt_ok / tot_psi) * 100.0, 1)
@@ -8866,7 +8899,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     kpi_09 = {
         "disponible": True,
-        "labels": ['Baja Severa (< -15%)', 'Baja Moderada (-15% a -5%)', 'Correcta (±5%)', 'Sobrepresión (> +10%)'],
+        "labels": [LBL_PSI_SEV, LBL_PSI_MOD, LBL_PSI_OK, LBL_PSI_SOB],
         "valores": [cnt_sev, cnt_mod, cnt_ok, cnt_sob],
         "colores": ['#dc2626', '#f59e0b', '#10b981', '#6366f1'],
         "distribucion": {
@@ -8897,10 +8930,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         # 2. Anomalías técnicas detectadas
         anomalias_tecnicas = {
-            'Baja Presión (< -5%)': int((df_patio['calc_delta_psi_pct'] < -5.0).sum()),
-            'Desalineación Hombros (>= 2mm)': int(df_patio['calc_alerta_alin'].sum()),
+            f'Baja Presión (< -{_g(tol_psi_baja)}%)': int((df_patio['calc_delta_psi_pct'] < -tol_psi_baja).sum()),
+            f'Desalineación Hombros (>= {_g(tol_desalineacion)} mm)': int(df_patio['calc_alerta_alin'].sum()),
             'Límite de Retiro Crítico': int((df_patio['calc_p_min'] <= df_patio['calc_lim_retiro']).sum()),
-            'Sobrepresión (> +10%)': int((df_patio['calc_delta_psi_pct'] > 10.0).sum()),
+            LBL_PSI_SOB: int((df_patio['calc_delta_psi_pct'] > tol_psi_alta).sum()),
             'Desgaste Acelerado (>= 80%)': int((df_patio['calc_pct_desgaste'] >= 80.0).sum())
         }
         for k_anom, v_anom in anomalias_tecnicas.items():
@@ -9101,8 +9134,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
                 labels_k14.append(lbl_fmt or 'General')
                 proy_k14.append(_redondear(grp_g['calc_proy_total'].mean()))
-                kmmm_k14.append(_redondear(grp_g['calc_km_mm'].mean(), 1))
-                cpk_k14.append(_redondear(grp_g['calc_cpk'].mean(), 2))
+                # Rendimiento y CPK del grupo = Σkm / Σmm y Σcosto / Σkm proyectados (no promedio por llanta)
+                con_r = grp_g[grp_g['calc_km_mm'].notna()]
+                kmmm_k14.append(_redondear(_div(con_r['calc_km_rodados'].sum(), con_r['calc_desgaste_mm'].sum()), 1))
+                con_c = grp_g[grp_g['calc_cpk'].notna()]
+                cpk_k14.append(_redondear(_div(pd.to_numeric(con_c['calc_precio'], errors='coerce').sum(), con_c['calc_proy_total'].sum()), 2))
 
     kpi_14 = {
         "disponible": es_full,
@@ -9137,6 +9173,49 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 brecha_k15.append(br_pct)
 
     brecha_prom_k15 = round(sum(brecha_k15) / max(1, len(brecha_k15)), 1) if brecha_k15 else 0.0
+
+    # Calidad de datos: cuántas llantas quedan fuera de cada cálculo y por qué (se muestra junto a los KPI)
+    if not df_patio.empty:
+        calidad_datos = {
+            "llantas": int(len(df_patio)),
+            "sin_psi": int((df_patio['calc_estado_psi'] == 'Sin dato').sum()),
+            "sin_prof_inicial": int(df_patio['calc_pini_sin_dato'].astype(bool).sum()) if 'calc_pini_sin_dato' in df_patio else 0,
+            "sin_precio": int(pd.to_numeric(df_patio['calc_precio'], errors='coerce').isna().sum()) if 'calc_precio' in df_patio else 0,
+            "sin_numero_interno": int(df_patio['numero_interno'].fillna('').astype(str).str.strip().str.upper().isin(('', 'SN')).sum()),
+            "sin_sede": int((df_patio['subcliente'].fillna('').astype(str).str.strip() == '').sum()),
+            "fechas_invalidas": int(fechas_invalidas),
+        }
+    else:
+        calidad_datos = {"llantas": 0, "sin_psi": 0, "sin_prof_inicial": 0, "sin_precio": 0, "sin_numero_interno": 0,
+                         "sin_sede": 0, "fechas_invalidas": int(fechas_invalidas)}
+
+    # =========================================================================
+    # Tendencias mensuales (gerencia): foto de la flota al cierre de cada mes, últimos 12 meses
+    # =========================================================================
+    meses_t = []
+    if not df.empty:
+        fechas_t = df['fecha'].astype(str).str[:10]
+        lista_meses_t = sorted({f[:7] for f in fechas_t if re.match(r'^\d{4}-\d{2}', f)})[-12:]
+        for mes_t in lista_meses_t:
+            hasta = df[fechas_t <= f"{mes_t}-31"]
+            foto = hasta.sort_values(['fecha', 'id'], ascending=[False, False]).drop_duplicates(['placa', 'posicion'])
+            foto = foto[~foto['calc_es_repuesto']] if 'calc_es_repuesto' in foto else foto
+            con_psi = foto[foto['calc_estado_psi'] != 'Sin dato']
+            p_min_t = pd.to_numeric(foto['calc_p_min'], errors='coerce')
+            p_min_t = p_min_t[p_min_t > 0]
+            punto = {
+                "mes": mes_t,
+                "llantas": int(len(foto)),
+                "vehiculos_inspeccionados": int(df[fechas_t.str[:7] == mes_t]['placa'].nunique()),
+                "pct_presion_correcta": _redondear(100.0 * (con_psi['calc_estado_psi'] == LBL_PSI_OK).mean(), 1) if len(con_psi) else None,
+                "pct_en_retiro": _redondear(100.0 * (foto['calc_p_min'] <= foto['calc_lim_retiro']).mean(), 1) if len(foto) else None,
+                "prof_minima_promedio": _redondear(p_min_t.mean(), 1) if len(p_min_t) else None,
+                "pct_alerta_alineacion": _redondear(100.0 * foto['calc_alerta_alin'].astype(bool).mean(), 1) if len(foto) else None,
+            }
+            if es_full:
+                punto["cpk_operativo"] = calcular_cpk_llantas(hasta, unidad)["flota"]["cpk_operativo"]
+            meses_t.append(punto)
+    kpi_tendencias = {"disponible": True, "mensaje": "", "meses": meses_t}
 
     # =========================================================================
     # KPI CPK: los 4 costos por kilómetro (operativo, proyectado, total por ciclo, administrativo)
@@ -9467,6 +9546,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "kpi_13": kpi_13,
         "kpi_14": kpi_14,
         "kpi_cpk": kpi_cpk,
+        "calidad_datos": calidad_datos,
+        "kpi_tendencias": kpi_tendencias,
         "base": base,
         "unidad": unidad,
         "kpi_15": kpi_15,
@@ -9541,7 +9622,11 @@ def obtener_directorio_clientes():
 
         # 2. Licenciamiento avanzado (LIGHT vs PRO)
         cursor.execute("SELECT UPPER(TRIM(cliente)), tipo_licencia FROM configuracion_avanzada_cliente")
-        licencias = {r[0]: (r[1] or 'PRO').upper() for r in cursor.fetchall()}
+        licencias = {r[0]: (r[1] or 'LIGHT').upper() for r in cursor.fetchall()}
+        cursor.execute("SELECT UPPER(TRIM(cliente)), meta_reencauche_pct, porcentaje_aprobacion_reencauche, stock_seguridad_default FROM configuracion_avanzada_cliente")
+        parametros_cli = {r[0]: {"meta_reencauche_pct": r[1] if r[1] is not None else 70.0,
+                                 "porcentaje_aprobacion_reencauche": r[2] if r[2] is not None else 85.0,
+                                 "stock_seguridad_default": r[3] if r[3] is not None else 4} for r in cursor.fetchall()}
 
         # 3. Sedes / Subclientes únicos detectados
         subclientes_dict = {}
@@ -9635,6 +9720,7 @@ def obtener_directorio_clientes():
             resultado.append({
                 "cliente": c_nombre,
                 "tipo_licencia": licencias.get(c_nombre, "LIGHT"),
+                **parametros_cli.get(c_nombre, {"meta_reencauche_pct": 70.0, "porcentaje_aprobacion_reencauche": 85.0, "stock_seguridad_default": 4}),
                 "limite_retiro_mm": item["limite_retiro_mm"],
                 "observaciones": item["observaciones"],
                 "fecha_actualizacion": item["fecha_actualizacion"],
@@ -9668,7 +9754,7 @@ def crear_o_actualizar_cliente(datos: dict):
     if not raw_cliente:
         return {"ok": False, "mensaje": "El nombre del cliente o razón social es obligatorio."}
 
-    tipo_licencia = str(datos.get("tipo_licencia", "PRO")).strip().upper()
+    tipo_licencia = str(datos.get("tipo_licencia") or "LIGHT").strip().upper()
     if tipo_licencia not in ("PRO", "LIGHT"):
         tipo_licencia = "PRO"
 
@@ -9723,6 +9809,12 @@ def crear_o_actualizar_cliente(datos: dict):
                 requiere_mes_siguiente = excluded.requiere_mes_siguiente,
                 fecha_actualizacion = CURRENT_TIMESTAMP
         """, (raw_cliente, tipo_licencia, dias_esp, req_mes))
+        # Metas y parámetros del MRP del cliente (solo si vienen en el formulario)
+        for col, val in (("meta_reencauche_pct", datos.get("meta_reencauche_pct")),
+                         ("porcentaje_aprobacion_reencauche", datos.get("porcentaje_aprobacion_reencauche")),
+                         ("stock_seguridad_default", datos.get("stock_seguridad_default"))):
+            if val is not None and str(val).strip() != '' and 0 <= to_float(val, -1) <= (100 if col != "stock_seguridad_default" else 1000):
+                cursor.execute(f"UPDATE configuracion_avanzada_cliente SET {col} = ? WHERE cliente = ?", (to_float(val), raw_cliente))
 
         # 3. Regla global por defecto en configuracion_limites_retiro
         cursor.execute("""
