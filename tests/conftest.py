@@ -49,6 +49,10 @@ def admin_token(test_db):
 
 @pytest.fixture
 def inspector_token(test_db):
+    # Un usuario que no es administrador necesita al menos un cliente asignado para ver datos
+    with database.get_connection() as conn:
+        conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username = 'inspector1'")
+        conn.commit()
     return server.crear_token_acceso("inspector1", "inspector")
 
 @pytest.fixture

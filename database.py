@@ -302,20 +302,8 @@ def inicializar_bd():
                 if u_pwd and not str(u_pwd).startswith("pbkdf2_sha256$"):
                     cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (hash_password(u_pwd), u_id))
 
-            # Asegurar usuarios base de jefatura y gerencia si aún no existen
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE LOWER(username) = 'jefe1'")
-            if cursor.fetchone()[0] == 0:
-                cursor.execute("""
-                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                    VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,catalogos')
-                """, (hash_password('1234'),))
-
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE LOWER(username) = 'gerencia1'")
-            if cursor.fetchone()[0] == 0:
-                cursor.execute("""
-                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                    VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis')
-                """, (hash_password('1234'),))
+            # Los usuarios de ejemplo solo se crean en una base vacía: si se borran no deben
+            # reaparecer con una contraseña conocida.
 
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
@@ -466,10 +454,10 @@ def inicializar_bd():
             WHERE UPPER(TRIM(cliente)) LIKE '%CIUDAD%LIMPIA%' AND (requiere_mes_siguiente IS NULL OR requiere_mes_siguiente = 1)
         """)
 
-        # Poblar configuración inicial PRO para clientes existentes
+        # Clientes nuevos sin licencia configurada quedan LIGHT hasta que se les asigne otra
         cursor.execute("""
             INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia)
-            SELECT DISTINCT UPPER(TRIM(cliente)), 'PRO'
+            SELECT DISTINCT UPPER(TRIM(cliente)), 'LIGHT'
             FROM inspecciones
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
         """)
@@ -2532,7 +2520,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
             if row_lic and row_lic[0]:
                 licencia = str(row_lic[0]).strip().upper()
         if not licencia:
-            licencia = 'PRO'
+            licencia = 'LIGHT'
 
         es_version_light = (licencia == 'LIGHT')
         permitir_sn_repetido = (es_version_light and num_interno == 'SN')
@@ -4214,8 +4202,8 @@ def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', s
                     fecha_actualizacion = CURRENT_TIMESTAMP
             ''', (c, lim, obs))
             cursor.execute('''
-                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+                VALUES (?, 'LIGHT', ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cliente) DO UPDATE SET
                     mm_retiro_direccional = excluded.mm_retiro_direccional,
                     mm_retiro_traccion = excluded.mm_retiro_traccion,
@@ -4224,16 +4212,16 @@ def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', s
             ''', (c, lim, lim, lim))
         elif 'DIR' in e:
             cursor.execute('''
-                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, fecha_actualizacion)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, fecha_actualizacion)
+                VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cliente) DO UPDATE SET
                     mm_retiro_direccional = excluded.mm_retiro_direccional,
                     fecha_actualizacion = CURRENT_TIMESTAMP
             ''', (c, lim))
         elif 'TRAC' in e:
             cursor.execute('''
-                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_traccion, fecha_actualizacion)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_traccion, fecha_actualizacion)
+                VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cliente) DO UPDATE SET
                     mm_retiro_traccion = excluded.mm_retiro_traccion,
                     fecha_actualizacion = CURRENT_TIMESTAMP
@@ -4301,8 +4289,8 @@ def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, obser
                         fecha_actualizacion = CURRENT_TIMESTAMP
                 ''', (c, lim, obs))
                 cursor.execute('''
-                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+                    VALUES (?, 'LIGHT', ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(cliente) DO UPDATE SET
                         mm_retiro_direccional = excluded.mm_retiro_direccional,
                         mm_retiro_traccion = excluded.mm_retiro_traccion,
@@ -4311,16 +4299,16 @@ def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, obser
                 ''', (c, lim, lim, lim))
             elif 'DIR' in e:
                 cursor.execute('''
-                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, fecha_actualizacion)
-                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, fecha_actualizacion)
+                    VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(cliente) DO UPDATE SET
                         mm_retiro_direccional = excluded.mm_retiro_direccional,
                         fecha_actualizacion = CURRENT_TIMESTAMP
                 ''', (c, lim))
             elif 'TRAC' in e:
                 cursor.execute('''
-                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_traccion, fecha_actualizacion)
-                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_traccion, fecha_actualizacion)
+                    VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(cliente) DO UPDATE SET
                         mm_retiro_traccion = excluded.mm_retiro_traccion,
                         fecha_actualizacion = CURRENT_TIMESTAMP
@@ -5387,7 +5375,8 @@ def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
         elif rol_clean in ('gerencia', 'gerente'):
             return ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas']
         else:
-            return ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
+            # Inspector: solo el avance de las inspecciones (patio); lo demás lo habilita el administrador
+            return ['patio']
 
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
     if rol_clean in ('jefatura', 'jefe', 'jefe_llantas', 'gerencia', 'gerente'):
@@ -5650,7 +5639,8 @@ def contar_vehiculos_padron(cliente: str) -> int:
 
 def obtener_licencia_cliente(cliente: str) -> str:
     """
-    Retorna 'LIGHT' o 'PRO' para el cliente especificado. Por defecto 'PRO'.
+    Retorna 'LIGHT' o 'PRO' para el cliente especificado. Sin licencia configurada: 'LIGHT'.
+    La vista global de todos los clientes (solo administrador) se calcula como 'PRO'.
     """
     if not cliente or str(cliente).strip().upper() == 'TODOS':
         return 'PRO'
@@ -5664,10 +5654,10 @@ def obtener_licencia_cliente(cliente: str) -> str:
             row = cursor.fetchone()
             if row and row[0]:
                 modo = str(row[0]).strip().upper()
-                return modo if modo in ('LIGHT', 'PRO') else 'PRO'
+                return modo if modo in ('LIGHT', 'PRO') else 'LIGHT'
     except Exception:
         pass
-    return 'PRO'
+    return 'LIGHT'
 
 
 def guardar_licencia_cliente(cliente: str, tipo_licencia: str, plantilla_kpis_json: str = "{}") -> bool:
@@ -5704,7 +5694,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
     """
     defaults = {
         "cliente": cliente,
-        "tipo_licencia": "PRO",
+        "tipo_licencia": "LIGHT",
         "mm_retiro_direccional": 4.0,
         "mm_retiro_traccion": 3.0,
         "mm_retiro_arrastre": 3.0,
@@ -7399,12 +7389,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     lic_param = str(filtros.get('licencia', '')).strip().upper()
     usuario = str(filtros.get('usuario', '')).strip()
 
-    # Licencia efectiva
-    if lic_param in ('LIGHT', 'PRO', 'FULL'):
-        licencia = 'FULL' if lic_param in ('PRO', 'FULL') else 'LIGHT'
-    else:
-        lic_db = obtener_licencia_cliente(cliente)
-        licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    # Licencia efectiva: siempre la configurada para el cliente. El parámetro solo permite ver la
+    # vista LIGHT de un cliente FULL (vista previa); nunca sube un cliente LIGHT a FULL.
+    lic_db = obtener_licencia_cliente(cliente)
+    licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    if lic_param == 'LIGHT':
+        licencia = 'LIGHT'
     es_full = (licencia == 'FULL')
 
     # Configuración avanzada del cliente
@@ -8854,7 +8844,7 @@ def obtener_directorio_clientes():
 
             resultado.append({
                 "cliente": c_nombre,
-                "tipo_licencia": licencias.get(c_nombre, "PRO"),
+                "tipo_licencia": licencias.get(c_nombre, "LIGHT"),
                 "limite_retiro_mm": item["limite_retiro_mm"],
                 "observaciones": item["observaciones"],
                 "fecha_actualizacion": item["fecha_actualizacion"],

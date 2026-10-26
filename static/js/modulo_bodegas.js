@@ -1409,7 +1409,7 @@
 
         const esFull = (typeof data.permite_taller !== 'undefined')
           ? Boolean(data.permite_taller)
-          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'PRO').toUpperCase() !== 'LIGHT');
+          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'LIGHT').toUpperCase() !== 'LIGHT');
 
         // Actualizar badges de licenciamiento y banner explicativo
         if (esFull) {

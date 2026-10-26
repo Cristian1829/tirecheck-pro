@@ -548,7 +548,7 @@
         placa: document.getElementById('edit_placa').value.trim().toUpperCase(),
         posicion: parseInt(document.getElementById('edit_posicion').value) || 1,
         numero_interno: document.getElementById('edit_numero_interno').value.trim().toUpperCase(),
-        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
         tipologia: document.getElementById('edit_tipologia').value,
         marca: document.getElementById('edit_marca').value,

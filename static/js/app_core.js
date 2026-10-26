@@ -661,7 +661,7 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']);
+          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio']);
         }
         if (!vistasPermitidas.includes(tabId)) {
           mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
@@ -868,7 +868,7 @@
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']);
+          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio']);
         }
       }
 

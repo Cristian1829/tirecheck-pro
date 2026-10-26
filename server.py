@@ -84,7 +84,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
-    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis,composicion"
+    vistas_permitidas: Optional[str] = "patio"
 
 class EditarUsuarioItem(BaseModel):
     nombre_completo: Optional[str] = None
@@ -99,7 +99,7 @@ class ResetPasswordItem(BaseModel):
 
 class ConfigLicenciaClienteItem(BaseModel):
     cliente: str
-    tipo_licencia: str = "PRO"  # "LIGHT" o "PRO"
+    tipo_licencia: str = "LIGHT"  # "LIGHT" o "PRO"
     plantilla_kpis_json: str = "{}"
 
 class LoteInspeccionesOfflineRequest(BaseModel):
@@ -205,7 +205,7 @@ class MarcaClienteItem(BaseModel):
 
 class ClienteDirectorioItem(BaseModel):
     cliente: str
-    tipo_licencia: Optional[str] = "PRO"
+    tipo_licencia: Optional[str] = "LIGHT"
     limite_retiro_mm: Optional[float] = 3.0
     subclientes: Optional[str] = ""
     observaciones: Optional[str] = ""
@@ -293,6 +293,9 @@ def obtener_usuario_actual(request: Request) -> dict:
     usr = database.obtener_usuario_por_username(payload["sub"])
     if not usr or not usr.get("activo"):
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    # Sin cliente asignado (y sin ser administrador) no hay alcance de datos: solo puede ver su sesión
+    if usuario_sin_alcance(usr) and request.url.path not in ("/api/usuario-actual", "/api/logout"):
+        raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
     
     return usr
 
@@ -301,6 +304,11 @@ def es_rol_admin(rol: str, user: str = "") -> bool:
     u = str(user or "").strip().lower()
     return r in ("admin", "administrador") or u == "admin"
 
+def usuario_sin_alcance(usr: dict) -> bool:
+    """Un usuario que no es administrador y no tiene clientes asignados no puede ver ni modificar datos."""
+    return (not es_rol_admin(usr.get("rol"), usr.get("username"))
+            and not database.parsear_clientes_asignados(usr.get("cliente_asignado")))
+
 def es_rol_jefatura(rol: str) -> bool:
     r = str(rol or "").strip().lower()
     return r in ("jefatura", "jefe", "jefe_llantas")
@@ -308,6 +316,16 @@ def es_rol_jefatura(rol: str) -> bool:
 def es_rol_gerencia(rol: str) -> bool:
     r = str(rol or "").strip().lower()
     return r in ("gerencia", "gerente")
+
+def requerir_vista(*vistas: str):
+    """Dependencia: el usuario debe tener al menos una de estas vistas permitidas (el navegador solo
+    oculta las pestañas; aquí se valida de verdad). El administrador tiene todas."""
+    def _verificar(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
+        permitidas = usuario_actual.get("vistas_permitidas") or []
+        if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")) or any(v in permitidas for v in vistas):
+            return usuario_actual
+        raise HTTPException(status_code=403, detail="Su usuario no tiene habilitada esta sección")
+    return _verificar
 
 def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -544,7 +562,7 @@ def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(o
     return sanitizar_nativos(df.to_dict(orient="records"))
 
 
-@app.get("/api/inspecciones/plantilla-excel")
+@app.get("/api/inspecciones/plantilla-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
     _p_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "plantillas", "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
     _p_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
@@ -579,7 +597,7 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
         headers={"Content-Disposition": "attachment; filename=Plantilla_Cargue_Masivo_Inspecciones.xlsx"}
     )
 
-@app.get("/api/inspecciones/exportar-excel")
+@app.get("/api/inspecciones/exportar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
@@ -594,7 +612,7 @@ def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = De
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@app.post("/api/inspecciones/importar-excel")
+@app.post("/api/inspecciones/importar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     if es_rol_gerencia(rol):
@@ -762,7 +780,7 @@ def api_sincronizar_lote_inspecciones(req: LoteInspeccionesOfflineRequest, usuar
 # RUTAS DE DIAGNÓSTICO Y PLANES DE ACCIÓN
 # ==========================================
 
-@app.get("/api/diagnostico")
+@app.get("/api/diagnostico", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_diagnostico(
     usuario: str = "",
     fecha_desde: str = "",
@@ -787,7 +805,7 @@ def api_diagnostico(
         raise HTTPException(status_code=500, detail=f"Error al calcular diagnóstico: {str(e)}")
 
 
-@app.get("/api/diagnostico/matriz-semaforos")
+@app.get("/api/diagnostico/matriz-semaforos", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_diagnostico_matriz_semaforos(
     cliente: str = "",
     subcliente: str = "",
@@ -844,7 +862,7 @@ def api_diagnostico_matriz_semaforos(
 
 
 
-@app.get("/api/diagnostico/graficos")
+@app.get("/api/diagnostico/graficos", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_diagnostico_graficos(
     cliente: str = "",
     subcliente: str = "",
@@ -960,7 +978,7 @@ def _estilizar_hoja_excel(ws, color_header="0F172A"):
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 11), 50)
 
 
-@app.get("/api/diagnostico/exportar-excel")
+@app.get("/api/diagnostico/exportar-excel", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_exportar_diagnostico_excel(
     cliente: str = "",
     subcliente: str = "",
@@ -1085,7 +1103,7 @@ def api_exportar_diagnostico_excel(
 # RUTAS DE TRAZABILIDAD Y KPIS DE LLANTAS (SUITE 20 KPIS)
 # ==========================================
 
-@app.get("/api/kpis/suite-20")
+@app.get("/api/kpis/suite-20", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_suite_20(
     cliente: str = "",
     subcliente: str = "",
@@ -1128,7 +1146,7 @@ def api_kpis_suite_20(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular Suite de 20 KPIs: {str(e)}")
 
-@app.get("/api/kpis/exportar-mrp-excel")
+@app.get("/api/kpis/exportar-mrp-excel", dependencies=[Depends(requerir_vista("kpis", "bodegas"))])
 def api_exportar_mrp_excel(
     cliente: str = "",
     subcliente: str = "",
@@ -1157,7 +1175,7 @@ def api_exportar_mrp_excel(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@app.get("/api/kpis-llantas")
+@app.get("/api/kpis-llantas", dependencies=[Depends(requerir_vista("composicion", "kpis"))])
 def api_kpis_llantas(
     numero_interno: str = "",
     cliente: str = "",
@@ -1196,7 +1214,7 @@ def api_kpis_llantas(
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
 
-@app.get("/api/kpis-llantas/exportar-excel")
+@app.get("/api/kpis-llantas/exportar-excel", dependencies=[Depends(requerir_vista("composicion", "kpis"))])
 def api_exportar_kpis_excel(
     numero_interno: str = "",
     cliente: str = "",
@@ -1655,29 +1673,8 @@ def api_guardar_licencia_cliente(item: ConfigLicenciaClienteItem, admin: dict = 
         raise HTTPException(status_code=400, detail="Error al guardar la configuración de licencia")
     return sanitizar_nativos({"status": "ok"})
 
-@app.post("/api/admin/migrar-pepsico-tellantas")
-@app.get("/api/admin/migrar-pepsico-tellantas")
-def api_migrar_pepsico_tellantas(usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_pepsico_a_tellantas()
-    return sanitizar_nativos(res)
-
-@app.post("/api/admin/migrar-restar-pext-ciudad-limpia")
-@app.get("/api/admin/migrar-restar-pext-ciudad-limpia")
-def api_migrar_restar_pext_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_restar_pext_ciudad_limpia(forzar=forzar)
-    return sanitizar_nativos(res)
-
-@app.post("/api/admin/migrar-normalizar-cliente-ciudad-limpia")
-@app.get("/api/admin/migrar-normalizar-cliente-ciudad-limpia")
-def api_migrar_normalizar_cliente_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_normalizar_cliente_ciudad_limpia_bogota(forzar=forzar)
-    return sanitizar_nativos(res)
-
-@app.post("/api/admin/migrar-limite-ciudad-limpia-4mm")
-@app.get("/api/admin/migrar-limite-ciudad-limpia-4mm")
-def api_migrar_limite_ciudad_limpia_4mm(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_limite_ciudad_limpia_4mm(forzar=forzar)
-    return sanitizar_nativos(res)
+# Las migraciones de datos corren solas al arrancar y una sola vez (ver startup); no se
+# exponen por URL para que nadie pueda relanzarlas ni forzarlas sobre datos ya corregidos.
 
 
 
@@ -1799,6 +1796,8 @@ def api_login(item: LoginItem, request: Request, response: Response):
     if not usr:
         _login_attempts[ip].append(ahora)
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    if usuario_sin_alcance(usr):
+        raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
 
     if ip in _login_attempts:
         _login_attempts[ip] = []
@@ -1839,6 +1838,8 @@ def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
 
 @app.post("/api/usuarios")
 def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
+    if usuario_sin_alcance({"rol": item.rol, "username": item.username, "cliente_asignado": item.cliente_asignado}):
+        raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
     ok = database.crear_usuario(
         username=item.username,
         password=item.password,
@@ -1858,6 +1859,11 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
             raise HTTPException(status_code=400, detail="No se puede desactivar al usuario administrador principal")
         if item.rol and item.rol.lower() != "admin":
             raise HTTPException(status_code=400, detail="No se puede degradar el rol del usuario administrador principal")
+    actual = database.obtener_usuario_por_username(username) or {}
+    resultante = {"username": username, "rol": item.rol or actual.get("rol"),
+                  "cliente_asignado": item.cliente_asignado if item.cliente_asignado is not None else actual.get("cliente_asignado")}
+    if usuario_sin_alcance(resultante):
+        raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
     ok = database.actualizar_usuario(
         username=username,
         nombre_completo=item.nombre_completo,
@@ -1980,7 +1986,7 @@ class GestionGarantiaItem(BaseModel):
     valor_reconocido_garantia: float = 0.0
     observaciones: str = ""
 
-@app.get("/api/bodegas/resumen-mrp")
+@app.get("/api/bodegas/resumen-mrp", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_resumen_mrp(
     cliente: str = "",
     subcliente: str = "",
@@ -2004,7 +2010,7 @@ def api_bodegas_resumen_mrp(
     }
     return sanitizar_nativos(database.obtener_balance_bodegas_mrp(filtros))
 
-@app.get("/api/bodegas/inventario")
+@app.get("/api/bodegas/inventario", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_inventario(
     cliente: str = "",
     subcliente: str = "",
@@ -2032,7 +2038,7 @@ def api_bodegas_inventario(
     }
     return sanitizar_nativos(database.listar_inventario_bodegas_con_kpis(filtros))
 
-@app.post("/api/bodegas/alta")
+@app.post("/api/bodegas/alta", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
@@ -2042,7 +2048,7 @@ def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(
         raise HTTPException(status_code=400, detail=res.get("mensaje", "Error al dar de alta la llanta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/movimiento")
+@app.post("/api/bodegas/movimiento", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
@@ -2052,7 +2058,7 @@ def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = De
         raise HTTPException(status_code=400, detail=res.get("mensaje", "Movimiento de bodega inválido"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/garantia")
+@app.post("/api/bodegas/garantia", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
@@ -2062,7 +2068,7 @@ def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depen
         raise HTTPException(status_code=400, detail=res.get("mensaje", "No se pudo actualizar la garantía"))
     return sanitizar_nativos(res)
 
-@app.get("/api/bodegas/kardex")
+@app.get("/api/bodegas/kardex", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
@@ -2071,7 +2077,7 @@ def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actu
 # ENDPOINTS TALLER EN PATIO Y 7 BODEGAS
 # ==========================================
 
-@app.get("/api/taller/posicion-info")
+@app.get("/api/taller/posicion-info", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
 def api_taller_posicion_info(
     placa: str = "",
     posicion: int = 0,
@@ -2098,7 +2104,7 @@ def api_taller_posicion_info(
     data["permite_taller"] = (lic != "LIGHT")
     return sanitizar_nativos(data)
 
-@app.post("/api/taller/desmontar")
+@app.post("/api/taller/desmontar", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
 def api_taller_desmontar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2126,7 +2132,7 @@ def api_taller_desmontar(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al desmontar llanta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/taller/montar")
+@app.post("/api/taller/montar", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
 def api_taller_montar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2159,8 +2165,8 @@ def api_taller_montar(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al montar llanta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/llantas-crear-stock")
-@app.post("/api/bodegas/ingreso-compra")
+@app.post("/api/llantas-crear-stock", dependencies=[Depends(requerir_vista("bodegas"))])
+@app.post("/api/bodegas/ingreso-compra", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_llantas_crear_stock(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2172,7 +2178,7 @@ def api_llantas_crear_stock(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al crear llantas en stock"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/despacho-planta")
+@app.post("/api/bodegas/despacho-planta", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_despacho_planta(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2184,7 +2190,7 @@ def api_bodegas_despacho_planta(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al despachar a planta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/retorno-reencauche")
+@app.post("/api/bodegas/retorno-reencauche", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_retorno_reencauche(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2196,7 +2202,7 @@ def api_bodegas_retorno_reencauche(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al recepcionar reencauche"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/finalizar-reparacion")
+@app.post("/api/bodegas/finalizar-reparacion", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_finalizar_reparacion(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2208,7 +2214,7 @@ def api_bodegas_finalizar_reparacion(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al finalizar reparación"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/dictamen-garantia")
+@app.post("/api/bodegas/dictamen-garantia", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_dictamen_garantia(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -2220,7 +2226,7 @@ def api_bodegas_dictamen_garantia(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error en dictamen de garantía"))
     return sanitizar_nativos(res)
 
-@app.get("/api/llanta/hoja-vida/{numero_interno}")
+@app.get("/api/llanta/hoja-vida/{numero_interno}", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_llanta_hoja_vida(
     numero_interno: str,
     cliente: str = "",
@@ -2232,7 +2238,7 @@ def api_llanta_hoja_vida(
         raise HTTPException(status_code=404, detail=res.get("mensaje", "No se encontró la hoja de vida"))
     return sanitizar_nativos(res)
 
-@app.get("/api/bodegas/pdf-despacho-planta")
+@app.get("/api/bodegas/pdf-despacho-planta", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_pdf_despacho_planta(
     guia: str = "",
     cliente: str = "",
@@ -2253,7 +2259,7 @@ def api_bodegas_pdf_despacho_planta(
     pdf_bytes = pdf_generator.generar_pdf_despacho_planta(datos_pdf)
     return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename=despacho_{guia or 'lote'}.pdf"})
 
-@app.get("/api/bodegas/pdf-acta-chatarrizacion/{numero_interno}")
+@app.get("/api/bodegas/pdf-acta-chatarrizacion/{numero_interno}", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_pdf_acta_chatarrizacion(
     numero_interno: str,
     cliente: str = "",

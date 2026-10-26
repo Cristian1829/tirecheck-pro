@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 08:09:02`
+- **Fecha de Generación:** `2026-10-26 12:18:30`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `56,375` líneas
-- **Tamaño Total de Código Fuente:** `2811.6 KB` (`2,879,100` bytes)
+- **Líneas Totales de Código:** `56,379` líneas
+- **Tamaño Total de Código Fuente:** `2814.2 KB` (`2,881,720` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,8 +432,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2298 | 100.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9490 | 460.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2304 | 103.0 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 9480 | 460.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2109 | 103.1 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -449,7 +449,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
-| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.8 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
+| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.6 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4090 | 184.1 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1953 | 82.5 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
@@ -463,7 +463,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [tests/conftest.py](#archivo-testsconftestpy) | `python` | 58 | 1.5 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
+| [tests/conftest.py](#archivo-testsconftestpy) | `python` | 62 | 1.8 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
 | [tests/test_bodegas_hoja_vida.py](#archivo-teststest-bodegas-hoja-vidapy) | `python` | 370 | 13.9 KB | Pruebas unitarias completas del módulo de 7 bodegas, kardex de carcasas, traslados y garantías |
 | [tests/test_bodegas_mrp.py](#archivo-teststest-bodegas-mrppy) | `python` | 499 | 20.1 KB | Pruebas de la lógica de balance MRP y compras sugeridas de bodegas |
 | [tests/test_auditoria_bodegas_sentido_negocio.py](#archivo-teststest-auditoria-bodegas-sentido-negociopy) | `python` | 527 | 21.7 KB | Auditoría de consistencia de negocio para bodegas y ciclo de vida |
@@ -480,7 +480,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 313 | 11.5 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 264 | 10.8 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 937 | 35.8 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 941 | 36.1 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -3777,7 +3777,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2298 líneas | 102,903 bytes (100.5 KB)
+- **Métricas:** 2304 líneas | 105,493 bytes (103.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3867,7 +3867,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
-    vistas_permitidas: Optional[str] = "patio,diagnostico,kpis,composicion"
+    vistas_permitidas: Optional[str] = "patio"
 
 class EditarUsuarioItem(BaseModel):
     nombre_completo: Optional[str] = None
@@ -3882,7 +3882,7 @@ class ResetPasswordItem(BaseModel):
 
 class ConfigLicenciaClienteItem(BaseModel):
     cliente: str
-    tipo_licencia: str = "PRO"  # "LIGHT" o "PRO"
+    tipo_licencia: str = "LIGHT"  # "LIGHT" o "PRO"
     plantilla_kpis_json: str = "{}"
 
 class LoteInspeccionesOfflineRequest(BaseModel):
@@ -3988,7 +3988,7 @@ class MarcaClienteItem(BaseModel):
 
 class ClienteDirectorioItem(BaseModel):
     cliente: str
-    tipo_licencia: Optional[str] = "PRO"
+    tipo_licencia: Optional[str] = "LIGHT"
     limite_retiro_mm: Optional[float] = 3.0
     subclientes: Optional[str] = ""
     observaciones: Optional[str] = ""
@@ -4076,6 +4076,9 @@ def obtener_usuario_actual(request: Request) -> dict:
     usr = database.obtener_usuario_por_username(payload["sub"])
     if not usr or not usr.get("activo"):
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    # Sin cliente asignado (y sin ser administrador) no hay alcance de datos: solo puede ver su sesión
+    if usuario_sin_alcance(usr) and request.url.path not in ("/api/usuario-actual", "/api/logout"):
+        raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
     
     return usr
 
@@ -4084,6 +4087,11 @@ def es_rol_admin(rol: str, user: str = "") -> bool:
     u = str(user or "").strip().lower()
     return r in ("admin", "administrador") or u == "admin"
 
+def usuario_sin_alcance(usr: dict) -> bool:
+    """Un usuario que no es administrador y no tiene clientes asignados no puede ver ni modificar datos."""
+    return (not es_rol_admin(usr.get("rol"), usr.get("username"))
+            and not database.parsear_clientes_asignados(usr.get("cliente_asignado")))
+
 def es_rol_jefatura(rol: str) -> bool:
     r = str(rol or "").strip().lower()
     return r in ("jefatura", "jefe", "jefe_llantas")
@@ -4091,6 +4099,16 @@ def es_rol_jefatura(rol: str) -> bool:
 def es_rol_gerencia(rol: str) -> bool:
     r = str(rol or "").strip().lower()
     return r in ("gerencia", "gerente")
+
+def requerir_vista(*vistas: str):
+    """Dependencia: el usuario debe tener al menos una de estas vistas permitidas (el navegador solo
+    oculta las pestañas; aquí se valida de verdad). El administrador tiene todas."""
+    def _verificar(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
+        permitidas = usuario_actual.get("vistas_permitidas") or []
+        if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")) or any(v in permitidas for v in vistas):
+            return usuario_actual
+        raise HTTPException(status_code=403, detail="Su usuario no tiene habilitada esta sección")
+    return _verificar
 
 def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -4327,7 +4345,7 @@ def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(o
     return sanitizar_nativos(df.to_dict(orient="records"))
 
 
-@app.get("/api/inspecciones/plantilla-excel")
+@app.get("/api/inspecciones/plantilla-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
     _p_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "plantillas", "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
     _p_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
@@ -4362,7 +4380,7 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
         headers={"Content-Disposition": "attachment; filename=Plantilla_Cargue_Masivo_Inspecciones.xlsx"}
     )
 
-@app.get("/api/inspecciones/exportar-excel")
+@app.get("/api/inspecciones/exportar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
@@ -4377,7 +4395,7 @@ def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = De
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@app.post("/api/inspecciones/importar-excel")
+@app.post("/api/inspecciones/importar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     if es_rol_gerencia(rol):
@@ -4545,7 +4563,7 @@ def api_sincronizar_lote_inspecciones(req: LoteInspeccionesOfflineRequest, usuar
 # RUTAS DE DIAGNÓSTICO Y PLANES DE ACCIÓN
 # ==========================================
 
-@app.get("/api/diagnostico")
+@app.get("/api/diagnostico", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_diagnostico(
     usuario: str = "",
     fecha_desde: str = "",
@@ -4570,7 +4588,7 @@ def api_diagnostico(
         raise HTTPException(status_code=500, detail=f"Error al calcular diagnóstico: {str(e)}")
 
 
-@app.get("/api/diagnostico/matriz-semaforos")
+@app.get("/api/diagnostico/matriz-semaforos", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_diagnostico_matriz_semaforos(
     cliente: str = "",
     subcliente: str = "",
@@ -4627,7 +4645,7 @@ def api_diagnostico_matriz_semaforos(
 
 
 
-@app.get("/api/diagnostico/graficos")
+@app.get("/api/diagnostico/graficos", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_diagnostico_graficos(
     cliente: str = "",
     subcliente: str = "",
@@ -4743,7 +4761,7 @@ def _estilizar_hoja_excel(ws, color_header="0F172A"):
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 11), 50)
 
 
-@app.get("/api/diagnostico/exportar-excel")
+@app.get("/api/diagnostico/exportar-excel", dependencies=[Depends(requerir_vista("diagnostico"))])
 def api_exportar_diagnostico_excel(
     cliente: str = "",
     subcliente: str = "",
@@ -4868,7 +4886,7 @@ def api_exportar_diagnostico_excel(
 # RUTAS DE TRAZABILIDAD Y KPIS DE LLANTAS (SUITE 20 KPIS)
 # ==========================================
 
-@app.get("/api/kpis/suite-20")
+@app.get("/api/kpis/suite-20", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_suite_20(
     cliente: str = "",
     subcliente: str = "",
@@ -4911,7 +4929,7 @@ def api_kpis_suite_20(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular Suite de 20 KPIs: {str(e)}")
 
-@app.get("/api/kpis/exportar-mrp-excel")
+@app.get("/api/kpis/exportar-mrp-excel", dependencies=[Depends(requerir_vista("kpis", "bodegas"))])
 def api_exportar_mrp_excel(
     cliente: str = "",
     subcliente: str = "",
@@ -4940,7 +4958,7 @@ def api_exportar_mrp_excel(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-@app.get("/api/kpis-llantas")
+@app.get("/api/kpis-llantas", dependencies=[Depends(requerir_vista("composicion", "kpis"))])
 def api_kpis_llantas(
     numero_interno: str = "",
     cliente: str = "",
@@ -4979,7 +4997,7 @@ def api_kpis_llantas(
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     return sanitizar_nativos(raw)
 
-@app.get("/api/kpis-llantas/exportar-excel")
+@app.get("/api/kpis-llantas/exportar-excel", dependencies=[Depends(requerir_vista("composicion", "kpis"))])
 def api_exportar_kpis_excel(
     numero_interno: str = "",
     cliente: str = "",
@@ -5438,29 +5456,8 @@ def api_guardar_licencia_cliente(item: ConfigLicenciaClienteItem, admin: dict = 
         raise HTTPException(status_code=400, detail="Error al guardar la configuración de licencia")
     return sanitizar_nativos({"status": "ok"})
 
-@app.post("/api/admin/migrar-pepsico-tellantas")
-@app.get("/api/admin/migrar-pepsico-tellantas")
-def api_migrar_pepsico_tellantas(usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_pepsico_a_tellantas()
-    return sanitizar_nativos(res)
-
-@app.post("/api/admin/migrar-restar-pext-ciudad-limpia")
-@app.get("/api/admin/migrar-restar-pext-ciudad-limpia")
-def api_migrar_restar_pext_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_restar_pext_ciudad_limpia(forzar=forzar)
-    return sanitizar_nativos(res)
-
-@app.post("/api/admin/migrar-normalizar-cliente-ciudad-limpia")
-@app.get("/api/admin/migrar-normalizar-cliente-ciudad-limpia")
-def api_migrar_normalizar_cliente_ciudad_limpia(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_normalizar_cliente_ciudad_limpia_bogota(forzar=forzar)
-    return sanitizar_nativos(res)
-
-@app.post("/api/admin/migrar-limite-ciudad-limpia-4mm")
-@app.get("/api/admin/migrar-limite-ciudad-limpia-4mm")
-def api_migrar_limite_ciudad_limpia_4mm(forzar: bool = False, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
-    res = database.migrar_limite_ciudad_limpia_4mm(forzar=forzar)
-    return sanitizar_nativos(res)
+# Las migraciones de datos corren solas al arrancar y una sola vez (ver startup); no se
+# exponen por URL para que nadie pueda relanzarlas ni forzarlas sobre datos ya corregidos.
 
 
 
@@ -5582,6 +5579,8 @@ def api_login(item: LoginItem, request: Request, response: Response):
     if not usr:
         _login_attempts[ip].append(ahora)
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    if usuario_sin_alcance(usr):
+        raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
 
     if ip in _login_attempts:
         _login_attempts[ip] = []
@@ -5622,6 +5621,8 @@ def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
 
 @app.post("/api/usuarios")
 def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
+    if usuario_sin_alcance({"rol": item.rol, "username": item.username, "cliente_asignado": item.cliente_asignado}):
+        raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
     ok = database.crear_usuario(
         username=item.username,
         password=item.password,
@@ -5641,6 +5642,11 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
             raise HTTPException(status_code=400, detail="No se puede desactivar al usuario administrador principal")
         if item.rol and item.rol.lower() != "admin":
             raise HTTPException(status_code=400, detail="No se puede degradar el rol del usuario administrador principal")
+    actual = database.obtener_usuario_por_username(username) or {}
+    resultante = {"username": username, "rol": item.rol or actual.get("rol"),
+                  "cliente_asignado": item.cliente_asignado if item.cliente_asignado is not None else actual.get("cliente_asignado")}
+    if usuario_sin_alcance(resultante):
+        raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
     ok = database.actualizar_usuario(
         username=username,
         nombre_completo=item.nombre_completo,
@@ -5763,7 +5769,7 @@ class GestionGarantiaItem(BaseModel):
     valor_reconocido_garantia: float = 0.0
     observaciones: str = ""
 
-@app.get("/api/bodegas/resumen-mrp")
+@app.get("/api/bodegas/resumen-mrp", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_resumen_mrp(
     cliente: str = "",
     subcliente: str = "",
@@ -5787,7 +5793,7 @@ def api_bodegas_resumen_mrp(
     }
     return sanitizar_nativos(database.obtener_balance_bodegas_mrp(filtros))
 
-@app.get("/api/bodegas/inventario")
+@app.get("/api/bodegas/inventario", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_inventario(
     cliente: str = "",
     subcliente: str = "",
@@ -5815,7 +5821,7 @@ def api_bodegas_inventario(
     }
     return sanitizar_nativos(database.listar_inventario_bodegas_con_kpis(filtros))
 
-@app.post("/api/bodegas/alta")
+@app.post("/api/bodegas/alta", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
@@ -5825,7 +5831,7 @@ def api_bodegas_alta(item: AltaLlantaBodegaItem, usuario_actual: dict = Depends(
         raise HTTPException(status_code=400, detail=res.get("mensaje", "Error al dar de alta la llanta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/movimiento")
+@app.post("/api/bodegas/movimiento", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
@@ -5835,7 +5841,7 @@ def api_bodegas_movimiento(item: MovimientoBodegaItem, usuario_actual: dict = De
         raise HTTPException(status_code=400, detail=res.get("mensaje", "Movimiento de bodega inválido"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/garantia")
+@app.post("/api/bodegas/garantia", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     datos = item.model_dump()
     datos["cliente"] = _resolver_cliente_usuario(usuario_actual, datos.get("cliente"))
@@ -5845,7 +5851,7 @@ def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depen
         raise HTTPException(status_code=400, detail=res.get("mensaje", "No se pudo actualizar la garantía"))
     return sanitizar_nativos(res)
 
-@app.get("/api/bodegas/kardex")
+@app.get("/api/bodegas/kardex", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
     return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
@@ -5854,7 +5860,7 @@ def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actu
 # ENDPOINTS TALLER EN PATIO Y 7 BODEGAS
 # ==========================================
 
-@app.get("/api/taller/posicion-info")
+@app.get("/api/taller/posicion-info", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
 def api_taller_posicion_info(
     placa: str = "",
     posicion: int = 0,
@@ -5881,7 +5887,7 @@ def api_taller_posicion_info(
     data["permite_taller"] = (lic != "LIGHT")
     return sanitizar_nativos(data)
 
-@app.post("/api/taller/desmontar")
+@app.post("/api/taller/desmontar", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
 def api_taller_desmontar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -5909,7 +5915,7 @@ def api_taller_desmontar(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al desmontar llanta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/taller/montar")
+@app.post("/api/taller/montar", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
 def api_taller_montar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -5942,8 +5948,8 @@ def api_taller_montar(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al montar llanta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/llantas-crear-stock")
-@app.post("/api/bodegas/ingreso-compra")
+@app.post("/api/llantas-crear-stock", dependencies=[Depends(requerir_vista("bodegas"))])
+@app.post("/api/bodegas/ingreso-compra", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_llantas_crear_stock(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -5955,7 +5961,7 @@ def api_llantas_crear_stock(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al crear llantas en stock"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/despacho-planta")
+@app.post("/api/bodegas/despacho-planta", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_despacho_planta(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -5967,7 +5973,7 @@ def api_bodegas_despacho_planta(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al despachar a planta"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/retorno-reencauche")
+@app.post("/api/bodegas/retorno-reencauche", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_retorno_reencauche(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -5979,7 +5985,7 @@ def api_bodegas_retorno_reencauche(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al recepcionar reencauche"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/finalizar-reparacion")
+@app.post("/api/bodegas/finalizar-reparacion", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_finalizar_reparacion(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -5991,7 +5997,7 @@ def api_bodegas_finalizar_reparacion(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error al finalizar reparación"))
     return sanitizar_nativos(res)
 
-@app.post("/api/bodegas/dictamen-garantia")
+@app.post("/api/bodegas/dictamen-garantia", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_dictamen_garantia(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
@@ -6003,7 +6009,7 @@ def api_bodegas_dictamen_garantia(
         raise HTTPException(status_code=400, detail=res.get("message") or res.get("mensaje", "Error en dictamen de garantía"))
     return sanitizar_nativos(res)
 
-@app.get("/api/llanta/hoja-vida/{numero_interno}")
+@app.get("/api/llanta/hoja-vida/{numero_interno}", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_llanta_hoja_vida(
     numero_interno: str,
     cliente: str = "",
@@ -6015,7 +6021,7 @@ def api_llanta_hoja_vida(
         raise HTTPException(status_code=404, detail=res.get("mensaje", "No se encontró la hoja de vida"))
     return sanitizar_nativos(res)
 
-@app.get("/api/bodegas/pdf-despacho-planta")
+@app.get("/api/bodegas/pdf-despacho-planta", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_pdf_despacho_planta(
     guia: str = "",
     cliente: str = "",
@@ -6036,7 +6042,7 @@ def api_bodegas_pdf_despacho_planta(
     pdf_bytes = pdf_generator.generar_pdf_despacho_planta(datos_pdf)
     return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename=despacho_{guia or 'lote'}.pdf"})
 
-@app.get("/api/bodegas/pdf-acta-chatarrizacion/{numero_interno}")
+@app.get("/api/bodegas/pdf-acta-chatarrizacion/{numero_interno}", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_pdf_acta_chatarrizacion(
     numero_interno: str,
     cliente: str = "",
@@ -6087,7 +6093,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9490 líneas | 471,713 bytes (460.7 KB)
+- **Métricas:** 9480 líneas | 471,271 bytes (460.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6395,20 +6401,8 @@ def inicializar_bd():
                 if u_pwd and not str(u_pwd).startswith("pbkdf2_sha256$"):
                     cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (hash_password(u_pwd), u_id))
 
-            # Asegurar usuarios base de jefatura y gerencia si aún no existen
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE LOWER(username) = 'jefe1'")
-            if cursor.fetchone()[0] == 0:
-                cursor.execute("""
-                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                    VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,catalogos')
-                """, (hash_password('1234'),))
-
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE LOWER(username) = 'gerencia1'")
-            if cursor.fetchone()[0] == 0:
-                cursor.execute("""
-                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                    VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis')
-                """, (hash_password('1234'),))
+            # Los usuarios de ejemplo solo se crean en una base vacía: si se borran no deben
+            # reaparecer con una contraseña conocida.
 
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
@@ -6559,10 +6553,10 @@ def inicializar_bd():
             WHERE UPPER(TRIM(cliente)) LIKE '%CIUDAD%LIMPIA%' AND (requiere_mes_siguiente IS NULL OR requiere_mes_siguiente = 1)
         """)
 
-        # Poblar configuración inicial PRO para clientes existentes
+        # Clientes nuevos sin licencia configurada quedan LIGHT hasta que se les asigne otra
         cursor.execute("""
             INSERT OR IGNORE INTO configuracion_avanzada_cliente (cliente, tipo_licencia)
-            SELECT DISTINCT UPPER(TRIM(cliente)), 'PRO'
+            SELECT DISTINCT UPPER(TRIM(cliente)), 'LIGHT'
             FROM inspecciones
             WHERE cliente IS NOT NULL AND TRIM(cliente) != ''
         """)
@@ -8625,7 +8619,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
             if row_lic and row_lic[0]:
                 licencia = str(row_lic[0]).strip().upper()
         if not licencia:
-            licencia = 'PRO'
+            licencia = 'LIGHT'
 
         es_version_light = (licencia == 'LIGHT')
         permitir_sn_repetido = (es_version_light and num_interno == 'SN')
@@ -10307,8 +10301,8 @@ def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', s
                     fecha_actualizacion = CURRENT_TIMESTAMP
             ''', (c, lim, obs))
             cursor.execute('''
-                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+                VALUES (?, 'LIGHT', ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cliente) DO UPDATE SET
                     mm_retiro_direccional = excluded.mm_retiro_direccional,
                     mm_retiro_traccion = excluded.mm_retiro_traccion,
@@ -10317,16 +10311,16 @@ def guardar_limite_retiro_cliente(cliente, limite_retiro_mm, observaciones='', s
             ''', (c, lim, lim, lim))
         elif 'DIR' in e:
             cursor.execute('''
-                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, fecha_actualizacion)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, fecha_actualizacion)
+                VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cliente) DO UPDATE SET
                     mm_retiro_direccional = excluded.mm_retiro_direccional,
                     fecha_actualizacion = CURRENT_TIMESTAMP
             ''', (c, lim))
         elif 'TRAC' in e:
             cursor.execute('''
-                INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_traccion, fecha_actualizacion)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_traccion, fecha_actualizacion)
+                VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cliente) DO UPDATE SET
                     mm_retiro_traccion = excluded.mm_retiro_traccion,
                     fecha_actualizacion = CURRENT_TIMESTAMP
@@ -10394,8 +10388,8 @@ def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, obser
                         fecha_actualizacion = CURRENT_TIMESTAMP
                 ''', (c, lim, obs))
                 cursor.execute('''
-                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, mm_retiro_traccion, mm_retiro_arrastre, fecha_actualizacion)
+                    VALUES (?, 'LIGHT', ?, ?, ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(cliente) DO UPDATE SET
                         mm_retiro_direccional = excluded.mm_retiro_direccional,
                         mm_retiro_traccion = excluded.mm_retiro_traccion,
@@ -10404,16 +10398,16 @@ def actualizar_limite_retiro_cliente(limite_id, cliente, limite_retiro_mm, obser
                 ''', (c, lim, lim, lim))
             elif 'DIR' in e:
                 cursor.execute('''
-                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_direccional, fecha_actualizacion)
-                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_direccional, fecha_actualizacion)
+                    VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(cliente) DO UPDATE SET
                         mm_retiro_direccional = excluded.mm_retiro_direccional,
                         fecha_actualizacion = CURRENT_TIMESTAMP
                 ''', (c, lim))
             elif 'TRAC' in e:
                 cursor.execute('''
-                    INSERT INTO configuracion_avanzada_cliente (cliente, mm_retiro_traccion, fecha_actualizacion)
-                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    INSERT INTO configuracion_avanzada_cliente (cliente, tipo_licencia, mm_retiro_traccion, fecha_actualizacion)
+                    VALUES (?, 'LIGHT', ?, CURRENT_TIMESTAMP)
                     ON CONFLICT(cliente) DO UPDATE SET
                         mm_retiro_traccion = excluded.mm_retiro_traccion,
                         fecha_actualizacion = CURRENT_TIMESTAMP
@@ -11480,7 +11474,8 @@ def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
         elif rol_clean in ('gerencia', 'gerente'):
             return ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas']
         else:
-            return ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']
+            # Inspector: solo el avance de las inspecciones (patio); lo demás lo habilita el administrador
+            return ['patio']
 
     raw = [v.strip().lower() for v in str(vistas).split(',') if v.strip()]
     if rol_clean in ('jefatura', 'jefe', 'jefe_llantas', 'gerencia', 'gerente'):
@@ -11743,7 +11738,8 @@ def contar_vehiculos_padron(cliente: str) -> int:
 
 def obtener_licencia_cliente(cliente: str) -> str:
     """
-    Retorna 'LIGHT' o 'PRO' para el cliente especificado. Por defecto 'PRO'.
+    Retorna 'LIGHT' o 'PRO' para el cliente especificado. Sin licencia configurada: 'LIGHT'.
+    La vista global de todos los clientes (solo administrador) se calcula como 'PRO'.
     """
     if not cliente or str(cliente).strip().upper() == 'TODOS':
         return 'PRO'
@@ -11757,10 +11753,10 @@ def obtener_licencia_cliente(cliente: str) -> str:
             row = cursor.fetchone()
             if row and row[0]:
                 modo = str(row[0]).strip().upper()
-                return modo if modo in ('LIGHT', 'PRO') else 'PRO'
+                return modo if modo in ('LIGHT', 'PRO') else 'LIGHT'
     except Exception:
         pass
-    return 'PRO'
+    return 'LIGHT'
 
 
 def guardar_licencia_cliente(cliente: str, tipo_licencia: str, plantilla_kpis_json: str = "{}") -> bool:
@@ -11797,7 +11793,7 @@ def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
     """
     defaults = {
         "cliente": cliente,
-        "tipo_licencia": "PRO",
+        "tipo_licencia": "LIGHT",
         "mm_retiro_direccional": 4.0,
         "mm_retiro_traccion": 3.0,
         "mm_retiro_arrastre": 3.0,
@@ -13492,12 +13488,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     lic_param = str(filtros.get('licencia', '')).strip().upper()
     usuario = str(filtros.get('usuario', '')).strip()
 
-    # Licencia efectiva
-    if lic_param in ('LIGHT', 'PRO', 'FULL'):
-        licencia = 'FULL' if lic_param in ('PRO', 'FULL') else 'LIGHT'
-    else:
-        lic_db = obtener_licencia_cliente(cliente)
-        licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    # Licencia efectiva: siempre la configurada para el cliente. El parámetro solo permite ver la
+    # vista LIGHT de un cliente FULL (vista previa); nunca sube un cliente LIGHT a FULL.
+    lic_db = obtener_licencia_cliente(cliente)
+    licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    if lic_param == 'LIGHT':
+        licencia = 'LIGHT'
     es_full = (licencia == 'FULL')
 
     # Configuración avanzada del cliente
@@ -14947,7 +14943,7 @@ def obtener_directorio_clientes():
 
             resultado.append({
                 "cliente": c_nombre,
-                "tipo_licencia": licencias.get(c_nombre, "PRO"),
+                "tipo_licencia": licencias.get(c_nombre, "LIGHT"),
                 "limite_retiro_mm": item["limite_retiro_mm"],
                 "observaciones": item["observaciones"],
                 "fecha_actualizacion": item["fecha_actualizacion"],
@@ -30947,7 +30943,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/app_core.js`
 - **Descripción:** Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación
-- **Métricas:** 976 líneas | 42,767 bytes (41.8 KB)
+- **Métricas:** 976 líneas | 42,643 bytes (41.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -31614,7 +31610,7 @@ if __name__ == '__main__':
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']);
+          vistasPermitidas = esUsuarioJefatura() ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esUsuarioGerencia() ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio']);
         }
         if (!vistasPermitidas.includes(tabId)) {
           mostrarToast('⛔ Módulo no autorizado para su perfil de usuario', true);
@@ -31821,7 +31817,7 @@ if __name__ == '__main__':
         } else if (typeof rawV === 'string' && rawV.trim()) {
           vistasPermitidas = rawV.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
         } else {
-          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos']);
+          vistasPermitidas = esJefe ? ['patio', 'basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas', 'catalogos'] : (esGere ? ['basedatos', 'diagnostico', 'kpis', 'composicion', 'bodegas'] : ['patio']);
         }
       }
 
@@ -31934,7 +31930,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4090 líneas | 188,536 bytes (184.1 KB)
+- **Métricas:** 4090 líneas | 188,540 bytes (184.1 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -32319,7 +32315,7 @@ if __name__ == '__main__':
           if (cat && cat.limites) {
             const limEncontrado = cat.limites.find(l => (l.cliente || '').trim().toUpperCase() === cli.toUpperCase());
             if (limEncontrado) {
-              d = { limite_retiro_mm: limEncontrado.limite_retiro_mm, tipo_licencia: limEncontrado.tipo_licencia || 'PRO' };
+              d = { limite_retiro_mm: limEncontrado.limite_retiro_mm, tipo_licencia: limEncontrado.tipo_licencia || 'LIGHT' };
             }
           }
         } catch(eDb) {}
@@ -35873,7 +35869,7 @@ if __name__ == '__main__':
         prof_inicial: prof_inicial_num,
         km_montaje: parseFloat(document.getElementById('km_montaje').value) || 0,
         numero_interno: numInterno,
-        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         usuario_registro: usuarioActual ? usuarioActual.username : '',
         _ultimo_km_previo: (perfilVehiculoActual && perfilVehiculoActual.ultimo_km > 0 && (perfilVehiculoActual.ultima_fecha_inspeccion || '') < fechaVal.slice(0, 10)) ? perfilVehiculoActual.ultimo_km : 0
       };
@@ -36035,7 +36031,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_basedatos.js`
 - **Descripción:** Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel
-- **Métricas:** 687 líneas | 34,837 bytes (34.0 KB)
+- **Métricas:** 687 líneas | 34,839 bytes (34.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -36589,7 +36585,7 @@ if __name__ == '__main__':
         placa: document.getElementById('edit_placa').value.trim().toUpperCase(),
         posicion: parseInt(document.getElementById('edit_posicion').value) || 1,
         numero_interno: document.getElementById('edit_numero_interno').value.trim().toUpperCase(),
-        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
         tipologia: document.getElementById('edit_tipologia').value,
         marca: document.getElementById('edit_marca').value,
@@ -36733,7 +36729,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 1953 líneas | 84,451 bytes (82.5 KB)
+- **Métricas:** 1953 líneas | 84,503 bytes (82.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -36888,7 +36884,7 @@ if __name__ == '__main__':
       if (kpi01Banner) kpi01Banner.classList.toggle('hidden', esLight);
     }
 
-    function cambiarModoLicenciaSuite(nuevoModo) {
+    function cambiarModoLicenciaSuite(nuevoModo, recargar = true) {
       modoLicenciaSuite = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'FULL';
       const badge = document.getElementById('badgeLicenciaActiva');
       const btnLight = document.getElementById('btnModoLight');
@@ -36911,7 +36907,7 @@ if __name__ == '__main__':
       }
 
       sincronizarAvisosLicenciaSubpestanas();
-      cargarSuite20Kpis();
+      if (recargar) cargarSuite20Kpis();
     }
 
     function cambiarAgrupacionKpi14(nuevaAgrup) {
@@ -36968,9 +36964,9 @@ if __name__ == '__main__':
         const data = await res.json();
         datosSuite20Actuales = data;
 
-        // Si el backend dictamina licencia del cliente, sincronizar si no se forzó manual
+        // La licencia efectiva la decide el servidor según la configuración del cliente
         if (data.licencia && data.licencia !== modoLicenciaSuite) {
-          // mantenemos modo actual
+          cambiarModoLicenciaSuite(data.licencia, false);
         }
 
         renderizarTodaLaSuite20(data);
@@ -40915,7 +40911,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 1759 líneas | 85,781 bytes (83.8 KB)
+- **Métricas:** 1759 líneas | 85,785 bytes (83.8 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -41105,7 +41101,7 @@ if __name__ == '__main__':
       document.getElementById('btnGuardarClienteTexto').textContent = 'Guardar Cliente';
       document.getElementById('nuevo_cliente_nombre').value = '';
       document.getElementById('nuevo_cliente_nombre').readOnly = false;
-      document.getElementById('nuevo_cliente_licencia').value = 'PRO';
+      document.getElementById('nuevo_cliente_licencia').value = 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = '20';
       document.getElementById('nuevo_cliente_regla_frecuencia').value = 'mes_siguiente';
@@ -41125,7 +41121,7 @@ if __name__ == '__main__':
       document.getElementById('btnGuardarClienteTexto').textContent = 'Actualizar Cambios';
       document.getElementById('nuevo_cliente_nombre').value = cli.cliente;
       document.getElementById('nuevo_cliente_nombre').readOnly = true;
-      document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'PRO';
+      document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = cli.limite_retiro_mm || '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = cli.dias_espera_inspeccion || 20;
       const esCorridos = (cli.requiere_mes_siguiente === false || cli.requiere_mes_siguiente === 0);
@@ -42684,7 +42680,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_bodegas.js`
 - **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
-- **Métricas:** 2077 líneas | 111,492 bytes (108.9 KB)
+- **Métricas:** 2077 líneas | 111,494 bytes (108.9 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -44099,7 +44095,7 @@ if __name__ == '__main__':
 
         const esFull = (typeof data.permite_taller !== 'undefined')
           ? Boolean(data.permite_taller)
-          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'PRO').toUpperCase() !== 'LIGHT');
+          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'LIGHT').toUpperCase() !== 'LIGHT');
 
         // Actualizar badges de licenciamiento y banner explicativo
         if (esFull) {
@@ -44804,7 +44800,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `tests/conftest.py`
 - **Descripción:** Configuración de fixtures y base de datos SQLite en memoria para tests aislados
-- **Métricas:** 58 líneas | 1,577 bytes (1.5 KB)
+- **Métricas:** 62 líneas | 1,843 bytes (1.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -44859,6 +44855,10 @@ def admin_token(test_db):
 
 @pytest.fixture
 def inspector_token(test_db):
+    # Un usuario que no es administrador necesita al menos un cliente asignado para ver datos
+    with database.get_connection() as conn:
+        conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username = 'inspector1'")
+        conn.commit()
     return server.crear_token_acceso("inspector1", "inspector")
 
 @pytest.fixture
@@ -49878,7 +49878,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 937 líneas | 36,680 bytes (35.8 KB)
+- **Métricas:** 941 líneas | 36,946 bytes (36.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -50557,6 +50557,10 @@ def test_api_usuario_actual_sincroniza_flotas_actualizadas(test_db, auth_client)
 
 
 def test_roles_jefatura_y_gerencia(test_db):
+    # Sin cliente asignado no pueden entrar: se les asigna el cliente de la prueba
+    with database.get_connection() as conn:
+        conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username IN ('jefe1', 'gerencia1')")
+        conn.commit()
     # 1. Login con jefe1 y gerencia1 creados automáticamente
     res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "1234"})
     assert res_login_jefe.status_code == 200

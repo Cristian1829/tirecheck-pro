@@ -184,7 +184,7 @@
       document.getElementById('btnGuardarClienteTexto').textContent = 'Guardar Cliente';
       document.getElementById('nuevo_cliente_nombre').value = '';
       document.getElementById('nuevo_cliente_nombre').readOnly = false;
-      document.getElementById('nuevo_cliente_licencia').value = 'PRO';
+      document.getElementById('nuevo_cliente_licencia').value = 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = '20';
       document.getElementById('nuevo_cliente_regla_frecuencia').value = 'mes_siguiente';
@@ -204,7 +204,7 @@
       document.getElementById('btnGuardarClienteTexto').textContent = 'Actualizar Cambios';
       document.getElementById('nuevo_cliente_nombre').value = cli.cliente;
       document.getElementById('nuevo_cliente_nombre').readOnly = true;
-      document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'PRO';
+      document.getElementById('nuevo_cliente_licencia').value = cli.tipo_licencia || 'LIGHT';
       document.getElementById('nuevo_cliente_limite').value = cli.limite_retiro_mm || '3.0';
       document.getElementById('nuevo_cliente_dias_inspeccion').value = cli.dias_espera_inspeccion || 20;
       const esCorridos = (cli.requiere_mes_siguiente === false || cli.requiere_mes_siguiente === 0);

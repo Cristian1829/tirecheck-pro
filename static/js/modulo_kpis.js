@@ -149,7 +149,7 @@
       if (kpi01Banner) kpi01Banner.classList.toggle('hidden', esLight);
     }
 
-    function cambiarModoLicenciaSuite(nuevoModo) {
+    function cambiarModoLicenciaSuite(nuevoModo, recargar = true) {
       modoLicenciaSuite = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'FULL';
       const badge = document.getElementById('badgeLicenciaActiva');
       const btnLight = document.getElementById('btnModoLight');
@@ -172,7 +172,7 @@
       }
 
       sincronizarAvisosLicenciaSubpestanas();
-      cargarSuite20Kpis();
+      if (recargar) cargarSuite20Kpis();
     }
 
     function cambiarAgrupacionKpi14(nuevaAgrup) {
@@ -229,9 +229,9 @@
         const data = await res.json();
         datosSuite20Actuales = data;
 
-        // Si el backend dictamina licencia del cliente, sincronizar si no se forzó manual
+        // La licencia efectiva la decide el servidor según la configuración del cliente
         if (data.licencia && data.licencia !== modoLicenciaSuite) {
-          // mantenemos modo actual
+          cambiarModoLicenciaSuite(data.licencia, false);
         }
 
         renderizarTodaLaSuite20(data);

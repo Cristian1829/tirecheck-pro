@@ -673,6 +673,10 @@ def test_api_usuario_actual_sincroniza_flotas_actualizadas(test_db, auth_client)
 
 
 def test_roles_jefatura_y_gerencia(test_db):
+    # Sin cliente asignado no pueden entrar: se les asigna el cliente de la prueba
+    with database.get_connection() as conn:
+        conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username IN ('jefe1', 'gerencia1')")
+        conn.commit()
     # 1. Login con jefe1 y gerencia1 creados automáticamente
     res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "1234"})
     assert res_login_jefe.status_code == 200

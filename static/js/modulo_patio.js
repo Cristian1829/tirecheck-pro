@@ -379,7 +379,7 @@
           if (cat && cat.limites) {
             const limEncontrado = cat.limites.find(l => (l.cliente || '').trim().toUpperCase() === cli.toUpperCase());
             if (limEncontrado) {
-              d = { limite_retiro_mm: limEncontrado.limite_retiro_mm, tipo_licencia: limEncontrado.tipo_licencia || 'PRO' };
+              d = { limite_retiro_mm: limEncontrado.limite_retiro_mm, tipo_licencia: limEncontrado.tipo_licencia || 'LIGHT' };
             }
           }
         } catch(eDb) {}
@@ -3933,7 +3933,7 @@
         prof_inicial: prof_inicial_num,
         km_montaje: parseFloat(document.getElementById('km_montaje').value) || 0,
         numero_interno: numInterno,
-        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'PRO'),
+        tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         usuario_registro: usuarioActual ? usuarioActual.username : '',
         _ultimo_km_previo: (perfilVehiculoActual && perfilVehiculoActual.ultimo_km > 0 && (perfilVehiculoActual.ultima_fecha_inspeccion || '') < fechaVal.slice(0, 10)) ? perfilVehiculoActual.ultimo_km : 0
       };
