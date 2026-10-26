@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 20:35:26`
+- **Fecha de Generación:** `2026-10-25 21:00:33`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
 - **Líneas Totales de Código:** `55,777` líneas
-- **Tamaño Total de Código Fuente:** `2772.0 KB` (`2,838,549` bytes)
+- **Tamaño Total de Código Fuente:** `2772.1 KB` (`2,838,673` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -27676,7 +27676,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/servicios_v3.html`
 - **Descripción:** Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura
-- **Métricas:** 759 líneas | 58,970 bytes (57.6 KB)
+- **Métricas:** 759 líneas | 59,032 bytes (57.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -27972,13 +27972,13 @@ if __name__ == '__main__':
       <p class="sm:hidden sidewall text-xs text-hivis-300 mt-3">Confianza en tu información</p>
 
       <p class="sidewall text-xs text-hivis mt-12 mb-5 flex items-center justify-center gap-3">
-        <span class="w-8 h-[3px] bg-hivis"></span> Suite para flotas de carga y pasajeros <span class="w-8 h-[3px] bg-hivis"></span>
+        <span class="w-8 h-[3px] bg-hivis"></span> Software de Control para Toda Operación con Llantas que Administrar <span class="w-8 h-[3px] bg-hivis"></span>
       </p>
       <h1 class="font-display font-extrabold uppercase text-5xl sm:text-6xl lg:text-7xl leading-[0.92] tracking-tight max-w-4xl mx-auto">
         Cada milímetro de tus llantas, <span class="text-hivis">bajo control.</span>
       </h1>
       <p class="mt-6 text-lg text-concrete-300 max-w-2xl mx-auto leading-relaxed">
-        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> de tu flota de carga o pasajeros.
+        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> en cualquier flota u operación donde tengas llantas para administrar.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -28356,7 +28356,7 @@ if __name__ == '__main__':
           <blockquote class="font-display font-semibold text-2xl sm:text-3xl leading-snug">
             “Antes pasábamos el día buscando culpables entre planillas traspapeladas. Ahora anticipamos los problemas antes de que el camión salga a ruta.”
           </blockquote>
-          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento, flota de carga y pasajeros</figcaption>
+          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento y Operaciones de Flota</figcaption>
         </div>
       </figure>
     </div>
@@ -28447,7 +28447,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/servicios.html`
 - **Descripción:** Plantilla de servicios activa en producción
-- **Métricas:** 759 líneas | 58,970 bytes (57.6 KB)
+- **Métricas:** 759 líneas | 59,032 bytes (57.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -28743,13 +28743,13 @@ if __name__ == '__main__':
       <p class="sm:hidden sidewall text-xs text-hivis-300 mt-3">Confianza en tu información</p>
 
       <p class="sidewall text-xs text-hivis mt-12 mb-5 flex items-center justify-center gap-3">
-        <span class="w-8 h-[3px] bg-hivis"></span> Suite para flotas de carga y pasajeros <span class="w-8 h-[3px] bg-hivis"></span>
+        <span class="w-8 h-[3px] bg-hivis"></span> Software de Control para Toda Operación con Llantas que Administrar <span class="w-8 h-[3px] bg-hivis"></span>
       </p>
       <h1 class="font-display font-extrabold uppercase text-5xl sm:text-6xl lg:text-7xl leading-[0.92] tracking-tight max-w-4xl mx-auto">
         Cada milímetro de tus llantas, <span class="text-hivis">bajo control.</span>
       </h1>
       <p class="mt-6 text-lg text-concrete-300 max-w-2xl mx-auto leading-relaxed">
-        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> de tu flota de carga o pasajeros.
+        El software que <strong class="text-concrete-50">facilita la inspección en patio</strong>, automatiza el control de neumáticos y llantas reencauchables, protege la seguridad de los datos y reduce hasta un <strong class="text-hivis">30% el costo por kilómetro (CPK)</strong> en cualquier flota u operación donde tengas llantas para administrar.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -29127,7 +29127,7 @@ if __name__ == '__main__':
           <blockquote class="font-display font-semibold text-2xl sm:text-3xl leading-snug">
             “Antes pasábamos el día buscando culpables entre planillas traspapeladas. Ahora anticipamos los problemas antes de que el camión salga a ruta.”
           </blockquote>
-          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento, flota de carga y pasajeros</figcaption>
+          <figcaption class="mt-4 text-asphalt-700 font-semibold">— Director de Mantenimiento y Operaciones de Flota</figcaption>
         </div>
       </figure>
     </div>
