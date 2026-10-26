@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 18:58:56`
+- **Fecha de Generación:** `2026-10-25 19:29:15`
 - **Total de Archivos Incluidos:** `79` archivos de código y documentación
-- **Líneas Totales de Código:** `53,754` líneas
-- **Tamaño Total de Código Fuente:** `2627.2 KB` (`2,690,295` bytes)
+- **Líneas Totales de Código:** `53,768` líneas
+- **Tamaño Total de Código Fuente:** `2627.2 KB` (`2,690,277` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -397,9 +397,9 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [requirements.txt](#archivo-requirementstxt) | `text` | 13 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
-| [.gitignore](#archivo-gitignore) | `gitignore` | 36 | 0.5 KB | Reglas de exclusión de Git |
-| [.dockerignore](#archivo-dockerignore) | `gitignore` | 14 | 0.1 KB | Reglas de exclusión para compilación de imagen Docker |
-| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 35 | 1.0 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
+| [.gitignore](#archivo-gitignore) | `gitignore` | 45 | 0.6 KB | Reglas de exclusión de Git |
+| [.dockerignore](#archivo-dockerignore) | `gitignore` | 22 | 0.2 KB | Reglas de exclusión para compilación de imagen Docker |
+| [Dockerfile](#archivo-dockerfile) | `dockerfile` | 32 | 0.8 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
 | [railway.json](#archivo-railwayjson) | `json` | 12 | 0.3 KB | Configuración de infraestructura y despliegue continuo en Railway (Builder DOCKERFILE) |
 | [render.yaml](#archivo-renderyaml) | `yaml` | 13 | 0.3 KB | Blueprint de infraestructura como código para despliegue automático en Render.com |
 | [Procfile](#archivo-procfile) | `text` | 1 | 0.0 KB | Comando de arranque estándar para plataformas PaaS |
@@ -535,7 +535,7 @@ pytz>=2024.1
 
 - **Ruta:** `.gitignore`
 - **Descripción:** Reglas de exclusión de Git
-- **Métricas:** 36 líneas | 478 bytes (0.5 KB)
+- **Métricas:** 45 líneas | 578 bytes (0.6 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -544,9 +544,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# SQLite temporal WAL & SHM files (la base principal data/inspecciones.db si se versiona)
+# Bases de datos locales de QA / Desarrollo (NUNCA subir a producción)
+*.db
 *.db-wal
 *.db-shm
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/inspecciones.db
+seed_inspecciones.db
+tirecheck.db
 
 # Pytest & Testing
 .pytest_cache/
@@ -582,7 +591,7 @@ data/backups/
 
 - **Ruta:** `.dockerignore`
 - **Descripción:** Reglas de exclusión para compilación de imagen Docker
-- **Métricas:** 14 líneas | 116 bytes (0.1 KB)
+- **Métricas:** 22 líneas | 198 bytes (0.2 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -600,6 +609,14 @@ venv/
 tests/
 scripts/temp_*
 *.log
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+data/
+seed_inspecciones.db
+tirecheck.db
 ```
 
 ---
@@ -608,7 +625,7 @@ scripts/temp_*
 
 - **Ruta:** `Dockerfile`
 - **Descripción:** Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID
-- **Métricas:** 35 líneas | 1,042 bytes (1.0 KB)
+- **Métricas:** 32 líneas | 842 bytes (0.8 KB)
 - **Lenguaje:** `dockerfile`
 
 ```dockerfile
@@ -634,9 +651,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código de la aplicación
 COPY . .
-
-# Asegurar que el archivo seed_inspecciones.db exista en la raíz del contenedor (fuera del punto de montaje del volumen)
-RUN cp -f data/inspecciones.db /app/seed_inspecciones.db 2>/dev/null || true
 
 # Asegurar existencia y permisos del directorio data para SQLite
 RUN mkdir -p /app/data && chmod 777 /app/data

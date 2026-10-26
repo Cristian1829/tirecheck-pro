@@ -12,3 +12,11 @@ venv/
 tests/
 scripts/temp_*
 *.log
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+data/
+seed_inspecciones.db
+tirecheck.db

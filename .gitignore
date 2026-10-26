@@ -3,9 +3,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# SQLite temporal WAL & SHM files (la base principal data/inspecciones.db si se versiona)
+# Bases de datos locales de QA / Desarrollo (NUNCA subir a producción)
+*.db
 *.db-wal
 *.db-shm
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/inspecciones.db
+seed_inspecciones.db
+tirecheck.db
 
 # Pytest & Testing
 .pytest_cache/

@@ -119,15 +119,28 @@ Abre en modo incógnito (para evitar caché local):
 
 ---
 
-## 🛡️ 5. Gestión de Datos y Persistencia en Railway
+## 🛡️ 5. Separación Estricta de Datos: QA Local vs. Producción
 
 > [!IMPORTANT]
-> Los contenedores Docker son efímeros (se destruyen y recrean en cada nuevo despliegue). Para que la información de usuarios, inspecciones y modelos **no se borre al actualizar**, Railway utiliza un volumen persistente.
+> **Regla de Oro:** La información de pruebas, inspecciones de QA y clientes de prueba creados en tu entorno local **NUNCA se deben mezclar ni subir a Producción**. Son entornos 100% aislados.
 
-- **Directorio del Volumen:** `/app/data`
-- **Archivo de Base de Datos:** `/app/data/inspecciones.db`
-- **Copia Semilla (Fallback):** En el Dockerfile se incluye `/app/seed_inspecciones.db` para que el sistema inicialice la estructura automáticamente si el volumen es nuevo.
-- **Configuración en Railway:** En la configuración del servicio en Railway, verifica que en la sección **Volumes** exista un volumen montado en el path `/app/data`.
+### ¿Cómo se garantiza esta separación?
+1. **Exclusión en Git (`.gitignore`):**
+   - Todos los archivos `*.db`, `data/*.db`, `seed_inspecciones.db` y archivos temporales SQLite están ignorados en Git y desvinculados del índice remoto.
+   - Aunque hagas `git add .`, Git **jamás incluirá tus inspecciones locales**. Tu archivo `data/inspecciones.db` local se queda intacto en tu máquina para tu trabajo diario de QA.
+
+2. **Exclusión en el Contenedor Docker (`.dockerignore`):**
+   - El archivo `.dockerignore` bloquea explícitamente `data/` y `*.db`.
+   - Cuando Railway construye la imagen del software, **no empaqueta ninguna base de datos de tu computadora**.
+
+3. **Persistencia Autónoma en Railway:**
+   - La base de datos de producción vive **única y exclusivamente dentro del volumen persistente de Railway** montado en `/app/data`.
+   - Al desplegar nuevo código (`git push origin main`), Railway solo actualiza los archivos del programa (rutas, plantillas, APIs). El archivo de base de datos del cliente en producción **permanece inalterado y protegido**.
+
+| Entorno | Ubicación de la Base | ¿Sube a GitHub? | ¿Se afecta con despliegues? |
+| :--- | :--- | :--- | :--- |
+| **QA / Local** | `TireCheck_Pro_Proyecto/data/inspecciones.db` | ❌ No (Ignorado) | ❌ No (Vive solo en tu máquina) |
+| **Producción** | Volumen persistente Railway en `/app/data` | ❌ No (Vive en la nube) | 🛡️ Protegido contra sobreescritura |
 
 ---
 
