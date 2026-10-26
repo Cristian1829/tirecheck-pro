@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 22:43:30`
+- **Fecha de Generación:** `2026-10-26 08:09:02`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `56,285` líneas
-- **Tamaño Total de Código Fuente:** `2806.5 KB` (`2,873,831` bytes)
+- **Líneas Totales de Código:** `56,375` líneas
+- **Tamaño Total de Código Fuente:** `2811.6 KB` (`2,879,100` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,8 +432,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2293 | 100.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9441 | 457.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2298 | 100.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 9490 | 460.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2109 | 103.1 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -450,7 +450,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.8 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4054 | 182.2 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4090 | 184.1 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1953 | 82.5 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
@@ -3777,7 +3777,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2293 líneas | 102,591 bytes (100.2 KB)
+- **Métricas:** 2298 líneas | 102,903 bytes (100.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5275,6 +5275,11 @@ def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "
     prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida, banda=banda)
     return {"prof_inicial": prof}
 
+@app.get("/api/dimensiones-modelo")
+def api_dimensiones_modelo(marca: str = "", diseno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Medidas de un modelo de la marca, para completar la dimensión al elegir el diseño."""
+    return database.buscar_dimensiones_modelo(marca, diseno)
+
 @app.get("/api/buscar-modelos")
 def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.buscar_modelos_llantas_filtro(query)
@@ -6082,7 +6087,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9441 líneas | 468,795 bytes (457.8 KB)
+- **Métricas:** 9490 líneas | 471,713 bytes (460.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6100,6 +6105,7 @@ import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 import sys
+import catalogo_modelos_colombia
 import estructura_ejes as ee
 
 try:
@@ -6843,6 +6849,14 @@ def inicializar_bd():
                 INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, modelos_seed)
+
+        # Modelos comunes de carga y pasajeros en Colombia (una sola vez; no pisa lo que el cliente ya tenga)
+        conn.execute("CREATE TABLE IF NOT EXISTS _control_migraciones (nombre TEXT PRIMARY KEY, fecha_ejecucion TEXT, filas_afectadas INTEGER)")
+        if not cursor.execute("SELECT 1 FROM _control_migraciones WHERE nombre = 'catalogo_modelos_colombia_v1'").fetchone():
+            antes = cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas").fetchone()[0]
+            cursor.executemany("INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion) VALUES (?, ?, ?, ?, ?, ?)", catalogo_modelos_colombia.modelos_colombia())
+            nuevas = cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas").fetchone()[0] - antes
+            cursor.execute("INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas) VALUES ('catalogo_modelos_colombia_v1', datetime('now'), ?)", (nuevas,))
 
         # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
         conn.execute("""
@@ -10994,6 +11008,46 @@ def obtener_catalogo_modelos():
         cursor.execute('SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, marca ASC, diseno ASC')
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def buscar_dimensiones_modelo(marca, diseno):
+    """
+    Medidas en las que existe un modelo (marca + diseño): primero el catálogo de modelos y, si
+    el modelo no está, las medidas con que se ha inspeccionado, de la más usada a la menos usada.
+    Retorna {'dimensiones': [...], 'origen': 'catalogo' | 'historial' | None}.
+    """
+    m = (marca or '').strip()
+    d = (diseno or '').strip()
+    if not d or '(seleccionar' in d.lower() or d == '__nuevo__':
+        return {'dimensiones': [], 'origen': None}
+    if '(seleccionar' in m.lower() or m == '__nuevo__':
+        m = ''
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if m:
+            filas = cursor.execute("""
+                SELECT TRIM(dimension) FROM catalogo_modelos_llantas
+                WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND TRIM(IFNULL(dimension, '')) != ''
+                ORDER BY id
+            """, (m, d)).fetchall()
+        else:
+            filas = cursor.execute("""
+                SELECT TRIM(dimension) FROM catalogo_modelos_llantas
+                WHERE LOWER(diseno) = LOWER(?) AND TRIM(IFNULL(dimension, '')) != '' ORDER BY id
+            """, (d,)).fetchall()
+        dims = list(dict.fromkeys(f[0] for f in filas))
+        if dims:
+            return {'dimensiones': dims, 'origen': 'catalogo'}
+        if m:
+            filas = cursor.execute("""
+                SELECT TRIM(dimension), COUNT(*) FROM inspecciones
+                WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND TRIM(IFNULL(dimension, '')) != ''
+                GROUP BY TRIM(dimension) ORDER BY COUNT(*) DESC
+            """, (m, d)).fetchall()
+            dims = [f[0] for f in filas]
+            if dims:
+                return {'dimensiones': dims, 'origen': 'historial'}
+    return {'dimensiones': [], 'origen': None}
+
 
 def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original', banda=''):
     m = (marca or '').strip()
@@ -22192,7 +22246,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 5789 líneas | 392,886 bytes (383.7 KB)
+- **Métricas:** 5789 líneas | 392,921 bytes (383.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -23213,7 +23267,7 @@ if __name__ == '__main__':
 
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Diseño / Modelo</label>
-                  <select id="diseno" onchange="verificarOpcionNuevaSelect(this, 'diseño / modelo'); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
+                  <select id="diseno" onchange="verificarOpcionNuevaSelect(this, 'diseño / modelo'); autoCompletarDimensionModelo().then(autoCompletarProfInicial);" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>
                   </select>
                   <datalist id="dl_disenos"></datalist>
@@ -31880,7 +31934,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4054 líneas | 186,568 bytes (182.2 KB)
+- **Métricas:** 4090 líneas | 188,536 bytes (184.1 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -34726,6 +34780,42 @@ if __name__ == '__main__':
           dimensionPredeterminadaVehiculo = val;
         }
       }
+    }
+
+    // Al elegir el diseño/modelo, completa la dimensión con la medida de ese modelo en el catálogo.
+    // Si el modelo existe en varias medidas y la actual es una de ellas, se respeta; si no, se usa la primera.
+    async function autoCompletarDimensionModelo() {
+      const m = (document.getElementById('marca')?.value || '').trim();
+      const d = (document.getElementById('diseno')?.value || '').trim();
+      if (!d || d === '__nuevo__' || d.includes('(Seleccionar')) return;
+      const mValida = m && m !== '__nuevo__' && !m.includes('(Seleccionar');
+
+      let dims = [];
+      try {
+        const res = await fetchConTimeoutPatio(`/api/dimensiones-modelo?marca=${encodeURIComponent(mValida ? m : '')}&diseno=${encodeURIComponent(d)}`, {}, 3500);
+        if (res.ok) dims = (await res.json()).dimensiones || [];
+      } catch (e) {}
+
+      if (!dims.length) {  // sin conexión: catálogo guardado en el dispositivo
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          const lista = (cat && cat.modelos) ? cat.modelos : [];
+          dims = [...new Set(lista
+            .filter(it => (!mValida || (it.marca || '').toLowerCase() === m.toLowerCase()) && (it.diseno || '').toLowerCase() === d.toLowerCase())
+            .map(it => String(it.dimension || '').trim()).filter(Boolean))];
+        } catch (e) {}
+      }
+      if (!dims.length) return;
+
+      const selDim = document.getElementById('dimension');
+      const actual = (selDim?.value || '').trim();
+      if (dims.some(x => x.toLowerCase() === actual.toLowerCase())) return;  // la medida actual ya es válida para el modelo
+
+      asignarValorSelect('dimension', dims[0]);
+      alCambiarDimensionMobile();
+      mostrarToast(dims.length === 1
+        ? `📐 Dimensión ${dims[0]} (medida del modelo ${d})`
+        : `📐 Dimensión ${dims[0]}. El modelo ${d} también existe en: ${dims.slice(1).join(', ')}`);
     }
 
     async function autoCompletarProfInicial() {
@@ -49788,7 +49878,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 937 líneas | 36,644 bytes (35.8 KB)
+- **Métricas:** 937 líneas | 36,680 bytes (35.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -50358,7 +50448,7 @@ def test_admin_editar_catalogo_modelos_y_sincronizar_prof_inicial(test_db):
 
     # 2. Obtener el modelo del catálogo
     mods = admin_client.get("/api/modelos-llanta").json()
-    mod_goodyear = next(m for m in mods if m["marca"].upper() == "GOODYEAR" and "KMAX D" in m["diseno"].upper())
+    mod_goodyear = next(m for m in mods if m["marca"].upper() == "GOODYEAR" and "KMAX D" in m["diseno"].upper() and m["dimension"] == "295/80R22.5")
     mod_id = mod_goodyear["id"]
 
     # 3. Editar el modelo en el catálogo cambiando profundidad inicial a 24.0 mm

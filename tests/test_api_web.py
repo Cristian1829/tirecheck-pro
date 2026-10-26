@@ -564,7 +564,7 @@ def test_admin_editar_catalogo_modelos_y_sincronizar_prof_inicial(test_db):
 
     # 2. Obtener el modelo del catálogo
     mods = admin_client.get("/api/modelos-llanta").json()
-    mod_goodyear = next(m for m in mods if m["marca"].upper() == "GOODYEAR" and "KMAX D" in m["diseno"].upper())
+    mod_goodyear = next(m for m in mods if m["marca"].upper() == "GOODYEAR" and "KMAX D" in m["diseno"].upper() and m["dimension"] == "295/80R22.5")
     mod_id = mod_goodyear["id"]
 
     # 3. Editar el modelo en el catálogo cambiando profundidad inicial a 24.0 mm

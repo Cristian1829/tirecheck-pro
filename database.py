@@ -12,6 +12,7 @@ import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 import sys
+import catalogo_modelos_colombia
 import estructura_ejes as ee
 
 try:
@@ -755,6 +756,14 @@ def inicializar_bd():
                 INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, modelos_seed)
+
+        # Modelos comunes de carga y pasajeros en Colombia (una sola vez; no pisa lo que el cliente ya tenga)
+        conn.execute("CREATE TABLE IF NOT EXISTS _control_migraciones (nombre TEXT PRIMARY KEY, fecha_ejecucion TEXT, filas_afectadas INTEGER)")
+        if not cursor.execute("SELECT 1 FROM _control_migraciones WHERE nombre = 'catalogo_modelos_colombia_v1'").fetchone():
+            antes = cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas").fetchone()[0]
+            cursor.executemany("INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion) VALUES (?, ?, ?, ?, ?, ?)", catalogo_modelos_colombia.modelos_colombia())
+            nuevas = cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas").fetchone()[0] - antes
+            cursor.execute("INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas) VALUES ('catalogo_modelos_colombia_v1', datetime('now'), ?)", (nuevas,))
 
         # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
         conn.execute("""
@@ -4906,6 +4915,46 @@ def obtener_catalogo_modelos():
         cursor.execute('SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, marca ASC, diseno ASC')
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
+
+def buscar_dimensiones_modelo(marca, diseno):
+    """
+    Medidas en las que existe un modelo (marca + diseño): primero el catálogo de modelos y, si
+    el modelo no está, las medidas con que se ha inspeccionado, de la más usada a la menos usada.
+    Retorna {'dimensiones': [...], 'origen': 'catalogo' | 'historial' | None}.
+    """
+    m = (marca or '').strip()
+    d = (diseno or '').strip()
+    if not d or '(seleccionar' in d.lower() or d == '__nuevo__':
+        return {'dimensiones': [], 'origen': None}
+    if '(seleccionar' in m.lower() or m == '__nuevo__':
+        m = ''
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if m:
+            filas = cursor.execute("""
+                SELECT TRIM(dimension) FROM catalogo_modelos_llantas
+                WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND TRIM(IFNULL(dimension, '')) != ''
+                ORDER BY id
+            """, (m, d)).fetchall()
+        else:
+            filas = cursor.execute("""
+                SELECT TRIM(dimension) FROM catalogo_modelos_llantas
+                WHERE LOWER(diseno) = LOWER(?) AND TRIM(IFNULL(dimension, '')) != '' ORDER BY id
+            """, (d,)).fetchall()
+        dims = list(dict.fromkeys(f[0] for f in filas))
+        if dims:
+            return {'dimensiones': dims, 'origen': 'catalogo'}
+        if m:
+            filas = cursor.execute("""
+                SELECT TRIM(dimension), COUNT(*) FROM inspecciones
+                WHERE LOWER(marca) = LOWER(?) AND LOWER(diseno) = LOWER(?) AND TRIM(IFNULL(dimension, '')) != ''
+                GROUP BY TRIM(dimension) ORDER BY COUNT(*) DESC
+            """, (m, d)).fetchall()
+            dims = [f[0] for f in filas]
+            if dims:
+                return {'dimensiones': dims, 'origen': 'historial'}
+    return {'dimensiones': [], 'origen': None}
+
 
 def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original', banda=''):
     m = (marca or '').strip()

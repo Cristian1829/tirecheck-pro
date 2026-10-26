@@ -1015,7 +1015,7 @@
 
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Diseño / Modelo</label>
-                  <select id="diseno" onchange="verificarOpcionNuevaSelect(this, 'diseño / modelo'); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
+                  <select id="diseno" onchange="verificarOpcionNuevaSelect(this, 'diseño / modelo'); autoCompletarDimensionModelo().then(autoCompletarProfInicial);" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>
                   </select>
                   <datalist id="dl_disenos"></datalist>

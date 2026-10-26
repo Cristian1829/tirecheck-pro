@@ -1492,6 +1492,11 @@ def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "
     prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida, banda=banda)
     return {"prof_inicial": prof}
 
+@app.get("/api/dimensiones-modelo")
+def api_dimensiones_modelo(marca: str = "", diseno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Medidas de un modelo de la marca, para completar la dimensión al elegir el diseño."""
+    return database.buscar_dimensiones_modelo(marca, diseno)
+
 @app.get("/api/buscar-modelos")
 def api_buscar_modelos(query: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     return database.buscar_modelos_llantas_filtro(query)

@@ -2842,6 +2842,42 @@
       }
     }
 
+    // Al elegir el diseño/modelo, completa la dimensión con la medida de ese modelo en el catálogo.
+    // Si el modelo existe en varias medidas y la actual es una de ellas, se respeta; si no, se usa la primera.
+    async function autoCompletarDimensionModelo() {
+      const m = (document.getElementById('marca')?.value || '').trim();
+      const d = (document.getElementById('diseno')?.value || '').trim();
+      if (!d || d === '__nuevo__' || d.includes('(Seleccionar')) return;
+      const mValida = m && m !== '__nuevo__' && !m.includes('(Seleccionar');
+
+      let dims = [];
+      try {
+        const res = await fetchConTimeoutPatio(`/api/dimensiones-modelo?marca=${encodeURIComponent(mValida ? m : '')}&diseno=${encodeURIComponent(d)}`, {}, 3500);
+        if (res.ok) dims = (await res.json()).dimensiones || [];
+      } catch (e) {}
+
+      if (!dims.length) {  // sin conexión: catálogo guardado en el dispositivo
+        try {
+          const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
+          const lista = (cat && cat.modelos) ? cat.modelos : [];
+          dims = [...new Set(lista
+            .filter(it => (!mValida || (it.marca || '').toLowerCase() === m.toLowerCase()) && (it.diseno || '').toLowerCase() === d.toLowerCase())
+            .map(it => String(it.dimension || '').trim()).filter(Boolean))];
+        } catch (e) {}
+      }
+      if (!dims.length) return;
+
+      const selDim = document.getElementById('dimension');
+      const actual = (selDim?.value || '').trim();
+      if (dims.some(x => x.toLowerCase() === actual.toLowerCase())) return;  // la medida actual ya es válida para el modelo
+
+      asignarValorSelect('dimension', dims[0]);
+      alCambiarDimensionMobile();
+      mostrarToast(dims.length === 1
+        ? `📐 Dimensión ${dims[0]} (medida del modelo ${d})`
+        : `📐 Dimensión ${dims[0]}. El modelo ${d} también existe en: ${dims.slice(1).join(', ')}`);
+    }
+
     async function autoCompletarProfInicial() {
       const m = (document.getElementById('marca')?.value || '').trim();
       const d = (document.getElementById('diseno')?.value || '').trim();
