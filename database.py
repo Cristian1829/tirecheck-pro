@@ -178,6 +178,10 @@ def asegurar_columna_vistas_permitidas(conn):
         if cols_usr and 'vistas_permitidas' not in cols_usr:
             cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis,composicion'")
             conn.commit()
+        # Sedes permitidas por cliente ('CLIENTE|SEDE, …'); vacío = todas las sedes de sus clientes
+        if cols_usr and 'sedes_asignadas' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN sedes_asignadas TEXT DEFAULT ''")
+            conn.commit()
     except Exception:
         pass
 
@@ -262,7 +266,8 @@ def inicializar_bd():
             ("tipo_operacion", "TEXT"),
             ("numero_interno", "TEXT"),
             ("usuario_registro", "TEXT"),
-            ("foto_novedad", "TEXT")
+            ("foto_novedad", "TEXT"),
+            ("unidad_medida", "TEXT DEFAULT 'KM'")  # KM u HORAS: en qué se mide la lectura (kilometraje u horómetro)
         ]
         for col, tipo in nuevas_columnas:
             if col not in cols_existentes:
@@ -550,6 +555,30 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_bodega ON llantas_maestro (cliente, ubicacion_bodega, dimension)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_serial ON llantas_maestro (numero_interno, cliente)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_serial_cliente ON kardex_movimientos_llanta (cliente, numero_interno, fecha_movimiento DESC)")
+        # Lista de precios por cliente (llanta nueva o reencauche), con fecha de vigencia
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS precios_llanta_cliente (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                marca TEXT NOT NULL,
+                diseno TEXT NOT NULL DEFAULT '',
+                dimension TEXT NOT NULL,
+                tipo TEXT NOT NULL DEFAULT 'Original',
+                precio REAL NOT NULL,
+                vigente_desde TEXT NOT NULL,
+                UNIQUE(cliente, marca, diseno, dimension, tipo, vigente_desde)
+            )
+        """)
+        # Stock de seguridad del MRP por medida y eje (DIRECCIONAL / TRACCION / LIBRE)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS stock_seguridad_mrp (
+                cliente TEXT NOT NULL,
+                dimension TEXT NOT NULL,
+                eje TEXT NOT NULL,
+                cantidad INTEGER NOT NULL,
+                UNIQUE(cliente, dimension, eje)
+            )
+        """)
         # Máximo de reencauches por cliente y marca ('TODAS' = regla general del cliente)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS configuracion_reencauche (
@@ -788,6 +817,9 @@ def inicializar_bd():
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Unidad de medida del vehículo, asignada al crear la placa: kilómetros u horas de motor
+        if 'unidad_medida' not in [r[1] for r in cursor.execute("PRAGMA table_info(catalogo_vehiculos)").fetchall()]:
+            cursor.execute("ALTER TABLE catalogo_vehiculos ADD COLUMN unidad_medida TEXT DEFAULT 'KM'")
 
         # Migración automática inicial (Backfill): poblar catalogo_vehiculos desde inspecciones históricas
         cursor.execute("""
@@ -1863,7 +1895,22 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
 # ==========================================
 
-def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None):
+def normalizar_unidad_medida(valor) -> str:
+    """'HORAS' si el vehículo se mide por horas de motor; 'KM' en cualquier otro caso."""
+    return 'HORAS' if 'HOR' in str(valor or '').upper() else 'KM'
+
+
+def unidad_medida_placa(placa, conn=None) -> str:
+    def _q(c):
+        r = c.execute("SELECT unidad_medida FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ?", (str(placa or '').strip().upper(),)).fetchone()
+        return normalizar_unidad_medida(r[0]) if r and r[0] else ''
+    if conn is not None:
+        return _q(conn)
+    with get_connection() as c:
+        return _q(c)
+
+
+def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None, unidad_medida=None):
     pl = str(placa or '').strip().upper()
     tip = str(tipologia or '').strip().upper()
     if not pl or not tip or tip.lower() in ('nan', 'none'):
@@ -1872,10 +1919,11 @@ def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', t
     sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip().upper()
     op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip().upper()
     km = to_float(kilometraje, 0.0)
+    uni = normalizar_unidad_medida(unidad_medida) if unidad_medida else ''
 
     sql = """
-        INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion, unidad_medida)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CASE WHEN ? != '' THEN ? ELSE 'KM' END)
         ON CONFLICT(placa) DO UPDATE SET
             tipologia = excluded.tipologia,
             cliente = CASE WHEN excluded.cliente != '' THEN excluded.cliente ELSE catalogo_vehiculos.cliente END,
@@ -1884,7 +1932,7 @@ def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', t
             ultimo_km = MAX(catalogo_vehiculos.ultimo_km, excluded.ultimo_km),
             fecha_actualizacion = CURRENT_TIMESTAMP
     """
-    params = (pl, tip, cli, sub, op, km)
+    params = (pl, tip, cli, sub, op, km, uni, uni)  # la unidad solo se fija al crear la placa
 
     if conn is not None:
         cursor = conn.cursor()
@@ -2150,6 +2198,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 "cliente": row[2] or cliente_placa or "",
                 "subcliente": row[3] or "",
                 "tipo_operacion": row[4] or "",
+                "unidad_medida": unidad_medida_placa(pl, conn) or "KM",
                 "ultimo_km": ultimo_km_val,
                 "dimension": dim_vehiculo,
                 "cant_llantas": len(posiciones),
@@ -2752,12 +2801,16 @@ def insertar_inspeccion(datos):
                 km_final = to_float(r_km_prev[0])
                 datos['kilometraje'] = km_final
 
+        # La unidad es la de la placa; la que trae la inspección solo cuenta si la placa es nueva
+        unidad_insp = unidad_medida_placa(placa_norm, conn) or (normalizar_unidad_medida(datos.get('unidad_medida')) if datos.get('unidad_medida') else 'KM')
+        datos['unidad_medida'] = unidad_insp
         cursor.execute("""
             INSERT INTO inspecciones (
                 fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                 tipologia, marca, diseno, dimension, vida, banda_reen,
-                prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad,
+                unidad_medida
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             fecha_norm,
             str(datos.get('cliente', '')).strip().upper(),
@@ -2782,7 +2835,8 @@ def insertar_inspeccion(datos):
             to_float(datos.get('km_montaje', 0)),
             str(datos.get('numero_interno', '')).strip().upper(),
             str(datos.get('usuario_registro', '')).strip().upper(),
-            str(datos.get('foto_novedad', '')).strip()
+            str(datos.get('foto_novedad', '')).strip(),
+            unidad_insp
         ))
         last_id = cursor.lastrowid
 
@@ -2807,7 +2861,8 @@ def insertar_inspeccion(datos):
         datos.get('cliente'),
         datos.get('subcliente'),
         datos.get('tipo_operacion'),
-        datos.get('kilometraje')
+        datos.get('kilometraje'),
+        unidad_medida=datos.get('unidad_medida')
     )
     sincronizar_marca_cliente(
         datos.get('cliente'),
@@ -2822,7 +2877,7 @@ def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
         query = f"""
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, {col_foto}
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, IFNULL(unidad_medida, 'KM') AS unidad_medida, {col_foto}
             FROM inspecciones
         """
         params = []
@@ -2835,6 +2890,11 @@ def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
                     placeholders = ', '.join(['UPPER(TRIM(?))'] * len(clis))
                     query += f" WHERE UPPER(TRIM(cliente)) IN ({placeholders})"
                     params.extend([c.upper() for c in clis])
+                    # Sedes: un cliente con sedes asignadas solo muestra esas sedes
+                    for cli_s, sedes in parsear_sedes_asignadas(usr_info.get('sedes_asignadas'), clis).items():
+                        ph = ', '.join(['?'] * len(sedes))
+                        query += f" AND (UPPER(TRIM(cliente)) != ? OR UPPER(TRIM(IFNULL(subcliente, ''))) IN ({ph}))"
+                        params.extend([cli_s] + sorted(sedes))
         query += " ORDER BY id DESC"
         return pd.read_sql_query(query, conn, params=params)
 
@@ -3761,6 +3821,73 @@ def vida_llanta(vida='', num_reencauches=None, ciclo=None) -> str:
     if v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
         n = to_int(ciclo, 1) - 1
     return 'Original' if n <= 0 else f'R{n}'
+
+
+def _tipo_precio(vida) -> str:
+    """La lista distingue llanta nueva ('Original') de reencauche ('Reencauche', aplica a R1, R2…)."""
+    return 'Original' if vida_llanta(vida) == 'Original' and str(vida or '').strip().upper() != 'REENCAUCHE' else 'Reencauche'
+
+
+def guardar_precio_cliente(cliente, marca, diseno, dimension, tipo, precio, vigente_desde) -> bool:
+    cli, mar, dis, dim = (str(x or '').strip().upper() for x in (cliente, marca, diseno, dimension))
+    tip = _tipo_precio(tipo)
+    pr, desde = to_float(precio), str(vigente_desde or '').strip()[:10]
+    if not (cli and mar and dim and pr > 0 and re.match(r'^\d{4}-\d{2}-\d{2}$', desde)):
+        return False
+    with get_connection() as conn:
+        conn.execute("""INSERT INTO precios_llanta_cliente (cliente, marca, diseno, dimension, tipo, precio, vigente_desde)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(cliente, marca, diseno, dimension, tipo, vigente_desde) DO UPDATE SET precio = excluded.precio""",
+                     (cli, mar, dis, dim, tip, pr, desde))
+        conn.commit()
+    return True
+
+
+def listar_precios_cliente(cliente='') -> list:
+    with get_connection() as conn:
+        q = "SELECT id, cliente, marca, diseno, dimension, tipo, precio, vigente_desde FROM precios_llanta_cliente"
+        params = []
+        if cliente:
+            q += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            params.append(cliente)
+        cols = ['id', 'cliente', 'marca', 'diseno', 'dimension', 'tipo', 'precio', 'vigente_desde']
+        return [dict(zip(cols, r)) for r in conn.execute(q + " ORDER BY cliente, marca, diseno, dimension, tipo, vigente_desde DESC", params)]
+
+
+def eliminar_precio_cliente(precio_id) -> bool:
+    with get_connection() as conn:
+        n = conn.execute("DELETE FROM precios_llanta_cliente WHERE id = ?", (to_int(precio_id),)).rowcount
+        conn.commit()
+    return n > 0
+
+
+def cargar_lista_precios():
+    """Lista completa en memoria para cálculos masivos: {(cliente, marca, diseno, dimension, tipo): [(desde, precio)…]}."""
+    lista = {}
+    try:
+        with get_connection() as conn:
+            for cli, mar, dis, dim, tip, pr, desde in conn.execute(
+                    "SELECT cliente, marca, diseno, dimension, tipo, precio, vigente_desde FROM precios_llanta_cliente ORDER BY vigente_desde"):
+                lista.setdefault((cli, mar, dis or '', dim, tip), []).append((desde, pr))
+    except Exception:
+        pass
+    return lista
+
+
+def precio_lista_cliente(cliente, marca, diseno, dimension, vida, fecha=None, lista=None) -> Optional[float]:
+    """
+    Precio de la lista del cliente vigente a la fecha: primero marca + diseño + dimensión y, si no hay,
+    el precio general de la marca para esa dimensión. Sin precio del cliente retorna None (se excluye).
+    """
+    lista = cargar_lista_precios() if lista is None else lista
+    cli, mar, dis, dim = (str(x or '').strip().upper() for x in (cliente, marca, diseno, dimension))
+    tip = _tipo_precio(vida)
+    f = str(fecha or _hoy_bogota().isoformat())[:10]
+    for clave in ((cli, mar, dis, dim, tip), (cli, mar, '', dim, tip)):
+        vigentes = [pr for desde, pr in lista.get(clave, []) if desde <= f]
+        if vigentes:
+            return float(vigentes[-1])
+    return None
 
 
 def maximo_reencauches(cliente, marca='') -> Optional[int]:
@@ -5546,6 +5673,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
     resultados = []
     cache_esquemas = {}
+    ref_precio_t, _ = construir_referencias_llanta(df)
     # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
     ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
     posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
@@ -5585,6 +5713,9 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         precio = to_float(ultima['precio'])
         if precio <= 0:
             precio = to_float(primera['precio'])
+        if precio <= 0:  # lista de precios del cliente (nunca de otro cliente)
+            precio = to_float(ref_precio_t(ultima.get('cliente'), ultima.get('dimension'), num, ultima.get('marca'),
+                                           ultima.get('diseno'), ultima.get('vida'), str(primera.get('fecha') or '')[:10]))
         cpk = (precio / km_rodados) if (km_rodados > 0 and precio > 0) else 0.0
 
         cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
@@ -5678,6 +5809,52 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
             res.append(clean)
     return res
 
+def parsear_sedes_asignadas(sedes_asignadas, clientes=None) -> dict:
+    """
+    'TELLANTAS|PEPSICO FUNZA, TELLANTAS|BOGOTA' -> {'TELLANTAS': {'PEPSICO FUNZA', 'BOGOTA'}}.
+    Un cliente que no aparece no tiene restricción de sede (ve todas). Si se pasan `clientes`,
+    se descartan sedes de clientes que el usuario no tiene asignados.
+    """
+    res = {}
+    permitidos = {c.upper() for c in (clientes or [])}
+    for item in str(sedes_asignadas or '').split(','):
+        if '|' not in item:
+            continue
+        cli, sede = [x.strip().upper() for x in item.split('|', 1)]
+        if cli and sede and (not permitidos or cli in permitidos):
+            res.setdefault(cli, set()).add(sede)
+    return res
+
+
+def serializar_sedes_asignadas(sedes: dict) -> str:
+    return ', '.join(f"{c}|{s}" for c in sorted(sedes) for s in sorted(sedes[c]))
+
+
+def cliente_sede_de_placa(placa):
+    """(cliente, sede) de la placa según el catálogo de vehículos o, si no está, su última inspección."""
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return '', ''
+    with get_connection() as conn:
+        r = conn.execute("SELECT cliente, subcliente FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ?", (pl,)).fetchone()
+        if not r or not r[0]:
+            r = conn.execute("""SELECT cliente, subcliente FROM inspecciones WHERE UPPER(TRIM(placa)) = ?
+                                ORDER BY fecha DESC, id DESC LIMIT 1""", (pl,)).fetchone()
+    return (str(r[0] or '').strip().upper(), str(r[1] or '').strip().upper()) if r else ('', '')
+
+
+def usuario_puede_ver_sede(usr: dict, cliente, subcliente) -> bool:
+    """True si el usuario ve ese cliente y esa sede (administrador: todo; sin sedes asignadas: todas)."""
+    if not usr or str(usr.get('rol', '')).lower() in ('admin', 'administrador') or str(usr.get('username', '')).lower() == 'admin':
+        return True
+    clis = parsear_clientes_asignados(usr.get('cliente_asignado'))
+    cli = str(cliente or '').strip().upper()
+    if clis and cli and cli not in clis:
+        return False
+    sedes = parsear_sedes_asignadas(usr.get('sedes_asignadas'), clis).get(cli)
+    return not sedes or str(subcliente or '').strip().upper() in sedes
+
+
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
     Retorna la lista de vistas autorizadas según el rol:
@@ -5755,7 +5932,7 @@ def obtener_usuario_por_username(username):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
             FROM usuarios
             WHERE LOWER(username) = LOWER(?)
         """, (u,))
@@ -5770,6 +5947,7 @@ def obtener_usuario_por_username(username):
                 'rol': row[3],
                 'cliente_asignado': row[4] or '',
                 'clientes_asignados': clis,
+                'sedes_asignadas': row[7] or '',
                 'vistas_permitidas': vistas,
                 'activo': bool(row[5])
             }
@@ -5781,11 +5959,11 @@ def listar_usuarios():
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
             FROM usuarios
             ORDER BY id ASC
         """)
-        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas']
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas', 'sedes_asignadas']
         filas = []
         for r in cursor.fetchall():
             d = dict(zip(cols, r))
@@ -5795,7 +5973,7 @@ def listar_usuarios():
             filas.append(d)
         return filas
 
-def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado='', vistas_permitidas=None):
+def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado='', vistas_permitidas=None, sedes_asignadas=''):
     u = (username or '').strip().lower()
     p = (password or '').strip()
     nom = (nombre_completo or '').strip()
@@ -5818,16 +5996,17 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
         asegurar_columna_vistas_permitidas(conn)
         try:
             cursor = conn.cursor()
+            sedes_str = serializar_sedes_asignadas(parsear_sedes_asignadas(sedes_asignadas, parsear_clientes_asignados(cli)))
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (u, hashed_pwd, nom, r, cli, vistas_str))
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas, sedes_asignadas)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (u, hashed_pwd, nom, r, cli, vistas_str, sedes_str))
             conn.commit()
             return True
         except Exception:
             return False
 
-def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None):
+def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None, sedes_asignadas=None):
     u = (username or '').strip().lower()
     with get_connection() as conn:
         asegurar_columna_vistas_permitidas(conn)
@@ -5868,6 +6047,14 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
             params.append(', '.join(parsear_clientes_asignados(cliente_asignado)))
+        if sedes_asignadas is not None:
+            if cliente_asignado is not None:
+                clis_ref = parsear_clientes_asignados(cliente_asignado)
+            else:
+                r_cli = cursor.execute("SELECT cliente_asignado FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,)).fetchone()
+                clis_ref = parsear_clientes_asignados(r_cli[0] if r_cli else '')
+            updates.append("sedes_asignadas = ?")
+            params.append(serializar_sedes_asignadas(parsear_sedes_asignadas(sedes_asignadas, clis_ref)))
         if activo is not None:
             updates.append("activo = ?")
             params.append(1 if activo else 0)
@@ -6118,9 +6305,14 @@ def construir_referencias_llanta(df: pd.DataFrame):
                 d = d.sort_values('fecha')
             precio_llanta = d.groupby(['_cli', '_sn'])['_pr'].last().to_dict()  # el más reciente
 
-    def ref_precio(cliente, dimension, numero_interno=''):
+    lista_precios = cargar_lista_precios()
+
+    def ref_precio(cliente, dimension, numero_interno='', marca='', diseno='', vida='', fecha=None):
         v = precio_llanta.get((str(cliente or '').strip().upper(), str(numero_interno or '').strip().upper()))
-        return float(v) if v and v > 0 else None
+        if v and v > 0:
+            return float(v)
+        # Lista de precios del cliente vigente a la fecha (nunca de otros clientes)
+        return precio_lista_cliente(cliente, marca, diseno, dimension, vida, fecha, lista_precios) if marca else None
 
     cache_pini = {}
 
@@ -6135,6 +6327,148 @@ def construir_referencias_llanta(df: pd.DataFrame):
         return cache_pini[clave]
 
     return ref_precio, ref_prof_inicial
+
+
+def _div(a, b):
+    return (a / b) if (a and b and b > 0) else None
+
+
+def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
+    """
+    Los 4 CPK del negocio (costo por km; con unidad='horas', costo por hora de motor):
+    - Operativo: costo de la vida / km recorridos hasta la última inspección.
+    - Proyectado: costo de la vida / km proyectados hasta el límite de retiro (km actuales + mm útiles × km/mm).
+    - Total por ciclo completo: suma de los costos de todas las vidas / suma de los km de todas las vidas.
+    - Administrativo (mensual, por flota): costo de las llantas instaladas en el mes sin km en esa vida
+      (montajes desde Bodega 1 o Bodega 4) / km de la flota en el mes (odómetro al corte − corte anterior).
+    Los agregados de flota son Σcosto / Σkm (no promedio de CPK por llanta). Sin precio de la llanta ni
+    de la lista del cliente, la vida queda fuera de los cálculos en pesos (se cuenta como sin precio).
+    """
+    # La lectura del vehículo (kilometraje) está en km o en horas según la unidad de la placa
+    col_med, col_mont = 'kilometraje', 'km_montaje'
+    vacio = {"unidad": unidad, "llantas": {}, "por_vida": [], "flota": {"cpk_operativo": None, "cpk_proyectado": None,
+             "cpk_total": None, "llantas_con_cpk": 0, "llantas_sin_precio": 0}, "administrativo": []}
+    if df is None or df.empty:
+        return vacio
+    d = df.copy().reset_index(drop=True)  # índice único: las columnas nuevas no se desalinean
+    # fillna antes de astype: en pandas recientes astype(str) conserva los vacíos como NaN
+    d['_cli'] = d['cliente'].fillna('').astype(str).str.strip().str.upper()
+    d['_sn'] = d['numero_interno'].fillna('').astype(str).str.strip().str.upper()
+    d = d[~d['_sn'].isin(('', 'SN', 'NAN', 'NONE')) & (d['_cli'] != '')]
+    d['_vida'] = [vida_llanta(v, None, None) if str(v or '').strip().upper() != 'REENCAUCHE' else 'Reencauche'
+                  for v in d.get('vida', pd.Series([''] * len(d)))]
+    d = d.sort_values(['fecha', 'id'])
+    ref_precio, _ = construir_referencias_llanta(d)
+    lim_posicion = construir_resolver_limite_posicion()
+    pos_placa = d.groupby(d['placa'].astype(str).str.strip().str.upper())['posicion'].apply(lambda s: [to_int(x) for x in s]).to_dict()
+
+    llantas = {}
+    sin_precio = 0
+    for (cli, sn, vida), g in d.groupby(['_cli', '_sn', '_vida'], sort=False):
+        pri, ult = g.iloc[0], g.iloc[-1]
+        med_ult = to_float(ult.get(col_med))
+        mont = to_float(ult.get(col_mont)) or to_float(pri.get(col_mont))
+        base = mont if (mont > 0 and med_ult >= mont) else to_float(pri.get(col_med))
+        km = max(0.0, med_ult - base)
+        precios = [to_float(x) for x in g['precio'] if to_float(x) > 0] if 'precio' in g else []
+        costo = precios[0] if precios else ref_precio(cli, pri.get('dimension'), sn, pri.get('marca'), pri.get('diseno'),
+                                                      vida, str(pri.get('fecha') or '')[:10])
+        profs = [p for p in (to_float(ult.get('prof_ext')), to_float(ult.get('prof_cent')), to_float(ult.get('prof_int'))) if p > 0]
+        p_min = min(profs) if profs else 0.0
+        p_ini = to_float(ult.get('prof_inicial')) or to_float(pri.get('prof_inicial'))
+        placa = str(ult.get('placa') or '').strip().upper()
+        lim = lim_posicion(cli, str(ult.get('subcliente') or ''), str(ult.get('tipologia') or ''), to_int(ult.get('posicion')),
+                           pos_placa.get(placa, [to_int(ult.get('posicion'))]))
+        desg = (p_ini - p_min) if (p_ini > 0 and p_min > 0) else 0.0
+        proy = None
+        if desg >= 0.5 and km >= (50 if unidad == 'horas' else 500):
+            proy = km + max(0.0, p_min - lim) * (km / desg)
+        if not costo:
+            sin_precio += 1
+        ll = llantas.setdefault(f"{cli}|{sn}", {"cliente": cli, "numero_interno": sn, "marca": str(pri.get('marca') or ''),
+                                                "vidas": {}, "cpk_total_ciclo": None})
+        ll["vidas"][vida] = {
+            "km": round(km, 1), "costo": costo, "km_proyectados": round(proy, 1) if proy else None,
+            "cpk_operativo": _div(costo, km), "cpk_proyectado": _div(costo, proy),
+            "prof_actual": p_min, "limite_retiro": lim, "fecha_ultima": str(ult.get('fecha') or '')[:10],
+        }
+    for ll in llantas.values():
+        vs = [v for v in ll["vidas"].values() if v["costo"] and v["km"] > 0]
+        if vs and len(vs) == len(ll["vidas"]):  # ciclo completo solo si todas las vidas tienen costo
+            ll["cpk_total_ciclo"] = _div(sum(v["costo"] for v in vs), sum(v["km"] for v in vs))
+
+    # Por vida y flota: Σcosto / Σkm
+    def _agregar(vidas):
+        con = [v for v in vidas if v["costo"] and v["km"] > 0]
+        con_p = [v for v in con if v["km_proyectados"]]
+        return (_div(sum(v["costo"] for v in con), sum(v["km"] for v in con)),
+                _div(sum(v["costo"] for v in con_p), sum(v["km_proyectados"] for v in con_p)), len(con))
+    por_vida = []
+    orden = lambda v: (0, 0) if v == 'Original' else ((1, int(v[1:])) if re.match(r'^R\d+$', v) else (2, 0))
+    todas = [(vn, v) for ll in llantas.values() for vn, v in ll["vidas"].items()]
+    for vn in sorted({vn for vn, _ in todas}, key=orden):
+        op, pr, n = _agregar([v for x, v in todas if x == vn])
+        por_vida.append({"vida": vn, "cpk_operativo": op, "cpk_proyectado": pr, "llantas": n})
+    op, pr, n = _agregar([v for _, v in todas])
+    ciclos = [ll for ll in llantas.values() if ll["cpk_total_ciclo"]]
+    total = _div(sum(sum(v["costo"] for v in ll["vidas"].values()) for ll in ciclos),
+                 sum(sum(v["km"] for v in ll["vidas"].values()) for ll in ciclos))
+
+    return {"unidad": unidad, "llantas": llantas, "por_vida": por_vida,
+            "flota": {"cpk_operativo": op, "cpk_proyectado": pr, "cpk_total": total, "llantas_con_cpk": n,
+                      "llantas_sin_precio": sin_precio},
+            "administrativo": _cpk_administrativo(d, col_med)}
+
+
+def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: int = 12) -> list:
+    """Serie mensual: inversión en llantas instaladas sin km / km (u horas) de la flota en el mes."""
+    if d.empty:
+        return []
+    clientes = sorted(set(d['_cli']))
+    fechas = d['fecha'].astype(str).str[:7]
+    lista_meses = sorted({m for m in fechas if re.match(r'^\d{4}-\d{2}$', m)})[-meses:]
+    # Odómetro de cada vehículo al corte de cada mes (última lectura hasta fin de mes)
+    d2 = d.assign(_mes=fechas, _placa=d['placa'].astype(str).str.strip().str.upper(), _med=pd.to_numeric(d[col_med], errors='coerce'))
+    d2 = d2[d2['_med'] > 0]
+    lista_precios = cargar_lista_precios()
+    instalaciones = []
+    try:
+        with get_connection() as conn:
+            ph = ', '.join(['?'] * len(clientes))
+            instalaciones = conn.execute(f"""
+                SELECT SUBSTR(k.fecha_movimiento, 1, 7), k.cliente, k.numero_interno, k.vida_ciclo,
+                       m.marca, m.diseno, m.dimension, m.costo_compra_original, m.costo_ciclo_actual, m.vida_actual, k.fecha_movimiento
+                FROM kardex_movimientos_llanta k
+                LEFT JOIN llantas_maestro m ON UPPER(m.numero_interno) = UPPER(k.numero_interno) AND UPPER(m.cliente) = UPPER(k.cliente)
+                WHERE k.tipo_movimiento IN ('MONTAJE', 'REINGRESO_MONTAJE')
+                  AND k.bodega_origen IN ('BODEGA_1_NUEVAS', 'BODEGA_4_REENCAUCHADAS')
+                  AND UPPER(k.cliente) IN ({ph})
+            """, clientes).fetchall()
+    except Exception:
+        instalaciones = []
+    serie = []
+    for i, mes in enumerate(lista_meses):
+        km_mes = 0.0
+        if i > 0:
+            ant = lista_meses[i - 1]
+            corte = d2[d2['_mes'] <= mes].groupby('_placa')['_med'].max()
+            corte_ant = d2[d2['_mes'] <= ant].groupby('_placa')['_med'].max()
+            comunes = corte.index.intersection(corte_ant.index)  # vehículos con lectura en los dos cortes
+            km_mes = float((corte[comunes] - corte_ant[comunes]).clip(lower=0).sum())
+        inversion, sin_costo = 0.0, 0
+        for (m_ins, cli, sn, vida_k, marca, diseno, dim, c_orig, c_ciclo, vida_m, f_mov) in instalaciones:
+            if m_ins != mes:
+                continue
+            vida_i = vida_llanta(vida_k or 'Original')
+            costo = c_orig if vida_i == 'Original' else (c_ciclo if vida_llanta(vida_m) == vida_i else None)
+            costo = to_float(costo) or precio_lista_cliente(cli, marca, diseno, dim, vida_i, str(f_mov)[:10], lista_precios)
+            if costo:
+                inversion += costo
+            else:
+                sin_costo += 1
+        serie.append({"mes": mes, "inversion": round(inversion), "km_flota": round(km_mes),
+                      "instalaciones_sin_costo": sin_costo, "cpk_administrativo": _div(inversion, km_mes)})
+    return serie
 
 
 def estimar_combustible_subinflado(df_corte: pd.DataFrame, col_delta: str = 'calc_delta_psi_pct') -> dict:
@@ -6345,6 +6679,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         _col = lambda c: [str(x or '').strip() for x in (df[c].tolist() if c in df else [''] * n_rows)]
         marca_list_g, diseno_list_g, dim_list_g, vida_list_g = _col('marca'), _col('diseno'), _col('dimension'), _col('vida')
         sn_list_g = _col('numero_interno')
+        fechas_g = _col('fecha')
         delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
         alerta_alin_col_g = []
 
@@ -6385,7 +6720,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             p_ini_col.append(p_ini if p_ini is not None else float('nan'))
             # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
             pr_real = precio_list[idx] if precio_list[idx] > 0 else None
-            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx], sn_list_g[idx])
+            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx], sn_list_g[idx],
+                                                    marca_list_g[idx], diseno_list_g[idx], vida_list_g[idx], fechas_g[idx])
             precio_col.append(pr if pr else float('nan'))
             precio_estimado_col.append(False)
 
@@ -7486,16 +7822,82 @@ def preparar_corte_mrp(df_inspecciones: pd.DataFrame, lim_posicion=None) -> pd.D
     return df_c
 
 
-def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones, lim_posicion=None) -> list:
+EJES_STOCK_SEGURIDAD = ('DIRECCIONAL', 'TRACCION', 'LIBRE')
+HORIZONTE_MRP_MESES = 3
+
+
+def guardar_stock_seguridad(cliente, dimension, eje, cantidad) -> bool:
+    cli, dim, e = str(cliente or '').strip().upper(), str(dimension or '').strip().upper(), str(eje or '').strip().upper()
+    if not cli or not dim or e not in EJES_STOCK_SEGURIDAD or to_int(cantidad, -1) < 0:
+        return False
+    with get_connection() as conn:
+        conn.execute("""INSERT INTO stock_seguridad_mrp (cliente, dimension, eje, cantidad) VALUES (?, ?, ?, ?)
+                        ON CONFLICT(cliente, dimension, eje) DO UPDATE SET cantidad = excluded.cantidad""", (cli, dim, e, to_int(cantidad)))
+        conn.commit()
+    return True
+
+
+def listar_stock_seguridad(cliente='') -> list:
+    with get_connection() as conn:
+        q, params = "SELECT cliente, dimension, eje, cantidad FROM stock_seguridad_mrp", []
+        if cliente:
+            q += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            params.append(cliente)
+        return [{"cliente": c, "dimension": d, "eje": e, "cantidad": n} for c, d, e, n in conn.execute(q + " ORDER BY cliente, dimension, eje", params)]
+
+
+def eliminar_stock_seguridad(cliente, dimension, eje) -> bool:
+    with get_connection() as conn:
+        n = conn.execute("DELETE FROM stock_seguridad_mrp WHERE UPPER(cliente) = UPPER(?) AND UPPER(dimension) = UPPER(?) AND UPPER(eje) = UPPER(?)",
+                         (cliente, dimension, eje)).rowcount
+        conn.commit()
+    return n > 0
+
+
+def _ritmos_mrp(df_hist: pd.DataFrame):
     """
-    Matriz MRP única para Bodegas y el KPI 20 (antes había dos con reglas distintas).
-    - Demanda direccional: llantas de ejes DIRECCIONALES (según la estructura de la tipología) en
-      o bajo su límite de retiro, más el ajuste de par direccional. Solo se cubre con nuevas.
-    - Demanda de tracción / libre / repuesto: resto de llantas en o bajo su límite.
+    (km_por_mm por llanta-vida, km_por_mes por vehículo) a partir del historial de inspecciones.
+    Sin historial suficiente (menos de 15 días, menos de 0,5 mm o 500 km) no hay ritmo.
+    """
+    km_mm, km_mes = {}, {}
+    if df_hist is None or df_hist.empty:
+        return km_mm, km_mes
+    d = df_hist.reset_index(drop=True).sort_values(['fecha', 'id'])
+    d = d.assign(_f=pd.to_datetime(d['fecha'].astype(str).str[:10], errors='coerce'), _km=pd.to_numeric(d['kilometraje'], errors='coerce'))
+    for placa, g in d[d['_km'] > 0].groupby(d['placa'].astype(str).str.strip().str.upper()):
+        dias = (g['_f'].max() - g['_f'].min()).days if g['_f'].notna().any() else 0
+        delta = g['_km'].max() - g['_km'].min()
+        if dias >= 15 and delta > 0:
+            km_mes[placa] = delta / (dias / 30.4)
+    for (cli, sn, vida), g in d.groupby([d['cliente'].astype(str).str.upper(), d['numero_interno'].astype(str).str.upper(),
+                                         d['vida'].astype(str).str.upper()]):
+        pri, ult = g.iloc[0], g.iloc[-1]
+        mont = to_float(ult.get('km_montaje'))
+        base = mont if (mont > 0 and to_float(ult['_km']) >= mont) else to_float(pri['_km'])
+        km = to_float(ult['_km']) - base
+        profs = [p for p in (to_float(ult.get('prof_ext')), to_float(ult.get('prof_cent')), to_float(ult.get('prof_int'))) if p > 0]
+        desg = (to_float(ult.get('prof_inicial')) or to_float(pri.get('prof_inicial'))) - (min(profs) if profs else 0)
+        if km >= 500 and desg >= 0.5 and profs:
+            km_mm[(cli, sn, vida)] = km / desg
+    return km_mm, km_mes
+
+
+def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones, lim_posicion=None,
+                        df_hist: pd.DataFrame = None, horizonte_meses=None) -> list:
+    """
+    Matriz MRP única para Bodegas y el KPI 20, proyectada al horizonte (3 meses por defecto, editable).
+    - Demanda: llantas que llegan a su límite de retiro dentro del horizonte según su ritmo de desgaste
+      (km por mm de la llanta y km por mes del vehículo). Sin historial suficiente solo cuenta si ya
+      está en el límite. Direccional (según la estructura de la tipología) se cubre solo con nuevas.
+    - Reencauche y desecho: de las llantas que se retiran, el % de aprobación de reencauche del cliente
+      vuelve como reencauchada (cubre ejes no direccionales); el resto es desecho.
     - Reposición: bajas FVU de los últimos DIAS_REPOSICION_FVU días.
-    - Stock de seguridad: el parámetro del cliente.
+    - Stock de seguridad por medida y eje; si la medida no tiene regla, el valor general del cliente.
     """
     lim_posicion = lim_posicion or construir_resolver_limite_posicion()
+    horizonte = max(0.0, to_float(horizonte_meses, HORIZONTE_MRP_MESES)) if horizonte_meses not in (None, '') else HORIZONTE_MRP_MESES
+    km_mm_ll, km_mes_veh = _ritmos_mrp(df_hist)
+    reglas_stock = {(r['dimension'], r['eje']): r['cantidad'] for r in listar_stock_seguridad(cfg.get('cliente') or '')}
     pct_aprob = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
     stock_seg = to_int(cfg.get('stock_seguridad_default', 4), 4)
     dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
@@ -7505,16 +7907,36 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
         return len([ll for ll in llantas if str(ll.get('dimension', '')).upper() == dim.upper()
                     and ll.get('ubicacion_bodega') == ubicacion and filtro(ll)])
 
+    def meses_al_limite(r):
+        """0 si ya está en el límite; None si no hay ritmo para proyectar."""
+        p_min, lim = to_float(r['calc_p_min']), to_float(r['calc_lim_retiro'])
+        if p_min <= 0:
+            return None
+        if p_min <= lim:
+            return 0.0
+        kmm = km_mm_ll.get((str(r.get('cliente', '')).upper(), str(r.get('numero_interno', '')).upper(), str(r.get('vida', '')).upper()))
+        kmes = km_mes_veh.get(str(r.get('placa', '')).strip().upper())
+        return ((p_min - lim) * kmm / kmes) if (kmm and kmes) else None
+
     filas = []
     for dim in dimensiones:
-        dem_dir, dem_otros = 0, 0
+        dem_dir, dem_otros, dem_proyectada, sin_ritmo, retiradas = 0, 0, 0, 0, 0
         if df_corte is not None and not df_corte.empty:
             for placa, grp in df_corte.groupby('placa'):
                 est = lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist())
                 por_pos = {to_int(r['posicion']): r for _, r in grp.iterrows()}
                 en_dim = lambda r: str(r.get('dimension', '')).strip().upper() == dim.upper()
                 for pos, r in por_pos.items():
-                    if en_dim(r) and 0 < to_float(r['calc_p_min']) <= to_float(r['calc_lim_retiro']):
+                    if not en_dim(r):
+                        continue
+                    meses = meses_al_limite(r)
+                    if meses is None:
+                        sin_ritmo += 1
+                        continue
+                    if meses <= horizonte:
+                        retiradas += 1
+                        if meses > 0:
+                            dem_proyectada += 1
                         if r['calc_eje'] == ee.DIRECCIONAL:
                             dem_dir += 1
                         else:
@@ -7532,6 +7954,17 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
                             dem_dir += 1  # ajuste de par direccional
 
         bajas_fvu = contar_bajas_fvu_para_reponer(llantas, dim)
+        # Stock de seguridad por medida y eje (sin reglas para la medida: el valor general del cliente)
+        reglas_dim = {e: n for (d_r, e), n in reglas_stock.items() if d_r == dim.upper()}
+        if reglas_dim:
+            seg_dir = reglas_dim.get('DIRECCIONAL', 0)
+            seg_otros = reglas_dim.get('TRACCION', 0) + reglas_dim.get('LIBRE', 0)
+        else:
+            seg_dir, seg_otros = 0, stock_seg
+        stock_seg_dim = seg_dir + seg_otros
+        # Cascos de las llantas que se retiran: el % aprobado vuelve como reencauchada, el resto es desecho
+        retorno_proy = int(math.floor(retiradas * (pct_aprob / 100.0)))
+        desecho_proy = retiradas - retorno_proy
         b1 = contar('BODEGA_1_NUEVAS', dim)
         b2 = contar('BODEGA_2_RECAMBIO', dim, lambda ll: not ll.get('reservada_para_placa'))
         lim_b2 = limite_base_cliente  # una llanta de recambio sirve si está sobre el límite asignado al cliente
@@ -7542,18 +7975,21 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
         retorno_planta = int(math.floor(b3 * (pct_aprob / 100.0)))
 
         demanda = dem_dir + dem_otros
-        necesidad_bruta = demanda + bajas_fvu + stock_seg
-        compra_nuevas_dir = max(0, dem_dir - b1)            # dirección solo con llantas nuevas
-        b1_restante = max(0, b1 - dem_dir)
-        necesidad_no_dir = dem_otros + bajas_fvu + stock_seg
-        stock_util_no_dir = b1_restante + b2_utiles + b4 + retorno_planta + b5
+        necesidad_bruta = demanda + bajas_fvu + stock_seg_dim
+        compra_nuevas_dir = max(0, dem_dir + seg_dir - b1)   # dirección (y su reserva) solo con llantas nuevas
+        b1_restante = max(0, b1 - dem_dir - seg_dir)
+        necesidad_no_dir = dem_otros + bajas_fvu + seg_otros
+        stock_util_no_dir = b1_restante + b2_utiles + b4 + retorno_planta + b5 + retorno_proy
         compra_adicional = max(0, necesidad_no_dir - stock_util_no_dir)
         stock_disponible = b1 + b2_utiles + b4 + retorno_planta + b5
         filas.append({
             'dimension': dim,
             'demanda_flota': demanda, 'demanda_direccional': dem_dir, 'demanda_traccion': dem_otros,
             'reposicion_bajas_fvu': bajas_fvu,
-            'stock_seguridad': stock_seg, 'margen_seguridad': stock_seg,
+            'horizonte_meses': horizonte, 'demanda_proyectada': dem_proyectada, 'llantas_sin_ritmo': sin_ritmo,
+            'retorno_reencauche_proyectado': retorno_proy, 'desecho_proyectado': desecho_proy,
+            'stock_seguridad_direccional': seg_dir, 'stock_seguridad_otros': seg_otros,
+            'stock_seguridad': stock_seg_dim, 'margen_seguridad': stock_seg_dim,
             'necesidad_bruta': necesidad_bruta,
             'b1_nuevas': b1, 'stock_b1': b1, 'b1_restante': b1_restante,
             'b2_recambio_libres': b2, 'b2_recambio_libres_utiles': b2_utiles, 'stock_b2': b2_utiles,
@@ -7610,6 +8046,10 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
         if subcliente and subcliente != "TODOS":
             query_m += " AND UPPER(subcliente) = ?"
             params_m.append(subcliente)
+        sedes_f = [str(x).strip().upper() for x in (filtros.get('sedes') or []) if str(x).strip()]
+        if sedes_f:  # usuario limitado a ciertas sedes
+            query_m += f" AND UPPER(IFNULL(subcliente, '')) IN ({', '.join(['?'] * len(sedes_f))})"
+            params_m.extend(sedes_f)
 
         cursor.execute(query_m, params_m)
         cols_m = [d[0] for d in cursor.description]
@@ -7662,11 +8102,14 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(incluir_fotos=False))
     if not df_raw.empty and cliente and cliente != "TODOS":
         df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
+    if not df_raw.empty and filtros.get('sedes'):
+        df_raw = df_raw[df_raw['subcliente'].astype(str).str.upper().str.strip().isin([str(x).strip().upper() for x in filtros['sedes']])]
     if not df_raw.empty and subcliente and subcliente != "TODOS":
         df_raw = df_raw[df_raw['subcliente'].astype(str).str.upper().str.strip() == subcliente]
     lim_posicion = construir_resolver_limite_posicion()
     df_corte = preparar_corte_mrp(df_raw, lim_posicion)
-    matriz_mrp = calcular_matriz_mrp(llantas_todas, df_corte, cfg, dimensiones_set, lim_posicion)
+    matriz_mrp = calcular_matriz_mrp(llantas_todas, df_corte, cfg, dimensiones_set, lim_posicion,
+                                     df_hist=df_raw, horizonte_meses=filtros.get('horizonte_meses'))
 
     return {
         "licencia": licencia,
@@ -7707,6 +8150,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         agrupar_kpi14 = 'marca'
     lic_param = str(filtros.get('licencia', '')).strip().upper()
     usuario = str(filtros.get('usuario', '')).strip()
+    # Base de los indicadores: 'ultima' = última inspección de cada posición; 'historial' = todas las inspecciones
+    base = 'historial' if str(filtros.get('base', '')).strip().lower() == 'historial' else 'ultima'
+    # Unidad de los indicadores: 'km' (vehículos por kilómetros) u 'horas' (vehículos por horas de motor)
+    unidad = 'horas' if 'HOR' in str(filtros.get('unidad', '')).upper() else 'km'
 
     # Licencia efectiva: siempre la configurada para el cliente. El parámetro solo permite ver la
     # vista LIGHT de un cliente FULL (vista previa); nunca sube un cliente LIGHT a FULL.
@@ -7753,6 +8200,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             df = df[df["marca"].astype(str).str.upper().str.strip() == marca]
         if dimension and dimension != "TODOS":
             df = df[df["dimension"].astype(str).str.upper().str.strip() == dimension]
+        # Solo los vehículos medidos en la unidad elegida (los datos sin unidad son de kilómetros)
+        uni_col = df['unidad_medida'] if 'unidad_medida' in df.columns else pd.Series(['KM'] * len(df), index=df.index)
+        df = df[uni_col.apply(normalizar_unidad_medida) == ('HORAS' if unidad == 'horas' else 'KM')]
     else:
         df = pd.DataFrame()
 
@@ -7782,6 +8232,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         marca_list_k = [str(x or '').strip() for x in (df['marca'].tolist() if 'marca' in df else ['']*n_rows)]
         diseno_list_k = [str(x or '').strip() for x in (df['diseno'].tolist() if 'diseno' in df else ['']*n_rows)]
         dim_list_k = [str(x or '').strip() for x in (df['dimension'].tolist() if 'dimension' in df else ['']*n_rows)]
+        fecha_list_k = [str(x or '')[:10] for x in (df['fecha'].tolist() if 'fecha' in df else ['']*n_rows)]
         precio_estimado_col, pini_sin_dato_col = [], []
         eje_col = []
 
@@ -7820,7 +8271,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             sub_r = sub_list[i] or subcliente or ''
 
             # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
-            pr = precio_list[i] if precio_list[i] > 0 else ref_precio(cli_r, dim_list_k[i], sn_list[i])
+            pr = precio_list[i] if precio_list[i] > 0 else ref_precio(cli_r, dim_list_k[i], sn_list[i], marca_list_k[i],
+                                                                     diseno_list_k[i], vida_list[i], fecha_list_k[i])
             precio_estimado_col.append(False)
 
             positivos = [x for x in (pe, pc, pi) if x > 0]
@@ -7866,7 +8318,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             km_rodados_col.append(km_rod)
 
             sin_desgaste = (d_mm != d_mm)  # NaN: sin profundidad inicial o sin medición
-            asent = sin_desgaste or (d_mm < 0.5) or (km_rod < 500.0)
+            asent = sin_desgaste or (d_mm < 0.5) or (km_rod < (50.0 if unidad == 'horas' else 500.0))
             es_asentamiento_col.append(asent)
 
             # Filtro estricto de madurez: desgaste >= 1.5 mm
@@ -7966,16 +8418,20 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_es_repuesto'] = [e == ee.REPUESTO for e in eje_col]
         df['calc_pini_sin_dato'] = pini_sin_dato_col
         # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
-        df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn) for p, c, d, sn in zip(precio_list, cli_list, dim_list_k, sn_list)]
+        df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn, m, ds, v, f) for p, c, d, sn, m, ds, v, f
+                             in zip(precio_list, cli_list, dim_list_k, sn_list, marca_list_k, diseno_list_k, vida_list, fecha_list_k)]
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
 
-        # CORRECCIÓN 1: Construcción de df_patio al inicio (deduplicado por placa y posición, tomando última inspección)
-        df_patio = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Estado actual: última inspección de cada posición (siempre se usa para el MRP: es un plan de compra)
+        df_corte = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Base de los indicadores según el selector: última inspección o historial completo
+        df_patio = df_corte if base == 'ultima' else df.sort_values(by=['fecha', 'id'], ascending=[False, False]).copy()
         # Los repuestos no ruedan: no entran a desgaste, rendimiento ni proyecciones
         df_rodante = df_patio[~df_patio['calc_es_repuesto']].copy()
     else:
+        df_corte = pd.DataFrame()
         df_patio = pd.DataFrame()
         df_rodante = pd.DataFrame()
 
@@ -8682,6 +9138,17 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     brecha_prom_k15 = round(sum(brecha_k15) / max(1, len(brecha_k15)), 1) if brecha_k15 else 0.0
 
+    # =========================================================================
+    # KPI CPK: los 4 costos por kilómetro (operativo, proyectado, total por ciclo, administrativo)
+    # =========================================================================
+    if es_full and not df.empty:
+        cpk_res = calcular_cpk_llantas(df, unidad)
+        kpi_cpk = {"disponible": True, "mensaje": "", "flota": cpk_res["flota"], "por_vida": cpk_res["por_vida"],
+                   "administrativo": cpk_res["administrativo"], "llantas": len(cpk_res["llantas"])}
+    else:
+        kpi_cpk = {"disponible": es_full, "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+                   "flota": {}, "por_vida": [], "administrativo": [], "llantas": 0}
+
     kpi_15 = {
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
@@ -8883,7 +9350,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         dims_mrp = [d for d in dims_mrp if d.upper() == dimension.upper()] or [dimension]
 
     # Misma matriz que la vista de Bodegas (antes se calculaba aparte con otras reglas)
-    matriz_mrp = calcular_matriz_mrp(llantas_maestro_todas, df_patio, cfg, dims_mrp, lim_posicion) if es_full else []
+    matriz_mrp = calcular_matriz_mrp(llantas_maestro_todas, df_corte, cfg, dims_mrp, lim_posicion,
+                                     df_hist=df, horizonte_meses=filtros.get('horizonte_meses')) if es_full else []
     lbl_mrp = [m['dimension'] for m in matriz_mrp]
     nec_mrp = [m['necesidad_bruta'] for m in matriz_mrp]
     stk_mrp = [m['stock_disponible'] for m in matriz_mrp]
@@ -8978,7 +9446,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "pestanas": {
             "pestana_1": {"titulo": "1. 🚛 Inspección & Parque", "kpis": ["kpi_01", "kpi_02", "kpi_03", "kpi_04"]},
             "pestana_2": {"titulo": "2. 🔧 Mantenimiento & Pérdida", "kpis": ["kpi_05", "kpi_06", "kpi_07", "kpi_08", "kpi_09", "kpi_10", "kpi_11"]},
-            "pestana_3": {"titulo": "3. 📈 Producto & Proyecciones", "kpis": ["kpi_12", "kpi_13", "kpi_14", "kpi_15", "kpi_16"]},
+            "pestana_3": {"titulo": "3. 📈 Producto & Proyecciones", "kpis": ["kpi_12", "kpi_13", "kpi_14", "kpi_cpk", "kpi_15", "kpi_16"]},
             "pestana_4": {"titulo": "4. ♻️ Tablero Bajas / FVU", "kpis": ["kpi_17", "kpi_18", "kpi_19"]},
             "pestana_5": {"titulo": "5. 🏭 Balance 7 Bodegas MRP", "kpis": ["kpi_20"]}
         },
@@ -8998,6 +9466,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "kpi_12": kpi_12,
         "kpi_13": kpi_13,
         "kpi_14": kpi_14,
+        "kpi_cpk": kpi_cpk,
+        "base": base,
+        "unidad": unidad,
         "kpi_15": kpi_15,
         "kpi_16": kpi_16,
         "kpi_17": kpi_17,
@@ -9735,6 +10206,10 @@ def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> di
                     "motivo": "No tiene permisos para registrar inspecciones de este cliente"
                 })
                 continue
+        if not usuario_puede_ver_sede(usuario_actual, datos.get("cliente"), datos.get("subcliente")):
+            rechazadas.append({"dedup_key": dedup_key, "placa": placa, "posicion": pos,
+                               "motivo": "No tiene permisos para registrar inspecciones de esta sede"})
+            continue
 
         # Verificar si ya existe registro en SQLite para esa placa, posición y fecha
         with get_connection() as conn:

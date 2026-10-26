@@ -9,10 +9,10 @@
       if (subtab === 'usuarios' && !esAdmin) {
         subtab = 'operaciones';
       }
-      if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
+      if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'precios_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
         subtab = 'operaciones';
       }
-      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'usuarios'];
+      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'precios_cliente', 'usuarios'];
       tabs.forEach(t => {
         const sec = document.getElementById(`cat-seccion-${t}`);
         if (sec) sec.classList.add('hidden');
@@ -31,9 +31,12 @@
         cargarUsuariosCat();
       } else if (subtab === 'clientes' && puedeVerClientes) {
         cargarClientesLimCat();
+      } else if (subtab === 'precios_cliente' && puedeVerClientes) {
+        cargarPreciosClienteCat();
       } else if (subtab === 'marcas_cliente' && puedeVerClientes) {
         cargarMarcasClienteCat();
         cargarMaximosReencaucheCat();
+        cargarStockSeguridadCat();
       } else if (subtab === 'operaciones') {
         cargarOperacionesCat();
       } else if (subtab === 'tipologias') {
@@ -841,6 +844,91 @@
     // ==========================================
     let marcasClienteCatCache = [];
 
+    // Lista de precios por cliente
+    async function cargarPreciosClienteCat() {
+      const tbody = document.getElementById('tbodyPreciosCliente');
+      if (!tbody) return;
+      const desde = document.getElementById('precio_desde');
+      if (desde && !desde.value) desde.value = new Date().toISOString().slice(0, 10);
+      try {
+        const res = await fetch('/api/precios-cliente');
+        const lista = res.ok ? await res.json() : [];
+        tbody.innerHTML = lista.length ? lista.map(p => `<tr>
+            <td class="p-2.5 font-bold">${p.cliente}</td><td class="p-2.5">${p.marca}</td><td class="p-2.5">${p.diseno || '<span class="text-slate-400">Todos</span>'}</td>
+            <td class="p-2.5 font-mono">${p.dimension}</td><td class="p-2.5">${p.tipo === 'Original' ? 'Llanta nueva' : 'Reencauche'}</td>
+            <td class="p-2.5 text-right font-mono font-bold">$ ${Number(p.precio).toLocaleString('es-CO')}</td><td class="p-2.5">${p.vigente_desde}</td>
+            <td class="p-2.5 text-center"><button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="text-rose-600 font-bold">Eliminar</button></td></tr>`).join('')
+          : '<tr><td colspan="8" class="p-2.5 text-slate-400 italic">Sin precios: las llantas sin precio quedan fuera de los cálculos en pesos</td></tr>';
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-2.5 text-rose-600">No se pudieron cargar los precios</td></tr>';
+      }
+    }
+
+    async function guardarPrecioClienteCat(ev) {
+      ev.preventDefault();
+      const v = id => document.getElementById(id).value.trim();
+      const body = { cliente: v('precio_cli').toUpperCase(), marca: v('precio_marca').toUpperCase(), diseno: v('precio_diseno').toUpperCase(),
+                     dimension: v('precio_dimension').toUpperCase(), tipo: v('precio_tipo'), precio: parseFloat(v('precio_valor')), vigente_desde: v('precio_desde') };
+      const res = await fetch('/api/precios-cliente', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar el precio'), true);
+        return;
+      }
+      mostrarToast('✅ Precio guardado');
+      document.getElementById('precio_valor').value = '';
+      cargarPreciosClienteCat();
+    }
+
+    async function eliminarPrecioClienteCat(id) {
+      if (!confirm('¿Eliminar este precio de la lista?')) return;
+      await fetch(`/api/precios-cliente/${id}`, { method: 'DELETE' });
+      cargarPreciosClienteCat();
+    }
+
+    // Stock de seguridad del MRP por medida y eje
+    async function cargarStockSeguridadCat() {
+      const tbody = document.getElementById('tbodyStockSeguridad');
+      if (!tbody) return;
+      try {
+        const res = await fetch('/api/stock-seguridad');
+        const lista = res.ok ? await res.json() : [];
+        const nombreEje = { DIRECCIONAL: 'Direccional', TRACCION: 'Tracción', LIBRE: 'Libre / remolque' };
+        tbody.innerHTML = lista.length ? lista.map(r => {
+          const q = s => String(s).replace(/'/g, "\\'");
+          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2 font-mono">${r.dimension}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
+            <td class="p-2 text-center font-bold">${r.cantidad}</td>
+            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+        }).join('') : '<tr><td colspan="5" class="p-2 text-slate-400 italic">Sin reglas: se usa el stock de seguridad general de cada cliente</td></tr>';
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
+      }
+    }
+
+    async function guardarStockSeguridadCat(ev) {
+      ev.preventDefault();
+      const body = {
+        cliente: document.getElementById('stockseg_cliente').value.trim().toUpperCase(),
+        dimension: document.getElementById('stockseg_dimension').value.trim().toUpperCase(),
+        eje: document.getElementById('stockseg_eje').value,
+        cantidad: parseInt(document.getElementById('stockseg_cantidad').value, 10)
+      };
+      const res = await fetch('/api/stock-seguridad', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar la regla'), true);
+        return;
+      }
+      mostrarToast('✅ Stock de seguridad guardado');
+      cargarStockSeguridadCat();
+    }
+
+    async function eliminarStockSeguridadCat(cliente, dimension, eje) {
+      if (!confirm(`¿Eliminar el stock de seguridad de ${cliente} / ${dimension} / ${eje}?`)) return;
+      await fetch(`/api/stock-seguridad?cliente=${encodeURIComponent(cliente)}&dimension=${encodeURIComponent(dimension)}&eje=${encodeURIComponent(eje)}`, { method: 'DELETE' });
+      cargarStockSeguridadCat();
+    }
+
     // Máximo de reencauches por cliente y marca
     async function cargarMaximosReencaucheCat() {
       const tbody = document.getElementById('tbodyMaximosReencauche');
@@ -1330,6 +1418,7 @@
       }
 
       const selSet = new Set((clientesSeleccionados || []).map(s => s.trim().toLowerCase()));
+      cont.onchange = () => poblarSedesUsuarioModal(modo);
       cont.innerHTML = lista.map(c => {
         const isChecked = selSet.has(c.toLowerCase());
         return `
@@ -1339,6 +1428,36 @@
           </label>
         `;
       }).join('');
+    }
+
+    // Sedes permitidas: checkboxes 'CLIENTE|SEDE' de los clientes marcados (ninguna = todas las sedes)
+    async function poblarSedesUsuarioModal(modo, sedesSeleccionadas = null) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const cont = document.getElementById(`${pfx}lista_sedes_check`);
+      if (!cont) return;
+      if (!cacheDirectorioClientes.length) {
+        try { const r = await fetch('/api/clientes-directorio'); if (r.ok) cacheDirectorioClientes = await r.json(); } catch (e) {}
+      }
+      const marcadas = new Set(sedesSeleccionadas !== null
+        ? String(sedesSeleccionadas || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+        : Array.from(cont.querySelectorAll('input:checked')).map(i => i.value));
+      const clientes = Array.from(document.querySelectorAll(`.chk-cli-modal-${modo}:checked`)).map(c => c.value.trim().toUpperCase());
+      const filas = [];
+      clientes.forEach(cli => {
+        const info = cacheDirectorioClientes.find(c => String(c.cliente || '').toUpperCase() === cli);
+        (info && info.subclientes ? info.subclientes : []).forEach(sede => {
+          const val = `${cli}|${String(sede).trim().toUpperCase()}`;
+          filas.push(`<label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" value="${val}" class="rounded text-blue-600" ${marcadas.has(val) ? 'checked' : ''}><span>${cli} — ${sede}</span></label>`);
+        });
+      });
+      cont.innerHTML = filas.length ? filas.join('') : '<p class="text-slate-400 italic text-[11px]">Marca un cliente para ver sus sedes.</p>';
+    }
+
+    function obtenerSedesSeleccionadasModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chkTodas = document.getElementById(`${pfx}todas_flotas`);
+      if (chkTodas && chkTodas.checked) return '';
+      return Array.from(document.querySelectorAll(`#${pfx}lista_sedes_check input:checked`)).map(i => i.value).join(', ');
     }
 
     function agregarClienteCustomModal(modo) {
@@ -1381,6 +1500,7 @@
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
       if (document.getElementById(`${pfx}vista_composicion`)?.checked) vistas.push('composicion');
+      if (document.getElementById(`${pfx}vista_bodegas`)?.checked) vistas.push('bodegas');
       if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
       // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
       if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
@@ -1487,15 +1607,17 @@
       document.getElementById('usr_pass').value = '';
       document.getElementById('usr_rol').value = 'inspector';
       document.getElementById('usr_vista_patio').checked = true;
-      document.getElementById('usr_vista_diagnostico').checked = true;
-      document.getElementById('usr_vista_kpis').checked = true;
-      document.getElementById('usr_vista_composicion').checked = true;
-      document.getElementById('usr_vista_catalogos').checked = true;
-      document.getElementById('usr_todas_flotas').checked = true;
+      document.getElementById('usr_vista_diagnostico').checked = false;
+      document.getElementById('usr_vista_kpis').checked = false;
+      document.getElementById('usr_vista_composicion').checked = false;
+      document.getElementById('usr_vista_catalogos').checked = false;
+      if (document.getElementById('usr_vista_bodegas')) document.getElementById('usr_vista_bodegas').checked = false;
+      // Solo el administrador trabaja sin cliente asignado
+      document.getElementById('usr_todas_flotas').checked = false;
       document.getElementById('usr_cliente_custom_nuevo').value = '';
       toggleClientesTodosModal('nuevo');
       alCambiarRolUsuarioModal('nuevo');
-      poblarListaCheckboxesClientesModal('nuevo', []);
+      poblarListaCheckboxesClientesModal('nuevo', []).then(() => poblarSedesUsuarioModal('nuevo', ''));
 
       // Solo el admin puede asignar el rol admin
       const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
@@ -1545,6 +1667,7 @@
             password: p,
             rol: rol,
             cliente_asignado: cliente,
+            sedes_asignadas: obtenerSedesSeleccionadasModal('nuevo'),
             vistas_permitidas: vistas
           })
         });
@@ -1604,6 +1727,7 @@
         document.getElementById('edit_usr_vista_composicion').checked = vistas.includes('composicion');
       }
       document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
+      if (document.getElementById('edit_usr_vista_bodegas')) document.getElementById('edit_usr_vista_bodegas').checked = vistas.includes('bodegas');
 
       // Clientes asignados
       let clis = [];
@@ -1619,7 +1743,7 @@
         document.getElementById('edit_usr_todas_flotas').checked = false;
       }
       toggleClientesTodosModal('editar');
-      poblarListaCheckboxesClientesModal('editar', clis);
+      poblarListaCheckboxesClientesModal('editar', clis).then(() => poblarSedesUsuarioModal('editar', u.sedes_asignadas || ''));
 
       const modal = document.getElementById('modalEditarUsuario');
       modal.classList.remove('hidden');
@@ -1666,6 +1790,7 @@
             nombre_completo: nombre,
             rol: rol,
             cliente_asignado: cliente,
+            sedes_asignadas: obtenerSedesSeleccionadasModal('editar'),
             vistas_permitidas: vistas,
             activo: activo
           })

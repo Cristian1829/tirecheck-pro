@@ -360,8 +360,14 @@ def test_kpi15_filtro_madurez_y_kpi20_formula_mrp(test_db, auth_client):
     stk_disp_esperado = mrp_dim["stock_b1"] + mrp_dim["stock_b2"] + mrp_dim["stock_b3_util"] + mrp_dim["stock_b4"]
     assert mrp_dim["stock_disponible"] == stk_disp_esperado
 
-    # Compra neta sugerida = max(0, necesidad_bruta - stock_disponible)
-    assert mrp_dim["compra_neta_sugerida"] == max(0, mrp_dim["necesidad_bruta"] - stk_disp_esperado)
+    # Compra neta = nuevas para dirección (demanda + reserva - Bodega 1) + resto no cubierto por el stock útil
+    # y por los cascos que volverán reencauchados dentro del horizonte
+    m = mrp_dim
+    compra_dir = max(0, m["demanda_direccional"] + m["stock_seguridad_direccional"] - m["stock_b1"])
+    b1_rest = max(0, m["stock_b1"] - m["demanda_direccional"] - m["stock_seguridad_direccional"])
+    cobertura = b1_rest + m["stock_b2"] + m["stock_b4"] + m["stock_b3_util"] + m["stock_b5"] + m["retorno_reencauche_proyectado"]
+    compra_otros = max(0, m["demanda_traccion"] + m["reposicion_bajas_fvu"] + m["stock_seguridad_otros"] - cobertura)
+    assert m["compra_neta_sugerida"] == compra_dir + compra_otros
 
 
 def test_licenciamiento_light_vs_full(test_db, auth_client):

@@ -15,6 +15,8 @@
     }
 
     let modoLicenciaSuite = 'FULL'; // 'LIGHT' o 'FULL'
+    let unidadSuite = 'km'; // 'km' u 'h' (vehículos medidos por horas de motor)
+    const uMed = () => unidadSuite;
     let datosSuite20Actuales = null;
     let subpestanaKpiActiva = 1;
     let agrupacionKpi14Actual = 'marca';
@@ -214,6 +216,8 @@
         if (marVal && marVal !== 'TODOS') params.append('marca', marVal);
         if (dimVal && dimVal !== 'TODOS') params.append('dimension', dimVal);
         params.append('eje_temporal', ejeVal);
+        params.append('base', document.getElementById('filtroKpiBase')?.value || 'ultima');
+        params.append('unidad', document.getElementById('filtroKpiUnidad')?.value || 'km');
         params.append('agrupar_kpi14', agrupacionKpi14Actual);
         params.append('licencia', modoLicenciaSuite);
 
@@ -228,6 +232,7 @@
 
         const data = await res.json();
         datosSuite20Actuales = data;
+        unidadSuite = data.unidad === 'horas' ? 'h' : 'km';
 
         // La licencia efectiva la decide el servidor según la configuración del cliente
         if (data.licencia && data.licencia !== modoLicenciaSuite) {
@@ -273,6 +278,7 @@
             if (data.kpi_12) renderKpi12(data.kpi_12);
             if (data.kpi_13) renderChartKpi13(data.kpi_13);
             if (data.kpi_14) renderChartKpi14(data.kpi_14);
+            if (data.kpi_cpk) renderKpiCpk(data.kpi_cpk);
             if (data.kpi_15) renderChartKpi15(data.kpi_15);
             if (data.kpi_16) renderChartKpi16(data.kpi_16);
           }
@@ -1147,7 +1153,7 @@
           elBarDesg.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
         }
       }
-      if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} km`;
+      if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} ${uMed()}`;
     }
 
     // KPI 13: Km Rodados Reales vs. Proyección Final al Límite de Retiro
@@ -1170,13 +1176,13 @@
           labels: ds.labels || [],
           datasets: [
             {
-              label: 'Km Reales Rodados',
+              label: unidadSuite === 'h' ? 'Horas reales' : 'Km Reales Rodados',
               data: ds.km_reales || [],
               backgroundColor: gradientReales,
               borderColor: '#1e40af',
               borderWidth: 1.5,
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             },
             {
               label: 'Proyección Final al Retiro',
@@ -1186,7 +1192,7 @@
               borderWidth: 1.5,
               borderDash: [4, 4],
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }
           ]
         },
@@ -1202,13 +1208,13 @@
               cornerRadius: 10,
               padding: 12,
               callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`,
+                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} ${uMed()}`,
                 afterBody: (items) => {
                   const idx = items[0].dataIndex;
                   const r = ds.km_reales?.[idx] || 0;
                   const p = ds.proyeccion_final?.[idx] || 0;
                   const dif = Math.max(0, p - r);
-                  return `Vida Remanente Est.: ${formatCO_Miles(dif)} km`;
+                  return `Vida Remanente Est.: ${formatCO_Miles(dif)} ${uMed()}`;
                 }
               }
             }
@@ -1253,11 +1259,11 @@
           data: {
             labels: labels,
             datasets: [{
-              label: 'Proy. Km Final',
+              label: unidadSuite === 'h' ? 'Proy. horas final' : 'Proy. Km Final',
               data: ds.proyeccion_km || [],
               backgroundColor: gradProy,
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }]
           },
           options: {
@@ -1267,7 +1273,7 @@
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} km` } }
+              tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} ${uMed()}` } }
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
@@ -1289,11 +1295,11 @@
           data: {
             labels: labels,
             datasets: [{
-              label: 'Rendimiento Km/mm',
+              label: `Rendimiento ${uMed()}/mm`,
               data: ds.km_mm || [],
               backgroundColor: gradKmmm,
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(4, 120, 87, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} km/mm`)
+              datalabels: pillDatalabelConfig('rgba(4, 120, 87, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} ${uMed()}/mm`)
             }]
           },
           options: {
@@ -1303,7 +1309,7 @@
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Rendimiento: ${formatCO_Decimal(c.raw, 1)} km/mm` } }
+              tooltip: { callbacks: { label: (c) => `Rendimiento: ${formatCO_Decimal(c.raw, 1)} ${uMed()}/mm` } }
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Decimal(v, 1), font: { size: 9 } } },
@@ -1325,7 +1331,7 @@
           data: {
             labels: labels,
             datasets: [{
-              label: 'CPK proyectado ($/km)',
+              label: `CPK proyectado ($/${uMed()})`,
               data: ds.cpk || [],
               backgroundColor: gradCpk,
               borderRadius: 6,
@@ -1339,7 +1345,7 @@
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `CPK: $ ${formatCO_Decimal(c.raw, 2)} COP/km` } }
+              tooltip: { callbacks: { label: (c) => `CPK: $ ${formatCO_Decimal(c.raw, 2)} COP/${uMed()}` } }
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 1)}`, font: { size: 9 } } },
@@ -1348,6 +1354,29 @@
           }
         });
       }
+    }
+
+    // KPI CPK: los 4 costos por kilómetro (sin dato = sin precio o sin km suficientes)
+    function renderKpiCpk(k) {
+      const fmt = v => (v === null || v === undefined) ? 'Sin dato' : `$ ${Number(v).toLocaleString('es-CO', { maximumFractionDigits: 1 })} /${uMed()}`;
+      const f = k.flota || {};
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('kpiCpkOperativo', fmt(f.cpk_operativo));
+      set('kpiCpkProyectado', fmt(f.cpk_proyectado));
+      set('kpiCpkTotal', fmt(f.cpk_total));
+      const adm = (k.administrativo || []).filter(m => m.km_flota > 0);
+      set('kpiCpkAdmin', adm.length ? fmt(adm[adm.length - 1].cpk_administrativo) : 'Sin dato');
+      set('kpiCpkNota', `${f.llantas_con_cpk || 0} vidas de llanta con CPK; ${f.llantas_sin_precio || 0} sin precio (registre la lista de precios del cliente en Catálogos).`);
+      const tv = document.getElementById('tbodyCpkPorVida');
+      if (tv) tv.innerHTML = (k.por_vida || []).map(v => `<tr><td class="p-2 font-bold">${v.vida}</td><td class="p-2 text-right">${v.llantas}</td>
+        <td class="p-2 text-right font-mono">${fmt(v.cpk_operativo)}</td><td class="p-2 text-right font-mono">${fmt(v.cpk_proyectado)}</td></tr>`).join('')
+        || '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin datos</td></tr>';
+      const ta = document.getElementById('tbodyCpkAdmin');
+      if (ta) ta.innerHTML = (k.administrativo || []).slice().reverse().map(m => `<tr><td class="p-2 font-bold">${m.mes}</td>
+        <td class="p-2 text-right font-mono">${m.inversion ? formatCO_Moneda(m.inversion) : '-'}</td>
+        <td class="p-2 text-right font-mono">${m.km_flota ? Number(m.km_flota).toLocaleString('es-CO') : '-'}</td>
+        <td class="p-2 text-right font-mono">${fmt(m.cpk_administrativo)}</td></tr>`).join('')
+        || '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin instalaciones registradas en Bodegas</td></tr>';
     }
 
     // KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Filtro Madurez >= 1.5mm)
@@ -1423,7 +1452,7 @@
               cornerRadius: 10,
               padding: 12,
               callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`
+                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} ${uMed()}`
               }
             }
           },
@@ -1464,7 +1493,7 @@
             },
             {
               type: 'line',
-              label: 'Proyección Promedio (km)',
+              label: `Proyección Promedio (${uMed()})`,
               data: ds.proyeccion_promedio || [],
               borderColor: '#4f46e5',
               backgroundColor: 'rgba(79, 70, 229, 0.12)',
@@ -1473,7 +1502,7 @@
               pointRadius: 4,
               tension: 0.35,
               yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }
           ]
         },
@@ -1505,9 +1534,9 @@
               position: 'right',
               beginAtZero: true,
               grace: '15%',
-              title: { display: true, text: 'Proyección (km)', font: { weight: 'bold', size: 10 } },
+              title: { display: true, text: `Proyección (${uMed()})`, font: { weight: 'bold', size: 10 } },
               grid: { drawOnChartArea: false },
-              ticks: { callback: (v) => `${formatCO_Miles(v)} km` }
+              ticks: { callback: (v) => `${formatCO_Miles(v)} ${uMed()}` }
             },
             x: { ticks: { font: { weight: 'bold', size: 10 } } }
           }

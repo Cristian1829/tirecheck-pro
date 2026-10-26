@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 13:17:04`
+- **Fecha de Generación:** `2026-10-26 13:52:18`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `56,675` líneas
-- **Tamaño Total de Código Fuente:** `2836.4 KB` (`2,904,423` bytes)
+- **Líneas Totales de Código:** `57,561` líneas
+- **Tamaño Total de Código Fuente:** `2892.4 KB` (`2,961,846` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -106,7 +106,7 @@ CREATE TABLE catalogo_vehiculos (
                 tipo_operacion TEXT DEFAULT '',
                 ultimo_km REAL DEFAULT 0.0,
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+            , unidad_medida TEXT DEFAULT 'KM');
 
 -- ========================================================
 -- TABLA: configuracion_avanzada_cliente
@@ -201,7 +201,7 @@ CREATE TABLE inspecciones (
                 prof_inicial REAL,
                 km_montaje REAL,
                 fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            , cliente TEXT, subcliente TEXT, tipo_operacion TEXT, numero_interno TEXT, usuario_registro TEXT, foto_novedad TEXT);
+            , cliente TEXT, subcliente TEXT, tipo_operacion TEXT, numero_interno TEXT, usuario_registro TEXT, foto_novedad TEXT, unidad_medida TEXT DEFAULT 'KM');
 
 -- ========================================================
 -- TABLA: kardex_movimientos_llanta
@@ -357,6 +357,21 @@ CREATE TABLE padron_vehiculos_cliente (
             );
 
 -- ========================================================
+-- TABLA: precios_llanta_cliente
+-- ========================================================
+CREATE TABLE precios_llanta_cliente (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                marca TEXT NOT NULL,
+                diseno TEXT NOT NULL DEFAULT '',
+                dimension TEXT NOT NULL,
+                tipo TEXT NOT NULL DEFAULT 'Original',
+                precio REAL NOT NULL,
+                vigente_desde TEXT NOT NULL,
+                UNIQUE(cliente, marca, diseno, dimension, tipo, vigente_desde)
+            );
+
+-- ========================================================
 -- TABLA: sqlite_sequence
 -- ========================================================
 CREATE TABLE sqlite_sequence(name,seq);
@@ -365,6 +380,17 @@ CREATE TABLE sqlite_sequence(name,seq);
 -- TABLA: sqlite_stat1
 -- ========================================================
 CREATE TABLE sqlite_stat1(tbl,idx,stat);
+
+-- ========================================================
+-- TABLA: stock_seguridad_mrp
+-- ========================================================
+CREATE TABLE stock_seguridad_mrp (
+                cliente TEXT NOT NULL,
+                dimension TEXT NOT NULL,
+                eje TEXT NOT NULL,
+                cantidad INTEGER NOT NULL,
+                UNIQUE(cliente, dimension, eje)
+            );
 
 -- ========================================================
 -- TABLA: usuarios
@@ -378,7 +404,7 @@ CREATE TABLE usuarios (
                 cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo o vacío para todos
                 activo INTEGER DEFAULT 1,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            , vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis');
+            , vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', sedes_asignadas TEXT DEFAULT '');
 ```
 
 ---
@@ -442,9 +468,9 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2336 | 104.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9799 | 472.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
-| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1298 | 66.8 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
+| [server.py](#archivo-serverpy) | `python` | 2427 | 109.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10274 | 500.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1302 | 67.1 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2110 | 103.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
@@ -455,18 +481,18 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5824 | 387.5 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5952 | 399.4 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1005 | 43.3 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4093 | 184.4 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4116 | 185.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1953 | 82.5 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1982 | 85.1 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1209 | 57.1 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1801 | 86.1 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
-| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2118 | 109.8 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1926 | 92.2 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -479,7 +505,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_auditoria_bodegas_sentido_negocio.py](#archivo-teststest-auditoria-bodegas-sentido-negociopy) | `python` | 529 | 21.9 KB | Auditoría de consistencia de negocio para bodegas y ciclo de vida |
 | [tests/test_composicion_flota.py](#archivo-teststest-composicion-flotapy) | `python` | 337 | 11.2 KB | Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario |
 | [tests/test_detalle_vehiculos_planes.py](#archivo-teststest-detalle-vehiculos-planespy) | `python` | 136 | 7.0 KB | Pruebas del módulo de detalle vehicular y planes de mantenimiento |
-| [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 506 | 19.5 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
+| [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 512 | 20.0 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
 | [tests/test_matriz_semaforos.py](#archivo-teststest-matriz-semaforospy) | `python` | 316 | 12.3 KB | Pruebas de matriz de semáforos de desgaste por eje y flota |
 | [tests/test_migracion_pext_ciudad_limpia.py](#archivo-teststest-migracion-pext-ciudad-limpiapy) | `python` | 213 | 8.1 KB | Pruebas de migración y normalización para Ciudad Limpia |
 | [tests/test_precision_graficos_ground_truth.py](#archivo-teststest-precision-graficos-ground-truthpy) | `python` | 529 | 23.7 KB | Pruebas de auditoría de gráficos ground truth y métricas matemáticas |
@@ -3787,7 +3813,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2336 líneas | 107,126 bytes (104.6 KB)
+- **Métricas:** 2427 líneas | 111,961 bytes (109.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3877,6 +3903,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
+    sedes_asignadas: str = ""  # 'CLIENTE|SEDE, …'; vacío = todas las sedes de sus clientes
     vistas_permitidas: Optional[str] = "patio"
 
 class EditarUsuarioItem(BaseModel):
@@ -3884,6 +3911,7 @@ class EditarUsuarioItem(BaseModel):
     password: Optional[str] = None
     rol: Optional[str] = None
     cliente_asignado: Optional[str] = None
+    sedes_asignadas: Optional[str] = None
     activo: Optional[bool] = None
     vistas_permitidas: Optional[str] = None
 
@@ -3920,6 +3948,7 @@ class InspeccionItem(BaseModel):
     precio: float = 0.0
     prof_inicial: float = 0.0
     km_montaje: float = 0.0
+    unidad_medida: Optional[str] = None  # KM u HORAS (se asigna al crear la placa)
     numero_interno: str = ""
     usuario_registro: str = ""
     foto_novedad: str = ""
@@ -4119,6 +4148,26 @@ def requerir_vista(*vistas: str):
             return usuario_actual
         raise HTTPException(status_code=403, detail="Su usuario no tiene habilitada esta sección")
     return _verificar
+
+def verificar_acceso_placa(usuario_actual: dict, placa: str, mensaje: str = "No tiene permisos para consultar este vehículo"):
+    """403 si la placa pertenece a un cliente o sede que el usuario no tiene asignados."""
+    if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")):
+        return
+    cli, sede = database.cliente_sede_de_placa(placa)
+    if cli and not database.usuario_puede_ver_sede(usuario_actual, cli, sede):
+        raise HTTPException(status_code=403, detail=mensaje)
+
+
+def sedes_filtro_usuario(usuario_actual: dict, cliente: str, subcliente: str = "") -> list:
+    """Sedes a las que se limita la consulta del usuario en ese cliente ([] = sin límite). 403 si pide otra."""
+    if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")):
+        return []
+    clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+    sedes = sorted(database.parsear_sedes_asignadas(usuario_actual.get("sedes_asignadas"), clis).get(str(cliente or "").strip().upper(), set()))
+    if sedes and subcliente and subcliente not in ("Todos", "TODOS") and subcliente.strip().upper() not in sedes:
+        raise HTTPException(status_code=403, detail="No tiene permisos para esta sede")
+    return sedes
+
 
 def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -4492,6 +4541,8 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
                 datos["cliente"] = clis[0]
             elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para registrar inspecciones de este cliente")
+        if not database.usuario_puede_ver_sede(usuario_actual, datos.get("cliente"), datos.get("subcliente")):
+            raise HTTPException(status_code=403, detail="No tiene permisos para registrar inspecciones de esta sede")
 
     # Validación de Candados de Seguridad
     val = database.validar_inspeccion_candados(datos)
@@ -4529,6 +4580,12 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
                 datos["cliente"] = clis[0]
             elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para asignar este cliente")
+        # La inspección actual y la editada deben estar en sedes del usuario
+        with database.get_connection() as conn:
+            r_sede = conn.execute("SELECT cliente, subcliente FROM inspecciones WHERE id = ?", (inspeccion_id,)).fetchone()
+        if (r_sede and not database.usuario_puede_ver_sede(usuario_actual, r_sede[0], r_sede[1])) or \
+                not database.usuario_puede_ver_sede(usuario_actual, datos.get("cliente"), datos.get("subcliente") or (r_sede[1] if r_sede else "")):
+            raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de esta sede")
 
     val = database.validar_inspeccion_candados(datos, excluir_id=inspeccion_id)
     if not val.get('valido', True):
@@ -4547,10 +4604,12 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
     if not es_rol_admin(rol, usuario_actual.get("username")):
         with database.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
+            cursor.execute("SELECT cliente, usuario_registro, subcliente FROM inspecciones WHERE id = ?", (inspeccion_id,))
             row_exist = cursor.fetchone()
             if not row_exist:
                 raise HTTPException(status_code=404, detail="Inspección no encontrada")
+            if not database.usuario_puede_ver_sede(usuario_actual, row_exist[0], row_exist[2]):
+                raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de esta sede")
             clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
             if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
@@ -4907,6 +4966,9 @@ def api_kpis_suite_20(
     eje_temporal: str = "mes",
     agrupar_kpi14: str = "marca",
     licencia: str = "",
+    base: str = "ultima",
+    unidad: str = "km",
+    horizonte_meses: float = 3,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     try:
@@ -4930,6 +4992,9 @@ def api_kpis_suite_20(
             "eje_temporal": eje_temporal,
             "agrupar_kpi14": agrupar_kpi14,
             "licencia": licencia,
+            "base": base,
+            "unidad": unidad,
+            "horizonte_meses": horizonte_meses,
             "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
         }
         datos = database.obtener_suite_completa_20_kpis(filtros)
@@ -5062,15 +5127,7 @@ def api_exportar_kpis_excel(
 
 @app.get("/api/informe-pdf/{placa}")
 def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user):
-        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis:
-            perfil = database.obtener_perfil_vehiculo(placa)
-            cli_veh = (perfil.get("cliente") or "").strip().lower()
-            if cli_veh and not any(c.lower() == cli_veh for c in clis):
-                raise HTTPException(status_code=403, detail="No tiene permisos para descargar el informe de este vehículo")
+    verificar_acceso_placa(usuario_actual, placa, "No tiene permisos para descargar el informe de este vehículo")
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
@@ -5088,15 +5145,7 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
 @app.get("/api/informe-resumen/{placa}")
 def api_resumen_informe_vehiculo(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     """Mismos datos que el PDF del vehículo, para el modal 'Informe de Inspección Finalizada'."""
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user):
-        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis:
-            perfil = database.obtener_perfil_vehiculo(placa)
-            cli_veh = (perfil.get("cliente") or "").strip().lower()
-            if cli_veh and not any(c.lower() == cli_veh for c in clis):
-                raise HTTPException(status_code=403, detail="No tiene permisos para consultar este vehículo")
+    verificar_acceso_placa(usuario_actual, placa)
     try:
         datos = pdf_generator.construir_datos_informe(placa, fecha if fecha else None)
     except Exception as e:
@@ -5459,6 +5508,67 @@ def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(r
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
     return sanitizar_nativos({"status": "ok", "mensaje": "Marca desvinculada del cliente"})
 
+class PrecioClienteItem(BaseModel):
+    cliente: str
+    marca: str
+    diseno: str = ""
+    dimension: str
+    tipo: str = "Original"  # Original (llanta nueva) o Reencauche
+    precio: float
+    vigente_desde: str
+
+
+@app.get("/api/precios-cliente")
+def api_listar_precios_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    return database.listar_precios_cliente(cliente)
+
+
+@app.post("/api/precios-cliente")
+def api_guardar_precio_cliente(item: PrecioClienteItem, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    cliente = _resolver_cliente_usuario(usuario_actual, item.cliente)
+    if not database.guardar_precio_cliente(cliente, item.marca, item.diseno, item.dimension, item.tipo, item.precio, item.vigente_desde):
+        raise HTTPException(status_code=400, detail="Indique cliente, marca, dimensión, un precio mayor a 0 y la fecha de vigencia (AAAA-MM-DD)")
+    return {"status": "ok"}
+
+
+@app.delete("/api/precios-cliente/{precio_id}")
+def api_eliminar_precio_cliente(precio_id: int, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    fila = next((p for p in database.listar_precios_cliente() if p["id"] == precio_id), None)
+    if not fila:
+        raise HTTPException(status_code=404, detail="Precio no encontrado")
+    _resolver_cliente_usuario(usuario_actual, fila["cliente"])  # 403 si no es su cliente
+    database.eliminar_precio_cliente(precio_id)
+    return {"status": "ok"}
+
+
+class StockSeguridadItem(BaseModel):
+    cliente: str
+    dimension: str
+    eje: str  # DIRECCIONAL, TRACCION o LIBRE
+    cantidad: int
+
+
+@app.get("/api/stock-seguridad")
+def api_listar_stock_seguridad(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    return database.listar_stock_seguridad(_resolver_cliente_usuario(usuario_actual, cliente))
+
+
+@app.post("/api/stock-seguridad")
+def api_guardar_stock_seguridad(item: StockSeguridadItem, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    cliente = _resolver_cliente_usuario(usuario_actual, item.cliente)
+    if not database.guardar_stock_seguridad(cliente, item.dimension, item.eje, item.cantidad):
+        raise HTTPException(status_code=400, detail="Indique cliente, dimensión, eje (DIRECCIONAL, TRACCION o LIBRE) y una cantidad de 0 o más")
+    return {"status": "ok"}
+
+
+@app.delete("/api/stock-seguridad")
+def api_eliminar_stock_seguridad(cliente: str, dimension: str, eje: str, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    if not database.eliminar_stock_seguridad(_resolver_cliente_usuario(usuario_actual, cliente), dimension, eje):
+        raise HTTPException(status_code=404, detail="No existe esa regla")
+    return {"status": "ok"}
+
+
 class MaximoReencaucheItem(BaseModel):
     cliente: str
     marca: str = "TODAS"
@@ -5521,17 +5631,16 @@ def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: s
             if not cliente and len(clis) == 1:
                 cliente = clis[0]
     res = database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca, todas=todas)
+    if campo == "subcliente" and cliente:
+        sedes = sedes_filtro_usuario(usuario_actual, cliente)  # usuario limitado a ciertas sedes
+        if sedes:
+            res = [x for x in res if str(x).strip().upper() in sedes]
     return sanitizar_nativos(res)
 
 @app.get("/api/vehiculo-perfil")
 def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    verificar_acceso_placa(usuario_actual, placa, "No tiene permisos para ver vehículos de este cliente")
     perfil = database.obtener_perfil_vehiculo(placa)
-    # Validar permisos de inspector con clientes asignados
-    if usuario_actual.get("rol") != "admin":
-        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis and perfil.get("encontrado") and perfil.get("cliente"):
-            if not any(c.lower() == perfil["cliente"].strip().lower() for c in clis):
-                raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
     return sanitizar_nativos(perfil)
 
 @app.get("/api/llanta-por-cliente")
@@ -5555,6 +5664,7 @@ def api_llanta_por_cliente(
 
 @app.get("/api/inspeccion-anterior")
 def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    verificar_acceso_placa(usuario_actual, placa)  # antes no se validaba el cliente
     prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
     perfil = database.obtener_perfil_vehiculo(placa)
     if prev:
@@ -5567,6 +5677,7 @@ def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = De
 
 @app.get("/api/posiciones-inspeccionadas")
 def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    verificar_acceso_placa(usuario_actual, placa)
     det = database.obtener_posiciones_inspeccionadas_detalle(placa, fecha)
     return {
         "placa": placa,
@@ -5667,7 +5778,8 @@ def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
         nombre_completo=item.nombre_completo,
         rol=item.rol,
         cliente_asignado=item.cliente_asignado,
-        vistas_permitidas=item.vistas_permitidas
+        vistas_permitidas=item.vistas_permitidas,
+        sedes_asignadas=item.sedes_asignadas
     )
     if not ok:
         raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
@@ -5692,7 +5804,8 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
         rol=item.rol,
         cliente_asignado=item.cliente_asignado,
         activo=item.activo,
-        vistas_permitidas=item.vistas_permitidas
+        vistas_permitidas=item.vistas_permitidas,
+        sedes_asignadas=item.sedes_asignadas
     )
     if not ok:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
@@ -5816,6 +5929,7 @@ def api_bodegas_resumen_mrp(
     cliente: str = "",
     subcliente: str = "",
     dimension: str = "",
+    horizonte_meses: float = 3,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -5829,9 +5943,11 @@ def api_bodegas_resumen_mrp(
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver las bodegas de este cliente")
 
     filtros = {
+        "sedes": sedes_filtro_usuario(usuario_actual, cliente, subcliente),
         "cliente": "" if cliente == "Todos" else cliente,
         "subcliente": "" if subcliente == "Todos" else subcliente,
-        "dimension": "" if dimension == "Todos" else dimension
+        "dimension": "" if dimension == "Todos" else dimension,
+        "horizonte_meses": horizonte_meses
     }
     return sanitizar_nativos(database.obtener_balance_bodegas_mrp(filtros))
 
@@ -5855,6 +5971,7 @@ def api_bodegas_inventario(
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver el inventario de este cliente")
 
     filtros = {
+        "sedes": sedes_filtro_usuario(usuario_actual, cliente, subcliente),
         "cliente": "" if cliente == "Todos" else cliente,
         "subcliente": "" if subcliente == "Todos" else subcliente,
         "ubicacion_bodega": "" if ubicacion_bodega in ("Todas", "TODAS") else ubicacion_bodega,
@@ -6135,7 +6252,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9799 líneas | 483,968 bytes (472.6 KB)
+- **Métricas:** 10274 líneas | 512,605 bytes (500.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6319,6 +6436,10 @@ def asegurar_columna_vistas_permitidas(conn):
         if cols_usr and 'vistas_permitidas' not in cols_usr:
             cursor.execute("ALTER TABLE usuarios ADD COLUMN vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis,composicion'")
             conn.commit()
+        # Sedes permitidas por cliente ('CLIENTE|SEDE, …'); vacío = todas las sedes de sus clientes
+        if cols_usr and 'sedes_asignadas' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN sedes_asignadas TEXT DEFAULT ''")
+            conn.commit()
     except Exception:
         pass
 
@@ -6403,7 +6524,8 @@ def inicializar_bd():
             ("tipo_operacion", "TEXT"),
             ("numero_interno", "TEXT"),
             ("usuario_registro", "TEXT"),
-            ("foto_novedad", "TEXT")
+            ("foto_novedad", "TEXT"),
+            ("unidad_medida", "TEXT DEFAULT 'KM'")  # KM u HORAS: en qué se mide la lectura (kilometraje u horómetro)
         ]
         for col, tipo in nuevas_columnas:
             if col not in cols_existentes:
@@ -6691,6 +6813,30 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_bodega ON llantas_maestro (cliente, ubicacion_bodega, dimension)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_serial ON llantas_maestro (numero_interno, cliente)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_serial_cliente ON kardex_movimientos_llanta (cliente, numero_interno, fecha_movimiento DESC)")
+        # Lista de precios por cliente (llanta nueva o reencauche), con fecha de vigencia
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS precios_llanta_cliente (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT NOT NULL,
+                marca TEXT NOT NULL,
+                diseno TEXT NOT NULL DEFAULT '',
+                dimension TEXT NOT NULL,
+                tipo TEXT NOT NULL DEFAULT 'Original',
+                precio REAL NOT NULL,
+                vigente_desde TEXT NOT NULL,
+                UNIQUE(cliente, marca, diseno, dimension, tipo, vigente_desde)
+            )
+        """)
+        # Stock de seguridad del MRP por medida y eje (DIRECCIONAL / TRACCION / LIBRE)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS stock_seguridad_mrp (
+                cliente TEXT NOT NULL,
+                dimension TEXT NOT NULL,
+                eje TEXT NOT NULL,
+                cantidad INTEGER NOT NULL,
+                UNIQUE(cliente, dimension, eje)
+            )
+        """)
         # Máximo de reencauches por cliente y marca ('TODAS' = regla general del cliente)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS configuracion_reencauche (
@@ -6929,6 +7075,9 @@ def inicializar_bd():
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Unidad de medida del vehículo, asignada al crear la placa: kilómetros u horas de motor
+        if 'unidad_medida' not in [r[1] for r in cursor.execute("PRAGMA table_info(catalogo_vehiculos)").fetchall()]:
+            cursor.execute("ALTER TABLE catalogo_vehiculos ADD COLUMN unidad_medida TEXT DEFAULT 'KM'")
 
         # Migración automática inicial (Backfill): poblar catalogo_vehiculos desde inspecciones históricas
         cursor.execute("""
@@ -8004,7 +8153,22 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
 # CATÁLOGO DE VEHÍCULOS & ESPECIFICACIONES DE LLANTAS
 # ==========================================
 
-def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None):
+def normalizar_unidad_medida(valor) -> str:
+    """'HORAS' si el vehículo se mide por horas de motor; 'KM' en cualquier otro caso."""
+    return 'HORAS' if 'HOR' in str(valor or '').upper() else 'KM'
+
+
+def unidad_medida_placa(placa, conn=None) -> str:
+    def _q(c):
+        r = c.execute("SELECT unidad_medida FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ?", (str(placa or '').strip().upper(),)).fetchone()
+        return normalizar_unidad_medida(r[0]) if r and r[0] else ''
+    if conn is not None:
+        return _q(conn)
+    with get_connection() as c:
+        return _q(c)
+
+
+def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', tipo_operacion='', kilometraje=0.0, conn=None, unidad_medida=None):
     pl = str(placa or '').strip().upper()
     tip = str(tipologia or '').strip().upper()
     if not pl or not tip or tip.lower() in ('nan', 'none'):
@@ -8013,10 +8177,11 @@ def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', t
     sub = '' if (pd.isna(subcliente) or str(subcliente).strip().lower() in ('nan', 'none')) else str(subcliente).strip().upper()
     op = '' if (pd.isna(tipo_operacion) or str(tipo_operacion).strip().lower() in ('nan', 'none')) else str(tipo_operacion).strip().upper()
     km = to_float(kilometraje, 0.0)
+    uni = normalizar_unidad_medida(unidad_medida) if unidad_medida else ''
 
     sql = """
-        INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente, tipo_operacion, ultimo_km, fecha_actualizacion, unidad_medida)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CASE WHEN ? != '' THEN ? ELSE 'KM' END)
         ON CONFLICT(placa) DO UPDATE SET
             tipologia = excluded.tipologia,
             cliente = CASE WHEN excluded.cliente != '' THEN excluded.cliente ELSE catalogo_vehiculos.cliente END,
@@ -8025,7 +8190,7 @@ def sincronizar_vehiculo_catalogo(placa, tipologia, cliente='', subcliente='', t
             ultimo_km = MAX(catalogo_vehiculos.ultimo_km, excluded.ultimo_km),
             fecha_actualizacion = CURRENT_TIMESTAMP
     """
-    params = (pl, tip, cli, sub, op, km)
+    params = (pl, tip, cli, sub, op, km, uni, uni)  # la unidad solo se fija al crear la placa
 
     if conn is not None:
         cursor = conn.cursor()
@@ -8291,6 +8456,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 "cliente": row[2] or cliente_placa or "",
                 "subcliente": row[3] or "",
                 "tipo_operacion": row[4] or "",
+                "unidad_medida": unidad_medida_placa(pl, conn) or "KM",
                 "ultimo_km": ultimo_km_val,
                 "dimension": dim_vehiculo,
                 "cant_llantas": len(posiciones),
@@ -8893,12 +9059,16 @@ def insertar_inspeccion(datos):
                 km_final = to_float(r_km_prev[0])
                 datos['kilometraje'] = km_final
 
+        # La unidad es la de la placa; la que trae la inspección solo cuenta si la placa es nueva
+        unidad_insp = unidad_medida_placa(placa_norm, conn) or (normalizar_unidad_medida(datos.get('unidad_medida')) if datos.get('unidad_medida') else 'KM')
+        datos['unidad_medida'] = unidad_insp
         cursor.execute("""
             INSERT INTO inspecciones (
                 fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                 tipologia, marca, diseno, dimension, vida, banda_reen,
-                prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                prof_ext, prof_cent, prof_int, psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, foto_novedad,
+                unidad_medida
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             fecha_norm,
             str(datos.get('cliente', '')).strip().upper(),
@@ -8923,7 +9093,8 @@ def insertar_inspeccion(datos):
             to_float(datos.get('km_montaje', 0)),
             str(datos.get('numero_interno', '')).strip().upper(),
             str(datos.get('usuario_registro', '')).strip().upper(),
-            str(datos.get('foto_novedad', '')).strip()
+            str(datos.get('foto_novedad', '')).strip(),
+            unidad_insp
         ))
         last_id = cursor.lastrowid
 
@@ -8948,7 +9119,8 @@ def insertar_inspeccion(datos):
         datos.get('cliente'),
         datos.get('subcliente'),
         datos.get('tipo_operacion'),
-        datos.get('kilometraje')
+        datos.get('kilometraje'),
+        unidad_medida=datos.get('unidad_medida')
     )
     sincronizar_marca_cliente(
         datos.get('cliente'),
@@ -8963,7 +9135,7 @@ def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
         query = f"""
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
-                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, {col_foto}
+                   psi, novedades, precio, prof_inicial, km_montaje, numero_interno, usuario_registro, IFNULL(unidad_medida, 'KM') AS unidad_medida, {col_foto}
             FROM inspecciones
         """
         params = []
@@ -8976,6 +9148,11 @@ def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
                     placeholders = ', '.join(['UPPER(TRIM(?))'] * len(clis))
                     query += f" WHERE UPPER(TRIM(cliente)) IN ({placeholders})"
                     params.extend([c.upper() for c in clis])
+                    # Sedes: un cliente con sedes asignadas solo muestra esas sedes
+                    for cli_s, sedes in parsear_sedes_asignadas(usr_info.get('sedes_asignadas'), clis).items():
+                        ph = ', '.join(['?'] * len(sedes))
+                        query += f" AND (UPPER(TRIM(cliente)) != ? OR UPPER(TRIM(IFNULL(subcliente, ''))) IN ({ph}))"
+                        params.extend([cli_s] + sorted(sedes))
         query += " ORDER BY id DESC"
         return pd.read_sql_query(query, conn, params=params)
 
@@ -9902,6 +10079,73 @@ def vida_llanta(vida='', num_reencauches=None, ciclo=None) -> str:
     if v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
         n = to_int(ciclo, 1) - 1
     return 'Original' if n <= 0 else f'R{n}'
+
+
+def _tipo_precio(vida) -> str:
+    """La lista distingue llanta nueva ('Original') de reencauche ('Reencauche', aplica a R1, R2…)."""
+    return 'Original' if vida_llanta(vida) == 'Original' and str(vida or '').strip().upper() != 'REENCAUCHE' else 'Reencauche'
+
+
+def guardar_precio_cliente(cliente, marca, diseno, dimension, tipo, precio, vigente_desde) -> bool:
+    cli, mar, dis, dim = (str(x or '').strip().upper() for x in (cliente, marca, diseno, dimension))
+    tip = _tipo_precio(tipo)
+    pr, desde = to_float(precio), str(vigente_desde or '').strip()[:10]
+    if not (cli and mar and dim and pr > 0 and re.match(r'^\d{4}-\d{2}-\d{2}$', desde)):
+        return False
+    with get_connection() as conn:
+        conn.execute("""INSERT INTO precios_llanta_cliente (cliente, marca, diseno, dimension, tipo, precio, vigente_desde)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(cliente, marca, diseno, dimension, tipo, vigente_desde) DO UPDATE SET precio = excluded.precio""",
+                     (cli, mar, dis, dim, tip, pr, desde))
+        conn.commit()
+    return True
+
+
+def listar_precios_cliente(cliente='') -> list:
+    with get_connection() as conn:
+        q = "SELECT id, cliente, marca, diseno, dimension, tipo, precio, vigente_desde FROM precios_llanta_cliente"
+        params = []
+        if cliente:
+            q += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            params.append(cliente)
+        cols = ['id', 'cliente', 'marca', 'diseno', 'dimension', 'tipo', 'precio', 'vigente_desde']
+        return [dict(zip(cols, r)) for r in conn.execute(q + " ORDER BY cliente, marca, diseno, dimension, tipo, vigente_desde DESC", params)]
+
+
+def eliminar_precio_cliente(precio_id) -> bool:
+    with get_connection() as conn:
+        n = conn.execute("DELETE FROM precios_llanta_cliente WHERE id = ?", (to_int(precio_id),)).rowcount
+        conn.commit()
+    return n > 0
+
+
+def cargar_lista_precios():
+    """Lista completa en memoria para cálculos masivos: {(cliente, marca, diseno, dimension, tipo): [(desde, precio)…]}."""
+    lista = {}
+    try:
+        with get_connection() as conn:
+            for cli, mar, dis, dim, tip, pr, desde in conn.execute(
+                    "SELECT cliente, marca, diseno, dimension, tipo, precio, vigente_desde FROM precios_llanta_cliente ORDER BY vigente_desde"):
+                lista.setdefault((cli, mar, dis or '', dim, tip), []).append((desde, pr))
+    except Exception:
+        pass
+    return lista
+
+
+def precio_lista_cliente(cliente, marca, diseno, dimension, vida, fecha=None, lista=None) -> Optional[float]:
+    """
+    Precio de la lista del cliente vigente a la fecha: primero marca + diseño + dimensión y, si no hay,
+    el precio general de la marca para esa dimensión. Sin precio del cliente retorna None (se excluye).
+    """
+    lista = cargar_lista_precios() if lista is None else lista
+    cli, mar, dis, dim = (str(x or '').strip().upper() for x in (cliente, marca, diseno, dimension))
+    tip = _tipo_precio(vida)
+    f = str(fecha or _hoy_bogota().isoformat())[:10]
+    for clave in ((cli, mar, dis, dim, tip), (cli, mar, '', dim, tip)):
+        vigentes = [pr for desde, pr in lista.get(clave, []) if desde <= f]
+        if vigentes:
+            return float(vigentes[-1])
+    return None
 
 
 def maximo_reencauches(cliente, marca='') -> Optional[int]:
@@ -11687,6 +11931,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
     resultados = []
     cache_esquemas = {}
+    ref_precio_t, _ = construir_referencias_llanta(df)
     # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
     ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
     posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
@@ -11726,6 +11971,9 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         precio = to_float(ultima['precio'])
         if precio <= 0:
             precio = to_float(primera['precio'])
+        if precio <= 0:  # lista de precios del cliente (nunca de otro cliente)
+            precio = to_float(ref_precio_t(ultima.get('cliente'), ultima.get('dimension'), num, ultima.get('marca'),
+                                           ultima.get('diseno'), ultima.get('vida'), str(primera.get('fecha') or '')[:10]))
         cpk = (precio / km_rodados) if (km_rodados > 0 and precio > 0) else 0.0
 
         cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
@@ -11819,6 +12067,52 @@ def parsear_clientes_asignados(cliente_asignado) -> list:
             res.append(clean)
     return res
 
+def parsear_sedes_asignadas(sedes_asignadas, clientes=None) -> dict:
+    """
+    'TELLANTAS|PEPSICO FUNZA, TELLANTAS|BOGOTA' -> {'TELLANTAS': {'PEPSICO FUNZA', 'BOGOTA'}}.
+    Un cliente que no aparece no tiene restricción de sede (ve todas). Si se pasan `clientes`,
+    se descartan sedes de clientes que el usuario no tiene asignados.
+    """
+    res = {}
+    permitidos = {c.upper() for c in (clientes or [])}
+    for item in str(sedes_asignadas or '').split(','):
+        if '|' not in item:
+            continue
+        cli, sede = [x.strip().upper() for x in item.split('|', 1)]
+        if cli and sede and (not permitidos or cli in permitidos):
+            res.setdefault(cli, set()).add(sede)
+    return res
+
+
+def serializar_sedes_asignadas(sedes: dict) -> str:
+    return ', '.join(f"{c}|{s}" for c in sorted(sedes) for s in sorted(sedes[c]))
+
+
+def cliente_sede_de_placa(placa):
+    """(cliente, sede) de la placa según el catálogo de vehículos o, si no está, su última inspección."""
+    pl = str(placa or '').strip().upper()
+    if not pl:
+        return '', ''
+    with get_connection() as conn:
+        r = conn.execute("SELECT cliente, subcliente FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ?", (pl,)).fetchone()
+        if not r or not r[0]:
+            r = conn.execute("""SELECT cliente, subcliente FROM inspecciones WHERE UPPER(TRIM(placa)) = ?
+                                ORDER BY fecha DESC, id DESC LIMIT 1""", (pl,)).fetchone()
+    return (str(r[0] or '').strip().upper(), str(r[1] or '').strip().upper()) if r else ('', '')
+
+
+def usuario_puede_ver_sede(usr: dict, cliente, subcliente) -> bool:
+    """True si el usuario ve ese cliente y esa sede (administrador: todo; sin sedes asignadas: todas)."""
+    if not usr or str(usr.get('rol', '')).lower() in ('admin', 'administrador') or str(usr.get('username', '')).lower() == 'admin':
+        return True
+    clis = parsear_clientes_asignados(usr.get('cliente_asignado'))
+    cli = str(cliente or '').strip().upper()
+    if clis and cli and cli not in clis:
+        return False
+    sedes = parsear_sedes_asignadas(usr.get('sedes_asignadas'), clis).get(cli)
+    return not sedes or str(subcliente or '').strip().upper() in sedes
+
+
 def parsear_vistas_permitidas(vistas, rol='inspector') -> list:
     """
     Retorna la lista de vistas autorizadas según el rol:
@@ -11896,7 +12190,7 @@ def obtener_usuario_por_username(username):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
             FROM usuarios
             WHERE LOWER(username) = LOWER(?)
         """, (u,))
@@ -11911,6 +12205,7 @@ def obtener_usuario_por_username(username):
                 'rol': row[3],
                 'cliente_asignado': row[4] or '',
                 'clientes_asignados': clis,
+                'sedes_asignadas': row[7] or '',
                 'vistas_permitidas': vistas,
                 'activo': bool(row[5])
             }
@@ -11922,11 +12217,11 @@ def listar_usuarios():
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
             FROM usuarios
             ORDER BY id ASC
         """)
-        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas']
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas', 'sedes_asignadas']
         filas = []
         for r in cursor.fetchall():
             d = dict(zip(cols, r))
@@ -11936,7 +12231,7 @@ def listar_usuarios():
             filas.append(d)
         return filas
 
-def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado='', vistas_permitidas=None):
+def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_asignado='', vistas_permitidas=None, sedes_asignadas=''):
     u = (username or '').strip().lower()
     p = (password or '').strip()
     nom = (nombre_completo or '').strip()
@@ -11959,16 +12254,17 @@ def crear_usuario(username, password, nombre_completo, rol='inspector', cliente_
         asegurar_columna_vistas_permitidas(conn)
         try:
             cursor = conn.cursor()
+            sedes_str = serializar_sedes_asignadas(parsear_sedes_asignadas(sedes_asignadas, parsear_clientes_asignados(cli)))
             cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (u, hashed_pwd, nom, r, cli, vistas_str))
+                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas, sedes_asignadas)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (u, hashed_pwd, nom, r, cli, vistas_str, sedes_str))
             conn.commit()
             return True
         except Exception:
             return False
 
-def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None):
+def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, cliente_asignado=None, activo=None, vistas_permitidas=None, sedes_asignadas=None):
     u = (username or '').strip().lower()
     with get_connection() as conn:
         asegurar_columna_vistas_permitidas(conn)
@@ -12009,6 +12305,14 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         if cliente_asignado is not None:
             updates.append("cliente_asignado = ?")
             params.append(', '.join(parsear_clientes_asignados(cliente_asignado)))
+        if sedes_asignadas is not None:
+            if cliente_asignado is not None:
+                clis_ref = parsear_clientes_asignados(cliente_asignado)
+            else:
+                r_cli = cursor.execute("SELECT cliente_asignado FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,)).fetchone()
+                clis_ref = parsear_clientes_asignados(r_cli[0] if r_cli else '')
+            updates.append("sedes_asignadas = ?")
+            params.append(serializar_sedes_asignadas(parsear_sedes_asignadas(sedes_asignadas, clis_ref)))
         if activo is not None:
             updates.append("activo = ?")
             params.append(1 if activo else 0)
@@ -12259,9 +12563,14 @@ def construir_referencias_llanta(df: pd.DataFrame):
                 d = d.sort_values('fecha')
             precio_llanta = d.groupby(['_cli', '_sn'])['_pr'].last().to_dict()  # el más reciente
 
-    def ref_precio(cliente, dimension, numero_interno=''):
+    lista_precios = cargar_lista_precios()
+
+    def ref_precio(cliente, dimension, numero_interno='', marca='', diseno='', vida='', fecha=None):
         v = precio_llanta.get((str(cliente or '').strip().upper(), str(numero_interno or '').strip().upper()))
-        return float(v) if v and v > 0 else None
+        if v and v > 0:
+            return float(v)
+        # Lista de precios del cliente vigente a la fecha (nunca de otros clientes)
+        return precio_lista_cliente(cliente, marca, diseno, dimension, vida, fecha, lista_precios) if marca else None
 
     cache_pini = {}
 
@@ -12276,6 +12585,148 @@ def construir_referencias_llanta(df: pd.DataFrame):
         return cache_pini[clave]
 
     return ref_precio, ref_prof_inicial
+
+
+def _div(a, b):
+    return (a / b) if (a and b and b > 0) else None
+
+
+def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
+    """
+    Los 4 CPK del negocio (costo por km; con unidad='horas', costo por hora de motor):
+    - Operativo: costo de la vida / km recorridos hasta la última inspección.
+    - Proyectado: costo de la vida / km proyectados hasta el límite de retiro (km actuales + mm útiles × km/mm).
+    - Total por ciclo completo: suma de los costos de todas las vidas / suma de los km de todas las vidas.
+    - Administrativo (mensual, por flota): costo de las llantas instaladas en el mes sin km en esa vida
+      (montajes desde Bodega 1 o Bodega 4) / km de la flota en el mes (odómetro al corte − corte anterior).
+    Los agregados de flota son Σcosto / Σkm (no promedio de CPK por llanta). Sin precio de la llanta ni
+    de la lista del cliente, la vida queda fuera de los cálculos en pesos (se cuenta como sin precio).
+    """
+    # La lectura del vehículo (kilometraje) está en km o en horas según la unidad de la placa
+    col_med, col_mont = 'kilometraje', 'km_montaje'
+    vacio = {"unidad": unidad, "llantas": {}, "por_vida": [], "flota": {"cpk_operativo": None, "cpk_proyectado": None,
+             "cpk_total": None, "llantas_con_cpk": 0, "llantas_sin_precio": 0}, "administrativo": []}
+    if df is None or df.empty:
+        return vacio
+    d = df.copy().reset_index(drop=True)  # índice único: las columnas nuevas no se desalinean
+    # fillna antes de astype: en pandas recientes astype(str) conserva los vacíos como NaN
+    d['_cli'] = d['cliente'].fillna('').astype(str).str.strip().str.upper()
+    d['_sn'] = d['numero_interno'].fillna('').astype(str).str.strip().str.upper()
+    d = d[~d['_sn'].isin(('', 'SN', 'NAN', 'NONE')) & (d['_cli'] != '')]
+    d['_vida'] = [vida_llanta(v, None, None) if str(v or '').strip().upper() != 'REENCAUCHE' else 'Reencauche'
+                  for v in d.get('vida', pd.Series([''] * len(d)))]
+    d = d.sort_values(['fecha', 'id'])
+    ref_precio, _ = construir_referencias_llanta(d)
+    lim_posicion = construir_resolver_limite_posicion()
+    pos_placa = d.groupby(d['placa'].astype(str).str.strip().str.upper())['posicion'].apply(lambda s: [to_int(x) for x in s]).to_dict()
+
+    llantas = {}
+    sin_precio = 0
+    for (cli, sn, vida), g in d.groupby(['_cli', '_sn', '_vida'], sort=False):
+        pri, ult = g.iloc[0], g.iloc[-1]
+        med_ult = to_float(ult.get(col_med))
+        mont = to_float(ult.get(col_mont)) or to_float(pri.get(col_mont))
+        base = mont if (mont > 0 and med_ult >= mont) else to_float(pri.get(col_med))
+        km = max(0.0, med_ult - base)
+        precios = [to_float(x) for x in g['precio'] if to_float(x) > 0] if 'precio' in g else []
+        costo = precios[0] if precios else ref_precio(cli, pri.get('dimension'), sn, pri.get('marca'), pri.get('diseno'),
+                                                      vida, str(pri.get('fecha') or '')[:10])
+        profs = [p for p in (to_float(ult.get('prof_ext')), to_float(ult.get('prof_cent')), to_float(ult.get('prof_int'))) if p > 0]
+        p_min = min(profs) if profs else 0.0
+        p_ini = to_float(ult.get('prof_inicial')) or to_float(pri.get('prof_inicial'))
+        placa = str(ult.get('placa') or '').strip().upper()
+        lim = lim_posicion(cli, str(ult.get('subcliente') or ''), str(ult.get('tipologia') or ''), to_int(ult.get('posicion')),
+                           pos_placa.get(placa, [to_int(ult.get('posicion'))]))
+        desg = (p_ini - p_min) if (p_ini > 0 and p_min > 0) else 0.0
+        proy = None
+        if desg >= 0.5 and km >= (50 if unidad == 'horas' else 500):
+            proy = km + max(0.0, p_min - lim) * (km / desg)
+        if not costo:
+            sin_precio += 1
+        ll = llantas.setdefault(f"{cli}|{sn}", {"cliente": cli, "numero_interno": sn, "marca": str(pri.get('marca') or ''),
+                                                "vidas": {}, "cpk_total_ciclo": None})
+        ll["vidas"][vida] = {
+            "km": round(km, 1), "costo": costo, "km_proyectados": round(proy, 1) if proy else None,
+            "cpk_operativo": _div(costo, km), "cpk_proyectado": _div(costo, proy),
+            "prof_actual": p_min, "limite_retiro": lim, "fecha_ultima": str(ult.get('fecha') or '')[:10],
+        }
+    for ll in llantas.values():
+        vs = [v for v in ll["vidas"].values() if v["costo"] and v["km"] > 0]
+        if vs and len(vs) == len(ll["vidas"]):  # ciclo completo solo si todas las vidas tienen costo
+            ll["cpk_total_ciclo"] = _div(sum(v["costo"] for v in vs), sum(v["km"] for v in vs))
+
+    # Por vida y flota: Σcosto / Σkm
+    def _agregar(vidas):
+        con = [v for v in vidas if v["costo"] and v["km"] > 0]
+        con_p = [v for v in con if v["km_proyectados"]]
+        return (_div(sum(v["costo"] for v in con), sum(v["km"] for v in con)),
+                _div(sum(v["costo"] for v in con_p), sum(v["km_proyectados"] for v in con_p)), len(con))
+    por_vida = []
+    orden = lambda v: (0, 0) if v == 'Original' else ((1, int(v[1:])) if re.match(r'^R\d+$', v) else (2, 0))
+    todas = [(vn, v) for ll in llantas.values() for vn, v in ll["vidas"].items()]
+    for vn in sorted({vn for vn, _ in todas}, key=orden):
+        op, pr, n = _agregar([v for x, v in todas if x == vn])
+        por_vida.append({"vida": vn, "cpk_operativo": op, "cpk_proyectado": pr, "llantas": n})
+    op, pr, n = _agregar([v for _, v in todas])
+    ciclos = [ll for ll in llantas.values() if ll["cpk_total_ciclo"]]
+    total = _div(sum(sum(v["costo"] for v in ll["vidas"].values()) for ll in ciclos),
+                 sum(sum(v["km"] for v in ll["vidas"].values()) for ll in ciclos))
+
+    return {"unidad": unidad, "llantas": llantas, "por_vida": por_vida,
+            "flota": {"cpk_operativo": op, "cpk_proyectado": pr, "cpk_total": total, "llantas_con_cpk": n,
+                      "llantas_sin_precio": sin_precio},
+            "administrativo": _cpk_administrativo(d, col_med)}
+
+
+def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: int = 12) -> list:
+    """Serie mensual: inversión en llantas instaladas sin km / km (u horas) de la flota en el mes."""
+    if d.empty:
+        return []
+    clientes = sorted(set(d['_cli']))
+    fechas = d['fecha'].astype(str).str[:7]
+    lista_meses = sorted({m for m in fechas if re.match(r'^\d{4}-\d{2}$', m)})[-meses:]
+    # Odómetro de cada vehículo al corte de cada mes (última lectura hasta fin de mes)
+    d2 = d.assign(_mes=fechas, _placa=d['placa'].astype(str).str.strip().str.upper(), _med=pd.to_numeric(d[col_med], errors='coerce'))
+    d2 = d2[d2['_med'] > 0]
+    lista_precios = cargar_lista_precios()
+    instalaciones = []
+    try:
+        with get_connection() as conn:
+            ph = ', '.join(['?'] * len(clientes))
+            instalaciones = conn.execute(f"""
+                SELECT SUBSTR(k.fecha_movimiento, 1, 7), k.cliente, k.numero_interno, k.vida_ciclo,
+                       m.marca, m.diseno, m.dimension, m.costo_compra_original, m.costo_ciclo_actual, m.vida_actual, k.fecha_movimiento
+                FROM kardex_movimientos_llanta k
+                LEFT JOIN llantas_maestro m ON UPPER(m.numero_interno) = UPPER(k.numero_interno) AND UPPER(m.cliente) = UPPER(k.cliente)
+                WHERE k.tipo_movimiento IN ('MONTAJE', 'REINGRESO_MONTAJE')
+                  AND k.bodega_origen IN ('BODEGA_1_NUEVAS', 'BODEGA_4_REENCAUCHADAS')
+                  AND UPPER(k.cliente) IN ({ph})
+            """, clientes).fetchall()
+    except Exception:
+        instalaciones = []
+    serie = []
+    for i, mes in enumerate(lista_meses):
+        km_mes = 0.0
+        if i > 0:
+            ant = lista_meses[i - 1]
+            corte = d2[d2['_mes'] <= mes].groupby('_placa')['_med'].max()
+            corte_ant = d2[d2['_mes'] <= ant].groupby('_placa')['_med'].max()
+            comunes = corte.index.intersection(corte_ant.index)  # vehículos con lectura en los dos cortes
+            km_mes = float((corte[comunes] - corte_ant[comunes]).clip(lower=0).sum())
+        inversion, sin_costo = 0.0, 0
+        for (m_ins, cli, sn, vida_k, marca, diseno, dim, c_orig, c_ciclo, vida_m, f_mov) in instalaciones:
+            if m_ins != mes:
+                continue
+            vida_i = vida_llanta(vida_k or 'Original')
+            costo = c_orig if vida_i == 'Original' else (c_ciclo if vida_llanta(vida_m) == vida_i else None)
+            costo = to_float(costo) or precio_lista_cliente(cli, marca, diseno, dim, vida_i, str(f_mov)[:10], lista_precios)
+            if costo:
+                inversion += costo
+            else:
+                sin_costo += 1
+        serie.append({"mes": mes, "inversion": round(inversion), "km_flota": round(km_mes),
+                      "instalaciones_sin_costo": sin_costo, "cpk_administrativo": _div(inversion, km_mes)})
+    return serie
 
 
 def estimar_combustible_subinflado(df_corte: pd.DataFrame, col_delta: str = 'calc_delta_psi_pct') -> dict:
@@ -12486,6 +12937,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         _col = lambda c: [str(x or '').strip() for x in (df[c].tolist() if c in df else [''] * n_rows)]
         marca_list_g, diseno_list_g, dim_list_g, vida_list_g = _col('marca'), _col('diseno'), _col('dimension'), _col('vida')
         sn_list_g = _col('numero_interno')
+        fechas_g = _col('fecha')
         delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
         alerta_alin_col_g = []
 
@@ -12526,7 +12978,8 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             p_ini_col.append(p_ini if p_ini is not None else float('nan'))
             # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
             pr_real = precio_list[idx] if precio_list[idx] > 0 else None
-            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx], sn_list_g[idx])
+            pr = pr_real if pr_real else ref_precio(cli_list[idx] or cliente or '', dim_list_g[idx], sn_list_g[idx],
+                                                    marca_list_g[idx], diseno_list_g[idx], vida_list_g[idx], fechas_g[idx])
             precio_col.append(pr if pr else float('nan'))
             precio_estimado_col.append(False)
 
@@ -13627,16 +14080,82 @@ def preparar_corte_mrp(df_inspecciones: pd.DataFrame, lim_posicion=None) -> pd.D
     return df_c
 
 
-def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones, lim_posicion=None) -> list:
+EJES_STOCK_SEGURIDAD = ('DIRECCIONAL', 'TRACCION', 'LIBRE')
+HORIZONTE_MRP_MESES = 3
+
+
+def guardar_stock_seguridad(cliente, dimension, eje, cantidad) -> bool:
+    cli, dim, e = str(cliente or '').strip().upper(), str(dimension or '').strip().upper(), str(eje or '').strip().upper()
+    if not cli or not dim or e not in EJES_STOCK_SEGURIDAD or to_int(cantidad, -1) < 0:
+        return False
+    with get_connection() as conn:
+        conn.execute("""INSERT INTO stock_seguridad_mrp (cliente, dimension, eje, cantidad) VALUES (?, ?, ?, ?)
+                        ON CONFLICT(cliente, dimension, eje) DO UPDATE SET cantidad = excluded.cantidad""", (cli, dim, e, to_int(cantidad)))
+        conn.commit()
+    return True
+
+
+def listar_stock_seguridad(cliente='') -> list:
+    with get_connection() as conn:
+        q, params = "SELECT cliente, dimension, eje, cantidad FROM stock_seguridad_mrp", []
+        if cliente:
+            q += " WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            params.append(cliente)
+        return [{"cliente": c, "dimension": d, "eje": e, "cantidad": n} for c, d, e, n in conn.execute(q + " ORDER BY cliente, dimension, eje", params)]
+
+
+def eliminar_stock_seguridad(cliente, dimension, eje) -> bool:
+    with get_connection() as conn:
+        n = conn.execute("DELETE FROM stock_seguridad_mrp WHERE UPPER(cliente) = UPPER(?) AND UPPER(dimension) = UPPER(?) AND UPPER(eje) = UPPER(?)",
+                         (cliente, dimension, eje)).rowcount
+        conn.commit()
+    return n > 0
+
+
+def _ritmos_mrp(df_hist: pd.DataFrame):
     """
-    Matriz MRP única para Bodegas y el KPI 20 (antes había dos con reglas distintas).
-    - Demanda direccional: llantas de ejes DIRECCIONALES (según la estructura de la tipología) en
-      o bajo su límite de retiro, más el ajuste de par direccional. Solo se cubre con nuevas.
-    - Demanda de tracción / libre / repuesto: resto de llantas en o bajo su límite.
+    (km_por_mm por llanta-vida, km_por_mes por vehículo) a partir del historial de inspecciones.
+    Sin historial suficiente (menos de 15 días, menos de 0,5 mm o 500 km) no hay ritmo.
+    """
+    km_mm, km_mes = {}, {}
+    if df_hist is None or df_hist.empty:
+        return km_mm, km_mes
+    d = df_hist.reset_index(drop=True).sort_values(['fecha', 'id'])
+    d = d.assign(_f=pd.to_datetime(d['fecha'].astype(str).str[:10], errors='coerce'), _km=pd.to_numeric(d['kilometraje'], errors='coerce'))
+    for placa, g in d[d['_km'] > 0].groupby(d['placa'].astype(str).str.strip().str.upper()):
+        dias = (g['_f'].max() - g['_f'].min()).days if g['_f'].notna().any() else 0
+        delta = g['_km'].max() - g['_km'].min()
+        if dias >= 15 and delta > 0:
+            km_mes[placa] = delta / (dias / 30.4)
+    for (cli, sn, vida), g in d.groupby([d['cliente'].astype(str).str.upper(), d['numero_interno'].astype(str).str.upper(),
+                                         d['vida'].astype(str).str.upper()]):
+        pri, ult = g.iloc[0], g.iloc[-1]
+        mont = to_float(ult.get('km_montaje'))
+        base = mont if (mont > 0 and to_float(ult['_km']) >= mont) else to_float(pri['_km'])
+        km = to_float(ult['_km']) - base
+        profs = [p for p in (to_float(ult.get('prof_ext')), to_float(ult.get('prof_cent')), to_float(ult.get('prof_int'))) if p > 0]
+        desg = (to_float(ult.get('prof_inicial')) or to_float(pri.get('prof_inicial'))) - (min(profs) if profs else 0)
+        if km >= 500 and desg >= 0.5 and profs:
+            km_mm[(cli, sn, vida)] = km / desg
+    return km_mm, km_mes
+
+
+def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones, lim_posicion=None,
+                        df_hist: pd.DataFrame = None, horizonte_meses=None) -> list:
+    """
+    Matriz MRP única para Bodegas y el KPI 20, proyectada al horizonte (3 meses por defecto, editable).
+    - Demanda: llantas que llegan a su límite de retiro dentro del horizonte según su ritmo de desgaste
+      (km por mm de la llanta y km por mes del vehículo). Sin historial suficiente solo cuenta si ya
+      está en el límite. Direccional (según la estructura de la tipología) se cubre solo con nuevas.
+    - Reencauche y desecho: de las llantas que se retiran, el % de aprobación de reencauche del cliente
+      vuelve como reencauchada (cubre ejes no direccionales); el resto es desecho.
     - Reposición: bajas FVU de los últimos DIAS_REPOSICION_FVU días.
-    - Stock de seguridad: el parámetro del cliente.
+    - Stock de seguridad por medida y eje; si la medida no tiene regla, el valor general del cliente.
     """
     lim_posicion = lim_posicion or construir_resolver_limite_posicion()
+    horizonte = max(0.0, to_float(horizonte_meses, HORIZONTE_MRP_MESES)) if horizonte_meses not in (None, '') else HORIZONTE_MRP_MESES
+    km_mm_ll, km_mes_veh = _ritmos_mrp(df_hist)
+    reglas_stock = {(r['dimension'], r['eje']): r['cantidad'] for r in listar_stock_seguridad(cfg.get('cliente') or '')}
     pct_aprob = to_float(cfg.get('porcentaje_aprobacion_reencauche', 85.0), 85.0)
     stock_seg = to_int(cfg.get('stock_seguridad_default', 4), 4)
     dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
@@ -13646,16 +14165,36 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
         return len([ll for ll in llantas if str(ll.get('dimension', '')).upper() == dim.upper()
                     and ll.get('ubicacion_bodega') == ubicacion and filtro(ll)])
 
+    def meses_al_limite(r):
+        """0 si ya está en el límite; None si no hay ritmo para proyectar."""
+        p_min, lim = to_float(r['calc_p_min']), to_float(r['calc_lim_retiro'])
+        if p_min <= 0:
+            return None
+        if p_min <= lim:
+            return 0.0
+        kmm = km_mm_ll.get((str(r.get('cliente', '')).upper(), str(r.get('numero_interno', '')).upper(), str(r.get('vida', '')).upper()))
+        kmes = km_mes_veh.get(str(r.get('placa', '')).strip().upper())
+        return ((p_min - lim) * kmm / kmes) if (kmm and kmes) else None
+
     filas = []
     for dim in dimensiones:
-        dem_dir, dem_otros = 0, 0
+        dem_dir, dem_otros, dem_proyectada, sin_ritmo, retiradas = 0, 0, 0, 0, 0
         if df_corte is not None and not df_corte.empty:
             for placa, grp in df_corte.groupby('placa'):
                 est = lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist())
                 por_pos = {to_int(r['posicion']): r for _, r in grp.iterrows()}
                 en_dim = lambda r: str(r.get('dimension', '')).strip().upper() == dim.upper()
                 for pos, r in por_pos.items():
-                    if en_dim(r) and 0 < to_float(r['calc_p_min']) <= to_float(r['calc_lim_retiro']):
+                    if not en_dim(r):
+                        continue
+                    meses = meses_al_limite(r)
+                    if meses is None:
+                        sin_ritmo += 1
+                        continue
+                    if meses <= horizonte:
+                        retiradas += 1
+                        if meses > 0:
+                            dem_proyectada += 1
                         if r['calc_eje'] == ee.DIRECCIONAL:
                             dem_dir += 1
                         else:
@@ -13673,6 +14212,17 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
                             dem_dir += 1  # ajuste de par direccional
 
         bajas_fvu = contar_bajas_fvu_para_reponer(llantas, dim)
+        # Stock de seguridad por medida y eje (sin reglas para la medida: el valor general del cliente)
+        reglas_dim = {e: n for (d_r, e), n in reglas_stock.items() if d_r == dim.upper()}
+        if reglas_dim:
+            seg_dir = reglas_dim.get('DIRECCIONAL', 0)
+            seg_otros = reglas_dim.get('TRACCION', 0) + reglas_dim.get('LIBRE', 0)
+        else:
+            seg_dir, seg_otros = 0, stock_seg
+        stock_seg_dim = seg_dir + seg_otros
+        # Cascos de las llantas que se retiran: el % aprobado vuelve como reencauchada, el resto es desecho
+        retorno_proy = int(math.floor(retiradas * (pct_aprob / 100.0)))
+        desecho_proy = retiradas - retorno_proy
         b1 = contar('BODEGA_1_NUEVAS', dim)
         b2 = contar('BODEGA_2_RECAMBIO', dim, lambda ll: not ll.get('reservada_para_placa'))
         lim_b2 = limite_base_cliente  # una llanta de recambio sirve si está sobre el límite asignado al cliente
@@ -13683,18 +14233,21 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
         retorno_planta = int(math.floor(b3 * (pct_aprob / 100.0)))
 
         demanda = dem_dir + dem_otros
-        necesidad_bruta = demanda + bajas_fvu + stock_seg
-        compra_nuevas_dir = max(0, dem_dir - b1)            # dirección solo con llantas nuevas
-        b1_restante = max(0, b1 - dem_dir)
-        necesidad_no_dir = dem_otros + bajas_fvu + stock_seg
-        stock_util_no_dir = b1_restante + b2_utiles + b4 + retorno_planta + b5
+        necesidad_bruta = demanda + bajas_fvu + stock_seg_dim
+        compra_nuevas_dir = max(0, dem_dir + seg_dir - b1)   # dirección (y su reserva) solo con llantas nuevas
+        b1_restante = max(0, b1 - dem_dir - seg_dir)
+        necesidad_no_dir = dem_otros + bajas_fvu + seg_otros
+        stock_util_no_dir = b1_restante + b2_utiles + b4 + retorno_planta + b5 + retorno_proy
         compra_adicional = max(0, necesidad_no_dir - stock_util_no_dir)
         stock_disponible = b1 + b2_utiles + b4 + retorno_planta + b5
         filas.append({
             'dimension': dim,
             'demanda_flota': demanda, 'demanda_direccional': dem_dir, 'demanda_traccion': dem_otros,
             'reposicion_bajas_fvu': bajas_fvu,
-            'stock_seguridad': stock_seg, 'margen_seguridad': stock_seg,
+            'horizonte_meses': horizonte, 'demanda_proyectada': dem_proyectada, 'llantas_sin_ritmo': sin_ritmo,
+            'retorno_reencauche_proyectado': retorno_proy, 'desecho_proyectado': desecho_proy,
+            'stock_seguridad_direccional': seg_dir, 'stock_seguridad_otros': seg_otros,
+            'stock_seguridad': stock_seg_dim, 'margen_seguridad': stock_seg_dim,
             'necesidad_bruta': necesidad_bruta,
             'b1_nuevas': b1, 'stock_b1': b1, 'b1_restante': b1_restante,
             'b2_recambio_libres': b2, 'b2_recambio_libres_utiles': b2_utiles, 'stock_b2': b2_utiles,
@@ -13751,6 +14304,10 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
         if subcliente and subcliente != "TODOS":
             query_m += " AND UPPER(subcliente) = ?"
             params_m.append(subcliente)
+        sedes_f = [str(x).strip().upper() for x in (filtros.get('sedes') or []) if str(x).strip()]
+        if sedes_f:  # usuario limitado a ciertas sedes
+            query_m += f" AND UPPER(IFNULL(subcliente, '')) IN ({', '.join(['?'] * len(sedes_f))})"
+            params_m.extend(sedes_f)
 
         cursor.execute(query_m, params_m)
         cols_m = [d[0] for d in cursor.description]
@@ -13803,11 +14360,14 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     df_raw = filtrar_fechas_validas(obtener_todas_inspecciones(incluir_fotos=False))
     if not df_raw.empty and cliente and cliente != "TODOS":
         df_raw = df_raw[df_raw['cliente'].astype(str).str.upper().str.strip() == cliente]
+    if not df_raw.empty and filtros.get('sedes'):
+        df_raw = df_raw[df_raw['subcliente'].astype(str).str.upper().str.strip().isin([str(x).strip().upper() for x in filtros['sedes']])]
     if not df_raw.empty and subcliente and subcliente != "TODOS":
         df_raw = df_raw[df_raw['subcliente'].astype(str).str.upper().str.strip() == subcliente]
     lim_posicion = construir_resolver_limite_posicion()
     df_corte = preparar_corte_mrp(df_raw, lim_posicion)
-    matriz_mrp = calcular_matriz_mrp(llantas_todas, df_corte, cfg, dimensiones_set, lim_posicion)
+    matriz_mrp = calcular_matriz_mrp(llantas_todas, df_corte, cfg, dimensiones_set, lim_posicion,
+                                     df_hist=df_raw, horizonte_meses=filtros.get('horizonte_meses'))
 
     return {
         "licencia": licencia,
@@ -13848,6 +14408,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         agrupar_kpi14 = 'marca'
     lic_param = str(filtros.get('licencia', '')).strip().upper()
     usuario = str(filtros.get('usuario', '')).strip()
+    # Base de los indicadores: 'ultima' = última inspección de cada posición; 'historial' = todas las inspecciones
+    base = 'historial' if str(filtros.get('base', '')).strip().lower() == 'historial' else 'ultima'
+    # Unidad de los indicadores: 'km' (vehículos por kilómetros) u 'horas' (vehículos por horas de motor)
+    unidad = 'horas' if 'HOR' in str(filtros.get('unidad', '')).upper() else 'km'
 
     # Licencia efectiva: siempre la configurada para el cliente. El parámetro solo permite ver la
     # vista LIGHT de un cliente FULL (vista previa); nunca sube un cliente LIGHT a FULL.
@@ -13894,6 +14458,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             df = df[df["marca"].astype(str).str.upper().str.strip() == marca]
         if dimension and dimension != "TODOS":
             df = df[df["dimension"].astype(str).str.upper().str.strip() == dimension]
+        # Solo los vehículos medidos en la unidad elegida (los datos sin unidad son de kilómetros)
+        uni_col = df['unidad_medida'] if 'unidad_medida' in df.columns else pd.Series(['KM'] * len(df), index=df.index)
+        df = df[uni_col.apply(normalizar_unidad_medida) == ('HORAS' if unidad == 'horas' else 'KM')]
     else:
         df = pd.DataFrame()
 
@@ -13923,6 +14490,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         marca_list_k = [str(x or '').strip() for x in (df['marca'].tolist() if 'marca' in df else ['']*n_rows)]
         diseno_list_k = [str(x or '').strip() for x in (df['diseno'].tolist() if 'diseno' in df else ['']*n_rows)]
         dim_list_k = [str(x or '').strip() for x in (df['dimension'].tolist() if 'dimension' in df else ['']*n_rows)]
+        fecha_list_k = [str(x or '')[:10] for x in (df['fecha'].tolist() if 'fecha' in df else ['']*n_rows)]
         precio_estimado_col, pini_sin_dato_col = [], []
         eje_col = []
 
@@ -13961,7 +14529,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             sub_r = sub_list[i] or subcliente or ''
 
             # Precio real de la llanta (de esta u otra de sus inspecciones); si no hay, sin dato y se excluye
-            pr = precio_list[i] if precio_list[i] > 0 else ref_precio(cli_r, dim_list_k[i], sn_list[i])
+            pr = precio_list[i] if precio_list[i] > 0 else ref_precio(cli_r, dim_list_k[i], sn_list[i], marca_list_k[i],
+                                                                     diseno_list_k[i], vida_list[i], fecha_list_k[i])
             precio_estimado_col.append(False)
 
             positivos = [x for x in (pe, pc, pi) if x > 0]
@@ -14007,7 +14576,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             km_rodados_col.append(km_rod)
 
             sin_desgaste = (d_mm != d_mm)  # NaN: sin profundidad inicial o sin medición
-            asent = sin_desgaste or (d_mm < 0.5) or (km_rod < 500.0)
+            asent = sin_desgaste or (d_mm < 0.5) or (km_rod < (50.0 if unidad == 'horas' else 500.0))
             es_asentamiento_col.append(asent)
 
             # Filtro estricto de madurez: desgaste >= 1.5 mm
@@ -14107,16 +14676,20 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_es_repuesto'] = [e == ee.REPUESTO for e in eje_col]
         df['calc_pini_sin_dato'] = pini_sin_dato_col
         # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
-        df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn) for p, c, d, sn in zip(precio_list, cli_list, dim_list_k, sn_list)]
+        df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn, m, ds, v, f) for p, c, d, sn, m, ds, v, f
+                             in zip(precio_list, cli_list, dim_list_k, sn_list, marca_list_k, diseno_list_k, vida_list, fecha_list_k)]
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
 
-        # CORRECCIÓN 1: Construcción de df_patio al inicio (deduplicado por placa y posición, tomando última inspección)
-        df_patio = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Estado actual: última inspección de cada posición (siempre se usa para el MRP: es un plan de compra)
+        df_corte = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Base de los indicadores según el selector: última inspección o historial completo
+        df_patio = df_corte if base == 'ultima' else df.sort_values(by=['fecha', 'id'], ascending=[False, False]).copy()
         # Los repuestos no ruedan: no entran a desgaste, rendimiento ni proyecciones
         df_rodante = df_patio[~df_patio['calc_es_repuesto']].copy()
     else:
+        df_corte = pd.DataFrame()
         df_patio = pd.DataFrame()
         df_rodante = pd.DataFrame()
 
@@ -14823,6 +15396,17 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     brecha_prom_k15 = round(sum(brecha_k15) / max(1, len(brecha_k15)), 1) if brecha_k15 else 0.0
 
+    # =========================================================================
+    # KPI CPK: los 4 costos por kilómetro (operativo, proyectado, total por ciclo, administrativo)
+    # =========================================================================
+    if es_full and not df.empty:
+        cpk_res = calcular_cpk_llantas(df, unidad)
+        kpi_cpk = {"disponible": True, "mensaje": "", "flota": cpk_res["flota"], "por_vida": cpk_res["por_vida"],
+                   "administrativo": cpk_res["administrativo"], "llantas": len(cpk_res["llantas"])}
+    else:
+        kpi_cpk = {"disponible": es_full, "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+                   "flota": {}, "por_vida": [], "administrativo": [], "llantas": 0}
+
     kpi_15 = {
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
@@ -15024,7 +15608,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         dims_mrp = [d for d in dims_mrp if d.upper() == dimension.upper()] or [dimension]
 
     # Misma matriz que la vista de Bodegas (antes se calculaba aparte con otras reglas)
-    matriz_mrp = calcular_matriz_mrp(llantas_maestro_todas, df_patio, cfg, dims_mrp, lim_posicion) if es_full else []
+    matriz_mrp = calcular_matriz_mrp(llantas_maestro_todas, df_corte, cfg, dims_mrp, lim_posicion,
+                                     df_hist=df, horizonte_meses=filtros.get('horizonte_meses')) if es_full else []
     lbl_mrp = [m['dimension'] for m in matriz_mrp]
     nec_mrp = [m['necesidad_bruta'] for m in matriz_mrp]
     stk_mrp = [m['stock_disponible'] for m in matriz_mrp]
@@ -15119,7 +15704,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "pestanas": {
             "pestana_1": {"titulo": "1. 🚛 Inspección & Parque", "kpis": ["kpi_01", "kpi_02", "kpi_03", "kpi_04"]},
             "pestana_2": {"titulo": "2. 🔧 Mantenimiento & Pérdida", "kpis": ["kpi_05", "kpi_06", "kpi_07", "kpi_08", "kpi_09", "kpi_10", "kpi_11"]},
-            "pestana_3": {"titulo": "3. 📈 Producto & Proyecciones", "kpis": ["kpi_12", "kpi_13", "kpi_14", "kpi_15", "kpi_16"]},
+            "pestana_3": {"titulo": "3. 📈 Producto & Proyecciones", "kpis": ["kpi_12", "kpi_13", "kpi_14", "kpi_cpk", "kpi_15", "kpi_16"]},
             "pestana_4": {"titulo": "4. ♻️ Tablero Bajas / FVU", "kpis": ["kpi_17", "kpi_18", "kpi_19"]},
             "pestana_5": {"titulo": "5. 🏭 Balance 7 Bodegas MRP", "kpis": ["kpi_20"]}
         },
@@ -15139,6 +15724,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "kpi_12": kpi_12,
         "kpi_13": kpi_13,
         "kpi_14": kpi_14,
+        "kpi_cpk": kpi_cpk,
+        "base": base,
+        "unidad": unidad,
         "kpi_15": kpi_15,
         "kpi_16": kpi_16,
         "kpi_17": kpi_17,
@@ -15876,6 +16464,10 @@ def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> di
                     "motivo": "No tiene permisos para registrar inspecciones de este cliente"
                 })
                 continue
+        if not usuario_puede_ver_sede(usuario_actual, datos.get("cliente"), datos.get("subcliente")):
+            rechazadas.append({"dedup_key": dedup_key, "placa": placa, "posicion": pos,
+                               "motivo": "No tiene permisos para registrar inspecciones de esta sede"})
+            continue
 
         # Verificar si ya existe registro en SQLite para esa placa, posición y fecha
         with get_connection() as conn:
@@ -15943,7 +16535,7 @@ def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> di
 
 - **Ruta:** `modulo_bodegas_taller.py`
 - **Descripción:** Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)
-- **Métricas:** 1298 líneas | 68,421 bytes (66.8 KB)
+- **Métricas:** 1302 líneas | 68,693 bytes (67.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17154,6 +17746,10 @@ def listar_inventario_bodegas_con_kpis(filtros: dict = None) -> dict:
     if subcliente and subcliente != "TODOS":
         query += " AND (UPPER(subcliente_sede) = ? OR UPPER(subcliente) = ?)"
         params.extend([subcliente, subcliente])
+    sedes_f = [str(x).strip().upper() for x in (filtros.get('sedes') or []) if str(x).strip()]
+    if sedes_f:  # usuario limitado a ciertas sedes
+        query += f" AND UPPER(IFNULL(subcliente, '')) IN ({', '.join(['?'] * len(sedes_f))})"
+        params.extend(sedes_f)
     if ubicacion and ubicacion != "TODAS":
         query += " AND ubicacion_bodega = ?"
         params.append(normalizar_estado_bodega(ubicacion) or ubicacion.upper())
@@ -22390,7 +22986,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 5824 líneas | 396,846 bytes (387.5 KB)
+- **Métricas:** 5952 líneas | 408,980 bytes (399.4 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -23120,8 +23716,13 @@ if __name__ == '__main__':
 
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+                <label id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
                 <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+                <!-- Solo al crear una placa nueva: en qué se mide el vehículo -->
+                <select id="unidad_medida_placa" onchange="aplicarUnidadPlacaPatio()" class="hidden mt-1 w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-slate-800" title="Placa nueva: elija si el vehículo se mide en kilómetros o en horas de motor">
+                  <option value="KM">Se mide en kilómetros</option>
+                  <option value="HORAS">Se mide en horas de motor</option>
+                </select>
               </div>
 
               <div>
@@ -23461,7 +24062,7 @@ if __name__ == '__main__':
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
+                  <label id="lblKmMontaje" class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
                   <input type="number" id="km_montaje" step="100" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
               </div>
@@ -24267,6 +24868,20 @@ if __name__ == '__main__':
             <option value="insp">Por Corte (INSP 1..N)</option>
           </select>
         </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Base de cálculo:</label>
+          <select id="filtroKpiBase" onchange="cargarSuite20Kpis()" title="Última inspección: estado actual de cada posición. Historial: todas las inspecciones del periodo." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="ultima">Última inspección</option>
+            <option value="historial">Historial completo</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Unidad:</label>
+          <select id="filtroKpiUnidad" onchange="cargarSuite20Kpis()" title="Vehículos medidos en kilómetros o en horas de motor" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="km">Kilómetros</option>
+            <option value="horas">Horas de motor</option>
+          </select>
+        </div>
       </div>
 
       <!-- Barra de las 5 Sub-Pestañas Homologadas (Segmented Pill Bar) -->
@@ -24932,6 +25547,35 @@ if __name__ == '__main__':
               <canvas id="canvasKpi14_cpk"></canvas>
             </div>
           </div>
+        </div>
+      </article>
+
+      <!-- KPI CPK: los 4 costos por kilómetro -->
+      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <h4 class="text-sm font-black text-slate-900">Costo por kilómetro (CPK): operativo, proyectado, total y administrativo</h4>
+          <p class="text-[11px] text-slate-500">Flota = Σ costos ÷ Σ km. Las llantas sin precio (ni propio ni en la lista del cliente) quedan fuera.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Costo de la vida ÷ km recorridos a la última inspección">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK operativo</div><div id="kpiCpkOperativo" class="text-lg font-black text-slate-900">-</div></div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Costo de la vida ÷ km proyectados hasta el límite de retiro">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK proyectado</div><div id="kpiCpkProyectado" class="text-lg font-black text-slate-900">-</div></div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Σ costos de todas las vidas ÷ Σ km de todas las vidas">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK total (ciclo completo)</div><div id="kpiCpkTotal" class="text-lg font-black text-slate-900">-</div></div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Inversión del último mes en llantas instaladas sin km ÷ km de la flota en el mes">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK administrativo (último mes)</div><div id="kpiCpkAdmin" class="text-lg font-black text-slate-900">-</div></div>
+        </div>
+        <p id="kpiCpkNota" class="text-[11px] text-slate-500"></p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr><th class="p-2 text-left">Vida</th><th class="p-2 text-right">Llantas</th><th class="p-2 text-right">CPK operativo</th><th class="p-2 text-right">CPK proyectado</th></tr></thead>
+            <tbody id="tbodyCpkPorVida" class="divide-y divide-slate-100"></tbody>
+          </table>
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr><th class="p-2 text-left">Mes</th><th class="p-2 text-right">Inversión</th><th class="p-2 text-right">Km flota</th><th class="p-2 text-right">CPK administrativo</th></tr></thead>
+            <tbody id="tbodyCpkAdmin" class="divide-y divide-slate-100"></tbody>
+          </table>
         </div>
       </article>
 
@@ -25678,6 +26322,7 @@ if __name__ == '__main__':
         <button type="button" onclick="mostrarSubtabCat('modelos')" id="subtab-btn-modelos" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Catálogo de Modelos</button>
         <button type="button" onclick="mostrarSubtabCat('clientes')" id="subtab-btn-clientes" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Límites de Retiro</button>
         <button type="button" onclick="mostrarSubtabCat('marcas_cliente')" id="subtab-btn-marcas_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Marcas por Cliente</button>
+        <button type="button" onclick="mostrarSubtabCat('precios_cliente')" id="subtab-btn-precios_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Precios por Cliente</button>
         <button type="button" onclick="mostrarSubtabCat('usuarios')" id="subtab-btn-usuarios" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Usuarios & Roles</button>
       </div>
 
@@ -25855,6 +26500,38 @@ if __name__ == '__main__':
         </div>
       </div>
 
+      <!-- Subtab: Lista de precios por cliente -->
+      <div id="cat-seccion-precios_cliente" class="hidden space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <span class="text-xs font-bold text-slate-800">Lista de precios por cliente</span>
+          <p class="text-[11px] text-slate-500">Precio de la llanta nueva o del reencauche para cada cliente, con fecha de vigencia. Se usa cuando la inspección no trae precio; si no hay precio del cliente, la llanta queda fuera de los cálculos en pesos (CPK, pérdidas).</p>
+        </div>
+        <form onsubmit="guardarPrecioClienteCat(event)" class="grid grid-cols-2 md:grid-cols-7 gap-2 items-end">
+          <input type="text" id="precio_cli" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <input type="text" id="precio_marca" required placeholder="Marca" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <input type="text" id="precio_diseno" placeholder="Diseño (opcional)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <input type="text" id="precio_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <select id="precio_tipo" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
+            <option value="Original">Llanta nueva</option>
+            <option value="Reencauche">Reencauche</option>
+          </select>
+          <input type="number" id="precio_valor" required min="1" step="1000" placeholder="Precio COP" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
+          <div class="flex gap-2">
+            <input type="date" id="precio_desde" required class="flex-1 px-2 py-1.5 bg-white border border-slate-300 rounded-xl text-xs">
+            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          </div>
+        </form>
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-900 text-white font-bold"><tr>
+              <th class="p-2.5">Cliente</th><th class="p-2.5">Marca</th><th class="p-2.5">Diseño</th><th class="p-2.5">Dimensión</th>
+              <th class="p-2.5">Tipo</th><th class="p-2.5 text-right">Precio</th><th class="p-2.5">Vigente desde</th><th class="p-2.5 text-center">Acciones</th>
+            </tr></thead>
+            <tbody id="tbodyPreciosCliente" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Subtab: Parametrización de Marcas por Cliente -->
       <div id="cat-seccion-marcas_cliente" class="hidden space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
@@ -25906,6 +26583,27 @@ if __name__ == '__main__':
             <span>marcas (25 por página)</span>
           </div>
           <div class="flex items-center space-x-1" id="controlesPaginacionMarcasCat"></div>
+        </div>
+
+        <!-- Stock de seguridad del MRP por medida y eje -->
+        <div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+          <div>
+            <span class="text-xs font-bold text-slate-800">Stock de seguridad del MRP por medida y eje</span>
+            <p class="text-[11px] text-slate-500">Reserva mínima por dimensión y tipo de eje. La de dirección solo se cubre con llantas nuevas. Si una medida no tiene reglas, se usa el stock general del cliente.</p>
+          </div>
+          <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2">
+            <input type="text" id="stockseg_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+            <input type="text" id="stockseg_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+            <select id="stockseg_eje" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
+              <option value="DIRECCIONAL">Direccional</option><option value="TRACCION">Tracción</option><option value="LIBRE">Libre / remolque</option>
+            </select>
+            <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
+            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          </form>
+          <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Dimensión</th><th class="p-2">Eje</th><th class="p-2 text-center">Cantidad</th><th class="p-2 text-center">Acciones</th></tr></thead>
+            <tbody id="tbodyStockSeguridad" class="divide-y divide-slate-100 bg-white"></tbody>
+          </table>
         </div>
 
         <!-- Máximo de reencauches por cliente y marca -->
@@ -26020,6 +26718,14 @@ if __name__ == '__main__':
             <select id="selBodegaDimension" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
               <option value="">Todas las Dimensiones</option>
             </select>
+          </div>
+
+          <!-- Horizonte de proyección del MRP (meses) -->
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs" title="Meses hacia adelante para proyectar qué llantas llegan a su límite de retiro">
+            <i class="fa-solid fa-calendar-days text-slate-400 text-xs mr-2"></i>
+            <span class="text-[11px] font-bold text-slate-600 mr-1">Horizonte</span>
+            <input type="number" id="inpHorizonteMrp" min="0" max="24" step="1" value="3" onchange="cargarModuloBodegasMRP()" class="w-12 bg-transparent text-xs font-black text-slate-800 focus:outline-none">
+            <span class="text-[11px] font-bold text-slate-600">meses</span>
           </div>
 
           <!-- Botón Dar de Alta Llanta/Carcasa -->
@@ -27131,6 +27837,10 @@ if __name__ == '__main__':
               <input type="checkbox" id="usr_vista_composicion" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Composición de Flota</span>
             </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_bodegas" class="rounded text-indigo-600">
+              <span class="font-semibold">Bodegas e Inventario</span>
+            </label>
             <label id="lbl_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
                 <input type="checkbox" id="usr_vista_basedatos" class="rounded text-indigo-600" disabled>
@@ -27164,6 +27874,11 @@ if __name__ == '__main__':
               <div class="flex items-center space-x-1.5 pt-0.5">
                 <input type="text" id="usr_cliente_custom_nuevo" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
                 <button type="button" onclick="agregarClienteCustomModal('nuevo')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+              <div class="pt-1 border-t border-slate-200">
+                <p class="text-[11px] font-bold text-slate-700">Sedes permitidas (opcional)</p>
+                <p class="text-[11px] text-slate-500">Si no marcas ninguna sede de un cliente, el usuario ve todas sus sedes.</p>
+                <div id="usr_lista_sedes_check" class="max-h-32 overflow-y-auto space-y-1 p-2 bg-white rounded-xl border border-slate-200 text-xs"></div>
               </div>
             </div>
           </div>
@@ -27229,6 +27944,10 @@ if __name__ == '__main__':
               <input type="checkbox" id="edit_usr_vista_composicion" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Composición de Flota</span>
             </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_bodegas" class="rounded text-indigo-600">
+              <span class="font-semibold">Bodegas e Inventario</span>
+            </label>
             <label id="lbl_edit_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
                 <input type="checkbox" id="edit_usr_vista_basedatos" class="rounded text-indigo-600" disabled>
@@ -27262,6 +27981,11 @@ if __name__ == '__main__':
               <div class="flex items-center space-x-1.5 pt-0.5">
                 <input type="text" id="edit_usr_cliente_custom" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
                 <button type="button" onclick="agregarClienteCustomModal('editar')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+              <div class="pt-1 border-t border-slate-200">
+                <p class="text-[11px] font-bold text-slate-700">Sedes permitidas (opcional)</p>
+                <p class="text-[11px] text-slate-500">Si no marcas ninguna sede de un cliente, el usuario ve todas sus sedes.</p>
+                <div id="edit_usr_lista_sedes_check" class="max-h-32 overflow-y-auto space-y-1 p-2 bg-white rounded-xl border border-slate-200 text-xs"></div>
               </div>
             </div>
           </div>
@@ -32142,7 +32866,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4093 líneas | 188,858 bytes (184.4 KB)
+- **Métricas:** 4116 líneas | 190,209 bytes (185.8 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -34271,6 +34995,7 @@ if __name__ == '__main__':
         } catch(eDb) {}
 
         perfilVehiculoActual = d;
+        aplicarUnidadPlacaPatio();
         if (d.ultima_marca) cacheUltimaMarcaVehiculo = d.ultima_marca;
         if (d.ultimo_diseno) cacheUltimoDisenoVehiculo = d.ultimo_diseno;
         if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
@@ -34935,6 +35660,27 @@ if __name__ == '__main__':
       if (esquemaTipologiaCache) renderizarChasisEjes(esquemaTipologiaCache, listaPosicionesActual);
       renderizarBotonesPosicion(listaPosicionesActual, esquemaTipologiaCache);
       actualizarBarraPosicionMobile(parseInt(document.getElementById('posicion').value) || 1);
+    }
+
+    // Unidad de medida de la placa: kilómetros u horas de motor (se elige solo al crear la placa)
+    function unidadPlacaPatio() {
+      if (perfilVehiculoActual && perfilVehiculoActual.encontrado && perfilVehiculoActual.unidad_medida) {
+        return String(perfilVehiculoActual.unidad_medida).toUpperCase() === 'HORAS' ? 'HORAS' : 'KM';
+      }
+      return document.getElementById('unidad_medida_placa')?.value === 'HORAS' ? 'HORAS' : 'KM';
+    }
+
+    function aplicarUnidadPlacaPatio() {
+      const placaNueva = !(perfilVehiculoActual && perfilVehiculoActual.encontrado);
+      const sel = document.getElementById('unidad_medida_placa');
+      if (sel) sel.classList.toggle('hidden', !placaNueva);
+      const horas = unidadPlacaPatio() === 'HORAS';
+      const lbl = document.getElementById('lblKilometraje');
+      if (lbl) lbl.textContent = horas ? 'Horómetro (horas)' : 'Kilometraje / Odóm.';
+      const lblM = document.getElementById('lblKmMontaje');
+      if (lblM) lblM.textContent = horas ? 'Horas al montaje' : 'Km de Montaje';
+      const inp = document.getElementById('kilometraje');
+      if (inp) inp.placeholder = horas ? 'ej. 4500' : 'ej. 125000';
     }
 
     function validarVida() {
@@ -36072,17 +36818,18 @@ if __name__ == '__main__':
         marca: document.getElementById('marca').value,
         diseno: document.getElementById('diseno').value,
         dimension: dimension,
-        vida: (document.getElementById('vida')?.value || 'Original').trim() || 'Original',
+        vida: (document.getElementById('vida')?.value || '').trim(),  // sin elegir no se asume Original
         banda_reen: document.getElementById('banda_reen').value,
         prof_ext: p_ext,
         prof_cent: p_cent,
         prof_int: p_int,
-        psi: parseFloat(psi_val) || 100,
+        psi: parseFloat(psi_val) || 0,  // sin lectura = sin dato (antes se guardaban 100 PSI)
         novedades: document.getElementById('novedades').value,
         foto_novedad: (document.getElementById('foto_novedad_base64') || {}).value || '',
         precio: parseFloat(document.getElementById('precio').value) || 0,
         prof_inicial: prof_inicial_num,
         km_montaje: parseFloat(document.getElementById('km_montaje').value) || 0,
+        unidad_medida: unidadPlacaPatio(),
         numero_interno: numInterno,
         tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         usuario_registro: usuarioActual ? usuarioActual.username : '',
@@ -36944,7 +37691,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 1953 líneas | 84,514 bytes (82.5 KB)
+- **Métricas:** 1982 líneas | 87,142 bytes (85.1 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -36965,6 +37712,8 @@ if __name__ == '__main__':
     }
 
     let modoLicenciaSuite = 'FULL'; // 'LIGHT' o 'FULL'
+    let unidadSuite = 'km'; // 'km' u 'h' (vehículos medidos por horas de motor)
+    const uMed = () => unidadSuite;
     let datosSuite20Actuales = null;
     let subpestanaKpiActiva = 1;
     let agrupacionKpi14Actual = 'marca';
@@ -37164,6 +37913,8 @@ if __name__ == '__main__':
         if (marVal && marVal !== 'TODOS') params.append('marca', marVal);
         if (dimVal && dimVal !== 'TODOS') params.append('dimension', dimVal);
         params.append('eje_temporal', ejeVal);
+        params.append('base', document.getElementById('filtroKpiBase')?.value || 'ultima');
+        params.append('unidad', document.getElementById('filtroKpiUnidad')?.value || 'km');
         params.append('agrupar_kpi14', agrupacionKpi14Actual);
         params.append('licencia', modoLicenciaSuite);
 
@@ -37178,6 +37929,7 @@ if __name__ == '__main__':
 
         const data = await res.json();
         datosSuite20Actuales = data;
+        unidadSuite = data.unidad === 'horas' ? 'h' : 'km';
 
         // La licencia efectiva la decide el servidor según la configuración del cliente
         if (data.licencia && data.licencia !== modoLicenciaSuite) {
@@ -37223,6 +37975,7 @@ if __name__ == '__main__':
             if (data.kpi_12) renderKpi12(data.kpi_12);
             if (data.kpi_13) renderChartKpi13(data.kpi_13);
             if (data.kpi_14) renderChartKpi14(data.kpi_14);
+            if (data.kpi_cpk) renderKpiCpk(data.kpi_cpk);
             if (data.kpi_15) renderChartKpi15(data.kpi_15);
             if (data.kpi_16) renderChartKpi16(data.kpi_16);
           }
@@ -38097,7 +38850,7 @@ if __name__ == '__main__':
           elBarDesg.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
         }
       }
-      if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} km`;
+      if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} ${uMed()}`;
     }
 
     // KPI 13: Km Rodados Reales vs. Proyección Final al Límite de Retiro
@@ -38120,13 +38873,13 @@ if __name__ == '__main__':
           labels: ds.labels || [],
           datasets: [
             {
-              label: 'Km Reales Rodados',
+              label: unidadSuite === 'h' ? 'Horas reales' : 'Km Reales Rodados',
               data: ds.km_reales || [],
               backgroundColor: gradientReales,
               borderColor: '#1e40af',
               borderWidth: 1.5,
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             },
             {
               label: 'Proyección Final al Retiro',
@@ -38136,7 +38889,7 @@ if __name__ == '__main__':
               borderWidth: 1.5,
               borderDash: [4, 4],
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }
           ]
         },
@@ -38152,13 +38905,13 @@ if __name__ == '__main__':
               cornerRadius: 10,
               padding: 12,
               callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`,
+                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} ${uMed()}`,
                 afterBody: (items) => {
                   const idx = items[0].dataIndex;
                   const r = ds.km_reales?.[idx] || 0;
                   const p = ds.proyeccion_final?.[idx] || 0;
                   const dif = Math.max(0, p - r);
-                  return `Vida Remanente Est.: ${formatCO_Miles(dif)} km`;
+                  return `Vida Remanente Est.: ${formatCO_Miles(dif)} ${uMed()}`;
                 }
               }
             }
@@ -38203,11 +38956,11 @@ if __name__ == '__main__':
           data: {
             labels: labels,
             datasets: [{
-              label: 'Proy. Km Final',
+              label: unidadSuite === 'h' ? 'Proy. horas final' : 'Proy. Km Final',
               data: ds.proyeccion_km || [],
               backgroundColor: gradProy,
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }]
           },
           options: {
@@ -38217,7 +38970,7 @@ if __name__ == '__main__':
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} km` } }
+              tooltip: { callbacks: { label: (c) => `Proyección: ${formatCO_Miles(c.raw)} ${uMed()}` } }
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
@@ -38239,11 +38992,11 @@ if __name__ == '__main__':
           data: {
             labels: labels,
             datasets: [{
-              label: 'Rendimiento Km/mm',
+              label: `Rendimiento ${uMed()}/mm`,
               data: ds.km_mm || [],
               backgroundColor: gradKmmm,
               borderRadius: 6,
-              datalabels: pillDatalabelConfig('rgba(4, 120, 87, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} km/mm`)
+              datalabels: pillDatalabelConfig('rgba(4, 120, 87, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} ${uMed()}/mm`)
             }]
           },
           options: {
@@ -38253,7 +39006,7 @@ if __name__ == '__main__':
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `Rendimiento: ${formatCO_Decimal(c.raw, 1)} km/mm` } }
+              tooltip: { callbacks: { label: (c) => `Rendimiento: ${formatCO_Decimal(c.raw, 1)} ${uMed()}/mm` } }
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Decimal(v, 1), font: { size: 9 } } },
@@ -38275,7 +39028,7 @@ if __name__ == '__main__':
           data: {
             labels: labels,
             datasets: [{
-              label: 'CPK proyectado ($/km)',
+              label: `CPK proyectado ($/${uMed()})`,
               data: ds.cpk || [],
               backgroundColor: gradCpk,
               borderRadius: 6,
@@ -38289,7 +39042,7 @@ if __name__ == '__main__':
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (c) => `CPK: $ ${formatCO_Decimal(c.raw, 2)} COP/km` } }
+              tooltip: { callbacks: { label: (c) => `CPK: $ ${formatCO_Decimal(c.raw, 2)} COP/${uMed()}` } }
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 1)}`, font: { size: 9 } } },
@@ -38298,6 +39051,29 @@ if __name__ == '__main__':
           }
         });
       }
+    }
+
+    // KPI CPK: los 4 costos por kilómetro (sin dato = sin precio o sin km suficientes)
+    function renderKpiCpk(k) {
+      const fmt = v => (v === null || v === undefined) ? 'Sin dato' : `$ ${Number(v).toLocaleString('es-CO', { maximumFractionDigits: 1 })} /${uMed()}`;
+      const f = k.flota || {};
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('kpiCpkOperativo', fmt(f.cpk_operativo));
+      set('kpiCpkProyectado', fmt(f.cpk_proyectado));
+      set('kpiCpkTotal', fmt(f.cpk_total));
+      const adm = (k.administrativo || []).filter(m => m.km_flota > 0);
+      set('kpiCpkAdmin', adm.length ? fmt(adm[adm.length - 1].cpk_administrativo) : 'Sin dato');
+      set('kpiCpkNota', `${f.llantas_con_cpk || 0} vidas de llanta con CPK; ${f.llantas_sin_precio || 0} sin precio (registre la lista de precios del cliente en Catálogos).`);
+      const tv = document.getElementById('tbodyCpkPorVida');
+      if (tv) tv.innerHTML = (k.por_vida || []).map(v => `<tr><td class="p-2 font-bold">${v.vida}</td><td class="p-2 text-right">${v.llantas}</td>
+        <td class="p-2 text-right font-mono">${fmt(v.cpk_operativo)}</td><td class="p-2 text-right font-mono">${fmt(v.cpk_proyectado)}</td></tr>`).join('')
+        || '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin datos</td></tr>';
+      const ta = document.getElementById('tbodyCpkAdmin');
+      if (ta) ta.innerHTML = (k.administrativo || []).slice().reverse().map(m => `<tr><td class="p-2 font-bold">${m.mes}</td>
+        <td class="p-2 text-right font-mono">${m.inversion ? formatCO_Moneda(m.inversion) : '-'}</td>
+        <td class="p-2 text-right font-mono">${m.km_flota ? Number(m.km_flota).toLocaleString('es-CO') : '-'}</td>
+        <td class="p-2 text-right font-mono">${fmt(m.cpk_administrativo)}</td></tr>`).join('')
+        || '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin instalaciones registradas en Bodegas</td></tr>';
     }
 
     // KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Filtro Madurez >= 1.5mm)
@@ -38373,7 +39149,7 @@ if __name__ == '__main__':
               cornerRadius: 10,
               padding: 12,
               callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} km`
+                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} ${uMed()}`
               }
             }
           },
@@ -38414,7 +39190,7 @@ if __name__ == '__main__':
             },
             {
               type: 'line',
-              label: 'Proyección Promedio (km)',
+              label: `Proyección Promedio (${uMed()})`,
               data: ds.proyeccion_promedio || [],
               borderColor: '#4f46e5',
               backgroundColor: 'rgba(79, 70, 229, 0.12)',
@@ -38423,7 +39199,7 @@ if __name__ == '__main__':
               pointRadius: 4,
               tension: 0.35,
               yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} km`)
+              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }
           ]
         },
@@ -38455,9 +39231,9 @@ if __name__ == '__main__':
               position: 'right',
               beginAtZero: true,
               grace: '15%',
-              title: { display: true, text: 'Proyección (km)', font: { weight: 'bold', size: 10 } },
+              title: { display: true, text: `Proyección (${uMed()})`, font: { weight: 'bold', size: 10 } },
               grid: { drawOnChartArea: false },
-              ticks: { callback: (v) => `${formatCO_Miles(v)} km` }
+              ticks: { callback: (v) => `${formatCO_Miles(v)} ${uMed()}` }
             },
             x: { ticks: { font: { weight: 'bold', size: 10 } } }
           }
@@ -41126,7 +41902,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 1801 líneas | 88,176 bytes (86.1 KB)
+- **Métricas:** 1926 líneas | 94,434 bytes (92.2 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -41141,10 +41917,10 @@ if __name__ == '__main__':
       if (subtab === 'usuarios' && !esAdmin) {
         subtab = 'operaciones';
       }
-      if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
+      if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'precios_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
         subtab = 'operaciones';
       }
-      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'usuarios'];
+      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'precios_cliente', 'usuarios'];
       tabs.forEach(t => {
         const sec = document.getElementById(`cat-seccion-${t}`);
         if (sec) sec.classList.add('hidden');
@@ -41163,9 +41939,12 @@ if __name__ == '__main__':
         cargarUsuariosCat();
       } else if (subtab === 'clientes' && puedeVerClientes) {
         cargarClientesLimCat();
+      } else if (subtab === 'precios_cliente' && puedeVerClientes) {
+        cargarPreciosClienteCat();
       } else if (subtab === 'marcas_cliente' && puedeVerClientes) {
         cargarMarcasClienteCat();
         cargarMaximosReencaucheCat();
+        cargarStockSeguridadCat();
       } else if (subtab === 'operaciones') {
         cargarOperacionesCat();
       } else if (subtab === 'tipologias') {
@@ -41973,6 +42752,91 @@ if __name__ == '__main__':
     // ==========================================
     let marcasClienteCatCache = [];
 
+    // Lista de precios por cliente
+    async function cargarPreciosClienteCat() {
+      const tbody = document.getElementById('tbodyPreciosCliente');
+      if (!tbody) return;
+      const desde = document.getElementById('precio_desde');
+      if (desde && !desde.value) desde.value = new Date().toISOString().slice(0, 10);
+      try {
+        const res = await fetch('/api/precios-cliente');
+        const lista = res.ok ? await res.json() : [];
+        tbody.innerHTML = lista.length ? lista.map(p => `<tr>
+            <td class="p-2.5 font-bold">${p.cliente}</td><td class="p-2.5">${p.marca}</td><td class="p-2.5">${p.diseno || '<span class="text-slate-400">Todos</span>'}</td>
+            <td class="p-2.5 font-mono">${p.dimension}</td><td class="p-2.5">${p.tipo === 'Original' ? 'Llanta nueva' : 'Reencauche'}</td>
+            <td class="p-2.5 text-right font-mono font-bold">$ ${Number(p.precio).toLocaleString('es-CO')}</td><td class="p-2.5">${p.vigente_desde}</td>
+            <td class="p-2.5 text-center"><button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="text-rose-600 font-bold">Eliminar</button></td></tr>`).join('')
+          : '<tr><td colspan="8" class="p-2.5 text-slate-400 italic">Sin precios: las llantas sin precio quedan fuera de los cálculos en pesos</td></tr>';
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-2.5 text-rose-600">No se pudieron cargar los precios</td></tr>';
+      }
+    }
+
+    async function guardarPrecioClienteCat(ev) {
+      ev.preventDefault();
+      const v = id => document.getElementById(id).value.trim();
+      const body = { cliente: v('precio_cli').toUpperCase(), marca: v('precio_marca').toUpperCase(), diseno: v('precio_diseno').toUpperCase(),
+                     dimension: v('precio_dimension').toUpperCase(), tipo: v('precio_tipo'), precio: parseFloat(v('precio_valor')), vigente_desde: v('precio_desde') };
+      const res = await fetch('/api/precios-cliente', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar el precio'), true);
+        return;
+      }
+      mostrarToast('✅ Precio guardado');
+      document.getElementById('precio_valor').value = '';
+      cargarPreciosClienteCat();
+    }
+
+    async function eliminarPrecioClienteCat(id) {
+      if (!confirm('¿Eliminar este precio de la lista?')) return;
+      await fetch(`/api/precios-cliente/${id}`, { method: 'DELETE' });
+      cargarPreciosClienteCat();
+    }
+
+    // Stock de seguridad del MRP por medida y eje
+    async function cargarStockSeguridadCat() {
+      const tbody = document.getElementById('tbodyStockSeguridad');
+      if (!tbody) return;
+      try {
+        const res = await fetch('/api/stock-seguridad');
+        const lista = res.ok ? await res.json() : [];
+        const nombreEje = { DIRECCIONAL: 'Direccional', TRACCION: 'Tracción', LIBRE: 'Libre / remolque' };
+        tbody.innerHTML = lista.length ? lista.map(r => {
+          const q = s => String(s).replace(/'/g, "\\'");
+          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2 font-mono">${r.dimension}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
+            <td class="p-2 text-center font-bold">${r.cantidad}</td>
+            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+        }).join('') : '<tr><td colspan="5" class="p-2 text-slate-400 italic">Sin reglas: se usa el stock de seguridad general de cada cliente</td></tr>';
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
+      }
+    }
+
+    async function guardarStockSeguridadCat(ev) {
+      ev.preventDefault();
+      const body = {
+        cliente: document.getElementById('stockseg_cliente').value.trim().toUpperCase(),
+        dimension: document.getElementById('stockseg_dimension').value.trim().toUpperCase(),
+        eje: document.getElementById('stockseg_eje').value,
+        cantidad: parseInt(document.getElementById('stockseg_cantidad').value, 10)
+      };
+      const res = await fetch('/api/stock-seguridad', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar la regla'), true);
+        return;
+      }
+      mostrarToast('✅ Stock de seguridad guardado');
+      cargarStockSeguridadCat();
+    }
+
+    async function eliminarStockSeguridadCat(cliente, dimension, eje) {
+      if (!confirm(`¿Eliminar el stock de seguridad de ${cliente} / ${dimension} / ${eje}?`)) return;
+      await fetch(`/api/stock-seguridad?cliente=${encodeURIComponent(cliente)}&dimension=${encodeURIComponent(dimension)}&eje=${encodeURIComponent(eje)}`, { method: 'DELETE' });
+      cargarStockSeguridadCat();
+    }
+
     // Máximo de reencauches por cliente y marca
     async function cargarMaximosReencaucheCat() {
       const tbody = document.getElementById('tbodyMaximosReencauche');
@@ -42462,6 +43326,7 @@ if __name__ == '__main__':
       }
 
       const selSet = new Set((clientesSeleccionados || []).map(s => s.trim().toLowerCase()));
+      cont.onchange = () => poblarSedesUsuarioModal(modo);
       cont.innerHTML = lista.map(c => {
         const isChecked = selSet.has(c.toLowerCase());
         return `
@@ -42471,6 +43336,36 @@ if __name__ == '__main__':
           </label>
         `;
       }).join('');
+    }
+
+    // Sedes permitidas: checkboxes 'CLIENTE|SEDE' de los clientes marcados (ninguna = todas las sedes)
+    async function poblarSedesUsuarioModal(modo, sedesSeleccionadas = null) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const cont = document.getElementById(`${pfx}lista_sedes_check`);
+      if (!cont) return;
+      if (!cacheDirectorioClientes.length) {
+        try { const r = await fetch('/api/clientes-directorio'); if (r.ok) cacheDirectorioClientes = await r.json(); } catch (e) {}
+      }
+      const marcadas = new Set(sedesSeleccionadas !== null
+        ? String(sedesSeleccionadas || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+        : Array.from(cont.querySelectorAll('input:checked')).map(i => i.value));
+      const clientes = Array.from(document.querySelectorAll(`.chk-cli-modal-${modo}:checked`)).map(c => c.value.trim().toUpperCase());
+      const filas = [];
+      clientes.forEach(cli => {
+        const info = cacheDirectorioClientes.find(c => String(c.cliente || '').toUpperCase() === cli);
+        (info && info.subclientes ? info.subclientes : []).forEach(sede => {
+          const val = `${cli}|${String(sede).trim().toUpperCase()}`;
+          filas.push(`<label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" value="${val}" class="rounded text-blue-600" ${marcadas.has(val) ? 'checked' : ''}><span>${cli} — ${sede}</span></label>`);
+        });
+      });
+      cont.innerHTML = filas.length ? filas.join('') : '<p class="text-slate-400 italic text-[11px]">Marca un cliente para ver sus sedes.</p>';
+    }
+
+    function obtenerSedesSeleccionadasModal(modo) {
+      const pfx = modo === 'nuevo' ? 'usr_' : 'edit_usr_';
+      const chkTodas = document.getElementById(`${pfx}todas_flotas`);
+      if (chkTodas && chkTodas.checked) return '';
+      return Array.from(document.querySelectorAll(`#${pfx}lista_sedes_check input:checked`)).map(i => i.value).join(', ');
     }
 
     function agregarClienteCustomModal(modo) {
@@ -42513,6 +43408,7 @@ if __name__ == '__main__':
       if (document.getElementById(`${pfx}vista_diagnostico`)?.checked) vistas.push('diagnostico');
       if (document.getElementById(`${pfx}vista_kpis`)?.checked) vistas.push('kpis');
       if (document.getElementById(`${pfx}vista_composicion`)?.checked) vistas.push('composicion');
+      if (document.getElementById(`${pfx}vista_bodegas`)?.checked) vistas.push('bodegas');
       if (document.getElementById(`${pfx}vista_catalogos`)?.checked) vistas.push('catalogos');
       // Seguridad inquebrantable: NUNCA añadir basedatos para inspector
       if (vistas.length === 0) vistas.push(rol === 'gerencia' ? 'diagnostico' : 'patio');
@@ -42619,15 +43515,17 @@ if __name__ == '__main__':
       document.getElementById('usr_pass').value = '';
       document.getElementById('usr_rol').value = 'inspector';
       document.getElementById('usr_vista_patio').checked = true;
-      document.getElementById('usr_vista_diagnostico').checked = true;
-      document.getElementById('usr_vista_kpis').checked = true;
-      document.getElementById('usr_vista_composicion').checked = true;
-      document.getElementById('usr_vista_catalogos').checked = true;
-      document.getElementById('usr_todas_flotas').checked = true;
+      document.getElementById('usr_vista_diagnostico').checked = false;
+      document.getElementById('usr_vista_kpis').checked = false;
+      document.getElementById('usr_vista_composicion').checked = false;
+      document.getElementById('usr_vista_catalogos').checked = false;
+      if (document.getElementById('usr_vista_bodegas')) document.getElementById('usr_vista_bodegas').checked = false;
+      // Solo el administrador trabaja sin cliente asignado
+      document.getElementById('usr_todas_flotas').checked = false;
       document.getElementById('usr_cliente_custom_nuevo').value = '';
       toggleClientesTodosModal('nuevo');
       alCambiarRolUsuarioModal('nuevo');
-      poblarListaCheckboxesClientesModal('nuevo', []);
+      poblarListaCheckboxesClientesModal('nuevo', []).then(() => poblarSedesUsuarioModal('nuevo', ''));
 
       // Solo el admin puede asignar el rol admin
       const optAdminNuevo = document.querySelector('#usr_rol option[value="admin"]');
@@ -42677,6 +43575,7 @@ if __name__ == '__main__':
             password: p,
             rol: rol,
             cliente_asignado: cliente,
+            sedes_asignadas: obtenerSedesSeleccionadasModal('nuevo'),
             vistas_permitidas: vistas
           })
         });
@@ -42736,6 +43635,7 @@ if __name__ == '__main__':
         document.getElementById('edit_usr_vista_composicion').checked = vistas.includes('composicion');
       }
       document.getElementById('edit_usr_vista_catalogos').checked = vistas.includes('catalogos');
+      if (document.getElementById('edit_usr_vista_bodegas')) document.getElementById('edit_usr_vista_bodegas').checked = vistas.includes('bodegas');
 
       // Clientes asignados
       let clis = [];
@@ -42751,7 +43651,7 @@ if __name__ == '__main__':
         document.getElementById('edit_usr_todas_flotas').checked = false;
       }
       toggleClientesTodosModal('editar');
-      poblarListaCheckboxesClientesModal('editar', clis);
+      poblarListaCheckboxesClientesModal('editar', clis).then(() => poblarSedesUsuarioModal('editar', u.sedes_asignadas || ''));
 
       const modal = document.getElementById('modalEditarUsuario');
       modal.classList.remove('hidden');
@@ -42798,6 +43698,7 @@ if __name__ == '__main__':
             nombre_completo: nombre,
             rol: rol,
             cliente_asignado: cliente,
+            sedes_asignadas: obtenerSedesSeleccionadasModal('editar'),
             vistas_permitidas: vistas,
             activo: activo
           })
@@ -42937,7 +43838,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_bodegas.js`
 - **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
-- **Métricas:** 2118 líneas | 112,450 bytes (109.8 KB)
+- **Métricas:** 2123 líneas | 113,217 bytes (110.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43004,7 +43905,8 @@ if __name__ == '__main__':
       try {
         const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const urlMrp = `/api/bodegas/resumen-mrp?cliente=${encodeURIComponent(clienteSel)}&dimension=${encodeURIComponent(dimSel)}`;
+        const horizonte = document.getElementById('inpHorizonteMrp')?.value || 3;
+        const urlMrp = `/api/bodegas/resumen-mrp?cliente=${encodeURIComponent(clienteSel)}&dimension=${encodeURIComponent(dimSel)}&horizonte_meses=${encodeURIComponent(horizonte)}`;
         const res = await fetch(urlMrp, { headers });
         if (res.ok) {
           const data = await res.json();
@@ -43253,12 +44155,16 @@ if __name__ == '__main__':
         const b5Rep = r.b5_reparacion != null ? r.b5_reparacion : (r.stock_b5_reparacion || 0);
         const stockUtil = r.stock_disponible_util != null ? r.stock_disponible_util : (r.stock_util_total || 0);
 
+        // Proyección: cuántas llegan al límite dentro del horizonte, retorno de reencauche y desecho
+        const proyBadge = `<span class="block text-[9px] text-slate-500" title="Llegan al límite dentro de ${r.horizonte_meses ?? 3} meses; sin historial suficiente: ${r.llantas_sin_ritmo || 0}">${r.demanda_proyectada || 0} proyectadas a ${r.horizonte_meses ?? 3} m</span>
+          <span class="block text-[9px] text-emerald-700" title="Cascos que volverán reencauchados / llantas que saldrán como desecho">↺ ${r.retorno_reencauche_proyectado || 0} · desecho ${r.desecho_proyectado || 0}</span>`;
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-3 font-black text-slate-900">${r.dimension}</td>
             <td class="p-3 text-center bg-rose-50/30">
               <span class="font-bold">${demRetiro}</span>
               ${parDirBadge}
+              ${proyBadge}
             </td>
             <td class="p-3 text-center bg-rose-50/30 font-bold">${bajasFvu}</td>
             <td class="p-3 text-center bg-rose-50/30 font-bold">${stockSeg}</td>
@@ -47112,7 +48018,7 @@ def test_filtro_rango_fechas_en_api_diagnostico(test_db, auth_client):
 
 - **Ruta:** `tests/test_suite_20_kpis_manual.py`
 - **Descripción:** Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP
-- **Métricas:** 506 líneas | 19,968 bytes (19.5 KB)
+- **Métricas:** 512 líneas | 20,509 bytes (20.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -47478,8 +48384,14 @@ def test_kpi15_filtro_madurez_y_kpi20_formula_mrp(test_db, auth_client):
     stk_disp_esperado = mrp_dim["stock_b1"] + mrp_dim["stock_b2"] + mrp_dim["stock_b3_util"] + mrp_dim["stock_b4"]
     assert mrp_dim["stock_disponible"] == stk_disp_esperado
 
-    # Compra neta sugerida = max(0, necesidad_bruta - stock_disponible)
-    assert mrp_dim["compra_neta_sugerida"] == max(0, mrp_dim["necesidad_bruta"] - stk_disp_esperado)
+    # Compra neta = nuevas para dirección (demanda + reserva - Bodega 1) + resto no cubierto por el stock útil
+    # y por los cascos que volverán reencauchados dentro del horizonte
+    m = mrp_dim
+    compra_dir = max(0, m["demanda_direccional"] + m["stock_seguridad_direccional"] - m["stock_b1"])
+    b1_rest = max(0, m["stock_b1"] - m["demanda_direccional"] - m["stock_seguridad_direccional"])
+    cobertura = b1_rest + m["stock_b2"] + m["stock_b4"] + m["stock_b3_util"] + m["stock_b5"] + m["retorno_reencauche_proyectado"]
+    compra_otros = max(0, m["demanda_traccion"] + m["reposicion_bajas_fvu"] + m["stock_seguridad_otros"] - cobertura)
+    assert m["compra_neta_sugerida"] == compra_dir + compra_otros
 
 
 def test_licenciamiento_light_vs_full(test_db, auth_client):

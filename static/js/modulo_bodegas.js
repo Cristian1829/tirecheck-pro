@@ -61,7 +61,8 @@
       try {
         const token = localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token');
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const urlMrp = `/api/bodegas/resumen-mrp?cliente=${encodeURIComponent(clienteSel)}&dimension=${encodeURIComponent(dimSel)}`;
+        const horizonte = document.getElementById('inpHorizonteMrp')?.value || 3;
+        const urlMrp = `/api/bodegas/resumen-mrp?cliente=${encodeURIComponent(clienteSel)}&dimension=${encodeURIComponent(dimSel)}&horizonte_meses=${encodeURIComponent(horizonte)}`;
         const res = await fetch(urlMrp, { headers });
         if (res.ok) {
           const data = await res.json();
@@ -310,12 +311,16 @@
         const b5Rep = r.b5_reparacion != null ? r.b5_reparacion : (r.stock_b5_reparacion || 0);
         const stockUtil = r.stock_disponible_util != null ? r.stock_disponible_util : (r.stock_util_total || 0);
 
+        // Proyección: cuántas llegan al límite dentro del horizonte, retorno de reencauche y desecho
+        const proyBadge = `<span class="block text-[9px] text-slate-500" title="Llegan al límite dentro de ${r.horizonte_meses ?? 3} meses; sin historial suficiente: ${r.llantas_sin_ritmo || 0}">${r.demanda_proyectada || 0} proyectadas a ${r.horizonte_meses ?? 3} m</span>
+          <span class="block text-[9px] text-emerald-700" title="Cascos que volverán reencauchados / llantas que saldrán como desecho">↺ ${r.retorno_reencauche_proyectado || 0} · desecho ${r.desecho_proyectado || 0}</span>`;
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-3 font-black text-slate-900">${r.dimension}</td>
             <td class="p-3 text-center bg-rose-50/30">
               <span class="font-bold">${demRetiro}</span>
               ${parDirBadge}
+              ${proyBadge}
             </td>
             <td class="p-3 text-center bg-rose-50/30 font-bold">${bajasFvu}</td>
             <td class="p-3 text-center bg-rose-50/30 font-bold">${stockSeg}</td>

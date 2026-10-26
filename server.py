@@ -84,6 +84,7 @@ class UsuarioItem(BaseModel):
     nombre_completo: str
     rol: str = "inspector"
     cliente_asignado: str = ""
+    sedes_asignadas: str = ""  # 'CLIENTE|SEDE, …'; vacío = todas las sedes de sus clientes
     vistas_permitidas: Optional[str] = "patio"
 
 class EditarUsuarioItem(BaseModel):
@@ -91,6 +92,7 @@ class EditarUsuarioItem(BaseModel):
     password: Optional[str] = None
     rol: Optional[str] = None
     cliente_asignado: Optional[str] = None
+    sedes_asignadas: Optional[str] = None
     activo: Optional[bool] = None
     vistas_permitidas: Optional[str] = None
 
@@ -127,6 +129,7 @@ class InspeccionItem(BaseModel):
     precio: float = 0.0
     prof_inicial: float = 0.0
     km_montaje: float = 0.0
+    unidad_medida: Optional[str] = None  # KM u HORAS (se asigna al crear la placa)
     numero_interno: str = ""
     usuario_registro: str = ""
     foto_novedad: str = ""
@@ -326,6 +329,26 @@ def requerir_vista(*vistas: str):
             return usuario_actual
         raise HTTPException(status_code=403, detail="Su usuario no tiene habilitada esta sección")
     return _verificar
+
+def verificar_acceso_placa(usuario_actual: dict, placa: str, mensaje: str = "No tiene permisos para consultar este vehículo"):
+    """403 si la placa pertenece a un cliente o sede que el usuario no tiene asignados."""
+    if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")):
+        return
+    cli, sede = database.cliente_sede_de_placa(placa)
+    if cli and not database.usuario_puede_ver_sede(usuario_actual, cli, sede):
+        raise HTTPException(status_code=403, detail=mensaje)
+
+
+def sedes_filtro_usuario(usuario_actual: dict, cliente: str, subcliente: str = "") -> list:
+    """Sedes a las que se limita la consulta del usuario en ese cliente ([] = sin límite). 403 si pide otra."""
+    if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")):
+        return []
+    clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+    sedes = sorted(database.parsear_sedes_asignadas(usuario_actual.get("sedes_asignadas"), clis).get(str(cliente or "").strip().upper(), set()))
+    if sedes and subcliente and subcliente not in ("Todos", "TODOS") and subcliente.strip().upper() not in sedes:
+        raise HTTPException(status_code=403, detail="No tiene permisos para esta sede")
+    return sedes
+
 
 def requerir_admin(usuario_actual: dict = Depends(obtener_usuario_actual)) -> dict:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -699,6 +722,8 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
                 datos["cliente"] = clis[0]
             elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para registrar inspecciones de este cliente")
+        if not database.usuario_puede_ver_sede(usuario_actual, datos.get("cliente"), datos.get("subcliente")):
+            raise HTTPException(status_code=403, detail="No tiene permisos para registrar inspecciones de esta sede")
 
     # Validación de Candados de Seguridad
     val = database.validar_inspeccion_candados(datos)
@@ -736,6 +761,12 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
                 datos["cliente"] = clis[0]
             elif not any(c.lower() == str(datos.get("cliente", "")).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para asignar este cliente")
+        # La inspección actual y la editada deben estar en sedes del usuario
+        with database.get_connection() as conn:
+            r_sede = conn.execute("SELECT cliente, subcliente FROM inspecciones WHERE id = ?", (inspeccion_id,)).fetchone()
+        if (r_sede and not database.usuario_puede_ver_sede(usuario_actual, r_sede[0], r_sede[1])) or \
+                not database.usuario_puede_ver_sede(usuario_actual, datos.get("cliente"), datos.get("subcliente") or (r_sede[1] if r_sede else "")):
+            raise HTTPException(status_code=403, detail="No tiene permisos para modificar inspecciones de esta sede")
 
     val = database.validar_inspeccion_candados(datos, excluir_id=inspeccion_id)
     if not val.get('valido', True):
@@ -754,10 +785,12 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
     if not es_rol_admin(rol, usuario_actual.get("username")):
         with database.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT cliente, usuario_registro FROM inspecciones WHERE id = ?", (inspeccion_id,))
+            cursor.execute("SELECT cliente, usuario_registro, subcliente FROM inspecciones WHERE id = ?", (inspeccion_id,))
             row_exist = cursor.fetchone()
             if not row_exist:
                 raise HTTPException(status_code=404, detail="Inspección no encontrada")
+            if not database.usuario_puede_ver_sede(usuario_actual, row_exist[0], row_exist[2]):
+                raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de esta sede")
             clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
             if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
@@ -1114,6 +1147,9 @@ def api_kpis_suite_20(
     eje_temporal: str = "mes",
     agrupar_kpi14: str = "marca",
     licencia: str = "",
+    base: str = "ultima",
+    unidad: str = "km",
+    horizonte_meses: float = 3,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     try:
@@ -1137,6 +1173,9 @@ def api_kpis_suite_20(
             "eje_temporal": eje_temporal,
             "agrupar_kpi14": agrupar_kpi14,
             "licencia": licencia,
+            "base": base,
+            "unidad": unidad,
+            "horizonte_meses": horizonte_meses,
             "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
         }
         datos = database.obtener_suite_completa_20_kpis(filtros)
@@ -1269,15 +1308,7 @@ def api_exportar_kpis_excel(
 
 @app.get("/api/informe-pdf/{placa}")
 def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user):
-        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis:
-            perfil = database.obtener_perfil_vehiculo(placa)
-            cli_veh = (perfil.get("cliente") or "").strip().lower()
-            if cli_veh and not any(c.lower() == cli_veh for c in clis):
-                raise HTTPException(status_code=403, detail="No tiene permisos para descargar el informe de este vehículo")
+    verificar_acceso_placa(usuario_actual, placa, "No tiene permisos para descargar el informe de este vehículo")
     try:
         pdf_bytes = pdf_generator.generar_pdf_plan_mantenimiento(placa, fecha if fecha else None)
         f_tag = fecha.replace("-", "") if fecha else ahora_bogota().strftime('%Y%m%d')
@@ -1295,15 +1326,7 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
 @app.get("/api/informe-resumen/{placa}")
 def api_resumen_informe_vehiculo(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     """Mismos datos que el PDF del vehículo, para el modal 'Informe de Inspección Finalizada'."""
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    if not es_rol_admin(rol, user):
-        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis:
-            perfil = database.obtener_perfil_vehiculo(placa)
-            cli_veh = (perfil.get("cliente") or "").strip().lower()
-            if cli_veh and not any(c.lower() == cli_veh for c in clis):
-                raise HTTPException(status_code=403, detail="No tiene permisos para consultar este vehículo")
+    verificar_acceso_placa(usuario_actual, placa)
     try:
         datos = pdf_generator.construir_datos_informe(placa, fecha if fecha else None)
     except Exception as e:
@@ -1666,6 +1689,67 @@ def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(r
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
     return sanitizar_nativos({"status": "ok", "mensaje": "Marca desvinculada del cliente"})
 
+class PrecioClienteItem(BaseModel):
+    cliente: str
+    marca: str
+    diseno: str = ""
+    dimension: str
+    tipo: str = "Original"  # Original (llanta nueva) o Reencauche
+    precio: float
+    vigente_desde: str
+
+
+@app.get("/api/precios-cliente")
+def api_listar_precios_cliente(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    return database.listar_precios_cliente(cliente)
+
+
+@app.post("/api/precios-cliente")
+def api_guardar_precio_cliente(item: PrecioClienteItem, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    cliente = _resolver_cliente_usuario(usuario_actual, item.cliente)
+    if not database.guardar_precio_cliente(cliente, item.marca, item.diseno, item.dimension, item.tipo, item.precio, item.vigente_desde):
+        raise HTTPException(status_code=400, detail="Indique cliente, marca, dimensión, un precio mayor a 0 y la fecha de vigencia (AAAA-MM-DD)")
+    return {"status": "ok"}
+
+
+@app.delete("/api/precios-cliente/{precio_id}")
+def api_eliminar_precio_cliente(precio_id: int, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    fila = next((p for p in database.listar_precios_cliente() if p["id"] == precio_id), None)
+    if not fila:
+        raise HTTPException(status_code=404, detail="Precio no encontrado")
+    _resolver_cliente_usuario(usuario_actual, fila["cliente"])  # 403 si no es su cliente
+    database.eliminar_precio_cliente(precio_id)
+    return {"status": "ok"}
+
+
+class StockSeguridadItem(BaseModel):
+    cliente: str
+    dimension: str
+    eje: str  # DIRECCIONAL, TRACCION o LIBRE
+    cantidad: int
+
+
+@app.get("/api/stock-seguridad")
+def api_listar_stock_seguridad(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    return database.listar_stock_seguridad(_resolver_cliente_usuario(usuario_actual, cliente))
+
+
+@app.post("/api/stock-seguridad")
+def api_guardar_stock_seguridad(item: StockSeguridadItem, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    cliente = _resolver_cliente_usuario(usuario_actual, item.cliente)
+    if not database.guardar_stock_seguridad(cliente, item.dimension, item.eje, item.cantidad):
+        raise HTTPException(status_code=400, detail="Indique cliente, dimensión, eje (DIRECCIONAL, TRACCION o LIBRE) y una cantidad de 0 o más")
+    return {"status": "ok"}
+
+
+@app.delete("/api/stock-seguridad")
+def api_eliminar_stock_seguridad(cliente: str, dimension: str, eje: str, usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    if not database.eliminar_stock_seguridad(_resolver_cliente_usuario(usuario_actual, cliente), dimension, eje):
+        raise HTTPException(status_code=404, detail="No existe esa regla")
+    return {"status": "ok"}
+
+
 class MaximoReencaucheItem(BaseModel):
     cliente: str
     marca: str = "TODAS"
@@ -1728,17 +1812,16 @@ def api_valores_campo(campo: str, cliente: str = "", usuario: str = "", marca: s
             if not cliente and len(clis) == 1:
                 cliente = clis[0]
     res = database.obtener_valores_unicos_campo(campo, cliente, filtro_marca=marca, todas=todas)
+    if campo == "subcliente" and cliente:
+        sedes = sedes_filtro_usuario(usuario_actual, cliente)  # usuario limitado a ciertas sedes
+        if sedes:
+            res = [x for x in res if str(x).strip().upper() in sedes]
     return sanitizar_nativos(res)
 
 @app.get("/api/vehiculo-perfil")
 def api_vehiculo_perfil(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    verificar_acceso_placa(usuario_actual, placa, "No tiene permisos para ver vehículos de este cliente")
     perfil = database.obtener_perfil_vehiculo(placa)
-    # Validar permisos de inspector con clientes asignados
-    if usuario_actual.get("rol") != "admin":
-        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis and perfil.get("encontrado") and perfil.get("cliente"):
-            if not any(c.lower() == perfil["cliente"].strip().lower() for c in clis):
-                raise HTTPException(status_code=403, detail="No tiene permisos para ver vehículos de este cliente")
     return sanitizar_nativos(perfil)
 
 @app.get("/api/llanta-por-cliente")
@@ -1762,6 +1845,7 @@ def api_llanta_por_cliente(
 
 @app.get("/api/inspeccion-anterior")
 def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    verificar_acceso_placa(usuario_actual, placa)  # antes no se validaba el cliente
     prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
     perfil = database.obtener_perfil_vehiculo(placa)
     if prev:
@@ -1774,6 +1858,7 @@ def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = De
 
 @app.get("/api/posiciones-inspeccionadas")
 def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    verificar_acceso_placa(usuario_actual, placa)
     det = database.obtener_posiciones_inspeccionadas_detalle(placa, fecha)
     return {
         "placa": placa,
@@ -1874,7 +1959,8 @@ def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
         nombre_completo=item.nombre_completo,
         rol=item.rol,
         cliente_asignado=item.cliente_asignado,
-        vistas_permitidas=item.vistas_permitidas
+        vistas_permitidas=item.vistas_permitidas,
+        sedes_asignadas=item.sedes_asignadas
     )
     if not ok:
         raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
@@ -1899,7 +1985,8 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
         rol=item.rol,
         cliente_asignado=item.cliente_asignado,
         activo=item.activo,
-        vistas_permitidas=item.vistas_permitidas
+        vistas_permitidas=item.vistas_permitidas,
+        sedes_asignadas=item.sedes_asignadas
     )
     if not ok:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
@@ -2023,6 +2110,7 @@ def api_bodegas_resumen_mrp(
     cliente: str = "",
     subcliente: str = "",
     dimension: str = "",
+    horizonte_meses: float = 3,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -2036,9 +2124,11 @@ def api_bodegas_resumen_mrp(
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver las bodegas de este cliente")
 
     filtros = {
+        "sedes": sedes_filtro_usuario(usuario_actual, cliente, subcliente),
         "cliente": "" if cliente == "Todos" else cliente,
         "subcliente": "" if subcliente == "Todos" else subcliente,
-        "dimension": "" if dimension == "Todos" else dimension
+        "dimension": "" if dimension == "Todos" else dimension,
+        "horizonte_meses": horizonte_meses
     }
     return sanitizar_nativos(database.obtener_balance_bodegas_mrp(filtros))
 
@@ -2062,6 +2152,7 @@ def api_bodegas_inventario(
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver el inventario de este cliente")
 
     filtros = {
+        "sedes": sedes_filtro_usuario(usuario_actual, cliente, subcliente),
         "cliente": "" if cliente == "Todos" else cliente,
         "subcliente": "" if subcliente == "Todos" else subcliente,
         "ubicacion_bodega": "" if ubicacion_bodega in ("Todas", "TODAS") else ubicacion_bodega,

@@ -1205,6 +1205,10 @@ def listar_inventario_bodegas_con_kpis(filtros: dict = None) -> dict:
     if subcliente and subcliente != "TODOS":
         query += " AND (UPPER(subcliente_sede) = ? OR UPPER(subcliente) = ?)"
         params.extend([subcliente, subcliente])
+    sedes_f = [str(x).strip().upper() for x in (filtros.get('sedes') or []) if str(x).strip()]
+    if sedes_f:  # usuario limitado a ciertas sedes
+        query += f" AND UPPER(IFNULL(subcliente, '')) IN ({', '.join(['?'] * len(sedes_f))})"
+        params.extend(sedes_f)
     if ubicacion and ubicacion != "TODAS":
         query += " AND ubicacion_bodega = ?"
         params.append(normalizar_estado_bodega(ubicacion) or ubicacion.upper())

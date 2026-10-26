@@ -2123,6 +2123,7 @@
         } catch(eDb) {}
 
         perfilVehiculoActual = d;
+        aplicarUnidadPlacaPatio();
         if (d.ultima_marca) cacheUltimaMarcaVehiculo = d.ultima_marca;
         if (d.ultimo_diseno) cacheUltimoDisenoVehiculo = d.ultimo_diseno;
         if (d.dimension) cacheUltimaDimensionVehiculo = d.dimension;
@@ -2787,6 +2788,27 @@
       if (esquemaTipologiaCache) renderizarChasisEjes(esquemaTipologiaCache, listaPosicionesActual);
       renderizarBotonesPosicion(listaPosicionesActual, esquemaTipologiaCache);
       actualizarBarraPosicionMobile(parseInt(document.getElementById('posicion').value) || 1);
+    }
+
+    // Unidad de medida de la placa: kilómetros u horas de motor (se elige solo al crear la placa)
+    function unidadPlacaPatio() {
+      if (perfilVehiculoActual && perfilVehiculoActual.encontrado && perfilVehiculoActual.unidad_medida) {
+        return String(perfilVehiculoActual.unidad_medida).toUpperCase() === 'HORAS' ? 'HORAS' : 'KM';
+      }
+      return document.getElementById('unidad_medida_placa')?.value === 'HORAS' ? 'HORAS' : 'KM';
+    }
+
+    function aplicarUnidadPlacaPatio() {
+      const placaNueva = !(perfilVehiculoActual && perfilVehiculoActual.encontrado);
+      const sel = document.getElementById('unidad_medida_placa');
+      if (sel) sel.classList.toggle('hidden', !placaNueva);
+      const horas = unidadPlacaPatio() === 'HORAS';
+      const lbl = document.getElementById('lblKilometraje');
+      if (lbl) lbl.textContent = horas ? 'Horómetro (horas)' : 'Kilometraje / Odóm.';
+      const lblM = document.getElementById('lblKmMontaje');
+      if (lblM) lblM.textContent = horas ? 'Horas al montaje' : 'Km de Montaje';
+      const inp = document.getElementById('kilometraje');
+      if (inp) inp.placeholder = horas ? 'ej. 4500' : 'ej. 125000';
     }
 
     function validarVida() {
@@ -3924,17 +3946,18 @@
         marca: document.getElementById('marca').value,
         diseno: document.getElementById('diseno').value,
         dimension: dimension,
-        vida: (document.getElementById('vida')?.value || 'Original').trim() || 'Original',
+        vida: (document.getElementById('vida')?.value || '').trim(),  // sin elegir no se asume Original
         banda_reen: document.getElementById('banda_reen').value,
         prof_ext: p_ext,
         prof_cent: p_cent,
         prof_int: p_int,
-        psi: parseFloat(psi_val) || 100,
+        psi: parseFloat(psi_val) || 0,  // sin lectura = sin dato (antes se guardaban 100 PSI)
         novedades: document.getElementById('novedades').value,
         foto_novedad: (document.getElementById('foto_novedad_base64') || {}).value || '',
         precio: parseFloat(document.getElementById('precio').value) || 0,
         prof_inicial: prof_inicial_num,
         km_montaje: parseFloat(document.getElementById('km_montaje').value) || 0,
+        unidad_medida: unidadPlacaPatio(),
         numero_interno: numInterno,
         tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         usuario_registro: usuarioActual ? usuarioActual.username : '',

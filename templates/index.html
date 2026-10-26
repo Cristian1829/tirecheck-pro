@@ -724,8 +724,13 @@
 
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+                <label id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
                 <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+                <!-- Solo al crear una placa nueva: en qué se mide el vehículo -->
+                <select id="unidad_medida_placa" onchange="aplicarUnidadPlacaPatio()" class="hidden mt-1 w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-slate-800" title="Placa nueva: elija si el vehículo se mide en kilómetros o en horas de motor">
+                  <option value="KM">Se mide en kilómetros</option>
+                  <option value="HORAS">Se mide en horas de motor</option>
+                </select>
               </div>
 
               <div>
@@ -1065,7 +1070,7 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
+                  <label id="lblKmMontaje" class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
                   <input type="number" id="km_montaje" step="100" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
               </div>
@@ -1871,6 +1876,20 @@
             <option value="insp">Por Corte (INSP 1..N)</option>
           </select>
         </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Base de cálculo:</label>
+          <select id="filtroKpiBase" onchange="cargarSuite20Kpis()" title="Última inspección: estado actual de cada posición. Historial: todas las inspecciones del periodo." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="ultima">Última inspección</option>
+            <option value="historial">Historial completo</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Unidad:</label>
+          <select id="filtroKpiUnidad" onchange="cargarSuite20Kpis()" title="Vehículos medidos en kilómetros o en horas de motor" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="km">Kilómetros</option>
+            <option value="horas">Horas de motor</option>
+          </select>
+        </div>
       </div>
 
       <!-- Barra de las 5 Sub-Pestañas Homologadas (Segmented Pill Bar) -->
@@ -2536,6 +2555,35 @@
               <canvas id="canvasKpi14_cpk"></canvas>
             </div>
           </div>
+        </div>
+      </article>
+
+      <!-- KPI CPK: los 4 costos por kilómetro -->
+      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <h4 class="text-sm font-black text-slate-900">Costo por kilómetro (CPK): operativo, proyectado, total y administrativo</h4>
+          <p class="text-[11px] text-slate-500">Flota = Σ costos ÷ Σ km. Las llantas sin precio (ni propio ni en la lista del cliente) quedan fuera.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Costo de la vida ÷ km recorridos a la última inspección">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK operativo</div><div id="kpiCpkOperativo" class="text-lg font-black text-slate-900">-</div></div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Costo de la vida ÷ km proyectados hasta el límite de retiro">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK proyectado</div><div id="kpiCpkProyectado" class="text-lg font-black text-slate-900">-</div></div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Σ costos de todas las vidas ÷ Σ km de todas las vidas">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK total (ciclo completo)</div><div id="kpiCpkTotal" class="text-lg font-black text-slate-900">-</div></div>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200" title="Inversión del último mes en llantas instaladas sin km ÷ km de la flota en el mes">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">CPK administrativo (último mes)</div><div id="kpiCpkAdmin" class="text-lg font-black text-slate-900">-</div></div>
+        </div>
+        <p id="kpiCpkNota" class="text-[11px] text-slate-500"></p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr><th class="p-2 text-left">Vida</th><th class="p-2 text-right">Llantas</th><th class="p-2 text-right">CPK operativo</th><th class="p-2 text-right">CPK proyectado</th></tr></thead>
+            <tbody id="tbodyCpkPorVida" class="divide-y divide-slate-100"></tbody>
+          </table>
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr><th class="p-2 text-left">Mes</th><th class="p-2 text-right">Inversión</th><th class="p-2 text-right">Km flota</th><th class="p-2 text-right">CPK administrativo</th></tr></thead>
+            <tbody id="tbodyCpkAdmin" class="divide-y divide-slate-100"></tbody>
+          </table>
         </div>
       </article>
 
@@ -3282,6 +3330,7 @@
         <button type="button" onclick="mostrarSubtabCat('modelos')" id="subtab-btn-modelos" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Catálogo de Modelos</button>
         <button type="button" onclick="mostrarSubtabCat('clientes')" id="subtab-btn-clientes" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Límites de Retiro</button>
         <button type="button" onclick="mostrarSubtabCat('marcas_cliente')" id="subtab-btn-marcas_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Marcas por Cliente</button>
+        <button type="button" onclick="mostrarSubtabCat('precios_cliente')" id="subtab-btn-precios_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Precios por Cliente</button>
         <button type="button" onclick="mostrarSubtabCat('usuarios')" id="subtab-btn-usuarios" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Usuarios & Roles</button>
       </div>
 
@@ -3459,6 +3508,38 @@
         </div>
       </div>
 
+      <!-- Subtab: Lista de precios por cliente -->
+      <div id="cat-seccion-precios_cliente" class="hidden space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <span class="text-xs font-bold text-slate-800">Lista de precios por cliente</span>
+          <p class="text-[11px] text-slate-500">Precio de la llanta nueva o del reencauche para cada cliente, con fecha de vigencia. Se usa cuando la inspección no trae precio; si no hay precio del cliente, la llanta queda fuera de los cálculos en pesos (CPK, pérdidas).</p>
+        </div>
+        <form onsubmit="guardarPrecioClienteCat(event)" class="grid grid-cols-2 md:grid-cols-7 gap-2 items-end">
+          <input type="text" id="precio_cli" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <input type="text" id="precio_marca" required placeholder="Marca" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <input type="text" id="precio_diseno" placeholder="Diseño (opcional)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <input type="text" id="precio_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+          <select id="precio_tipo" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
+            <option value="Original">Llanta nueva</option>
+            <option value="Reencauche">Reencauche</option>
+          </select>
+          <input type="number" id="precio_valor" required min="1" step="1000" placeholder="Precio COP" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
+          <div class="flex gap-2">
+            <input type="date" id="precio_desde" required class="flex-1 px-2 py-1.5 bg-white border border-slate-300 rounded-xl text-xs">
+            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          </div>
+        </form>
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-900 text-white font-bold"><tr>
+              <th class="p-2.5">Cliente</th><th class="p-2.5">Marca</th><th class="p-2.5">Diseño</th><th class="p-2.5">Dimensión</th>
+              <th class="p-2.5">Tipo</th><th class="p-2.5 text-right">Precio</th><th class="p-2.5">Vigente desde</th><th class="p-2.5 text-center">Acciones</th>
+            </tr></thead>
+            <tbody id="tbodyPreciosCliente" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Subtab: Parametrización de Marcas por Cliente -->
       <div id="cat-seccion-marcas_cliente" class="hidden space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
@@ -3510,6 +3591,27 @@
             <span>marcas (25 por página)</span>
           </div>
           <div class="flex items-center space-x-1" id="controlesPaginacionMarcasCat"></div>
+        </div>
+
+        <!-- Stock de seguridad del MRP por medida y eje -->
+        <div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+          <div>
+            <span class="text-xs font-bold text-slate-800">Stock de seguridad del MRP por medida y eje</span>
+            <p class="text-[11px] text-slate-500">Reserva mínima por dimensión y tipo de eje. La de dirección solo se cubre con llantas nuevas. Si una medida no tiene reglas, se usa el stock general del cliente.</p>
+          </div>
+          <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2">
+            <input type="text" id="stockseg_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+            <input type="text" id="stockseg_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
+            <select id="stockseg_eje" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
+              <option value="DIRECCIONAL">Direccional</option><option value="TRACCION">Tracción</option><option value="LIBRE">Libre / remolque</option>
+            </select>
+            <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
+            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          </form>
+          <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Dimensión</th><th class="p-2">Eje</th><th class="p-2 text-center">Cantidad</th><th class="p-2 text-center">Acciones</th></tr></thead>
+            <tbody id="tbodyStockSeguridad" class="divide-y divide-slate-100 bg-white"></tbody>
+          </table>
         </div>
 
         <!-- Máximo de reencauches por cliente y marca -->
@@ -3624,6 +3726,14 @@
             <select id="selBodegaDimension" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
               <option value="">Todas las Dimensiones</option>
             </select>
+          </div>
+
+          <!-- Horizonte de proyección del MRP (meses) -->
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs" title="Meses hacia adelante para proyectar qué llantas llegan a su límite de retiro">
+            <i class="fa-solid fa-calendar-days text-slate-400 text-xs mr-2"></i>
+            <span class="text-[11px] font-bold text-slate-600 mr-1">Horizonte</span>
+            <input type="number" id="inpHorizonteMrp" min="0" max="24" step="1" value="3" onchange="cargarModuloBodegasMRP()" class="w-12 bg-transparent text-xs font-black text-slate-800 focus:outline-none">
+            <span class="text-[11px] font-bold text-slate-600">meses</span>
           </div>
 
           <!-- Botón Dar de Alta Llanta/Carcasa -->
@@ -4735,6 +4845,10 @@
               <input type="checkbox" id="usr_vista_composicion" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Composición de Flota</span>
             </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="usr_vista_bodegas" class="rounded text-indigo-600">
+              <span class="font-semibold">Bodegas e Inventario</span>
+            </label>
             <label id="lbl_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
                 <input type="checkbox" id="usr_vista_basedatos" class="rounded text-indigo-600" disabled>
@@ -4768,6 +4882,11 @@
               <div class="flex items-center space-x-1.5 pt-0.5">
                 <input type="text" id="usr_cliente_custom_nuevo" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
                 <button type="button" onclick="agregarClienteCustomModal('nuevo')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+              <div class="pt-1 border-t border-slate-200">
+                <p class="text-[11px] font-bold text-slate-700">Sedes permitidas (opcional)</p>
+                <p class="text-[11px] text-slate-500">Si no marcas ninguna sede de un cliente, el usuario ve todas sus sedes.</p>
+                <div id="usr_lista_sedes_check" class="max-h-32 overflow-y-auto space-y-1 p-2 bg-white rounded-xl border border-slate-200 text-xs"></div>
               </div>
             </div>
           </div>
@@ -4833,6 +4952,10 @@
               <input type="checkbox" id="edit_usr_vista_composicion" class="rounded text-indigo-600" checked>
               <span class="font-semibold">Composición de Flota</span>
             </label>
+            <label class="flex items-center space-x-2 text-slate-700 cursor-pointer">
+              <input type="checkbox" id="edit_usr_vista_bodegas" class="rounded text-indigo-600">
+              <span class="font-semibold">Bodegas e Inventario</span>
+            </label>
             <label id="lbl_edit_usr_vista_basedatos" class="flex items-center justify-between text-slate-400 bg-slate-100 p-1.5 rounded-xl border border-slate-200/70 transition-colors">
               <span class="flex items-center space-x-2">
                 <input type="checkbox" id="edit_usr_vista_basedatos" class="rounded text-indigo-600" disabled>
@@ -4866,6 +4989,11 @@
               <div class="flex items-center space-x-1.5 pt-0.5">
                 <input type="text" id="edit_usr_cliente_custom" placeholder="O escribe cliente adicional..." class="flex-1 p-1.5 bg-white border border-slate-200 rounded-lg text-xs">
                 <button type="button" onclick="agregarClienteCustomModal('editar')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 font-bold rounded-lg text-xs">+ Añadir</button>
+              </div>
+              <div class="pt-1 border-t border-slate-200">
+                <p class="text-[11px] font-bold text-slate-700">Sedes permitidas (opcional)</p>
+                <p class="text-[11px] text-slate-500">Si no marcas ninguna sede de un cliente, el usuario ve todas sus sedes.</p>
+                <div id="edit_usr_lista_sedes_check" class="max-h-32 overflow-y-auto space-y-1 p-2 bg-white rounded-xl border border-slate-200 text-xs"></div>
               </div>
             </div>
           </div>
