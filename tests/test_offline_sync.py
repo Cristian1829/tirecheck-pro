@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 import pytest
 from fastapi.testclient import TestClient
 import database
@@ -278,43 +280,39 @@ def test_sincronizar_lote_parcial_aisla_rechazo_candado(test_db, auth_client):
 
 def test_frontend_contiene_motor_indexeddb_y_modal_offline(auth_client):
     """
-    5. Verifica que GET / incluya TireAnalyzeOfflineDB, cola_pendientes,
-    sincronizarColaOffline y #modalColaOffline, y que la sintaxis JavaScript de
-    templates/index.html pase limpia con node --check.
+    5. Verifica que la aplicación incluya TireAnalyzeOfflineDB, cola_pendientes,
+    sincronizarColaOffline y #modalColaOffline, y que la sintaxis JavaScript pase limpia con node --check.
     """
     import subprocess
-    import tempfile
     import os
-    import re
 
     resp = auth_client.get("/")
     assert resp.status_code == 200
     html = resp.text
 
-    assert "TireAnalyzeOfflineDB" in html
-    assert "cola_pendientes" in html
-    assert "sincronizarColaOffline" in html
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    js_content = ""
+    archivos_js = []
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                ruta = os.path.join(js_dir, fname)
+                archivos_js.append(ruta)
+                with open(ruta, "r", encoding="utf-8") as f_js:
+                    js_content += "\n" + f_js.read()
+    bundle = html + "\n" + js_content
+
+    assert "TireAnalyzeOfflineDB" in bundle
+    assert "cola_pendientes" in bundle
+    assert "sincronizarColaOffline" in bundle
     assert "modalColaOffline" in html
     assert "btnEstadoConexionOffline" in html
 
-    # Extraer el bloque <script> principal de templates/index.html para verificar sintaxis JS con node
-    script_match = re.search(r'<script>(.*?)</script>', html, re.DOTALL)
-    assert script_match is not None, "No se encontró el bloque <script> principal en templates/index.html"
-    js_code = script_match.group(1)
-
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
-        f.write(js_code)
-        temp_js_path = f.name
-
-    try:
-        resultado = subprocess.run(["node", "--check", temp_js_path], capture_output=True, text=True)
-        assert resultado.returncode == 0, f"Error de sintaxis JS detectado por node --check:\n{resultado.stderr}"
-    finally:
-        if os.path.exists(temp_js_path):
-            try:
-                os.remove(temp_js_path)
-            except OSError:
-                pass
+    # Verificar sintaxis de los módulos JS de static/js
+    assert len(archivos_js) > 0
+    for ruta in archivos_js:
+        resultado = subprocess.run(["node", "--check", ruta], capture_output=True, text=True)
+        assert resultado.returncode == 0, f"Error de sintaxis JS detectado en {os.path.basename(ruta)}:\n{resultado.stderr}"
 
 
 def test_offline_filtrado_disenos_por_marca_estricto(test_db, auth_client):
@@ -366,6 +364,16 @@ def test_offline_filtrado_disenos_por_marca_estricto(test_db, auth_client):
     resp_front = auth_client.get("/")
     assert resp_front.status_code == 200
     html = resp_front.text
-    assert "disenos_por_marca" in html
-    assert "NUNCA caer en cc.disenos para evitar mezclar marcas" in html
+
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    js_content = ""
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8") as f_js:
+                    js_content += "\n" + f_js.read()
+    bundle = html + "\n" + js_content
+
+    assert "disenos_por_marca" in bundle
+    assert "NUNCA caer en cc.disenos para evitar mezclar marcas" in bundle
 

@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 21:00:33`
+- **Fecha de Generación:** `2026-10-25 21:23:22`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `55,777` líneas
-- **Tamaño Total de Código Fuente:** `2772.1 KB` (`2,838,673` bytes)
+- **Líneas Totales de Código:** `56,003` líneas
+- **Tamaño Total de Código Fuente:** `2783.1 KB` (`2,849,866` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,7 +432,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2237 | 97.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2291 | 99.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 9288 | 442.9 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
@@ -445,18 +445,18 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5770 | 382.1 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5789 | 383.7 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.8 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4048 | 181.9 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4054 | 182.2 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1946 | 81.9 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 968 | 50.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1209 | 57.1 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1759 | 83.8 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
-| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2005 | 105.4 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
+| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2077 | 108.9 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -464,8 +464,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [tests/conftest.py](#archivo-testsconftestpy) | `python` | 47 | 1.2 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
-| [tests/test_bodegas_hoja_vida.py](#archivo-teststest-bodegas-hoja-vidapy) | `python` | 327 | 12.2 KB | Pruebas unitarias completas del módulo de 7 bodegas, kardex de carcasas, traslados y garantías |
-| [tests/test_bodegas_mrp.py](#archivo-teststest-bodegas-mrppy) | `python` | 498 | 20.1 KB | Pruebas de la lógica de balance MRP y compras sugeridas de bodegas |
+| [tests/test_bodegas_hoja_vida.py](#archivo-teststest-bodegas-hoja-vidapy) | `python` | 370 | 13.9 KB | Pruebas unitarias completas del módulo de 7 bodegas, kardex de carcasas, traslados y garantías |
+| [tests/test_bodegas_mrp.py](#archivo-teststest-bodegas-mrppy) | `python` | 499 | 20.1 KB | Pruebas de la lógica de balance MRP y compras sugeridas de bodegas |
 | [tests/test_auditoria_bodegas_sentido_negocio.py](#archivo-teststest-auditoria-bodegas-sentido-negociopy) | `python` | 527 | 21.7 KB | Auditoría de consistencia de negocio para bodegas y ciclo de vida |
 | [tests/test_composicion_flota.py](#archivo-teststest-composicion-flotapy) | `python` | 337 | 11.2 KB | Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario |
 | [tests/test_detalle_vehiculos_planes.py](#archivo-teststest-detalle-vehiculos-planespy) | `python` | 136 | 7.0 KB | Pruebas del módulo de detalle vehicular y planes de mantenimiento |
@@ -473,13 +473,13 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_matriz_semaforos.py](#archivo-teststest-matriz-semaforospy) | `python` | 316 | 12.3 KB | Pruebas de matriz de semáforos de desgaste por eje y flota |
 | [tests/test_migracion_pext_ciudad_limpia.py](#archivo-teststest-migracion-pext-ciudad-limpiapy) | `python` | 213 | 8.1 KB | Pruebas de migración y normalización para Ciudad Limpia |
 | [tests/test_precision_graficos_ground_truth.py](#archivo-teststest-precision-graficos-ground-truthpy) | `python` | 529 | 23.7 KB | Pruebas de auditoría de gráficos ground truth y métricas matemáticas |
-| [tests/test_sincronizacion_kilometraje_vehiculo.py](#archivo-teststest-sincronizacion-kilometraje-vehiculopy) | `python` | 186 | 7.4 KB | Pruebas de sincronización y propagación de odómetro vehicular |
+| [tests/test_sincronizacion_kilometraje_vehiculo.py](#archivo-teststest-sincronizacion-kilometraje-vehiculopy) | `python` | 196 | 7.8 KB | Pruebas de sincronización y propagación de odómetro vehicular |
 | [tests/test_tipologia_mayusculas_limites.py](#archivo-teststest-tipologia-mayusculas-limitespy) | `python` | 211 | 7.8 KB | Pruebas de tipologías en mayúsculas y límites de retiro por cliente |
 | [tests/test_frecuencia_parametrizable_cliente.py](#archivo-teststest-frecuencia-parametrizable-clientepy) | `python` | 173 | 6.2 KB | Pruebas de parametrización de frecuencia de inspección por cliente |
 | [tests/test_directorio_clientes.py](#archivo-teststest-directorio-clientespy) | `python` | 99 | 4.2 KB | Pruebas del directorio de clientes y sedes |
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
-| [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 297 | 11.0 KB | Pruebas de seguridad de sesión y permisos en frontend |
-| [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 259 | 10.5 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
+| [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 313 | 11.5 KB | Pruebas de seguridad de sesión y permisos en frontend |
+| [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 264 | 10.8 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
 | [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 937 | 35.8 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
@@ -3777,7 +3777,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2237 líneas | 99,737 bytes (97.4 KB)
+- **Métricas:** 2291 líneas | 102,276 bytes (99.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5855,14 +5855,47 @@ def api_taller_posicion_info(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
-    return sanitizar_nativos(database.obtener_posicion_taller_info(placa, posicion, cliente))
+    if not cliente and placa:
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (placa,))
+            r_v = cur.fetchone()
+            if r_v and r_v[0]:
+                cliente = r_v[0]
+            else:
+                cur.execute("SELECT cliente FROM inspecciones WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) ORDER BY fecha DESC, id DESC LIMIT 1", (placa,))
+                r_i = cur.fetchone()
+                if r_i and r_i[0]:
+                    cliente = r_i[0]
+
+    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    data = database.obtener_posicion_taller_info(placa, posicion, cliente)
+    data["tipo_licencia"] = lic
+    data["permite_taller"] = (lic != "LIGHT")
+    return sanitizar_nativos(data)
 
 @app.post("/api/taller/desmontar")
 def api_taller_desmontar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
+    cliente = item.get("cliente_propietario") or item.get("cliente")
+    if not cliente and item.get("numero_interno"):
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cliente_propietario, cliente FROM llantas_maestro WHERE UPPER(TRIM(numero_interno)) = UPPER(TRIM(?))", (str(item.get("numero_interno")).strip(),))
+            r_ll = cur.fetchone()
+            if r_ll:
+                cliente = r_ll[0] or r_ll[1]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    if lic == "LIGHT":
+        raise HTTPException(
+            status_code=403,
+            detail="Los desmontajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+        )
+
+    item["cliente_propietario"] = cliente
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.desmontar_llanta_taller(item)
     if not res.get("ok"):
@@ -5874,7 +5907,28 @@ def api_taller_montar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
+    cliente = item.get("cliente_propietario") or item.get("cliente")
+    if not cliente and item.get("placa"):
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (str(item.get("placa")).strip(),))
+            r_v = cur.fetchone()
+            if r_v and r_v[0]:
+                cliente = r_v[0]
+            else:
+                cur.execute("SELECT cliente FROM inspecciones WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) ORDER BY fecha DESC, id DESC LIMIT 1", (str(item.get("placa")).strip(),))
+                r_i = cur.fetchone()
+                if r_i and r_i[0]:
+                    cliente = r_i[0]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    if lic == "LIGHT":
+        raise HTTPException(
+            status_code=403,
+            detail="Los montajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+        )
+
+    item["cliente_propietario"] = cliente
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.montar_llanta_taller(item)
     if not res.get("ok"):
@@ -21894,7 +21948,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 5770 líneas | 391,250 bytes (382.1 KB)
+- **Métricas:** 5789 líneas | 392,886 bytes (383.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -22776,7 +22830,7 @@ if __name__ == '__main__':
             </button>
           </div>
 
-          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE & DESMONTE RÁPIDO -->
+          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE & DESMONTE RÁPIDO (EXCLUSIVO LICENCIA FULL) -->
           <div id="seccionTallerPatio" class="pt-3 border-t border-slate-100 space-y-2.5">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
@@ -22784,10 +22838,29 @@ if __name__ == '__main__':
                   <i class="fa-solid fa-wrench"></i>
                 </span>
                 <h4 class="text-xs font-black text-slate-800">Taller en Patio</h4>
+                <span id="badgeTallerPlanFull" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700 border border-purple-200">
+                  FULL
+                </span>
+                <span id="badgeTallerPlanLight" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                  LIGHT (Solo Lectura)
+                </span>
               </div>
               <span id="badgeTallerPos" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200">
                 Posición 1
               </span>
+            </div>
+
+            <!-- Aviso informativo para Versión LIGHT (Sin Taller / Bodegas) -->
+            <div id="bannerTallerLight" class="hidden p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-xs shadow-sm space-y-1.5">
+              <div class="flex items-center gap-2 font-bold text-amber-900">
+                <span class="w-5 h-5 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-[10px]">
+                  <i class="fa-solid fa-lock"></i>
+                </span>
+                <span>Desmontajes y Montajes exclusivos de la Versión FULL</span>
+              </div>
+              <p class="text-[11px] text-amber-800/90 leading-relaxed">
+                Esta cuenta opera con <strong>Licencia Operativa LIGHT</strong>. Los movimientos de taller, reemplazo y desmonte de llantas están habilitados únicamente para la <strong>Licencia Empresarial FULL</strong> (Gestión de 7 Bodegas y Hoja de Vida).
+              </p>
             </div>
 
             <!-- Caja de Estado de la Llanta en la Posición -->
@@ -22822,14 +22895,14 @@ if __name__ == '__main__':
             </div>
 
             <!-- Botonera de Acciones de Taller -->
-            <div class="grid grid-cols-2 gap-2 pt-1">
+            <div id="contenedorBotonesTaller" class="grid grid-cols-2 gap-2 pt-1">
               <button type="button" id="btnTallerDesmontar" onclick="abrirModalTallerDesmontar()" disabled class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 transition-all">
                 <i class="fa-solid fa-arrow-down"></i>
-                <span>Desmontar</span>
+                <span id="txtBtnTallerDesmontar">Desmontar</span>
               </button>
-              <button type="button" id="btnTallerMontar" onclick="abrirModalTallerMontar()" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 transition-all">
+              <button type="button" id="btnTallerMontar" onclick="abrirModalTallerMontar()" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 transition-all">
                 <i class="fa-solid fa-arrow-up"></i>
-                <span>Montar Llanta</span>
+                <span id="txtBtnTallerMontar">Montar Llanta</span>
               </button>
             </div>
             <div class="flex justify-end pt-0.5">
@@ -31563,7 +31636,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4048 líneas | 186,215 bytes (181.9 KB)
+- **Métricas:** 4054 líneas | 186,568 bytes (182.2 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -31960,6 +32033,12 @@ if __name__ == '__main__':
         document.getElementById('lblMmAlerta').textContent = Number(mm).toFixed(1);
         if (d.tipo_licencia) {
           clienteLicenciaCaptura = d.tipo_licencia;
+          window.clienteLicenciaCaptura = d.tipo_licencia;
+        }
+        // Sincronizar el panel de taller en patio con el licenciamiento del cliente
+        const posSel = document.getElementById('posicion')?.value;
+        if (posSel && typeof actualizarPanelTallerPosicion === 'function') {
+          actualizarPanelTallerPosicion(posSel);
         }
       }
     }
@@ -42245,7 +42324,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_bodegas.js`
 - **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
-- **Métricas:** 2005 líneas | 107,929 bytes (105.4 KB)
+- **Métricas:** 2077 líneas | 111,492 bytes (108.9 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43606,16 +43685,42 @@ if __name__ == '__main__':
     let chartCurvaDesgasteInstance = null;
 
     /**
+     * Valida si el cliente seleccionado opera bajo Licencia FULL / PRO.
+     * En caso de Licencia LIGHT, los montajes y desmontajes están restringidos.
+     */
+    function esLicenciaFullTaller() {
+      if (posTallerActualInfo && typeof posTallerActualInfo.permite_taller !== 'undefined') {
+        return Boolean(posTallerActualInfo.permite_taller);
+      }
+      if (posTallerActualInfo && posTallerActualInfo.tipo_licencia) {
+        return String(posTallerActualInfo.tipo_licencia).toUpperCase() !== 'LIGHT';
+      }
+      if (typeof window !== 'undefined' && window.clienteLicenciaCaptura) {
+        return String(window.clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
+      }
+      if (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) {
+        return String(clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
+      }
+      return true;
+    }
+
+    /**
      * Consulta el estado en tiempo real de la posición seleccionada en el chasis
      * y actualiza el panel de Taller en Patio (#seccionTallerPatio).
      */
     async function actualizarPanelTallerPosicion(p) {
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
       const badgePos = document.getElementById('badgeTallerPos');
       const boxVacio = document.getElementById('tallerLlantaVacia');
       const boxMontada = document.getElementById('tallerLlantaMontada');
       const btnDesm = document.getElementById('btnTallerDesmontar');
       const btnMont = document.getElementById('btnTallerMontar');
+      const badgeFull = document.getElementById('badgeTallerPlanFull');
+      const badgeLight = document.getElementById('badgeTallerPlanLight');
+      const bannerLight = document.getElementById('bannerTallerLight');
+      const txtDesm = document.getElementById('txtBtnTallerDesmontar');
+      const txtMont = document.getElementById('txtBtnTallerMontar');
 
       if (!placa || !p) {
         if (badgePos) badgePos.textContent = `Posición ${p || '-'}`;
@@ -43627,10 +43732,41 @@ if __name__ == '__main__':
       }
 
       try {
-        const res = await fetch(`/api/taller/posicion-info?placa=${encodeURIComponent(placa)}&posicion=${p}`);
+        const res = await fetch(`/api/taller/posicion-info?placa=${encodeURIComponent(placa)}&posicion=${p}&cliente=${encodeURIComponent(cliente)}`);
         if (!res.ok) return;
         const data = await res.json();
         posTallerActualInfo = data;
+
+        const esFull = (typeof data.permite_taller !== 'undefined')
+          ? Boolean(data.permite_taller)
+          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'PRO').toUpperCase() !== 'LIGHT');
+
+        // Actualizar badges de licenciamiento y banner explicativo
+        if (esFull) {
+          if (badgeFull) badgeFull.classList.remove('hidden');
+          if (badgeLight) badgeLight.classList.add('hidden');
+          if (bannerLight) bannerLight.classList.add('hidden');
+          if (txtDesm) txtDesm.textContent = 'Desmontar';
+          if (txtMont) txtMont.textContent = 'Montar Llanta';
+          if (btnMont) {
+            btnMont.disabled = false;
+            btnMont.title = 'Montar llanta en esta posición';
+          }
+        } else {
+          if (badgeFull) badgeFull.classList.add('hidden');
+          if (badgeLight) badgeLight.classList.remove('hidden');
+          if (bannerLight) bannerLight.classList.remove('hidden');
+          if (txtDesm) txtDesm.textContent = 'Desmontar (Plan FULL)';
+          if (txtMont) txtMont.textContent = 'Montar (Plan FULL)';
+          if (btnMont) {
+            btnMont.disabled = true;
+            btnMont.title = 'Montajes de taller exclusivos de la Licencia FULL';
+          }
+          if (btnDesm) {
+            btnDesm.disabled = true;
+            btnDesm.title = 'Desmontes de taller exclusivos de la Licencia FULL';
+          }
+        }
 
         if (badgePos) {
           const dirTxt = data.es_direccional ? 'Direccional ⚠️' : 'Tracción / Arrastre';
@@ -43641,7 +43777,10 @@ if __name__ == '__main__':
           const ll = data.llanta_instalada;
           if (boxVacio) boxVacio.classList.add('hidden');
           if (boxMontada) boxMontada.classList.remove('hidden');
-          if (btnDesm) btnDesm.disabled = false;
+          if (btnDesm) {
+            btnDesm.disabled = !esFull;
+            if (esFull) btnDesm.title = 'Desmontar llanta instalada';
+          }
 
           const serialEl = document.getElementById('txtTallerSerial');
           if (serialEl) serialEl.innerHTML = `<i class="fa-solid fa-ring text-blue-600 mr-1.5"></i>${ll.numero_interno}`;
@@ -43682,6 +43821,12 @@ if __name__ == '__main__':
 
     // --- MODAL DESMONTAR ---
     function abrirModalTallerDesmontar() {
+      if (!esLicenciaFullTaller()) {
+        const msg = 'Los desmontajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
+        else alert(msg);
+        return;
+      }
       if (!posTallerActualInfo || !posTallerActualInfo.llanta_instalada) {
         alert('No hay una llanta montada en esta posición para retirar.');
         return;
@@ -43747,6 +43892,12 @@ if __name__ == '__main__':
 
     // --- MODAL MONTAR ---
     async function abrirModalTallerMontar() {
+      if (!esLicenciaFullTaller()) {
+        const msg = 'Los montajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
+        else alert(msg);
+        return;
+      }
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
       const pos = parseInt(document.getElementById('posicion')?.value) || 1;
       const kmVeh = document.getElementById('kilometraje')?.value || '';
@@ -44352,7 +44503,7 @@ def auth_client(admin_token):
 
 - **Ruta:** `tests/test_bodegas_hoja_vida.py`
 - **Descripción:** Pruebas unitarias completas del módulo de 7 bodegas, kardex de carcasas, traslados y garantías
-- **Métricas:** 327 líneas | 12,524 bytes (12.2 KB)
+- **Métricas:** 370 líneas | 14,276 bytes (13.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -44683,6 +44834,48 @@ def test_candado_direccional_y_desmonte_automatico_en_montaje(auth_client, test_
     assert hv_orig["estado_actual"]["estado"] == "Bodega_2_Reutilizable"
     assert hv_orig["estado_actual"]["posicion"] == 0
     assert hv_orig["metricas_consolidadas"]["km_totales"] == 10000.0  # 60000 - 50000
+
+
+def test_taller_restringido_licencia_light(auth_client):
+    """
+    Verifica que para clientes con licencia LIGHT, los montajes y desmontajes
+    en inspección de patio estén estrictamente restringidos (403 Forbidden)
+    y que posicion-info reporte permite_taller = False.
+    """
+    cliente_light = "FLOTA OPERATIVA LIGHT TEST"
+    with database.get_connection() as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, fecha_actualizacion)
+            VALUES (?, 'LIGHT', CURRENT_TIMESTAMP)
+        """, (cliente_light,))
+        conn.commit()
+
+    # 1. Posicion-info debe reportar permite_taller = False y tipo_licencia = LIGHT
+    resp_info = auth_client.get(f"/api/taller/posicion-info?placa=LGT101&posicion=1&cliente={cliente_light}")
+    assert resp_info.status_code == 200
+    d_info = resp_info.json()
+    assert d_info["tipo_licencia"] == "LIGHT"
+    assert d_info["permite_taller"] is False
+
+    # 2. Intentar montar debe ser rechazado con 403 Forbidden
+    resp_montar = auth_client.post("/api/taller/montar", json={
+        "placa": "LGT101",
+        "posicion": 1,
+        "numero_interno": "LL-LGT-01",
+        "cliente_propietario": cliente_light,
+        "odometro_vehiculo": 12000.0
+    })
+    assert resp_montar.status_code == 403
+    assert "FULL" in resp_montar.json()["detail"]
+
+    # 3. Intentar desmontar debe ser rechazado con 403 Forbidden
+    resp_desmontar = auth_client.post("/api/taller/desmontar", json={
+        "numero_interno": "LL-LGT-01",
+        "cliente_propietario": cliente_light,
+        "bodega_destino": "Bodega_2_Reutilizable"
+    })
+    assert resp_desmontar.status_code == 403
+    assert "FULL" in resp_desmontar.json()["detail"]
 ```
 
 ---
@@ -44691,7 +44884,7 @@ def test_candado_direccional_y_desmonte_automatico_en_montaje(auth_client, test_
 
 - **Ruta:** `tests/test_bodegas_mrp.py`
 - **Descripción:** Pruebas de la lógica de balance MRP y compras sugeridas de bodegas
-- **Métricas:** 498 líneas | 20,596 bytes (20.1 KB)
+- **Métricas:** 499 líneas | 20,626 bytes (20.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -44701,6 +44894,7 @@ TireAnalyze Pro / TireCheck Pro
 """
 
 import pytest
+from datetime import datetime
 import database
 import server
 
@@ -45068,7 +45262,7 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
         "prof_inicial": 21.0,
         "numero_interno": serial,
         "kilometraje": 45000.0,
-        "fecha": "2026-10-25"
+        "fecha": "2026-10-27"
     })
 
     # 3. Verificar que llantas_maestro se actualizó a MONTADA_OPERACION
@@ -47843,7 +48037,7 @@ def test_auditoria_generacion_pdf_certificado(test_db, tmp_path):
 
 - **Ruta:** `tests/test_sincronizacion_kilometraje_vehiculo.py`
 - **Descripción:** Pruebas de sincronización y propagación de odómetro vehicular
-- **Métricas:** 186 líneas | 7,527 bytes (7.4 KB)
+- **Métricas:** 196 líneas | 8,003 bytes (7.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -48001,22 +48195,32 @@ def test_frontend_sincronizacion_kilometraje_dom_y_js():
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    assert "kilometrajeInspeccionActual" in html
-    assert "alCambiarKilometrajeInput()" in html
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    js_content = ""
+    archivos_js = []
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                ruta = os.path.join(js_dir, fname)
+                archivos_js.append(ruta)
+                with open(ruta, "r", encoding="utf-8") as f_js:
+                    js_content += "\n" + f_js.read()
+    bundle = html + "\n" + js_content
+
+    assert "kilometrajeInspeccionActual" in bundle
+    assert "alCambiarKilometrajeInput()" in bundle
     assert 'oninput="alCambiarKilometrajeInput();"' in html
 
-    # Validar sintaxis JS con Node.js
-    scripts = re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', html, re.DOTALL)
-    assert len(scripts) > 0
-    codigo_js = "\n".join(scripts)
-    res = subprocess.run(
-        ["node", "--check"],
-        input=codigo_js,
-        text=True,
-        encoding="utf-8",
-        capture_output=True
-    )
-    assert res.returncode == 0, f"Error de sintaxis JavaScript: {res.stderr}"
+    # Validar sintaxis JS con Node.js en módulos de static/js
+    assert len(archivos_js) > 0
+    for ruta in archivos_js:
+        res = subprocess.run(
+            ["node", "--check", ruta],
+            capture_output=True,
+            text=True,
+            encoding="utf-8"
+        )
+        assert res.returncode == 0, f"Error de sintaxis JavaScript en {os.path.basename(ruta)}: {res.stderr}"
 
 def test_boton_limpiador_y_unico_boton_copiar_marca_diseno():
     """Valida que el limpiador ejecute limpiarTodoParaNuevaInspeccion() y que exista un único botón de copiar marca/diseño."""
@@ -48702,7 +48906,7 @@ def test_api_seguridad_marcas_cliente(test_db):
 
 - **Ruta:** `tests/test_login_seguridad_frontend.py`
 - **Descripción:** Pruebas de seguridad de sesión y permisos en frontend
-- **Métricas:** 297 líneas | 11,285 bytes (11.0 KB)
+- **Métricas:** 313 líneas | 11,805 bytes (11.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -48734,28 +48938,46 @@ INDEX_HTML_PATH = os.path.join(BASE_DIR, "templates", "index.html")
 # 1. PRUEBAS DE INTEGRIDAD Y SINTAXIS JAVASCRIPT EN EL FRONTEND (ANTI-REGRESIÓN)
 # ==============================================================================
 
+def obtener_bundle_frontend():
+    with open(INDEX_HTML_PATH, "r", encoding="utf-8", errors="ignore") as f:
+        html = f.read()
+    js_dir = os.path.join(BASE_DIR, "static", "js")
+    js_content = ""
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8", errors="ignore") as f_js:
+                    js_content += "\n" + f_js.read()
+    return html + "\n" + js_content
+
+
 def test_frontend_javascript_sintaxis_valida():
     """
-    Extrae todos los bloques <script> de templates/index.html y los valida
-    con el compilador de Node.js ('node --check').
-    Esta prueba previene syntax errors (como llaves huérfanas, comas o tokens inválidos)
-    que bloqueen el flujo de la aplicación en el navegador del cliente.
+    Valida la sintaxis con el compilador de Node.js ('node --check') tanto de
+    los módulos en static/js/ como de scripts en templates/index.html.
+    Esta prueba previene syntax errors que bloqueen la aplicación.
     """
     assert os.path.exists(INDEX_HTML_PATH), f"No se encontró {INDEX_HTML_PATH}"
+
+    js_dir = os.path.join(BASE_DIR, "static", "js")
+    archivos_js = []
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8", errors="ignore") as f_js:
+                    archivos_js.append((fname, f_js.read()))
 
     with open(INDEX_HTML_PATH, "r", encoding="utf-8", errors="ignore") as f:
         html = f.read()
 
-    # Extraer todos los scripts que contengan código inline
-    script_pattern = re.compile(r"<script\b[^>]*>(.*?)</script>", re.DOTALL | re.IGNORECASE)
-    matches = script_pattern.findall(html)
-    assert len(matches) > 0, "No se encontraron etiquetas <script> en index.html"
+    script_pattern = re.compile(r"<script\b(?![^>]*src=)[^>]*>(.*?)</script>", re.DOTALL | re.IGNORECASE)
+    inline_scripts = [s for s in script_pattern.findall(html) if s.strip()]
+    for idx, s_code in enumerate(inline_scripts, 1):
+        archivos_js.append((f"index_inline_{idx}.js", s_code))
 
-    scripts_con_codigo = [s for s in matches if s.strip()]
-    assert len(scripts_con_codigo) > 0, "No se encontró código JavaScript en las etiquetas <script>"
+    assert len(archivos_js) > 0, "No se encontró código JavaScript en static/js/ ni en index.html"
 
-    for idx, script_code in enumerate(scripts_con_codigo, 1):
-        # Escribir a un archivo temporal y validar con node --check
+    for fname, script_code in archivos_js:
         with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as tmp:
             tmp.write(script_code)
             tmp_path = tmp.name
@@ -48768,9 +48990,8 @@ def test_frontend_javascript_sintaxis_valida():
                 check=False
             )
             assert res.returncode == 0, (
-                f"Error de sintaxis detectado en el script #{idx} de templates/index.html:\n"
+                f"Error de sintaxis detectado en {fname}:\n"
                 f"{res.stderr}\n"
-                f"Por favor revisa el código JavaScript en index.html antes de desplegar."
             )
         finally:
             if os.path.exists(tmp_path):
@@ -48802,18 +49023,17 @@ def test_frontend_dom_elementos_login():
 
 def test_frontend_funciones_esenciales_login():
     """
-    Verifica que en el código de index.html estén declaradas las funciones JS
+    Verifica que en el bundle de la aplicación (HTML + módulos JS) estén declaradas las funciones JS
     clave para el ciclo de vida de la autenticación:
     ejecutarLogin, cerrarSesionUsuario, actualizarUIUsuario, y los tokens en localStorage.
     """
-    with open(INDEX_HTML_PATH, "r", encoding="utf-8", errors="ignore") as f:
-        html = f.read()
+    bundle = obtener_bundle_frontend()
 
-    assert "async function ejecutarLogin()" in html, "La función ejecutarLogin() debe estar declarada"
-    assert "async function cerrarSesionUsuario()" in html, "La función cerrarSesionUsuario() debe estar declarada"
-    assert "function actualizarUIUsuario()" in html, "La función actualizarUIUsuario() debe estar declarada"
-    assert "tireanalyze_token" in html, "Debe gestionar la clave tireanalyze_token en localStorage"
-    assert "tirecheck_token" in html, "Debe gestionar la clave tirecheck_token en localStorage"
+    assert "async function ejecutarLogin()" in bundle, "La función ejecutarLogin() debe estar declarada"
+    assert "async function cerrarSesionUsuario()" in bundle, "La función cerrarSesionUsuario() debe estar declarada"
+    assert "function actualizarUIUsuario()" in bundle, "La función actualizarUIUsuario() debe estar declarada"
+    assert "tireanalyze_token" in bundle, "Debe gestionar la clave tireanalyze_token en localStorage"
+    assert "tirecheck_token" in bundle, "Debe gestionar la clave tirecheck_token en localStorage"
 
 
 # ==============================================================================
@@ -49011,7 +49231,7 @@ def test_api_rutas_protegidas_sin_autenticacion(test_db):
 
 - **Ruta:** `tests/test_alerta_frecuencia_copiar_marca.py`
 - **Descripción:** Pruebas de alertas de frecuencia y copiado de marca/diseño
-- **Métricas:** 259 líneas | 10,751 bytes (10.5 KB)
+- **Métricas:** 264 líneas | 11,075 bytes (10.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -49147,47 +49367,52 @@ def test_api_vehiculo_perfil_y_ultima_marca_diseno():
     assert data_marca["diseno"] == "X MULTI Z"
 
 def test_frontend_dom_modal_frecuencia_y_boton_copiar_marca():
-    """Valida la presencia física de los elementos HTML en templates/index.html."""
+    """Valida la presencia física de los elementos HTML y funciones JS en la aplicación."""
     html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "index.html")
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
-    
+
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    js_content = ""
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8") as f_js:
+                    js_content += "\n" + f_js.read()
+    bundle = html + "\n" + js_content
+
     # Modal de alerta de vehículo ya inspeccionado
     assert 'id="modalVehiculoYaInspeccionado"' in html
     assert 'id="popup_placa_vehiculo"' in html
     assert 'id="popup_fecha_ultima_inspeccion"' in html
     assert 'id="popup_fecha_permitida_inspeccion"' in html
     assert 'id="popup_dias_restantes_texto"' in html
-    assert 'cerrarModalVehiculoYaInspeccionado()' in html
+    assert 'cerrarModalVehiculoYaInspeccionado()' in bundle
     
     # Botón para copiar marca y diseño anterior
     assert 'id="btnCopiarMarcaDisenoAnt"' in html
-    assert 'copiarMarcaDisenoAnterior()' in html
+    assert 'copiarMarcaDisenoAnterior()' in bundle
     
     # Funciones JavaScript
-    assert "function mostrarModalVehiculoYaInspeccionado(" in html
-    assert "function cerrarModalVehiculoYaInspeccionado(" in html
-    assert "async function copiarMarcaDisenoAnterior(" in html
-    assert "cacheUltimaMarcaVehiculo" in html
+    assert "function mostrarModalVehiculoYaInspeccionado(" in bundle
+    assert "function cerrarModalVehiculoYaInspeccionado(" in bundle
+    assert "async function copiarMarcaDisenoAnterior(" in bundle
+    assert "cacheUltimaMarcaVehiculo" in bundle
 
 def test_frontend_javascript_sintaxis_valida():
-    """Valida con Node.js que no existan errores de sintaxis en el código JavaScript de index.html."""
-    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        content = f.read()
+    """Valida con Node.js que no existan errores de sintaxis en el código JavaScript de static/js/."""
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    archivos = [os.path.join(js_dir, f) for f in os.listdir(js_dir) if f.endswith(".js")]
+    assert len(archivos) > 0, "No se encontraron módulos JS en static/js"
 
-    scripts = re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', content, re.DOTALL)
-    assert len(scripts) > 0, "No se encontraron etiquetas <script> en index.html"
-
-    codigo_js = "\n".join(scripts)
-    res = subprocess.run(
-        ["node", "--check"],
-        input=codigo_js,
-        text=True,
-        encoding="utf-8",
-        capture_output=True
-    )
-    assert res.returncode == 0, f"Error de sintaxis en JavaScript de templates/index.html: {res.stderr}"
+    for ruta in archivos:
+        res = subprocess.run(
+            ["node", "--check", ruta],
+            capture_output=True,
+            text=True,
+            encoding="utf-8"
+        )
+        assert res.returncode == 0, f"Error de sintaxis JavaScript en {os.path.basename(ruta)}: {res.stderr}"
 
 def test_fecha_minima_permitida_parametrizable_por_cliente():
     """

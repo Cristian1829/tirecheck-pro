@@ -1355,16 +1355,42 @@
     let chartCurvaDesgasteInstance = null;
 
     /**
+     * Valida si el cliente seleccionado opera bajo Licencia FULL / PRO.
+     * En caso de Licencia LIGHT, los montajes y desmontajes están restringidos.
+     */
+    function esLicenciaFullTaller() {
+      if (posTallerActualInfo && typeof posTallerActualInfo.permite_taller !== 'undefined') {
+        return Boolean(posTallerActualInfo.permite_taller);
+      }
+      if (posTallerActualInfo && posTallerActualInfo.tipo_licencia) {
+        return String(posTallerActualInfo.tipo_licencia).toUpperCase() !== 'LIGHT';
+      }
+      if (typeof window !== 'undefined' && window.clienteLicenciaCaptura) {
+        return String(window.clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
+      }
+      if (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) {
+        return String(clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
+      }
+      return true;
+    }
+
+    /**
      * Consulta el estado en tiempo real de la posición seleccionada en el chasis
      * y actualiza el panel de Taller en Patio (#seccionTallerPatio).
      */
     async function actualizarPanelTallerPosicion(p) {
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
       const badgePos = document.getElementById('badgeTallerPos');
       const boxVacio = document.getElementById('tallerLlantaVacia');
       const boxMontada = document.getElementById('tallerLlantaMontada');
       const btnDesm = document.getElementById('btnTallerDesmontar');
       const btnMont = document.getElementById('btnTallerMontar');
+      const badgeFull = document.getElementById('badgeTallerPlanFull');
+      const badgeLight = document.getElementById('badgeTallerPlanLight');
+      const bannerLight = document.getElementById('bannerTallerLight');
+      const txtDesm = document.getElementById('txtBtnTallerDesmontar');
+      const txtMont = document.getElementById('txtBtnTallerMontar');
 
       if (!placa || !p) {
         if (badgePos) badgePos.textContent = `Posición ${p || '-'}`;
@@ -1376,10 +1402,41 @@
       }
 
       try {
-        const res = await fetch(`/api/taller/posicion-info?placa=${encodeURIComponent(placa)}&posicion=${p}`);
+        const res = await fetch(`/api/taller/posicion-info?placa=${encodeURIComponent(placa)}&posicion=${p}&cliente=${encodeURIComponent(cliente)}`);
         if (!res.ok) return;
         const data = await res.json();
         posTallerActualInfo = data;
+
+        const esFull = (typeof data.permite_taller !== 'undefined')
+          ? Boolean(data.permite_taller)
+          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'PRO').toUpperCase() !== 'LIGHT');
+
+        // Actualizar badges de licenciamiento y banner explicativo
+        if (esFull) {
+          if (badgeFull) badgeFull.classList.remove('hidden');
+          if (badgeLight) badgeLight.classList.add('hidden');
+          if (bannerLight) bannerLight.classList.add('hidden');
+          if (txtDesm) txtDesm.textContent = 'Desmontar';
+          if (txtMont) txtMont.textContent = 'Montar Llanta';
+          if (btnMont) {
+            btnMont.disabled = false;
+            btnMont.title = 'Montar llanta en esta posición';
+          }
+        } else {
+          if (badgeFull) badgeFull.classList.add('hidden');
+          if (badgeLight) badgeLight.classList.remove('hidden');
+          if (bannerLight) bannerLight.classList.remove('hidden');
+          if (txtDesm) txtDesm.textContent = 'Desmontar (Plan FULL)';
+          if (txtMont) txtMont.textContent = 'Montar (Plan FULL)';
+          if (btnMont) {
+            btnMont.disabled = true;
+            btnMont.title = 'Montajes de taller exclusivos de la Licencia FULL';
+          }
+          if (btnDesm) {
+            btnDesm.disabled = true;
+            btnDesm.title = 'Desmontes de taller exclusivos de la Licencia FULL';
+          }
+        }
 
         if (badgePos) {
           const dirTxt = data.es_direccional ? 'Direccional ⚠️' : 'Tracción / Arrastre';
@@ -1390,7 +1447,10 @@
           const ll = data.llanta_instalada;
           if (boxVacio) boxVacio.classList.add('hidden');
           if (boxMontada) boxMontada.classList.remove('hidden');
-          if (btnDesm) btnDesm.disabled = false;
+          if (btnDesm) {
+            btnDesm.disabled = !esFull;
+            if (esFull) btnDesm.title = 'Desmontar llanta instalada';
+          }
 
           const serialEl = document.getElementById('txtTallerSerial');
           if (serialEl) serialEl.innerHTML = `<i class="fa-solid fa-ring text-blue-600 mr-1.5"></i>${ll.numero_interno}`;
@@ -1431,6 +1491,12 @@
 
     // --- MODAL DESMONTAR ---
     function abrirModalTallerDesmontar() {
+      if (!esLicenciaFullTaller()) {
+        const msg = 'Los desmontajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
+        else alert(msg);
+        return;
+      }
       if (!posTallerActualInfo || !posTallerActualInfo.llanta_instalada) {
         alert('No hay una llanta montada en esta posición para retirar.');
         return;
@@ -1496,6 +1562,12 @@
 
     // --- MODAL MONTAR ---
     async function abrirModalTallerMontar() {
+      if (!esLicenciaFullTaller()) {
+        const msg = 'Los montajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
+        else alert(msg);
+        return;
+      }
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
       const pos = parseInt(document.getElementById('posicion')?.value) || 1;
       const kmVeh = document.getElementById('kilometraje')?.value || '';

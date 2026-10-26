@@ -325,3 +325,46 @@ def test_candado_direccional_y_desmonte_automatico_en_montaje(auth_client, test_
     assert hv_orig["estado_actual"]["estado"] == "Bodega_2_Reutilizable"
     assert hv_orig["estado_actual"]["posicion"] == 0
     assert hv_orig["metricas_consolidadas"]["km_totales"] == 10000.0  # 60000 - 50000
+
+
+def test_taller_restringido_licencia_light(auth_client):
+    """
+    Verifica que para clientes con licencia LIGHT, los montajes y desmontajes
+    en inspección de patio estén estrictamente restringidos (403 Forbidden)
+    y que posicion-info reporte permite_taller = False.
+    """
+    cliente_light = "FLOTA OPERATIVA LIGHT TEST"
+    with database.get_connection() as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO configuracion_avanzada_cliente (cliente, tipo_licencia, fecha_actualizacion)
+            VALUES (?, 'LIGHT', CURRENT_TIMESTAMP)
+        """, (cliente_light,))
+        conn.commit()
+
+    # 1. Posicion-info debe reportar permite_taller = False y tipo_licencia = LIGHT
+    resp_info = auth_client.get(f"/api/taller/posicion-info?placa=LGT101&posicion=1&cliente={cliente_light}")
+    assert resp_info.status_code == 200
+    d_info = resp_info.json()
+    assert d_info["tipo_licencia"] == "LIGHT"
+    assert d_info["permite_taller"] is False
+
+    # 2. Intentar montar debe ser rechazado con 403 Forbidden
+    resp_montar = auth_client.post("/api/taller/montar", json={
+        "placa": "LGT101",
+        "posicion": 1,
+        "numero_interno": "LL-LGT-01",
+        "cliente_propietario": cliente_light,
+        "odometro_vehiculo": 12000.0
+    })
+    assert resp_montar.status_code == 403
+    assert "FULL" in resp_montar.json()["detail"]
+
+    # 3. Intentar desmontar debe ser rechazado con 403 Forbidden
+    resp_desmontar = auth_client.post("/api/taller/desmontar", json={
+        "numero_interno": "LL-LGT-01",
+        "cliente_propietario": cliente_light,
+        "bodega_destino": "Bodega_2_Reutilizable"
+    })
+    assert resp_desmontar.status_code == 403
+    assert "FULL" in resp_desmontar.json()["detail"]
+

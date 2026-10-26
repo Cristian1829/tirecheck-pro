@@ -876,7 +876,7 @@
             </button>
           </div>
 
-          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE & DESMONTE RÁPIDO -->
+          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE & DESMONTE RÁPIDO (EXCLUSIVO LICENCIA FULL) -->
           <div id="seccionTallerPatio" class="pt-3 border-t border-slate-100 space-y-2.5">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
@@ -884,10 +884,29 @@
                   <i class="fa-solid fa-wrench"></i>
                 </span>
                 <h4 class="text-xs font-black text-slate-800">Taller en Patio</h4>
+                <span id="badgeTallerPlanFull" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700 border border-purple-200">
+                  FULL
+                </span>
+                <span id="badgeTallerPlanLight" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                  LIGHT (Solo Lectura)
+                </span>
               </div>
               <span id="badgeTallerPos" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200">
                 Posición 1
               </span>
+            </div>
+
+            <!-- Aviso informativo para Versión LIGHT (Sin Taller / Bodegas) -->
+            <div id="bannerTallerLight" class="hidden p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-xs shadow-sm space-y-1.5">
+              <div class="flex items-center gap-2 font-bold text-amber-900">
+                <span class="w-5 h-5 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-[10px]">
+                  <i class="fa-solid fa-lock"></i>
+                </span>
+                <span>Desmontajes y Montajes exclusivos de la Versión FULL</span>
+              </div>
+              <p class="text-[11px] text-amber-800/90 leading-relaxed">
+                Esta cuenta opera con <strong>Licencia Operativa LIGHT</strong>. Los movimientos de taller, reemplazo y desmonte de llantas están habilitados únicamente para la <strong>Licencia Empresarial FULL</strong> (Gestión de 7 Bodegas y Hoja de Vida).
+              </p>
             </div>
 
             <!-- Caja de Estado de la Llanta en la Posición -->
@@ -922,14 +941,14 @@
             </div>
 
             <!-- Botonera de Acciones de Taller -->
-            <div class="grid grid-cols-2 gap-2 pt-1">
+            <div id="contenedorBotonesTaller" class="grid grid-cols-2 gap-2 pt-1">
               <button type="button" id="btnTallerDesmontar" onclick="abrirModalTallerDesmontar()" disabled class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 transition-all">
                 <i class="fa-solid fa-arrow-down"></i>
-                <span>Desmontar</span>
+                <span id="txtBtnTallerDesmontar">Desmontar</span>
               </button>
-              <button type="button" id="btnTallerMontar" onclick="abrirModalTallerMontar()" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 transition-all">
+              <button type="button" id="btnTallerMontar" onclick="abrirModalTallerMontar()" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs shadow-sm flex items-center justify-center space-x-1.5 transition-all">
                 <i class="fa-solid fa-arrow-up"></i>
-                <span>Montar Llanta</span>
+                <span id="txtBtnTallerMontar">Montar Llanta</span>
               </button>
             </div>
             <div class="flex justify-end pt-0.5">

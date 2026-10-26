@@ -391,6 +391,12 @@
         document.getElementById('lblMmAlerta').textContent = Number(mm).toFixed(1);
         if (d.tipo_licencia) {
           clienteLicenciaCaptura = d.tipo_licencia;
+          window.clienteLicenciaCaptura = d.tipo_licencia;
+        }
+        // Sincronizar el panel de taller en patio con el licenciamiento del cliente
+        const posSel = document.getElementById('posicion')?.value;
+        if (posSel && typeof actualizarPanelTallerPosicion === 'function') {
+          actualizarPanelTallerPosicion(posSel);
         }
       }
     }

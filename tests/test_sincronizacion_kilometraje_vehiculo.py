@@ -152,22 +152,32 @@ def test_frontend_sincronizacion_kilometraje_dom_y_js():
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    assert "kilometrajeInspeccionActual" in html
-    assert "alCambiarKilometrajeInput()" in html
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    js_content = ""
+    archivos_js = []
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                ruta = os.path.join(js_dir, fname)
+                archivos_js.append(ruta)
+                with open(ruta, "r", encoding="utf-8") as f_js:
+                    js_content += "\n" + f_js.read()
+    bundle = html + "\n" + js_content
+
+    assert "kilometrajeInspeccionActual" in bundle
+    assert "alCambiarKilometrajeInput()" in bundle
     assert 'oninput="alCambiarKilometrajeInput();"' in html
 
-    # Validar sintaxis JS con Node.js
-    scripts = re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', html, re.DOTALL)
-    assert len(scripts) > 0
-    codigo_js = "\n".join(scripts)
-    res = subprocess.run(
-        ["node", "--check"],
-        input=codigo_js,
-        text=True,
-        encoding="utf-8",
-        capture_output=True
-    )
-    assert res.returncode == 0, f"Error de sintaxis JavaScript: {res.stderr}"
+    # Validar sintaxis JS con Node.js en módulos de static/js
+    assert len(archivos_js) > 0
+    for ruta in archivos_js:
+        res = subprocess.run(
+            ["node", "--check", ruta],
+            capture_output=True,
+            text=True,
+            encoding="utf-8"
+        )
+        assert res.returncode == 0, f"Error de sintaxis JavaScript en {os.path.basename(ruta)}: {res.stderr}"
 
 def test_boton_limpiador_y_unico_boton_copiar_marca_diseno():
     """Valida que el limpiador ejecute limpiarTodoParaNuevaInspeccion() y que exista un único botón de copiar marca/diseño."""

@@ -4,6 +4,7 @@ TireAnalyze Pro / TireCheck Pro
 """
 
 import pytest
+from datetime import datetime
 import database
 import server
 
@@ -371,7 +372,7 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
         "prof_inicial": 21.0,
         "numero_interno": serial,
         "kilometraje": 45000.0,
-        "fecha": "2026-10-25"
+        "fecha": "2026-10-27"
     })
 
     # 3. Verificar que llantas_maestro se actualizó a MONTADA_OPERACION

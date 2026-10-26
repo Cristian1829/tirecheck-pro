@@ -130,47 +130,52 @@ def test_api_vehiculo_perfil_y_ultima_marca_diseno():
     assert data_marca["diseno"] == "X MULTI Z"
 
 def test_frontend_dom_modal_frecuencia_y_boton_copiar_marca():
-    """Valida la presencia física de los elementos HTML en templates/index.html."""
+    """Valida la presencia física de los elementos HTML y funciones JS en la aplicación."""
     html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "index.html")
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
-    
+
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    js_content = ""
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8") as f_js:
+                    js_content += "\n" + f_js.read()
+    bundle = html + "\n" + js_content
+
     # Modal de alerta de vehículo ya inspeccionado
     assert 'id="modalVehiculoYaInspeccionado"' in html
     assert 'id="popup_placa_vehiculo"' in html
     assert 'id="popup_fecha_ultima_inspeccion"' in html
     assert 'id="popup_fecha_permitida_inspeccion"' in html
     assert 'id="popup_dias_restantes_texto"' in html
-    assert 'cerrarModalVehiculoYaInspeccionado()' in html
+    assert 'cerrarModalVehiculoYaInspeccionado()' in bundle
     
     # Botón para copiar marca y diseño anterior
     assert 'id="btnCopiarMarcaDisenoAnt"' in html
-    assert 'copiarMarcaDisenoAnterior()' in html
+    assert 'copiarMarcaDisenoAnterior()' in bundle
     
     # Funciones JavaScript
-    assert "function mostrarModalVehiculoYaInspeccionado(" in html
-    assert "function cerrarModalVehiculoYaInspeccionado(" in html
-    assert "async function copiarMarcaDisenoAnterior(" in html
-    assert "cacheUltimaMarcaVehiculo" in html
+    assert "function mostrarModalVehiculoYaInspeccionado(" in bundle
+    assert "function cerrarModalVehiculoYaInspeccionado(" in bundle
+    assert "async function copiarMarcaDisenoAnterior(" in bundle
+    assert "cacheUltimaMarcaVehiculo" in bundle
 
 def test_frontend_javascript_sintaxis_valida():
-    """Valida con Node.js que no existan errores de sintaxis en el código JavaScript de index.html."""
-    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        content = f.read()
+    """Valida con Node.js que no existan errores de sintaxis en el código JavaScript de static/js/."""
+    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
+    archivos = [os.path.join(js_dir, f) for f in os.listdir(js_dir) if f.endswith(".js")]
+    assert len(archivos) > 0, "No se encontraron módulos JS en static/js"
 
-    scripts = re.findall(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', content, re.DOTALL)
-    assert len(scripts) > 0, "No se encontraron etiquetas <script> en index.html"
-
-    codigo_js = "\n".join(scripts)
-    res = subprocess.run(
-        ["node", "--check"],
-        input=codigo_js,
-        text=True,
-        encoding="utf-8",
-        capture_output=True
-    )
-    assert res.returncode == 0, f"Error de sintaxis en JavaScript de templates/index.html: {res.stderr}"
+    for ruta in archivos:
+        res = subprocess.run(
+            ["node", "--check", ruta],
+            capture_output=True,
+            text=True,
+            encoding="utf-8"
+        )
+        assert res.returncode == 0, f"Error de sintaxis JavaScript en {os.path.basename(ruta)}: {res.stderr}"
 
 def test_fecha_minima_permitida_parametrizable_por_cliente():
     """

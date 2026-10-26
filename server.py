@@ -2072,14 +2072,47 @@ def api_taller_posicion_info(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
-    return sanitizar_nativos(database.obtener_posicion_taller_info(placa, posicion, cliente))
+    if not cliente and placa:
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (placa,))
+            r_v = cur.fetchone()
+            if r_v and r_v[0]:
+                cliente = r_v[0]
+            else:
+                cur.execute("SELECT cliente FROM inspecciones WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) ORDER BY fecha DESC, id DESC LIMIT 1", (placa,))
+                r_i = cur.fetchone()
+                if r_i and r_i[0]:
+                    cliente = r_i[0]
+
+    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    data = database.obtener_posicion_taller_info(placa, posicion, cliente)
+    data["tipo_licencia"] = lic
+    data["permite_taller"] = (lic != "LIGHT")
+    return sanitizar_nativos(data)
 
 @app.post("/api/taller/desmontar")
 def api_taller_desmontar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
+    cliente = item.get("cliente_propietario") or item.get("cliente")
+    if not cliente and item.get("numero_interno"):
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cliente_propietario, cliente FROM llantas_maestro WHERE UPPER(TRIM(numero_interno)) = UPPER(TRIM(?))", (str(item.get("numero_interno")).strip(),))
+            r_ll = cur.fetchone()
+            if r_ll:
+                cliente = r_ll[0] or r_ll[1]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    if lic == "LIGHT":
+        raise HTTPException(
+            status_code=403,
+            detail="Los desmontajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+        )
+
+    item["cliente_propietario"] = cliente
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.desmontar_llanta_taller(item)
     if not res.get("ok"):
@@ -2091,7 +2124,28 @@ def api_taller_montar(
     item: dict,
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
-    item["cliente_propietario"] = _resolver_cliente_usuario(usuario_actual, item.get("cliente_propietario") or item.get("cliente"))
+    cliente = item.get("cliente_propietario") or item.get("cliente")
+    if not cliente and item.get("placa"):
+        with database.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (str(item.get("placa")).strip(),))
+            r_v = cur.fetchone()
+            if r_v and r_v[0]:
+                cliente = r_v[0]
+            else:
+                cur.execute("SELECT cliente FROM inspecciones WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) ORDER BY fecha DESC, id DESC LIMIT 1", (str(item.get("placa")).strip(),))
+                r_i = cur.fetchone()
+                if r_i and r_i[0]:
+                    cliente = r_i[0]
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    if lic == "LIGHT":
+        raise HTTPException(
+            status_code=403,
+            detail="Los montajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+        )
+
+    item["cliente_propietario"] = cliente
     item["usuario_responsable"] = usuario_actual.get("username", "admin")
     res = database.montar_llanta_taller(item)
     if not res.get("ok"):

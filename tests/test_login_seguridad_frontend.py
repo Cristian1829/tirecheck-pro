@@ -26,28 +26,46 @@ INDEX_HTML_PATH = os.path.join(BASE_DIR, "templates", "index.html")
 # 1. PRUEBAS DE INTEGRIDAD Y SINTAXIS JAVASCRIPT EN EL FRONTEND (ANTI-REGRESIÓN)
 # ==============================================================================
 
+def obtener_bundle_frontend():
+    with open(INDEX_HTML_PATH, "r", encoding="utf-8", errors="ignore") as f:
+        html = f.read()
+    js_dir = os.path.join(BASE_DIR, "static", "js")
+    js_content = ""
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8", errors="ignore") as f_js:
+                    js_content += "\n" + f_js.read()
+    return html + "\n" + js_content
+
+
 def test_frontend_javascript_sintaxis_valida():
     """
-    Extrae todos los bloques <script> de templates/index.html y los valida
-    con el compilador de Node.js ('node --check').
-    Esta prueba previene syntax errors (como llaves huérfanas, comas o tokens inválidos)
-    que bloqueen el flujo de la aplicación en el navegador del cliente.
+    Valida la sintaxis con el compilador de Node.js ('node --check') tanto de
+    los módulos en static/js/ como de scripts en templates/index.html.
+    Esta prueba previene syntax errors que bloqueen la aplicación.
     """
     assert os.path.exists(INDEX_HTML_PATH), f"No se encontró {INDEX_HTML_PATH}"
+
+    js_dir = os.path.join(BASE_DIR, "static", "js")
+    archivos_js = []
+    if os.path.exists(js_dir):
+        for fname in sorted(os.listdir(js_dir)):
+            if fname.endswith(".js"):
+                with open(os.path.join(js_dir, fname), "r", encoding="utf-8", errors="ignore") as f_js:
+                    archivos_js.append((fname, f_js.read()))
 
     with open(INDEX_HTML_PATH, "r", encoding="utf-8", errors="ignore") as f:
         html = f.read()
 
-    # Extraer todos los scripts que contengan código inline
-    script_pattern = re.compile(r"<script\b[^>]*>(.*?)</script>", re.DOTALL | re.IGNORECASE)
-    matches = script_pattern.findall(html)
-    assert len(matches) > 0, "No se encontraron etiquetas <script> en index.html"
+    script_pattern = re.compile(r"<script\b(?![^>]*src=)[^>]*>(.*?)</script>", re.DOTALL | re.IGNORECASE)
+    inline_scripts = [s for s in script_pattern.findall(html) if s.strip()]
+    for idx, s_code in enumerate(inline_scripts, 1):
+        archivos_js.append((f"index_inline_{idx}.js", s_code))
 
-    scripts_con_codigo = [s for s in matches if s.strip()]
-    assert len(scripts_con_codigo) > 0, "No se encontró código JavaScript en las etiquetas <script>"
+    assert len(archivos_js) > 0, "No se encontró código JavaScript en static/js/ ni en index.html"
 
-    for idx, script_code in enumerate(scripts_con_codigo, 1):
-        # Escribir a un archivo temporal y validar con node --check
+    for fname, script_code in archivos_js:
         with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as tmp:
             tmp.write(script_code)
             tmp_path = tmp.name
@@ -60,9 +78,8 @@ def test_frontend_javascript_sintaxis_valida():
                 check=False
             )
             assert res.returncode == 0, (
-                f"Error de sintaxis detectado en el script #{idx} de templates/index.html:\n"
+                f"Error de sintaxis detectado en {fname}:\n"
                 f"{res.stderr}\n"
-                f"Por favor revisa el código JavaScript en index.html antes de desplegar."
             )
         finally:
             if os.path.exists(tmp_path):
@@ -94,18 +111,17 @@ def test_frontend_dom_elementos_login():
 
 def test_frontend_funciones_esenciales_login():
     """
-    Verifica que en el código de index.html estén declaradas las funciones JS
+    Verifica que en el bundle de la aplicación (HTML + módulos JS) estén declaradas las funciones JS
     clave para el ciclo de vida de la autenticación:
     ejecutarLogin, cerrarSesionUsuario, actualizarUIUsuario, y los tokens en localStorage.
     """
-    with open(INDEX_HTML_PATH, "r", encoding="utf-8", errors="ignore") as f:
-        html = f.read()
+    bundle = obtener_bundle_frontend()
 
-    assert "async function ejecutarLogin()" in html, "La función ejecutarLogin() debe estar declarada"
-    assert "async function cerrarSesionUsuario()" in html, "La función cerrarSesionUsuario() debe estar declarada"
-    assert "function actualizarUIUsuario()" in html, "La función actualizarUIUsuario() debe estar declarada"
-    assert "tireanalyze_token" in html, "Debe gestionar la clave tireanalyze_token en localStorage"
-    assert "tirecheck_token" in html, "Debe gestionar la clave tirecheck_token en localStorage"
+    assert "async function ejecutarLogin()" in bundle, "La función ejecutarLogin() debe estar declarada"
+    assert "async function cerrarSesionUsuario()" in bundle, "La función cerrarSesionUsuario() debe estar declarada"
+    assert "function actualizarUIUsuario()" in bundle, "La función actualizarUIUsuario() debe estar declarada"
+    assert "tireanalyze_token" in bundle, "Debe gestionar la clave tireanalyze_token en localStorage"
+    assert "tirecheck_token" in bundle, "Debe gestionar la clave tirecheck_token en localStorage"
 
 
 # ==============================================================================
