@@ -3295,7 +3295,13 @@ def analizar_inspecciones_df(df_inspecciones):
         plan_rotacion_equis_larga = False
         detalles_rot_equis = []
 
-        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower():
+        # El cruce en equis mueve las 8 llantas de tracción: solo se propone si todas están
+        # medidas y ninguna sale del vehículo (retiro o reemplazo desde Bodega 2)
+        pos_ocupadas = posiciones_retiro | posiciones_con_cruce_b2
+        pos_equis = [5, 6, 7, 8, 9, 10, 11, 12] if es_cuatro_manos else [3, 4, 5, 6, 7, 8, 9, 10]
+        equis_viable = all(p in pos_map_num for p in pos_equis) and not (pos_ocupadas & set(pos_equis))
+
+        if equis_viable and ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()):
             if not es_cuatro_manos:
                 e1_vals = [pos_map_num[p] for p in [3, 4, 5, 6] if p in pos_map_num]
                 e2_vals = [pos_map_num[p] for p in [7, 8, 9, 10] if p in pos_map_num]
@@ -3486,6 +3492,7 @@ def analizar_inspecciones_df(df_inspecciones):
             'Detalle_Cambio': "; ".join(detalles_cambio) if detalles_cambio else "OK",
             'Detalle_Proximas': "; ".join(detalles_proximas) if detalles_proximas else "OK",
             'Detalle_Auto_Ajuste': "; ".join(auto_ajuste_dict['instrucciones']) if auto_ajuste_dict['instrucciones'] else "OK",
+            'Detalle_Rotacion_Equis': "; ".join(detalles_rot_equis) if detalles_rot_equis else "OK",
             'Detalle_Rotacion_Irregular': "; ".join(detalles_rot_irregular) if detalles_rot_irregular else "OK",
             'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
             'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",

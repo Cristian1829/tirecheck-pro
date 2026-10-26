@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-25 20:15:41`
+- **Fecha de Generación:** `2026-10-25 20:35:26`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `55,527` líneas
-- **Tamaño Total de Código Fuente:** `2756.9 KB` (`2,823,113` bytes)
+- **Líneas Totales de Código:** `55,777` líneas
+- **Tamaño Total de Código Fuente:** `2772.0 KB` (`2,838,549` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -432,11 +432,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2197 | 95.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 9281 | 442.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2237 | 97.4 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 9288 | 442.9 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1512 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 1856 | 88.0 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2022 | 97.5 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 189 | 10.1 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -450,7 +450,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 976 | 41.8 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4011 | 178.9 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4048 | 181.9 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 1946 | 81.9 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 968 | 50.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
@@ -3777,7 +3777,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2197 líneas | 97,574 bytes (95.3 KB)
+- **Métricas:** 2237 líneas | 99,737 bytes (97.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4205,7 +4205,7 @@ def pwa_manifest():
 @app.get("/sw.js")
 def service_worker():
     sw_code = """// Service Worker para TireAnalyze Pro — Soporte Offline-First en Patio
-const CACHE_NAME = 'tireanalyze-patio-v1';
+const CACHE_NAME = 'tireanalyze-patio-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/static/img/logo_hd.svg',
@@ -4257,8 +4257,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Peticiones de datos API: Network-First con Fallback a Caché
-  if (url.pathname.startsWith('/api/')) {
+  // Datos API y JavaScript propio de la app: Network-First con Fallback a Caché
+  // (con Cache-First los celulares se quedaban con los módulos JS de un despliegue anterior)
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/static/js/')) {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.status === 200) {
@@ -5053,6 +5054,45 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
         raise
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@app.get("/api/informe-resumen/{placa}")
+def api_resumen_informe_vehiculo(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Mismos datos que el PDF del vehículo, para el modal 'Informe de Inspección Finalizada'."""
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            perfil = database.obtener_perfil_vehiculo(placa)
+            cli_veh = (perfil.get("cliente") or "").strip().lower()
+            if cli_veh and not any(c.lower() == cli_veh for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para consultar este vehículo")
+    try:
+        datos = pdf_generator.construir_datos_informe(placa, fecha if fecha else None)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    filas = datos["filas"]
+    psis = [float(f.get("psi") or 0) for f in filas if float(f.get("psi") or 0) > 0]
+    return {
+        "placa": datos["placa"],
+        "fecha": datos["fecha_insp"],
+        "cliente": datos["cliente"],
+        "tipologia": datos["tipologia"],
+        "limite_retiro": datos["limite_retiro"],
+        "total_auditadas": datos["total_auditadas"],
+        "total_posiciones": datos["total_posiciones"],
+        "posiciones_pendientes": datos["posiciones_pendientes"],
+        "llantas_retiro": datos["n_cambios"],
+        "llantas_con_novedad": datos["n_nov"],
+        "promedio_psi": round(sum(psis) / len(psis)) if psis else None,
+        "total_alertas": datos["total_alertas"],
+        "grupos": [{"id": g, "nombre": n} for g, n in pdf_generator.GRUPOS_DIAGNOSTICO],
+        "alertas": [
+            {k: a.get(k) for k in ("grupo", "tipo", "tipo_color", "posicion", "detalle", "accion")}
+            for a in datos["alertas_lista"]
+        ],
+    }
 
 @app.get("/api/informe-pdf-consolidado")
 def api_descargar_pdf_consolidado(
@@ -5986,7 +6026,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 9281 líneas | 452,970 bytes (442.4 KB)
+- **Métricas:** 9288 líneas | 453,544 bytes (442.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -9287,7 +9327,13 @@ def analizar_inspecciones_df(df_inspecciones):
         plan_rotacion_equis_larga = False
         detalles_rot_equis = []
 
-        if 'cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower():
+        # El cruce en equis mueve las 8 llantas de tracción: solo se propone si todas están
+        # medidas y ninguna sale del vehículo (retiro o reemplazo desde Bodega 2)
+        pos_ocupadas = posiciones_retiro | posiciones_con_cruce_b2
+        pos_equis = [5, 6, 7, 8, 9, 10, 11, 12] if es_cuatro_manos else [3, 4, 5, 6, 7, 8, 9, 10]
+        equis_viable = all(p in pos_map_num for p in pos_equis) and not (pos_ocupadas & set(pos_equis))
+
+        if equis_viable and ('cabezote' in t_veh.lower() or 'camion' in t_veh.lower() or 'volqueta' in t_veh.lower()):
             if not es_cuatro_manos:
                 e1_vals = [pos_map_num[p] for p in [3, 4, 5, 6] if p in pos_map_num]
                 e2_vals = [pos_map_num[p] for p in [7, 8, 9, 10] if p in pos_map_num]
@@ -9478,6 +9524,7 @@ def analizar_inspecciones_df(df_inspecciones):
             'Detalle_Cambio': "; ".join(detalles_cambio) if detalles_cambio else "OK",
             'Detalle_Proximas': "; ".join(detalles_proximas) if detalles_proximas else "OK",
             'Detalle_Auto_Ajuste': "; ".join(auto_ajuste_dict['instrucciones']) if auto_ajuste_dict['instrucciones'] else "OK",
+            'Detalle_Rotacion_Equis': "; ".join(detalles_rot_equis) if detalles_rot_equis else "OK",
             'Detalle_Rotacion_Irregular': "; ".join(detalles_rot_irregular) if detalles_rot_irregular else "OK",
             'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
             'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",
@@ -16956,7 +17003,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 1856 líneas | 90,137 bytes (88.0 KB)
+- **Métricas:** 2022 líneas | 99,808 bytes (97.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17240,6 +17287,132 @@ def resolver_fecha_informe(placa, fecha=None):
             return str(row[0])
     return None
 
+# Orden de prioridad de las secciones del diagnóstico (lo urgente primero)
+GRUPOS_DIAGNOSTICO = [
+    ('retiro', 'Retiros y reemplazos'),
+    ('proximas', 'Próximas a cambio'),
+    ('geometria', 'Alineación y duales'),
+    ('rotacion', 'Rotaciones y auto-ajuste de posiciones'),
+    ('presion', 'Presión de inflado'),
+    ('novedades', 'Novedades reportadas por el inspector'),
+    ('vehiculo', 'Configuración del vehículo'),
+]
+PSI_OBJETIVO = 100  # mismo valor que usa el motor de diagnóstico (rango aceptado ±10 %)
+
+
+def _partes(texto):
+    """Separa un detalle del motor ("a; b; c") y descarta los vacíos y el 'OK' de relleno."""
+    t = str(texto or '').strip()
+    if not t or t.upper() == 'OK':
+        return []
+    return [p.strip() for p in t.split(';') if p.strip()]
+
+
+def _posiciones_en(texto):
+    """'Invertir Pos 4 ↔ Pos 3' -> '4 y 3'."""
+    nums = list(dict.fromkeys(re.findall(r'\bP(?:os(?:ición)?)?\s*(\d+)', texto, re.IGNORECASE)))
+    if not nums:
+        return '-'
+    return nums[0] if len(nums) == 1 else ", ".join(nums[:-1]) + f" y {nums[-1]}"
+
+
+def recomendaciones_motor(r_an, limite_retiro) -> list:
+    """
+    Traduce las recomendaciones del motor de diagnóstico (cruces de bodega, emparejamiento,
+    auto-ajuste, rotaciones, presión y próximas a cambio) a filas claras para el informe:
+    qué se encontró (detalle) y qué hacer (acción).
+    """
+    filas = []
+
+    def agregar(grupo, tipo, color, posicion, detalle, accion):
+        filas.append({'grupo': grupo, 'tipo': tipo, 'tipo_color': color, 'posicion': posicion,
+                      'detalle': decimales_es(detalle), 'accion': decimales_es(accion)})
+
+    # Ajuste del par direccional (se retira también la pareja para igualar alturas)
+    for parte in _partes(r_an.get('Detalle_Cambio')):
+        m = re.search(r'Ajuste Par Direccional: retirar también Pos (\d+) \(([\d.]+) mm\)', parte)
+        if m:
+            agregar('retiro', 'Ajuste par direccional', '#DC2626', m.group(1),
+                    f"La pareja direccional sale por retiro; la Pos {m.group(1)} ({m.group(2)} mm) quedaría con altura distinta.",
+                    f"Retirar también la Pos {m.group(1)} y enviarla a Bodega 2 (Recambio) para montar un par parejo.")
+
+    # Cruces con Bodega 2 y emparejamiento de duales
+    for parte in _partes(r_an.get('Recomendaciones_Dual')):
+        m_b2 = re.search(r'Desmontar Pos (\d+) \(([\d.]+) mm\) y MONTAR llanta N° (\S+) \(([\d.]+) mm\)', parte)
+        m_emp = re.search(r'Pos (\d+) en retiro \(([\d.]+) mm\) vs Pos (\d+) \(([\d.]+) mm\).*?entre ([\d.]+) y ([\d.]+) mm', parte)
+        if m_b2:
+            agregar('retiro', 'Reemplazo desde bodega', '#047857', m_b2.group(1),
+                    f"El dual quedaría desparejo con la llanta actual ({m_b2.group(2)} mm).",
+                    f"Desmontar la Pos {m_b2.group(1)} y montar la llanta N.º {m_b2.group(3)} ({m_b2.group(4)} mm) disponible en Bodega 2 (Recambio).")
+        elif m_emp:
+            agregar('retiro', 'Emparejamiento de dual', '#4338CA', m_emp.group(1),
+                    f"La Pos {m_emp.group(1)} sale por retiro ({m_emp.group(2)} mm) y su pareja Pos {m_emp.group(3)} tiene {m_emp.group(4)} mm.",
+                    f"Montar en la Pos {m_emp.group(1)} una llanta de {m_emp.group(5)} a {m_emp.group(6)} mm, o cambiar ambas para dejarlas parejas.")
+        else:
+            agregar('retiro', 'Recomendación de dual', '#4338CA', _posiciones_en(parte), parte, 'Aplicar la recomendación en el taller.')
+
+    # Próximas a cambio (dentro de los 2 mm sobre el límite)
+    for parte in _partes(r_an.get('Detalle_Proximas')):
+        m = re.search(r'Pos (\d+) \(([\d.]+) mm\)', parte)
+        if m:
+            agregar('proximas', 'Próxima a cambio', '#D97706', m.group(1),
+                    f"Remanente de {m.group(2)} mm, a menos de 2 mm del límite de retiro ({limite_retiro} mm).",
+                    "Programar cambio o reencauche y volver a medir en 15 a 30 días.")
+
+    # Auto-ajuste: cruces e inversiones de posiciones
+    for parte in _partes(r_an.get('Detalle_Auto_Ajuste')):
+        instruccion = parte.split(':', 1)[1].strip() if ':' in parte else parte
+        if 'Dirección' in parte:
+            motivo = "La llanta derecha del eje direccional tiene más remanente que la izquierda."
+        elif 'Pacha' in parte:
+            motivo = "En el dual, la llanta interior tiene más remanente que la exterior."
+        else:
+            motivo = "La altura de las llantas no respeta la jerarquía de ejes del tráiler."
+        agregar('rotacion', 'Auto-ajuste de posiciones', '#1D4ED8', _posiciones_en(instruccion), motivo, instruccion + '.')
+
+    for parte in _partes(r_an.get('Detalle_Rotacion_Equis')):
+        m = re.search(r'^(Cruzar .*?) \(dif entre ejes ([\d.]+) mm\)', parte)
+        if m:
+            agregar('rotacion', 'Rotación entre ejes', '#1D4ED8', 'Tracción',
+                    f"Diferencia de {m.group(2)} mm entre los ejes de tracción.", m.group(1) + '.')
+
+    for parte in _partes(r_an.get('Detalle_Rotacion_Irregular')):
+        m = re.search(r'Pos (\d+) \(dif ext/int ([\d.]+) mm\)', parte)
+        detalle = (f"Diferencia de {m.group(2)} mm entre el hombro exterior y el interior." if m
+                   else "El inspector reportó desgaste irregular.")
+        agregar('rotacion', 'Desgaste irregular', '#1D4ED8', _posiciones_en(parte), detalle,
+                "Rotar la llanta y revisar alineación y suspensión de esa posición.")
+
+    for parte in _partes(r_an.get('Detalle_Rotacion_Escalonado')):
+        agregar('rotacion', 'Desgaste escalonado', '#1D4ED8', _posiciones_en(parte),
+                "Desgaste en diente de sierra en el eje de tracción.",
+                "Rotar la llanta y revisar amortiguadores y balanceo.")
+
+    # Presión fuera de rango
+    for parte in _partes(r_an.get('Detalle_Calibracion_PSI')):
+        m = re.search(r'Pos (\d+) \((\d+) PSI, (alta|baja)\)', parte)
+        if m and m.group(3) == 'alta':
+            agregar('presion', 'Presión alta', '#0284C7', m.group(1),
+                    f"{m.group(2)} PSI, por encima de {int(PSI_OBJETIVO * 1.1)} PSI.",
+                    f"Ajustar a {PSI_OBJETIVO} PSI en frío.")
+        elif m:
+            agregar('presion', 'Presión baja', '#0284C7', m.group(1),
+                    f"{m.group(2)} PSI, por debajo de {int(PSI_OBJETIVO * 0.9)} PSI.",
+                    f"Inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+        else:
+            agregar('presion', 'Presión baja', '#0284C7', _posiciones_en(parte),
+                    "El inspector reportó baja presión.",
+                    f"Medir e inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+
+    return filas
+
+
+def ordenar_por_grupo(alertas):
+    """Ordena las alertas según GRUPOS_DIAGNOSTICO conservando el orden interno de cada grupo."""
+    orden = {g: i for i, (g, _) in enumerate(GRUPOS_DIAGNOSTICO)}
+    return sorted(alertas, key=lambda a: orden.get(a.get('grupo'), len(orden)))
+
+
 def construir_datos_informe(placa, fecha=None) -> dict:
     placa_limpia = str(placa or '').strip().upper()
     fecha_resuelta = resolver_fecha_informe(placa_limpia, fecha)
@@ -17328,6 +17501,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         pos_cambio_str = ", ".join(str(p) for p, _ in llantas_cambio)
         pos_detalles = ", ".join(f"Posición {p}" for p, _ in llantas_cambio)
         alertas_lista.append({
+            'grupo': 'retiro',
             'tipo': 'Cambio',
             'tipo_color': '#DC2626',
             'posicion': pos_cambio_str,
@@ -17337,6 +17511,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     else:
         for p, p_m in llantas_cambio:
             alertas_lista.append({
+                'grupo': 'retiro',
                 'tipo': 'Cambio',
                 'tipo_color': '#DC2626',
                 'posicion': str(p),
@@ -17367,6 +17542,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             detalle_ali_fmt = f"{decimales_es(det_ali)} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
 
             alertas_lista.append({
+                'grupo': 'geometria',
                 'tipo': tipo_ali,
                 'tipo_color': '#D97706',
                 'posicion': pos_ali,
@@ -17375,6 +17551,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             })
         if r_an.get('Plan_Dual_Mal_Apareado') == 'SÍ':
             alertas_lista.append({
+                'grupo': 'geometria',
                 'tipo': 'Dual mal apareado',
                 'tipo_color': '#D97706',
                 'posicion': 'Duales',
@@ -17387,6 +17564,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         nov = str(f.get('novedades') or '').strip()
         if es_novedad_alerta(nov):
             alertas_lista.append({
+                'grupo': 'novedades',
                 'tipo': 'Novedad mecánica',
                 'tipo_color': '#D97706',
                 'posicion': str(f.get('posicion')),
@@ -17406,6 +17584,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     if tiene_dims_distintas:
         partes_d = [f"{dim} (Pos {', '.join(str(p) for p in sorted(pos_list))})" for dim, pos_list in sorted(dims_map.items())]
         alertas_lista.append({
+            'grupo': 'vehiculo',
             'tipo': 'Dimensiones mixtas',
             'tipo_color': '#DC2626',
             'posicion': 'Vehículo',
@@ -17413,11 +17592,19 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             'accion': 'Estandarizar todas las posiciones a una sola dimensión homologada según ficha técnica.'
         })
 
+    # 5. Resto del plan del motor de diagnóstico: reemplazos, emparejamiento, auto-ajuste,
+    #    rotaciones, presión y próximas a cambio (antes no salían en el informe)
+    if not df_analisis.empty:
+        alertas_lista.extend(recomendaciones_motor(df_analisis.iloc[0], limite_retiro))
+    alertas_lista = ordenar_por_grupo(alertas_lista)
+
     n_ali = sum(1 for a in alertas_lista if 'Alineación' in a['tipo'])
     n_duales = sum(1 for a in alertas_lista if a['tipo'] == 'Dual mal apareado')
     n_nov = sum(1 for a in alertas_lista if a['tipo'] == 'Novedad mecánica')
     n_dims = sum(1 for a in alertas_lista if a['tipo'] == 'Dimensiones mixtas')
-    total_alertas = n_cambios + n_ali + n_duales + n_nov + n_dims
+    n_otras = sum(1 for a in alertas_lista if a['grupo'] in ('retiro', 'proximas', 'rotacion', 'presion') and a['tipo'] != 'Cambio')
+    # Los cambios cuentan por llanta aunque se agrupen en una sola fila
+    total_alertas = n_cambios + n_ali + n_duales + n_nov + n_dims + n_otras
 
     return {
         'placa': placa_limpia,
@@ -17444,6 +17631,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'n_duales': n_duales,
         'n_nov': n_nov,
         'n_dims': n_dims,
+        'n_otras': n_otras,
         'tiene_dims_distintas': tiene_dims_distintas,
         'dims_map': dims_map,
         'total_alertas': total_alertas,
@@ -17540,7 +17728,15 @@ def renderizar_informe(datos) -> bytes:
 
     txt_pmin_glo = f"{format_num_es(p_min_global)} mm" if p_min_global is not None else "—"
     txt_prom_glo = f"{format_num_es(p_prom_global)} mm" if p_prom_global is not None else "—"
-    desglose_alertas_txt = f"Alertas: {n_cambios} cambio, {n_ali} alineación, {n_duales} duales, {n_nov} novedades"
+    # Desglose por grupo, solo con los grupos que tienen alertas
+    conteo_grupo = {}
+    for a in alertas_lista:
+        conteo_grupo[a['grupo']] = conteo_grupo.get(a['grupo'], 0) + 1
+    conteo_grupo['retiro'] = conteo_grupo.get('retiro', 0) + n_cambios - sum(1 for a in alertas_lista if a['tipo'] == 'Cambio')
+    etiquetas_grupo = {'retiro': 'retiro/reemplazo', 'proximas': 'próximas', 'geometria': 'alineación/duales',
+                       'rotacion': 'rotaciones', 'presion': 'presión', 'novedades': 'novedades', 'vehiculo': 'configuración'}
+    partes_desglose = [f"{conteo_grupo[g]} {etiquetas_grupo[g]}" for g, _ in GRUPOS_DIAGNOSTICO if conteo_grupo.get(g)]
+    desglose_alertas_txt = "Alertas: " + (", ".join(partes_desglose) if partes_desglose else "ninguna")
 
     data_kpi = [
         [
@@ -17581,8 +17777,18 @@ def renderizar_informe(datos) -> bytes:
         ]
     ]
 
+    # Filas de título por grupo (retiros, próximas, alineación, rotaciones, presión...)
+    style_grupo = ParagraphStyle('GrupoDiag', parent=style_cell_body, fontName='Helvetica-Bold', fontSize=7, textColor=colors.HexColor('#0F172A'))
+    filas_grupo = []
+    nombres_grupo = dict(GRUPOS_DIAGNOSTICO)
     if alertas_lista:
+        grupo_actual = None
         for a in alertas_lista:
+            if a.get('grupo') != grupo_actual:
+                grupo_actual = a.get('grupo')
+                filas_grupo.append(len(data_diag))
+                n_grupo = sum(1 for x in alertas_lista if x.get('grupo') == grupo_actual)
+                data_diag.append([Paragraph(f"{nombres_grupo.get(grupo_actual, 'Otras acciones')} ({n_grupo})", style_grupo), '', '', ''])
             style_tipo = ParagraphStyle('TipoAlerta', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor(a['tipo_color']))
             data_diag.append([
                 Paragraph(html.escape(a['tipo']), style_tipo),
@@ -17605,8 +17811,8 @@ def renderizar_informe(datos) -> bytes:
             Paragraph("Operación normal y próxima inspección periódica.", style_cell_body)
         ])
 
-    t_diag = Table(data_diag, colWidths=[95, 45, 250, 150], repeatRows=1)
-    t_diag.setStyle(TableStyle([
+    t_diag = Table(data_diag, colWidths=[95, 45, 225, 175], repeatRows=1)
+    estilo_diag = [
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
         ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#E2E8F0')),
         ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#F1F5F9')),
@@ -17615,7 +17821,14 @@ def renderizar_informe(datos) -> bytes:
         ('LEFTPADDING', (0,0), (-1,-1), 5),
         ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-    ]))
+    ]
+    for idx in filas_grupo:
+        estilo_diag += [
+            ('SPAN', (0, idx), (-1, idx)),
+            ('BACKGROUND', (0, idx), (-1, idx), colors.HexColor('#E2E8F0')),
+            ('LINEABOVE', (0, idx), (-1, idx), 0.8, colors.HexColor('#94A3B8')),
+        ]
+    t_diag.setStyle(TableStyle(estilo_diag))
     elements.append(t_diag)
     elements.append(Spacer(1, 4))
 
@@ -31350,7 +31563,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4011 líneas | 183,187 bytes (178.9 KB)
+- **Métricas:** 4048 líneas | 186,215 bytes (181.9 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -34838,106 +35051,143 @@ if __name__ == '__main__':
       if (elTip) elTip.textContent = tip;
       if (elCli) elCli.textContent = cli;
 
-      // 2. Consultar datos de inspección del vehículo para KPIs y Planes
+      // 2. Resumen del informe: el servidor usa el mismo motor que el PDF (conteo y recomendaciones coinciden)
+      const placaUp = placa.toUpperCase();
+      let resumen = null;
       try {
-        let filas = [];
+        let url = `/api/informe-resumen/${encodeURIComponent(placaUp)}`;
+        if (fecha) url += `?fecha=${encodeURIComponent(fecha)}`;
+        const res = await fetchConTimeoutPatio(url, {}, 6000);
+        if (res.ok) resumen = await res.json();
+      } catch(eRed) {}
+
+      // Sin conexión: resumen básico con las llantas de ESTA inspección en la cola local
+      if (!resumen) {
         try {
-          const res = await fetchConTimeoutPatio('/api/inspecciones?usuario=', {}, 3500);
-          if (res.ok) {
-            const todas = await res.json();
-            filas = todas.filter(r => (r['Vehículo/Placa'] || r['placa'] || '').toUpperCase() === placa.toUpperCase());
-          }
-        } catch(eRed) {}
+          const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+          resumen = resumenInformeOffline(pendientes, placaUp, fecha);
+        } catch(eDb) {}
+      }
+      if (resumen) pintarResumenInformeModal(resumen);
+    }
 
-        // Si no hay datos de la API (offline o no sincronizados), buscar en cola_pendientes
-        if (!filas || filas.length === 0) {
-          try {
-            const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
-            const locales = pendientes.filter(r => (r.placa || '').toUpperCase() === placa.toUpperCase());
-            if (locales.length > 0) {
-              filas = locales.map(l => ({
-                'Vehículo/Placa': l.placa,
-                'Posición': l.posicion,
-                'Prof. Ext (mm)': l.prof_ext,
-                'Prof. Cent (mm)': l.prof_cent,
-                'Prof. Int (mm)': l.prof_int,
-                'PSI': l.psi,
-                'Novedades / Daños': l.novedades
-              }));
-            }
-          } catch(eDb) {}
+    // Frases que no son novedad (misma regla que el servidor: "Normal sin novedad", "OK"...)
+    function esNovedadReal(texto) {
+      const benignas = ['desgaste normal y parejo', 'desgaste normal', 'desgaste parejo', 'en buen estado', 'buen estado',
+        'sin novedades', 'sin novedad', 'sin problemas', 'sin problema', 'ninguna', 'ninguno', 'normal', 'optimo', 'óptimo', 'bien', 'ok'];
+      let t = ` ${String(texto || '').toLowerCase().replace(/[-/,;:.()]+/g, ' ').replace(/\s+/g, ' ').trim()} `;
+      benignas.forEach(b => {
+        while (t.includes(` ${b} `)) t = t.replace(` ${b} `, ' ');
+      });
+      return t.trim().length > 0;
+    }
+
+    function resumenInformeOffline(pendientes, placaUp, fecha) {
+      let locales = (pendientes || []).filter(r => (r.placa || '').toUpperCase() === placaUp);
+      if (fecha) locales = locales.filter(r => !r.fecha || String(r.fecha).slice(0, 10) === String(fecha).slice(0, 10));
+      if (!locales.length) return null;
+      // Una fila por posición (la última registrada): antes se contaban todas las capturas de la placa
+      const porPosicion = new Map();
+      locales.forEach(r => porPosicion.set(String(r.posicion), r));
+      const filas = [...porPosicion.values()];
+      const limite = parseFloat(document.getElementById('lblMmRetiroCliente')?.textContent) || 3.0;
+      const fmt = v => v.toFixed(1).replace('.', ',');
+      const alertas = [];
+      const psis = [];
+      filas.forEach(f => {
+        const val = [f.prof_ext, f.prof_cent, f.prof_int].map(v => parseFloat(v) || 0).filter(v => v > 0);
+        const pMin = val.length ? Math.min(...val) : 0;
+        const psi = parseFloat(f.psi) || 0;
+        if (psi > 0) psis.push(psi);
+        if (pMin > 0 && pMin <= limite) {
+          alertas.push({ grupo: 'retiro', tipo: 'Cambio', tipo_color: '#DC2626', posicion: String(f.posicion),
+            detalle: `Remanente ${fmt(pMin)} mm ≤ ${fmt(limite)} mm de límite.`,
+            accion: 'Retirar la llanta y programar su cambio.' });
         }
-
-        if (filas && filas.length > 0) {
-          const totalAuditadas = filas.length;
-          const limite = parseFloat(document.getElementById('lblMmRetiroCliente')?.textContent) || 3.0;
-          let retiroCount = 0;
-          let novedadCount = 0;
-          let sumaPsi = 0;
-          let planesDetectados = [];
-
-          filas.forEach(f => {
-            const pExt = parseFloat(f['Prof. Ext (mm)'] || f['prof_ext'] || 0);
-            const pCen = parseFloat(f['Prof. Cent (mm)'] || f['prof_cent'] || 0);
-            const pInt = parseFloat(f['Prof. Int (mm)'] || f['prof_int'] || 0);
-            const val = [pExt, pCen, pInt].filter(v => v > 0);
-            const pMin = val.length ? Math.min(...val) : 0;
-            const psiVal = parseFloat(f['PSI'] || f['psi'] || 100);
-            const nov = (f['Novedades / Daños'] || f['novedades'] || '').trim();
-            const posNum = f['Posición'] || f['posicion'];
-
-            sumaPsi += psiVal;
-            if (pMin > 0 && pMin <= limite) {
-              retiroCount++;
-              planesDetectados.push(`⚠️ <b>Posición ${posNum}:</b> Profundidad (${pMin.toFixed(1)} mm) en límite de retiro (<= ${limite.toFixed(1)} mm). Acción: Retiro / Reencauche.`);
-            }
-            if (nov) {
-              novedadCount++;
-              planesDetectados.push(`🔧 <b>Posición ${posNum}:</b> Novedad reportada: "${nov}".`);
-            }
-          });
-
-          const promPsi = totalAuditadas > 0 ? (sumaPsi / totalAuditadas).toFixed(0) : 100;
-          
-          const elTotal = document.getElementById('lblModalTotalLlantas');
-          const elRetiro = document.getElementById('lblModalLlantasRetiro');
-          const elNov = document.getElementById('lblModalLlantasNovedad');
-          const elPsi = document.getElementById('lblModalPromedioPsi');
-
-          if (elTotal) elTotal.textContent = `${totalAuditadas} / ${listaPosicionesActual.length || totalAuditadas}`;
-          if (elRetiro) elRetiro.textContent = retiroCount;
-          if (elNov) elNov.textContent = novedadCount;
-          if (elPsi) elPsi.textContent = `${promPsi} PSI`;
-
-          const listaBox = document.getElementById('modalPlanesAccionList');
-          const saludBadge = document.getElementById('lblEstadoSaludVehiculo');
-
-          if (listaBox) {
-            if (planesDetectados.length === 0) {
-              listaBox.innerHTML = `
-                <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center space-x-2">
-                  <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                  <span><b>Vehículo en Estado Seguro y Óptimo:</b> Todas las llantas están sobre el límite de retiro (${limite.toFixed(1)} mm) y sin novedades mecánicas registradas.</span>
-                </div>
-              `;
-              if (saludBadge) {
-                saludBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
-                saludBadge.textContent = 'Estado Óptimo';
-              }
-            } else {
-              listaBox.innerHTML = planesDetectados.map(p => `
-                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 leading-snug">
-                  ${p}
-                </div>
-              `).join('');
-              if (saludBadge) {
-                saludBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
-                saludBadge.textContent = 'Requiere Atención';
-              }
-            }
-          }
+        if (esNovedadReal(f.novedades)) {
+          alertas.push({ grupo: 'novedades', tipo: 'Novedad mecánica', tipo_color: '#D97706', posicion: String(f.posicion),
+            detalle: String(f.novedades).trim(), accion: 'Revisar componente y corregir condición.' });
         }
-      } catch(e) {}
+      });
+      const orden = ['retiro', 'novedades'];
+      alertas.sort((a, b) => orden.indexOf(a.grupo) - orden.indexOf(b.grupo));
+      return {
+        offline: true,
+        limite_retiro: limite,
+        total_auditadas: filas.length,
+        total_posiciones: listaPosicionesActual.length || filas.length,
+        posiciones_pendientes: [],
+        llantas_retiro: alertas.filter(a => a.tipo === 'Cambio').length,
+        llantas_con_novedad: alertas.filter(a => a.grupo === 'novedades').length,
+        promedio_psi: psis.length ? Math.round(psis.reduce((a, b) => a + b, 0) / psis.length) : null,
+        grupos: [{ id: 'retiro', nombre: 'Retiros y reemplazos' }, { id: 'novedades', nombre: 'Novedades reportadas por el inspector' }],
+        alertas
+      };
+    }
+
+    function pintarResumenInformeModal(r) {
+      const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setTxt('lblModalTotalLlantas', `${r.total_auditadas} / ${r.total_posiciones}`);
+      setTxt('lblModalLlantasRetiro', r.llantas_retiro);
+      setTxt('lblModalLlantasNovedad', r.llantas_con_novedad);
+      setTxt('lblModalPromedioPsi', r.promedio_psi ? `${r.promedio_psi} PSI` : '— PSI');
+
+      const listaBox = document.getElementById('modalPlanesAccionList');
+      const saludBadge = document.getElementById('lblEstadoSaludVehiculo');
+      if (!listaBox) return;
+      const limiteTxt = Number(r.limite_retiro || 3).toFixed(1).replace('.', ',');
+      const alertas = r.alertas || [];
+      const pendientes = r.posiciones_pendientes || [];
+      const avisoPendientes = pendientes.length
+        ? `<div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+             <i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>${pendientes.length} posición(es) sin inspeccionar: ${escapeHtml(pendientes.join(', '))}.
+           </div>` : '';
+      const avisoOffline = r.offline
+        ? `<div class="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+             <i class="fa-solid fa-wifi mr-1"></i>Sin conexión: resumen básico. Las demás recomendaciones (cruces, rotaciones, presión) aparecen al sincronizar.
+           </div>` : '';
+
+      if (!alertas.length) {
+        listaBox.innerHTML = `${avisoOffline}
+          <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+            <span><b>Vehículo en estado seguro:</b> todas las llantas inspeccionadas están sobre el límite de retiro (${limiteTxt} mm) y sin novedades.</span>
+          </div>${avisoPendientes}`;
+        if (saludBadge) {
+          saludBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
+          saludBadge.textContent = 'Estado Óptimo';
+        }
+        return;
+      }
+
+      // Una sección por grupo, en el mismo orden de prioridad del PDF
+      const secciones = (r.grupos || []).map(g => {
+        const delGrupo = alertas.filter(a => a.grupo === g.id);
+        if (!delGrupo.length) return '';
+        const items = delGrupo.map(a => `
+          <div class="p-2.5 rounded-xl bg-white border border-slate-200 leading-snug" style="border-left: 4px solid ${escapeHtml(a.tipo_color)}">
+            <div class="flex items-center justify-between gap-2">
+              <b style="color: ${escapeHtml(a.tipo_color)}">${escapeHtml(a.tipo)}</b>
+              <span class="text-[11px] font-bold text-slate-500 whitespace-nowrap">${/^\d/.test(String(a.posicion)) ? 'Pos. ' : ''}${escapeHtml(a.posicion)}</span>
+            </div>
+            <div class="text-slate-600 mt-0.5">${escapeHtml(a.detalle)}</div>
+            <div class="text-slate-800 mt-0.5"><i class="fa-solid fa-arrow-right text-[10px] text-slate-400 mr-1"></i>${escapeHtml(a.accion)}</div>
+          </div>`).join('');
+        return `
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-black uppercase tracking-wider text-slate-500 pt-1">${escapeHtml(g.nombre)} (${delGrupo.length})</div>
+            ${items}
+          </div>`;
+      }).join('');
+
+      listaBox.innerHTML = avisoOffline + secciones + avisoPendientes;
+      if (saludBadge) {
+        const urgente = alertas.some(a => a.grupo === 'retiro');
+        saludBadge.className = urgente
+          ? 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200'
+          : 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
+        saludBadge.textContent = urgente ? 'Requiere Retiro' : 'Requiere Atención';
+      }
     }
     function cerrarModalInformePdf() {
       const m = document.getElementById('modalInformePdf');

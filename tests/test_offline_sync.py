@@ -27,7 +27,7 @@ def test_pwa_manifest_y_service_worker_disponibles(auth_client):
     assert "application/javascript" in resp_sw.headers.get("content-type", "")
     assert resp_sw.headers.get("service-worker-allowed") == "/"
     sw_code = resp_sw.text
-    assert "tireanalyze-patio-v1" in sw_code
+    assert "tireanalyze-patio-v2" in sw_code
     assert "caches.open" in sw_code
     assert "caches.match" in sw_code
     assert "Network-First" in sw_code

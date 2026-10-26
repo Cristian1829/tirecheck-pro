@@ -422,7 +422,7 @@ def pwa_manifest():
 @app.get("/sw.js")
 def service_worker():
     sw_code = """// Service Worker para TireAnalyze Pro — Soporte Offline-First en Patio
-const CACHE_NAME = 'tireanalyze-patio-v1';
+const CACHE_NAME = 'tireanalyze-patio-v2';
 const PRECACHE_ASSETS = [
   '/',
   '/static/img/logo_hd.svg',
@@ -474,8 +474,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Peticiones de datos API: Network-First con Fallback a Caché
-  if (url.pathname.startsWith('/api/')) {
+  // Datos API y JavaScript propio de la app: Network-First con Fallback a Caché
+  // (con Cache-First los celulares se quedaban con los módulos JS de un despliegue anterior)
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/static/js/')) {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.status === 200) {
@@ -1270,6 +1271,45 @@ def api_descargar_pdf_plan_mantenimiento(placa: str, fecha: str = "", usuario_ac
         raise
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@app.get("/api/informe-resumen/{placa}")
+def api_resumen_informe_vehiculo(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Mismos datos que el PDF del vehículo, para el modal 'Informe de Inspección Finalizada'."""
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis:
+            perfil = database.obtener_perfil_vehiculo(placa)
+            cli_veh = (perfil.get("cliente") or "").strip().lower()
+            if cli_veh and not any(c.lower() == cli_veh for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para consultar este vehículo")
+    try:
+        datos = pdf_generator.construir_datos_informe(placa, fecha if fecha else None)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    filas = datos["filas"]
+    psis = [float(f.get("psi") or 0) for f in filas if float(f.get("psi") or 0) > 0]
+    return {
+        "placa": datos["placa"],
+        "fecha": datos["fecha_insp"],
+        "cliente": datos["cliente"],
+        "tipologia": datos["tipologia"],
+        "limite_retiro": datos["limite_retiro"],
+        "total_auditadas": datos["total_auditadas"],
+        "total_posiciones": datos["total_posiciones"],
+        "posiciones_pendientes": datos["posiciones_pendientes"],
+        "llantas_retiro": datos["n_cambios"],
+        "llantas_con_novedad": datos["n_nov"],
+        "promedio_psi": round(sum(psis) / len(psis)) if psis else None,
+        "total_alertas": datos["total_alertas"],
+        "grupos": [{"id": g, "nombre": n} for g, n in pdf_generator.GRUPOS_DIAGNOSTICO],
+        "alertas": [
+            {k: a.get(k) for k in ("grupo", "tipo", "tipo_color", "posicion", "detalle", "accion")}
+            for a in datos["alertas_lista"]
+        ],
+    }
 
 @app.get("/api/informe-pdf-consolidado")
 def api_descargar_pdf_consolidado(

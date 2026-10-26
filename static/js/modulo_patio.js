@@ -3482,106 +3482,143 @@
       if (elTip) elTip.textContent = tip;
       if (elCli) elCli.textContent = cli;
 
-      // 2. Consultar datos de inspección del vehículo para KPIs y Planes
+      // 2. Resumen del informe: el servidor usa el mismo motor que el PDF (conteo y recomendaciones coinciden)
+      const placaUp = placa.toUpperCase();
+      let resumen = null;
       try {
-        let filas = [];
+        let url = `/api/informe-resumen/${encodeURIComponent(placaUp)}`;
+        if (fecha) url += `?fecha=${encodeURIComponent(fecha)}`;
+        const res = await fetchConTimeoutPatio(url, {}, 6000);
+        if (res.ok) resumen = await res.json();
+      } catch(eRed) {}
+
+      // Sin conexión: resumen básico con las llantas de ESTA inspección en la cola local
+      if (!resumen) {
         try {
-          const res = await fetchConTimeoutPatio('/api/inspecciones?usuario=', {}, 3500);
-          if (res.ok) {
-            const todas = await res.json();
-            filas = todas.filter(r => (r['Vehículo/Placa'] || r['placa'] || '').toUpperCase() === placa.toUpperCase());
-          }
-        } catch(eRed) {}
+          const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
+          resumen = resumenInformeOffline(pendientes, placaUp, fecha);
+        } catch(eDb) {}
+      }
+      if (resumen) pintarResumenInformeModal(resumen);
+    }
 
-        // Si no hay datos de la API (offline o no sincronizados), buscar en cola_pendientes
-        if (!filas || filas.length === 0) {
-          try {
-            const pendientes = await TireAnalyzeOfflineDB.obtenerTodasPendientes();
-            const locales = pendientes.filter(r => (r.placa || '').toUpperCase() === placa.toUpperCase());
-            if (locales.length > 0) {
-              filas = locales.map(l => ({
-                'Vehículo/Placa': l.placa,
-                'Posición': l.posicion,
-                'Prof. Ext (mm)': l.prof_ext,
-                'Prof. Cent (mm)': l.prof_cent,
-                'Prof. Int (mm)': l.prof_int,
-                'PSI': l.psi,
-                'Novedades / Daños': l.novedades
-              }));
-            }
-          } catch(eDb) {}
+    // Frases que no son novedad (misma regla que el servidor: "Normal sin novedad", "OK"...)
+    function esNovedadReal(texto) {
+      const benignas = ['desgaste normal y parejo', 'desgaste normal', 'desgaste parejo', 'en buen estado', 'buen estado',
+        'sin novedades', 'sin novedad', 'sin problemas', 'sin problema', 'ninguna', 'ninguno', 'normal', 'optimo', 'óptimo', 'bien', 'ok'];
+      let t = ` ${String(texto || '').toLowerCase().replace(/[-/,;:.()]+/g, ' ').replace(/\s+/g, ' ').trim()} `;
+      benignas.forEach(b => {
+        while (t.includes(` ${b} `)) t = t.replace(` ${b} `, ' ');
+      });
+      return t.trim().length > 0;
+    }
+
+    function resumenInformeOffline(pendientes, placaUp, fecha) {
+      let locales = (pendientes || []).filter(r => (r.placa || '').toUpperCase() === placaUp);
+      if (fecha) locales = locales.filter(r => !r.fecha || String(r.fecha).slice(0, 10) === String(fecha).slice(0, 10));
+      if (!locales.length) return null;
+      // Una fila por posición (la última registrada): antes se contaban todas las capturas de la placa
+      const porPosicion = new Map();
+      locales.forEach(r => porPosicion.set(String(r.posicion), r));
+      const filas = [...porPosicion.values()];
+      const limite = parseFloat(document.getElementById('lblMmRetiroCliente')?.textContent) || 3.0;
+      const fmt = v => v.toFixed(1).replace('.', ',');
+      const alertas = [];
+      const psis = [];
+      filas.forEach(f => {
+        const val = [f.prof_ext, f.prof_cent, f.prof_int].map(v => parseFloat(v) || 0).filter(v => v > 0);
+        const pMin = val.length ? Math.min(...val) : 0;
+        const psi = parseFloat(f.psi) || 0;
+        if (psi > 0) psis.push(psi);
+        if (pMin > 0 && pMin <= limite) {
+          alertas.push({ grupo: 'retiro', tipo: 'Cambio', tipo_color: '#DC2626', posicion: String(f.posicion),
+            detalle: `Remanente ${fmt(pMin)} mm ≤ ${fmt(limite)} mm de límite.`,
+            accion: 'Retirar la llanta y programar su cambio.' });
         }
-
-        if (filas && filas.length > 0) {
-          const totalAuditadas = filas.length;
-          const limite = parseFloat(document.getElementById('lblMmRetiroCliente')?.textContent) || 3.0;
-          let retiroCount = 0;
-          let novedadCount = 0;
-          let sumaPsi = 0;
-          let planesDetectados = [];
-
-          filas.forEach(f => {
-            const pExt = parseFloat(f['Prof. Ext (mm)'] || f['prof_ext'] || 0);
-            const pCen = parseFloat(f['Prof. Cent (mm)'] || f['prof_cent'] || 0);
-            const pInt = parseFloat(f['Prof. Int (mm)'] || f['prof_int'] || 0);
-            const val = [pExt, pCen, pInt].filter(v => v > 0);
-            const pMin = val.length ? Math.min(...val) : 0;
-            const psiVal = parseFloat(f['PSI'] || f['psi'] || 100);
-            const nov = (f['Novedades / Daños'] || f['novedades'] || '').trim();
-            const posNum = f['Posición'] || f['posicion'];
-
-            sumaPsi += psiVal;
-            if (pMin > 0 && pMin <= limite) {
-              retiroCount++;
-              planesDetectados.push(`⚠️ <b>Posición ${posNum}:</b> Profundidad (${pMin.toFixed(1)} mm) en límite de retiro (<= ${limite.toFixed(1)} mm). Acción: Retiro / Reencauche.`);
-            }
-            if (nov) {
-              novedadCount++;
-              planesDetectados.push(`🔧 <b>Posición ${posNum}:</b> Novedad reportada: "${nov}".`);
-            }
-          });
-
-          const promPsi = totalAuditadas > 0 ? (sumaPsi / totalAuditadas).toFixed(0) : 100;
-          
-          const elTotal = document.getElementById('lblModalTotalLlantas');
-          const elRetiro = document.getElementById('lblModalLlantasRetiro');
-          const elNov = document.getElementById('lblModalLlantasNovedad');
-          const elPsi = document.getElementById('lblModalPromedioPsi');
-
-          if (elTotal) elTotal.textContent = `${totalAuditadas} / ${listaPosicionesActual.length || totalAuditadas}`;
-          if (elRetiro) elRetiro.textContent = retiroCount;
-          if (elNov) elNov.textContent = novedadCount;
-          if (elPsi) elPsi.textContent = `${promPsi} PSI`;
-
-          const listaBox = document.getElementById('modalPlanesAccionList');
-          const saludBadge = document.getElementById('lblEstadoSaludVehiculo');
-
-          if (listaBox) {
-            if (planesDetectados.length === 0) {
-              listaBox.innerHTML = `
-                <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center space-x-2">
-                  <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                  <span><b>Vehículo en Estado Seguro y Óptimo:</b> Todas las llantas están sobre el límite de retiro (${limite.toFixed(1)} mm) y sin novedades mecánicas registradas.</span>
-                </div>
-              `;
-              if (saludBadge) {
-                saludBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
-                saludBadge.textContent = 'Estado Óptimo';
-              }
-            } else {
-              listaBox.innerHTML = planesDetectados.map(p => `
-                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 leading-snug">
-                  ${p}
-                </div>
-              `).join('');
-              if (saludBadge) {
-                saludBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
-                saludBadge.textContent = 'Requiere Atención';
-              }
-            }
-          }
+        if (esNovedadReal(f.novedades)) {
+          alertas.push({ grupo: 'novedades', tipo: 'Novedad mecánica', tipo_color: '#D97706', posicion: String(f.posicion),
+            detalle: String(f.novedades).trim(), accion: 'Revisar componente y corregir condición.' });
         }
-      } catch(e) {}
+      });
+      const orden = ['retiro', 'novedades'];
+      alertas.sort((a, b) => orden.indexOf(a.grupo) - orden.indexOf(b.grupo));
+      return {
+        offline: true,
+        limite_retiro: limite,
+        total_auditadas: filas.length,
+        total_posiciones: listaPosicionesActual.length || filas.length,
+        posiciones_pendientes: [],
+        llantas_retiro: alertas.filter(a => a.tipo === 'Cambio').length,
+        llantas_con_novedad: alertas.filter(a => a.grupo === 'novedades').length,
+        promedio_psi: psis.length ? Math.round(psis.reduce((a, b) => a + b, 0) / psis.length) : null,
+        grupos: [{ id: 'retiro', nombre: 'Retiros y reemplazos' }, { id: 'novedades', nombre: 'Novedades reportadas por el inspector' }],
+        alertas
+      };
+    }
+
+    function pintarResumenInformeModal(r) {
+      const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setTxt('lblModalTotalLlantas', `${r.total_auditadas} / ${r.total_posiciones}`);
+      setTxt('lblModalLlantasRetiro', r.llantas_retiro);
+      setTxt('lblModalLlantasNovedad', r.llantas_con_novedad);
+      setTxt('lblModalPromedioPsi', r.promedio_psi ? `${r.promedio_psi} PSI` : '— PSI');
+
+      const listaBox = document.getElementById('modalPlanesAccionList');
+      const saludBadge = document.getElementById('lblEstadoSaludVehiculo');
+      if (!listaBox) return;
+      const limiteTxt = Number(r.limite_retiro || 3).toFixed(1).replace('.', ',');
+      const alertas = r.alertas || [];
+      const pendientes = r.posiciones_pendientes || [];
+      const avisoPendientes = pendientes.length
+        ? `<div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600">
+             <i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>${pendientes.length} posición(es) sin inspeccionar: ${escapeHtml(pendientes.join(', '))}.
+           </div>` : '';
+      const avisoOffline = r.offline
+        ? `<div class="p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+             <i class="fa-solid fa-wifi mr-1"></i>Sin conexión: resumen básico. Las demás recomendaciones (cruces, rotaciones, presión) aparecen al sincronizar.
+           </div>` : '';
+
+      if (!alertas.length) {
+        listaBox.innerHTML = `${avisoOffline}
+          <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+            <span><b>Vehículo en estado seguro:</b> todas las llantas inspeccionadas están sobre el límite de retiro (${limiteTxt} mm) y sin novedades.</span>
+          </div>${avisoPendientes}`;
+        if (saludBadge) {
+          saludBadge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200';
+          saludBadge.textContent = 'Estado Óptimo';
+        }
+        return;
+      }
+
+      // Una sección por grupo, en el mismo orden de prioridad del PDF
+      const secciones = (r.grupos || []).map(g => {
+        const delGrupo = alertas.filter(a => a.grupo === g.id);
+        if (!delGrupo.length) return '';
+        const items = delGrupo.map(a => `
+          <div class="p-2.5 rounded-xl bg-white border border-slate-200 leading-snug" style="border-left: 4px solid ${escapeHtml(a.tipo_color)}">
+            <div class="flex items-center justify-between gap-2">
+              <b style="color: ${escapeHtml(a.tipo_color)}">${escapeHtml(a.tipo)}</b>
+              <span class="text-[11px] font-bold text-slate-500 whitespace-nowrap">${/^\d/.test(String(a.posicion)) ? 'Pos. ' : ''}${escapeHtml(a.posicion)}</span>
+            </div>
+            <div class="text-slate-600 mt-0.5">${escapeHtml(a.detalle)}</div>
+            <div class="text-slate-800 mt-0.5"><i class="fa-solid fa-arrow-right text-[10px] text-slate-400 mr-1"></i>${escapeHtml(a.accion)}</div>
+          </div>`).join('');
+        return `
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-black uppercase tracking-wider text-slate-500 pt-1">${escapeHtml(g.nombre)} (${delGrupo.length})</div>
+            ${items}
+          </div>`;
+      }).join('');
+
+      listaBox.innerHTML = avisoOffline + secciones + avisoPendientes;
+      if (saludBadge) {
+        const urgente = alertas.some(a => a.grupo === 'retiro');
+        saludBadge.className = urgente
+          ? 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200'
+          : 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200';
+        saludBadge.textContent = urgente ? 'Requiere Retiro' : 'Requiere Atención';
+      }
     }
     function cerrarModalInformePdf() {
       const m = document.getElementById('modalInformePdf');

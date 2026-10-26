@@ -278,6 +278,132 @@ def resolver_fecha_informe(placa, fecha=None):
             return str(row[0])
     return None
 
+# Orden de prioridad de las secciones del diagnóstico (lo urgente primero)
+GRUPOS_DIAGNOSTICO = [
+    ('retiro', 'Retiros y reemplazos'),
+    ('proximas', 'Próximas a cambio'),
+    ('geometria', 'Alineación y duales'),
+    ('rotacion', 'Rotaciones y auto-ajuste de posiciones'),
+    ('presion', 'Presión de inflado'),
+    ('novedades', 'Novedades reportadas por el inspector'),
+    ('vehiculo', 'Configuración del vehículo'),
+]
+PSI_OBJETIVO = 100  # mismo valor que usa el motor de diagnóstico (rango aceptado ±10 %)
+
+
+def _partes(texto):
+    """Separa un detalle del motor ("a; b; c") y descarta los vacíos y el 'OK' de relleno."""
+    t = str(texto or '').strip()
+    if not t or t.upper() == 'OK':
+        return []
+    return [p.strip() for p in t.split(';') if p.strip()]
+
+
+def _posiciones_en(texto):
+    """'Invertir Pos 4 ↔ Pos 3' -> '4 y 3'."""
+    nums = list(dict.fromkeys(re.findall(r'\bP(?:os(?:ición)?)?\s*(\d+)', texto, re.IGNORECASE)))
+    if not nums:
+        return '-'
+    return nums[0] if len(nums) == 1 else ", ".join(nums[:-1]) + f" y {nums[-1]}"
+
+
+def recomendaciones_motor(r_an, limite_retiro) -> list:
+    """
+    Traduce las recomendaciones del motor de diagnóstico (cruces de bodega, emparejamiento,
+    auto-ajuste, rotaciones, presión y próximas a cambio) a filas claras para el informe:
+    qué se encontró (detalle) y qué hacer (acción).
+    """
+    filas = []
+
+    def agregar(grupo, tipo, color, posicion, detalle, accion):
+        filas.append({'grupo': grupo, 'tipo': tipo, 'tipo_color': color, 'posicion': posicion,
+                      'detalle': decimales_es(detalle), 'accion': decimales_es(accion)})
+
+    # Ajuste del par direccional (se retira también la pareja para igualar alturas)
+    for parte in _partes(r_an.get('Detalle_Cambio')):
+        m = re.search(r'Ajuste Par Direccional: retirar también Pos (\d+) \(([\d.]+) mm\)', parte)
+        if m:
+            agregar('retiro', 'Ajuste par direccional', '#DC2626', m.group(1),
+                    f"La pareja direccional sale por retiro; la Pos {m.group(1)} ({m.group(2)} mm) quedaría con altura distinta.",
+                    f"Retirar también la Pos {m.group(1)} y enviarla a Bodega 2 (Recambio) para montar un par parejo.")
+
+    # Cruces con Bodega 2 y emparejamiento de duales
+    for parte in _partes(r_an.get('Recomendaciones_Dual')):
+        m_b2 = re.search(r'Desmontar Pos (\d+) \(([\d.]+) mm\) y MONTAR llanta N° (\S+) \(([\d.]+) mm\)', parte)
+        m_emp = re.search(r'Pos (\d+) en retiro \(([\d.]+) mm\) vs Pos (\d+) \(([\d.]+) mm\).*?entre ([\d.]+) y ([\d.]+) mm', parte)
+        if m_b2:
+            agregar('retiro', 'Reemplazo desde bodega', '#047857', m_b2.group(1),
+                    f"El dual quedaría desparejo con la llanta actual ({m_b2.group(2)} mm).",
+                    f"Desmontar la Pos {m_b2.group(1)} y montar la llanta N.º {m_b2.group(3)} ({m_b2.group(4)} mm) disponible en Bodega 2 (Recambio).")
+        elif m_emp:
+            agregar('retiro', 'Emparejamiento de dual', '#4338CA', m_emp.group(1),
+                    f"La Pos {m_emp.group(1)} sale por retiro ({m_emp.group(2)} mm) y su pareja Pos {m_emp.group(3)} tiene {m_emp.group(4)} mm.",
+                    f"Montar en la Pos {m_emp.group(1)} una llanta de {m_emp.group(5)} a {m_emp.group(6)} mm, o cambiar ambas para dejarlas parejas.")
+        else:
+            agregar('retiro', 'Recomendación de dual', '#4338CA', _posiciones_en(parte), parte, 'Aplicar la recomendación en el taller.')
+
+    # Próximas a cambio (dentro de los 2 mm sobre el límite)
+    for parte in _partes(r_an.get('Detalle_Proximas')):
+        m = re.search(r'Pos (\d+) \(([\d.]+) mm\)', parte)
+        if m:
+            agregar('proximas', 'Próxima a cambio', '#D97706', m.group(1),
+                    f"Remanente de {m.group(2)} mm, a menos de 2 mm del límite de retiro ({limite_retiro} mm).",
+                    "Programar cambio o reencauche y volver a medir en 15 a 30 días.")
+
+    # Auto-ajuste: cruces e inversiones de posiciones
+    for parte in _partes(r_an.get('Detalle_Auto_Ajuste')):
+        instruccion = parte.split(':', 1)[1].strip() if ':' in parte else parte
+        if 'Dirección' in parte:
+            motivo = "La llanta derecha del eje direccional tiene más remanente que la izquierda."
+        elif 'Pacha' in parte:
+            motivo = "En el dual, la llanta interior tiene más remanente que la exterior."
+        else:
+            motivo = "La altura de las llantas no respeta la jerarquía de ejes del tráiler."
+        agregar('rotacion', 'Auto-ajuste de posiciones', '#1D4ED8', _posiciones_en(instruccion), motivo, instruccion + '.')
+
+    for parte in _partes(r_an.get('Detalle_Rotacion_Equis')):
+        m = re.search(r'^(Cruzar .*?) \(dif entre ejes ([\d.]+) mm\)', parte)
+        if m:
+            agregar('rotacion', 'Rotación entre ejes', '#1D4ED8', 'Tracción',
+                    f"Diferencia de {m.group(2)} mm entre los ejes de tracción.", m.group(1) + '.')
+
+    for parte in _partes(r_an.get('Detalle_Rotacion_Irregular')):
+        m = re.search(r'Pos (\d+) \(dif ext/int ([\d.]+) mm\)', parte)
+        detalle = (f"Diferencia de {m.group(2)} mm entre el hombro exterior y el interior." if m
+                   else "El inspector reportó desgaste irregular.")
+        agregar('rotacion', 'Desgaste irregular', '#1D4ED8', _posiciones_en(parte), detalle,
+                "Rotar la llanta y revisar alineación y suspensión de esa posición.")
+
+    for parte in _partes(r_an.get('Detalle_Rotacion_Escalonado')):
+        agregar('rotacion', 'Desgaste escalonado', '#1D4ED8', _posiciones_en(parte),
+                "Desgaste en diente de sierra en el eje de tracción.",
+                "Rotar la llanta y revisar amortiguadores y balanceo.")
+
+    # Presión fuera de rango
+    for parte in _partes(r_an.get('Detalle_Calibracion_PSI')):
+        m = re.search(r'Pos (\d+) \((\d+) PSI, (alta|baja)\)', parte)
+        if m and m.group(3) == 'alta':
+            agregar('presion', 'Presión alta', '#0284C7', m.group(1),
+                    f"{m.group(2)} PSI, por encima de {int(PSI_OBJETIVO * 1.1)} PSI.",
+                    f"Ajustar a {PSI_OBJETIVO} PSI en frío.")
+        elif m:
+            agregar('presion', 'Presión baja', '#0284C7', m.group(1),
+                    f"{m.group(2)} PSI, por debajo de {int(PSI_OBJETIVO * 0.9)} PSI.",
+                    f"Inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+        else:
+            agregar('presion', 'Presión baja', '#0284C7', _posiciones_en(parte),
+                    "El inspector reportó baja presión.",
+                    f"Medir e inflar a {PSI_OBJETIVO} PSI en frío y revisar válvula y posibles fugas.")
+
+    return filas
+
+
+def ordenar_por_grupo(alertas):
+    """Ordena las alertas según GRUPOS_DIAGNOSTICO conservando el orden interno de cada grupo."""
+    orden = {g: i for i, (g, _) in enumerate(GRUPOS_DIAGNOSTICO)}
+    return sorted(alertas, key=lambda a: orden.get(a.get('grupo'), len(orden)))
+
+
 def construir_datos_informe(placa, fecha=None) -> dict:
     placa_limpia = str(placa or '').strip().upper()
     fecha_resuelta = resolver_fecha_informe(placa_limpia, fecha)
@@ -366,6 +492,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         pos_cambio_str = ", ".join(str(p) for p, _ in llantas_cambio)
         pos_detalles = ", ".join(f"Posición {p}" for p, _ in llantas_cambio)
         alertas_lista.append({
+            'grupo': 'retiro',
             'tipo': 'Cambio',
             'tipo_color': '#DC2626',
             'posicion': pos_cambio_str,
@@ -375,6 +502,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     else:
         for p, p_m in llantas_cambio:
             alertas_lista.append({
+                'grupo': 'retiro',
                 'tipo': 'Cambio',
                 'tipo_color': '#DC2626',
                 'posicion': str(p),
@@ -405,6 +533,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             detalle_ali_fmt = f"{decimales_es(det_ali)} (desgaste irregular entre hombros en {'ejes de trailer / eje libre' if es_trailer_tip else 'eje direccional'})"
 
             alertas_lista.append({
+                'grupo': 'geometria',
                 'tipo': tipo_ali,
                 'tipo_color': '#D97706',
                 'posicion': pos_ali,
@@ -413,6 +542,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             })
         if r_an.get('Plan_Dual_Mal_Apareado') == 'SÍ':
             alertas_lista.append({
+                'grupo': 'geometria',
                 'tipo': 'Dual mal apareado',
                 'tipo_color': '#D97706',
                 'posicion': 'Duales',
@@ -425,6 +555,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         nov = str(f.get('novedades') or '').strip()
         if es_novedad_alerta(nov):
             alertas_lista.append({
+                'grupo': 'novedades',
                 'tipo': 'Novedad mecánica',
                 'tipo_color': '#D97706',
                 'posicion': str(f.get('posicion')),
@@ -444,6 +575,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
     if tiene_dims_distintas:
         partes_d = [f"{dim} (Pos {', '.join(str(p) for p in sorted(pos_list))})" for dim, pos_list in sorted(dims_map.items())]
         alertas_lista.append({
+            'grupo': 'vehiculo',
             'tipo': 'Dimensiones mixtas',
             'tipo_color': '#DC2626',
             'posicion': 'Vehículo',
@@ -451,11 +583,19 @@ def construir_datos_informe(placa, fecha=None) -> dict:
             'accion': 'Estandarizar todas las posiciones a una sola dimensión homologada según ficha técnica.'
         })
 
+    # 5. Resto del plan del motor de diagnóstico: reemplazos, emparejamiento, auto-ajuste,
+    #    rotaciones, presión y próximas a cambio (antes no salían en el informe)
+    if not df_analisis.empty:
+        alertas_lista.extend(recomendaciones_motor(df_analisis.iloc[0], limite_retiro))
+    alertas_lista = ordenar_por_grupo(alertas_lista)
+
     n_ali = sum(1 for a in alertas_lista if 'Alineación' in a['tipo'])
     n_duales = sum(1 for a in alertas_lista if a['tipo'] == 'Dual mal apareado')
     n_nov = sum(1 for a in alertas_lista if a['tipo'] == 'Novedad mecánica')
     n_dims = sum(1 for a in alertas_lista if a['tipo'] == 'Dimensiones mixtas')
-    total_alertas = n_cambios + n_ali + n_duales + n_nov + n_dims
+    n_otras = sum(1 for a in alertas_lista if a['grupo'] in ('retiro', 'proximas', 'rotacion', 'presion') and a['tipo'] != 'Cambio')
+    # Los cambios cuentan por llanta aunque se agrupen en una sola fila
+    total_alertas = n_cambios + n_ali + n_duales + n_nov + n_dims + n_otras
 
     return {
         'placa': placa_limpia,
@@ -482,6 +622,7 @@ def construir_datos_informe(placa, fecha=None) -> dict:
         'n_duales': n_duales,
         'n_nov': n_nov,
         'n_dims': n_dims,
+        'n_otras': n_otras,
         'tiene_dims_distintas': tiene_dims_distintas,
         'dims_map': dims_map,
         'total_alertas': total_alertas,
@@ -578,7 +719,15 @@ def renderizar_informe(datos) -> bytes:
 
     txt_pmin_glo = f"{format_num_es(p_min_global)} mm" if p_min_global is not None else "—"
     txt_prom_glo = f"{format_num_es(p_prom_global)} mm" if p_prom_global is not None else "—"
-    desglose_alertas_txt = f"Alertas: {n_cambios} cambio, {n_ali} alineación, {n_duales} duales, {n_nov} novedades"
+    # Desglose por grupo, solo con los grupos que tienen alertas
+    conteo_grupo = {}
+    for a in alertas_lista:
+        conteo_grupo[a['grupo']] = conteo_grupo.get(a['grupo'], 0) + 1
+    conteo_grupo['retiro'] = conteo_grupo.get('retiro', 0) + n_cambios - sum(1 for a in alertas_lista if a['tipo'] == 'Cambio')
+    etiquetas_grupo = {'retiro': 'retiro/reemplazo', 'proximas': 'próximas', 'geometria': 'alineación/duales',
+                       'rotacion': 'rotaciones', 'presion': 'presión', 'novedades': 'novedades', 'vehiculo': 'configuración'}
+    partes_desglose = [f"{conteo_grupo[g]} {etiquetas_grupo[g]}" for g, _ in GRUPOS_DIAGNOSTICO if conteo_grupo.get(g)]
+    desglose_alertas_txt = "Alertas: " + (", ".join(partes_desglose) if partes_desglose else "ninguna")
 
     data_kpi = [
         [
@@ -619,8 +768,18 @@ def renderizar_informe(datos) -> bytes:
         ]
     ]
 
+    # Filas de título por grupo (retiros, próximas, alineación, rotaciones, presión...)
+    style_grupo = ParagraphStyle('GrupoDiag', parent=style_cell_body, fontName='Helvetica-Bold', fontSize=7, textColor=colors.HexColor('#0F172A'))
+    filas_grupo = []
+    nombres_grupo = dict(GRUPOS_DIAGNOSTICO)
     if alertas_lista:
+        grupo_actual = None
         for a in alertas_lista:
+            if a.get('grupo') != grupo_actual:
+                grupo_actual = a.get('grupo')
+                filas_grupo.append(len(data_diag))
+                n_grupo = sum(1 for x in alertas_lista if x.get('grupo') == grupo_actual)
+                data_diag.append([Paragraph(f"{nombres_grupo.get(grupo_actual, 'Otras acciones')} ({n_grupo})", style_grupo), '', '', ''])
             style_tipo = ParagraphStyle('TipoAlerta', parent=style_cell_body, fontName='Helvetica-Bold', textColor=colors.HexColor(a['tipo_color']))
             data_diag.append([
                 Paragraph(html.escape(a['tipo']), style_tipo),
@@ -643,8 +802,8 @@ def renderizar_informe(datos) -> bytes:
             Paragraph("Operación normal y próxima inspección periódica.", style_cell_body)
         ])
 
-    t_diag = Table(data_diag, colWidths=[95, 45, 250, 150], repeatRows=1)
-    t_diag.setStyle(TableStyle([
+    t_diag = Table(data_diag, colWidths=[95, 45, 225, 175], repeatRows=1)
+    estilo_diag = [
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0F172A')),
         ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor('#E2E8F0')),
         ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor('#F1F5F9')),
@@ -653,7 +812,14 @@ def renderizar_informe(datos) -> bytes:
         ('LEFTPADDING', (0,0), (-1,-1), 5),
         ('RIGHTPADDING', (0,0), (-1,-1), 5),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-    ]))
+    ]
+    for idx in filas_grupo:
+        estilo_diag += [
+            ('SPAN', (0, idx), (-1, idx)),
+            ('BACKGROUND', (0, idx), (-1, idx), colors.HexColor('#E2E8F0')),
+            ('LINEABOVE', (0, idx), (-1, idx), 0.8, colors.HexColor('#94A3B8')),
+        ]
+    t_diag.setStyle(TableStyle(estilo_diag))
     elements.append(t_diag)
     elements.append(Spacer(1, 4))
 
