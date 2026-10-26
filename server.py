@@ -413,21 +413,25 @@ def _resolver_cliente_usuario(usuario_actual: dict, cliente_solicitado: str = ""
 # ==========================================
 
 @app.get("/", response_class=HTMLResponse)
-def index(response: Response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
-    with open(template_path, "r", encoding="utf-8") as f:
-        return f.read()
-
 @app.get("/servicios", response_class=HTMLResponse)
 @app.get("/landing", response_class=HTMLResponse)
-def pagina_servicios(response: Response):
+def index_servicios(response: Response):
     response.headers["Cache-Control"] = "public, max-age=3600"
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios_v3.html")
     if not os.path.exists(template_path):
         template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/login", response_class=HTMLResponse)
+@app.get("/app", response_class=HTMLResponse)
+@app.get("/sistema", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
+def index_app(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
@@ -471,6 +475,8 @@ def service_worker():
 const CACHE_NAME = 'tireanalyze-patio-v2';
 const PRECACHE_ASSETS = [
   '/',
+  '/app',
+  '/login',
   '/static/img/logo_hd.svg',
   '/static/img/banner_tireanalyze_hd.png',
   'https://cdn.tailwindcss.com',
@@ -506,8 +512,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Navegación HTML (/): Network-First con Fallback a Caché
-  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/') {
+  // Navegación HTML: Network-First con Fallback a Caché
+  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/' || url.pathname === '/app' || url.pathname === '/login') {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.status === 200) {
@@ -515,7 +521,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }
         return res;
-      }).catch(() => caches.match('/') || caches.match(req))
+      }).catch(() => caches.match(req) || caches.match('/app') || caches.match('/'))
     );
     return;
   }

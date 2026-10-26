@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 15:08:38`
+- **Fecha de Generación:** `2026-10-26 15:32:22`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `57,959` líneas
-- **Tamaño Total de Código Fuente:** `2918.9 KB` (`2,988,990` bytes)
+- **Líneas Totales de Código:** `57,974` líneas
+- **Tamaño Total de Código Fuente:** `2920.1 KB` (`2,990,137` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2440 | 109.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2446 | 110.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 10433 | 511.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
@@ -482,8 +482,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [templates/index.html](#archivo-templatesindexhtml) | `html` | 6009 | 403.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
-| [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
-| [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
+| [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
+| [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1006 | 43.5 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4140 | 187.4 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
@@ -516,7 +516,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 313 | 11.5 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 264 | 10.8 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 958 | 36.8 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 961 | 37.0 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 508 | 16.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2440 líneas | 112,551 bytes (109.9 KB)
+- **Métricas:** 2446 líneas | 112,849 bytes (110.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -4233,21 +4233,25 @@ def _resolver_cliente_usuario(usuario_actual: dict, cliente_solicitado: str = ""
 # ==========================================
 
 @app.get("/", response_class=HTMLResponse)
-def index(response: Response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
-    with open(template_path, "r", encoding="utf-8") as f:
-        return f.read()
-
 @app.get("/servicios", response_class=HTMLResponse)
 @app.get("/landing", response_class=HTMLResponse)
-def pagina_servicios(response: Response):
+def index_servicios(response: Response):
     response.headers["Cache-Control"] = "public, max-age=3600"
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios_v3.html")
     if not os.path.exists(template_path):
         template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "servicios.html")
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/login", response_class=HTMLResponse)
+@app.get("/app", response_class=HTMLResponse)
+@app.get("/sistema", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
+def index_app(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html")
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
@@ -4291,6 +4295,8 @@ def service_worker():
 const CACHE_NAME = 'tireanalyze-patio-v2';
 const PRECACHE_ASSETS = [
   '/',
+  '/app',
+  '/login',
   '/static/img/logo_hd.svg',
   '/static/img/banner_tireanalyze_hd.png',
   'https://cdn.tailwindcss.com',
@@ -4326,8 +4332,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Navegación HTML (/): Network-First con Fallback a Caché
-  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/') {
+  // Navegación HTML: Network-First con Fallback a Caché
+  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/' || url.pathname === '/app' || url.pathname === '/login') {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.status === 200) {
@@ -4335,7 +4341,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }
         return res;
-      }).catch(() => caches.match('/') || caches.match(req))
+      }).catch(() => caches.match(req) || caches.match('/app') || caches.match('/'))
     );
     return;
   }
@@ -29182,7 +29188,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/servicios_v3.html`
 - **Descripción:** Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura
-- **Métricas:** 759 líneas | 59,032 bytes (57.6 KB)
+- **Métricas:** 762 líneas | 59,333 bytes (57.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -29194,6 +29200,8 @@ if __name__ == '__main__':
   <title>Servicios de Gestión Técnica de Flotas y Neumáticos — TireAnalyze Pro</title>
   <meta name="description" content="El software que facilita la inspección en patio, control integral de llantas reencauchables, seguridad en los datos y maximización del rendimiento de neumáticos para flotas.">
   <meta name="theme-color" content="#061226">
+  <link rel="canonical" href="https://www.tireanalizepro.com/">
+  <meta property="og:url" content="https://www.tireanalizepro.com/">
 
   <!-- Tipografía industrial: Barlow Condensed (titulares), Barlow (texto), JetBrains Mono (medidas) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29295,7 +29303,7 @@ if __name__ == '__main__':
   <!-- ============================================================== -->
   <header class="fixed top-0 inset-x-0 z-50 bg-asphalt-950/95 backdrop-blur border-b border-asphalt-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-      <a href="https://www.tireanalizepro.com" class="flex items-center gap-2.5 shrink-0">
+      <a href="/" class="flex items-center gap-2.5 shrink-0" title="TireAnalyze Pro">
         <!-- Isotipo: llanta con banda de rodadura -->
         <svg class="w-9 h-9" viewBox="0 0 40 40" aria-hidden="true">
           <circle cx="20" cy="20" r="18" fill="#0B1B36" stroke="#38B6FF" stroke-width="2.5"/>
@@ -29323,7 +29331,7 @@ if __name__ == '__main__':
         <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-ok hover:text-ok transition-colors">
           <i class="fa-brands fa-whatsapp"></i> WhatsApp
         </a>
-        <a href="https://www.tireanalizepro.com" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors">
+        <a href="/login" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors shadow-sm" title="Ingresar al sistema">
           Ingresar <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
         </a>
         <button id="menuBtn" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu" class="lg:hidden w-10 h-10 border border-asphalt-600 flex items-center justify-center text-concrete-100">
@@ -29341,6 +29349,7 @@ if __name__ == '__main__':
           <a href="#calculadora" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Calculadora</a>
           <a href="#planes" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Versiones</a>
           <a href="#historia" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Casos</a>
+          <a href="/login" class="col-span-2 px-3 py-3 bg-hivis text-asphalt-950 font-bold uppercase text-center flex items-center justify-center gap-2">Ingresar al aplicativo <i class="fa-solid fa-arrow-right text-xs"></i></a>
         </nav>
       </div>
     </div>
@@ -29731,7 +29740,7 @@ if __name__ == '__main__':
           <p id="lblAhorroEstimado" aria-live="polite" class="font-display font-extrabold text-5xl sm:text-6xl text-hivis mt-2 leading-none">$33.600.000</p>
           <p class="font-mono text-sm text-concrete-300 mt-1">COP / año</p>
           <p class="mt-6 text-concrete-300 leading-relaxed">Basado en una reducción promedio del <strong class="text-concrete-50">28% en gasto por llantas</strong> gracias a reencauche oportuno, control de presiones y menos milímetros desperdiciados.</p>
-          <a href="https://www.tireanalizepro.com" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
+          <a href="/login" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
         </div>
       </div>
     </div>
@@ -29882,7 +29891,7 @@ if __name__ == '__main__':
         <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-asphalt-950 text-concrete-50 font-bold uppercase tracking-wide hover:bg-asphalt-800 transition-colors text-center">
           <i class="fa-brands fa-whatsapp text-lg"></i> Agendar visita presencial
         </a>
-        <a href="https://www.tireanalizepro.com" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
+        <a href="/login" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
           Ingresar a la plataforma <i class="fa-solid fa-arrow-right text-sm"></i>
         </a>
         <p class="text-sm font-semibold text-center">o llámanos: <a href="tel:+573204098077" class="underline font-mono">+57 320 409 8077</a></p>
@@ -29897,7 +29906,7 @@ if __name__ == '__main__':
         <p class="mt-1">© 2026 TireAnalyze Pro — Confianza en tu información.</p>
       </div>
       <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 font-semibold">
-        <a href="https://www.tireanalizepro.com" class="hover:text-hivis">Plataforma</a>
+        <a href="/login" class="hover:text-hivis">Plataforma</a>
         <a href="#servicios" class="hover:text-hivis">Servicios</a>
         <a href="#reencauche" class="hover:text-hivis">Reencauche</a>
         <a href="#planes" class="hover:text-hivis">Versiones</a>
@@ -29953,7 +29962,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/servicios.html`
 - **Descripción:** Plantilla de servicios activa en producción
-- **Métricas:** 759 líneas | 59,032 bytes (57.6 KB)
+- **Métricas:** 762 líneas | 59,333 bytes (57.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -29965,6 +29974,8 @@ if __name__ == '__main__':
   <title>Servicios de Gestión Técnica de Flotas y Neumáticos — TireAnalyze Pro</title>
   <meta name="description" content="El software que facilita la inspección en patio, control integral de llantas reencauchables, seguridad en los datos y maximización del rendimiento de neumáticos para flotas.">
   <meta name="theme-color" content="#061226">
+  <link rel="canonical" href="https://www.tireanalizepro.com/">
+  <meta property="og:url" content="https://www.tireanalizepro.com/">
 
   <!-- Tipografía industrial: Barlow Condensed (titulares), Barlow (texto), JetBrains Mono (medidas) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30066,7 +30077,7 @@ if __name__ == '__main__':
   <!-- ============================================================== -->
   <header class="fixed top-0 inset-x-0 z-50 bg-asphalt-950/95 backdrop-blur border-b border-asphalt-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-      <a href="https://www.tireanalizepro.com" class="flex items-center gap-2.5 shrink-0">
+      <a href="/" class="flex items-center gap-2.5 shrink-0" title="TireAnalyze Pro">
         <!-- Isotipo: llanta con banda de rodadura -->
         <svg class="w-9 h-9" viewBox="0 0 40 40" aria-hidden="true">
           <circle cx="20" cy="20" r="18" fill="#0B1B36" stroke="#38B6FF" stroke-width="2.5"/>
@@ -30094,7 +30105,7 @@ if __name__ == '__main__':
         <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-ok hover:text-ok transition-colors">
           <i class="fa-brands fa-whatsapp"></i> WhatsApp
         </a>
-        <a href="https://www.tireanalizepro.com" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors">
+        <a href="/login" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors shadow-sm" title="Ingresar al sistema">
           Ingresar <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
         </a>
         <button id="menuBtn" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu" class="lg:hidden w-10 h-10 border border-asphalt-600 flex items-center justify-center text-concrete-100">
@@ -30112,6 +30123,7 @@ if __name__ == '__main__':
           <a href="#calculadora" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Calculadora</a>
           <a href="#planes" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Versiones</a>
           <a href="#historia" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Casos</a>
+          <a href="/login" class="col-span-2 px-3 py-3 bg-hivis text-asphalt-950 font-bold uppercase text-center flex items-center justify-center gap-2">Ingresar al aplicativo <i class="fa-solid fa-arrow-right text-xs"></i></a>
         </nav>
       </div>
     </div>
@@ -30502,7 +30514,7 @@ if __name__ == '__main__':
           <p id="lblAhorroEstimado" aria-live="polite" class="font-display font-extrabold text-5xl sm:text-6xl text-hivis mt-2 leading-none">$33.600.000</p>
           <p class="font-mono text-sm text-concrete-300 mt-1">COP / año</p>
           <p class="mt-6 text-concrete-300 leading-relaxed">Basado en una reducción promedio del <strong class="text-concrete-50">28% en gasto por llantas</strong> gracias a reencauche oportuno, control de presiones y menos milímetros desperdiciados.</p>
-          <a href="https://www.tireanalizepro.com" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
+          <a href="/login" class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 bg-hivis text-asphalt-950 font-bold uppercase tracking-wide hover:bg-hivis-300 transition-colors">Empezar a ahorrar <i class="fa-solid fa-arrow-right text-sm"></i></a>
         </div>
       </div>
     </div>
@@ -30653,7 +30665,7 @@ if __name__ == '__main__':
         <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20agendar%20una%20reunión%20o%20visita%20presencial%20para%20conocer%20el%20software%20TireAnalyze%20Pro%20en%20nuestras%20instalaciones" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-asphalt-950 text-concrete-50 font-bold uppercase tracking-wide hover:bg-asphalt-800 transition-colors text-center">
           <i class="fa-brands fa-whatsapp text-lg"></i> Agendar visita presencial
         </a>
-        <a href="https://www.tireanalizepro.com" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
+        <a href="/login" class="inline-flex items-center justify-center gap-2.5 px-7 py-4 border-2 border-asphalt-950 font-bold uppercase tracking-wide hover:bg-asphalt-950 hover:text-hivis transition-colors">
           Ingresar a la plataforma <i class="fa-solid fa-arrow-right text-sm"></i>
         </a>
         <p class="text-sm font-semibold text-center">o llámanos: <a href="tel:+573204098077" class="underline font-mono">+57 320 409 8077</a></p>
@@ -30668,7 +30680,7 @@ if __name__ == '__main__':
         <p class="mt-1">© 2026 TireAnalyze Pro — Confianza en tu información.</p>
       </div>
       <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 font-semibold">
-        <a href="https://www.tireanalizepro.com" class="hover:text-hivis">Plataforma</a>
+        <a href="/login" class="hover:text-hivis">Plataforma</a>
         <a href="#servicios" class="hover:text-hivis">Servicios</a>
         <a href="#reencauche" class="hover:text-hivis">Reencauche</a>
         <a href="#planes" class="hover:text-hivis">Versiones</a>
@@ -47855,7 +47867,7 @@ def test_sincronizacion_inspecciones_no_sobreescribe_bajas_fvu(test_db, auth_cli
 
 - **Ruta:** `tests/test_composicion_flota.py`
 - **Descripción:** Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario
-- **Métricas:** 337 líneas | 11,459 bytes (11.2 KB)
+- **Métricas:** 337 líneas | 11,462 bytes (11.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -48129,7 +48141,7 @@ def test_vista_composicion_presente_en_html(auth_client):
     Prueba 4: Verifica que GET / retorne HTTP 200 e incluya la estructura DOM
     completa de Composición de Flota (IDs exactos de filtros, KPIs, gráficos y matriz).
     """
-    res = auth_client.get("/")
+    res = auth_client.get("/app")
     assert res.status_code == 200
     html = res.text
 
@@ -51435,7 +51447,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 958 líneas | 37,686 bytes (36.8 KB)
+- **Métricas:** 961 líneas | 37,930 bytes (37.0 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -51456,7 +51468,7 @@ def test_api_info_servidor():
     assert data["app"] == "TireAnalyze Pro"
 
 def test_index_page_loads_all_views():
-    res = client.get("/")
+    res = client.get("/login")
     assert res.status_code == 200
     html = res.text
     # Verificar que el HTML contiene las 5 vistas principales integradas
@@ -51486,24 +51498,27 @@ def test_index_page_loads_all_views():
     assert "Re-animar" not in html
 
 def test_servicios_landing_page_loads():
-    res = client.get("/servicios")
-    assert res.status_code == 200
-    html = res.text
-    assert "TireAnalyze Pro" in html
-    assert "facilita la inspección en patio" in html
-    assert "https://www.tireanalizepro.com" in html
-    assert "lblAhorroEstimado" in html
-    assert "actualizarCalculadora" in html
-    # Verificación de logos emblemáticos y textura industrial
-    assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
-    assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
-    assert "Confianza en tu información" in html
-    assert "tread-band" in html       # Separador de banda de rodadura
-    # Verificación de la sección de licencias y versiones
-    assert "Licencia operativa" in html
-    assert "Licencia empresarial" in html
-    assert "Solicitar demo operativa" in html
-    assert "Solicitar demo empresarial" in html
+    # Verifica que tanto / como /servicios carguen la página de portafolio y enlace a /login
+    for path in ["/", "/servicios", "/landing"]:
+        res = client.get(path)
+        assert res.status_code == 200
+        html = res.text
+        assert "TireAnalyze Pro" in html
+        assert "facilita la inspección en patio" in html
+        assert "https://www.tireanalizepro.com" in html
+        assert "lblAhorroEstimado" in html
+        assert "actualizarCalculadora" in html
+        assert "/login" in html
+        # Verificación de logos emblemáticos y textura industrial
+        assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
+        assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
+        assert "Confianza en tu información" in html
+        assert "tread-band" in html       # Separador de banda de rodadura
+        # Verificación de la sección de licencias y versiones
+        assert "Licencia operativa" in html
+        assert "Licencia empresarial" in html
+        assert "Solicitar demo operativa" in html
+        assert "Solicitar demo empresarial" in html
     # Verificación de la sección de Storytelling (El Viaje de la Transformación)
     assert "El viaje de la transformación" in html
     assert "De apagar incendios en carretera a dominar el 100% de tu flota" in html

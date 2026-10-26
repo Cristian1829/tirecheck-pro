@@ -15,7 +15,7 @@ def test_api_info_servidor():
     assert data["app"] == "TireAnalyze Pro"
 
 def test_index_page_loads_all_views():
-    res = client.get("/")
+    res = client.get("/login")
     assert res.status_code == 200
     html = res.text
     # Verificar que el HTML contiene las 5 vistas principales integradas
@@ -45,24 +45,27 @@ def test_index_page_loads_all_views():
     assert "Re-animar" not in html
 
 def test_servicios_landing_page_loads():
-    res = client.get("/servicios")
-    assert res.status_code == 200
-    html = res.text
-    assert "TireAnalyze Pro" in html
-    assert "facilita la inspección en patio" in html
-    assert "https://www.tireanalizepro.com" in html
-    assert "lblAhorroEstimado" in html
-    assert "actualizarCalculadora" in html
-    # Verificación de logos emblemáticos y textura industrial
-    assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
-    assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
-    assert "Confianza en tu información" in html
-    assert "tread-band" in html       # Separador de banda de rodadura
-    # Verificación de la sección de licencias y versiones
-    assert "Licencia operativa" in html
-    assert "Licencia empresarial" in html
-    assert "Solicitar demo operativa" in html
-    assert "Solicitar demo empresarial" in html
+    # Verifica que tanto / como /servicios carguen la página de portafolio y enlace a /login
+    for path in ["/", "/servicios", "/landing"]:
+        res = client.get(path)
+        assert res.status_code == 200
+        html = res.text
+        assert "TireAnalyze Pro" in html
+        assert "facilita la inspección en patio" in html
+        assert "https://www.tireanalizepro.com" in html
+        assert "lblAhorroEstimado" in html
+        assert "actualizarCalculadora" in html
+        assert "/login" in html
+        # Verificación de logos emblemáticos y textura industrial
+        assert "srvTireTreadGrad" in html # Llanta 3D con gráfico
+        assert "srvCupBodyGrad" in html   # Taza de café con vapor analítico
+        assert "Confianza en tu información" in html
+        assert "tread-band" in html       # Separador de banda de rodadura
+        # Verificación de la sección de licencias y versiones
+        assert "Licencia operativa" in html
+        assert "Licencia empresarial" in html
+        assert "Solicitar demo operativa" in html
+        assert "Solicitar demo empresarial" in html
     # Verificación de la sección de Storytelling (El Viaje de la Transformación)
     assert "El viaje de la transformación" in html
     assert "De apagar incendios en carretera a dominar el 100% de tu flota" in html

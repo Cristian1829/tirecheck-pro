@@ -268,7 +268,7 @@ def test_vista_composicion_presente_en_html(auth_client):
     Prueba 4: Verifica que GET / retorne HTTP 200 e incluya la estructura DOM
     completa de Composición de Flota (IDs exactos de filtros, KPIs, gráficos y matriz).
     """
-    res = auth_client.get("/")
+    res = auth_client.get("/app")
     assert res.status_code == 200
     html = res.text
 

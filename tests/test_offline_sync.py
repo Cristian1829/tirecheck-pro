@@ -287,7 +287,7 @@ def test_frontend_contiene_motor_indexeddb_y_modal_offline(auth_client):
     import subprocess
     import os
 
-    resp = auth_client.get("/")
+    resp = auth_client.get("/app")
     assert resp.status_code == 200
     html = resp.text
 
@@ -362,7 +362,7 @@ def test_offline_filtrado_disenos_por_marca_estricto(test_db, auth_client):
     assert "M853" not in dis_por_marca["PIRELLI"]
 
     # 3. Verificar que el frontend HTML no haga fallback a cc.disenos cuando hay marca seleccionada
-    resp_front = auth_client.get("/")
+    resp_front = auth_client.get("/app")
     assert resp_front.status_code == 200
     html = resp_front.text
 
