@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 14:09:21`
+- **Fecha de Generación:** `2026-10-26 15:08:38`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `57,779` líneas
-- **Tamaño Total de Código Fuente:** `2909.4 KB` (`2,979,190` bytes)
+- **Líneas Totales de Código:** `57,959` líneas
+- **Tamaño Total de Código Fuente:** `2918.9 KB` (`2,988,990` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -93,7 +93,7 @@ CREATE TABLE catalogo_tipologias (
             descripcion TEXT,
             cant_llantas INTEGER,
             esquema_json TEXT
-        );
+        , permite_reencauche_direccion INTEGER DEFAULT 0);
 
 -- ========================================================
 -- TABLA: catalogo_vehiculos
@@ -433,7 +433,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [requirements.txt](#archivo-requirementstxt) | `text` | 13 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
-| [.gitignore](#archivo-gitignore) | `gitignore` | 46 | 0.6 KB | Reglas de exclusión de Git |
+| [.gitignore](#archivo-gitignore) | `gitignore` | 47 | 0.6 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 22 | 0.2 KB | Reglas de exclusión para compilación de imagen Docker |
 | [Dockerfile](#archivo-dockerfile) | `dockerfile` | 32 | 0.8 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
 | [railway.json](#archivo-railwayjson) | `json` | 12 | 0.3 KB | Configuración de infraestructura y despliegue continuo en Railway (Builder DOCKERFILE) |
@@ -468,9 +468,9 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2430 | 109.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10366 | 508.2 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
-| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1302 | 67.1 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
+| [server.py](#archivo-serverpy) | `python` | 2440 | 109.9 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10433 | 511.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2110 | 103.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
@@ -481,17 +481,17 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6001 | 403.1 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6009 | 403.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 759 | 57.6 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 759 | 57.6 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
-| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1005 | 43.3 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4116 | 185.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1006 | 43.5 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4140 | 187.4 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1935 | 93.1 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1938 | 93.4 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
@@ -516,9 +516,9 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 313 | 11.5 KB | Pruebas de seguridad de sesión y permisos en frontend |
 | [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 264 | 10.8 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 941 | 36.1 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 958 | 36.8 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
-| [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 461 | 14.7 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
+| [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 508 | 16.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
@@ -583,7 +583,7 @@ pytz>=2024.1
 
 - **Ruta:** `.gitignore`
 - **Descripción:** Reglas de exclusión de Git
-- **Métricas:** 46 líneas | 587 bytes (0.6 KB)
+- **Métricas:** 47 líneas | 594 bytes (0.6 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -611,6 +611,7 @@ tirecheck.db
 htmlcov/
 
 # Virtual Environment
+.venv/
 venv/
 env/
 ENV/
@@ -3813,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2430 líneas | 112,120 bytes (109.5 KB)
+- **Métricas:** 2440 líneas | 112,551 bytes (109.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3973,6 +3974,7 @@ class NuevaTipologiaItem(BaseModel):
     tipo_libres: str = "dual"
     cant_repuestos: int = 0
     esquema_custom: Optional[list] = None
+    permite_reencauche_direccion: Optional[bool] = False
 
 class EditarTipologiaItem(BaseModel):
     nombre_antiguo: str
@@ -3987,6 +3989,7 @@ class EditarTipologiaItem(BaseModel):
     tipo_libres: Optional[str] = "dual"
     cant_repuestos: Optional[int] = None
     esquema_custom: Optional[list] = None
+    permite_reencauche_direccion: Optional[bool] = None
 
 class ModeloLlantaItem(BaseModel):
     tipo_llanta: str = "Nueva"
@@ -5277,7 +5280,8 @@ def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir
         tipo_trac=item.tipo_trac,
         ejes_libres=item.ejes_libres,
         tipo_libres=item.tipo_libres,
-        cant_repuestos=item.cant_repuestos
+        cant_repuestos=item.cant_repuestos,
+        permite_reencauche_direccion=bool(item.permite_reencauche_direccion)
     )
     return {"status": "ok", "nombre": nom}
 
@@ -5296,7 +5300,8 @@ def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requer
             ejes_libres=item.ejes_libres,
             tipo_libres=item.tipo_libres or "dual",
             cant_repuestos=item.cant_repuestos,
-            esquema_custom=item.esquema_custom
+            esquema_custom=item.esquema_custom,
+            permite_reencauche_direccion=item.permite_reencauche_direccion
         )
         return {"status": "ok" if ok else "error"}
     except ValueError as e:
@@ -5314,7 +5319,13 @@ def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin_o_j
 def api_esquema(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     esquema = database.obtener_esquema_tipologia(tipologia)
     posiciones = database.obtener_posiciones_por_tipologia(tipologia)
-    return {"tipologia": tipologia, "esquema": esquema, "posiciones": posiciones}
+    permite_reenc = database.tipologia_permite_reencauche_direccion(tipologia)
+    return {
+        "tipologia": tipologia,
+        "esquema": esquema,
+        "posiciones": posiciones,
+        "permite_reencauche_direccion": permite_reenc
+    }
 
 @app.get("/api/modelos-llanta")
 def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -6255,7 +6266,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10366 líneas | 520,369 bytes (508.2 KB)
+- **Métricas:** 10433 líneas | 523,841 bytes (511.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6997,9 +7008,15 @@ def inicializar_bd():
                 descripcion TEXT,
                 cant_llantas INTEGER,
                 esquema_json TEXT,
+                permite_reencauche_direccion INTEGER DEFAULT 0,
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("PRAGMA table_info(catalogo_tipologias)")
+        cols_tip_existentes = [row[1] for row in cursor.fetchall()]
+        if "permite_reencauche_direccion" not in cols_tip_existentes:
+            cursor.execute("ALTER TABLE catalogo_tipologias ADD COLUMN permite_reencauche_direccion INTEGER DEFAULT 0")
+
         cursor.execute("SELECT COUNT(*) FROM catalogo_tipologias")
         if cursor.fetchone()[0] == 0:
             for s_path in ["seed_inspecciones.db", "data/inspecciones.db", os.path.join(os.path.dirname(__file__), "seed_inspecciones.db")]:
@@ -8459,6 +8476,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 "encontrado": True,
                 "placa": row[0],
                 "tipologia": tip,
+                "permite_reencauche_direccion": tipologia_permite_reencauche_direccion(tip, conn),
                 "cliente": row[2] or cliente_placa or "",
                 "subcliente": row[3] or "",
                 "tipo_operacion": row[4] or "",
@@ -8705,6 +8723,45 @@ def es_posicion_direccional(tipologia, posicion):
         return pos in [1, 2, 3, 4]
     return pos in [1, 2]
 
+def tipologia_permite_reencauche_direccion(tipologia, conn=None) -> bool:
+    """
+    Determina si la tipología especificada autoriza el uso de reencauche en eje direccional.
+    Por defecto retorna False (cumpliendo norma estricta de seguridad vial).
+    """
+    t_norm = str(tipologia or '').strip().lower()
+    if not t_norm:
+        return False
+
+    def _query(c):
+        cur = c.cursor()
+        try:
+            cur.execute("SELECT nombre, permite_reencauche_direccion FROM catalogo_tipologias")
+            rows = cur.fetchall()
+            # 1. Coincidencia exacta
+            for r in rows:
+                if r[0] and str(r[0]).strip().lower() == t_norm:
+                    return bool(r[1])
+            # 2. Coincidencia parcial
+            for r in rows:
+                nom_row = str(r[0] or '').strip().lower()
+                if nom_row and (t_norm in nom_row or nom_row in t_norm):
+                    return bool(r[1])
+            # 3. Palabras clave
+            palabras = [w for w in re.sub(r'[^a-zA-Z0-9]', ' ', t_norm).split() if len(w) >= 2]
+            if palabras:
+                for r in rows:
+                    nom_row = str(r[0] or '').strip().lower()
+                    if all(p in nom_row for p in palabras):
+                        return bool(r[1])
+        except Exception:
+            pass
+        return False
+
+    if conn is not None:
+        return _query(conn)
+    with get_connection() as _c:
+        return _query(_c)
+
 ANIO_MINIMO_INSPECCION = 2000
 
 # Profundidad máxima de banda por diámetro de rin (mm), usada cuando el modelo no está en el
@@ -8798,6 +8855,16 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
     km_actual = to_float(datos.get('kilometraje', 0))
     posicion = to_int(datos.get('posicion', 1))
     tipologia_val = str(datos.get('tipologia', '')).strip()
+    if not tipologia_val and placa:
+        try:
+            def _get_tip(c):
+                cur = c.cursor()
+                cur.execute("SELECT tipologia FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ? LIMIT 1", (placa,))
+                r = cur.fetchone()
+                return r[0] if r and r[0] else ''
+            tipologia_val = _get_tip(conn) if conn else _get_tip(get_connection())
+        except Exception:
+            pass
     dimension = str(datos.get('dimension', '')).strip().upper()
     prof_inicial = to_float(datos.get('prof_inicial', 0))
 
@@ -8824,11 +8891,13 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                 'mensaje': f'⛔ CANDADO DE SEGURIDAD: Ninguna de las 3 profundidades ({profs}) puede ser mayor a la Profundidad Inicial ({prof_inicial} mm) de la llanta.'
             }
 
-    # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original)
+    # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original),
+    # excepto si la tipología autoriza explícitamente reencauche en eje direccional.
     vida_val, banda_val = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     datos['vida'] = vida_val
     datos['banda_reen'] = banda_val
-    if es_posicion_direccional(tipologia_val, posicion) and vida_val != 'ORIGINAL':
+    permite_reen_dir = tipologia_permite_reencauche_direccion(tipologia_val, conn=conn)
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val != 'ORIGINAL' and not permite_reen_dir:
         return {
             'valido': False,
             'mensaje': (
@@ -11177,11 +11246,17 @@ def guardar_operacion(nombre):
 def obtener_todas_tipologias():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT nombre, descripcion, cant_llantas, esquema_json FROM catalogo_tipologias ORDER BY nombre ASC')
+        cursor.execute('SELECT nombre, descripcion, cant_llantas, esquema_json, permite_reencauche_direccion FROM catalogo_tipologias ORDER BY nombre ASC')
         res = []
         for r in cursor.fetchall():
             import json
-            res.append({'nombre': r[0], 'descripcion': r[1], 'cant_llantas': r[2], 'esquema': json.loads(r[3]) if r[3] else []})
+            res.append({
+                'nombre': r[0],
+                'descripcion': r[1],
+                'cant_llantas': r[2],
+                'esquema': json.loads(r[3]) if r[3] else [],
+                'permite_reencauche_direccion': bool(r[4]) if len(r) > 4 and r[4] is not None else False
+            })
         return res
 
 def generar_esquema_desde_composicion(ejes_dir=1, tipo_dir='sencilla', ejes_trac=2, tipo_trac='dual', ejes_libres=0, tipo_libres='dual', cant_repuestos=0):
@@ -11305,7 +11380,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=
                       ejes_dir=None, tipo_dir='sencilla',
                       ejes_trac=None, tipo_trac='dual',
                       ejes_libres=None, tipo_libres='dual',
-                      cant_repuestos=0):
+                      cant_repuestos=0, permite_reencauche_direccion=False):
     nom = (nombre or '').strip().upper()
     if not nom:
         return None
@@ -11381,10 +11456,11 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=
                     resto -= 2
                 eje_num += 1
 
+    permite_val = 1 if permite_reencauche_direccion else 0
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                       (nom, desc, cant, json.dumps(esquema)))
+        cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json, permite_reencauche_direccion) VALUES (?, ?, ?, ?, ?)',
+                       (nom, desc, cant, json.dumps(esquema), permite_val))
         conn.commit()
     return nom
 
@@ -11556,7 +11632,8 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
                          ejes_dir=None, tipo_dir='sencilla',
                          ejes_trac=None, tipo_trac='dual',
                          ejes_libres=None, tipo_libres='dual',
-                         cant_repuestos=None, esquema_custom=None, config_ejes=None):
+                         cant_repuestos=None, esquema_custom=None, config_ejes=None,
+                         permite_reencauche_direccion=None):
     nom_a = (nombre_antiguo or '').strip().upper()
     nom_n = (nombre_nuevo or '').strip().upper()
     if not nom_a or not nom_n:
@@ -11565,43 +11642,42 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
     desc = str(descripcion or '').strip().upper()
     import json
 
-    # Si se especificó composición de ejes desde el modal visual
-    if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
-        esquema, cant_calculada = generar_esquema_desde_composicion(
-            ejes_dir=ejes_dir or 0,
-            tipo_dir=tipo_dir,
-            ejes_trac=ejes_trac or 0,
-            tipo_trac=tipo_trac,
-            ejes_libres=ejes_libres or 0,
-            tipo_libres=tipo_libres,
-            cant_repuestos=cant_repuestos or 0
-        )
-        cant = cant_calculada
-        esquema_json = json.dumps(esquema)
-    elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
-        esquema_json = json.dumps(esquema_custom)
-        cant = sum(len(eje.get('posiciones', [])) for eje in esquema_custom)
-    else:
-        # Mantener el esquema existente
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT esquema_json, cant_llantas FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_a,))
-            row = cursor.fetchone()
-            if row:
-                esquema_json = row[0]
-                cant = int(cant_llantas or row[1] or 10)
-            else:
-                esquema_json = '[]'
-                cant = int(cant_llantas or 10)
-
     with get_connection() as conn:
         cursor = conn.cursor()
+        cursor.execute('SELECT esquema_json, cant_llantas, permite_reencauche_direccion FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_a,))
+        row_prev = cursor.fetchone()
+        prev_esquema = row_prev[0] if row_prev and row_prev[0] else '[]'
+        prev_cant = int(row_prev[1]) if row_prev and row_prev[1] else 10
+        prev_permite = row_prev[2] if row_prev and len(row_prev) > 2 and row_prev[2] is not None else 0
+
+        # Si se especificó composición de ejes desde el modal visual
+        if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
+            esquema, cant_calculada = generar_esquema_desde_composicion(
+                ejes_dir=ejes_dir or 0,
+                tipo_dir=tipo_dir,
+                ejes_trac=ejes_trac or 0,
+                tipo_trac=tipo_trac,
+                ejes_libres=ejes_libres or 0,
+                tipo_libres=tipo_libres,
+                cant_repuestos=cant_repuestos or 0
+            )
+            cant = cant_calculada
+            esquema_json = json.dumps(esquema)
+        elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
+            esquema_json = json.dumps(esquema_custom)
+            cant = sum(len(eje.get('posiciones', [])) for eje in esquema_custom)
+        else:
+            esquema_json = prev_esquema
+            cant = int(cant_llantas or prev_cant)
+
+        p_reen_val = (1 if permite_reencauche_direccion else 0) if permite_reencauche_direccion is not None else prev_permite
+
         if nom_a == nom_n:
             cursor.execute('''
                 UPDATE catalogo_tipologias
-                SET descripcion = ?, cant_llantas = ?, esquema_json = ?
+                SET descripcion = ?, cant_llantas = ?, esquema_json = ?, permite_reencauche_direccion = ?
                 WHERE UPPER(TRIM(nombre)) = ?
-            ''', (desc, cant, esquema_json, nom_a))
+            ''', (desc, cant, esquema_json, p_reen_val, nom_a))
         else:
             cursor.execute('SELECT COUNT(*) FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_n,))
             if cursor.fetchone()[0] > 0:
@@ -11609,9 +11685,9 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
 
             cursor.execute('''
                 UPDATE catalogo_tipologias
-                SET nombre = ?, descripcion = ?, cant_llantas = ?, esquema_json = ?
+                SET nombre = ?, descripcion = ?, cant_llantas = ?, esquema_json = ?, permite_reencauche_direccion = ?
                 WHERE UPPER(TRIM(nombre)) = ?
-            ''', (nom_n, desc, cant, esquema_json, nom_a))
+            ''', (nom_n, desc, cant, esquema_json, p_reen_val, nom_a))
 
             # Actualizar en cascada en la base de datos de inspecciones y vehículos
             cursor.execute('UPDATE inspecciones SET tipologia = ? WHERE UPPER(TRIM(tipologia)) = ?', (nom_n, nom_a))
@@ -13636,8 +13712,10 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             perfil_v = obtener_perfil_vehiculo(placa)
             tipologia_v = perfil_v.get('tipologia', '')
             if es_posicion_direccional(tipologia_v, posicion):
-                if vida_act.upper() != 'ORIGINAL' or bodega_origen == 'BODEGA_4_REENCAUCHADAS':
-                    return {"ok": False, "mensaje": "⛔ CANDADO VIAL: No se puede montar una llanta reencauchada en posición direccional."}
+                permite_dir = tipologia_permite_reencauche_direccion(tipologia_v, conn=conn)
+                if not permite_dir:
+                    if vida_act.upper() != 'ORIGINAL' or bodega_origen == 'BODEGA_4_REENCAUCHADAS':
+                        return {"ok": False, "mensaje": "⛔ CANDADO VIAL: No se puede montar una llanta reencauchada en posición direccional."}
 
         placa_act = cur.get('placa_actual', '')
         pos_act = to_int(cur.get('posicion_actual', 0))
@@ -16630,7 +16708,7 @@ def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> di
 
 - **Ruta:** `modulo_bodegas_taller.py`
 - **Descripción:** Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)
-- **Métricas:** 1302 líneas | 68,693 bytes (67.1 KB)
+- **Métricas:** 1304 líneas | 68,998 bytes (67.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17011,16 +17089,17 @@ def montar_llanta_taller(datos: dict) -> dict:
             return {"ok": False, "status": "error", "message": error}
         es_reingreso = origen in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA')
 
-        # Candado Direccional: Si es eje direccional y ciclo_actual > 1 (o reencauche), rechazar
+        # Candado Direccional: Si es eje direccional y ciclo_actual > 1 (o reencauche), rechazar (salvo si la tipología autoriza)
         perfil_v = database.obtener_perfil_vehiculo(placa)
         tipologia_v = perfil_v.get('tipologia', '') if perfil_v else ''
         if database.es_posicion_direccional(tipologia_v, posicion):
-            if (ciclo_act and ciclo_act > 1) or (vida_act and vida_act.upper() != 'ORIGINAL'):
-                return {
-                    "ok": False,
-                    "status": "error",
-                    "message": "⛔ CANDADO VIAL: En eje direccional solo se permite condición Original (prohibido llantas reencauchadas)."
-                }
+            if not database.tipologia_permite_reencauche_direccion(tipologia_v):
+                if (ciclo_act and ciclo_act > 1) or (vida_act and vida_act.upper() != 'ORIGINAL'):
+                    return {
+                        "ok": False,
+                        "status": "error",
+                        "message": "⛔ CANDADO VIAL: En eje direccional solo se permite condición Original (prohibido llantas reencauchadas)."
+                    }
 
         # Desmonte automático de ocupante previa en la misma posición
         cursor.execute("""
@@ -17773,6 +17852,7 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         perfil_v = database.obtener_perfil_vehiculo(placa)
         tipologia = perfil_v.get('tipologia', '') if perfil_v else ''
         es_direccional = database.es_posicion_direccional(tipologia, posicion)
+        permite_reenc_dir = database.tipologia_permite_reencauche_direccion(tipologia)
 
         # Buscar stock disponible en Bodega 1 y Bodega 2
         query_stock = """
@@ -17794,8 +17874,8 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         for r_s in stock_raw:
             c_num = r_s[10] or 1
             v_act = database.vida_llanta(r_s[11], r_s[12], c_num)
-            # Si la posición es direccional, excluir reencauches
-            if es_direccional and v_act != 'Original':
+            # Si la posición es direccional y la tipología no permite reencauche en direccional, excluir reencauches
+            if es_direccional and not permite_reenc_dir and v_act != 'Original':
                 continue
 
             stock_disponible.append({
@@ -23081,7 +23161,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6001 líneas | 412,778 bytes (403.1 KB)
+- **Métricas:** 6009 líneas | 413,535 bytes (403.8 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -28353,6 +28433,14 @@ if __name__ == '__main__':
                 <option value="dual">Pacha / Dual (4 llantas por eje)</option>
               </select>
             </div>
+            <!-- Checkbox: Permitir Reencauche en Eje Direccional -->
+            <div class="pt-2 border-t border-slate-100 flex items-start space-x-2.5">
+              <input type="checkbox" id="tip_permite_reencauche_dir" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+              <label for="tip_permite_reencauche_dir" class="cursor-pointer select-none">
+                <span class="font-bold text-slate-800 text-xs block">Permitir reencauche en eje direccional</span>
+                <span class="text-[11px] text-slate-500 block leading-tight">Marcar solo si esta tipología autoriza el uso de llantas reencauchadas en el eje direccional.</span>
+              </label>
+            </div>
           </div>
 
           <!-- Card 2: Ejes de Tracción (Fuerza) -->
@@ -31994,7 +32082,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/app_core.js`
 - **Descripción:** Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación
-- **Métricas:** 1005 líneas | 44,332 bytes (43.3 KB)
+- **Métricas:** 1006 líneas | 44,522 bytes (43.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -32288,11 +32376,12 @@ if __name__ == '__main__':
         };
       }
 
-      // 3. Eje Direccional: vida debe ser Original
+      // 3. Eje Direccional: vida debe ser Original (salvo autorización explícita de la tipología)
       const pos = parseInt(payload.posicion) || 1;
       const vida = String(payload.vida || 'Original').trim().toUpperCase();
       const tipologia = String(payload.tipologia || '').trim();
-      if (esPosicionDireccionalLocal(tipologia, pos) && esVidaReencauche(vida)) {
+      const permiteReenDir = payload.permite_reencauche_direccion || (window.tipologiaPermiteReencaucheCache === true);
+      if (esPosicionDireccionalLocal(tipologia, pos) && esVidaReencauche(vida) && !permiteReenDir) {
         return {
           valido: false,
           mensaje: `⛔ CANDADO DE SEGURIDAD VIAL: En el eje direccional (Posición ${pos}) no se permite Reencauche, únicamente condición Original.`
@@ -33010,7 +33099,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4116 líneas | 190,209 bytes (185.8 KB)
+- **Métricas:** 4140 líneas | 191,911 bytes (187.4 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -33511,6 +33600,7 @@ if __name__ == '__main__':
 
       if (d) {
         esquemaTipologiaCache = d.esquema;
+        window.tipologiaPermiteReencaucheCache = !!d.permite_reencauche_direccion;
         listaPosicionesActual = calcularOrdenInspeccion(d.esquema, d.posiciones);
         const posActual = parseInt(document.getElementById('posicion').value) || 1;
         renderizarChasisEjes(d.esquema, listaPosicionesActual);
@@ -33523,6 +33613,7 @@ if __name__ == '__main__':
         } else {
           seleccionarPosicion(posActual);
         }
+        aplicarRestriccionEjeDireccional(posActual);
       }
     }
 
@@ -34945,17 +35036,30 @@ if __name__ == '__main__':
       const selVida = document.getElementById('vida');
       const optsReencauche = selVida ? Array.from(selVida.querySelectorAll('option')).filter(o => /^R\d+$/.test(o.value)) : [];
       const badge = document.getElementById('badgeDireccionalOriginal');
+      const permiteReen = (window.tipologiaPermiteReencaucheCache === true);
 
-      if (esDir) {
+      if (esDir && !permiteReen) {
         optsReencauche.forEach(o => { o.disabled = true; o.classList.add('text-slate-400'); });
         if (selVida && esVidaReencauche(selVida.value)) {
           selVida.value = 'Original';
           validarVida();
         }
-        if (badge) badge.classList.remove('hidden');
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.className = "mt-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center space-x-1.5";
+          badge.innerHTML = `<i class="fa-solid fa-shield-halved text-amber-600"></i><span>Eje Direccional: Por norma solo se permite Original.</span>`;
+        }
       } else {
         optsReencauche.forEach(o => { o.disabled = false; o.classList.remove('text-slate-400'); });
-        if (badge) badge.classList.add('hidden');
+        if (badge) {
+          if (esDir && permiteReen) {
+            badge.classList.remove('hidden');
+            badge.className = "mt-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 flex items-center space-x-1.5";
+            badge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i><span>Eje Direccional: Tipología autorizada para Reencauche.</span>`;
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
       }
     }
 
@@ -35835,7 +35939,7 @@ if __name__ == '__main__':
         if (selVida.value && selVida.value !== 'Original' && !/^R\d+$/.test(selVida.value)) {
           selVida.value = '';
         }
-        if (esVidaReencauche(selVida.value) && esPosicionDireccionalActual(pos)) {
+        if (esVidaReencauche(selVida.value) && esPosicionDireccionalActual(pos) && !window.tipologiaPermiteReencaucheCache) {
           selVida.value = 'Original';
           mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
         }
@@ -36378,6 +36482,8 @@ if __name__ == '__main__':
       document.getElementById('tip_ejes_libre_cant').value = '0';
       document.getElementById('tip_ejes_libre_tipo').value = 'dual';
       document.getElementById('tip_ejes_repuesto_cant').value = '0';
+      const chkReen = document.getElementById('tip_permite_reencauche_dir');
+      if (chkReen) chkReen.checked = false;
       document.getElementById('modalTipologia').classList.remove('hidden');
       document.getElementById('modalTipologia').classList.add('flex');
       recalcularLlantasTipologia();
@@ -36427,6 +36533,8 @@ if __name__ == '__main__':
       document.getElementById('tip_ejes_libre_cant').value = eLib;
       document.getElementById('tip_ejes_libre_tipo').value = tLib;
       document.getElementById('tip_ejes_repuesto_cant').value = eRep;
+      const chkReen = document.getElementById('tip_permite_reencauche_dir');
+      if (chkReen) chkReen.checked = !!t.permite_reencauche_direccion;
       recalcularLlantasTipologia();
 
       document.getElementById('modalTipologia').classList.remove('hidden');
@@ -36435,6 +36543,8 @@ if __name__ == '__main__':
 
     function cerrarModalTipologia() {
       tipologiaEditando = null;
+      const chkReen = document.getElementById('tip_permite_reencauche_dir');
+      if (chkReen) chkReen.checked = false;
       document.getElementById('modalTipologia').classList.add('hidden');
       document.getElementById('modalTipologia').classList.remove('flex');
     }
@@ -36457,6 +36567,7 @@ if __name__ == '__main__':
       const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
       const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
       const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+      const permiteReenDir = !!document.getElementById('tip_permite_reencauche_dir')?.checked;
 
       const totalLlantas = recalcularLlantasTipologia();
 
@@ -36472,7 +36583,8 @@ if __name__ == '__main__':
           tipo_trac: tTrac,
           ejes_libres: eLib,
           tipo_libres: tLib,
-          cant_repuestos: eRep
+          cant_repuestos: eRep,
+          permite_reencauche_direccion: permiteReenDir
         };
         try {
           const res = await fetch('/api/tipologias', {
@@ -36503,7 +36615,8 @@ if __name__ == '__main__':
           tipo_trac: tTrac,
           ejes_libres: eLib,
           tipo_libres: tLib,
-          cant_repuestos: eRep
+          cant_repuestos: eRep,
+          permite_reencauche_direccion: permiteReenDir
         };
 
         try {
@@ -42111,7 +42224,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 1935 líneas | 95,323 bytes (93.1 KB)
+- **Métricas:** 1938 líneas | 95,685 bytes (93.4 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -42477,7 +42590,10 @@ if __name__ == '__main__':
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
                   <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
-                  <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                  <div class="flex items-center space-x-1.5">
+                    ${t.permite_reencauche_direccion ? `<span class="text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full" title="Esta tipología permite llantas reencauchadas en eje direccional">Reencauche Dir.</span>` : ''}
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                  </div>
                 </div>
                 <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
               </div>
@@ -51319,7 +51435,7 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 941 líneas | 36,946 bytes (36.1 KB)
+- **Métricas:** 958 líneas | 37,686 bytes (36.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -51830,6 +51946,23 @@ def test_admin_editar_y_eliminar_tipologia_con_candado_uso(test_db):
     # Verificar que el nombre nuevo está en el catálogo
     tips = admin_client.get("/api/tipologias").json()
     assert any(t["nombre"] == "VOLQUETA 10X4 ULTRA" for t in tips)
+
+    # 2b. Crear y consultar tipología con permite_reencauche_direccion
+    res_crear_reen = admin_client.post("/api/tipologias", json={
+        "nombre": "Volqueta Reen Dir",
+        "descripcion": "Autoriza reencauche",
+        "cant_llantas": 10,
+        "ejes_dir": 1,
+        "ejes_trac": 2,
+        "permite_reencauche_direccion": True
+    })
+    assert res_crear_reen.status_code == 200
+    tips_reen = admin_client.get("/api/tipologias").json()
+    tip_item = next(t for t in tips_reen if t["nombre"] == "VOLQUETA REEN DIR")
+    assert tip_item["permite_reencauche_direccion"] is True
+
+    esq_res = admin_client.get("/api/esquema?tipologia=VOLQUETA%20REEN%20DIR").json()
+    assert esq_res["permite_reencauche_direccion"] is True
 
     # 3. Vincular una inspección a esta tipología para probar el candado de no eliminación
     database.insertar_inspeccion({
@@ -52740,7 +52873,7 @@ def test_recalculo_prof_inicial_catalogo_al_cambiar_posicion(test_db, auth_clien
 
 - **Ruta:** `tests/test_candados.py`
 - **Descripción:** Pruebas unitarias de los 6 candados operativos de captura en patio
-- **Métricas:** 461 líneas | 15,084 bytes (14.7 KB)
+- **Métricas:** 508 líneas | 16,918 bytes (16.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -52979,6 +53112,53 @@ def test_candado_eje_direccional_solo_original(test_db):
     datos_dir_original['vida'] = 'Original'
     val_ok = database.validar_inspeccion_candados(datos_dir_original)
     assert val_ok['valido'] is True
+
+def test_candado_eje_direccional_permite_reencauche_si_tipologia_lo_autoriza(test_db):
+    # 1. Crear tipología con permiso de reencauche en eje direccional habilitado
+    database.guardar_tipologia(
+        nombre="ESPECIAL REEN DIR",
+        descripcion="Tipología de prueba que autoriza reencauche en dirección",
+        cant_llantas=10,
+        ejes_dir=1,
+        tipo_dir="sencilla",
+        ejes_trac=2,
+        tipo_trac="dual",
+        permite_reencauche_direccion=True
+    )
+
+    # Verificar que el helper retorna True
+    assert database.tipologia_permite_reencauche_direccion("ESPECIAL REEN DIR") is True
+
+    # 2. Registrar inspección con Reencauche en eje direccional (Pos 1) -> DEBE SER VÁLIDO
+    datos_permitido = {
+        'fecha': '2026-10-14',
+        'placa': 'ESP01',
+        'posicion': 1,
+        'tipologia': 'ESPECIAL REEN DIR',
+        'kilometraje': 25000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'vida': 'Reencauche'
+    }
+    val = database.validar_inspeccion_candados(datos_permitido)
+    assert val['valido'] is True, f"Error inesperado: {val.get('mensaje')}"
+
+    # 3. Editar la tipología para desmarcar el check (permite_reencauche_direccion=False)
+    database.actualizar_tipologia(
+        nombre_antiguo="ESPECIAL REEN DIR",
+        nombre_nuevo="ESPECIAL REEN DIR",
+        permite_reencauche_direccion=False
+    )
+    assert database.tipologia_permite_reencauche_direccion("ESPECIAL REEN DIR") is False
+
+    # 4. Ahora debe ser BLOQUEADO por seguridad vial
+    val_bloq = database.validar_inspeccion_candados(datos_permitido)
+    assert not val_bloq['valido']
+    assert 'eje direccional' in val_bloq['mensaje'].lower()
+    assert 'reencauche' in val_bloq['mensaje'].lower()
 
 def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
     # Vehículo inspeccionado el 2026-08-25
