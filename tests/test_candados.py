@@ -234,6 +234,53 @@ def test_candado_eje_direccional_solo_original(test_db):
     val_ok = database.validar_inspeccion_candados(datos_dir_original)
     assert val_ok['valido'] is True
 
+def test_candado_eje_direccional_permite_reencauche_si_tipologia_lo_autoriza(test_db):
+    # 1. Crear tipología con permiso de reencauche en eje direccional habilitado
+    database.guardar_tipologia(
+        nombre="ESPECIAL REEN DIR",
+        descripcion="Tipología de prueba que autoriza reencauche en dirección",
+        cant_llantas=10,
+        ejes_dir=1,
+        tipo_dir="sencilla",
+        ejes_trac=2,
+        tipo_trac="dual",
+        permite_reencauche_direccion=True
+    )
+
+    # Verificar que el helper retorna True
+    assert database.tipologia_permite_reencauche_direccion("ESPECIAL REEN DIR") is True
+
+    # 2. Registrar inspección con Reencauche en eje direccional (Pos 1) -> DEBE SER VÁLIDO
+    datos_permitido = {
+        'fecha': '2026-10-14',
+        'placa': 'ESP01',
+        'posicion': 1,
+        'tipologia': 'ESPECIAL REEN DIR',
+        'kilometraje': 25000,
+        'dimension': '295/80R22.5',
+        'prof_inicial': 16.0,
+        'prof_ext': 12.0,
+        'prof_cent': 12.0,
+        'prof_int': 12.0,
+        'vida': 'Reencauche'
+    }
+    val = database.validar_inspeccion_candados(datos_permitido)
+    assert val['valido'] is True, f"Error inesperado: {val.get('mensaje')}"
+
+    # 3. Editar la tipología para desmarcar el check (permite_reencauche_direccion=False)
+    database.actualizar_tipologia(
+        nombre_antiguo="ESPECIAL REEN DIR",
+        nombre_nuevo="ESPECIAL REEN DIR",
+        permite_reencauche_direccion=False
+    )
+    assert database.tipologia_permite_reencauche_direccion("ESPECIAL REEN DIR") is False
+
+    # 4. Ahora debe ser BLOQUEADO por seguridad vial
+    val_bloq = database.validar_inspeccion_candados(datos_permitido)
+    assert not val_bloq['valido']
+    assert 'eje direccional' in val_bloq['mensaje'].lower()
+    assert 'reencauche' in val_bloq['mensaje'].lower()
+
 def test_candado_frecuencia_siguiente_mes_mas_20_dias(test_db):
     # Vehículo inspeccionado el 2026-08-25
     datos1 = {

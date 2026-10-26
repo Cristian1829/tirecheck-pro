@@ -375,16 +375,17 @@ def montar_llanta_taller(datos: dict) -> dict:
             return {"ok": False, "status": "error", "message": error}
         es_reingreso = origen in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA')
 
-        # Candado Direccional: Si es eje direccional y ciclo_actual > 1 (o reencauche), rechazar
+        # Candado Direccional: Si es eje direccional y ciclo_actual > 1 (o reencauche), rechazar (salvo si la tipología autoriza)
         perfil_v = database.obtener_perfil_vehiculo(placa)
         tipologia_v = perfil_v.get('tipologia', '') if perfil_v else ''
         if database.es_posicion_direccional(tipologia_v, posicion):
-            if (ciclo_act and ciclo_act > 1) or (vida_act and vida_act.upper() != 'ORIGINAL'):
-                return {
-                    "ok": False,
-                    "status": "error",
-                    "message": "⛔ CANDADO VIAL: En eje direccional solo se permite condición Original (prohibido llantas reencauchadas)."
-                }
+            if not database.tipologia_permite_reencauche_direccion(tipologia_v):
+                if (ciclo_act and ciclo_act > 1) or (vida_act and vida_act.upper() != 'ORIGINAL'):
+                    return {
+                        "ok": False,
+                        "status": "error",
+                        "message": "⛔ CANDADO VIAL: En eje direccional solo se permite condición Original (prohibido llantas reencauchadas)."
+                    }
 
         # Desmonte automático de ocupante previa en la misma posición
         cursor.execute("""
@@ -1137,6 +1138,7 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         perfil_v = database.obtener_perfil_vehiculo(placa)
         tipologia = perfil_v.get('tipologia', '') if perfil_v else ''
         es_direccional = database.es_posicion_direccional(tipologia, posicion)
+        permite_reenc_dir = database.tipologia_permite_reencauche_direccion(tipologia)
 
         # Buscar stock disponible en Bodega 1 y Bodega 2
         query_stock = """
@@ -1158,8 +1160,8 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         for r_s in stock_raw:
             c_num = r_s[10] or 1
             v_act = database.vida_llanta(r_s[11], r_s[12], c_num)
-            # Si la posición es direccional, excluir reencauches
-            if es_direccional and v_act != 'Original':
+            # Si la posición es direccional y la tipología no permite reencauche en direccional, excluir reencauches
+            if es_direccional and not permite_reenc_dir and v_act != 'Original':
                 continue
 
             stock_disponible.append({

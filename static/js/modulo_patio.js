@@ -495,6 +495,7 @@
 
       if (d) {
         esquemaTipologiaCache = d.esquema;
+        window.tipologiaPermiteReencaucheCache = !!d.permite_reencauche_direccion;
         listaPosicionesActual = calcularOrdenInspeccion(d.esquema, d.posiciones);
         const posActual = parseInt(document.getElementById('posicion').value) || 1;
         renderizarChasisEjes(d.esquema, listaPosicionesActual);
@@ -507,6 +508,7 @@
         } else {
           seleccionarPosicion(posActual);
         }
+        aplicarRestriccionEjeDireccional(posActual);
       }
     }
 
@@ -1929,17 +1931,30 @@
       const selVida = document.getElementById('vida');
       const optsReencauche = selVida ? Array.from(selVida.querySelectorAll('option')).filter(o => /^R\d+$/.test(o.value)) : [];
       const badge = document.getElementById('badgeDireccionalOriginal');
+      const permiteReen = (window.tipologiaPermiteReencaucheCache === true);
 
-      if (esDir) {
+      if (esDir && !permiteReen) {
         optsReencauche.forEach(o => { o.disabled = true; o.classList.add('text-slate-400'); });
         if (selVida && esVidaReencauche(selVida.value)) {
           selVida.value = 'Original';
           validarVida();
         }
-        if (badge) badge.classList.remove('hidden');
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.className = "mt-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center space-x-1.5";
+          badge.innerHTML = `<i class="fa-solid fa-shield-halved text-amber-600"></i><span>Eje Direccional: Por norma solo se permite Original.</span>`;
+        }
       } else {
         optsReencauche.forEach(o => { o.disabled = false; o.classList.remove('text-slate-400'); });
-        if (badge) badge.classList.add('hidden');
+        if (badge) {
+          if (esDir && permiteReen) {
+            badge.classList.remove('hidden');
+            badge.className = "mt-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 flex items-center space-x-1.5";
+            badge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i><span>Eje Direccional: Tipología autorizada para Reencauche.</span>`;
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
       }
     }
 
@@ -2819,7 +2834,7 @@
         if (selVida.value && selVida.value !== 'Original' && !/^R\d+$/.test(selVida.value)) {
           selVida.value = '';
         }
-        if (esVidaReencauche(selVida.value) && esPosicionDireccionalActual(pos)) {
+        if (esVidaReencauche(selVida.value) && esPosicionDireccionalActual(pos) && !window.tipologiaPermiteReencaucheCache) {
           selVida.value = 'Original';
           mostrarToast('⛔ En eje direccional solo se permite condición Original por seguridad vial.', true);
         }
@@ -3362,6 +3377,8 @@
       document.getElementById('tip_ejes_libre_cant').value = '0';
       document.getElementById('tip_ejes_libre_tipo').value = 'dual';
       document.getElementById('tip_ejes_repuesto_cant').value = '0';
+      const chkReen = document.getElementById('tip_permite_reencauche_dir');
+      if (chkReen) chkReen.checked = false;
       document.getElementById('modalTipologia').classList.remove('hidden');
       document.getElementById('modalTipologia').classList.add('flex');
       recalcularLlantasTipologia();
@@ -3411,6 +3428,8 @@
       document.getElementById('tip_ejes_libre_cant').value = eLib;
       document.getElementById('tip_ejes_libre_tipo').value = tLib;
       document.getElementById('tip_ejes_repuesto_cant').value = eRep;
+      const chkReen = document.getElementById('tip_permite_reencauche_dir');
+      if (chkReen) chkReen.checked = !!t.permite_reencauche_direccion;
       recalcularLlantasTipologia();
 
       document.getElementById('modalTipologia').classList.remove('hidden');
@@ -3419,6 +3438,8 @@
 
     function cerrarModalTipologia() {
       tipologiaEditando = null;
+      const chkReen = document.getElementById('tip_permite_reencauche_dir');
+      if (chkReen) chkReen.checked = false;
       document.getElementById('modalTipologia').classList.add('hidden');
       document.getElementById('modalTipologia').classList.remove('flex');
     }
@@ -3441,6 +3462,7 @@
       const eLib = Math.max(0, parseInt(document.getElementById('tip_ejes_libre_cant')?.value) || 0);
       const tLib = document.getElementById('tip_ejes_libre_tipo')?.value || 'dual';
       const eRep = Math.max(0, parseInt(document.getElementById('tip_ejes_repuesto_cant')?.value) || 0);
+      const permiteReenDir = !!document.getElementById('tip_permite_reencauche_dir')?.checked;
 
       const totalLlantas = recalcularLlantasTipologia();
 
@@ -3456,7 +3478,8 @@
           tipo_trac: tTrac,
           ejes_libres: eLib,
           tipo_libres: tLib,
-          cant_repuestos: eRep
+          cant_repuestos: eRep,
+          permite_reencauche_direccion: permiteReenDir
         };
         try {
           const res = await fetch('/api/tipologias', {
@@ -3487,7 +3510,8 @@
           tipo_trac: tTrac,
           ejes_libres: eLib,
           tipo_libres: tLib,
-          cant_repuestos: eRep
+          cant_repuestos: eRep,
+          permite_reencauche_direccion: permiteReenDir
         };
 
         try {

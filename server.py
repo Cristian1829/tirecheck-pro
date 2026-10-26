@@ -154,6 +154,7 @@ class NuevaTipologiaItem(BaseModel):
     tipo_libres: str = "dual"
     cant_repuestos: int = 0
     esquema_custom: Optional[list] = None
+    permite_reencauche_direccion: Optional[bool] = False
 
 class EditarTipologiaItem(BaseModel):
     nombre_antiguo: str
@@ -168,6 +169,7 @@ class EditarTipologiaItem(BaseModel):
     tipo_libres: Optional[str] = "dual"
     cant_repuestos: Optional[int] = None
     esquema_custom: Optional[list] = None
+    permite_reencauche_direccion: Optional[bool] = None
 
 class ModeloLlantaItem(BaseModel):
     tipo_llanta: str = "Nueva"
@@ -1458,7 +1460,8 @@ def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir
         tipo_trac=item.tipo_trac,
         ejes_libres=item.ejes_libres,
         tipo_libres=item.tipo_libres,
-        cant_repuestos=item.cant_repuestos
+        cant_repuestos=item.cant_repuestos,
+        permite_reencauche_direccion=bool(item.permite_reencauche_direccion)
     )
     return {"status": "ok", "nombre": nom}
 
@@ -1477,7 +1480,8 @@ def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requer
             ejes_libres=item.ejes_libres,
             tipo_libres=item.tipo_libres or "dual",
             cant_repuestos=item.cant_repuestos,
-            esquema_custom=item.esquema_custom
+            esquema_custom=item.esquema_custom,
+            permite_reencauche_direccion=item.permite_reencauche_direccion
         )
         return {"status": "ok" if ok else "error"}
     except ValueError as e:
@@ -1495,7 +1499,13 @@ def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin_o_j
 def api_esquema(tipologia: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
     esquema = database.obtener_esquema_tipologia(tipologia)
     posiciones = database.obtener_posiciones_por_tipologia(tipologia)
-    return {"tipologia": tipologia, "esquema": esquema, "posiciones": posiciones}
+    permite_reenc = database.tipologia_permite_reencauche_direccion(tipologia)
+    return {
+        "tipologia": tipologia,
+        "esquema": esquema,
+        "posiciones": posiciones,
+        "permite_reencauche_direccion": permite_reenc
+    }
 
 @app.get("/api/modelos-llanta")
 def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):

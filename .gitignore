@@ -22,6 +22,7 @@ tirecheck.db
 htmlcov/
 
 # Virtual Environment
+.venv/
 venv/
 env/
 ENV/

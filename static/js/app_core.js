@@ -288,11 +288,12 @@
         };
       }
 
-      // 3. Eje Direccional: vida debe ser Original
+      // 3. Eje Direccional: vida debe ser Original (salvo autorización explícita de la tipología)
       const pos = parseInt(payload.posicion) || 1;
       const vida = String(payload.vida || 'Original').trim().toUpperCase();
       const tipologia = String(payload.tipologia || '').trim();
-      if (esPosicionDireccionalLocal(tipologia, pos) && esVidaReencauche(vida)) {
+      const permiteReenDir = payload.permite_reencauche_direccion || (window.tipologiaPermiteReencaucheCache === true);
+      if (esPosicionDireccionalLocal(tipologia, pos) && esVidaReencauche(vida) && !permiteReenDir) {
         return {
           valido: false,
           mensaje: `⛔ CANDADO DE SEGURIDAD VIAL: En el eje direccional (Posición ${pos}) no se permite Reencauche, únicamente condición Original.`

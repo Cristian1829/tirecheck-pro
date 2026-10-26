@@ -506,6 +506,23 @@ def test_admin_editar_y_eliminar_tipologia_con_candado_uso(test_db):
     tips = admin_client.get("/api/tipologias").json()
     assert any(t["nombre"] == "VOLQUETA 10X4 ULTRA" for t in tips)
 
+    # 2b. Crear y consultar tipología con permite_reencauche_direccion
+    res_crear_reen = admin_client.post("/api/tipologias", json={
+        "nombre": "Volqueta Reen Dir",
+        "descripcion": "Autoriza reencauche",
+        "cant_llantas": 10,
+        "ejes_dir": 1,
+        "ejes_trac": 2,
+        "permite_reencauche_direccion": True
+    })
+    assert res_crear_reen.status_code == 200
+    tips_reen = admin_client.get("/api/tipologias").json()
+    tip_item = next(t for t in tips_reen if t["nombre"] == "VOLQUETA REEN DIR")
+    assert tip_item["permite_reencauche_direccion"] is True
+
+    esq_res = admin_client.get("/api/esquema?tipologia=VOLQUETA%20REEN%20DIR").json()
+    assert esq_res["permite_reencauche_direccion"] is True
+
     # 3. Vincular una inspección a esta tipología para probar el candado de no eliminación
     database.insertar_inspeccion({
         "fecha": "2026-03-01",

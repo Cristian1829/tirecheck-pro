@@ -360,7 +360,10 @@
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
                   <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
-                  <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                  <div class="flex items-center space-x-1.5">
+                    ${t.permite_reencauche_direccion ? `<span class="text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full" title="Esta tipología permite llantas reencauchadas en eje direccional">Reencauche Dir.</span>` : ''}
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                  </div>
                 </div>
                 <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
               </div>

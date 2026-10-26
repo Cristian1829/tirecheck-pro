@@ -736,9 +736,15 @@ def inicializar_bd():
                 descripcion TEXT,
                 cant_llantas INTEGER,
                 esquema_json TEXT,
+                permite_reencauche_direccion INTEGER DEFAULT 0,
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("PRAGMA table_info(catalogo_tipologias)")
+        cols_tip_existentes = [row[1] for row in cursor.fetchall()]
+        if "permite_reencauche_direccion" not in cols_tip_existentes:
+            cursor.execute("ALTER TABLE catalogo_tipologias ADD COLUMN permite_reencauche_direccion INTEGER DEFAULT 0")
+
         cursor.execute("SELECT COUNT(*) FROM catalogo_tipologias")
         if cursor.fetchone()[0] == 0:
             for s_path in ["seed_inspecciones.db", "data/inspecciones.db", os.path.join(os.path.dirname(__file__), "seed_inspecciones.db")]:
@@ -2198,6 +2204,7 @@ def obtener_perfil_vehiculo(placa: str) -> dict:
                 "encontrado": True,
                 "placa": row[0],
                 "tipologia": tip,
+                "permite_reencauche_direccion": tipologia_permite_reencauche_direccion(tip, conn),
                 "cliente": row[2] or cliente_placa or "",
                 "subcliente": row[3] or "",
                 "tipo_operacion": row[4] or "",
@@ -2444,6 +2451,45 @@ def es_posicion_direccional(tipologia, posicion):
         return pos in [1, 2, 3, 4]
     return pos in [1, 2]
 
+def tipologia_permite_reencauche_direccion(tipologia, conn=None) -> bool:
+    """
+    Determina si la tipología especificada autoriza el uso de reencauche en eje direccional.
+    Por defecto retorna False (cumpliendo norma estricta de seguridad vial).
+    """
+    t_norm = str(tipologia or '').strip().lower()
+    if not t_norm:
+        return False
+
+    def _query(c):
+        cur = c.cursor()
+        try:
+            cur.execute("SELECT nombre, permite_reencauche_direccion FROM catalogo_tipologias")
+            rows = cur.fetchall()
+            # 1. Coincidencia exacta
+            for r in rows:
+                if r[0] and str(r[0]).strip().lower() == t_norm:
+                    return bool(r[1])
+            # 2. Coincidencia parcial
+            for r in rows:
+                nom_row = str(r[0] or '').strip().lower()
+                if nom_row and (t_norm in nom_row or nom_row in t_norm):
+                    return bool(r[1])
+            # 3. Palabras clave
+            palabras = [w for w in re.sub(r'[^a-zA-Z0-9]', ' ', t_norm).split() if len(w) >= 2]
+            if palabras:
+                for r in rows:
+                    nom_row = str(r[0] or '').strip().lower()
+                    if all(p in nom_row for p in palabras):
+                        return bool(r[1])
+        except Exception:
+            pass
+        return False
+
+    if conn is not None:
+        return _query(conn)
+    with get_connection() as _c:
+        return _query(_c)
+
 ANIO_MINIMO_INSPECCION = 2000
 
 # Profundidad máxima de banda por diámetro de rin (mm), usada cuando el modelo no está en el
@@ -2537,6 +2583,16 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
     km_actual = to_float(datos.get('kilometraje', 0))
     posicion = to_int(datos.get('posicion', 1))
     tipologia_val = str(datos.get('tipologia', '')).strip()
+    if not tipologia_val and placa:
+        try:
+            def _get_tip(c):
+                cur = c.cursor()
+                cur.execute("SELECT tipologia FROM catalogo_vehiculos WHERE UPPER(TRIM(placa)) = ? LIMIT 1", (placa,))
+                r = cur.fetchone()
+                return r[0] if r and r[0] else ''
+            tipologia_val = _get_tip(conn) if conn else _get_tip(get_connection())
+        except Exception:
+            pass
     dimension = str(datos.get('dimension', '')).strip().upper()
     prof_inicial = to_float(datos.get('prof_inicial', 0))
 
@@ -2563,11 +2619,13 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                 'mensaje': f'⛔ CANDADO DE SEGURIDAD: Ninguna de las 3 profundidades ({profs}) puede ser mayor a la Profundidad Inicial ({prof_inicial} mm) de la llanta.'
             }
 
-    # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original)
+    # Candado 1.3: Eje Direccional - No se puede seleccionar Reencauche (solo Original),
+    # excepto si la tipología autoriza explícitamente reencauche en eje direccional.
     vida_val, banda_val = normalizar_vida_y_banda(datos.get('vida'), datos.get('banda_reen'))
     datos['vida'] = vida_val
     datos['banda_reen'] = banda_val
-    if es_posicion_direccional(tipologia_val, posicion) and vida_val != 'ORIGINAL':
+    permite_reen_dir = tipologia_permite_reencauche_direccion(tipologia_val, conn=conn)
+    if es_posicion_direccional(tipologia_val, posicion) and vida_val != 'ORIGINAL' and not permite_reen_dir:
         return {
             'valido': False,
             'mensaje': (
@@ -4916,11 +4974,17 @@ def guardar_operacion(nombre):
 def obtener_todas_tipologias():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT nombre, descripcion, cant_llantas, esquema_json FROM catalogo_tipologias ORDER BY nombre ASC')
+        cursor.execute('SELECT nombre, descripcion, cant_llantas, esquema_json, permite_reencauche_direccion FROM catalogo_tipologias ORDER BY nombre ASC')
         res = []
         for r in cursor.fetchall():
             import json
-            res.append({'nombre': r[0], 'descripcion': r[1], 'cant_llantas': r[2], 'esquema': json.loads(r[3]) if r[3] else []})
+            res.append({
+                'nombre': r[0],
+                'descripcion': r[1],
+                'cant_llantas': r[2],
+                'esquema': json.loads(r[3]) if r[3] else [],
+                'permite_reencauche_direccion': bool(r[4]) if len(r) > 4 and r[4] is not None else False
+            })
         return res
 
 def generar_esquema_desde_composicion(ejes_dir=1, tipo_dir='sencilla', ejes_trac=2, tipo_trac='dual', ejes_libres=0, tipo_libres='dual', cant_repuestos=0):
@@ -5044,7 +5108,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=
                       ejes_dir=None, tipo_dir='sencilla',
                       ejes_trac=None, tipo_trac='dual',
                       ejes_libres=None, tipo_libres='dual',
-                      cant_repuestos=0):
+                      cant_repuestos=0, permite_reencauche_direccion=False):
     nom = (nombre or '').strip().upper()
     if not nom:
         return None
@@ -5120,10 +5184,11 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=
                     resto -= 2
                 eje_num += 1
 
+    permite_val = 1 if permite_reencauche_direccion else 0
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json) VALUES (?, ?, ?, ?)',
-                       (nom, desc, cant, json.dumps(esquema)))
+        cursor.execute('INSERT OR REPLACE INTO catalogo_tipologias (nombre, descripcion, cant_llantas, esquema_json, permite_reencauche_direccion) VALUES (?, ?, ?, ?, ?)',
+                       (nom, desc, cant, json.dumps(esquema), permite_val))
         conn.commit()
     return nom
 
@@ -5295,7 +5360,8 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
                          ejes_dir=None, tipo_dir='sencilla',
                          ejes_trac=None, tipo_trac='dual',
                          ejes_libres=None, tipo_libres='dual',
-                         cant_repuestos=None, esquema_custom=None, config_ejes=None):
+                         cant_repuestos=None, esquema_custom=None, config_ejes=None,
+                         permite_reencauche_direccion=None):
     nom_a = (nombre_antiguo or '').strip().upper()
     nom_n = (nombre_nuevo or '').strip().upper()
     if not nom_a or not nom_n:
@@ -5304,43 +5370,42 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
     desc = str(descripcion or '').strip().upper()
     import json
 
-    # Si se especificó composición de ejes desde el modal visual
-    if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
-        esquema, cant_calculada = generar_esquema_desde_composicion(
-            ejes_dir=ejes_dir or 0,
-            tipo_dir=tipo_dir,
-            ejes_trac=ejes_trac or 0,
-            tipo_trac=tipo_trac,
-            ejes_libres=ejes_libres or 0,
-            tipo_libres=tipo_libres,
-            cant_repuestos=cant_repuestos or 0
-        )
-        cant = cant_calculada
-        esquema_json = json.dumps(esquema)
-    elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
-        esquema_json = json.dumps(esquema_custom)
-        cant = sum(len(eje.get('posiciones', [])) for eje in esquema_custom)
-    else:
-        # Mantener el esquema existente
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT esquema_json, cant_llantas FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_a,))
-            row = cursor.fetchone()
-            if row:
-                esquema_json = row[0]
-                cant = int(cant_llantas or row[1] or 10)
-            else:
-                esquema_json = '[]'
-                cant = int(cant_llantas or 10)
-
     with get_connection() as conn:
         cursor = conn.cursor()
+        cursor.execute('SELECT esquema_json, cant_llantas, permite_reencauche_direccion FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_a,))
+        row_prev = cursor.fetchone()
+        prev_esquema = row_prev[0] if row_prev and row_prev[0] else '[]'
+        prev_cant = int(row_prev[1]) if row_prev and row_prev[1] else 10
+        prev_permite = row_prev[2] if row_prev and len(row_prev) > 2 and row_prev[2] is not None else 0
+
+        # Si se especificó composición de ejes desde el modal visual
+        if ejes_dir is not None or ejes_trac is not None or ejes_libres is not None:
+            esquema, cant_calculada = generar_esquema_desde_composicion(
+                ejes_dir=ejes_dir or 0,
+                tipo_dir=tipo_dir,
+                ejes_trac=ejes_trac or 0,
+                tipo_trac=tipo_trac,
+                ejes_libres=ejes_libres or 0,
+                tipo_libres=tipo_libres,
+                cant_repuestos=cant_repuestos or 0
+            )
+            cant = cant_calculada
+            esquema_json = json.dumps(esquema)
+        elif esquema_custom and isinstance(esquema_custom, list) and len(esquema_custom) > 0:
+            esquema_json = json.dumps(esquema_custom)
+            cant = sum(len(eje.get('posiciones', [])) for eje in esquema_custom)
+        else:
+            esquema_json = prev_esquema
+            cant = int(cant_llantas or prev_cant)
+
+        p_reen_val = (1 if permite_reencauche_direccion else 0) if permite_reencauche_direccion is not None else prev_permite
+
         if nom_a == nom_n:
             cursor.execute('''
                 UPDATE catalogo_tipologias
-                SET descripcion = ?, cant_llantas = ?, esquema_json = ?
+                SET descripcion = ?, cant_llantas = ?, esquema_json = ?, permite_reencauche_direccion = ?
                 WHERE UPPER(TRIM(nombre)) = ?
-            ''', (desc, cant, esquema_json, nom_a))
+            ''', (desc, cant, esquema_json, p_reen_val, nom_a))
         else:
             cursor.execute('SELECT COUNT(*) FROM catalogo_tipologias WHERE UPPER(TRIM(nombre)) = ?', (nom_n,))
             if cursor.fetchone()[0] > 0:
@@ -5348,9 +5413,9 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
 
             cursor.execute('''
                 UPDATE catalogo_tipologias
-                SET nombre = ?, descripcion = ?, cant_llantas = ?, esquema_json = ?
+                SET nombre = ?, descripcion = ?, cant_llantas = ?, esquema_json = ?, permite_reencauche_direccion = ?
                 WHERE UPPER(TRIM(nombre)) = ?
-            ''', (nom_n, desc, cant, esquema_json, nom_a))
+            ''', (nom_n, desc, cant, esquema_json, p_reen_val, nom_a))
 
             # Actualizar en cascada en la base de datos de inspecciones y vehículos
             cursor.execute('UPDATE inspecciones SET tipologia = ? WHERE UPPER(TRIM(tipologia)) = ?', (nom_n, nom_a))
@@ -7375,8 +7440,10 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             perfil_v = obtener_perfil_vehiculo(placa)
             tipologia_v = perfil_v.get('tipologia', '')
             if es_posicion_direccional(tipologia_v, posicion):
-                if vida_act.upper() != 'ORIGINAL' or bodega_origen == 'BODEGA_4_REENCAUCHADAS':
-                    return {"ok": False, "mensaje": "⛔ CANDADO VIAL: No se puede montar una llanta reencauchada en posición direccional."}
+                permite_dir = tipologia_permite_reencauche_direccion(tipologia_v, conn=conn)
+                if not permite_dir:
+                    if vida_act.upper() != 'ORIGINAL' or bodega_origen == 'BODEGA_4_REENCAUCHADAS':
+                        return {"ok": False, "mensaje": "⛔ CANDADO VIAL: No se puede montar una llanta reencauchada en posición direccional."}
 
         placa_act = cur.get('placa_actual', '')
         pos_act = to_int(cur.get('posicion_actual', 0))
