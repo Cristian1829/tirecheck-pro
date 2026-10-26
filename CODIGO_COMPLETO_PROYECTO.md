@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 16:56:08`
+- **Fecha de Generación:** `2026-10-26 17:23:53`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `58,016` líneas
-- **Tamaño Total de Código Fuente:** `2922.0 KB` (`2,992,118` bytes)
+- **Líneas Totales de Código:** `57,986` líneas
+- **Tamaño Total de Código Fuente:** `2920.0 KB` (`2,990,042` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -481,7 +481,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6009 | 403.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5979 | 401.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
@@ -6272,7 +6272,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10433 líneas | 523,841 bytes (511.6 KB)
+- **Métricas:** 10433 líneas | 523,899 bytes (511.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14841,30 +14841,30 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         placas_unicas = df['placa'].dropna().str.upper().str.strip().unique()
         padron_rows = [(p, '', '', 'Activo') for p in placas_unicas]
 
-    total_padron = len(padron_rows)
+    # Placas inspeccionadas en el corte evaluado (consistente con 'Vehículos Evaluados' en Diagnóstico)
+    if not df_corte.empty:
+        placas_insp_corte = set(df_corte['placa'].dropna().str.upper().str.strip().unique())
+    elif not df.empty:
+        placas_insp_corte = set(df['placa'].dropna().str.upper().str.strip().unique())
+    else:
+        placas_insp_corte = set()
+
+    periodo_reciente = df['periodo_mes'].max() if not df.empty else ""
+
+    placas_padron = {r[0] for r in padron_rows} if padron_rows else set()
+    todas_placas_parque = placas_padron | placas_insp_corte
+    total_padron = len(todas_placas_parque) if todas_placas_parque else len(padron_rows)
     if total_padron == 0:
         fuente_padron = 'sin_padron'
 
-    # Corte más reciente
-    if not df.empty:
-        periodo_reciente = df['periodo_mes'].max()
-        df_mes_reciente = df[df['periodo_mes'] == periodo_reciente]
-        placas_insp_mes = set(df_mes_reciente['placa'].dropna().str.upper().str.strip().unique())
-    else:
-        periodo_reciente = ""
-        placas_insp_mes = set()
-
-    # Solo cuentan las placas del padrón: antes las inspeccionadas fuera del padrón inflaban el
-    # numerador (ej. 177 de 35) y el cumplimiento quedaba en 100 % aunque faltaran vehículos
-    placas_padron = {r[0] for r in padron_rows}
-    vehiculos_auditados_mes = len(placas_insp_mes & placas_padron)
-    placas_fuera_padron = len(placas_insp_mes - placas_padron)
-    # Sin parque no hay cumplimiento que medir (antes daba 100 %)
+    vehiculos_auditados_mes = len(placas_insp_corte)
+    placas_fuera_padron = len(placas_insp_corte - placas_padron) if placas_padron else 0
+    # Sin parque no hay cumplimiento que medir
     cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / total_padron) * 100.0), 1) if total_padron > 0 else None
 
     placas_pendientes = []
     for r in padron_rows:
-        if r[0] not in placas_insp_mes:
+        if r[0] not in placas_insp_corte:
             placas_pendientes.append({
                 "placa": r[0],
                 "subcliente": r[1],
@@ -23168,7 +23168,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6009 líneas | 413,535 bytes (403.8 KB)
+- **Métricas:** 5979 líneas | 411,401 bytes (401.8 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -25392,7 +25392,7 @@ if __name__ == '__main__':
           <div>
             <div class="flex items-center space-x-1.5">
               <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 05</span>
-              <h4 class="text-sm font-black text-slate-900">Cuadro de Cambios Inmediatos & Matriz de Semáforos por Posición</h4>
+              <h4 class="text-sm font-black text-slate-900">Cuadro de Retiros y Cambios Inmediatos</h4>
             </div>
             <p class="text-[11px] text-slate-400">Identificación de llantas a límite de retiro con blindaje de Par Direccional (Pos 1 y 2)</p>
           </div>
@@ -25421,36 +25421,6 @@ if __name__ == '__main__':
           </div>
           <div class="lg:col-span-5 relative w-full h-[220px]">
             <canvas id="canvasKpi05_retiros"></canvas>
-          </div>
-        </div>
-
-        <!-- Nivel 2: Heatmap Placa vs Posición -->
-        <div>
-          <div class="flex items-center justify-between pb-1 mb-2">
-            <h5 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-table-cells text-indigo-600"></i>
-              <span>Matriz Semafórica de Salud por Posición (1..12)</span>
-            </h5>
-            <div class="flex items-center space-x-2 text-[10px] font-bold">
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Retiro Urgente (&le; Límite)</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Alerta Preventiva (&le; Límite + 2mm)</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Saludable</span>
-            </div>
-          </div>
-          <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-[360px] custom-scroll">
-            <table class="w-full text-xs text-center border-collapse">
-              <thead class="bg-slate-800 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
-                <tr>
-                  <th class="p-2 text-left sticky left-0 bg-slate-800 z-20">Placa</th>
-                  <th class="p-2">P1</th><th class="p-2">P2</th><th class="p-2">P3</th><th class="p-2">P4</th>
-                  <th class="p-2">P5</th><th class="p-2">P6</th><th class="p-2">P7</th><th class="p-2">P8</th>
-                  <th class="p-2">P9</th><th class="p-2">P10</th><th class="p-2">P11</th><th class="p-2">P12</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyKpi05_heatmap" class="divide-y divide-slate-100 bg-white font-mono text-[11px]">
-                <tr><td colspan="13" class="p-4 text-center text-slate-400 font-sans">Cargando matriz semafórica...</td></tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </article>

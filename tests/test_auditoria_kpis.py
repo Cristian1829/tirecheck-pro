@@ -115,3 +115,39 @@ def test_34_tendencias_mes_a_mes(test_db):
     assert t["2026-09"]["pct_presion_correcta"] == 0.0 and t["2026-10"]["pct_presion_correcta"] == 100.0
     assert t["2026-09"]["prof_minima_promedio"] == 10.0 and t["2026-10"]["prof_minima_promedio"] == 9.0
     assert t["2026-10"]["vehiculos_inspeccionados"] == 1
+
+
+def test_kpi01_vehiculos_auditados_coincide_con_corte_21_vehiculos(test_db):
+    """
+    Verifica que si una flota tiene 21 vehículos inspeccionados en corte,
+    KPI 01 reporte exactamente 21 vehículos auditados y sincronice con el padrón / censo total.
+    """
+    cli = "METROLLANTAS"
+    sede = "TEUSACA"
+    database.guardar_licencia_cliente(cli, "FULL")
+
+    # Insertamos 16 vehículos registrados en padrón
+    with database.get_connection() as conn:
+        for i in range(1, 17):
+            placa = f"MET{i:03d}"
+            conn.execute(
+                "INSERT INTO padron_vehiculos_cliente (placa, cliente, subcliente, tipologia, activo) VALUES (?, ?, ?, ?, 1)",
+                (placa, cli, sede, "Tractocamión (6x4)")
+            )
+        conn.commit()
+
+    # Pero en patio se auditaron 21 vehículos (los 16 del padrón + 5 adicionales identificados en corte)
+    for i in range(1, 22):
+        placa = f"MET{i:03d}"
+        _insp(cli, placa, f"SN-{i:03d}", subcliente=sede)
+
+    suite = database.obtener_suite_completa_20_kpis({"cliente": cli, "subcliente": sede, "licencia": "FULL"})
+    k1 = suite["kpi_01"]
+
+    assert k1["vehiculos_auditados"] == 21
+    assert k1["vehiculos_inspeccionados"] == 21
+    assert k1["total_padron"] == 21
+    assert k1["total_padron_activo"] == 21
+    assert k1["cumplimiento_pct"] == 100.0
+    assert len(k1["placas_pendientes"]) == 0
+

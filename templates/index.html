@@ -2218,7 +2218,7 @@
           <div>
             <div class="flex items-center space-x-1.5">
               <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 05</span>
-              <h4 class="text-sm font-black text-slate-900">Cuadro de Cambios Inmediatos & Matriz de Semáforos por Posición</h4>
+              <h4 class="text-sm font-black text-slate-900">Cuadro de Retiros y Cambios Inmediatos</h4>
             </div>
             <p class="text-[11px] text-slate-400">Identificación de llantas a límite de retiro con blindaje de Par Direccional (Pos 1 y 2)</p>
           </div>
@@ -2247,36 +2247,6 @@
           </div>
           <div class="lg:col-span-5 relative w-full h-[220px]">
             <canvas id="canvasKpi05_retiros"></canvas>
-          </div>
-        </div>
-
-        <!-- Nivel 2: Heatmap Placa vs Posición -->
-        <div>
-          <div class="flex items-center justify-between pb-1 mb-2">
-            <h5 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-table-cells text-indigo-600"></i>
-              <span>Matriz Semafórica de Salud por Posición (1..12)</span>
-            </h5>
-            <div class="flex items-center space-x-2 text-[10px] font-bold">
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Retiro Urgente (&le; Límite)</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Alerta Preventiva (&le; Límite + 2mm)</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Saludable</span>
-            </div>
-          </div>
-          <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-[360px] custom-scroll">
-            <table class="w-full text-xs text-center border-collapse">
-              <thead class="bg-slate-800 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
-                <tr>
-                  <th class="p-2 text-left sticky left-0 bg-slate-800 z-20">Placa</th>
-                  <th class="p-2">P1</th><th class="p-2">P2</th><th class="p-2">P3</th><th class="p-2">P4</th>
-                  <th class="p-2">P5</th><th class="p-2">P6</th><th class="p-2">P7</th><th class="p-2">P8</th>
-                  <th class="p-2">P9</th><th class="p-2">P10</th><th class="p-2">P11</th><th class="p-2">P12</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyKpi05_heatmap" class="divide-y divide-slate-100 bg-white font-mono text-[11px]">
-                <tr><td colspan="13" class="p-4 text-center text-slate-400 font-sans">Cargando matriz semafórica...</td></tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </article>

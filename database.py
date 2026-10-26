@@ -8563,30 +8563,30 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         placas_unicas = df['placa'].dropna().str.upper().str.strip().unique()
         padron_rows = [(p, '', '', 'Activo') for p in placas_unicas]
 
-    total_padron = len(padron_rows)
+    # Placas inspeccionadas en el corte evaluado (consistente con 'Vehículos Evaluados' en Diagnóstico)
+    if not df_corte.empty:
+        placas_insp_corte = set(df_corte['placa'].dropna().str.upper().str.strip().unique())
+    elif not df.empty:
+        placas_insp_corte = set(df['placa'].dropna().str.upper().str.strip().unique())
+    else:
+        placas_insp_corte = set()
+
+    periodo_reciente = df['periodo_mes'].max() if not df.empty else ""
+
+    placas_padron = {r[0] for r in padron_rows} if padron_rows else set()
+    todas_placas_parque = placas_padron | placas_insp_corte
+    total_padron = len(todas_placas_parque) if todas_placas_parque else len(padron_rows)
     if total_padron == 0:
         fuente_padron = 'sin_padron'
 
-    # Corte más reciente
-    if not df.empty:
-        periodo_reciente = df['periodo_mes'].max()
-        df_mes_reciente = df[df['periodo_mes'] == periodo_reciente]
-        placas_insp_mes = set(df_mes_reciente['placa'].dropna().str.upper().str.strip().unique())
-    else:
-        periodo_reciente = ""
-        placas_insp_mes = set()
-
-    # Solo cuentan las placas del padrón: antes las inspeccionadas fuera del padrón inflaban el
-    # numerador (ej. 177 de 35) y el cumplimiento quedaba en 100 % aunque faltaran vehículos
-    placas_padron = {r[0] for r in padron_rows}
-    vehiculos_auditados_mes = len(placas_insp_mes & placas_padron)
-    placas_fuera_padron = len(placas_insp_mes - placas_padron)
-    # Sin parque no hay cumplimiento que medir (antes daba 100 %)
+    vehiculos_auditados_mes = len(placas_insp_corte)
+    placas_fuera_padron = len(placas_insp_corte - placas_padron) if placas_padron else 0
+    # Sin parque no hay cumplimiento que medir
     cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / total_padron) * 100.0), 1) if total_padron > 0 else None
 
     placas_pendientes = []
     for r in padron_rows:
-        if r[0] not in placas_insp_mes:
+        if r[0] not in placas_insp_corte:
             placas_pendientes.append({
                 "placa": r[0],
                 "subcliente": r[1],
