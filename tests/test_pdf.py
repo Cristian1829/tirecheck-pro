@@ -254,5 +254,46 @@ def test_api_pdf_consolidado_con_rango_fechas(test_db, auth_client):
     assert res.content.startswith(b"%PDF-")
 
 
+def test_pdf_consolidado_sin_psi_y_layout_cuadrado(test_db):
+    import io
+    import pypdf
+
+    # Insertar inspección de vehículo INTERMUNICIPAL con desviación PSI
+    for pos in range(1, 7):
+        database.insertar_inspeccion({
+            'fecha': '2026-10-26',
+            'cliente': 'Flota Cuadrada',
+            'subcliente': 'TEUSACA',
+            'tipo_operacion': 'PASAJEROS / INTERMUNICIPAL',
+            'tipologia': 'INTERMUNICIPAL',
+            'placa': 'WGA478',
+            'posicion': pos,
+            'kilometraje': 150000.0,
+            'dimension': '295/80R22.5',
+            'prof_inicial': 16.0,
+            'prof_ext': 4.0 if pos in [1, 2] else 8.0,
+            'prof_cent': 4.0 if pos in [1, 2] else 8.0,
+            'prof_int': 4.0 if pos in [1, 2] else 8.0,
+            'psi': 85.0,  # Baja presión que antes mostraba [PRESIÓN PSI]
+            'usuario_registro': 'Tester'
+        })
+
+    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Cuadrada')
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b"%PDF-")
+
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    full_text = "".join(page.extract_text() for page in reader.pages)
+
+    # 1. No debe existir el mensaje [PRESIÓN PSI]
+    assert "[PRESIÓN PSI]" not in full_text
+
+    # 2. La palabra INTERMUNICIPAL debe salir completa
+    assert "INTERMUNICIPAL" in full_text
+    assert "INTERMUNICIP\nAL" not in full_text
+    assert "INTERMUNICIP AL" not in full_text
+
+
+
 
 

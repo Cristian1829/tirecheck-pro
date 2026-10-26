@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 15:32:22`
+- **Fecha de Generación:** `2026-10-26 16:56:08`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `57,974` líneas
-- **Tamaño Total de Código Fuente:** `2920.1 KB` (`2,990,137` bytes)
+- **Líneas Totales de Código:** `58,016` líneas
+- **Tamaño Total de Código Fuente:** `2922.0 KB` (`2,992,118` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -472,7 +472,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [database.py](#archivo-databasepy) | `python` | 10433 | 511.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2110 | 103.3 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -522,7 +522,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
-| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 258 | 8.4 KB | Pruebas de generación y estructura de informes técnicos PDF |
+| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 299 | 9.9 KB | Pruebas de generación y estructura de informes técnicos PDF |
 | [tests/test_seguridad_y_rendimiento.py](#archivo-teststest-seguridad-y-rendimientopy) | `python` | 231 | 9.5 KB | Pruebas de aislamiento multi-tenant IDOR, rate limiting, descarga segura de PDF y rendimiento base64 incremental |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
@@ -18186,7 +18186,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 2110 líneas | 105,749 bytes (103.3 KB)
+- **Métricas:** 2111 líneas | 106,230 bytes (103.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -19454,13 +19454,7 @@ def formatear_detalles_alertas_pdf(r, limite_def):
     if det_rot:
         lineas.append(f"• <b><font color='#2563eb'>[ROTACIÓN PREVENTIVA]</font></b> <font color='#1e293b'>{'; '.join(det_rot)}</font>")
 
-    # 9. Calibración Presión PSI
-    det_psi = str(r.get('Detalle_Calibracion_PSI', '') or '').strip()
-    if r.get('Plan_Calibracion_PSI') == 'SÍ' or (det_psi and det_psi != 'OK'):
-        txt = det_psi if (det_psi and det_psi != 'OK') else "Ajuste de presión según tabla operativa"
-        lineas.append(f"• <b><font color='#0284c7'>[PRESIÓN PSI]</font></b> <font color='#1e293b'>{txt}</font>")
-
-    # 10. Si no hay alertas
+    # 9. Si no hay alertas
     if not lineas:
         lineas.append("• <b><font color='#15803d'>[VEHÍCULO OK]</font></b> <font color='#15803d'>Sin alertas activas en la inspección.</font>")
 
@@ -19556,6 +19550,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     style_cell_alert = ParagraphStyle('CellAlert', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, leading=9, textColor=colors.HexColor('#b91c1c'))
     style_cell_center = ParagraphStyle('CellCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, alignment=1, textColor=colors.HexColor('#1e293b'))
     style_cell_detalles = ParagraphStyle('CellDetalles', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#1e293b'))
+    style_matriz_header = ParagraphStyle('MatrizHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=6.5, leading=8.5, textColor=colors.white, alignment=1)
+    style_matriz_tipo = ParagraphStyle('MatrizTipo', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#1e293b'))
+    style_matriz_center = ParagraphStyle('MatrizCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, alignment=1, textColor=colors.HexColor('#1e293b'))
+    style_matriz_veh = ParagraphStyle('MatrizVeh', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#1e293b'))
 
     elements = []
     elements.append(Spacer(1, 2))
@@ -19742,15 +19740,15 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(Paragraph(f"4. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
     matriz_data = [
         [
-            Paragraph("<b>Vehículo</b>", style_cell_header),
-            Paragraph("<b>Tipología / Sede</b>", style_cell_header),
-            Paragraph("<b>Llantas</b>", style_cell_header),
-            Paragraph("<b>Cambio YA</b>", style_cell_header),
-            Paragraph("<b>Próximas</b>", style_cell_header),
-            Paragraph("<b>Alinear</b>", style_cell_header),
-            Paragraph("<b>Dual</b>", style_cell_header),
-            Paragraph("<b>Rotación</b>", style_cell_header),
-            Paragraph("<b>Detalles de Alertas & Planes de Acción</b>", style_cell_header)
+            Paragraph("<b>Vehículo</b>", style_matriz_header),
+            Paragraph("<b>Tipología /<br/>Sede</b>", style_matriz_header),
+            Paragraph("<b>Llantas</b>", style_matriz_header),
+            Paragraph("<b>Cambio<br/>YA</b>", style_matriz_header),
+            Paragraph("<b>Próximas</b>", style_matriz_header),
+            Paragraph("<b>Alinear</b>", style_matriz_header),
+            Paragraph("<b>Dual</b>", style_matriz_header),
+            Paragraph("<b>Rotación</b>", style_matriz_header),
+            Paragraph("<b>Detalles de Alertas & Planes de Acción</b>", style_matriz_header)
         ]
     ]
 
@@ -19799,39 +19797,40 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
 
         # Formateo Celdas de Acción
         llantas_num = str(r.get('Llantas Inspeccionadas', '') or '')
-        cambio_html = f"<font color='#b91c1c'><b>URGENTE<br/>({cant_cambios})</b></font>" if cant_cambios > 0 else "<font color='#15803d'>OK</font>"
-        proximas_html = f"<font color='#b45309'><b>PRÓXIMA<br/>({cant_prox})</b></font>" if cant_prox > 0 else "<font color='#94a3b8'>0</font>"
+        cambio_html = f"<font color='#b91c1c' size=6><b>URGENTE<br/>({cant_cambios})</b></font>" if cant_cambios > 0 else "<font color='#15803d'>OK</font>"
+        proximas_html = f"<font color='#b45309' size=6><b>PRÓXIMA<br/>({cant_prox})</b></font>" if cant_prox > 0 else "<font color='#94a3b8'>0</font>"
         ali_html = "<font color='#c2410c'><b>SÍ</b></font>" if p_ali == 'SÍ' else "<font color='#15803d'>OK</font>"
         dual_html = "<font color='#7e22ce'><b>SÍ</b></font>" if p_du == 'SÍ' else "<font color='#15803d'>OK</font>"
         if badge_rot == 'AUTO-AJUSTE':
-            rot_html = "<font color='#4338ca'><b>AUTO-AJUSTE</b></font>"
+            rot_html = "<font color='#4338ca' size=5.5><b>AUTO<br/>AJUSTE</b></font>"
         elif p_rot == 'SÍ':
             rot_html = "<font color='#1d4ed8'><b>SÍ</b></font>"
         else:
             rot_html = "<font color='#15803d'>OK</font>"
 
         matriz_data.append([
-            Paragraph(celda_veh_html, style_cell_body),
-            Paragraph(celda_tipo_html, style_cell_body),
-            Paragraph(f"<b>{llantas_num}</b>", style_cell_center),
-            Paragraph(cambio_html, style_cell_center),
-            Paragraph(proximas_html, style_cell_center),
-            Paragraph(ali_html, style_cell_center),
-            Paragraph(dual_html, style_cell_center),
-            Paragraph(rot_html, style_cell_center),
+            Paragraph(celda_veh_html, style_matriz_veh),
+            Paragraph(celda_tipo_html, style_matriz_tipo),
+            Paragraph(f"<b>{llantas_num}</b>", style_matriz_center),
+            Paragraph(cambio_html, style_matriz_center),
+            Paragraph(proximas_html, style_matriz_center),
+            Paragraph(ali_html, style_matriz_center),
+            Paragraph(dual_html, style_matriz_center),
+            Paragraph(rot_html, style_matriz_center),
             Paragraph(texto_detalles_html, style_cell_detalles)
         ])
 
-    t_matriz = Table(matriz_data, colWidths=[50, 58, 24, 34, 34, 30, 28, 34, 248], repeatRows=1)
+    t_matriz = Table(matriz_data, colWidths=[48, 76, 30, 38, 38, 32, 26, 36, 216], repeatRows=1)
     table_style_commands = [
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
         ('TOPPADDING', (0,0), (-1,-1), 2.5),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 2),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
     ]
     for idx_fila, r in enumerate(df_analisis.to_dict('records'), start=1):
         c_camb = int(r.get('Cant_Cambios', 0) or (1 if r.get('Plan_Cambio_Llanta') == 'SÍ' else 0))
@@ -19861,18 +19860,18 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         num_pos = len(pos_list)
 
         if num_pos <= 10:
-            w_veh = 52
-            w_tip = 58
-            w_res = 65
+            w_veh = 48
+            w_tip = 68
+            w_res = 60
             w_pos = (540 - w_veh - w_tip - w_res) / max(1, num_pos)
         elif num_pos <= 12:
-            w_veh = 48
-            w_tip = 52
-            w_res = 60
+            w_veh = 46
+            w_tip = 64
+            w_res = 58
             w_pos = (540 - w_veh - w_tip - w_res) / max(1, num_pos)
         else:
             w_veh = 44
-            w_tip = 48
+            w_tip = 60
             w_res = 55
             w_pos = max(16.0, (540 - w_veh - w_tip - w_res) / max(1, num_pos))
 
@@ -19899,6 +19898,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
             ('TOPPADDING', (0,0), (-1,-1), 2),
             ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+            ('LEFTPADDING', (0,0), (-1,-1), 1.5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 1.5),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ]
 
@@ -54206,7 +54207,7 @@ def test_kpis_permisos_inspector_flotas(test_db):
 
 - **Ruta:** `tests/test_pdf.py`
 - **Descripción:** Pruebas de generación y estructura de informes técnicos PDF
-- **Métricas:** 258 líneas | 8,605 bytes (8.4 KB)
+- **Métricas:** 299 líneas | 10,105 bytes (9.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -54464,6 +54465,46 @@ def test_api_pdf_consolidado_con_rango_fechas(test_db, auth_client):
     assert res.status_code == 200
     assert res.headers["content-type"] == "application/pdf"
     assert res.content.startswith(b"%PDF-")
+
+
+def test_pdf_consolidado_sin_psi_y_layout_cuadrado(test_db):
+    import io
+    import pypdf
+
+    # Insertar inspección de vehículo INTERMUNICIPAL con desviación PSI
+    for pos in range(1, 7):
+        database.insertar_inspeccion({
+            'fecha': '2026-10-26',
+            'cliente': 'Flota Cuadrada',
+            'subcliente': 'TEUSACA',
+            'tipo_operacion': 'PASAJEROS / INTERMUNICIPAL',
+            'tipologia': 'INTERMUNICIPAL',
+            'placa': 'WGA478',
+            'posicion': pos,
+            'kilometraje': 150000.0,
+            'dimension': '295/80R22.5',
+            'prof_inicial': 16.0,
+            'prof_ext': 4.0 if pos in [1, 2] else 8.0,
+            'prof_cent': 4.0 if pos in [1, 2] else 8.0,
+            'prof_int': 4.0 if pos in [1, 2] else 8.0,
+            'psi': 85.0,  # Baja presión que antes mostraba [PRESIÓN PSI]
+            'usuario_registro': 'Tester'
+        })
+
+    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Cuadrada')
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b"%PDF-")
+
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    full_text = "".join(page.extract_text() for page in reader.pages)
+
+    # 1. No debe existir el mensaje [PRESIÓN PSI]
+    assert "[PRESIÓN PSI]" not in full_text
+
+    # 2. La palabra INTERMUNICIPAL debe salir completa
+    assert "INTERMUNICIPAL" in full_text
+    assert "INTERMUNICIP\nAL" not in full_text
+    assert "INTERMUNICIP AL" not in full_text
 ```
 
 ---

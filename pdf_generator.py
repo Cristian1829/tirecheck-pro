@@ -1262,13 +1262,7 @@ def formatear_detalles_alertas_pdf(r, limite_def):
     if det_rot:
         lineas.append(f"• <b><font color='#2563eb'>[ROTACIÓN PREVENTIVA]</font></b> <font color='#1e293b'>{'; '.join(det_rot)}</font>")
 
-    # 9. Calibración Presión PSI
-    det_psi = str(r.get('Detalle_Calibracion_PSI', '') or '').strip()
-    if r.get('Plan_Calibracion_PSI') == 'SÍ' or (det_psi and det_psi != 'OK'):
-        txt = det_psi if (det_psi and det_psi != 'OK') else "Ajuste de presión según tabla operativa"
-        lineas.append(f"• <b><font color='#0284c7'>[PRESIÓN PSI]</font></b> <font color='#1e293b'>{txt}</font>")
-
-    # 10. Si no hay alertas
+    # 9. Si no hay alertas
     if not lineas:
         lineas.append("• <b><font color='#15803d'>[VEHÍCULO OK]</font></b> <font color='#15803d'>Sin alertas activas en la inspección.</font>")
 
@@ -1364,6 +1358,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     style_cell_alert = ParagraphStyle('CellAlert', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=7, leading=9, textColor=colors.HexColor('#b91c1c'))
     style_cell_center = ParagraphStyle('CellCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, alignment=1, textColor=colors.HexColor('#1e293b'))
     style_cell_detalles = ParagraphStyle('CellDetalles', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#1e293b'))
+    style_matriz_header = ParagraphStyle('MatrizHeader', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=6.5, leading=8.5, textColor=colors.white, alignment=1)
+    style_matriz_tipo = ParagraphStyle('MatrizTipo', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#1e293b'))
+    style_matriz_center = ParagraphStyle('MatrizCenter', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, alignment=1, textColor=colors.HexColor('#1e293b'))
+    style_matriz_veh = ParagraphStyle('MatrizVeh', parent=styles['Normal'], fontName='Helvetica', fontSize=6.5, leading=8, textColor=colors.HexColor('#1e293b'))
 
     elements = []
     elements.append(Spacer(1, 2))
@@ -1550,15 +1548,15 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
     elements.append(Paragraph(f"4. Detalle de Vehículos y Planes de Acción de Mantenimiento ({total_vehiculos} Unidades)", style_seccion))
     matriz_data = [
         [
-            Paragraph("<b>Vehículo</b>", style_cell_header),
-            Paragraph("<b>Tipología / Sede</b>", style_cell_header),
-            Paragraph("<b>Llantas</b>", style_cell_header),
-            Paragraph("<b>Cambio YA</b>", style_cell_header),
-            Paragraph("<b>Próximas</b>", style_cell_header),
-            Paragraph("<b>Alinear</b>", style_cell_header),
-            Paragraph("<b>Dual</b>", style_cell_header),
-            Paragraph("<b>Rotación</b>", style_cell_header),
-            Paragraph("<b>Detalles de Alertas & Planes de Acción</b>", style_cell_header)
+            Paragraph("<b>Vehículo</b>", style_matriz_header),
+            Paragraph("<b>Tipología /<br/>Sede</b>", style_matriz_header),
+            Paragraph("<b>Llantas</b>", style_matriz_header),
+            Paragraph("<b>Cambio<br/>YA</b>", style_matriz_header),
+            Paragraph("<b>Próximas</b>", style_matriz_header),
+            Paragraph("<b>Alinear</b>", style_matriz_header),
+            Paragraph("<b>Dual</b>", style_matriz_header),
+            Paragraph("<b>Rotación</b>", style_matriz_header),
+            Paragraph("<b>Detalles de Alertas & Planes de Acción</b>", style_matriz_header)
         ]
     ]
 
@@ -1607,39 +1605,40 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
 
         # Formateo Celdas de Acción
         llantas_num = str(r.get('Llantas Inspeccionadas', '') or '')
-        cambio_html = f"<font color='#b91c1c'><b>URGENTE<br/>({cant_cambios})</b></font>" if cant_cambios > 0 else "<font color='#15803d'>OK</font>"
-        proximas_html = f"<font color='#b45309'><b>PRÓXIMA<br/>({cant_prox})</b></font>" if cant_prox > 0 else "<font color='#94a3b8'>0</font>"
+        cambio_html = f"<font color='#b91c1c' size=6><b>URGENTE<br/>({cant_cambios})</b></font>" if cant_cambios > 0 else "<font color='#15803d'>OK</font>"
+        proximas_html = f"<font color='#b45309' size=6><b>PRÓXIMA<br/>({cant_prox})</b></font>" if cant_prox > 0 else "<font color='#94a3b8'>0</font>"
         ali_html = "<font color='#c2410c'><b>SÍ</b></font>" if p_ali == 'SÍ' else "<font color='#15803d'>OK</font>"
         dual_html = "<font color='#7e22ce'><b>SÍ</b></font>" if p_du == 'SÍ' else "<font color='#15803d'>OK</font>"
         if badge_rot == 'AUTO-AJUSTE':
-            rot_html = "<font color='#4338ca'><b>AUTO-AJUSTE</b></font>"
+            rot_html = "<font color='#4338ca' size=5.5><b>AUTO<br/>AJUSTE</b></font>"
         elif p_rot == 'SÍ':
             rot_html = "<font color='#1d4ed8'><b>SÍ</b></font>"
         else:
             rot_html = "<font color='#15803d'>OK</font>"
 
         matriz_data.append([
-            Paragraph(celda_veh_html, style_cell_body),
-            Paragraph(celda_tipo_html, style_cell_body),
-            Paragraph(f"<b>{llantas_num}</b>", style_cell_center),
-            Paragraph(cambio_html, style_cell_center),
-            Paragraph(proximas_html, style_cell_center),
-            Paragraph(ali_html, style_cell_center),
-            Paragraph(dual_html, style_cell_center),
-            Paragraph(rot_html, style_cell_center),
+            Paragraph(celda_veh_html, style_matriz_veh),
+            Paragraph(celda_tipo_html, style_matriz_tipo),
+            Paragraph(f"<b>{llantas_num}</b>", style_matriz_center),
+            Paragraph(cambio_html, style_matriz_center),
+            Paragraph(proximas_html, style_matriz_center),
+            Paragraph(ali_html, style_matriz_center),
+            Paragraph(dual_html, style_matriz_center),
+            Paragraph(rot_html, style_matriz_center),
             Paragraph(texto_detalles_html, style_cell_detalles)
         ])
 
-    t_matriz = Table(matriz_data, colWidths=[50, 58, 24, 34, 34, 30, 28, 34, 248], repeatRows=1)
+    t_matriz = Table(matriz_data, colWidths=[48, 76, 30, 38, 38, 32, 26, 36, 216], repeatRows=1)
     table_style_commands = [
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#0f172a')),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
         ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
         ('TOPPADDING', (0,0), (-1,-1), 2.5),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 2),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
     ]
     for idx_fila, r in enumerate(df_analisis.to_dict('records'), start=1):
         c_camb = int(r.get('Cant_Cambios', 0) or (1 if r.get('Plan_Cambio_Llanta') == 'SÍ' else 0))
@@ -1669,18 +1668,18 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
         num_pos = len(pos_list)
 
         if num_pos <= 10:
-            w_veh = 52
-            w_tip = 58
-            w_res = 65
+            w_veh = 48
+            w_tip = 68
+            w_res = 60
             w_pos = (540 - w_veh - w_tip - w_res) / max(1, num_pos)
         elif num_pos <= 12:
-            w_veh = 48
-            w_tip = 52
-            w_res = 60
+            w_veh = 46
+            w_tip = 64
+            w_res = 58
             w_pos = (540 - w_veh - w_tip - w_res) / max(1, num_pos)
         else:
             w_veh = 44
-            w_tip = 48
+            w_tip = 60
             w_res = 55
             w_pos = max(16.0, (540 - w_veh - w_tip - w_res) / max(1, num_pos))
 
@@ -1707,6 +1706,8 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
             ('TOPPADDING', (0,0), (-1,-1), 2),
             ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+            ('LEFTPADDING', (0,0), (-1,-1), 1.5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 1.5),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ]
 
