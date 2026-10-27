@@ -103,6 +103,105 @@
       window.location.href = `/api/kpis/exportar-mrp-excel?${params.toString()}`;
     }
 
+    // PDF de la suite: recorre las pestañas de la licencia, captura sus gráficos y el servidor arma el informe
+    async function exportarKpisPdf() {
+      if (!datosSuite20Actuales) {
+        mostrarToast('Espere a que carguen los indicadores', true);
+        return;
+      }
+      const btn = document.getElementById('btnExportarKpisPdf');
+      if (btn) btn.disabled = true;
+      const pestanaOriginal = subpestanaKpiActiva;
+      const pestanas = modoLicenciaSuite === 'FULL' ? [1, 2, 3, 4, 5, 6] : [1, 2, 6];
+      // Temporizador y no requestAnimationFrame: este se congela si la pestaña del navegador queda en segundo plano
+      const esperarCuadro = () => new Promise(r => setTimeout(r, 80));
+      const graficos = {};
+      // Gráficos de barras con muchas etiquetas que en pantalla van a un tercio del ancho: se capturan anchos
+      // para que las etiquetas no se monten unas sobre otras en el PDF
+      const capturaAncha = new Set(['canvasKpi13_comparativo', 'canvasKpi14_proy', 'canvasKpi14_kmmm', 'canvasKpi14_cpk',
+                                    'canvasKpi15_potencial']);
+      mostrarToast('Generando PDF de indicadores...');
+      try {
+        for (const num of pestanas) {
+          cambiarSubpestanaKpis(num);
+          await esperarCuadro();
+          for (const cv of document.querySelectorAll(`#subvista-kpi-${num} canvas`)) {
+            const chart = Chart.getChart(cv);
+            if (!chart || !cv.width || !cv.height) continue;
+            // Sin animación para capturar el estado final; fondo blanco porque el canvas es transparente
+            chart.stop();
+            chart.options.animation = false;
+            // Chart.js no deja el gráfico más ancho que su contenedor: se agranda el contenedor y luego se restaura
+            const caja = capturaAncha.has(cv.id) ? cv.parentElement : null;
+            const estiloCaja = caja ? caja.getAttribute('style') : null;
+            if (caja) {
+              caja.style.width = '1100px';
+              caja.style.height = '380px';
+              // Si el gráfico sigue animando, Chart.js aplaza el cambio de tamaño: se reintenta unas veces
+              for (let intento = 0; intento < 4 && cv.clientWidth < 1000; intento++) {
+                if (intento) await esperarCuadro();
+                chart.stop();
+                chart.resize();
+                chart.update('none');
+              }
+            }
+            chart.update('none');
+            const lienzo = document.createElement('canvas');
+            lienzo.width = cv.width;
+            lienzo.height = cv.height;
+            const ctx = lienzo.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+            ctx.drawImage(cv, 0, 0);
+            graficos[cv.id] = lienzo.toDataURL('image/jpeg', 0.9);
+            if (caja) {
+              if (estiloCaja === null) caja.removeAttribute('style');
+              else caja.setAttribute('style', estiloCaja);
+              chart.resize();
+            }
+          }
+        }
+      } finally {
+        cambiarSubpestanaKpis(pestanaOriginal);
+      }
+
+      const val = id => {
+        const v = document.getElementById(id)?.value || '';
+        return v === 'TODOS' ? '' : v;
+      };
+      const cuerpo = {
+        cliente: val('filtroKpiCliente'), subcliente: val('filtroKpiSubcliente'), tipo_operacion: val('filtroKpiOperacion'),
+        tipologia: val('filtroKpiTipologia'), marca: val('filtroKpiMarca'), dimension: val('filtroKpiDimension'),
+        eje_temporal: val('filtroKpiEjeTemporal') || 'mes', base: val('filtroKpiBase') || 'ultima',
+        unidad: val('filtroKpiUnidad') || 'km', agrupar_kpi14: agrupacionKpi14Actual, licencia: modoLicenciaSuite, graficos
+      };
+      try {
+        const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const res = await fetch('/api/kpis/exportar-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(tok ? { 'Authorization': `Bearer ${tok}` } : {}) },
+          body: JSON.stringify(cuerpo)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'TireAnalyze_KPIs.pdf';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast('📄 PDF de indicadores generado');
+      } catch (e) {
+        console.error('Error exportando PDF de KPIs:', e);
+        mostrarToast(`No se pudo generar el PDF: ${e.message}`, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function cambiarSubpestanaKpis(num) {
       subpestanaKpiActiva = num;
       for (let i = 1; i <= 6; i++) {

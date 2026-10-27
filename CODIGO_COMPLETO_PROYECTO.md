@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 10:06:25`
+- **Fecha de Generación:** `2026-10-27 12:19:48`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,157` líneas
-- **Tamaño Total de Código Fuente:** `3026.9 KB` (`3,099,502` bytes)
+- **Líneas Totales de Código:** `60,301` líneas
+- **Tamaño Total de Código Fuente:** `3036.8 KB` (`3,109,653` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,11 +468,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2594 | 116.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2634 | 121.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 10674 | 522.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2112 | 103.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.3 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -481,14 +481,14 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6531 | 440.6 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6535 | 441.0 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2143 | 94.3 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.7 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2594 líneas | 119,392 bytes (116.6 KB)
+- **Métricas:** 2634 líneas | 124,081 bytes (121.2 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3850,6 +3850,7 @@ from pydantic import BaseModel
 
 import database
 import pdf_generator
+import pdf_kpis
 
 app = FastAPI(title="TireAnalyze Pro - Sistema Integral Web & Móvil")
 
@@ -5011,37 +5012,76 @@ def api_kpis_suite_20(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     try:
-        rol = str(usuario_actual.get("rol", "")).strip().lower()
-        user = str(usuario_actual.get("username", "")).strip().lower()
-        if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-            if clis and (not cliente or cliente == "Todos"):
-                cliente = clis[0]
-            elif clis and cliente and cliente != "Todos":
-                if not any(c.lower() == cliente.strip().lower() for c in clis):
-                    raise HTTPException(status_code=403, detail="No tiene permisos para ver los KPIs de este cliente")
-
-        filtros = {
-            "cliente": "" if cliente == "Todos" else cliente,
-            "subcliente": "" if subcliente == "Todos" else subcliente,
-            "tipo_operacion": "" if tipo_operacion == "Todos" else tipo_operacion,
-            "tipologia": "" if tipologia == "Todos" else tipologia,
-            "marca": "" if marca == "Todos" else marca,
-            "dimension": "" if dimension == "Todos" else dimension,
-            "eje_temporal": eje_temporal,
-            "agrupar_kpi14": agrupar_kpi14,
-            "licencia": licencia,
-            "base": base,
-            "unidad": unidad,
-            "horizonte_meses": horizonte_meses,
-            "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
-        }
+        filtros = _filtros_suite_kpis(usuario_actual, cliente, subcliente, tipo_operacion, tipologia, marca, dimension,
+                                      eje_temporal, agrupar_kpi14, licencia, base, unidad, horizonte_meses)
         datos = database.obtener_suite_completa_20_kpis(filtros)
         return sanitizar_nativos(datos)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular Suite de 20 KPIs: {str(e)}")
+
+
+def _filtros_suite_kpis(usuario_actual, cliente, subcliente, tipo_operacion, tipologia, marca, dimension,
+                        eje_temporal, agrupar_kpi14, licencia, base, unidad, horizonte_meses):
+    """Filtros de la suite de KPIs con el alcance del usuario (un usuario de cliente solo ve sus clientes)."""
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and (not cliente or cliente == "Todos"):
+            cliente = clis[0]
+        elif clis and cliente and cliente != "Todos":
+            if not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver los KPIs de este cliente")
+    return {
+        "cliente": "" if cliente == "Todos" else cliente,
+        "subcliente": "" if subcliente == "Todos" else subcliente,
+        "tipo_operacion": "" if tipo_operacion == "Todos" else tipo_operacion,
+        "tipologia": "" if tipologia == "Todos" else tipologia,
+        "marca": "" if marca == "Todos" else marca,
+        "dimension": "" if dimension == "Todos" else dimension,
+        "eje_temporal": eje_temporal,
+        "agrupar_kpi14": agrupar_kpi14,
+        "licencia": licencia,
+        "base": base,
+        "unidad": unidad,
+        "horizonte_meses": horizonte_meses,
+        "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
+    }
+
+
+class ExportarKpisPdfItem(BaseModel):
+    cliente: str = ""
+    subcliente: str = ""
+    tipo_operacion: str = ""
+    tipologia: str = ""
+    marca: str = ""
+    dimension: str = ""
+    eje_temporal: str = "mes"
+    agrupar_kpi14: str = "marca"
+    licencia: str = ""
+    base: str = "ultima"
+    unidad: str = "km"
+    horizonte_meses: float = 3
+    graficos: dict = {}
+
+
+@app.post("/api/kpis/exportar-pdf", dependencies=[Depends(requerir_vista("kpis"))])
+def api_kpis_exportar_pdf(item: ExportarKpisPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """PDF de la suite de KPIs: gráficos capturados en pantalla + cifras recalculadas con los mismos filtros."""
+    filtros = _filtros_suite_kpis(usuario_actual, item.cliente, item.subcliente, item.tipo_operacion, item.tipologia,
+                                  item.marca, item.dimension, item.eje_temporal, item.agrupar_kpi14, item.licencia,
+                                  item.base, item.unidad, item.horizonte_meses)
+    try:
+        datos = sanitizar_nativos(database.obtener_suite_completa_20_kpis(filtros))
+        pdf_bytes = pdf_kpis.generar_pdf_kpis(datos, item.graficos, filtros)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar el PDF de KPIs: {str(e)}")
+    c_tag = (filtros["cliente"] or "General").replace(" ", "_")
+    filename = f"TireAnalyze_KPIs_{c_tag}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 @app.get("/api/kpis/exportar-mrp-excel", dependencies=[Depends(requerir_vista("kpis", "bodegas"))])
 def api_exportar_mrp_excel(
@@ -18575,7 +18615,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 2111 líneas | 106,230 bytes (103.7 KB)
+- **Métricas:** 2112 líneas | 106,258 bytes (103.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -18745,6 +18785,7 @@ class NumberedCanvas(canvas.Canvas):
 class ConsolidadoNumberedCanvas(canvas.Canvas):
     _fecha = ""
     _cliente = ""
+    _titulo = "INFORME EJECUTIVO & DIAGNÓSTICO CONSOLIDADO DE FLOTA"
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
@@ -18789,7 +18830,7 @@ class ConsolidadoNumberedCanvas(canvas.Canvas):
 
         self.setFillColor(colors.HexColor('#38BDF8'))
         self.setFont("Helvetica-Bold", 6.8)
-        self.drawString(x + 10, y_sub + 4, "INFORME EJECUTIVO & DIAGNÓSTICO CONSOLIDADO DE FLOTA")
+        self.drawString(x + 10, y_sub + 4, self._titulo)
 
         fec_txt = getattr(self, '_fecha', '') or 'Histórico General'
         ahora_txt = ahora_bogota().strftime('%d/%m/%Y %H:%M')
@@ -23557,7 +23598,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6531 líneas | 451,150 bytes (440.6 KB)
+- **Métricas:** 6535 líneas | 451,543 bytes (441.0 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -25389,6 +25430,10 @@ if __name__ == '__main__':
           <button type="button" onclick="exportarKpisExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
             <i class="fa-solid fa-file-excel"></i>
             <span>Exportar Excel</span>
+          </button>
+          <button type="button" id="btnExportarKpisPdf" onclick="exportarKpisPdf()" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-wait">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Exportar PDF</span>
           </button>
           <button type="button" onclick="limpiarFiltrosKpis()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-all active:scale-95">
             <i class="fa-solid fa-rotate-left text-slate-400 mr-1"></i>
@@ -39084,7 +39129,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 2044 líneas | 91,512 bytes (89.4 KB)
+- **Métricas:** 2143 líneas | 96,553 bytes (94.3 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -39191,6 +39236,105 @@ if __name__ == '__main__':
       if (tok) params.append('token', tok);
 
       window.location.href = `/api/kpis/exportar-mrp-excel?${params.toString()}`;
+    }
+
+    // PDF de la suite: recorre las pestañas de la licencia, captura sus gráficos y el servidor arma el informe
+    async function exportarKpisPdf() {
+      if (!datosSuite20Actuales) {
+        mostrarToast('Espere a que carguen los indicadores', true);
+        return;
+      }
+      const btn = document.getElementById('btnExportarKpisPdf');
+      if (btn) btn.disabled = true;
+      const pestanaOriginal = subpestanaKpiActiva;
+      const pestanas = modoLicenciaSuite === 'FULL' ? [1, 2, 3, 4, 5, 6] : [1, 2, 6];
+      // Temporizador y no requestAnimationFrame: este se congela si la pestaña del navegador queda en segundo plano
+      const esperarCuadro = () => new Promise(r => setTimeout(r, 80));
+      const graficos = {};
+      // Gráficos de barras con muchas etiquetas que en pantalla van a un tercio del ancho: se capturan anchos
+      // para que las etiquetas no se monten unas sobre otras en el PDF
+      const capturaAncha = new Set(['canvasKpi13_comparativo', 'canvasKpi14_proy', 'canvasKpi14_kmmm', 'canvasKpi14_cpk',
+                                    'canvasKpi15_potencial']);
+      mostrarToast('Generando PDF de indicadores...');
+      try {
+        for (const num of pestanas) {
+          cambiarSubpestanaKpis(num);
+          await esperarCuadro();
+          for (const cv of document.querySelectorAll(`#subvista-kpi-${num} canvas`)) {
+            const chart = Chart.getChart(cv);
+            if (!chart || !cv.width || !cv.height) continue;
+            // Sin animación para capturar el estado final; fondo blanco porque el canvas es transparente
+            chart.stop();
+            chart.options.animation = false;
+            // Chart.js no deja el gráfico más ancho que su contenedor: se agranda el contenedor y luego se restaura
+            const caja = capturaAncha.has(cv.id) ? cv.parentElement : null;
+            const estiloCaja = caja ? caja.getAttribute('style') : null;
+            if (caja) {
+              caja.style.width = '1100px';
+              caja.style.height = '380px';
+              // Si el gráfico sigue animando, Chart.js aplaza el cambio de tamaño: se reintenta unas veces
+              for (let intento = 0; intento < 4 && cv.clientWidth < 1000; intento++) {
+                if (intento) await esperarCuadro();
+                chart.stop();
+                chart.resize();
+                chart.update('none');
+              }
+            }
+            chart.update('none');
+            const lienzo = document.createElement('canvas');
+            lienzo.width = cv.width;
+            lienzo.height = cv.height;
+            const ctx = lienzo.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+            ctx.drawImage(cv, 0, 0);
+            graficos[cv.id] = lienzo.toDataURL('image/jpeg', 0.9);
+            if (caja) {
+              if (estiloCaja === null) caja.removeAttribute('style');
+              else caja.setAttribute('style', estiloCaja);
+              chart.resize();
+            }
+          }
+        }
+      } finally {
+        cambiarSubpestanaKpis(pestanaOriginal);
+      }
+
+      const val = id => {
+        const v = document.getElementById(id)?.value || '';
+        return v === 'TODOS' ? '' : v;
+      };
+      const cuerpo = {
+        cliente: val('filtroKpiCliente'), subcliente: val('filtroKpiSubcliente'), tipo_operacion: val('filtroKpiOperacion'),
+        tipologia: val('filtroKpiTipologia'), marca: val('filtroKpiMarca'), dimension: val('filtroKpiDimension'),
+        eje_temporal: val('filtroKpiEjeTemporal') || 'mes', base: val('filtroKpiBase') || 'ultima',
+        unidad: val('filtroKpiUnidad') || 'km', agrupar_kpi14: agrupacionKpi14Actual, licencia: modoLicenciaSuite, graficos
+      };
+      try {
+        const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+        const res = await fetch('/api/kpis/exportar-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(tok ? { 'Authorization': `Bearer ${tok}` } : {}) },
+          body: JSON.stringify(cuerpo)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'TireAnalyze_KPIs.pdf';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast('📄 PDF de indicadores generado');
+      } catch (e) {
+        console.error('Error exportando PDF de KPIs:', e);
+        mostrarToast(`No se pudo generar el PDF: ${e.message}`, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     function cambiarSubpestanaKpis(num) {

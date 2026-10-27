@@ -30,6 +30,7 @@ from pydantic import BaseModel
 
 import database
 import pdf_generator
+import pdf_kpis
 
 app = FastAPI(title="TireAnalyze Pro - Sistema Integral Web & Móvil")
 
@@ -1191,37 +1192,76 @@ def api_kpis_suite_20(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     try:
-        rol = str(usuario_actual.get("rol", "")).strip().lower()
-        user = str(usuario_actual.get("username", "")).strip().lower()
-        if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
-            clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-            if clis and (not cliente or cliente == "Todos"):
-                cliente = clis[0]
-            elif clis and cliente and cliente != "Todos":
-                if not any(c.lower() == cliente.strip().lower() for c in clis):
-                    raise HTTPException(status_code=403, detail="No tiene permisos para ver los KPIs de este cliente")
-
-        filtros = {
-            "cliente": "" if cliente == "Todos" else cliente,
-            "subcliente": "" if subcliente == "Todos" else subcliente,
-            "tipo_operacion": "" if tipo_operacion == "Todos" else tipo_operacion,
-            "tipologia": "" if tipologia == "Todos" else tipologia,
-            "marca": "" if marca == "Todos" else marca,
-            "dimension": "" if dimension == "Todos" else dimension,
-            "eje_temporal": eje_temporal,
-            "agrupar_kpi14": agrupar_kpi14,
-            "licencia": licencia,
-            "base": base,
-            "unidad": unidad,
-            "horizonte_meses": horizonte_meses,
-            "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
-        }
+        filtros = _filtros_suite_kpis(usuario_actual, cliente, subcliente, tipo_operacion, tipologia, marca, dimension,
+                                      eje_temporal, agrupar_kpi14, licencia, base, unidad, horizonte_meses)
         datos = database.obtener_suite_completa_20_kpis(filtros)
         return sanitizar_nativos(datos)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al calcular Suite de 20 KPIs: {str(e)}")
+
+
+def _filtros_suite_kpis(usuario_actual, cliente, subcliente, tipo_operacion, tipologia, marca, dimension,
+                        eje_temporal, agrupar_kpi14, licencia, base, unidad, horizonte_meses):
+    """Filtros de la suite de KPIs con el alcance del usuario (un usuario de cliente solo ve sus clientes)."""
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    user = str(usuario_actual.get("username", "")).strip().lower()
+    if not es_rol_admin(rol, user) and usuario_actual.get("cliente_asignado"):
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if clis and (not cliente or cliente == "Todos"):
+            cliente = clis[0]
+        elif clis and cliente and cliente != "Todos":
+            if not any(c.lower() == cliente.strip().lower() for c in clis):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver los KPIs de este cliente")
+    return {
+        "cliente": "" if cliente == "Todos" else cliente,
+        "subcliente": "" if subcliente == "Todos" else subcliente,
+        "tipo_operacion": "" if tipo_operacion == "Todos" else tipo_operacion,
+        "tipologia": "" if tipologia == "Todos" else tipologia,
+        "marca": "" if marca == "Todos" else marca,
+        "dimension": "" if dimension == "Todos" else dimension,
+        "eje_temporal": eje_temporal,
+        "agrupar_kpi14": agrupar_kpi14,
+        "licencia": licencia,
+        "base": base,
+        "unidad": unidad,
+        "horizonte_meses": horizonte_meses,
+        "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
+    }
+
+
+class ExportarKpisPdfItem(BaseModel):
+    cliente: str = ""
+    subcliente: str = ""
+    tipo_operacion: str = ""
+    tipologia: str = ""
+    marca: str = ""
+    dimension: str = ""
+    eje_temporal: str = "mes"
+    agrupar_kpi14: str = "marca"
+    licencia: str = ""
+    base: str = "ultima"
+    unidad: str = "km"
+    horizonte_meses: float = 3
+    graficos: dict = {}
+
+
+@app.post("/api/kpis/exportar-pdf", dependencies=[Depends(requerir_vista("kpis"))])
+def api_kpis_exportar_pdf(item: ExportarKpisPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """PDF de la suite de KPIs: gráficos capturados en pantalla + cifras recalculadas con los mismos filtros."""
+    filtros = _filtros_suite_kpis(usuario_actual, item.cliente, item.subcliente, item.tipo_operacion, item.tipologia,
+                                  item.marca, item.dimension, item.eje_temporal, item.agrupar_kpi14, item.licencia,
+                                  item.base, item.unidad, item.horizonte_meses)
+    try:
+        datos = sanitizar_nativos(database.obtener_suite_completa_20_kpis(filtros))
+        pdf_bytes = pdf_kpis.generar_pdf_kpis(datos, item.graficos, filtros)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar el PDF de KPIs: {str(e)}")
+    c_tag = (filtros["cliente"] or "General").replace(" ", "_")
+    filename = f"TireAnalyze_KPIs_{c_tag}_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 @app.get("/api/kpis/exportar-mrp-excel", dependencies=[Depends(requerir_vista("kpis", "bodegas"))])
 def api_exportar_mrp_excel(

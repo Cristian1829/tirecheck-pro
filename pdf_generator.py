@@ -164,6 +164,7 @@ class NumberedCanvas(canvas.Canvas):
 class ConsolidadoNumberedCanvas(canvas.Canvas):
     _fecha = ""
     _cliente = ""
+    _titulo = "INFORME EJECUTIVO & DIAGNÓSTICO CONSOLIDADO DE FLOTA"
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
@@ -208,7 +209,7 @@ class ConsolidadoNumberedCanvas(canvas.Canvas):
 
         self.setFillColor(colors.HexColor('#38BDF8'))
         self.setFont("Helvetica-Bold", 6.8)
-        self.drawString(x + 10, y_sub + 4, "INFORME EJECUTIVO & DIAGNÓSTICO CONSOLIDADO DE FLOTA")
+        self.drawString(x + 10, y_sub + 4, self._titulo)
 
         fec_txt = getattr(self, '_fecha', '') or 'Histórico General'
         ahora_txt = ahora_bogota().strftime('%d/%m/%Y %H:%M')
