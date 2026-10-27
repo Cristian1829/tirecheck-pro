@@ -821,6 +821,17 @@ def inicializar_bd():
             WHERE marca IS NOT NULL AND marca != UPPER(TRIM(marca))
         """)
 
+        # Garantizar que todas las marcas asociadas a clientes queden en mayúsculas y sin duplicados
+        cursor.execute("""
+            UPDATE OR IGNORE configuracion_marcas_cliente
+            SET marca = UPPER(TRIM(marca)), cliente = UPPER(TRIM(cliente))
+            WHERE marca IS NOT NULL AND (marca != UPPER(TRIM(marca)) OR cliente != UPPER(TRIM(cliente)))
+        """)
+        cursor.execute("""
+            DELETE FROM configuracion_marcas_cliente
+            WHERE marca IS NOT NULL AND marca != UPPER(TRIM(marca))
+        """)
+
         # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS catalogo_vehiculos (
@@ -4318,24 +4329,24 @@ def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', toda
         if campo == 'marca' and filtro_cliente and not todas:
             cli_norm = str(filtro_cliente).strip().upper()
             cursor.execute("""
-                SELECT DISTINCT marca
+                SELECT DISTINCT UPPER(TRIM(marca))
                 FROM configuracion_marcas_cliente
                 WHERE UPPER(TRIM(cliente)) = ?
                 ORDER BY marca ASC
             """, (cli_norm,))
-            marcas_cfg = [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+            marcas_cfg = sorted(list(set(str(r[0]).strip().upper() for r in cursor.fetchall() if r[0] and str(r[0]).strip())))
             if marcas_cfg:
                 return marcas_cfg
             # Fallback al histórico de inspecciones de ese cliente si aún no tiene configuración explícita
             cursor.execute("""
-                SELECT DISTINCT marca
+                SELECT DISTINCT UPPER(TRIM(marca))
                 FROM inspecciones
                 WHERE UPPER(TRIM(cliente)) = ? AND marca IS NOT NULL AND TRIM(marca) != ''
                 ORDER BY marca ASC
             """, (cli_norm,))
-            marcas_insp = [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+            marcas_insp = sorted(list(set(str(r[0]).strip().upper() for r in cursor.fetchall() if r[0] and str(r[0]).strip())))
             if marcas_insp:
-                return sorted(list(set(marcas_insp)))
+                return marcas_insp
             # Si no tiene marcas configuradas ni en historial, continúa al catálogo general
 
         query = f"SELECT DISTINCT {campo} FROM inspecciones WHERE {campo} IS NOT NULL AND TRIM({campo}) != ''"
@@ -5094,7 +5105,7 @@ def sincronizar_marca_cliente(cliente, marca, conn=None):
     Registra o actualiza la asociación cliente <-> marca en configuracion_marcas_cliente.
     """
     cli = str(cliente or '').strip().upper()
-    m = str(marca or '').strip()
+    m = str(marca or '').strip().upper()
     if not cli or not m or cli in ('NAN', 'NONE') or m in ('NAN', 'NONE'):
         return
     sql = """
@@ -5114,7 +5125,7 @@ def guardar_marca_cliente(cliente: str, marca: str) -> bool:
     Asocia explícitamente una marca a un cliente en configuracion_marcas_cliente.
     """
     cli = str(cliente or '').strip().upper()
-    m = str(marca or '').strip()
+    m = str(marca or '').strip().upper()
     if not cli or not m:
         return False
     sincronizar_marca_cliente(cli, m)
@@ -5130,19 +5141,19 @@ def obtener_marcas_por_cliente(cliente: str) -> list:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT DISTINCT marca
+            SELECT DISTINCT UPPER(TRIM(marca))
             FROM configuracion_marcas_cliente
             WHERE UPPER(TRIM(cliente)) = ?
             ORDER BY marca ASC
         """, (cli,))
-        return [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+        return sorted(list(set(str(r[0]).strip().upper() for r in cursor.fetchall() if r[0] and str(r[0]).strip())))
 
 def eliminar_marca_cliente(cliente: str, marca: str) -> bool:
     """
     Desvincula una marca de un cliente por nombres.
     """
     cli = str(cliente or '').strip().upper()
-    m = str(marca or '').strip()
+    m = str(marca or '').strip().upper()
     if not cli or not m:
         return False
     with get_connection() as conn:

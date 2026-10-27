@@ -512,7 +512,7 @@
         document.getElementById('edit_numero_interno').value = d.numero_interno || '';
         document.getElementById('edit_kilometraje').value = d.kilometraje || 0;
         document.getElementById('edit_tipologia').value = d.tipologia || '';
-        document.getElementById('edit_marca').value = d.marca || '';
+        document.getElementById('edit_marca').value = (d.marca || '').toUpperCase();
         document.getElementById('edit_diseno').value = d.diseno || '';
         document.getElementById('edit_dimension').value = d.dimension || '';
         const vEd = String(d.vida || 'Original').trim();
@@ -566,11 +566,11 @@
         tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
         tipologia: document.getElementById('edit_tipologia').value,
-        marca: document.getElementById('edit_marca').value,
-        diseno: document.getElementById('edit_diseno').value,
-        dimension: document.getElementById('edit_dimension').value,
+        marca: (document.getElementById('edit_marca')?.value || '').trim().toUpperCase(),
+        diseno: (document.getElementById('edit_diseno')?.value || '').trim().toUpperCase(),
+        dimension: (document.getElementById('edit_dimension')?.value || '').trim().toUpperCase(),
         vida: (document.getElementById('edit_vida')?.value || '').trim(),
-        banda_reen: document.getElementById('edit_banda_reen').value,
+        banda_reen: (document.getElementById('edit_banda_reen')?.value || '').trim().toUpperCase(),
         psi: parseFloat(document.getElementById('edit_psi').value) || 0,
         prof_ext: parseFloat(document.getElementById('edit_prof_ext').value) || 0,
         prof_cent: parseFloat(document.getElementById('edit_prof_cent').value) || 0,

@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 09:36:22`
+- **Fecha de Generación:** `2026-10-27 10:06:25`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,140` líneas
-- **Tamaño Total de Código Fuente:** `3025.5 KB` (`3,098,162` bytes)
+- **Líneas Totales de Código:** `60,157` líneas
+- **Tamaño Total de Código Fuente:** `3026.9 KB` (`3,099,502` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -469,7 +469,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2594 | 116.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10663 | 521.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 10674 | 522.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -481,13 +481,13 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6531 | 440.5 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6531 | 440.6 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4140 | 187.4 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
-| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.5 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2594 líneas | 119,384 bytes (116.6 KB)
+- **Métricas:** 2594 líneas | 119,392 bytes (116.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5533,7 +5533,7 @@ def api_obtener_marcas_cliente(cliente: str = "", usuario_actual: dict = Depends
 def api_guardar_marca_cliente(item: MarcaClienteItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     cli = str(item.cliente or "").strip().upper()
-    m = str(item.marca or "").strip()
+    m = str(item.marca or "").strip().upper()
     if not cli or not m:
         raise HTTPException(status_code=400, detail="Cliente y marca son obligatorios")
     if rol not in ("admin", "jefatura"):
@@ -6420,7 +6420,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10663 líneas | 534,153 bytes (521.6 KB)
+- **Métricas:** 10674 líneas | 534,853 bytes (522.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -7244,6 +7244,17 @@ def inicializar_bd():
         cursor.execute("""
             UPDATE OR IGNORE catalogo_modelos_llantas
             SET marca = UPPER(TRIM(marca))
+            WHERE marca IS NOT NULL AND marca != UPPER(TRIM(marca))
+        """)
+
+        # Garantizar que todas las marcas asociadas a clientes queden en mayúsculas y sin duplicados
+        cursor.execute("""
+            UPDATE OR IGNORE configuracion_marcas_cliente
+            SET marca = UPPER(TRIM(marca)), cliente = UPPER(TRIM(cliente))
+            WHERE marca IS NOT NULL AND (marca != UPPER(TRIM(marca)) OR cliente != UPPER(TRIM(cliente)))
+        """)
+        cursor.execute("""
+            DELETE FROM configuracion_marcas_cliente
             WHERE marca IS NOT NULL AND marca != UPPER(TRIM(marca))
         """)
 
@@ -10744,24 +10755,24 @@ def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', toda
         if campo == 'marca' and filtro_cliente and not todas:
             cli_norm = str(filtro_cliente).strip().upper()
             cursor.execute("""
-                SELECT DISTINCT marca
+                SELECT DISTINCT UPPER(TRIM(marca))
                 FROM configuracion_marcas_cliente
                 WHERE UPPER(TRIM(cliente)) = ?
                 ORDER BY marca ASC
             """, (cli_norm,))
-            marcas_cfg = [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+            marcas_cfg = sorted(list(set(str(r[0]).strip().upper() for r in cursor.fetchall() if r[0] and str(r[0]).strip())))
             if marcas_cfg:
                 return marcas_cfg
             # Fallback al histórico de inspecciones de ese cliente si aún no tiene configuración explícita
             cursor.execute("""
-                SELECT DISTINCT marca
+                SELECT DISTINCT UPPER(TRIM(marca))
                 FROM inspecciones
                 WHERE UPPER(TRIM(cliente)) = ? AND marca IS NOT NULL AND TRIM(marca) != ''
                 ORDER BY marca ASC
             """, (cli_norm,))
-            marcas_insp = [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+            marcas_insp = sorted(list(set(str(r[0]).strip().upper() for r in cursor.fetchall() if r[0] and str(r[0]).strip())))
             if marcas_insp:
-                return sorted(list(set(marcas_insp)))
+                return marcas_insp
             # Si no tiene marcas configuradas ni en historial, continúa al catálogo general
 
         query = f"SELECT DISTINCT {campo} FROM inspecciones WHERE {campo} IS NOT NULL AND TRIM({campo}) != ''"
@@ -11520,7 +11531,7 @@ def sincronizar_marca_cliente(cliente, marca, conn=None):
     Registra o actualiza la asociación cliente <-> marca en configuracion_marcas_cliente.
     """
     cli = str(cliente or '').strip().upper()
-    m = str(marca or '').strip()
+    m = str(marca or '').strip().upper()
     if not cli or not m or cli in ('NAN', 'NONE') or m in ('NAN', 'NONE'):
         return
     sql = """
@@ -11540,7 +11551,7 @@ def guardar_marca_cliente(cliente: str, marca: str) -> bool:
     Asocia explícitamente una marca a un cliente en configuracion_marcas_cliente.
     """
     cli = str(cliente or '').strip().upper()
-    m = str(marca or '').strip()
+    m = str(marca or '').strip().upper()
     if not cli or not m:
         return False
     sincronizar_marca_cliente(cli, m)
@@ -11556,19 +11567,19 @@ def obtener_marcas_por_cliente(cliente: str) -> list:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT DISTINCT marca
+            SELECT DISTINCT UPPER(TRIM(marca))
             FROM configuracion_marcas_cliente
             WHERE UPPER(TRIM(cliente)) = ?
             ORDER BY marca ASC
         """, (cli,))
-        return [r[0] for r in cursor.fetchall() if r[0] and str(r[0]).strip()]
+        return sorted(list(set(str(r[0]).strip().upper() for r in cursor.fetchall() if r[0] and str(r[0]).strip())))
 
 def eliminar_marca_cliente(cliente: str, marca: str) -> bool:
     """
     Desvincula una marca de un cliente por nombres.
     """
     cli = str(cliente or '').strip().upper()
-    m = str(marca or '').strip()
+    m = str(marca or '').strip().upper()
     if not cli or not m:
         return False
     with get_connection() as conn:
@@ -23546,7 +23557,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6531 líneas | 451,089 bytes (440.5 KB)
+- **Métricas:** 6531 líneas | 451,150 bytes (440.6 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -24564,8 +24575,8 @@ if __name__ == '__main__':
                     <label class="block text-xs font-bold text-slate-600">Marca</label>
                     <span id="badgeMarcasModo" class="text-[10px] text-slate-500 font-bold hidden"></span>
                   </div>
-                  <select id="marca" onchange="verificarOpcionNuevaSelect(this, 'marca'); alCambiarMarcaMobile();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
-                    <option value="" disabled selected class="text-slate-400 font-normal">ej. Michelin (Seleccionar marca)</option>
+                  <select id="marca" onchange="verificarOpcionNuevaSelect(this, 'marca'); alCambiarMarcaMobile();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
+                    <option value="" disabled selected class="text-slate-400 font-normal">ej. MICHELIN (Seleccionar marca)</option>
                   </select>
                   <datalist id="dl_marcas"></datalist>
                 </div>
@@ -28389,7 +28400,7 @@ if __name__ == '__main__':
           <div><label class="font-bold text-slate-600">No. Interno</label><input type="text" id="edit_numero_interno" oninput="this.value = this.value.toUpperCase();" onblur="this.value = this.value.trim().toUpperCase();" onchange="this.value = this.value.trim().toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
           <div><label class="font-bold text-slate-600">Kilometraje</label><input type="number" id="edit_kilometraje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
           <div><label class="font-bold text-slate-600">Tipología</label><input type="text" id="edit_tipologia" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Marca</label><input type="text" id="edit_marca" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label class="font-bold text-slate-600">Marca</label><input type="text" id="edit_marca" oninput="this.value = this.value.toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
           <div><label class="font-bold text-slate-600">Diseño</label><input type="text" id="edit_diseno" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label class="font-bold text-slate-600">Dimensión</label><input type="text" id="edit_dimension" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div>
@@ -34018,7 +34029,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4140 líneas | 191,911 bytes (187.4 KB)
+- **Métricas:** 4146 líneas | 192,346 bytes (187.8 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -34028,8 +34039,11 @@ if __name__ == '__main__':
     function asignarValorSelect(selectId, valor) {
       const sel = document.getElementById(selectId);
       if (!sel || valor === undefined || valor === null || valor === '') return;
-      const valStr = String(valor).trim();
-      let opt = Array.from(sel.options).find(o => o.value.trim().toLowerCase() === valStr.toLowerCase());
+      let valStr = String(valor).trim();
+      if (selectId === 'marca' || selectId === 'diseno' || selectId === 'dimension' || selectId === 'banda_reen') {
+        valStr = valStr.toUpperCase();
+      }
+      let opt = Array.from(sel.options).find(o => o.value.trim().toUpperCase() === valStr.toUpperCase());
       if (!opt) {
         opt = document.createElement('option');
         opt.value = valStr;
@@ -34060,7 +34074,10 @@ if __name__ == '__main__':
       if (sel.value === '__nuevo__') {
         const nuevo = prompt(`Ingresa nuevo ${nombreCampo}:`);
         if (nuevo && nuevo.trim()) {
-          const valLimpio = nuevo.trim();
+          let valLimpio = nuevo.trim();
+          if (sel.id === 'marca' || sel.id === 'diseno' || sel.id === 'dimension' || sel.id === 'banda_reen') {
+            valLimpio = valLimpio.toUpperCase();
+          }
           asignarValorSelect(sel.id, valLimpio);
           mostrarToast(`Agregado: ${valLimpio}`);
           if (sel.id === 'marca') {
@@ -34071,7 +34088,7 @@ if __name__ == '__main__':
               fetch('/api/configuracion-marcas-cliente', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cliente: cli, marca: valLimpio })
+                body: JSON.stringify({ cliente: cli.toUpperCase(), marca: valLimpio.toUpperCase() })
               }).catch(e => console.error("Error al guardar marca cliente:", e));
             }
           }
@@ -34128,16 +34145,16 @@ if __name__ == '__main__':
         const unicos = [];
         const vistos = new Set();
         (marcas || []).forEach(m => {
-          const norm = String(m || '').trim();
-          if (norm && !vistos.has(norm.toLowerCase())) {
-            vistos.add(norm.toLowerCase());
+          const norm = String(m || '').trim().toUpperCase();
+          if (norm && !vistos.has(norm)) {
+            vistos.add(norm);
             unicos.push(norm);
           }
         });
 
         const placeholder = cliente && !mostrarTodas
-          ? `ej. Michelin (Marcas de ${cliente})`
-          : `ej. Michelin (Catálogo completo de marcas)`;
+          ? `ej. MICHELIN (Marcas de ${cliente})`
+          : `ej. MICHELIN (Catálogo completo de marcas)`;
 
         let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholder}</option>`;
 
@@ -34146,7 +34163,7 @@ if __name__ == '__main__':
         }
 
         unicos.forEach(m => {
-          const isSel = (valorPrevio && valorPrevio.toLowerCase() === m.toLowerCase());
+          const isSel = (valorPrevio && valorPrevio.trim().toUpperCase() === m);
           html += `<option value="${m}" ${isSel ? 'selected' : ''}>${m}</option>`;
         });
 
@@ -37991,11 +38008,11 @@ if __name__ == '__main__':
           return k > 0 ? k : (kilometrajeInspeccionActual || 0);
         })(),
         tipologia: document.getElementById('tipologia').value,
-        marca: document.getElementById('marca').value,
-        diseno: document.getElementById('diseno').value,
+        marca: (document.getElementById('marca')?.value || '').trim().toUpperCase(),
+        diseno: (document.getElementById('diseno')?.value || '').trim().toUpperCase(),
         dimension: dimension,
         vida: (document.getElementById('vida')?.value || '').trim(),  // sin elegir no se asume Original
-        banda_reen: document.getElementById('banda_reen').value,
+        banda_reen: (document.getElementById('banda_reen')?.value || '').trim().toUpperCase(),
         prof_ext: p_ext,
         prof_cent: p_cent,
         prof_int: p_int,
@@ -38169,7 +38186,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_basedatos.js`
 - **Descripción:** Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel
-- **Métricas:** 887 líneas | 42,461 bytes (41.5 KB)
+- **Métricas:** 887 líneas | 42,597 bytes (41.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -38687,7 +38704,7 @@ if __name__ == '__main__':
         document.getElementById('edit_numero_interno').value = d.numero_interno || '';
         document.getElementById('edit_kilometraje').value = d.kilometraje || 0;
         document.getElementById('edit_tipologia').value = d.tipologia || '';
-        document.getElementById('edit_marca').value = d.marca || '';
+        document.getElementById('edit_marca').value = (d.marca || '').toUpperCase();
         document.getElementById('edit_diseno').value = d.diseno || '';
         document.getElementById('edit_dimension').value = d.dimension || '';
         const vEd = String(d.vida || 'Original').trim();
@@ -38741,11 +38758,11 @@ if __name__ == '__main__':
         tipo_licencia: (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) ? clienteLicenciaCaptura : (typeof modoLicenciaGraficos !== 'undefined' ? modoLicenciaGraficos : 'LIGHT'),
         kilometraje: parseFloat(document.getElementById('edit_kilometraje').value) || 0,
         tipologia: document.getElementById('edit_tipologia').value,
-        marca: document.getElementById('edit_marca').value,
-        diseno: document.getElementById('edit_diseno').value,
-        dimension: document.getElementById('edit_dimension').value,
+        marca: (document.getElementById('edit_marca')?.value || '').trim().toUpperCase(),
+        diseno: (document.getElementById('edit_diseno')?.value || '').trim().toUpperCase(),
+        dimension: (document.getElementById('edit_dimension')?.value || '').trim().toUpperCase(),
         vida: (document.getElementById('edit_vida')?.value || '').trim(),
-        banda_reen: document.getElementById('edit_banda_reen').value,
+        banda_reen: (document.getElementById('edit_banda_reen')?.value || '').trim().toUpperCase(),
         psi: parseFloat(document.getElementById('edit_psi').value) || 0,
         prof_ext: parseFloat(document.getElementById('edit_prof_ext').value) || 0,
         prof_cent: parseFloat(document.getElementById('edit_prof_cent').value) || 0,

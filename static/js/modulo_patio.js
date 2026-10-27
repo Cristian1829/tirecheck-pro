@@ -4,8 +4,11 @@
     function asignarValorSelect(selectId, valor) {
       const sel = document.getElementById(selectId);
       if (!sel || valor === undefined || valor === null || valor === '') return;
-      const valStr = String(valor).trim();
-      let opt = Array.from(sel.options).find(o => o.value.trim().toLowerCase() === valStr.toLowerCase());
+      let valStr = String(valor).trim();
+      if (selectId === 'marca' || selectId === 'diseno' || selectId === 'dimension' || selectId === 'banda_reen') {
+        valStr = valStr.toUpperCase();
+      }
+      let opt = Array.from(sel.options).find(o => o.value.trim().toUpperCase() === valStr.toUpperCase());
       if (!opt) {
         opt = document.createElement('option');
         opt.value = valStr;
@@ -36,7 +39,10 @@
       if (sel.value === '__nuevo__') {
         const nuevo = prompt(`Ingresa nuevo ${nombreCampo}:`);
         if (nuevo && nuevo.trim()) {
-          const valLimpio = nuevo.trim();
+          let valLimpio = nuevo.trim();
+          if (sel.id === 'marca' || sel.id === 'diseno' || sel.id === 'dimension' || sel.id === 'banda_reen') {
+            valLimpio = valLimpio.toUpperCase();
+          }
           asignarValorSelect(sel.id, valLimpio);
           mostrarToast(`Agregado: ${valLimpio}`);
           if (sel.id === 'marca') {
@@ -47,7 +53,7 @@
               fetch('/api/configuracion-marcas-cliente', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cliente: cli, marca: valLimpio })
+                body: JSON.stringify({ cliente: cli.toUpperCase(), marca: valLimpio.toUpperCase() })
               }).catch(e => console.error("Error al guardar marca cliente:", e));
             }
           }
@@ -104,16 +110,16 @@
         const unicos = [];
         const vistos = new Set();
         (marcas || []).forEach(m => {
-          const norm = String(m || '').trim();
-          if (norm && !vistos.has(norm.toLowerCase())) {
-            vistos.add(norm.toLowerCase());
+          const norm = String(m || '').trim().toUpperCase();
+          if (norm && !vistos.has(norm)) {
+            vistos.add(norm);
             unicos.push(norm);
           }
         });
 
         const placeholder = cliente && !mostrarTodas
-          ? `ej. Michelin (Marcas de ${cliente})`
-          : `ej. Michelin (Catálogo completo de marcas)`;
+          ? `ej. MICHELIN (Marcas de ${cliente})`
+          : `ej. MICHELIN (Catálogo completo de marcas)`;
 
         let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholder}</option>`;
 
@@ -122,7 +128,7 @@
         }
 
         unicos.forEach(m => {
-          const isSel = (valorPrevio && valorPrevio.toLowerCase() === m.toLowerCase());
+          const isSel = (valorPrevio && valorPrevio.trim().toUpperCase() === m);
           html += `<option value="${m}" ${isSel ? 'selected' : ''}>${m}</option>`;
         });
 
@@ -3967,11 +3973,11 @@
           return k > 0 ? k : (kilometrajeInspeccionActual || 0);
         })(),
         tipologia: document.getElementById('tipologia').value,
-        marca: document.getElementById('marca').value,
-        diseno: document.getElementById('diseno').value,
+        marca: (document.getElementById('marca')?.value || '').trim().toUpperCase(),
+        diseno: (document.getElementById('diseno')?.value || '').trim().toUpperCase(),
         dimension: dimension,
         vida: (document.getElementById('vida')?.value || '').trim(),  // sin elegir no se asume Original
-        banda_reen: document.getElementById('banda_reen').value,
+        banda_reen: (document.getElementById('banda_reen')?.value || '').trim().toUpperCase(),
         prof_ext: p_ext,
         prof_cent: p_cent,
         prof_int: p_int,

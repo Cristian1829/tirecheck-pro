@@ -1713,7 +1713,7 @@ def api_obtener_marcas_cliente(cliente: str = "", usuario_actual: dict = Depends
 def api_guardar_marca_cliente(item: MarcaClienteItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     cli = str(item.cliente or "").strip().upper()
-    m = str(item.marca or "").strip()
+    m = str(item.marca or "").strip().upper()
     if not cli or not m:
         raise HTTPException(status_code=400, detail="Cliente y marca son obligatorios")
     if rol not in ("admin", "jefatura"):
