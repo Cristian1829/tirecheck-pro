@@ -297,7 +297,12 @@
       }
     }
 
+    // Cada carga lleva un número: si el usuario cambia de filtro antes de que llegue la respuesta,
+    // la respuesta vieja se descarta (antes podía pintar los datos de todos los clientes encima del filtrado)
+    let consultaSuiteVigente = 0;
+
     async function cargarSuite20Kpis() {
+      const consulta = ++consultaSuiteVigente;
       try {
         const cliVal = document.getElementById('filtroKpiCliente')?.value || '';
         const sedeVal = document.getElementById('filtroKpiSubcliente')?.value || '';
@@ -330,6 +335,7 @@
         }
 
         const data = await res.json();
+        if (consulta !== consultaSuiteVigente) return;
         datosSuite20Actuales = data;
         unidadSuite = data.unidad === 'horas' ? 'h' : 'km';
 
@@ -1719,6 +1725,14 @@
       if (elCant) elCant.textContent = `${formatCO_Miles(d.cantidad_fvu || 0)} llantas`;
       if (elIr) elIr.textContent = formatCO_Decimal(d.indice_reencauchabilidad_ir || 0, 2);
       if (elPctReen) elPctReen.textContent = `${formatCO_Decimal(d.pct_reencauche_fvu || 0, 1)}%`;
+      const elNota = document.getElementById('kpi17_nota_sin_fecha');
+      if (elNota) {
+        const sinFecha = d.bajas_sin_fecha || 0;
+        elNota.classList.toggle('hidden', !sinFecha);
+        elNota.textContent = sinFecha
+          ? `⚠️ ${formatCO_Miles(sinFecha)} de ${formatCO_Miles(d.cantidad_fvu)} bajas no tienen fecha de baja registrada: cuentan en el total pero no aparecen en la gráfica mensual.`
+          : '';
+      }
 
       destruirChartSuite('kpi17_lineas');
       const ctx = document.getElementById('canvasKpi17_lineas');

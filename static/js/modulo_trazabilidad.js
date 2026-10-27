@@ -23,13 +23,18 @@
       const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
       const op = document.getElementById('filtroKpiOperacion')?.value || '';
       const marca = document.getElementById('filtroKpiMarca')?.value || '';
+      // Tipología y dimensión también filtran la tabla (antes solo las gráficas)
+      const tip = document.getElementById('filtroKpiTipologia')?.value || '';
+      const dim = document.getElementById('filtroKpiDimension')?.value || '';
 
       const params = new URLSearchParams();
       if (qNum) params.append('numero_interno', qNum);
       if (cli && cli !== 'TODOS') params.append('cliente', cli);
       if (sub && sub !== 'TODOS') params.append('subcliente', sub);
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
+      if (tip && tip !== 'TODOS') params.append('tipologia', tip);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
+      if (dim && dim !== 'TODOS') params.append('dimension', dim);
 
       const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -387,13 +392,18 @@
       const sub = document.getElementById('filtroKpiSubcliente')?.value || '';
       const op = document.getElementById('filtroKpiOperacion')?.value || '';
       const marca = document.getElementById('filtroKpiMarca')?.value || '';
+      // Tipología y dimensión también filtran la tabla (antes solo las gráficas)
+      const tip = document.getElementById('filtroKpiTipologia')?.value || '';
+      const dim = document.getElementById('filtroKpiDimension')?.value || '';
 
       const params = new URLSearchParams();
       if (qNum) params.append('numero_interno', qNum);
       if (cli && cli !== 'TODOS') params.append('cliente', cli);
       if (sub && sub !== 'TODOS') params.append('subcliente', sub);
       if (op && op !== 'TODOS') params.append('tipo_operacion', op);
+      if (tip && tip !== 'TODOS') params.append('tipologia', tip);
       if (marca && marca !== 'TODOS') params.append('marca', marca);
+      if (dim && dim !== 'TODOS') params.append('dimension', dim);
 
       const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
       if (tok) params.append('token', tok);

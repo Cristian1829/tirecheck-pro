@@ -161,6 +161,8 @@ def get_connection():
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA cache_size = -32000")
     conn.execute("PRAGMA temp_store = MEMORY")
+    # UPPER de SQLite no pasa a mayúscula las tildes ('Camión' -> 'CAMIóN'): MAYUS lo hace como Python
+    conn.create_function("MAYUS", 1, lambda v: str(v).upper() if v is not None else None, deterministic=True)
     try:
         yield conn
         conn.commit()
@@ -5965,22 +5967,22 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
             cli_sol_up = str(cliente_solicitado).strip().upper()
             if clis_autorizados is not None:
                 if cli_sol_up in clis_autorizados:
-                    query += " AND UPPER(TRIM(cliente)) = ?"
+                    query += " AND MAYUS(TRIM(cliente)) = ?"
                     params.append(cli_sol_up)
                 else:
                     return []
             else:
-                query += " AND UPPER(TRIM(cliente)) = ?"
+                query += " AND MAYUS(TRIM(cliente)) = ?"
                 params.append(cli_sol_up)
         elif clis_autorizados is not None:
             placeholders = ', '.join(['?'] * len(clis_autorizados))
-            query += f" AND UPPER(TRIM(cliente)) IN ({placeholders})"
+            query += f" AND MAYUS(TRIM(cliente)) IN ({placeholders})"
             params.extend(clis_autorizados)
 
-        for k_campo in ['subcliente', 'tipo_operacion', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
+        for k_campo in ['subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen']:
             v_val = filtros.get(k_campo)
             if v_val and str(v_val).strip() and str(v_val).strip().upper() != 'TODOS':
-                query += f" AND UPPER(TRIM({k_campo})) = UPPER(TRIM(?))"
+                query += f" AND MAYUS(TRIM({k_campo})) = MAYUS(TRIM(?))"
                 params.append(str(v_val).strip())
 
         query += " ORDER BY numero_interno ASC, fecha ASC, id ASC"
@@ -6757,7 +6759,8 @@ def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: in
             ph = ', '.join(['?'] * len(clientes))
             instalaciones = conn.execute(f"""
                 SELECT SUBSTR(k.fecha_movimiento, 1, 7), k.cliente, k.numero_interno, k.vida_ciclo,
-                       m.marca, m.diseno, m.dimension, m.costo_compra_original, m.costo_ciclo_actual, m.vida_actual, k.fecha_movimiento
+                       m.marca, m.diseno, m.dimension, m.costo_compra_original, m.costo_ciclo_actual, m.vida_actual, k.fecha_movimiento,
+                       UPPER(TRIM(k.placa))
                 FROM kardex_movimientos_llanta k
                 LEFT JOIN llantas_maestro m ON UPPER(m.numero_interno) = UPPER(k.numero_interno) AND UPPER(m.cliente) = UPPER(k.cliente)
                 WHERE k.tipo_movimiento IN ('MONTAJE', 'REINGRESO_MONTAJE')
@@ -6766,6 +6769,10 @@ def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: in
             """, clientes).fetchall()
     except Exception:
         instalaciones = []
+    # Solo las instalaciones en los vehículos filtrados: la inversión y el recorrido son de la misma flota
+    # (antes, al filtrar una sede, se dividía la inversión de todas las sedes por el recorrido de una)
+    placas_flota = set(d2['_placa']) | set(d['placa'].astype(str).str.strip().str.upper())
+    instalaciones = [fila[:11] for fila in instalaciones if fila[11] in placas_flota]
     serie = []
     for i, mes in enumerate(lista_meses):
         km_mes = 0.0
@@ -8530,15 +8537,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             df = df[df["tipo_operacion"].astype(str).str.upper().str.strip() == tipo_operacion]
         if tipologia and tipologia != "TODOS":
             df = df[df["tipologia"].astype(str).str.upper().str.strip() == tipologia]
+        # Solo los vehículos medidos en la unidad elegida (los datos sin unidad son de kilómetros)
+        uni_col = df['unidad_medida'] if 'unidad_medida' in df.columns else pd.Series(['KM'] * len(df), index=df.index)
+        df = df[uni_col.apply(normalizar_unidad_medida) == ('HORAS' if unidad == 'horas' else 'KM')]
+        # El cumplimiento (KPI 01) es de vehículos: no depende de la marca ni de la medida de llanta
+        df_vehiculos = df
         if marca and marca != "TODOS":
             df = df[df["marca"].astype(str).str.upper().str.strip() == marca]
         if dimension and dimension != "TODOS":
             df = df[df["dimension"].astype(str).str.upper().str.strip() == dimension]
-        # Solo los vehículos medidos en la unidad elegida (los datos sin unidad son de kilómetros)
-        uni_col = df['unidad_medida'] if 'unidad_medida' in df.columns else pd.Series(['KM'] * len(df), index=df.index)
-        df = df[uni_col.apply(normalizar_unidad_medida) == ('HORAS' if unidad == 'horas' else 'KM')]
     else:
         df = pd.DataFrame()
+        df_vehiculos = pd.DataFrame()
 
     if not df.empty:
         pos_list = [to_int(p) for p in df['posicion']]
@@ -8754,6 +8764,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         # Precio usado en los montos: real, o referencia real del cliente/dimensión, o sin dato
         df['calc_precio'] = [p if p > 0 else ref_precio(c, d, sn, m, ds, v, f) for p, c, d, sn, m, ds, v, f
                              in zip(precio_list, cli_list, dim_list_k, sn_list, marca_list_k, diseno_list_k, vida_list, fecha_list_k)]
+        # La marca se agrupa en mayúsculas (ya calculados los precios): las inspecciones viejas tienen
+        # 'Bridgestone' y 'BRIDGESTONE', que salían como dos barras distintas en las gráficas
+        df['marca'] = df['marca'].fillna('').astype(str).str.strip().str.upper()
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
@@ -8773,14 +8786,22 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # 2. Padrón de vehículos
     with get_connection() as conn:
         cur = conn.cursor()
-        qp = "SELECT UPPER(TRIM(placa)), UPPER(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo') FROM padron_vehiculos_cliente WHERE activo = 1"
+        qp = "SELECT MAYUS(TRIM(placa)), MAYUS(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo') FROM padron_vehiculos_cliente WHERE activo = 1"
         par_p = []
         if cliente and cliente != "TODOS":
-            qp += " AND UPPER(TRIM(cliente)) = ?"
+            qp += " AND MAYUS(TRIM(cliente)) = ?"
             par_p.append(cliente)
         if subcliente and subcliente != "TODOS":
-            qp += " AND UPPER(TRIM(subcliente)) = ?"
+            qp += " AND MAYUS(TRIM(subcliente)) = ?"
             par_p.append(subcliente)
+        if tipologia and tipologia != "TODOS":
+            qp += " AND MAYUS(TRIM(tipologia)) = ?"
+            par_p.append(tipologia)
+        # El padrón no guarda la operación: se toma la del catálogo de vehículos
+        if tipo_operacion and tipo_operacion != "TODOS":
+            qp += (" AND MAYUS(TRIM(placa)) IN (SELECT MAYUS(TRIM(placa)) FROM catalogo_vehiculos"
+                   " WHERE MAYUS(TRIM(tipo_operacion)) = ?)")
+            par_p.append(tipo_operacion)
         cur.execute(qp, par_p)
         padron_rows = cur.fetchall()
     # De dónde sale el parque: padrón cargado o, si no hay, los vehículos ya inspeccionados alguna vez
@@ -8789,28 +8810,30 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     if not padron_rows:
         with get_connection() as conn:
             cur = conn.cursor()
-            qc = "SELECT UPPER(TRIM(placa)), UPPER(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), 'Activo' FROM catalogo_vehiculos WHERE 1=1"
+            qc = "SELECT MAYUS(TRIM(placa)), MAYUS(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), 'Activo' FROM catalogo_vehiculos WHERE 1=1"
             par_c = []
             if cliente and cliente != "TODOS":
-                qc += " AND UPPER(TRIM(cliente)) = ?"
+                qc += " AND MAYUS(TRIM(cliente)) = ?"
                 par_c.append(cliente)
             if subcliente and subcliente != "TODOS":
-                qc += " AND UPPER(TRIM(subcliente)) = ?"
+                qc += " AND MAYUS(TRIM(subcliente)) = ?"
                 par_c.append(subcliente)
+            if tipologia and tipologia != "TODOS":
+                qc += " AND MAYUS(TRIM(tipologia)) = ?"
+                par_c.append(tipologia)
+            if tipo_operacion and tipo_operacion != "TODOS":
+                qc += " AND MAYUS(TRIM(tipo_operacion)) = ?"
+                par_c.append(tipo_operacion)
             cur.execute(qc, par_c)
             padron_rows = cur.fetchall()
 
-    if not padron_rows and not df.empty:
-        placas_unicas = df['placa'].dropna().str.upper().str.strip().unique()
-        padron_rows = [(p, '', '', 'Activo') for p in placas_unicas]
+    # Vehículos inspeccionados con los filtros de vehículo (cliente, sede, operación, tipología, unidad).
+    # Antes, al filtrar por marca o medida, una placa con otras llantas contaba como no inspeccionada.
+    placas_insp_corte = set(df_vehiculos['placa'].dropna().astype(str).str.upper().str.strip().unique()) \
+        if not df_vehiculos.empty else set()
 
-    # Placas inspeccionadas en el corte evaluado (consistente con 'Vehículos Evaluados' en Diagnóstico)
-    if not df_corte.empty:
-        placas_insp_corte = set(df_corte['placa'].dropna().str.upper().str.strip().unique())
-    elif not df.empty:
-        placas_insp_corte = set(df['placa'].dropna().str.upper().str.strip().unique())
-    else:
-        placas_insp_corte = set()
+    if not padron_rows and placas_insp_corte:
+        padron_rows = [(p, '', '', 'Activo') for p in sorted(placas_insp_corte)]
 
     periodo_reciente = df['periodo_mes'].max() if not df.empty else ""
 
@@ -8841,11 +8864,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         qm = "SELECT * FROM llantas_maestro WHERE 1=1"
         par_m = []
         if cliente and cliente != "TODOS":
-            qm += " AND UPPER(TRIM(cliente)) = ?"
+            qm += " AND MAYUS(TRIM(cliente)) = ?"
             par_m.append(cliente)
         if subcliente and subcliente != "TODOS":
-            qm += " AND UPPER(TRIM(subcliente)) = ?"
+            qm += " AND MAYUS(TRIM(subcliente)) = ?"
             par_m.append(subcliente)
+        # Bajas (KPI 17-19) y bodegas (KPI 20) con los mismos filtros de llanta que las inspecciones
+        # (antes solo cliente y sede: al filtrar una marca salían las bajas de todas las marcas).
+        # La tipología no aplica: una llanta en bodega o de baja no está en ningún vehículo.
+        for col_m, val_m in (('tipo_operacion', tipo_operacion), ('marca', marca), ('dimension', dimension)):
+            if val_m and val_m != "TODOS":
+                qm += f" AND MAYUS(TRIM({col_m})) = ?"
+                par_m.append(val_m)
         cur.execute(qm, par_m)
         cols_m = [d[0] for d in cur.description]
         llantas_maestro_todas = [dict(zip(cols_m, row)) for row in cur.fetchall()]
@@ -9592,20 +9622,25 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         f_b = fecha_baja_de(ll)
         if f_b:
             fvu_por_mes.setdefault(f_b[:7], []).append(ll)
-    fvu_12m_cant = [len(fvu_por_mes.get(m, [])) for m in meses_k2]
+    # Meses de las bajas (antes, los de las inspecciones: una baja en un mes sin inspección no salía en la gráfica)
+    meses_fvu = sorted(set(meses_k2) | set(fvu_por_mes))[-12:]
+    labels_fvu = [_mes_a_espanol(m) for m in meses_fvu]
+    fvu_12m_cant = [len(fvu_por_mes.get(m, [])) for m in meses_fvu]
     fvu_12m_ir = [
         round(sum(to_int(ll.get('num_reencauches', 0)) + 1 for ll in fvu_por_mes[m]) / len(fvu_por_mes[m]), 2) if fvu_por_mes.get(m) else None
-        for m in meses_k2
+        for m in meses_fvu
     ]
 
     kpi_17 = {
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
         "cantidad_fvu": cant_fvu,
+        # Bajas sin fecha (ni fecha_baja ni movimiento en el kardex): cuentan en el total pero no en la serie mensual
+        "bajas_sin_fecha": sum(1 for ll in llantas_fvu if not fecha_baja_de(ll)),
         "indice_reencauchabilidad_ir": ir_fvu,
         "pct_reencauche_fvu": pct_reen_fvu,
         "grafico_12m": {
-            "labels": labels_k2,
+            "labels": labels_fvu,
             "cantidad": fvu_12m_cant,
             "ir": fvu_12m_ir
         }
@@ -9617,10 +9652,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     marcas_fvu, ciclos_fvu, causales_fvu, alertas_garantia = {}, {'Original': 0, 'R1': 0, 'R2': 0, 'R3+': 0}, {}, []
     if cant_fvu > 0 and es_full:
         for ll in llantas_fvu:
-            mk_f = str(ll.get('marca', 'Otras')).strip() or 'Otras'
+            # Campos vacíos en la base llegan como None: sin 'or' salían rotulados "None" en las gráficas
+            mk_f = str(ll.get('marca') or '').strip().upper() or 'SIN MARCA'
             marcas_fvu[mk_f] = marcas_fvu.get(mk_f, 0) + 1
 
-            vd_f = str(ll.get('vida_actual', 'Original')).strip().upper()
+            vd_f = str(ll.get('vida_actual') or 'Original').strip().upper()
             if re.search(r'R3|R4|R5', vd_f):
                 ciclos_fvu['R3+'] += 1
             elif 'R2' in vd_f:
@@ -9630,7 +9666,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             else:
                 ciclos_fvu['Original'] += 1
 
-            cs_f = str(ll.get('causal_baja_fvu', 'Fin de vida útil normal')).strip() or 'Fin de vida útil normal'
+            cs_f = str(ll.get('causal_baja_fvu') or '').strip() or 'Sin causal registrada'
             causales_fvu[cs_f] = causales_fvu.get(cs_f, 0) + 1
 
             p_ini_f = to_float(ll.get('prof_inicial', 18.0), 18.0)
@@ -9689,7 +9725,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             })
 
         # Profundidad de baja por mes real (antes: el mismo valor global repetido en cada mes)
-        for m in meses_k2:
+        for m in meses_fvu:
             pb_m = [to_float(ll.get('prof_actual_min', 0.0)) for ll in fvu_por_mes.get(m, [])]
             max_baja.append(round(max(pb_m), 1) if pb_m else None)
             prom_baja.append(round(sum(pb_m) / len(pb_m), 1) if pb_m else None)
@@ -9699,7 +9735,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
         "grafico_lineas": {
-            "labels": labels_k2,
+            "labels": labels_fvu,
             "maximo": max_baja,
             "promedio": prom_baja,
             "minimo": min_baja

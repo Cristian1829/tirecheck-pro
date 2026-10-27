@@ -1304,12 +1304,14 @@ def api_kpis_llantas(
     vida: str = "",
     banda_reen: str = "",
     usuario: str = "",
+    tipologia: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtros = {
         'cliente': cliente,
         'subcliente': subcliente,
         'tipo_operacion': tipo_operacion,
+        'tipologia': tipologia,
         'marca': marca,
         'diseno': diseno,
         'dimension': dimension,
@@ -1343,12 +1345,14 @@ def api_exportar_kpis_excel(
     vida: str = "",
     banda_reen: str = "",
     usuario: str = "",
+    tipologia: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     filtros = {
         'cliente': cliente,
         'subcliente': subcliente,
         'tipo_operacion': tipo_operacion,
+        'tipologia': tipologia,
         'marca': marca,
         'diseno': diseno,
         'dimension': dimension,

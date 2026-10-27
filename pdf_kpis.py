@@ -304,9 +304,14 @@ def _detalle(clave, d, u):
                                           for m in reversed(d['administrativo'])], [100, 150, 140, 150])]
         return out
     if clave == 'kpi_17':
-        return [_cifras([("Llantas dadas de baja", format_miles_es(d.get('cantidad_fvu') or 0)),
-                         ("Índice de reencauchabilidad", format_num_es(d.get('indice_reencauchabilidad_ir') or 0, 2)),
-                         ("% de bajas reencauchadas", _pct(d.get('pct_reencauche_fvu') or 0))])]
+        out = [_cifras([("Llantas dadas de baja", format_miles_es(d.get('cantidad_fvu') or 0)),
+                        ("Índice de reencauchabilidad", format_num_es(d.get('indice_reencauchabilidad_ir') or 0, 2)),
+                        ("% de bajas reencauchadas", _pct(d.get('pct_reencauche_fvu') or 0))])]
+        if d.get('bajas_sin_fecha'):
+            out.append(Paragraph(f"{format_miles_es(d['bajas_sin_fecha'])} de {format_miles_es(d.get('cantidad_fvu') or 0)} "
+                                 "bajas no tienen fecha de baja registrada: cuentan en el total pero no aparecen en la "
+                                 "gráfica mensual.", _s_vacio))
+        return out
     if clave == 'kpi_20':
         m = d.get('matriz_mrp') or []
         return [_tabla(["Dimensión", "Demanda", "Reposición bajas", "Stock seg.", "Necesidad bruta", "Stock disponible",
