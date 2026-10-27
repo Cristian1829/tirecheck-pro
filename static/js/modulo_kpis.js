@@ -361,6 +361,8 @@
       if (q.sin_prof_inicial) partes.push(`${q.sin_prof_inicial} sin profundidad inicial (fuera de desgaste y proyecciones)`);
       if (q.sin_precio) partes.push(`${q.sin_precio} sin precio (fuera de CPK y pérdidas en pesos)`);
       if (q.sin_numero_interno) partes.push(`${q.sin_numero_interno} sin número interno (fuera de la trazabilidad por llanta)`);
+      if (q.sin_marca) partes.push(`${q.sin_marca} sin marca (salen como "Sin marca")`);
+      if (q.marca_es_banda) partes.push(`${q.marca_es_banda} con una marca de banda de reencauche en el campo marca (${(q.marcas_banda_usadas || []).join(', ')}): corrija la marca de la llanta`);
       if (q.sin_sede) partes.push(`${q.sin_sede} sin sede`);
       if (q.fechas_invalidas) partes.push(`${q.fechas_invalidas} inspecciones con fecha inválida excluidas`);
       el.classList.toggle('hidden', partes.length === 0);

@@ -383,8 +383,12 @@ def generar_pdf_kpis(datos: dict, graficos: dict, filtros: dict) -> bytes:
 
     q = datos.get('calidad_datos') or {}
     excl = [f"{q[k]} {txt}" for k, txt in (('sin_psi', 'sin presión'), ('sin_prof_inicial', 'sin profundidad inicial'),
-                                           ('sin_precio', 'sin precio'), ('sin_numero_interno', 'sin número interno'))
+                                           ('sin_precio', 'sin precio'), ('sin_numero_interno', 'sin número interno'),
+                                           ('sin_marca', 'sin marca'))
             if q.get(k)]
+    if q.get('marca_es_banda'):
+        excl.append(f"{q['marca_es_banda']} con marca de banda de reencauche en el campo marca "
+                    f"({', '.join(q.get('marcas_banda_usadas') or [])})")
     if q.get('llantas') and excl:
         el.append(Spacer(1, 4))
         el.append(Paragraph(f"Calidad de datos: de {q['llantas']} llantas analizadas, {'; '.join(excl)}. Cada indicador "

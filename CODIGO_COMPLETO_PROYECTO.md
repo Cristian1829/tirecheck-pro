@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 13:40:20`
+- **Fecha de Generación:** `2026-10-27 13:55:41`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,413` líneas
-- **Tamaño Total de Código Fuente:** `3054.0 KB` (`3,127,262` bytes)
+- **Líneas Totales de Código:** `60,440` líneas
+- **Tamaño Total de Código Fuente:** `3055.7 KB` (`3,129,016` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -469,7 +469,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2638 | 121.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10757 | 537.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 10782 | 539.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2112 | 103.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -488,7 +488,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2157 | 95.1 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2159 | 95.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1222 | 58.2 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.7 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
@@ -6464,7 +6464,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10757 líneas | 550,611 bytes (537.7 KB)
+- **Métricas:** 10782 líneas | 552,078 bytes (539.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14600,6 +14600,22 @@ def resolver_fecha_baja_fvu():
 
 
 _SALIDAS_KARDEX = ('DESMONTE', 'BAJA', 'CHATARR', 'ENVIO')
+SIN_MARCA = 'Sin marca'
+
+
+def marcas_de_banda() -> set:
+    """Marcas que el catálogo de modelos solo tiene como banda de reencauche (BANDAG, VIPAL, MARANGONI...):
+    no son marca de llanta. Las que también fabrican llanta nueva no cuentan."""
+    try:
+        with get_connection() as conn:
+            filas = conn.execute("""
+                SELECT MAYUS(TRIM(marca)), MAX(MAYUS(TRIM(tipo_llanta)) LIKE 'REENC%'),
+                       MAX(MAYUS(TRIM(tipo_llanta)) NOT LIKE 'REENC%')
+                FROM catalogo_modelos_llantas WHERE TRIM(IFNULL(marca, '')) <> '' GROUP BY 1
+            """).fetchall()
+    except Exception:
+        return set()
+    return {m for m, es_banda, es_llanta in filas if es_banda and not es_llanta}
 
 
 def quitar_llantas_desmontadas(df_corte: pd.DataFrame) -> pd.DataFrame:
@@ -15281,7 +15297,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                              in zip(precio_list, cli_list, dim_list_k, sn_list, marca_list_k, diseno_list_k, vida_list, fecha_list_k)]
         # La marca se agrupa en mayúsculas (ya calculados los precios): las inspecciones viejas tienen
         # 'Bridgestone' y 'BRIDGESTONE', que salían como dos barras distintas en las gráficas
-        df['marca'] = df['marca'].fillna('').astype(str).str.strip().str.upper()
+        # Sin marca registrada se rotula "Sin marca" (antes "Otras", que parecía un grupo de otras marcas)
+        df['marca'] = df['marca'].fillna('').astype(str).str.strip().str.upper().replace(
+            {'': SIN_MARCA, 'NAN': SIN_MARCA, 'NONE': SIN_MARCA})
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
@@ -15495,8 +15513,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     if not df_patio.empty:
         tip_counts = df_patio['tipologia'].replace('', 'No Especificada').value_counts()
-        mar_counts = df_patio['marca'].replace('', 'Otras').value_counts()
-        dim_counts = df_patio['dimension'].replace('', 'Otras').value_counts()
+        mar_counts = df_patio['marca'].value_counts()
+        dim_counts = df_patio['dimension'].fillna('').astype(str).str.strip().replace('', 'Sin medida').value_counts()
         tot_dim = max(1, dim_counts.sum())
         dim_pcts = [round((v / tot_dim) * 100.0, 1) for v in dim_counts.values.tolist()]
     else:
@@ -16039,10 +16057,17 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             "sin_numero_interno": int(df_patio['numero_interno'].fillna('').astype(str).str.strip().str.upper().isin(('', 'SN')).sum()),
             "sin_sede": int((df_patio['subcliente'].fillna('').astype(str).str.strip() == '').sum()),
             "fechas_invalidas": int(fechas_invalidas),
+            "sin_marca": int((df_patio['marca'] == SIN_MARCA).sum()),
         }
+        # Marca de banda de reencauche (BANDAG, VIPAL...) escrita en el campo marca de la llanta
+        bandas = marcas_de_banda()
+        con_banda = df_patio[df_patio['marca'].isin(bandas)]
+        calidad_datos["marca_es_banda"] = int(len(con_banda))
+        calidad_datos["marcas_banda_usadas"] = sorted(con_banda['marca'].unique().tolist())
     else:
         calidad_datos = {"llantas": 0, "sin_psi": 0, "sin_prof_inicial": 0, "sin_precio": 0, "sin_numero_interno": 0,
-                         "sin_sede": 0, "fechas_invalidas": int(fechas_invalidas)}
+                         "sin_sede": 0, "fechas_invalidas": int(fechas_invalidas), "sin_marca": 0,
+                         "marca_es_banda": 0, "marcas_banda_usadas": []}
 
     # =========================================================================
     # Tendencias mensuales (gerencia): foto de la flota al cierre de cada mes, últimos 12 meses
@@ -16170,7 +16195,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     if cant_fvu > 0 and es_full:
         for ll in llantas_fvu:
             # Campos vacíos en la base llegan como None: sin 'or' salían rotulados "None" en las gráficas
-            mk_f = str(ll.get('marca') or '').strip().upper() or 'SIN MARCA'
+            mk_f = str(ll.get('marca') or '').strip().upper() or SIN_MARCA
             marcas_fvu[mk_f] = marcas_fvu.get(mk_f, 0) + 1
 
             vd_f = str(ll.get('vida_actual') or 'Original').strip().upper()
@@ -39217,7 +39242,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 2157 líneas | 97,361 bytes (95.1 KB)
+- **Métricas:** 2159 líneas | 97,648 bytes (95.4 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -39584,6 +39609,8 @@ if __name__ == '__main__':
       if (q.sin_prof_inicial) partes.push(`${q.sin_prof_inicial} sin profundidad inicial (fuera de desgaste y proyecciones)`);
       if (q.sin_precio) partes.push(`${q.sin_precio} sin precio (fuera de CPK y pérdidas en pesos)`);
       if (q.sin_numero_interno) partes.push(`${q.sin_numero_interno} sin número interno (fuera de la trazabilidad por llanta)`);
+      if (q.sin_marca) partes.push(`${q.sin_marca} sin marca (salen como "Sin marca")`);
+      if (q.marca_es_banda) partes.push(`${q.marca_es_banda} con una marca de banda de reencauche en el campo marca (${(q.marcas_banda_usadas || []).join(', ')}): corrija la marca de la llanta`);
       if (q.sin_sede) partes.push(`${q.sin_sede} sin sede`);
       if (q.fechas_invalidas) partes.push(`${q.fechas_invalidas} inspecciones con fecha inválida excluidas`);
       el.classList.toggle('hidden', partes.length === 0);

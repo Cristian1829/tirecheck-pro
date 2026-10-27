@@ -172,6 +172,21 @@ def test_llanta_desmontada_no_sale_en_la_foto_actual(test_db, hoy_fijo):
     assert "ZETA" in _suite(cliente=A, base="historial")["kpi_04"]["marca"]["labels"]
 
 
+def test_sin_marca_y_marca_de_banda_en_calidad_de_datos(test_db, hoy_fijo):
+    """Caso DEMO FLOTA: llantas sin marca salían como "Otras" y BANDAG (banda) estaba como marca de llanta."""
+    _escenario()
+    _insp(A, "SEDE NORTE", "AAA101", "", "2026-10-12", 31000, posicion=6, marca="")
+    _insp(A, "SEDE NORTE", "AAA101", "A-7", "2026-10-12", 31000, posicion=7, marca="Bandag")
+    s = _suite(cliente=A)
+    etiquetas = s["kpi_04"]["marca"]["labels"]
+    assert "Sin marca" in etiquetas and "Otras" not in etiquetas
+    q = s["calidad_datos"]
+    assert q["sin_marca"] == 1
+    assert q["marca_es_banda"] == 1 and q["marcas_banda_usadas"] == ["BANDAG"]
+    # Una marca que hace llanta nueva no es "marca de banda" aunque tenga bandas en el catálogo
+    assert "MICHELIN" not in database.marcas_de_banda() and "BANDAG" in database.marcas_de_banda()
+
+
 def test_filtros_con_tilde(test_db, hoy_fijo):
     """UPPER de SQLite no sube las tildes: 'Camión' y 'CAMIÓN' no coincidían en padrón ni bodegas."""
     _escenario()

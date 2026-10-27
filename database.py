@@ -8130,6 +8130,22 @@ def resolver_fecha_baja_fvu():
 
 
 _SALIDAS_KARDEX = ('DESMONTE', 'BAJA', 'CHATARR', 'ENVIO')
+SIN_MARCA = 'Sin marca'
+
+
+def marcas_de_banda() -> set:
+    """Marcas que el catálogo de modelos solo tiene como banda de reencauche (BANDAG, VIPAL, MARANGONI...):
+    no son marca de llanta. Las que también fabrican llanta nueva no cuentan."""
+    try:
+        with get_connection() as conn:
+            filas = conn.execute("""
+                SELECT MAYUS(TRIM(marca)), MAX(MAYUS(TRIM(tipo_llanta)) LIKE 'REENC%'),
+                       MAX(MAYUS(TRIM(tipo_llanta)) NOT LIKE 'REENC%')
+                FROM catalogo_modelos_llantas WHERE TRIM(IFNULL(marca, '')) <> '' GROUP BY 1
+            """).fetchall()
+    except Exception:
+        return set()
+    return {m for m, es_banda, es_llanta in filas if es_banda and not es_llanta}
 
 
 def quitar_llantas_desmontadas(df_corte: pd.DataFrame) -> pd.DataFrame:
@@ -8811,7 +8827,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                              in zip(precio_list, cli_list, dim_list_k, sn_list, marca_list_k, diseno_list_k, vida_list, fecha_list_k)]
         # La marca se agrupa en mayúsculas (ya calculados los precios): las inspecciones viejas tienen
         # 'Bridgestone' y 'BRIDGESTONE', que salían como dos barras distintas en las gráficas
-        df['marca'] = df['marca'].fillna('').astype(str).str.strip().str.upper()
+        # Sin marca registrada se rotula "Sin marca" (antes "Otras", que parecía un grupo de otras marcas)
+        df['marca'] = df['marca'].fillna('').astype(str).str.strip().str.upper().replace(
+            {'': SIN_MARCA, 'NAN': SIN_MARCA, 'NONE': SIN_MARCA})
 
         df['fecha_str'] = df['fecha'].astype(str).str[:10]
         df['periodo_mes'] = df['fecha_str'].apply(lambda x: x[:7] if len(x) >= 7 else 'Actual')
@@ -9025,8 +9043,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # =========================================================================
     if not df_patio.empty:
         tip_counts = df_patio['tipologia'].replace('', 'No Especificada').value_counts()
-        mar_counts = df_patio['marca'].replace('', 'Otras').value_counts()
-        dim_counts = df_patio['dimension'].replace('', 'Otras').value_counts()
+        mar_counts = df_patio['marca'].value_counts()
+        dim_counts = df_patio['dimension'].fillna('').astype(str).str.strip().replace('', 'Sin medida').value_counts()
         tot_dim = max(1, dim_counts.sum())
         dim_pcts = [round((v / tot_dim) * 100.0, 1) for v in dim_counts.values.tolist()]
     else:
@@ -9569,10 +9587,17 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             "sin_numero_interno": int(df_patio['numero_interno'].fillna('').astype(str).str.strip().str.upper().isin(('', 'SN')).sum()),
             "sin_sede": int((df_patio['subcliente'].fillna('').astype(str).str.strip() == '').sum()),
             "fechas_invalidas": int(fechas_invalidas),
+            "sin_marca": int((df_patio['marca'] == SIN_MARCA).sum()),
         }
+        # Marca de banda de reencauche (BANDAG, VIPAL...) escrita en el campo marca de la llanta
+        bandas = marcas_de_banda()
+        con_banda = df_patio[df_patio['marca'].isin(bandas)]
+        calidad_datos["marca_es_banda"] = int(len(con_banda))
+        calidad_datos["marcas_banda_usadas"] = sorted(con_banda['marca'].unique().tolist())
     else:
         calidad_datos = {"llantas": 0, "sin_psi": 0, "sin_prof_inicial": 0, "sin_precio": 0, "sin_numero_interno": 0,
-                         "sin_sede": 0, "fechas_invalidas": int(fechas_invalidas)}
+                         "sin_sede": 0, "fechas_invalidas": int(fechas_invalidas), "sin_marca": 0,
+                         "marca_es_banda": 0, "marcas_banda_usadas": []}
 
     # =========================================================================
     # Tendencias mensuales (gerencia): foto de la flota al cierre de cada mes, últimos 12 meses
@@ -9700,7 +9725,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     if cant_fvu > 0 and es_full:
         for ll in llantas_fvu:
             # Campos vacíos en la base llegan como None: sin 'or' salían rotulados "None" en las gráficas
-            mk_f = str(ll.get('marca') or '').strip().upper() or 'SIN MARCA'
+            mk_f = str(ll.get('marca') or '').strip().upper() or SIN_MARCA
             marcas_fvu[mk_f] = marcas_fvu.get(mk_f, 0) + 1
 
             vd_f = str(ll.get('vida_actual') or 'Original').strip().upper()
