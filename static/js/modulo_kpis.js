@@ -244,6 +244,15 @@
       if (av3) av3.classList.toggle('hidden', !esLight);
       if (av4) av4.classList.toggle('hidden', !esLight);
       if (av5) av5.classList.toggle('hidden', !esLight);
+      // En LIGHT esas pestañas no se recalculan: se oculta su contenido para no dejar a la vista
+      // las gráficas del cliente anterior (pasaba al ir de un cliente FULL a uno LIGHT)
+      [3, 4, 5].forEach(n => {
+        const sub = document.getElementById(`subvista-kpi-${n}`);
+        if (!sub) return;
+        [...sub.children].forEach(hijo => {
+          if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
+        });
+      });
 
       // En LIGHT, ocultar KPI 01 padrón o banner
       const kpi01Banner = document.getElementById('kpi01-banner');
@@ -370,6 +379,8 @@
     }
 
     function renderizarTodaLaSuite20(data) {
+      // Datos nuevos (otro filtro): ninguna gráfica del filtro anterior queda dibujada en otra pestaña
+      Object.keys(instanciasChartsSuite).forEach(destruirChartSuite);
       renderizarCalidadDatosKpi(data.calidad_datos);
       if (!data) return;
       sincronizarAvisosLicenciaSubpestanas();

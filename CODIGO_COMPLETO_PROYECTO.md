@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 13:55:41`
+- **Fecha de Generación:** `2026-10-27 14:12:50`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,440` líneas
-- **Tamaño Total de Código Fuente:** `3055.7 KB` (`3,129,016` bytes)
+- **Líneas Totales de Código:** `60,451` líneas
+- **Tamaño Total de Código Fuente:** `3056.3 KB` (`3,129,679` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -488,7 +488,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2159 | 95.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2170 | 96.0 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1222 | 58.2 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.7 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
@@ -39242,7 +39242,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 2159 líneas | 97,648 bytes (95.4 KB)
+- **Métricas:** 2170 líneas | 98,311 bytes (96.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -39492,6 +39492,15 @@ if __name__ == '__main__':
       if (av3) av3.classList.toggle('hidden', !esLight);
       if (av4) av4.classList.toggle('hidden', !esLight);
       if (av5) av5.classList.toggle('hidden', !esLight);
+      // En LIGHT esas pestañas no se recalculan: se oculta su contenido para no dejar a la vista
+      // las gráficas del cliente anterior (pasaba al ir de un cliente FULL a uno LIGHT)
+      [3, 4, 5].forEach(n => {
+        const sub = document.getElementById(`subvista-kpi-${n}`);
+        if (!sub) return;
+        [...sub.children].forEach(hijo => {
+          if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
+        });
+      });
 
       // En LIGHT, ocultar KPI 01 padrón o banner
       const kpi01Banner = document.getElementById('kpi01-banner');
@@ -39618,6 +39627,8 @@ if __name__ == '__main__':
     }
 
     function renderizarTodaLaSuite20(data) {
+      // Datos nuevos (otro filtro): ninguna gráfica del filtro anterior queda dibujada en otra pestaña
+      Object.keys(instanciasChartsSuite).forEach(destruirChartSuite);
       renderizarCalidadDatosKpi(data.calidad_datos);
       if (!data) return;
       sincronizarAvisosLicenciaSubpestanas();
