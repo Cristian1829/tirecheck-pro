@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 21:22:54`
+- **Fecha de Generación:** `2026-10-26 21:53:35`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `58,466` líneas
-- **Tamaño Total de Código Fuente:** `2944.2 KB` (`3,014,812` bytes)
+- **Líneas Totales de Código:** `58,592` líneas
+- **Tamaño Total de Código Fuente:** `2950.4 KB` (`3,021,253` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -469,7 +469,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2473 | 111.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10517 | 514.9 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 10559 | 516.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -489,7 +489,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4140 | 187.4 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.5 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
-| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
+| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1938 | 93.4 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
@@ -504,7 +504,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [tests/test_bodegas_mrp.py](#archivo-teststest-bodegas-mrppy) | `python` | 503 | 20.3 KB | Pruebas de la lógica de balance MRP y compras sugeridas de bodegas |
 | [tests/test_auditoria_bodegas_sentido_negocio.py](#archivo-teststest-auditoria-bodegas-sentido-negociopy) | `python` | 529 | 21.9 KB | Auditoría de consistencia de negocio para bodegas y ciclo de vida |
 | [tests/test_composicion_flota.py](#archivo-teststest-composicion-flotapy) | `python` | 337 | 11.2 KB | Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario |
-| [tests/test_detalle_vehiculos_planes.py](#archivo-teststest-detalle-vehiculos-planespy) | `python` | 136 | 7.0 KB | Pruebas del módulo de detalle vehicular y planes de mantenimiento |
+| [tests/test_detalle_vehiculos_planes.py](#archivo-teststest-detalle-vehiculos-planespy) | `python` | 189 | 9.6 KB | Pruebas del módulo de detalle vehicular y planes de mantenimiento |
 | [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 512 | 20.0 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
 | [tests/test_matriz_semaforos.py](#archivo-teststest-matriz-semaforospy) | `python` | 316 | 12.3 KB | Pruebas de matriz de semáforos de desgaste por eje y flota |
 | [tests/test_migracion_pext_ciudad_limpia.py](#archivo-teststest-migracion-pext-ciudad-limpiapy) | `python` | 213 | 8.1 KB | Pruebas de migración y normalización para Ciudad Limpia |
@@ -6299,7 +6299,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10517 líneas | 527,211 bytes (514.9 KB)
+- **Métricas:** 10559 líneas | 529,221 bytes (516.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -9737,6 +9737,18 @@ def analizar_inspecciones_df(df_inspecciones):
     except Exception:
         llantas_b2_disponibles = []
 
+    cache_pos_esperadas = {}
+    def _resolver_pos_esperadas(tipologia):
+        if not tipologia or str(tipologia).strip().lower() in ('desconocido', 'nan', 'none', ''):
+            return []
+        tip_norm = str(tipologia).strip()
+        if tip_norm not in cache_pos_esperadas:
+            try:
+                cache_pos_esperadas[tip_norm] = obtener_posiciones_por_tipologia(tip_norm)
+            except Exception:
+                cache_pos_esperadas[tip_norm] = []
+        return cache_pos_esperadas[tip_norm]
+
     for placa, group in df.groupby('placa'):
         t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
@@ -9749,6 +9761,19 @@ def analizar_inspecciones_df(df_inspecciones):
 
         op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
         operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip().upper()
+
+        # Detección de posiciones pendientes de inspeccionar según la tipología
+        pos_esperadas = _resolver_pos_esperadas(t_veh)
+        posiciones_inspeccionadas = set(int(r['posicion']) for _, r in group.iterrows() if pd.notna(r.get('posicion')) and int(r.get('posicion', 0)) > 0)
+        pos_pendientes = [p for p in pos_esperadas if p not in posiciones_inspeccionadas]
+        cant_pendientes = len(pos_pendientes)
+
+        if cant_pendientes == 1:
+            texto_pendientes = f"1 posición pendiente por inspeccionar (Pos {pos_pendientes[0]})"
+        elif cant_pendientes > 1:
+            texto_pendientes = f"{cant_pendientes} posiciones pendientes por inspeccionar (Pos {', '.join(str(p) for p in pos_pendientes)})"
+        else:
+            texto_pendientes = ""
 
         # Estructura de ejes del vehículo según su tipología: de aquí salen direccionales,
         # duales, ejes libres y repuestos (antes se suponía por número de posición o por nombre)
@@ -10061,6 +10086,19 @@ def analizar_inspecciones_df(df_inspecciones):
             for det in detalles_calibracion:
                 bloques_recom.append({'tipo': 'PRESION', 'texto': det, 'color': 'azul'})
 
+        if cant_pendientes > 0:
+            bloques_recom.append({
+                'tipo': 'PENDIENTES',
+                'texto': texto_pendientes,
+                'color': 'ambar'
+            })
+            if len(bloques_recom) == 1:
+                bloques_recom.append({
+                    'tipo': 'OK',
+                    'texto': 'Sin alertas activas en llantas inspeccionadas (Vehículo OK)',
+                    'color': 'verde'
+                })
+
         desc_tipo = t_veh
 
         # Resumen por eje: llantas, mínima (llanta más crítica), retiros y próximas con el límite de cada eje
@@ -10105,6 +10143,9 @@ def analizar_inspecciones_df(df_inspecciones):
             'Cant_Cambios': cant_cambios,
             'Cant_Proximas': cant_proximas,
             'Cant_Presiones': cant_presiones,
+            'Cant_Pendientes': cant_pendientes,
+            'Posiciones_Pendientes': pos_pendientes,
+            'Total_Posiciones_Tipologia': len(pos_esperadas),
 
             'Detalle_Alineacion': "; ".join(detalles_alineacion) if detalles_alineacion else "OK",
             'Detalle_Dual': "; ".join(detalles_dual) if detalles_dual else "OK",
@@ -10116,6 +10157,7 @@ def analizar_inspecciones_df(df_inspecciones):
             'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
             'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",
             'Detalle_Dimensiones_Heterogeneas': "; ".join(detalles_dims_heterogeneas) if detalles_dims_heterogeneas else "OK",
+            'Detalle_Pendientes': texto_pendientes if cant_pendientes > 0 else "OK",
             'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK",
             'Bloques_Recomendaciones': bloques_recom,
             'Llantas_Posiciones': llantas_posiciones,
@@ -40466,7 +40508,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_diagnostico.js`
 - **Descripción:** Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes
-- **Métricas:** 987 líneas | 52,486 bytes (51.3 KB)
+- **Métricas:** 1018 líneas | 54,270 bytes (53.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -40826,6 +40868,29 @@ if __name__ == '__main__':
         const bgRow = cantCambios > 0 ? 'bg-rose-50/50' : (esAlin || esDual || cantProx > 0) ? 'bg-amber-50/40' : '';
 
         // Bloques de prescripción formateados (Sección 5 Columna 11)
+        const cantPend = Number(r.Cant_Pendientes) || 0;
+        const detPend = (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') ? r.Detalle_Pendientes : '';
+        if (cantPend > 0 || detPend) {
+          const textoPend = detPend || (cantPend === 1 ? '1 posición pendiente por inspeccionar' : `${cantPend} posiciones pendientes por inspeccionar`);
+          if (Array.isArray(r.Bloques_Recomendaciones)) {
+            const yaTienePend = r.Bloques_Recomendaciones.some(b => b.tipo === 'PENDIENTE' || b.tipo === 'PENDIENTES');
+            if (!yaTienePend) {
+              r.Bloques_Recomendaciones.push({
+                tipo: 'PENDIENTES',
+                texto: textoPend,
+                color: 'ambar'
+              });
+              if (r.Bloques_Recomendaciones.length === 1) {
+                r.Bloques_Recomendaciones.push({
+                  tipo: 'OK',
+                  texto: 'Sin alertas activas en llantas inspeccionadas (Vehículo OK)',
+                  color: 'verde'
+                });
+              }
+            }
+          }
+        }
+
         let bloquesHtml = '';
         if (Array.isArray(r.Bloques_Recomendaciones) && r.Bloques_Recomendaciones.length > 0) {
           bloquesHtml = `<div class="flex flex-col gap-1 max-w-sm whitespace-normal">` +
@@ -40838,6 +40903,9 @@ if __name__ == '__main__':
               } else if (b.tipo === 'PROXIMO' || b.tipo === 'PROXIMA') {
                 cls = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
                 ico = 'fa-clock text-amber-600';
+              } else if (b.tipo === 'PENDIENTE' || b.tipo === 'PENDIENTES') {
+                cls = 'bg-amber-50 text-amber-800 border-amber-300 font-bold';
+                ico = 'fa-triangle-exclamation text-amber-600';
               } else if (b.tipo === 'ALINEACION') {
                 cls = 'bg-orange-50 text-orange-800 border-orange-200 font-medium';
                 ico = 'fa-arrows-left-right text-orange-600';
@@ -40871,7 +40939,12 @@ if __name__ == '__main__':
           if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${r.Detalle_Dual}</span>`);
           if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${r.Detalle_Auto_Ajuste}</span>`);
           if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${r.Detalle_Calibracion_PSI}</span>`);
-          if (lineas.length === 0) lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
+          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${r.Detalle_Pendientes}</span>`);
+          if (lineas.length === 0) {
+            lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
+          } else if (lineas.length === 1 && r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') {
+            lineas.push('<span class="text-emerald-700">Sin alertas activas en llantas inspeccionadas (Vehículo OK)</span>');
+          }
           bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
         }
         bloquesHtml = resumenEjesDiagHtml(r) + bloquesHtml;
@@ -48667,7 +48740,7 @@ def test_vista_composicion_presente_en_html(auth_client):
 
 - **Ruta:** `tests/test_detalle_vehiculos_planes.py`
 - **Descripción:** Pruebas del módulo de detalle vehicular y planes de mantenimiento
-- **Métricas:** 136 líneas | 7,184 bytes (7.0 KB)
+- **Métricas:** 189 líneas | 9,831 bytes (9.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -48807,6 +48880,58 @@ def test_filtro_rango_fechas_en_api_diagnostico(test_db, auth_client):
     assert "OCT001" in placas_oct
     assert "SEP001" not in placas_oct
     assert "NOV001" not in placas_oct
+
+
+def test_posiciones_pendientes_en_diagnostico(test_db, auth_client):
+    """
+    6. Verifica que si un vehículo tiene posiciones pendientes según su tipología:
+       - Se reporte Cant_Pendientes > 0 y la lista de Posiciones_Pendientes.
+       - Se genere Detalle_Pendientes con el mensaje explícito.
+       - En Bloques_Recomendaciones se incluya el bloque de tipo PENDIENTES.
+       - Y para un vehículo con todas las posiciones inspeccionadas, Cant_Pendientes sea 0.
+    """
+    with database.get_connection() as conn:
+        # Vehículo 1: COMPACTADOR 4 MANOS (12 llantas esperadas) pero solo 8 inspeccionadas
+        for pos in range(1, 9):
+            conn.execute("""
+                INSERT INTO inspecciones (fecha, cliente, placa, posicion, tipologia, prof_ext, prof_cent, prof_int, psi)
+                VALUES ('2026-10-25', 'CIUDAD LIMPIA', 'CMP008', ?, 'COMPACTADOR 4 MANOS', 19.0, 19.0, 19.0, 100)
+            """, (pos,))
+
+        # Vehículo 2: COMPACTADOR 4 MANOS con las 12 posiciones inspeccionadas
+        for pos in range(1, 13):
+            conn.execute("""
+                INSERT INTO inspecciones (fecha, cliente, placa, posicion, tipologia, prof_ext, prof_cent, prof_int, psi)
+                VALUES ('2026-10-25', 'CIUDAD LIMPIA', 'CMP012', ?, 'COMPACTADOR 4 MANOS', 18.0, 18.0, 18.0, 100)
+            """, (pos,))
+
+    res = auth_client.get("/api/diagnostico")
+    assert res.status_code == 200
+    data = res.json()
+
+    # Vehículo con 8 de 12 inspeccionadas
+    veh8 = next((v for v in data if v["Vehículo/Placa"] == "CMP008"), None)
+    assert veh8 is not None
+    assert veh8["Llantas Inspeccionadas"] == 8
+    assert veh8["Cant_Pendientes"] == 4
+    assert veh8["Posiciones_Pendientes"] == [9, 10, 11, 12]
+    assert "4 posiciones pendientes por inspeccionar" in veh8["Detalle_Pendientes"]
+    assert "Pos 9, 10, 11, 12" in veh8["Detalle_Pendientes"]
+
+    bloques8 = veh8.get("Bloques_Recomendaciones", [])
+    bloque_pend8 = next((b for b in bloques8 if b.get("tipo") in ("PENDIENTE", "PENDIENTES")), None)
+    assert bloque_pend8 is not None
+    assert "4 posiciones pendientes por inspeccionar" in bloque_pend8["texto"]
+
+    # Vehículo con 12 de 12 inspeccionadas
+    veh12 = next((v for v in data if v["Vehículo/Placa"] == "CMP012"), None)
+    assert veh12 is not None
+    assert veh12["Llantas Inspeccionadas"] == 12
+    assert veh12["Cant_Pendientes"] == 0
+    assert veh12["Detalle_Pendientes"] == "OK"
+    bloques12 = veh12.get("Bloques_Recomendaciones", [])
+    bloque_pend12 = next((b for b in bloques12 if b.get("tipo") in ("PENDIENTE", "PENDIENTES")), None)
+    assert bloque_pend12 is None
 ```
 
 ---

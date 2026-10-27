@@ -134,3 +134,56 @@ def test_filtro_rango_fechas_en_api_diagnostico(test_db, auth_client):
     assert "OCT001" in placas_oct
     assert "SEP001" not in placas_oct
     assert "NOV001" not in placas_oct
+
+
+def test_posiciones_pendientes_en_diagnostico(test_db, auth_client):
+    """
+    6. Verifica que si un vehículo tiene posiciones pendientes según su tipología:
+       - Se reporte Cant_Pendientes > 0 y la lista de Posiciones_Pendientes.
+       - Se genere Detalle_Pendientes con el mensaje explícito.
+       - En Bloques_Recomendaciones se incluya el bloque de tipo PENDIENTES.
+       - Y para un vehículo con todas las posiciones inspeccionadas, Cant_Pendientes sea 0.
+    """
+    with database.get_connection() as conn:
+        # Vehículo 1: COMPACTADOR 4 MANOS (12 llantas esperadas) pero solo 8 inspeccionadas
+        for pos in range(1, 9):
+            conn.execute("""
+                INSERT INTO inspecciones (fecha, cliente, placa, posicion, tipologia, prof_ext, prof_cent, prof_int, psi)
+                VALUES ('2026-10-25', 'CIUDAD LIMPIA', 'CMP008', ?, 'COMPACTADOR 4 MANOS', 19.0, 19.0, 19.0, 100)
+            """, (pos,))
+
+        # Vehículo 2: COMPACTADOR 4 MANOS con las 12 posiciones inspeccionadas
+        for pos in range(1, 13):
+            conn.execute("""
+                INSERT INTO inspecciones (fecha, cliente, placa, posicion, tipologia, prof_ext, prof_cent, prof_int, psi)
+                VALUES ('2026-10-25', 'CIUDAD LIMPIA', 'CMP012', ?, 'COMPACTADOR 4 MANOS', 18.0, 18.0, 18.0, 100)
+            """, (pos,))
+
+    res = auth_client.get("/api/diagnostico")
+    assert res.status_code == 200
+    data = res.json()
+
+    # Vehículo con 8 de 12 inspeccionadas
+    veh8 = next((v for v in data if v["Vehículo/Placa"] == "CMP008"), None)
+    assert veh8 is not None
+    assert veh8["Llantas Inspeccionadas"] == 8
+    assert veh8["Cant_Pendientes"] == 4
+    assert veh8["Posiciones_Pendientes"] == [9, 10, 11, 12]
+    assert "4 posiciones pendientes por inspeccionar" in veh8["Detalle_Pendientes"]
+    assert "Pos 9, 10, 11, 12" in veh8["Detalle_Pendientes"]
+
+    bloques8 = veh8.get("Bloques_Recomendaciones", [])
+    bloque_pend8 = next((b for b in bloques8 if b.get("tipo") in ("PENDIENTE", "PENDIENTES")), None)
+    assert bloque_pend8 is not None
+    assert "4 posiciones pendientes por inspeccionar" in bloque_pend8["texto"]
+
+    # Vehículo con 12 de 12 inspeccionadas
+    veh12 = next((v for v in data if v["Vehículo/Placa"] == "CMP012"), None)
+    assert veh12 is not None
+    assert veh12["Llantas Inspeccionadas"] == 12
+    assert veh12["Cant_Pendientes"] == 0
+    assert veh12["Detalle_Pendientes"] == "OK"
+    bloques12 = veh12.get("Bloques_Recomendaciones", [])
+    bloque_pend12 = next((b for b in bloques12 if b.get("tipo") in ("PENDIENTE", "PENDIENTES")), None)
+    assert bloque_pend12 is None
+

@@ -354,6 +354,29 @@
         const bgRow = cantCambios > 0 ? 'bg-rose-50/50' : (esAlin || esDual || cantProx > 0) ? 'bg-amber-50/40' : '';
 
         // Bloques de prescripción formateados (Sección 5 Columna 11)
+        const cantPend = Number(r.Cant_Pendientes) || 0;
+        const detPend = (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') ? r.Detalle_Pendientes : '';
+        if (cantPend > 0 || detPend) {
+          const textoPend = detPend || (cantPend === 1 ? '1 posición pendiente por inspeccionar' : `${cantPend} posiciones pendientes por inspeccionar`);
+          if (Array.isArray(r.Bloques_Recomendaciones)) {
+            const yaTienePend = r.Bloques_Recomendaciones.some(b => b.tipo === 'PENDIENTE' || b.tipo === 'PENDIENTES');
+            if (!yaTienePend) {
+              r.Bloques_Recomendaciones.push({
+                tipo: 'PENDIENTES',
+                texto: textoPend,
+                color: 'ambar'
+              });
+              if (r.Bloques_Recomendaciones.length === 1) {
+                r.Bloques_Recomendaciones.push({
+                  tipo: 'OK',
+                  texto: 'Sin alertas activas en llantas inspeccionadas (Vehículo OK)',
+                  color: 'verde'
+                });
+              }
+            }
+          }
+        }
+
         let bloquesHtml = '';
         if (Array.isArray(r.Bloques_Recomendaciones) && r.Bloques_Recomendaciones.length > 0) {
           bloquesHtml = `<div class="flex flex-col gap-1 max-w-sm whitespace-normal">` +
@@ -366,6 +389,9 @@
               } else if (b.tipo === 'PROXIMO' || b.tipo === 'PROXIMA') {
                 cls = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
                 ico = 'fa-clock text-amber-600';
+              } else if (b.tipo === 'PENDIENTE' || b.tipo === 'PENDIENTES') {
+                cls = 'bg-amber-50 text-amber-800 border-amber-300 font-bold';
+                ico = 'fa-triangle-exclamation text-amber-600';
               } else if (b.tipo === 'ALINEACION') {
                 cls = 'bg-orange-50 text-orange-800 border-orange-200 font-medium';
                 ico = 'fa-arrows-left-right text-orange-600';
@@ -399,7 +425,12 @@
           if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${r.Detalle_Dual}</span>`);
           if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${r.Detalle_Auto_Ajuste}</span>`);
           if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${r.Detalle_Calibracion_PSI}</span>`);
-          if (lineas.length === 0) lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
+          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${r.Detalle_Pendientes}</span>`);
+          if (lineas.length === 0) {
+            lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
+          } else if (lineas.length === 1 && r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') {
+            lineas.push('<span class="text-emerald-700">Sin alertas activas en llantas inspeccionadas (Vehículo OK)</span>');
+          }
           bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
         }
         bloquesHtml = resumenEjesDiagHtml(r) + bloquesHtml;

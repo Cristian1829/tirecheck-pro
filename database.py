@@ -3432,6 +3432,18 @@ def analizar_inspecciones_df(df_inspecciones):
     except Exception:
         llantas_b2_disponibles = []
 
+    cache_pos_esperadas = {}
+    def _resolver_pos_esperadas(tipologia):
+        if not tipologia or str(tipologia).strip().lower() in ('desconocido', 'nan', 'none', ''):
+            return []
+        tip_norm = str(tipologia).strip()
+        if tip_norm not in cache_pos_esperadas:
+            try:
+                cache_pos_esperadas[tip_norm] = obtener_posiciones_por_tipologia(tip_norm)
+            except Exception:
+                cache_pos_esperadas[tip_norm] = []
+        return cache_pos_esperadas[tip_norm]
+
     for placa, group in df.groupby('placa'):
         t_veh_val = group['tipo_calc'].iloc[0] if 'tipo_calc' in group else 'Desconocido'
         t_veh = 'Desconocido' if (pd.isna(t_veh_val) or str(t_veh_val).strip().lower() in ('nan', 'none', '')) else str(t_veh_val).strip()
@@ -3444,6 +3456,19 @@ def analizar_inspecciones_df(df_inspecciones):
 
         op_val = group['tipo_operacion'].iloc[0] if ('tipo_operacion' in group and pd.notna(group['tipo_operacion'].iloc[0])) else ''
         operacion = '' if (pd.isna(op_val) or str(op_val).strip().lower() in ('nan', 'none')) else str(op_val).strip().upper()
+
+        # Detección de posiciones pendientes de inspeccionar según la tipología
+        pos_esperadas = _resolver_pos_esperadas(t_veh)
+        posiciones_inspeccionadas = set(int(r['posicion']) for _, r in group.iterrows() if pd.notna(r.get('posicion')) and int(r.get('posicion', 0)) > 0)
+        pos_pendientes = [p for p in pos_esperadas if p not in posiciones_inspeccionadas]
+        cant_pendientes = len(pos_pendientes)
+
+        if cant_pendientes == 1:
+            texto_pendientes = f"1 posición pendiente por inspeccionar (Pos {pos_pendientes[0]})"
+        elif cant_pendientes > 1:
+            texto_pendientes = f"{cant_pendientes} posiciones pendientes por inspeccionar (Pos {', '.join(str(p) for p in pos_pendientes)})"
+        else:
+            texto_pendientes = ""
 
         # Estructura de ejes del vehículo según su tipología: de aquí salen direccionales,
         # duales, ejes libres y repuestos (antes se suponía por número de posición o por nombre)
@@ -3756,6 +3781,19 @@ def analizar_inspecciones_df(df_inspecciones):
             for det in detalles_calibracion:
                 bloques_recom.append({'tipo': 'PRESION', 'texto': det, 'color': 'azul'})
 
+        if cant_pendientes > 0:
+            bloques_recom.append({
+                'tipo': 'PENDIENTES',
+                'texto': texto_pendientes,
+                'color': 'ambar'
+            })
+            if len(bloques_recom) == 1:
+                bloques_recom.append({
+                    'tipo': 'OK',
+                    'texto': 'Sin alertas activas en llantas inspeccionadas (Vehículo OK)',
+                    'color': 'verde'
+                })
+
         desc_tipo = t_veh
 
         # Resumen por eje: llantas, mínima (llanta más crítica), retiros y próximas con el límite de cada eje
@@ -3800,6 +3838,9 @@ def analizar_inspecciones_df(df_inspecciones):
             'Cant_Cambios': cant_cambios,
             'Cant_Proximas': cant_proximas,
             'Cant_Presiones': cant_presiones,
+            'Cant_Pendientes': cant_pendientes,
+            'Posiciones_Pendientes': pos_pendientes,
+            'Total_Posiciones_Tipologia': len(pos_esperadas),
 
             'Detalle_Alineacion': "; ".join(detalles_alineacion) if detalles_alineacion else "OK",
             'Detalle_Dual': "; ".join(detalles_dual) if detalles_dual else "OK",
@@ -3811,6 +3852,7 @@ def analizar_inspecciones_df(df_inspecciones):
             'Detalle_Rotacion_Escalonado': "; ".join(detalles_rot_escalonado) if detalles_rot_escalonado else "OK",
             'Detalle_Calibracion_PSI': "; ".join(detalles_calibracion) if detalles_calibracion else "OK",
             'Detalle_Dimensiones_Heterogeneas': "; ".join(detalles_dims_heterogeneas) if detalles_dims_heterogeneas else "OK",
+            'Detalle_Pendientes': texto_pendientes if cant_pendientes > 0 else "OK",
             'Recomendaciones_Dual': "; ".join(recomendaciones_dual) if recomendaciones_dual else "OK",
             'Bloques_Recomendaciones': bloques_recom,
             'Llantas_Posiciones': llantas_posiciones,
