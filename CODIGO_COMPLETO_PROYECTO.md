@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 22:01:43`
+- **Fecha de Generación:** `2026-10-27 09:18:02`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `58,747` líneas
-- **Tamaño Total de Código Fuente:** `2958.9 KB` (`3,029,901` bytes)
+- **Líneas Totales de Código:** `60,129` líneas
+- **Tamaño Total de Código Fuente:** `3024.8 KB` (`3,097,396` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,8 +468,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2473 | 111.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10559 | 516.8 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2592 | 116.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10654 | 521.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -481,7 +481,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6186 | 417.0 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6531 | 440.5 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
@@ -491,7 +491,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2049 | 98.4 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.6 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2473 líneas | 114,269 bytes (111.6 KB)
+- **Métricas:** 2592 líneas | 119,296 bytes (116.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5589,6 +5589,125 @@ def api_eliminar_precio_cliente(precio_id: int, usuario_actual: dict = Depends(r
     return {"status": "ok"}
 
 
+@app.get("/api/precios-cliente/plantilla-excel")
+def api_descargar_plantilla_precios_cliente(usuario_actual: dict = Depends(obtener_usuario_actual)):
+    columnas = ["Cliente", "Marca", "Diseño", "Dimensión", "Tipo", "Precio", "Vigente Desde"]
+    ejemplos = [
+        {
+            "Cliente": "TRANSCARGA ANDINA S.A.S.",
+            "Marca": "MICHELIN",
+            "Diseño": "X MULTI Z",
+            "Dimensión": "295/80R22.5",
+            "Tipo": "Llanta nueva",
+            "Precio": 1850000,
+            "Vigente Desde": "2026-01-01"
+        },
+        {
+            "Cliente": "TRANSCARGA ANDINA S.A.S.",
+            "Marca": "MICHELIN",
+            "Diseño": "X MULTI D",
+            "Dimensión": "295/80R22.5",
+            "Tipo": "Llanta nueva",
+            "Precio": 1920000,
+            "Vigente Desde": "2026-01-01"
+        },
+        {
+            "Cliente": "TRANSCARGA ANDINA S.A.S.",
+            "Marca": "BANDAG",
+            "Diseño": "BDR-HT",
+            "Dimensión": "295/80R22.5",
+            "Tipo": "Reencauche",
+            "Precio": 720000,
+            "Vigente Desde": "2026-01-01"
+        }
+    ]
+    df = pd.DataFrame(ejemplos, columns=columnas)
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Precios_Cliente", index=False)
+        ws = writer.sheets["Precios_Cliente"]
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = col[0].column_letter
+            ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+    data = buf.getvalue()
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=Plantilla_Precios_Cliente.xlsx"}
+    )
+
+
+@app.get("/api/precios-cliente/exportar-excel")
+def api_exportar_precios_cliente_excel(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    lista = database.listar_precios_cliente(cliente)
+    filas = []
+    for p in lista:
+        filas.append({
+            "Cliente": p["cliente"],
+            "Marca": p["marca"],
+            "Diseño": p["diseno"] or "TODOS",
+            "Dimensión": p["dimension"],
+            "Tipo": "Llanta nueva" if p["tipo"] == "Original" else "Reencauche",
+            "Precio COP": p["precio"],
+            "Vigente Desde": p["vigente_desde"]
+        })
+    df = pd.DataFrame(filas, columns=["Cliente", "Marca", "Diseño", "Dimensión", "Tipo", "Precio COP", "Vigente Desde"])
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Precios_Por_Cliente", index=False)
+        ws = writer.sheets["Precios_Por_Cliente"]
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = col[0].column_letter
+            ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+    f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
+    filename = f"Precios_Por_Cliente_{f_str}.xlsx"
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.post("/api/precios-cliente/importar-excel")
+async def api_importar_precios_cliente_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    filename = file.filename or ""
+    if not filename.lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
+
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    clientes_autorizados = None
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        clientes_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+
+    try:
+        res = database.importar_precios_cliente_excel(tmp_path, clientes_autorizados=clientes_autorizados)
+        return {
+            "status": "ok",
+            "registros_guardados": res["registros_guardados"],
+            "total_filas": res["total_filas"],
+            "errores": res["errores"],
+            "total_errores": res["total_errores"],
+            "message": f"Se procesaron {res['registros_guardados']} precios con éxito ({res['total_filas']} filas analizadas)."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al importar precios desde Excel: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+
+
 class StockSeguridadItem(BaseModel):
     cliente: str
     dimension: str
@@ -6299,7 +6418,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10559 líneas | 529,221 bytes (516.8 KB)
+- **Métricas:** 10654 líneas | 533,633 bytes (521.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -10316,17 +10435,22 @@ def vida_llanta(vida='', num_reencauches=None, ciclo=None) -> str:
     m = re.search(r'R\s*(\d+)', v) or re.search(r'REENCAUCHE\s*(\d+)', v)
     if m:
         n = int(m.group(1))
-    elif v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') or 'ORIG' in v:
+    elif v in ('', 'ORIGINAL', 'ORIG', 'NUEVA', 'NUEVO') or 'ORIG' in v or 'NUEV' in v:
         n = 0 if not num_reencauches else to_int(num_reencauches)
     else:  # 'REENCAUCHE' sin número
         n = max(to_int(num_reencauches), to_int(ciclo, 1) - 1, 1)
-    if v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
+    if (v in ('', 'ORIGINAL', 'ORIG', 'NUEVA', 'NUEVO') or 'ORIG' in v or 'NUEV' in v) and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
         n = to_int(ciclo, 1) - 1
     return 'Original' if n <= 0 else f'R{n}'
 
 
 def _tipo_precio(vida) -> str:
     """La lista distingue llanta nueva ('Original') de reencauche ('Reencauche', aplica a R1, R2…)."""
+    v = str(vida or '').strip().upper()
+    if 'NUEV' in v or 'ORIG' in v:
+        return 'Original'
+    if 'REEN' in v or 'RECAL' in v:
+        return 'Reencauche'
     return 'Original' if vida_llanta(vida) == 'Original' and str(vida or '').strip().upper() != 'REENCAUCHE' else 'Reencauche'
 
 
@@ -10361,6 +10485,96 @@ def eliminar_precio_cliente(precio_id) -> bool:
         n = conn.execute("DELETE FROM precios_llanta_cliente WHERE id = ?", (to_int(precio_id),)).rowcount
         conn.commit()
     return n > 0
+
+
+def importar_precios_cliente_excel(file_path: str, clientes_autorizados=None) -> dict:
+    df = pd.read_excel(file_path, sheet_name=0)
+    cols_norm_map = {normalizar_texto(c): c for c in df.columns}
+
+    alias_map = {
+        'cliente': ['cliente', 'empresa', 'flota', 'cuenta', 'nombre cliente'],
+        'marca': ['marca', 'fabricante', 'brand'],
+        'diseno': ['diseno', 'diseño', 'modelo', 'dibujo', 'banda'],
+        'dimension': ['dimension', 'dimensión', 'medida', 'tamano', 'tamaño', 'dim'],
+        'tipo': ['tipo', 'tipo llanta', 'tipo_llanta', 'condicion', 'condición', 'vida'],
+        'precio': ['precio', 'precio cop', 'precio_cop', 'valor', 'costo', 'tarifa'],
+        'vigente_desde': ['vigente desde', 'vigente_desde', 'fecha vigencia', 'vigencia', 'fecha', 'desde', 'fecha_vigencia']
+    }
+
+    col_encontradas = {}
+    for canonico, lista in alias_map.items():
+        for item in lista:
+            norm = normalizar_texto(item)
+            if norm in cols_norm_map:
+                col_encontradas[canonico] = cols_norm_map[norm]
+                break
+
+    if 'cliente' not in col_encontradas or 'marca' not in col_encontradas or 'dimension' not in col_encontradas or 'precio' not in col_encontradas:
+        raise ValueError("El archivo Excel debe contener al menos las columnas: Cliente, Marca, Dimensión y Precio.")
+
+    registros_guardados = 0
+    errores = []
+    hoy = datetime.now(BOGOTA_TZ).strftime("%Y-%m-%d")
+
+    for idx, row in df.iterrows():
+        fila_num = idx + 2
+        try:
+            cli_raw = row[col_encontradas['cliente']] if not pd.isna(row[col_encontradas['cliente']]) else ''
+            cli = str(cli_raw).strip().upper()
+            if not cli:
+                continue
+
+            if clientes_autorizados and not any(c.upper() == cli for c in clientes_autorizados):
+                errores.append(f"Fila {fila_num}: No tiene permisos para registrar precios del cliente '{cli}'")
+                continue
+
+            mar_raw = row[col_encontradas['marca']] if not pd.isna(row[col_encontradas['marca']]) else ''
+            mar = str(mar_raw).strip().upper()
+            if not mar:
+                errores.append(f"Fila {fila_num}: Falta la marca de la llanta")
+                continue
+
+            dis_raw = row[col_encontradas['diseno']] if ('diseno' in col_encontradas and not pd.isna(row[col_encontradas['diseno']])) else ''
+            dis = str(dis_raw).strip().upper()
+
+            dim_raw = row[col_encontradas['dimension']] if not pd.isna(row[col_encontradas['dimension']]) else ''
+            dim = str(dim_raw).strip().upper()
+            if not dim:
+                errores.append(f"Fila {fila_num}: Falta la dimensión de la llanta")
+                continue
+
+            tipo_raw = row[col_encontradas['tipo']] if ('tipo' in col_encontradas and not pd.isna(row[col_encontradas['tipo']])) else 'Original'
+            tipo_str = str(tipo_raw).strip()
+
+            precio_val = to_float(row[col_encontradas['precio']])
+            if precio_val <= 0:
+                errores.append(f"Fila {fila_num}: El precio debe ser mayor a 0 (valor: {row[col_encontradas['precio']]})")
+                continue
+
+            vig_raw = row[col_encontradas['vigente_desde']] if ('vigente_desde' in col_encontradas and not pd.isna(row[col_encontradas['vigente_desde']])) else ''
+            if isinstance(vig_raw, (pd.Timestamp, date, datetime)):
+                vig_str = vig_raw.strftime("%Y-%m-%d")
+            else:
+                vig_str = str(vig_raw).strip()[:10]
+                if not re.match(r'^\d{4}-\d{2}-\d{2}$', vig_str):
+                    vig_str = hoy
+
+            ok = guardar_precio_cliente(cli, mar, dis, dim, tipo_str, precio_val, vig_str)
+            if ok:
+                registros_guardados += 1
+            else:
+                errores.append(f"Fila {fila_num}: Error al guardar en la base de datos")
+        except Exception as e:
+            errores.append(f"Fila {fila_num}: {str(e)}")
+
+    return {
+        "status": "ok",
+        "total_filas": len(df),
+        "registros_guardados": registros_guardados,
+        "errores": errores[:25],
+        "total_errores": len(errores)
+    }
+
 
 
 def cargar_lista_precios():
@@ -23321,7 +23535,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6186 líneas | 426,982 bytes (417.0 KB)
+- **Métricas:** 6531 líneas | 451,045 bytes (440.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -26848,16 +27062,43 @@ if __name__ == '__main__':
 
       <!-- Subtab 4: Límites de Retiro por Cliente, Subcliente y Eje -->
       <div id="cat-seccion-clientes" class="hidden space-y-3">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span class="text-xs font-bold text-slate-800">Políticas Técnicas de Retiro por Cliente, Subcliente y Eje (mm)</span>
             <p class="text-[11px] text-slate-500">Configura umbrales mínimos de retiro para llantas según flota, sede operativa y posición de eje</p>
           </div>
-          <button type="button" onclick="abrirModalLimiteCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button type="button" onclick="abrirModalLimiteCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1 self-start sm:self-auto cursor-pointer transition-all">
             <i class="fa-solid fa-gear"></i>
             <span>Nuevo Límite de Retiro</span>
           </button>
         </div>
+
+        <!-- Barra de Búsqueda y Filtros de Límites de Retiro -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2.5 shadow-2xs">
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="filtroBuscadorLimitesCat" oninput="filtrarLimitesCat()" placeholder="Buscar por cliente, sede u observaciones..." class="w-full pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+          </div>
+          <div class="w-full sm:w-auto">
+            <select id="filtroClienteLimitesCat" onchange="filtrarLimitesCat()" class="w-full sm:w-48 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los clientes</option>
+            </select>
+          </div>
+          <div class="w-full sm:w-auto">
+            <select id="filtroEjeLimitesCat" onchange="filtrarLimitesCat()" class="w-full sm:w-40 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los ejes</option>
+              <option value="DIRECCIONAL">Direccional</option>
+              <option value="TRACCIÓN">Tracción</option>
+              <option value="LIBRE">Libre</option>
+              <option value="REPUESTO">Repuesto</option>
+            </select>
+          </div>
+          <button type="button" id="btnLimpiarFiltrosLimitesCat" onclick="limpiarFiltrosLimitesCat()" class="hidden px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all items-center justify-center space-x-1.5 cursor-pointer whitespace-nowrap active:scale-95" title="Restablecer filtros">
+            <i class="fa-solid fa-filter-circle-xmark text-slate-500"></i>
+            <span>Limpiar</span>
+          </button>
+        </div>
+
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
           <table class="w-full text-xs text-left">
             <thead class="bg-slate-900 text-white font-bold">
@@ -26870,7 +27111,7 @@ if __name__ == '__main__':
                 <th class="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100"></tbody>
+            <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100 bg-white"></tbody>
           </table>
         </div>
 
@@ -26889,35 +27130,248 @@ if __name__ == '__main__':
         </div>
       </div>
 
-      <!-- Subtab: Lista de precios por cliente -->
-      <div id="cat-seccion-precios_cliente" class="hidden space-y-3">
-        <div class="pb-2 border-b border-slate-100">
-          <span class="text-xs font-bold text-slate-800">Lista de precios por cliente</span>
-          <p class="text-[11px] text-slate-500">Precio de la llanta nueva o del reencauche para cada cliente, con fecha de vigencia. Se usa cuando la inspección no trae precio; si no hay precio del cliente, la llanta queda fuera de los cálculos en pesos (CPK, pérdidas).</p>
-        </div>
-        <form onsubmit="guardarPrecioClienteCat(event)" class="grid grid-cols-2 md:grid-cols-7 gap-2 items-end">
-          <input type="text" id="precio_cli" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <input type="text" id="precio_marca" required placeholder="Marca" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <input type="text" id="precio_diseno" placeholder="Diseño (opcional)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <input type="text" id="precio_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <select id="precio_tipo" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
-            <option value="Original">Llanta nueva</option>
-            <option value="Reencauche">Reencauche</option>
-          </select>
-          <input type="number" id="precio_valor" required min="1" step="1000" placeholder="Precio COP" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-          <div class="flex gap-2">
-            <input type="date" id="precio_desde" required class="flex-1 px-2 py-1.5 bg-white border border-slate-300 rounded-xl text-xs">
-            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+      <!-- Subtab: Lista y Tarifario de precios por cliente -->
+      <div id="cat-seccion-precios_cliente" class="hidden space-y-4">
+        <!-- Encabezado con Botones de Acción (Excel y Nuevo) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <span class="text-sm font-black text-slate-900 flex items-center space-x-2">
+              <i class="fa-solid fa-tags text-blue-600"></i>
+              <span>Tarifario de Precios por Cliente</span>
+            </span>
+            <p class="text-[11px] text-slate-500">Configura precios vigentes de llanta nueva y reencauche por cliente. Se utiliza para el Costo por Kilómetro (CPK), análisis de pérdidas y balance de inversión.</p>
           </div>
-        </form>
-        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="abrirModalImportarPreciosExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all cursor-pointer active:scale-95">
+              <i class="fa-solid fa-file-excel text-emerald-200"></i>
+              <span>Subir Precios (Excel)</span>
+            </button>
+            <button type="button" onclick="descargarPlantillaPreciosExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-download text-slate-500"></i>
+              <span>Plantilla</span>
+            </button>
+            <button type="button" onclick="exportarPreciosClienteExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer" title="Exportar precios a Excel">
+              <i class="fa-solid fa-file-export text-slate-500"></i>
+              <span>Exportar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs Rápidos de Tarifario -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-list-check"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-blue-700 font-bold uppercase tracking-wider block">Precios Registrados</span>
+              <span id="kpiPreciosTotal" class="text-sm font-black text-blue-950">0 tarifas</span>
+            </div>
+          </div>
+          <div class="bg-indigo-50/80 border border-indigo-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-building-user"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-indigo-700 font-bold uppercase tracking-wider block">Clientes Cubiertos</span>
+              <span id="kpiPreciosClientes" class="text-sm font-black text-indigo-950">0 clientes</span>
+            </div>
+          </div>
+          <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-circle-dollar-to-slot"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Promedio Llanta Nueva</span>
+              <span id="kpiPreciosPromNueva" class="text-xs font-black text-emerald-950">$ 0</span>
+            </div>
+          </div>
+          <div class="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Promedio Reencauche</span>
+              <span id="kpiPreciosPromReen" class="text-xs font-black text-amber-950">$ 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta: Registrar o Modificar Precio -->
+        <div id="cardFormularioPreciosCliente" class="bg-slate-50/90 border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
+            <div class="flex items-center space-x-2">
+              <span id="badgeModoPrecio" class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+              <span id="tituloFormularioPrecio" class="text-xs font-black text-slate-800 uppercase tracking-wider">Registrar Nuevo Precio de Llanta</span>
+            </div>
+            <span id="avisoModoEdicionPrecio" class="hidden text-[11px] font-bold text-amber-700 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-lg flex items-center space-x-1">
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
+              <span>Modo edición activo</span>
+            </span>
+          </div>
+
+          <form id="formPreciosClienteCat" onsubmit="guardarPrecioClienteCat(event)" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              <!-- Cliente (Desplegable) -->
+              <div class="lg:col-span-2">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-building text-slate-400"></i>
+                  <span>Cliente / Flota *</span>
+                </label>
+                <select id="precio_cli" required onchange="alCambiarClienteFormPrecios()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer uppercase">
+                  <option value="">-- Seleccionar Cliente --</option>
+                </select>
+              </div>
+
+              <!-- Marca (Desplegable) -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-tag text-slate-400"></i>
+                  <span>Marca *</span>
+                </label>
+                <select id="precio_marca" required onchange="alCambiarMarcaFormPrecios()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer uppercase">
+                  <option value="">-- Marca --</option>
+                </select>
+                <input type="text" id="precio_marca_custom" placeholder="Escribe la marca..." class="hidden mt-1.5 w-full px-3 py-1.5 bg-white border border-blue-400 rounded-xl text-xs font-bold uppercase">
+              </div>
+
+              <!-- Diseño (Datalist / Desplegable) -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-fingerprint text-slate-400"></i>
+                  <span>Diseño (Opcional)</span>
+                </label>
+                <input type="text" id="precio_diseno" list="dl_precio_disenos" placeholder="TODOS o ej. X MULTI Z" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                <datalist id="dl_precio_disenos"></datalist>
+              </div>
+
+              <!-- Dimensión (Datalist / Desplegable) -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-ruler-combined text-slate-400"></i>
+                  <span>Dimensión *</span>
+                </label>
+                <input type="text" id="precio_dimension" required list="dl_precio_dimensiones" placeholder="ej. 295/80R22.5" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono">
+                <datalist id="dl_precio_dimensiones"></datalist>
+              </div>
+
+              <!-- Tipo de Llanta -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-arrows-spin text-slate-400"></i>
+                  <span>Tipo *</span>
+                </label>
+                <select id="precio_tipo" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                  <option value="Original">🔷 Llanta nueva</option>
+                  <option value="Reencauche">🔶 Reencauche</option>
+                </select>
+              </div>
+
+              <!-- Precio COP -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
+                  <span>Precio COP *</span>
+                </label>
+                <input type="number" id="precio_valor" required min="1" step="1000" placeholder="ej. 1850000" oninput="alEscribirPrecioValor(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-emerald-800 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
+                <span id="previewPrecioCOP" class="text-[10px] font-bold text-emerald-600 truncate block mt-0.5">$ 0 COP</span>
+              </div>
+            </div>
+
+            <!-- Fila inferior: Fecha de Vigencia y Botones -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-slate-200/60">
+              <div class="flex items-center space-x-2">
+                <label class="text-[11px] font-bold text-slate-600 flex items-center space-x-1 whitespace-nowrap">
+                  <i class="fa-solid fa-calendar-day text-slate-400"></i>
+                  <span>Vigente desde:</span>
+                </label>
+                <input type="date" id="precio_desde" required class="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+                <span class="text-[10px] text-slate-400 hidden md:inline">Aplica a inspecciones posteriores a esta fecha</span>
+              </div>
+              <div class="flex items-center justify-end space-x-2">
+                <button type="button" id="btnCancelarEdicionPrecio" onclick="cancelarEdicionPrecioCliente()" class="hidden px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer">
+                  <span>Cancelar</span>
+                </button>
+                <button type="submit" id="btnGuardarPrecioCliente" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95">
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  <span id="btnGuardarPrecioClienteTexto">Guardar Precio</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtros de la Tabla de Precios -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2.5 shadow-2xs">
+          <!-- Buscador libre -->
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="filtroBuscadorPreciosCat" oninput="filtrarPreciosClienteCat()" placeholder="Buscar por cliente, marca, diseño o dimensión..." class="w-full pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+          </div>
+
+          <!-- Filtro Cliente -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroClientePreciosCat" onchange="filtrarPreciosClienteCat()" class="w-full sm:w-48 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los clientes</option>
+            </select>
+          </div>
+
+          <!-- Filtro Marca -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroMarcaPreciosCat" onchange="filtrarPreciosClienteCat()" class="w-full sm:w-40 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODAS">Todas las marcas</option>
+            </select>
+          </div>
+
+          <!-- Filtro Tipo -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroTipoPreciosCat" onchange="filtrarPreciosClienteCat()" class="w-full sm:w-36 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los tipos</option>
+              <option value="Original">Llanta nueva</option>
+              <option value="Reencauche">Reencauche</option>
+            </select>
+          </div>
+
+          <!-- Botón Limpiar Filtros -->
+          <button type="button" id="btnLimpiarFiltrosPreciosCat" onclick="limpiarFiltrosPreciosCat()" class="hidden px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all items-center justify-center space-x-1.5 cursor-pointer whitespace-nowrap active:scale-95" title="Restablecer filtros">
+            <i class="fa-solid fa-filter-circle-xmark text-slate-500"></i>
+            <span>Limpiar</span>
+          </button>
+        </div>
+
+        <!-- Tabla de Tarifario de Precios -->
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-2xs">
           <table class="w-full text-xs text-left">
-            <thead class="bg-slate-900 text-white font-bold"><tr>
-              <th class="p-2.5">Cliente</th><th class="p-2.5">Marca</th><th class="p-2.5">Diseño</th><th class="p-2.5">Dimensión</th>
-              <th class="p-2.5">Tipo</th><th class="p-2.5 text-right">Precio</th><th class="p-2.5">Vigente desde</th><th class="p-2.5 text-center">Acciones</th>
-            </tr></thead>
-            <tbody id="tbodyPreciosCliente" class="divide-y divide-slate-100"></tbody>
+            <thead class="bg-slate-900 text-white font-bold">
+              <tr>
+                <th class="p-3">Cliente / Flota</th>
+                <th class="p-3">Marca</th>
+                <th class="p-3">Diseño</th>
+                <th class="p-3">Dimensión</th>
+                <th class="p-3 text-center">Tipo</th>
+                <th class="p-3 text-right">Precio Unitario (COP)</th>
+                <th class="p-3 text-center">Vigente Desde</th>
+                <th class="p-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPreciosCliente" class="divide-y divide-slate-100 bg-white">
+              <tr><td colspan="8" class="p-4 text-center text-slate-400 italic">Cargando tarifario de precios...</td></tr>
+            </tbody>
           </table>
+        </div>
+
+        <!-- Barra de Paginación Precios por Cliente (20 resultados por página) -->
+        <div id="contenedorPaginacionPreciosCat" class="mt-2 flex flex-col sm:flex-row items-center justify-between gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-2xs">
+          <div class="text-xs text-slate-500 font-medium flex items-center space-x-1.5">
+            <span>Mostrando</span>
+            <span id="pagInicioPreciosCat" class="font-bold text-slate-800">0</span>
+            <span>-</span>
+            <span id="pagFinPreciosCat" class="font-bold text-slate-800">0</span>
+            <span>de</span>
+            <span id="pagTotalPreciosCat" class="font-bold text-blue-600">0</span>
+            <span>precios (20 por página)</span>
+          </div>
+          <div class="flex items-center space-x-1" id="controlesPaginacionPreciosCat"></div>
         </div>
       </div>
 
@@ -26980,14 +27434,31 @@ if __name__ == '__main__':
             <span class="text-xs font-bold text-slate-800">Stock de seguridad del MRP por medida y eje</span>
             <p class="text-[11px] text-slate-500">Reserva mínima por dimensión y tipo de eje. La de dirección solo se cubre con llantas nuevas. Si una medida no tiene reglas, se usa el stock general del cliente.</p>
           </div>
-          <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2">
-            <input type="text" id="stockseg_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <input type="text" id="stockseg_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <select id="stockseg_eje" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
-              <option value="DIRECCIONAL">Direccional</option><option value="TRACCION">Tracción</option><option value="LIBRE">Libre / remolque</option>
-            </select>
-            <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2.5">
+            <div class="flex-1 min-w-[170px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
+              <select id="stockseg_cliente" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="">-- Seleccionar Cliente --</option>
+              </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Dimensión *</label>
+              <input type="text" id="stockseg_dimension" required list="dl_stockseg_dimensiones" placeholder="ej. 295/80R22.5" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold uppercase focus:outline-none focus:border-blue-500 font-mono">
+              <datalist id="dl_stockseg_dimensiones"></datalist>
+            </div>
+            <div class="w-36">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Eje / Posición *</label>
+              <select id="stockseg_eje" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="DIRECCIONAL">Direccional</option>
+                <option value="TRACCION">Tracción</option>
+                <option value="LIBRE">Libre / remolque</option>
+              </select>
+            </div>
+            <div class="w-24">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cant. Mín. *</label>
+              <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">Guardar Regla</button>
           </form>
           <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Dimensión</th><th class="p-2">Eje</th><th class="p-2 text-center">Cantidad</th><th class="p-2 text-center">Acciones</th></tr></thead>
@@ -27001,11 +27472,24 @@ if __name__ == '__main__':
             <span class="text-xs font-bold text-slate-800">Máximo de reencauches por cliente y marca</span>
             <p class="text-[11px] text-slate-500">Una llanta que ya alcanzó el máximo no puede despacharse otra vez a la planta. "TODAS" aplica a las marcas sin regla propia; sin regla no hay tope.</p>
           </div>
-          <form onsubmit="guardarMaximoReencaucheCat(event)" class="flex flex-wrap items-end gap-2">
-            <input type="text" id="maxreen_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <input type="text" id="maxreen_marca" placeholder="Marca (TODAS)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <input type="number" id="maxreen_valor" required min="0" max="10" step="1" placeholder="Máx." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          <form onsubmit="guardarMaximoReencaucheCat(event)" class="flex flex-wrap items-end gap-2.5">
+            <div class="flex-1 min-w-[170px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
+              <select id="maxreen_cliente" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="">-- Seleccionar Cliente --</option>
+              </select>
+            </div>
+            <div class="flex-1 min-w-[160px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Marca *</label>
+              <select id="maxreen_marca" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="TODAS">TODAS LAS MARCAS</option>
+              </select>
+            </div>
+            <div class="w-24">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Tope Máx. *</label>
+              <input type="number" id="maxreen_valor" required min="0" max="10" step="1" placeholder="Máx." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">Guardar Tope</button>
           </form>
           <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Marca</th><th class="p-2 text-center">Máx. reencauches</th><th class="p-2 text-center">Acciones</th></tr></thead>
@@ -28104,9 +28588,20 @@ if __name__ == '__main__':
             <option value="Reencauche">Banda de Reencauche</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Marca *</label><input type="text" id="mod_marca" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label><input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Dimensión</label><input type="text" id="mod_dimension" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Marca *</label>
+          <input type="text" id="mod_marca" list="dl_marcas_modelo_catalogo" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+          <datalist id="dl_marcas_modelo_catalogo"></datalist>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label>
+          <input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Dimensión</label>
+          <input type="text" id="mod_dimension" list="dl_dimensiones_modelo_catalogo" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+          <datalist id="dl_dimensiones_modelo_catalogo"></datalist>
+        </div>
         <div><label class="font-bold text-slate-600 block mb-1">Profundidad Inicial (mm) *</label><input type="number" step="0.1" id="mod_prof" placeholder="16.5" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Aplicación / Notas</label><input type="text" id="mod_desc" placeholder="Toda Posición / Direccional" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
         <div class="pt-2 flex justify-end space-x-2">
@@ -28283,12 +28778,18 @@ if __name__ == '__main__':
       <div class="space-y-2.5 text-xs">
         <div>
           <label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota *</label>
-          <input type="text" id="lim_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+          <select id="lim_cliente" onchange="alCambiarClienteModalLimite()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+            <option value="">-- Seleccionar Cliente --</option>
+          </select>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-600 block mb-1">Sede / Subcliente</label>
-            <input type="text" id="lim_subcliente" list="dl_subclientes" placeholder="TODOS o Sede Norte" value="TODOS" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+            <select id="lim_subcliente" onchange="alCambiarSubclienteModalLimite()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+              <option value="TODOS">TODOS (Toda la flota)</option>
+              <option value="__OTRA__">+ Escribir otra sede...</option>
+            </select>
+            <input type="text" id="lim_subcliente_custom" placeholder="Nombre de la nueva sede" class="hidden mt-1.5 w-full p-1.5 bg-white border border-blue-400 rounded-xl font-bold uppercase text-xs">
           </div>
           <div>
             <label class="font-bold text-slate-600 block mb-1">Eje / Posición *</label>
@@ -28336,16 +28837,74 @@ if __name__ == '__main__':
       <div class="space-y-3 text-xs">
         <div>
           <label class="font-bold text-slate-600 block mb-1">Cliente / Empresa *</label>
-          <input type="text" id="asoc_marca_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+          <select id="asoc_marca_cliente" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+            <option value="">-- Seleccionar Cliente --</option>
+          </select>
         </div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Marca a Vincular *</label>
-          <input type="text" id="asoc_marca_nombre" list="dl_marcas_todas" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-bold">
-          <datalist id="dl_marcas_todas"></datalist>
+          <select id="asoc_marca_nombre_select" onchange="alCambiarMarcaAsocModal()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+            <option value="">-- Seleccionar Marca del Catálogo --</option>
+            <option value="__OTRA__">+ Escribir otra marca...</option>
+          </select>
+          <input type="text" id="asoc_marca_nombre_custom" placeholder="Nombre de la marca a vincular" class="hidden mt-1.5 w-full p-1.5 bg-white border border-blue-400 rounded-xl font-bold uppercase text-xs">
+          <input type="hidden" id="asoc_marca_nombre">
         </div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalAsociarMarcaCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarAsociacionMarcaCliente()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20">Asociar Marca</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR PRECIOS POR CLIENTE DESDE EXCEL -->
+  <div id="modalImportarPreciosExcel" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-black text-slate-900 flex items-center space-x-2">
+          <i class="fa-solid fa-file-excel text-emerald-600"></i>
+          <span>Importar Precios desde Excel</span>
+        </h3>
+        <button type="button" onclick="cerrarModalImportarPreciosExcel()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs text-slate-500">Sube un archivo Excel (.xlsx o .xls) con las tarifas de llantas nuevas y reencauches por cliente:</p>
+        
+        <div id="dropZonePreciosExcel" class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50">
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-emerald-600 mb-2"></i>
+          <span class="block text-xs font-bold text-slate-700">Arrastra tu archivo aquí o haz clic para examinar</span>
+          <span id="lblArchivoPreciosSeleccionado" class="block text-[11px] text-slate-400 mt-1">Formatos permitidos: .xlsx, .xls</span>
+          <input type="file" id="filePreciosExcelInput" accept=".xlsx,.xls" class="hidden" onchange="alSeleccionarArchivoPreciosExcel(event)">
+        </div>
+
+        <div class="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-slate-700 space-y-1">
+          <span class="font-bold text-blue-900 block flex items-center space-x-1">
+            <i class="fa-solid fa-circle-info text-blue-600"></i>
+            <span>Columnas esperadas en el archivo:</span>
+          </span>
+          <div class="text-[10px] text-slate-600 pl-4 list-disc space-y-0.5">
+            <div>• <strong class="text-slate-800">Cliente</strong> (Nombre de la flota registrada)</div>
+            <div>• <strong class="text-slate-800">Marca</strong> (ej. MICHELIN, GOODYEAR, BANDAG)</div>
+            <div>• <strong class="text-slate-800">Diseño</strong> (Opcional, ej. X MULTI Z o vacío para todos)</div>
+            <div>• <strong class="text-slate-800">Dimensión</strong> (ej. 295/80R22.5 o 11R22.5)</div>
+            <div>• <strong class="text-slate-800">Tipo</strong> (Llanta nueva / Original o Reencauche)</div>
+            <div>• <strong class="text-slate-800">Precio</strong> (Valor en pesos COP, sin puntos ni comas)</div>
+            <div>• <strong class="text-slate-800">Vigente Desde</strong> (Fecha en formato AAAA-MM-DD)</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" onclick="descargarPlantillaPreciosExcel()" class="text-xs text-blue-600 hover:underline font-bold flex items-center space-x-1 cursor-pointer">
+            <i class="fa-solid fa-download"></i>
+            <span>Descargar plantilla guía</span>
+          </button>
+          <button type="button" id="btnSubirPreciosExcel" onclick="ejecutarImportarPreciosExcel()" disabled class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow text-xs cursor-pointer transition-all active:scale-95">
+            Subir e Importar
+          </button>
         </div>
       </div>
     </div>
@@ -42804,7 +43363,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 2049 líneas | 100,752 bytes (98.4 KB)
+- **Métricas:** 2872 líneas | 134,745 bytes (131.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43474,6 +44033,13 @@ if __name__ == '__main__':
       if (elNota) elNota.classList.add('hidden');
       const elBtn = document.getElementById('btnGuardarModeloTexto');
       if (elBtn) elBtn.textContent = 'Guardar';
+
+      // Poblar datalists sugeridos
+      const dlM = document.getElementById('dl_marcas_modelo_catalogo');
+      if (dlM) dlM.innerHTML = obtenerListaMarcasDisponibles().map(m => `<option value="${escapeHtml(m)}">`).join('');
+      const dlD = document.getElementById('dl_dimensiones_modelo_catalogo');
+      if (dlD) dlD.innerHTML = obtenerListaDimensionesDisponibles().map(d => `<option value="${escapeHtml(d)}">`).join('');
+
       document.getElementById('mod_tipo').value = 'Nueva';
       document.getElementById('mod_marca').value = '';
       document.getElementById('mod_diseno').value = '';
@@ -43494,6 +44060,13 @@ if __name__ == '__main__':
       if (elNota) elNota.classList.remove('hidden');
       const elBtn = document.getElementById('btnGuardarModeloTexto');
       if (elBtn) elBtn.textContent = 'Guardar Cambios';
+
+      // Poblar datalists sugeridos
+      const dlM = document.getElementById('dl_marcas_modelo_catalogo');
+      if (dlM) dlM.innerHTML = obtenerListaMarcasDisponibles().map(x => `<option value="${escapeHtml(x)}">`).join('');
+      const dlD = document.getElementById('dl_dimensiones_modelo_catalogo');
+      if (dlD) dlD.innerHTML = obtenerListaDimensionesDisponibles().map(d => `<option value="${escapeHtml(d)}">`).join('');
+
       document.getElementById('mod_tipo').value = m.tipo_llanta;
       document.getElementById('mod_marca').value = m.marca;
       document.getElementById('mod_diseno').value = m.diseno;
@@ -43589,16 +44162,121 @@ if __name__ == '__main__':
       }
     }
 
+    // ==========================================
+    // HELPERS GLOBALES DE CATÁLOGOS
+    // ==========================================
+    function obtenerListaClientesDisponibles() {
+      const set = new Set();
+      (cacheDirectorioClientes || []).forEach(c => {
+        if (c.cliente) set.add(c.cliente.trim().toUpperCase());
+      });
+      (catalogoLimitesCache || []).forEach(c => {
+        if (c.cliente) set.add(c.cliente.trim().toUpperCase());
+      });
+      (marcasClienteCatCache || []).forEach(m => {
+        if (m.cliente) set.add(m.cliente.trim().toUpperCase());
+      });
+      (preciosClienteCatCache || []).forEach(p => {
+        if (p.cliente) set.add(p.cliente.trim().toUpperCase());
+      });
+      return Array.from(set).filter(Boolean).sort();
+    }
+
+    function obtenerListaMarcasDisponibles() {
+      const set = new Set();
+      const comunes = [
+        'MICHELIN', 'GOODYEAR', 'BRIDGESTONE', 'CONTINENTAL', 'FIRESTONE',
+        'PIRELLI', 'HANKOOK', 'DOUBLE COIN', 'AEOLUS', 'TRIANGLE',
+        'SAILUN', 'KUMHO', 'YOKOHAMA', 'DUNLOP', 'BANDAG', 'MARANGONI', 'VIPAL'
+      ];
+      comunes.forEach(m => set.add(m));
+      (catalogoModelosCache || []).forEach(m => {
+        if (m.marca) set.add(m.marca.trim().toUpperCase());
+      });
+      (marcasClienteCatCache || []).forEach(m => {
+        if (m.marca) set.add(m.marca.trim().toUpperCase());
+      });
+      (preciosClienteCatCache || []).forEach(p => {
+        if (p.marca) set.add(p.marca.trim().toUpperCase());
+      });
+      return Array.from(set).filter(Boolean).sort();
+    }
+
+    function obtenerListaDimensionesDisponibles() {
+      const set = new Set();
+      const comunes = [
+        '295/80R22.5', '11R22.5', '12R22.5', '315/80R22.5', '275/70R22.5',
+        '385/65R22.5', '12.00R24', '12.00R20', '7.50R16', '215/75R17.5',
+        '225/70R19.5', '11.00R20', '10.00R20', '255/70R22.5'
+      ];
+      comunes.forEach(d => set.add(d));
+      (catalogoModelosCache || []).forEach(m => {
+        if (m.dimension) set.add(m.dimension.trim().toUpperCase());
+      });
+      (preciosClienteCatCache || []).forEach(p => {
+        if (p.dimension) set.add(p.dimension.trim().toUpperCase());
+      });
+      return Array.from(set).filter(Boolean).sort();
+    }
+
     let paginaActualLimitesCat = 1;
     const ITEMS_POR_PAGINA_LIMITES = 25;
+    let catalogoLimitesFiltrados = null;
 
     async function cargarClientesLimCat() {
       const res = await fetch('/api/configuraciones-clientes');
       if (res.ok) {
         catalogoLimitesCache = await res.json();
-        paginaActualLimitesCat = 1;
-        renderizarTablaLimitesCat();
+        poblarFiltrosLimitesCat();
+        filtrarLimitesCat();
       }
+    }
+
+    function poblarFiltrosLimitesCat() {
+      const selCli = document.getElementById('filtroClienteLimitesCat');
+      if (!selCli) return;
+      const valPrev = selCli.value || 'TODOS';
+      const clis = Array.from(new Set((catalogoLimitesCache || []).map(c => c.cliente))).sort();
+      selCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
+        clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (clis.includes(valPrev)) selCli.value = valPrev;
+    }
+
+    function filtrarLimitesCat() {
+      const q = (document.getElementById('filtroBuscadorLimitesCat')?.value || '').trim().toLowerCase();
+      const fCli = (document.getElementById('filtroClienteLimitesCat')?.value || 'TODOS').trim().toUpperCase();
+      const fEje = (document.getElementById('filtroEjeLimitesCat')?.value || 'TODOS').trim().toUpperCase();
+
+      const btnL = document.getElementById('btnLimpiarFiltrosLimitesCat');
+      const hay = Boolean(q) || fCli !== 'TODOS' || fEje !== 'TODOS';
+      if (btnL) {
+        btnL.classList.toggle('hidden', !hay);
+        btnL.classList.toggle('flex', hay);
+      }
+
+      const lista = catalogoLimitesCache || [];
+      catalogoLimitesFiltrados = lista.filter(c => {
+        if (fCli !== 'TODOS' && String(c.cliente || '').trim().toUpperCase() !== fCli) return false;
+        if (fEje !== 'TODOS' && String(c.eje || 'TODOS').trim().toUpperCase() !== fEje) return false;
+        if (q) {
+          const t = `${c.cliente || ''} ${c.subcliente || ''} ${c.eje || ''} ${c.observaciones || ''} ${c.limite_retiro_mm || ''}`.toLowerCase();
+          if (!t.includes(q)) return false;
+        }
+        return true;
+      });
+
+      paginaActualLimitesCat = 1;
+      renderizarTablaLimitesCat();
+    }
+
+    function limpiarFiltrosLimitesCat() {
+      const b = document.getElementById('filtroBuscadorLimitesCat');
+      if (b) b.value = '';
+      const c = document.getElementById('filtroClienteLimitesCat');
+      if (c) c.value = 'TODOS';
+      const e = document.getElementById('filtroEjeLimitesCat');
+      if (e) e.value = 'TODOS';
+      filtrarLimitesCat();
     }
 
     function renderizarTablaLimitesCat() {
@@ -43606,9 +44284,9 @@ if __name__ == '__main__':
       const contenedor = document.getElementById('contenedorPaginacionLimitesCat');
       if (!tbody) return;
 
-      const lista = catalogoLimitesCache || [];
+      const lista = catalogoLimitesFiltrados !== null ? catalogoLimitesFiltrados : (catalogoLimitesCache || []);
       if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-medium">No se encontraron límites configurados con los filtros aplicados.</td></tr>`;
         if (contenedor) contenedor.classList.add('hidden');
         return;
       }
@@ -43639,17 +44317,17 @@ if __name__ == '__main__':
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
-            <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
+            <td class="p-2.5 font-black text-slate-900">${escapeHtml(c.cliente)}</td>
+            <td class="p-2.5 font-bold text-slate-700">${escapeHtml(c.subcliente || 'TODOS')}</td>
             <td class="p-2.5 text-center">${badgeEje}</td>
             <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
-            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
+            <td class="p-2.5 text-slate-600">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-2.5 text-center">
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar límite de retiro">
+                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar límite de retiro">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar regla de límite">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -43666,14 +44344,60 @@ if __name__ == '__main__':
       renderizarTablaLimitesCat();
     }
 
+    function alCambiarClienteModalLimite() {
+      const cli = (document.getElementById('lim_cliente')?.value || '').trim().toUpperCase();
+      const selSub = document.getElementById('lim_subcliente');
+      const customSub = document.getElementById('lim_subcliente_custom');
+      if (!selSub) return;
+
+      if (customSub) {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+      }
+
+      const clienteObj = (cacheDirectorioClientes || []).find(c => (c.cliente || '').toUpperCase() === cli);
+      const subclientes = (clienteObj && clienteObj.subclientes) ? clienteObj.subclientes : [];
+
+      let html = '<option value="TODOS">TODOS (Toda la flota)</option>';
+      subclientes.forEach(s => {
+        if (s && s.toUpperCase() !== 'TODOS') {
+          html += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+        }
+      });
+      html += '<option value="__OTRA__">+ Escribir otra sede...</option>';
+      selSub.innerHTML = html;
+    }
+
+    function alCambiarSubclienteModalLimite() {
+      const selSub = document.getElementById('lim_subcliente');
+      const customSub = document.getElementById('lim_subcliente_custom');
+      if (!selSub || !customSub) return;
+      if (selSub.value === '__OTRA__') {
+        customSub.classList.remove('hidden');
+        customSub.focus();
+      } else {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+      }
+    }
+
     function abrirModalLimiteCliente() {
       limiteClienteEditandoId = null;
       const elTit = document.getElementById('tituloModalLimiteCliente');
       if (elTit) elTit.textContent = 'Límite de Retiro por Cliente y Eje';
       const elBtn = document.getElementById('btnGuardarLimiteTexto');
       if (elBtn) elBtn.textContent = 'Guardar Límite';
-      document.getElementById('lim_cliente').value = '';
-      document.getElementById('lim_subcliente').value = 'TODOS';
+
+      // Poblar selector de clientes
+      const selCli = document.getElementById('lim_cliente');
+      if (selCli) {
+        const clientes = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        selCli.value = '';
+      }
+
+      alCambiarClienteModalLimite();
       document.getElementById('lim_eje').value = 'TODOS';
       document.getElementById('lim_mm').value = '3.0';
       document.getElementById('lim_obs').value = '';
@@ -43682,15 +44406,44 @@ if __name__ == '__main__':
     }
 
     function abrirModalEditarLimiteCliente(id) {
-      const c = catalogoLimitesCache.find(x => x.id === id);
+      const c = (catalogoLimitesCache || []).find(x => x.id === id);
       if (!c) return;
       limiteClienteEditandoId = id;
       const elTit = document.getElementById('tituloModalLimiteCliente');
       if (elTit) elTit.textContent = `Editar Límite: ${c.cliente}`;
       const elBtn = document.getElementById('btnGuardarLimiteTexto');
       if (elBtn) elBtn.textContent = 'Guardar Cambios';
-      document.getElementById('lim_cliente').value = c.cliente;
-      document.getElementById('lim_subcliente').value = c.subcliente || 'TODOS';
+
+      // Poblar selector de clientes
+      const selCli = document.getElementById('lim_cliente');
+      if (selCli) {
+        const clientes = obtenerListaClientesDisponibles();
+        if (!clientes.includes(c.cliente)) clientes.push(c.cliente);
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clientes.sort().map(cli => `<option value="${escapeHtml(cli)}">${escapeHtml(cli)}</option>`).join('');
+        selCli.value = c.cliente;
+      }
+
+      alCambiarClienteModalLimite();
+
+      // Ajustar valor de sede
+      const selSub = document.getElementById('lim_subcliente');
+      const customSub = document.getElementById('lim_subcliente_custom');
+      const subVal = c.subcliente || 'TODOS';
+      if (selSub) {
+        const opciones = Array.from(selSub.options).map(o => o.value);
+        if (opciones.includes(subVal)) {
+          selSub.value = subVal;
+          if (customSub) customSub.classList.add('hidden');
+        } else {
+          selSub.value = '__OTRA__';
+          if (customSub) {
+            customSub.classList.remove('hidden');
+            customSub.value = subVal;
+          }
+        }
+      }
+
       document.getElementById('lim_eje').value = (c.eje || 'TODOS').toUpperCase();
       document.getElementById('lim_mm').value = c.limite_retiro_mm;
       document.getElementById('lim_obs').value = c.observaciones || '';
@@ -43704,13 +44457,20 @@ if __name__ == '__main__':
     }
 
     async function guardarLimiteCliente() {
-      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
-      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
-      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
-      const mm = parseFloat(document.getElementById('lim_mm').value);
-      const obs = document.getElementById('lim_obs').value.trim().toUpperCase();
-      if (!cli || isNaN(mm)) {
-        alert('Por favor completa el cliente y el límite en mm');
+      const cli = (document.getElementById('lim_cliente')?.value || '').trim().toUpperCase();
+      const selSub = document.getElementById('lim_subcliente')?.value || 'TODOS';
+      const customSub = (document.getElementById('lim_subcliente_custom')?.value || '').trim().toUpperCase();
+      const sub = (selSub === '__OTRA__' ? customSub : selSub) || 'TODOS';
+      const eje = (document.getElementById('lim_eje')?.value || 'TODOS').trim().toUpperCase();
+      const mm = parseFloat(document.getElementById('lim_mm')?.value);
+      const obs = (document.getElementById('lim_obs')?.value || '').trim().toUpperCase();
+
+      if (!cli) {
+        alert('Por favor selecciona un cliente de la lista desplegable.');
+        return;
+      }
+      if (isNaN(mm) || mm <= 0) {
+        alert('Por favor ingresa un límite de retiro válido en mm.');
         return;
       }
 
@@ -43777,52 +44537,611 @@ if __name__ == '__main__':
     // ==========================================
     let marcasClienteCatCache = [];
 
-    // Lista de precios por cliente
+    // ==========================================
+    // PRECIOS POR CLIENTE (TARIFARIO & EXCEL)
+    // ==========================================
+    let preciosClienteCatCache = [];
+    let cacheFiltradosPreciosCat = [];
+    let paginaActualPreciosCat = 1;
+    const ITEMS_POR_PAGINA_PRECIOS = 20;
+    let idPrecioEnEdicion = null;
+    let archivoPreciosExcelSeleccionado = null;
+
     async function cargarPreciosClienteCat() {
       const tbody = document.getElementById('tbodyPreciosCliente');
       if (!tbody) return;
       const desde = document.getElementById('precio_desde');
       if (desde && !desde.value) desde.value = new Date().toISOString().slice(0, 10);
+
       try {
         const res = await fetch('/api/precios-cliente');
         const lista = res.ok ? await res.json() : [];
-        tbody.innerHTML = lista.length ? lista.map(p => `<tr>
-            <td class="p-2.5 font-bold">${p.cliente}</td><td class="p-2.5">${p.marca}</td><td class="p-2.5">${p.diseno || '<span class="text-slate-400">Todos</span>'}</td>
-            <td class="p-2.5 font-mono">${p.dimension}</td><td class="p-2.5">${p.tipo === 'Original' ? 'Llanta nueva' : 'Reencauche'}</td>
-            <td class="p-2.5 text-right font-mono font-bold">$ ${Number(p.precio).toLocaleString('es-CO')}</td><td class="p-2.5">${p.vigente_desde}</td>
-            <td class="p-2.5 text-center"><button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="text-rose-600 font-bold">Eliminar</button></td></tr>`).join('')
-          : '<tr><td colspan="8" class="p-2.5 text-slate-400 italic">Sin precios: las llantas sin precio quedan fuera de los cálculos en pesos</td></tr>';
+        preciosClienteCatCache = lista || [];
+
+        // KPIs rápidos
+        const total = preciosClienteCatCache.length;
+        const clientesUnicos = Array.from(new Set(preciosClienteCatCache.map(p => p.cliente).filter(Boolean)));
+        const nuevas = preciosClienteCatCache.filter(p => p.tipo === 'Original' && p.precio > 0);
+        const promNueva = nuevas.length ? Math.round(nuevas.reduce((s, p) => s + Number(p.precio), 0) / nuevas.length) : 0;
+        const reencauches = preciosClienteCatCache.filter(p => p.tipo === 'Reencauche' && p.precio > 0);
+        const promReen = reencauches.length ? Math.round(reencauches.reduce((s, p) => s + Number(p.precio), 0) / reencauches.length) : 0;
+
+        const elTot = document.getElementById('kpiPreciosTotal');
+        if (elTot) elTot.textContent = `${total} tarifas`;
+        const elCli = document.getElementById('kpiPreciosClientes');
+        if (elCli) elCli.textContent = `${clientesUnicos.length} clientes`;
+        const elPn = document.getElementById('kpiPreciosPromNueva');
+        if (elPn) elPn.textContent = `$ ${promNueva.toLocaleString('es-CO')}`;
+        const elPr = document.getElementById('kpiPreciosPromReen');
+        if (elPr) elPr.textContent = `$ ${promReen.toLocaleString('es-CO')}`;
+
+        // Poblar selector de cliente en el formulario
+        const selCliForm = document.getElementById('precio_cli');
+        if (selCliForm) {
+          const valPrevio = selCliForm.value;
+          const todosClientes = obtenerListaClientesDisponibles();
+          selCliForm.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+            todosClientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valPrevio && todosClientes.includes(valPrevio)) {
+            selCliForm.value = valPrevio;
+          }
+          alCambiarClienteFormPrecios();
+        }
+
+        // Poblar filtros de cliente y marca
+        const selFiltroCli = document.getElementById('filtroClientePreciosCat');
+        if (selFiltroCli) {
+          const valPrev = selFiltroCli.value;
+          const clientesFiltro = Array.from(new Set([...clientesUnicos, ...obtenerListaClientesDisponibles()])).sort();
+          selFiltroCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
+            clientesFiltro.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valPrev) selFiltroCli.value = valPrev;
+        }
+
+        const selFiltroMarca = document.getElementById('filtroMarcaPreciosCat');
+        if (selFiltroMarca) {
+          const valPrev = selFiltroMarca.value;
+          const marcasFiltro = Array.from(new Set(preciosClienteCatCache.map(p => p.marca).filter(Boolean))).sort();
+          selFiltroMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
+            marcasFiltro.map(m => `<option value="${m}">${m}</option>`).join('');
+          if (valPrev) selFiltroMarca.value = valPrev;
+        }
+
+        filtrarPreciosClienteCat();
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-2.5 text-rose-600">No se pudieron cargar los precios</td></tr>';
+        console.error("Error al cargar precios:", e);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-rose-600">No se pudieron cargar los precios</td></tr>';
       }
+    }
+
+    function alCambiarClienteFormPrecios() {
+      const cli = (document.getElementById('precio_cli')?.value || '').trim().toUpperCase();
+      const selMarca = document.getElementById('precio_marca');
+      if (!selMarca) return;
+
+      const valPrevio = selMarca.value;
+      const todasMarcas = obtenerListaMarcasDisponibles();
+
+      const marcasAsociadas = (marcasClienteCatCache || [])
+        .filter(m => m.cliente === cli)
+        .map(m => m.marca);
+
+      let opts = '<option value="">-- Marca --</option>';
+      if (marcasAsociadas.length > 0) {
+        opts += `<optgroup label="⭐ Marcas Habituales de ${cli}">`;
+        marcasAsociadas.forEach(m => {
+          opts += `<option value="${m}">${m}</option>`;
+        });
+        opts += `</optgroup>`;
+        opts += `<optgroup label="Otras Marcas del Catálogo">`;
+        todasMarcas.filter(m => !marcasAsociadas.includes(m)).forEach(m => {
+          opts += `<option value="${m}">${m}</option>`;
+        });
+        opts += `</optgroup>`;
+      } else {
+        todasMarcas.forEach(m => {
+          opts += `<option value="${m}">${m}</option>`;
+        });
+      }
+      opts += '<option value="__OTRA__">+ Escribir otra marca...</option>';
+      selMarca.innerHTML = opts;
+
+      if (valPrevio && (todasMarcas.includes(valPrevio) || marcasAsociadas.includes(valPrevio))) {
+        selMarca.value = valPrevio;
+      }
+      alCambiarMarcaFormPrecios();
+    }
+
+    function alCambiarMarcaFormPrecios() {
+      const sel = document.getElementById('precio_marca');
+      const custom = document.getElementById('precio_marca_custom');
+      if (!sel) return;
+
+      if (sel.value === '__OTRA__') {
+        if (custom) {
+          custom.classList.remove('hidden');
+          custom.focus();
+        }
+      } else {
+        if (custom) {
+          custom.classList.add('hidden');
+          custom.value = '';
+        }
+      }
+
+      const marca = sel.value === '__OTRA__' ? (custom?.value || '').trim().toUpperCase() : sel.value.trim().toUpperCase();
+      const dlDisenos = document.getElementById('dl_precio_disenos');
+      const dlDims = document.getElementById('dl_precio_dimensiones');
+
+      let disenosSugeridos = new Set();
+      let dimsSugeridas = new Set(obtenerListaDimensionesDisponibles());
+
+      if (typeof catalogoModelosCache !== 'undefined' && Array.isArray(catalogoModelosCache)) {
+        catalogoModelosCache.forEach(m => {
+          if (!marca || (m.marca && m.marca.toUpperCase() === marca)) {
+            if (m.diseno) disenosSugeridos.add(m.diseno.toUpperCase());
+            if (m.dimension) dimsSugeridas.add(m.dimension.toUpperCase());
+          }
+        });
+      }
+
+      if (dlDisenos) {
+        dlDisenos.innerHTML = Array.from(disenosSugeridos).sort().map(d => `<option value="${d}">`).join('');
+      }
+      if (dlDims) {
+        dlDims.innerHTML = Array.from(dimsSugeridas).sort().map(d => `<option value="${d}">`).join('');
+      }
+    }
+
+    function alEscribirPrecioValor(val) {
+      const preview = document.getElementById('previewPrecioCOP');
+      if (!preview) return;
+      const num = parseFloat(val) || 0;
+      preview.textContent = `$ ${num.toLocaleString('es-CO')} COP`;
+    }
+
+    function filtrarPreciosClienteCat() {
+      const txt = (document.getElementById('filtroBuscadorPreciosCat')?.value || '').trim().toLowerCase();
+      const cli = (document.getElementById('filtroClientePreciosCat')?.value || 'TODOS').trim().toUpperCase();
+      const mar = (document.getElementById('filtroMarcaPreciosCat')?.value || 'TODAS').trim().toUpperCase();
+      const tip = (document.getElementById('filtroTipoPreciosCat')?.value || 'TODOS').trim();
+
+      const btnLimpiar = document.getElementById('btnLimpiarFiltrosPreciosCat');
+      if (btnLimpiar) {
+        if (txt || cli !== 'TODOS' || mar !== 'TODAS' || tip !== 'TODOS') {
+          btnLimpiar.classList.remove('hidden');
+          btnLimpiar.classList.add('flex');
+        } else {
+          btnLimpiar.classList.add('hidden');
+          btnLimpiar.classList.remove('flex');
+        }
+      }
+
+      cacheFiltradosPreciosCat = (preciosClienteCatCache || []).filter(p => {
+        if (cli !== 'TODOS' && p.cliente !== cli) return false;
+        if (mar !== 'TODAS' && p.marca !== mar) return false;
+        if (tip !== 'TODOS' && p.tipo !== tip) return false;
+        if (txt) {
+          const buscable = `${p.cliente} ${p.marca} ${p.diseno || ''} ${p.dimension} ${p.tipo}`.toLowerCase();
+          if (!buscable.includes(txt)) return false;
+        }
+        return true;
+      });
+
+      paginaActualPreciosCat = 1;
+      renderizarTablaPreciosCliente(cacheFiltradosPreciosCat);
+    }
+
+    function limpiarFiltrosPreciosCat() {
+      const txt = document.getElementById('filtroBuscadorPreciosCat');
+      if (txt) txt.value = '';
+      const cli = document.getElementById('filtroClientePreciosCat');
+      if (cli) cli.value = 'TODOS';
+      const mar = document.getElementById('filtroMarcaPreciosCat');
+      if (mar) mar.value = 'TODAS';
+      const tip = document.getElementById('filtroTipoPreciosCat');
+      if (tip) tip.value = 'TODOS';
+      filtrarPreciosClienteCat();
+    }
+
+    function cambiarPaginaPrecios(p) {
+      paginaActualPreciosCat = p;
+      renderizarTablaPreciosCliente(cacheFiltradosPreciosCat);
+    }
+
+    function renderizarTablaPreciosCliente(lista) {
+      const tbody = document.getElementById('tbodyPreciosCliente');
+      const contenedor = document.getElementById('contenedorPaginacionPreciosCat');
+      if (!tbody) return;
+
+      lista = lista || [];
+
+      if (lista.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="p-8 text-center text-slate-400">
+              <i class="fa-solid fa-tags text-3xl mb-2 text-slate-300 block"></i>
+              No se encontraron precios registrados con los filtros aplicados.
+            </td>
+          </tr>
+        `;
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+      }
+
+      const totalRegistros = lista.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_PRECIOS) || 1;
+      if (paginaActualPreciosCat > totalPaginas) paginaActualPreciosCat = totalPaginas;
+      if (paginaActualPreciosCat < 1) paginaActualPreciosCat = 1;
+
+      const inicio = (paginaActualPreciosCat - 1) * ITEMS_POR_PAGINA_PRECIOS;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_PRECIOS, totalRegistros);
+      const paginaItems = lista.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(p => {
+        const esNueva = p.tipo === 'Original';
+        const badgeTipo = esNueva
+          ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <i class="fa-solid fa-circle text-[6px] mr-1 text-emerald-500"></i> Llanta nueva
+             </span>`
+          : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+              <i class="fa-solid fa-arrows-rotate text-[8px] mr-1 text-amber-500"></i> Reencauche
+             </span>`;
+
+        const disenoHtml = p.diseno && p.diseno.trim() && p.diseno !== 'TODOS'
+          ? `<span class="font-semibold text-slate-700">${p.diseno}</span>`
+          : `<span class="text-slate-400 italic font-mono text-[11px]">Todos</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-3 font-bold text-slate-900">${p.cliente}</td>
+            <td class="p-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                ${p.marca}
+              </span>
+            </td>
+            <td class="p-3">${disenoHtml}</td>
+            <td class="p-3 font-mono font-bold text-slate-700 text-xs">${p.dimension}</td>
+            <td class="p-3 text-center">${badgeTipo}</td>
+            <td class="p-3 text-right font-mono font-black text-slate-900 text-xs">
+              $ ${Number(p.precio).toLocaleString('es-CO')}
+            </td>
+            <td class="p-3 text-center font-mono text-slate-500 text-[11px]">${p.vigente_desde || '-'}</td>
+            <td class="p-3 text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button type="button" onclick="editarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Modificar precio">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Eliminar tarifa">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionGenerica('PreciosCat', totalRegistros, inicio, fin, paginaActualPreciosCat, totalPaginas, 'cambiarPaginaPrecios');
+    }
+
+    function editarPrecioClienteCat(id) {
+      const p = (preciosClienteCatCache || []).find(item => item.id === id);
+      if (!p) return;
+
+      idPrecioEnEdicion = id;
+
+      const selCli = document.getElementById('precio_cli');
+      if (selCli) {
+        selCli.value = p.cliente;
+        alCambiarClienteFormPrecios();
+      }
+
+      const selMarca = document.getElementById('precio_marca');
+      const customMarca = document.getElementById('precio_marca_custom');
+      if (selMarca) {
+        const existe = Array.from(selMarca.options).some(o => o.value === p.marca);
+        if (existe) {
+          selMarca.value = p.marca;
+          if (customMarca) customMarca.classList.add('hidden');
+        } else {
+          selMarca.value = '__OTRA__';
+          if (customMarca) {
+            customMarca.classList.remove('hidden');
+            customMarca.value = p.marca;
+          }
+        }
+        alCambiarMarcaFormPrecios();
+      }
+
+      const inpDiseno = document.getElementById('precio_diseno');
+      if (inpDiseno) inpDiseno.value = p.diseno || '';
+
+      const inpDim = document.getElementById('precio_dimension');
+      if (inpDim) inpDim.value = p.dimension || '';
+
+      const selTipo = document.getElementById('precio_tipo');
+      if (selTipo) selTipo.value = p.tipo;
+
+      const inpValor = document.getElementById('precio_valor');
+      if (inpValor) {
+        inpValor.value = p.precio;
+        alEscribirPrecioValor(p.precio);
+      }
+
+      const inpDesde = document.getElementById('precio_desde');
+      if (inpDesde) inpDesde.value = p.vigente_desde || '';
+
+      const badge = document.getElementById('badgeModoPrecio');
+      if (badge) {
+        badge.classList.remove('bg-blue-600');
+        badge.classList.add('bg-amber-500');
+      }
+      const tit = document.getElementById('tituloFormularioPrecio');
+      if (tit) tit.textContent = 'Modificar Tarifa de Precio';
+      const aviso = document.getElementById('avisoModoEdicionPrecio');
+      if (aviso) aviso.classList.remove('hidden');
+      const btnCancel = document.getElementById('btnCancelarEdicionPrecio');
+      if (btnCancel) btnCancel.classList.remove('hidden');
+      const btnTxt = document.getElementById('btnGuardarPrecioClienteTexto');
+      if (btnTxt) btnTxt.textContent = 'Actualizar Tarifa';
+
+      document.getElementById('cardFormularioPreciosCliente')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function cancelarEdicionPrecioCliente() {
+      idPrecioEnEdicion = null;
+      const f = document.getElementById('formPreciosClienteCat');
+      if (f) f.reset();
+
+      const customMarca = document.getElementById('precio_marca_custom');
+      if (customMarca) {
+        customMarca.classList.add('hidden');
+        customMarca.value = '';
+      }
+
+      const badge = document.getElementById('badgeModoPrecio');
+      if (badge) {
+        badge.classList.add('bg-blue-600');
+        badge.classList.remove('bg-amber-500');
+      }
+      const tit = document.getElementById('tituloFormularioPrecio');
+      if (tit) tit.textContent = 'Registrar Nuevo Precio de Llanta';
+      const aviso = document.getElementById('avisoModoEdicionPrecio');
+      if (aviso) aviso.classList.add('hidden');
+      const btnCancel = document.getElementById('btnCancelarEdicionPrecio');
+      if (btnCancel) btnCancel.classList.add('hidden');
+      const btnTxt = document.getElementById('btnGuardarPrecioClienteTexto');
+      if (btnTxt) btnTxt.textContent = 'Guardar Precio';
+
+      const preview = document.getElementById('previewPrecioCOP');
+      if (preview) preview.textContent = '$ 0 COP';
+
+      const desde = document.getElementById('precio_desde');
+      if (desde) desde.value = new Date().toISOString().slice(0, 10);
     }
 
     async function guardarPrecioClienteCat(ev) {
       ev.preventDefault();
-      const v = id => document.getElementById(id).value.trim();
-      const body = { cliente: v('precio_cli').toUpperCase(), marca: v('precio_marca').toUpperCase(), diseno: v('precio_diseno').toUpperCase(),
-                     dimension: v('precio_dimension').toUpperCase(), tipo: v('precio_tipo'), precio: parseFloat(v('precio_valor')), vigente_desde: v('precio_desde') };
-      const res = await fetch('/api/precios-cliente', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar el precio'), true);
+      const v = id => (document.getElementById(id)?.value || '').trim();
+
+      const cli = v('precio_cli').toUpperCase();
+      let marca = v('precio_marca').toUpperCase();
+      if (marca === '__OTRA__') {
+        marca = v('precio_marca_custom').toUpperCase();
+      }
+
+      const diseno = v('precio_diseno').toUpperCase();
+      const dimension = v('precio_dimension').toUpperCase();
+      const tipo = v('precio_tipo');
+      const precio = parseFloat(v('precio_valor'));
+      const vigente_desde = v('precio_desde');
+
+      if (!cli) {
+        mostrarToast('⚠️ Selecciona un cliente', true);
         return;
       }
-      mostrarToast('✅ Precio guardado');
-      document.getElementById('precio_valor').value = '';
-      cargarPreciosClienteCat();
+      if (!marca) {
+        mostrarToast('⚠️ Selecciona o escribe una marca', true);
+        return;
+      }
+      if (!dimension) {
+        mostrarToast('⚠️ Especifica la dimensión de la llanta', true);
+        return;
+      }
+      if (!precio || precio <= 0) {
+        mostrarToast('⚠️ Ingresa un precio válido en COP', true);
+        return;
+      }
+      if (!vigente_desde) {
+        mostrarToast('⚠️ Selecciona la fecha de vigencia', true);
+        return;
+      }
+
+      const body = { cliente: cli, marca, diseno, dimension, tipo, precio, vigente_desde };
+
+      try {
+        const btnGuardar = document.getElementById('btnGuardarPrecioCliente');
+        if (btnGuardar) btnGuardar.disabled = true;
+
+        const res = await fetch('/api/precios-cliente', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          mostrarToast('❌ ' + (d.detail || 'No se pudo guardar el precio'), true);
+          return;
+        }
+
+        mostrarToast(idPrecioEnEdicion ? '✅ Tarifa actualizada exitosamente' : '✅ Precio guardado exitosamente');
+        cancelarEdicionPrecioCliente();
+        await cargarPreciosClienteCat();
+      } catch (e) {
+        mostrarToast('❌ Error de conexión al guardar precio', true);
+      } finally {
+        const btnGuardar = document.getElementById('btnGuardarPrecioCliente');
+        if (btnGuardar) btnGuardar.disabled = false;
+      }
     }
 
     async function eliminarPrecioClienteCat(id) {
-      if (!confirm('¿Eliminar este precio de la lista?')) return;
-      await fetch(`/api/precios-cliente/${id}`, { method: 'DELETE' });
-      cargarPreciosClienteCat();
+      if (!confirm('¿Eliminar esta tarifa de precio de la lista?')) return;
+      try {
+        const res = await fetch(`/api/precios-cliente/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast('Precio eliminado');
+          cargarPreciosClienteCat();
+        } else {
+          mostrarToast('No se pudo eliminar el precio', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión', true);
+      }
     }
 
-    // Stock de seguridad del MRP por medida y eje
+    // Funciones Excel Precios
+    function descargarPlantillaPreciosExcel() {
+      window.location.href = '/api/precios-cliente/plantilla-excel';
+    }
+
+    function exportarPreciosClienteExcel() {
+      window.location.href = '/api/precios-cliente/exportar-excel';
+    }
+
+    function abrirModalImportarPreciosExcel() {
+      archivoPreciosExcelSeleccionado = null;
+      const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
+      if (lbl) lbl.textContent = 'Formatos permitidos: .xlsx, .xls';
+      const fileInput = document.getElementById('filePreciosExcelInput');
+      if (fileInput) fileInput.value = '';
+
+      const btn = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+      if (btn) btn.disabled = true;
+
+      const modal = document.getElementById('modalImportarPreciosExcel');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      // Drag & Drop
+      const dropZone = document.getElementById('dropZonePreciosExcel');
+      if (dropZone && !dropZone._dndInit) {
+        dropZone._dndInit = true;
+        dropZone.addEventListener('click', () => {
+          document.getElementById('filePreciosExcelInput')?.click();
+        });
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('border-emerald-500', 'bg-emerald-50/40');
+        });
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+        });
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            archivoPreciosExcelSeleccionado = e.dataTransfer.files[0];
+            const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
+            if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+            const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+            if (btnImportar) btnImportar.disabled = false;
+          }
+        });
+      }
+    }
+
+    function cerrarModalImportarPreciosExcel() {
+      const modal = document.getElementById('modalImportarPreciosExcel');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function alSeleccionarArchivoPreciosExcel(e) {
+      if (e.target.files && e.target.files[0]) {
+        archivoPreciosExcelSeleccionado = e.target.files[0];
+        const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
+        if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+        const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+        if (btnImportar) btnImportar.disabled = false;
+      }
+    }
+
+    async function ejecutarImportarPreciosExcel() {
+      if (!archivoPreciosExcelSeleccionado) {
+        alert('Por favor selecciona o arrastra un archivo de Excel (.xlsx o .xls)');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando...';
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('file', archivoPreciosExcelSeleccionado);
+
+        const res = await fetch('/api/precios-cliente/importar-excel', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert('❌ ' + (data.detail || 'Error al procesar el archivo Excel'));
+          return;
+        }
+
+        cerrarModalImportarPreciosExcel();
+        let msg = `✅ Importación completada con éxito:\n• ${data.importados} tarifas registradas o actualizadas.`;
+        if (data.errores && data.errores.length > 0) {
+          msg += `\n\n⚠️ ${data.errores.length} fila(s) omitida(s) por inconsistencias:\n` + data.errores.slice(0, 8).join('\n');
+          if (data.errores.length > 8) msg += `\n...y ${data.errores.length - 8} más.`;
+        }
+        alert(msg);
+        mostrarToast(`✅ ${data.importados} precios importados`);
+        cargarPreciosClienteCat();
+      } catch (err) {
+        alert('Error de conexión al subir el archivo');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    }
+
+    // ==========================================
+    // STOCK DE SEGURIDAD DEL MRP
+    // ==========================================
     async function cargarStockSeguridadCat() {
       const tbody = document.getElementById('tbodyStockSeguridad');
       if (!tbody) return;
+
+      // Poblar selectores de clientes y dimensiones
+      const selCli = document.getElementById('stockseg_cliente');
+      if (selCli) {
+        const valPrev = selCli.value;
+        const clis = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
+      }
+
+      const dlDims = document.getElementById('dl_stockseg_dimensiones');
+      if (dlDims) {
+        const dims = obtenerListaDimensionesDisponibles();
+        dlDims.innerHTML = dims.map(d => `<option value="${d}">`).join('');
+      }
+
       try {
         const res = await fetch('/api/stock-seguridad');
         const lista = res.ok ? await res.json() : [];
@@ -43831,7 +45150,7 @@ if __name__ == '__main__':
           const q = s => String(s).replace(/'/g, "\\'");
           return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2 font-mono">${r.dimension}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
             <td class="p-2 text-center font-bold">${r.cantidad}</td>
-            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="5" class="p-2 text-slate-400 italic">Sin reglas: se usa el stock de seguridad general de cada cliente</td></tr>';
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
@@ -43853,6 +45172,8 @@ if __name__ == '__main__':
         return;
       }
       mostrarToast('✅ Stock de seguridad guardado');
+      document.getElementById('stockseg_dimension').value = '';
+      document.getElementById('stockseg_cantidad').value = '';
       cargarStockSeguridadCat();
     }
 
@@ -43862,10 +45183,32 @@ if __name__ == '__main__':
       cargarStockSeguridadCat();
     }
 
-    // Máximo de reencauches por cliente y marca
+    // ==========================================
+    // MÁXIMO DE REENCAUCHES
+    // ==========================================
     async function cargarMaximosReencaucheCat() {
       const tbody = document.getElementById('tbodyMaximosReencauche');
       if (!tbody) return;
+
+      // Poblar selects de cliente y marca
+      const selCli = document.getElementById('maxreen_cliente');
+      if (selCli) {
+        const valPrev = selCli.value;
+        const clis = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
+      }
+
+      const selMarca = document.getElementById('maxreen_marca');
+      if (selMarca) {
+        const valPrev = selMarca.value;
+        const marcas = obtenerListaMarcasDisponibles();
+        selMarca.innerHTML = '<option value="TODAS">TODAS LAS MARCAS</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (valPrev) selMarca.value = valPrev;
+      }
+
       try {
         const res = await fetch('/api/configuracion-reencauche');
         const lista = res.ok ? await res.json() : [];
@@ -43873,7 +45216,7 @@ if __name__ == '__main__':
           const cli = String(r.cliente).replace(/'/g, "\\'"), mar = String(r.marca).replace(/'/g, "\\'");
           return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2">${r.marca}</td>
             <td class="p-2 text-center font-mono font-bold">${r.max_reencauches}</td>
-            <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+            <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin reglas: no hay tope de reencauches</td></tr>';
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="4" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
@@ -43894,6 +45237,7 @@ if __name__ == '__main__':
         return;
       }
       mostrarToast('✅ Regla de reencauches guardada');
+      document.getElementById('maxreen_valor').value = '';
       cargarMaximosReencaucheCat();
     }
 
@@ -43980,7 +45324,7 @@ if __name__ == '__main__':
           </td>
           <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
           <td class="p-2.5 text-center">
-            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors" title="Desvincular marca de este cliente">
+            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Desvincular marca de este cliente">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -43996,28 +45340,58 @@ if __name__ == '__main__':
     }
 
     async function abrirModalAsociarMarcaCliente(clientePref = '') {
-      const cliInput = document.getElementById('asoc_marca_cliente');
-      const marcaInput = document.getElementById('asoc_marca_nombre');
-      if (cliInput) {
-        const selFiltro = document.getElementById('filtroCatMarcaCliente');
-        cliInput.value = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
-      }
-      if (marcaInput) marcaInput.value = '';
+      const selCli = document.getElementById('asoc_marca_cliente');
+      const selMarca = document.getElementById('asoc_marca_nombre_select');
+      const customMarca = document.getElementById('asoc_marca_nombre_custom');
+      const hiddenMarca = document.getElementById('asoc_marca_nombre');
 
-      // Cargar todas las marcas del catálogo en datalist
-      try {
-        const res = await fetch('/api/valores-campo?campo=marca&todas=true');
-        if (res.ok) {
-          const marcas = await res.json();
-          const dl = document.getElementById('dl_marcas_todas');
-          if (dl) dl.innerHTML = marcas.map(m => `<option value="${m}">`).join('');
-        }
-      } catch (e) {}
+      // Poblar selector de clientes
+      if (selCli) {
+        const selFiltro = document.getElementById('filtroCatMarcaCliente');
+        const pref = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
+        const clis = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (pref && clis.includes(pref)) selCli.value = pref;
+      }
+
+      // Poblar selector de marcas
+      if (selMarca) {
+        const marcas = obtenerListaMarcasDisponibles();
+        selMarca.innerHTML = '<option value="">-- Seleccionar Marca del Catálogo --</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('') +
+          '<option value="__OTRA__">+ Escribir otra marca...</option>';
+        selMarca.value = '';
+      }
+
+      if (customMarca) {
+        customMarca.value = '';
+        customMarca.classList.add('hidden');
+      }
+      if (hiddenMarca) hiddenMarca.value = '';
 
       const modal = document.getElementById('modalAsociarMarcaCliente');
       if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+      }
+    }
+
+    function alCambiarMarcaAsocModal() {
+      const sel = document.getElementById('asoc_marca_nombre_select');
+      const custom = document.getElementById('asoc_marca_nombre_custom');
+      if (!sel) return;
+
+      if (sel.value === '__OTRA__') {
+        if (custom) {
+          custom.classList.remove('hidden');
+          custom.focus();
+        }
+      } else {
+        if (custom) {
+          custom.classList.add('hidden');
+          custom.value = '';
+        }
       }
     }
 
@@ -44031,9 +45405,17 @@ if __name__ == '__main__':
 
     async function guardarAsociacionMarcaCliente() {
       const cli = (document.getElementById('asoc_marca_cliente')?.value || '').trim().toUpperCase();
-      const marca = (document.getElementById('asoc_marca_nombre')?.value || '').trim();
-      if (!cli || !marca) {
-        alert('Por favor ingresa tanto el Cliente como la Marca');
+      const selMarca = document.getElementById('asoc_marca_nombre_select')?.value || '';
+      const customMarca = (document.getElementById('asoc_marca_nombre_custom')?.value || '').trim();
+
+      const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
+
+      if (!cli) {
+        alert('Por favor selecciona un Cliente');
+        return;
+      }
+      if (!marca) {
+        alert('Por favor selecciona o escribe la Marca a vincular');
         return;
       }
 
@@ -44047,9 +45429,9 @@ if __name__ == '__main__':
           cerrarModalAsociarMarcaCliente();
           mostrarToast(`✅ Marca '${marca}' asociada a '${cli}'.`);
           await cargarMarcasClienteCat();
-          // Si el patio tiene seleccionado a este cliente, refrescar marcas de patio
+          // Actualizar marcas de patio si corresponde
           const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
-          if (cliPatio === cli) {
+          if (cliPatio === cli && typeof actualizarMarcasCliente === 'function') {
             actualizarMarcasCliente(cli);
           }
         } else {

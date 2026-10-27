@@ -664,6 +664,13 @@
       if (elNota) elNota.classList.add('hidden');
       const elBtn = document.getElementById('btnGuardarModeloTexto');
       if (elBtn) elBtn.textContent = 'Guardar';
+
+      // Poblar datalists sugeridos
+      const dlM = document.getElementById('dl_marcas_modelo_catalogo');
+      if (dlM) dlM.innerHTML = obtenerListaMarcasDisponibles().map(m => `<option value="${escapeHtml(m)}">`).join('');
+      const dlD = document.getElementById('dl_dimensiones_modelo_catalogo');
+      if (dlD) dlD.innerHTML = obtenerListaDimensionesDisponibles().map(d => `<option value="${escapeHtml(d)}">`).join('');
+
       document.getElementById('mod_tipo').value = 'Nueva';
       document.getElementById('mod_marca').value = '';
       document.getElementById('mod_diseno').value = '';
@@ -684,6 +691,13 @@
       if (elNota) elNota.classList.remove('hidden');
       const elBtn = document.getElementById('btnGuardarModeloTexto');
       if (elBtn) elBtn.textContent = 'Guardar Cambios';
+
+      // Poblar datalists sugeridos
+      const dlM = document.getElementById('dl_marcas_modelo_catalogo');
+      if (dlM) dlM.innerHTML = obtenerListaMarcasDisponibles().map(x => `<option value="${escapeHtml(x)}">`).join('');
+      const dlD = document.getElementById('dl_dimensiones_modelo_catalogo');
+      if (dlD) dlD.innerHTML = obtenerListaDimensionesDisponibles().map(d => `<option value="${escapeHtml(d)}">`).join('');
+
       document.getElementById('mod_tipo').value = m.tipo_llanta;
       document.getElementById('mod_marca').value = m.marca;
       document.getElementById('mod_diseno').value = m.diseno;
@@ -779,16 +793,121 @@
       }
     }
 
+    // ==========================================
+    // HELPERS GLOBALES DE CATÁLOGOS
+    // ==========================================
+    function obtenerListaClientesDisponibles() {
+      const set = new Set();
+      (cacheDirectorioClientes || []).forEach(c => {
+        if (c.cliente) set.add(c.cliente.trim().toUpperCase());
+      });
+      (catalogoLimitesCache || []).forEach(c => {
+        if (c.cliente) set.add(c.cliente.trim().toUpperCase());
+      });
+      (marcasClienteCatCache || []).forEach(m => {
+        if (m.cliente) set.add(m.cliente.trim().toUpperCase());
+      });
+      (preciosClienteCatCache || []).forEach(p => {
+        if (p.cliente) set.add(p.cliente.trim().toUpperCase());
+      });
+      return Array.from(set).filter(Boolean).sort();
+    }
+
+    function obtenerListaMarcasDisponibles() {
+      const set = new Set();
+      const comunes = [
+        'MICHELIN', 'GOODYEAR', 'BRIDGESTONE', 'CONTINENTAL', 'FIRESTONE',
+        'PIRELLI', 'HANKOOK', 'DOUBLE COIN', 'AEOLUS', 'TRIANGLE',
+        'SAILUN', 'KUMHO', 'YOKOHAMA', 'DUNLOP', 'BANDAG', 'MARANGONI', 'VIPAL'
+      ];
+      comunes.forEach(m => set.add(m));
+      (catalogoModelosCache || []).forEach(m => {
+        if (m.marca) set.add(m.marca.trim().toUpperCase());
+      });
+      (marcasClienteCatCache || []).forEach(m => {
+        if (m.marca) set.add(m.marca.trim().toUpperCase());
+      });
+      (preciosClienteCatCache || []).forEach(p => {
+        if (p.marca) set.add(p.marca.trim().toUpperCase());
+      });
+      return Array.from(set).filter(Boolean).sort();
+    }
+
+    function obtenerListaDimensionesDisponibles() {
+      const set = new Set();
+      const comunes = [
+        '295/80R22.5', '11R22.5', '12R22.5', '315/80R22.5', '275/70R22.5',
+        '385/65R22.5', '12.00R24', '12.00R20', '7.50R16', '215/75R17.5',
+        '225/70R19.5', '11.00R20', '10.00R20', '255/70R22.5'
+      ];
+      comunes.forEach(d => set.add(d));
+      (catalogoModelosCache || []).forEach(m => {
+        if (m.dimension) set.add(m.dimension.trim().toUpperCase());
+      });
+      (preciosClienteCatCache || []).forEach(p => {
+        if (p.dimension) set.add(p.dimension.trim().toUpperCase());
+      });
+      return Array.from(set).filter(Boolean).sort();
+    }
+
     let paginaActualLimitesCat = 1;
     const ITEMS_POR_PAGINA_LIMITES = 25;
+    let catalogoLimitesFiltrados = null;
 
     async function cargarClientesLimCat() {
       const res = await fetch('/api/configuraciones-clientes');
       if (res.ok) {
         catalogoLimitesCache = await res.json();
-        paginaActualLimitesCat = 1;
-        renderizarTablaLimitesCat();
+        poblarFiltrosLimitesCat();
+        filtrarLimitesCat();
       }
+    }
+
+    function poblarFiltrosLimitesCat() {
+      const selCli = document.getElementById('filtroClienteLimitesCat');
+      if (!selCli) return;
+      const valPrev = selCli.value || 'TODOS';
+      const clis = Array.from(new Set((catalogoLimitesCache || []).map(c => c.cliente))).sort();
+      selCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
+        clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (clis.includes(valPrev)) selCli.value = valPrev;
+    }
+
+    function filtrarLimitesCat() {
+      const q = (document.getElementById('filtroBuscadorLimitesCat')?.value || '').trim().toLowerCase();
+      const fCli = (document.getElementById('filtroClienteLimitesCat')?.value || 'TODOS').trim().toUpperCase();
+      const fEje = (document.getElementById('filtroEjeLimitesCat')?.value || 'TODOS').trim().toUpperCase();
+
+      const btnL = document.getElementById('btnLimpiarFiltrosLimitesCat');
+      const hay = Boolean(q) || fCli !== 'TODOS' || fEje !== 'TODOS';
+      if (btnL) {
+        btnL.classList.toggle('hidden', !hay);
+        btnL.classList.toggle('flex', hay);
+      }
+
+      const lista = catalogoLimitesCache || [];
+      catalogoLimitesFiltrados = lista.filter(c => {
+        if (fCli !== 'TODOS' && String(c.cliente || '').trim().toUpperCase() !== fCli) return false;
+        if (fEje !== 'TODOS' && String(c.eje || 'TODOS').trim().toUpperCase() !== fEje) return false;
+        if (q) {
+          const t = `${c.cliente || ''} ${c.subcliente || ''} ${c.eje || ''} ${c.observaciones || ''} ${c.limite_retiro_mm || ''}`.toLowerCase();
+          if (!t.includes(q)) return false;
+        }
+        return true;
+      });
+
+      paginaActualLimitesCat = 1;
+      renderizarTablaLimitesCat();
+    }
+
+    function limpiarFiltrosLimitesCat() {
+      const b = document.getElementById('filtroBuscadorLimitesCat');
+      if (b) b.value = '';
+      const c = document.getElementById('filtroClienteLimitesCat');
+      if (c) c.value = 'TODOS';
+      const e = document.getElementById('filtroEjeLimitesCat');
+      if (e) e.value = 'TODOS';
+      filtrarLimitesCat();
     }
 
     function renderizarTablaLimitesCat() {
@@ -796,9 +915,9 @@
       const contenedor = document.getElementById('contenedorPaginacionLimitesCat');
       if (!tbody) return;
 
-      const lista = catalogoLimitesCache || [];
+      const lista = catalogoLimitesFiltrados !== null ? catalogoLimitesFiltrados : (catalogoLimitesCache || []);
       if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic font-medium">No hay límites configurados por cliente</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-medium">No se encontraron límites configurados con los filtros aplicados.</td></tr>`;
         if (contenedor) contenedor.classList.add('hidden');
         return;
       }
@@ -829,17 +948,17 @@
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 font-black text-slate-900">${c.cliente}</td>
-            <td class="p-2.5 font-bold text-slate-700">${c.subcliente || 'TODOS'}</td>
+            <td class="p-2.5 font-black text-slate-900">${escapeHtml(c.cliente)}</td>
+            <td class="p-2.5 font-bold text-slate-700">${escapeHtml(c.subcliente || 'TODOS')}</td>
             <td class="p-2.5 text-center">${badgeEje}</td>
             <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
-            <td class="p-2.5 text-slate-600">${c.observaciones || '-'}</td>
+            <td class="p-2.5 text-slate-600">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-2.5 text-center">
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar límite de retiro">
+                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar límite de retiro">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar regla de límite">
+                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar regla de límite">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -856,14 +975,60 @@
       renderizarTablaLimitesCat();
     }
 
+    function alCambiarClienteModalLimite() {
+      const cli = (document.getElementById('lim_cliente')?.value || '').trim().toUpperCase();
+      const selSub = document.getElementById('lim_subcliente');
+      const customSub = document.getElementById('lim_subcliente_custom');
+      if (!selSub) return;
+
+      if (customSub) {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+      }
+
+      const clienteObj = (cacheDirectorioClientes || []).find(c => (c.cliente || '').toUpperCase() === cli);
+      const subclientes = (clienteObj && clienteObj.subclientes) ? clienteObj.subclientes : [];
+
+      let html = '<option value="TODOS">TODOS (Toda la flota)</option>';
+      subclientes.forEach(s => {
+        if (s && s.toUpperCase() !== 'TODOS') {
+          html += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+        }
+      });
+      html += '<option value="__OTRA__">+ Escribir otra sede...</option>';
+      selSub.innerHTML = html;
+    }
+
+    function alCambiarSubclienteModalLimite() {
+      const selSub = document.getElementById('lim_subcliente');
+      const customSub = document.getElementById('lim_subcliente_custom');
+      if (!selSub || !customSub) return;
+      if (selSub.value === '__OTRA__') {
+        customSub.classList.remove('hidden');
+        customSub.focus();
+      } else {
+        customSub.classList.add('hidden');
+        customSub.value = '';
+      }
+    }
+
     function abrirModalLimiteCliente() {
       limiteClienteEditandoId = null;
       const elTit = document.getElementById('tituloModalLimiteCliente');
       if (elTit) elTit.textContent = 'Límite de Retiro por Cliente y Eje';
       const elBtn = document.getElementById('btnGuardarLimiteTexto');
       if (elBtn) elBtn.textContent = 'Guardar Límite';
-      document.getElementById('lim_cliente').value = '';
-      document.getElementById('lim_subcliente').value = 'TODOS';
+
+      // Poblar selector de clientes
+      const selCli = document.getElementById('lim_cliente');
+      if (selCli) {
+        const clientes = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        selCli.value = '';
+      }
+
+      alCambiarClienteModalLimite();
       document.getElementById('lim_eje').value = 'TODOS';
       document.getElementById('lim_mm').value = '3.0';
       document.getElementById('lim_obs').value = '';
@@ -872,15 +1037,44 @@
     }
 
     function abrirModalEditarLimiteCliente(id) {
-      const c = catalogoLimitesCache.find(x => x.id === id);
+      const c = (catalogoLimitesCache || []).find(x => x.id === id);
       if (!c) return;
       limiteClienteEditandoId = id;
       const elTit = document.getElementById('tituloModalLimiteCliente');
       if (elTit) elTit.textContent = `Editar Límite: ${c.cliente}`;
       const elBtn = document.getElementById('btnGuardarLimiteTexto');
       if (elBtn) elBtn.textContent = 'Guardar Cambios';
-      document.getElementById('lim_cliente').value = c.cliente;
-      document.getElementById('lim_subcliente').value = c.subcliente || 'TODOS';
+
+      // Poblar selector de clientes
+      const selCli = document.getElementById('lim_cliente');
+      if (selCli) {
+        const clientes = obtenerListaClientesDisponibles();
+        if (!clientes.includes(c.cliente)) clientes.push(c.cliente);
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clientes.sort().map(cli => `<option value="${escapeHtml(cli)}">${escapeHtml(cli)}</option>`).join('');
+        selCli.value = c.cliente;
+      }
+
+      alCambiarClienteModalLimite();
+
+      // Ajustar valor de sede
+      const selSub = document.getElementById('lim_subcliente');
+      const customSub = document.getElementById('lim_subcliente_custom');
+      const subVal = c.subcliente || 'TODOS';
+      if (selSub) {
+        const opciones = Array.from(selSub.options).map(o => o.value);
+        if (opciones.includes(subVal)) {
+          selSub.value = subVal;
+          if (customSub) customSub.classList.add('hidden');
+        } else {
+          selSub.value = '__OTRA__';
+          if (customSub) {
+            customSub.classList.remove('hidden');
+            customSub.value = subVal;
+          }
+        }
+      }
+
       document.getElementById('lim_eje').value = (c.eje || 'TODOS').toUpperCase();
       document.getElementById('lim_mm').value = c.limite_retiro_mm;
       document.getElementById('lim_obs').value = c.observaciones || '';
@@ -894,13 +1088,20 @@
     }
 
     async function guardarLimiteCliente() {
-      const cli = document.getElementById('lim_cliente').value.trim().toUpperCase();
-      const sub = (document.getElementById('lim_subcliente').value.trim() || 'TODOS').toUpperCase();
-      const eje = document.getElementById('lim_eje').value.trim().toUpperCase();
-      const mm = parseFloat(document.getElementById('lim_mm').value);
-      const obs = document.getElementById('lim_obs').value.trim().toUpperCase();
-      if (!cli || isNaN(mm)) {
-        alert('Por favor completa el cliente y el límite en mm');
+      const cli = (document.getElementById('lim_cliente')?.value || '').trim().toUpperCase();
+      const selSub = document.getElementById('lim_subcliente')?.value || 'TODOS';
+      const customSub = (document.getElementById('lim_subcliente_custom')?.value || '').trim().toUpperCase();
+      const sub = (selSub === '__OTRA__' ? customSub : selSub) || 'TODOS';
+      const eje = (document.getElementById('lim_eje')?.value || 'TODOS').trim().toUpperCase();
+      const mm = parseFloat(document.getElementById('lim_mm')?.value);
+      const obs = (document.getElementById('lim_obs')?.value || '').trim().toUpperCase();
+
+      if (!cli) {
+        alert('Por favor selecciona un cliente de la lista desplegable.');
+        return;
+      }
+      if (isNaN(mm) || mm <= 0) {
+        alert('Por favor ingresa un límite de retiro válido en mm.');
         return;
       }
 
@@ -967,52 +1168,611 @@
     // ==========================================
     let marcasClienteCatCache = [];
 
-    // Lista de precios por cliente
+    // ==========================================
+    // PRECIOS POR CLIENTE (TARIFARIO & EXCEL)
+    // ==========================================
+    let preciosClienteCatCache = [];
+    let cacheFiltradosPreciosCat = [];
+    let paginaActualPreciosCat = 1;
+    const ITEMS_POR_PAGINA_PRECIOS = 20;
+    let idPrecioEnEdicion = null;
+    let archivoPreciosExcelSeleccionado = null;
+
     async function cargarPreciosClienteCat() {
       const tbody = document.getElementById('tbodyPreciosCliente');
       if (!tbody) return;
       const desde = document.getElementById('precio_desde');
       if (desde && !desde.value) desde.value = new Date().toISOString().slice(0, 10);
+
       try {
         const res = await fetch('/api/precios-cliente');
         const lista = res.ok ? await res.json() : [];
-        tbody.innerHTML = lista.length ? lista.map(p => `<tr>
-            <td class="p-2.5 font-bold">${p.cliente}</td><td class="p-2.5">${p.marca}</td><td class="p-2.5">${p.diseno || '<span class="text-slate-400">Todos</span>'}</td>
-            <td class="p-2.5 font-mono">${p.dimension}</td><td class="p-2.5">${p.tipo === 'Original' ? 'Llanta nueva' : 'Reencauche'}</td>
-            <td class="p-2.5 text-right font-mono font-bold">$ ${Number(p.precio).toLocaleString('es-CO')}</td><td class="p-2.5">${p.vigente_desde}</td>
-            <td class="p-2.5 text-center"><button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="text-rose-600 font-bold">Eliminar</button></td></tr>`).join('')
-          : '<tr><td colspan="8" class="p-2.5 text-slate-400 italic">Sin precios: las llantas sin precio quedan fuera de los cálculos en pesos</td></tr>';
+        preciosClienteCatCache = lista || [];
+
+        // KPIs rápidos
+        const total = preciosClienteCatCache.length;
+        const clientesUnicos = Array.from(new Set(preciosClienteCatCache.map(p => p.cliente).filter(Boolean)));
+        const nuevas = preciosClienteCatCache.filter(p => p.tipo === 'Original' && p.precio > 0);
+        const promNueva = nuevas.length ? Math.round(nuevas.reduce((s, p) => s + Number(p.precio), 0) / nuevas.length) : 0;
+        const reencauches = preciosClienteCatCache.filter(p => p.tipo === 'Reencauche' && p.precio > 0);
+        const promReen = reencauches.length ? Math.round(reencauches.reduce((s, p) => s + Number(p.precio), 0) / reencauches.length) : 0;
+
+        const elTot = document.getElementById('kpiPreciosTotal');
+        if (elTot) elTot.textContent = `${total} tarifas`;
+        const elCli = document.getElementById('kpiPreciosClientes');
+        if (elCli) elCli.textContent = `${clientesUnicos.length} clientes`;
+        const elPn = document.getElementById('kpiPreciosPromNueva');
+        if (elPn) elPn.textContent = `$ ${promNueva.toLocaleString('es-CO')}`;
+        const elPr = document.getElementById('kpiPreciosPromReen');
+        if (elPr) elPr.textContent = `$ ${promReen.toLocaleString('es-CO')}`;
+
+        // Poblar selector de cliente en el formulario
+        const selCliForm = document.getElementById('precio_cli');
+        if (selCliForm) {
+          const valPrevio = selCliForm.value;
+          const todosClientes = obtenerListaClientesDisponibles();
+          selCliForm.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+            todosClientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valPrevio && todosClientes.includes(valPrevio)) {
+            selCliForm.value = valPrevio;
+          }
+          alCambiarClienteFormPrecios();
+        }
+
+        // Poblar filtros de cliente y marca
+        const selFiltroCli = document.getElementById('filtroClientePreciosCat');
+        if (selFiltroCli) {
+          const valPrev = selFiltroCli.value;
+          const clientesFiltro = Array.from(new Set([...clientesUnicos, ...obtenerListaClientesDisponibles()])).sort();
+          selFiltroCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
+            clientesFiltro.map(c => `<option value="${c}">${c}</option>`).join('');
+          if (valPrev) selFiltroCli.value = valPrev;
+        }
+
+        const selFiltroMarca = document.getElementById('filtroMarcaPreciosCat');
+        if (selFiltroMarca) {
+          const valPrev = selFiltroMarca.value;
+          const marcasFiltro = Array.from(new Set(preciosClienteCatCache.map(p => p.marca).filter(Boolean))).sort();
+          selFiltroMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
+            marcasFiltro.map(m => `<option value="${m}">${m}</option>`).join('');
+          if (valPrev) selFiltroMarca.value = valPrev;
+        }
+
+        filtrarPreciosClienteCat();
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-2.5 text-rose-600">No se pudieron cargar los precios</td></tr>';
+        console.error("Error al cargar precios:", e);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-rose-600">No se pudieron cargar los precios</td></tr>';
       }
+    }
+
+    function alCambiarClienteFormPrecios() {
+      const cli = (document.getElementById('precio_cli')?.value || '').trim().toUpperCase();
+      const selMarca = document.getElementById('precio_marca');
+      if (!selMarca) return;
+
+      const valPrevio = selMarca.value;
+      const todasMarcas = obtenerListaMarcasDisponibles();
+
+      const marcasAsociadas = (marcasClienteCatCache || [])
+        .filter(m => m.cliente === cli)
+        .map(m => m.marca);
+
+      let opts = '<option value="">-- Marca --</option>';
+      if (marcasAsociadas.length > 0) {
+        opts += `<optgroup label="⭐ Marcas Habituales de ${cli}">`;
+        marcasAsociadas.forEach(m => {
+          opts += `<option value="${m}">${m}</option>`;
+        });
+        opts += `</optgroup>`;
+        opts += `<optgroup label="Otras Marcas del Catálogo">`;
+        todasMarcas.filter(m => !marcasAsociadas.includes(m)).forEach(m => {
+          opts += `<option value="${m}">${m}</option>`;
+        });
+        opts += `</optgroup>`;
+      } else {
+        todasMarcas.forEach(m => {
+          opts += `<option value="${m}">${m}</option>`;
+        });
+      }
+      opts += '<option value="__OTRA__">+ Escribir otra marca...</option>';
+      selMarca.innerHTML = opts;
+
+      if (valPrevio && (todasMarcas.includes(valPrevio) || marcasAsociadas.includes(valPrevio))) {
+        selMarca.value = valPrevio;
+      }
+      alCambiarMarcaFormPrecios();
+    }
+
+    function alCambiarMarcaFormPrecios() {
+      const sel = document.getElementById('precio_marca');
+      const custom = document.getElementById('precio_marca_custom');
+      if (!sel) return;
+
+      if (sel.value === '__OTRA__') {
+        if (custom) {
+          custom.classList.remove('hidden');
+          custom.focus();
+        }
+      } else {
+        if (custom) {
+          custom.classList.add('hidden');
+          custom.value = '';
+        }
+      }
+
+      const marca = sel.value === '__OTRA__' ? (custom?.value || '').trim().toUpperCase() : sel.value.trim().toUpperCase();
+      const dlDisenos = document.getElementById('dl_precio_disenos');
+      const dlDims = document.getElementById('dl_precio_dimensiones');
+
+      let disenosSugeridos = new Set();
+      let dimsSugeridas = new Set(obtenerListaDimensionesDisponibles());
+
+      if (typeof catalogoModelosCache !== 'undefined' && Array.isArray(catalogoModelosCache)) {
+        catalogoModelosCache.forEach(m => {
+          if (!marca || (m.marca && m.marca.toUpperCase() === marca)) {
+            if (m.diseno) disenosSugeridos.add(m.diseno.toUpperCase());
+            if (m.dimension) dimsSugeridas.add(m.dimension.toUpperCase());
+          }
+        });
+      }
+
+      if (dlDisenos) {
+        dlDisenos.innerHTML = Array.from(disenosSugeridos).sort().map(d => `<option value="${d}">`).join('');
+      }
+      if (dlDims) {
+        dlDims.innerHTML = Array.from(dimsSugeridas).sort().map(d => `<option value="${d}">`).join('');
+      }
+    }
+
+    function alEscribirPrecioValor(val) {
+      const preview = document.getElementById('previewPrecioCOP');
+      if (!preview) return;
+      const num = parseFloat(val) || 0;
+      preview.textContent = `$ ${num.toLocaleString('es-CO')} COP`;
+    }
+
+    function filtrarPreciosClienteCat() {
+      const txt = (document.getElementById('filtroBuscadorPreciosCat')?.value || '').trim().toLowerCase();
+      const cli = (document.getElementById('filtroClientePreciosCat')?.value || 'TODOS').trim().toUpperCase();
+      const mar = (document.getElementById('filtroMarcaPreciosCat')?.value || 'TODAS').trim().toUpperCase();
+      const tip = (document.getElementById('filtroTipoPreciosCat')?.value || 'TODOS').trim();
+
+      const btnLimpiar = document.getElementById('btnLimpiarFiltrosPreciosCat');
+      if (btnLimpiar) {
+        if (txt || cli !== 'TODOS' || mar !== 'TODAS' || tip !== 'TODOS') {
+          btnLimpiar.classList.remove('hidden');
+          btnLimpiar.classList.add('flex');
+        } else {
+          btnLimpiar.classList.add('hidden');
+          btnLimpiar.classList.remove('flex');
+        }
+      }
+
+      cacheFiltradosPreciosCat = (preciosClienteCatCache || []).filter(p => {
+        if (cli !== 'TODOS' && p.cliente !== cli) return false;
+        if (mar !== 'TODAS' && p.marca !== mar) return false;
+        if (tip !== 'TODOS' && p.tipo !== tip) return false;
+        if (txt) {
+          const buscable = `${p.cliente} ${p.marca} ${p.diseno || ''} ${p.dimension} ${p.tipo}`.toLowerCase();
+          if (!buscable.includes(txt)) return false;
+        }
+        return true;
+      });
+
+      paginaActualPreciosCat = 1;
+      renderizarTablaPreciosCliente(cacheFiltradosPreciosCat);
+    }
+
+    function limpiarFiltrosPreciosCat() {
+      const txt = document.getElementById('filtroBuscadorPreciosCat');
+      if (txt) txt.value = '';
+      const cli = document.getElementById('filtroClientePreciosCat');
+      if (cli) cli.value = 'TODOS';
+      const mar = document.getElementById('filtroMarcaPreciosCat');
+      if (mar) mar.value = 'TODAS';
+      const tip = document.getElementById('filtroTipoPreciosCat');
+      if (tip) tip.value = 'TODOS';
+      filtrarPreciosClienteCat();
+    }
+
+    function cambiarPaginaPrecios(p) {
+      paginaActualPreciosCat = p;
+      renderizarTablaPreciosCliente(cacheFiltradosPreciosCat);
+    }
+
+    function renderizarTablaPreciosCliente(lista) {
+      const tbody = document.getElementById('tbodyPreciosCliente');
+      const contenedor = document.getElementById('contenedorPaginacionPreciosCat');
+      if (!tbody) return;
+
+      lista = lista || [];
+
+      if (lista.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="p-8 text-center text-slate-400">
+              <i class="fa-solid fa-tags text-3xl mb-2 text-slate-300 block"></i>
+              No se encontraron precios registrados con los filtros aplicados.
+            </td>
+          </tr>
+        `;
+        if (contenedor) contenedor.classList.add('hidden');
+        return;
+      }
+
+      const totalRegistros = lista.length;
+      const totalPaginas = Math.ceil(totalRegistros / ITEMS_POR_PAGINA_PRECIOS) || 1;
+      if (paginaActualPreciosCat > totalPaginas) paginaActualPreciosCat = totalPaginas;
+      if (paginaActualPreciosCat < 1) paginaActualPreciosCat = 1;
+
+      const inicio = (paginaActualPreciosCat - 1) * ITEMS_POR_PAGINA_PRECIOS;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_PRECIOS, totalRegistros);
+      const paginaItems = lista.slice(inicio, fin);
+
+      tbody.innerHTML = paginaItems.map(p => {
+        const esNueva = p.tipo === 'Original';
+        const badgeTipo = esNueva
+          ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <i class="fa-solid fa-circle text-[6px] mr-1 text-emerald-500"></i> Llanta nueva
+             </span>`
+          : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+              <i class="fa-solid fa-arrows-rotate text-[8px] mr-1 text-amber-500"></i> Reencauche
+             </span>`;
+
+        const disenoHtml = p.diseno && p.diseno.trim() && p.diseno !== 'TODOS'
+          ? `<span class="font-semibold text-slate-700">${p.diseno}</span>`
+          : `<span class="text-slate-400 italic font-mono text-[11px]">Todos</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="p-3 font-bold text-slate-900">${p.cliente}</td>
+            <td class="p-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                ${p.marca}
+              </span>
+            </td>
+            <td class="p-3">${disenoHtml}</td>
+            <td class="p-3 font-mono font-bold text-slate-700 text-xs">${p.dimension}</td>
+            <td class="p-3 text-center">${badgeTipo}</td>
+            <td class="p-3 text-right font-mono font-black text-slate-900 text-xs">
+              $ ${Number(p.precio).toLocaleString('es-CO')}
+            </td>
+            <td class="p-3 text-center font-mono text-slate-500 text-[11px]">${p.vigente_desde || '-'}</td>
+            <td class="p-3 text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button type="button" onclick="editarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Modificar precio">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Eliminar tarifa">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      actualizarBarraPaginacionGenerica('PreciosCat', totalRegistros, inicio, fin, paginaActualPreciosCat, totalPaginas, 'cambiarPaginaPrecios');
+    }
+
+    function editarPrecioClienteCat(id) {
+      const p = (preciosClienteCatCache || []).find(item => item.id === id);
+      if (!p) return;
+
+      idPrecioEnEdicion = id;
+
+      const selCli = document.getElementById('precio_cli');
+      if (selCli) {
+        selCli.value = p.cliente;
+        alCambiarClienteFormPrecios();
+      }
+
+      const selMarca = document.getElementById('precio_marca');
+      const customMarca = document.getElementById('precio_marca_custom');
+      if (selMarca) {
+        const existe = Array.from(selMarca.options).some(o => o.value === p.marca);
+        if (existe) {
+          selMarca.value = p.marca;
+          if (customMarca) customMarca.classList.add('hidden');
+        } else {
+          selMarca.value = '__OTRA__';
+          if (customMarca) {
+            customMarca.classList.remove('hidden');
+            customMarca.value = p.marca;
+          }
+        }
+        alCambiarMarcaFormPrecios();
+      }
+
+      const inpDiseno = document.getElementById('precio_diseno');
+      if (inpDiseno) inpDiseno.value = p.diseno || '';
+
+      const inpDim = document.getElementById('precio_dimension');
+      if (inpDim) inpDim.value = p.dimension || '';
+
+      const selTipo = document.getElementById('precio_tipo');
+      if (selTipo) selTipo.value = p.tipo;
+
+      const inpValor = document.getElementById('precio_valor');
+      if (inpValor) {
+        inpValor.value = p.precio;
+        alEscribirPrecioValor(p.precio);
+      }
+
+      const inpDesde = document.getElementById('precio_desde');
+      if (inpDesde) inpDesde.value = p.vigente_desde || '';
+
+      const badge = document.getElementById('badgeModoPrecio');
+      if (badge) {
+        badge.classList.remove('bg-blue-600');
+        badge.classList.add('bg-amber-500');
+      }
+      const tit = document.getElementById('tituloFormularioPrecio');
+      if (tit) tit.textContent = 'Modificar Tarifa de Precio';
+      const aviso = document.getElementById('avisoModoEdicionPrecio');
+      if (aviso) aviso.classList.remove('hidden');
+      const btnCancel = document.getElementById('btnCancelarEdicionPrecio');
+      if (btnCancel) btnCancel.classList.remove('hidden');
+      const btnTxt = document.getElementById('btnGuardarPrecioClienteTexto');
+      if (btnTxt) btnTxt.textContent = 'Actualizar Tarifa';
+
+      document.getElementById('cardFormularioPreciosCliente')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function cancelarEdicionPrecioCliente() {
+      idPrecioEnEdicion = null;
+      const f = document.getElementById('formPreciosClienteCat');
+      if (f) f.reset();
+
+      const customMarca = document.getElementById('precio_marca_custom');
+      if (customMarca) {
+        customMarca.classList.add('hidden');
+        customMarca.value = '';
+      }
+
+      const badge = document.getElementById('badgeModoPrecio');
+      if (badge) {
+        badge.classList.add('bg-blue-600');
+        badge.classList.remove('bg-amber-500');
+      }
+      const tit = document.getElementById('tituloFormularioPrecio');
+      if (tit) tit.textContent = 'Registrar Nuevo Precio de Llanta';
+      const aviso = document.getElementById('avisoModoEdicionPrecio');
+      if (aviso) aviso.classList.add('hidden');
+      const btnCancel = document.getElementById('btnCancelarEdicionPrecio');
+      if (btnCancel) btnCancel.classList.add('hidden');
+      const btnTxt = document.getElementById('btnGuardarPrecioClienteTexto');
+      if (btnTxt) btnTxt.textContent = 'Guardar Precio';
+
+      const preview = document.getElementById('previewPrecioCOP');
+      if (preview) preview.textContent = '$ 0 COP';
+
+      const desde = document.getElementById('precio_desde');
+      if (desde) desde.value = new Date().toISOString().slice(0, 10);
     }
 
     async function guardarPrecioClienteCat(ev) {
       ev.preventDefault();
-      const v = id => document.getElementById(id).value.trim();
-      const body = { cliente: v('precio_cli').toUpperCase(), marca: v('precio_marca').toUpperCase(), diseno: v('precio_diseno').toUpperCase(),
-                     dimension: v('precio_dimension').toUpperCase(), tipo: v('precio_tipo'), precio: parseFloat(v('precio_valor')), vigente_desde: v('precio_desde') };
-      const res = await fetch('/api/precios-cliente', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        mostrarToast('❌ ' + (d.detail || 'No se pudo guardar el precio'), true);
+      const v = id => (document.getElementById(id)?.value || '').trim();
+
+      const cli = v('precio_cli').toUpperCase();
+      let marca = v('precio_marca').toUpperCase();
+      if (marca === '__OTRA__') {
+        marca = v('precio_marca_custom').toUpperCase();
+      }
+
+      const diseno = v('precio_diseno').toUpperCase();
+      const dimension = v('precio_dimension').toUpperCase();
+      const tipo = v('precio_tipo');
+      const precio = parseFloat(v('precio_valor'));
+      const vigente_desde = v('precio_desde');
+
+      if (!cli) {
+        mostrarToast('⚠️ Selecciona un cliente', true);
         return;
       }
-      mostrarToast('✅ Precio guardado');
-      document.getElementById('precio_valor').value = '';
-      cargarPreciosClienteCat();
+      if (!marca) {
+        mostrarToast('⚠️ Selecciona o escribe una marca', true);
+        return;
+      }
+      if (!dimension) {
+        mostrarToast('⚠️ Especifica la dimensión de la llanta', true);
+        return;
+      }
+      if (!precio || precio <= 0) {
+        mostrarToast('⚠️ Ingresa un precio válido en COP', true);
+        return;
+      }
+      if (!vigente_desde) {
+        mostrarToast('⚠️ Selecciona la fecha de vigencia', true);
+        return;
+      }
+
+      const body = { cliente: cli, marca, diseno, dimension, tipo, precio, vigente_desde };
+
+      try {
+        const btnGuardar = document.getElementById('btnGuardarPrecioCliente');
+        if (btnGuardar) btnGuardar.disabled = true;
+
+        const res = await fetch('/api/precios-cliente', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          mostrarToast('❌ ' + (d.detail || 'No se pudo guardar el precio'), true);
+          return;
+        }
+
+        mostrarToast(idPrecioEnEdicion ? '✅ Tarifa actualizada exitosamente' : '✅ Precio guardado exitosamente');
+        cancelarEdicionPrecioCliente();
+        await cargarPreciosClienteCat();
+      } catch (e) {
+        mostrarToast('❌ Error de conexión al guardar precio', true);
+      } finally {
+        const btnGuardar = document.getElementById('btnGuardarPrecioCliente');
+        if (btnGuardar) btnGuardar.disabled = false;
+      }
     }
 
     async function eliminarPrecioClienteCat(id) {
-      if (!confirm('¿Eliminar este precio de la lista?')) return;
-      await fetch(`/api/precios-cliente/${id}`, { method: 'DELETE' });
-      cargarPreciosClienteCat();
+      if (!confirm('¿Eliminar esta tarifa de precio de la lista?')) return;
+      try {
+        const res = await fetch(`/api/precios-cliente/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          mostrarToast('Precio eliminado');
+          cargarPreciosClienteCat();
+        } else {
+          mostrarToast('No se pudo eliminar el precio', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión', true);
+      }
     }
 
-    // Stock de seguridad del MRP por medida y eje
+    // Funciones Excel Precios
+    function descargarPlantillaPreciosExcel() {
+      window.location.href = '/api/precios-cliente/plantilla-excel';
+    }
+
+    function exportarPreciosClienteExcel() {
+      window.location.href = '/api/precios-cliente/exportar-excel';
+    }
+
+    function abrirModalImportarPreciosExcel() {
+      archivoPreciosExcelSeleccionado = null;
+      const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
+      if (lbl) lbl.textContent = 'Formatos permitidos: .xlsx, .xls';
+      const fileInput = document.getElementById('filePreciosExcelInput');
+      if (fileInput) fileInput.value = '';
+
+      const btn = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+      if (btn) btn.disabled = true;
+
+      const modal = document.getElementById('modalImportarPreciosExcel');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      // Drag & Drop
+      const dropZone = document.getElementById('dropZonePreciosExcel');
+      if (dropZone && !dropZone._dndInit) {
+        dropZone._dndInit = true;
+        dropZone.addEventListener('click', () => {
+          document.getElementById('filePreciosExcelInput')?.click();
+        });
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.classList.add('border-emerald-500', 'bg-emerald-50/40');
+        });
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+        });
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            archivoPreciosExcelSeleccionado = e.dataTransfer.files[0];
+            const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
+            if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+            const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+            if (btnImportar) btnImportar.disabled = false;
+          }
+        });
+      }
+    }
+
+    function cerrarModalImportarPreciosExcel() {
+      const modal = document.getElementById('modalImportarPreciosExcel');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function alSeleccionarArchivoPreciosExcel(e) {
+      if (e.target.files && e.target.files[0]) {
+        archivoPreciosExcelSeleccionado = e.target.files[0];
+        const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
+        if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+        const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+        if (btnImportar) btnImportar.disabled = false;
+      }
+    }
+
+    async function ejecutarImportarPreciosExcel() {
+      if (!archivoPreciosExcelSeleccionado) {
+        alert('Por favor selecciona o arrastra un archivo de Excel (.xlsx o .xls)');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando...';
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('file', archivoPreciosExcelSeleccionado);
+
+        const res = await fetch('/api/precios-cliente/importar-excel', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert('❌ ' + (data.detail || 'Error al procesar el archivo Excel'));
+          return;
+        }
+
+        cerrarModalImportarPreciosExcel();
+        let msg = `✅ Importación completada con éxito:\n• ${data.importados} tarifas registradas o actualizadas.`;
+        if (data.errores && data.errores.length > 0) {
+          msg += `\n\n⚠️ ${data.errores.length} fila(s) omitida(s) por inconsistencias:\n` + data.errores.slice(0, 8).join('\n');
+          if (data.errores.length > 8) msg += `\n...y ${data.errores.length - 8} más.`;
+        }
+        alert(msg);
+        mostrarToast(`✅ ${data.importados} precios importados`);
+        cargarPreciosClienteCat();
+      } catch (err) {
+        alert('Error de conexión al subir el archivo');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    }
+
+    // ==========================================
+    // STOCK DE SEGURIDAD DEL MRP
+    // ==========================================
     async function cargarStockSeguridadCat() {
       const tbody = document.getElementById('tbodyStockSeguridad');
       if (!tbody) return;
+
+      // Poblar selectores de clientes y dimensiones
+      const selCli = document.getElementById('stockseg_cliente');
+      if (selCli) {
+        const valPrev = selCli.value;
+        const clis = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
+      }
+
+      const dlDims = document.getElementById('dl_stockseg_dimensiones');
+      if (dlDims) {
+        const dims = obtenerListaDimensionesDisponibles();
+        dlDims.innerHTML = dims.map(d => `<option value="${d}">`).join('');
+      }
+
       try {
         const res = await fetch('/api/stock-seguridad');
         const lista = res.ok ? await res.json() : [];
@@ -1021,7 +1781,7 @@
           const q = s => String(s).replace(/'/g, "\\'");
           return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2 font-mono">${r.dimension}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
             <td class="p-2 text-center font-bold">${r.cantidad}</td>
-            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="5" class="p-2 text-slate-400 italic">Sin reglas: se usa el stock de seguridad general de cada cliente</td></tr>';
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
@@ -1043,6 +1803,8 @@
         return;
       }
       mostrarToast('✅ Stock de seguridad guardado');
+      document.getElementById('stockseg_dimension').value = '';
+      document.getElementById('stockseg_cantidad').value = '';
       cargarStockSeguridadCat();
     }
 
@@ -1052,10 +1814,32 @@
       cargarStockSeguridadCat();
     }
 
-    // Máximo de reencauches por cliente y marca
+    // ==========================================
+    // MÁXIMO DE REENCAUCHES
+    // ==========================================
     async function cargarMaximosReencaucheCat() {
       const tbody = document.getElementById('tbodyMaximosReencauche');
       if (!tbody) return;
+
+      // Poblar selects de cliente y marca
+      const selCli = document.getElementById('maxreen_cliente');
+      if (selCli) {
+        const valPrev = selCli.value;
+        const clis = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
+      }
+
+      const selMarca = document.getElementById('maxreen_marca');
+      if (selMarca) {
+        const valPrev = selMarca.value;
+        const marcas = obtenerListaMarcasDisponibles();
+        selMarca.innerHTML = '<option value="TODAS">TODAS LAS MARCAS</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (valPrev) selMarca.value = valPrev;
+      }
+
       try {
         const res = await fetch('/api/configuracion-reencauche');
         const lista = res.ok ? await res.json() : [];
@@ -1063,7 +1847,7 @@
           const cli = String(r.cliente).replace(/'/g, "\\'"), mar = String(r.marca).replace(/'/g, "\\'");
           return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2">${r.marca}</td>
             <td class="p-2 text-center font-mono font-bold">${r.max_reencauches}</td>
-            <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold">Eliminar</button></td></tr>`;
+            <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin reglas: no hay tope de reencauches</td></tr>';
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="4" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
@@ -1084,6 +1868,7 @@
         return;
       }
       mostrarToast('✅ Regla de reencauches guardada');
+      document.getElementById('maxreen_valor').value = '';
       cargarMaximosReencaucheCat();
     }
 
@@ -1170,7 +1955,7 @@
           </td>
           <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
           <td class="p-2.5 text-center">
-            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors" title="Desvincular marca de este cliente">
+            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Desvincular marca de este cliente">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -1186,28 +1971,58 @@
     }
 
     async function abrirModalAsociarMarcaCliente(clientePref = '') {
-      const cliInput = document.getElementById('asoc_marca_cliente');
-      const marcaInput = document.getElementById('asoc_marca_nombre');
-      if (cliInput) {
-        const selFiltro = document.getElementById('filtroCatMarcaCliente');
-        cliInput.value = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
-      }
-      if (marcaInput) marcaInput.value = '';
+      const selCli = document.getElementById('asoc_marca_cliente');
+      const selMarca = document.getElementById('asoc_marca_nombre_select');
+      const customMarca = document.getElementById('asoc_marca_nombre_custom');
+      const hiddenMarca = document.getElementById('asoc_marca_nombre');
 
-      // Cargar todas las marcas del catálogo en datalist
-      try {
-        const res = await fetch('/api/valores-campo?campo=marca&todas=true');
-        if (res.ok) {
-          const marcas = await res.json();
-          const dl = document.getElementById('dl_marcas_todas');
-          if (dl) dl.innerHTML = marcas.map(m => `<option value="${m}">`).join('');
-        }
-      } catch (e) {}
+      // Poblar selector de clientes
+      if (selCli) {
+        const selFiltro = document.getElementById('filtroCatMarcaCliente');
+        const pref = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
+        const clis = obtenerListaClientesDisponibles();
+        selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
+          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (pref && clis.includes(pref)) selCli.value = pref;
+      }
+
+      // Poblar selector de marcas
+      if (selMarca) {
+        const marcas = obtenerListaMarcasDisponibles();
+        selMarca.innerHTML = '<option value="">-- Seleccionar Marca del Catálogo --</option>' +
+          marcas.map(m => `<option value="${m}">${m}</option>`).join('') +
+          '<option value="__OTRA__">+ Escribir otra marca...</option>';
+        selMarca.value = '';
+      }
+
+      if (customMarca) {
+        customMarca.value = '';
+        customMarca.classList.add('hidden');
+      }
+      if (hiddenMarca) hiddenMarca.value = '';
 
       const modal = document.getElementById('modalAsociarMarcaCliente');
       if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+      }
+    }
+
+    function alCambiarMarcaAsocModal() {
+      const sel = document.getElementById('asoc_marca_nombre_select');
+      const custom = document.getElementById('asoc_marca_nombre_custom');
+      if (!sel) return;
+
+      if (sel.value === '__OTRA__') {
+        if (custom) {
+          custom.classList.remove('hidden');
+          custom.focus();
+        }
+      } else {
+        if (custom) {
+          custom.classList.add('hidden');
+          custom.value = '';
+        }
       }
     }
 
@@ -1221,9 +2036,17 @@
 
     async function guardarAsociacionMarcaCliente() {
       const cli = (document.getElementById('asoc_marca_cliente')?.value || '').trim().toUpperCase();
-      const marca = (document.getElementById('asoc_marca_nombre')?.value || '').trim();
-      if (!cli || !marca) {
-        alert('Por favor ingresa tanto el Cliente como la Marca');
+      const selMarca = document.getElementById('asoc_marca_nombre_select')?.value || '';
+      const customMarca = (document.getElementById('asoc_marca_nombre_custom')?.value || '').trim();
+
+      const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
+
+      if (!cli) {
+        alert('Por favor selecciona un Cliente');
+        return;
+      }
+      if (!marca) {
+        alert('Por favor selecciona o escribe la Marca a vincular');
         return;
       }
 
@@ -1237,9 +2060,9 @@
           cerrarModalAsociarMarcaCliente();
           mostrarToast(`✅ Marca '${marca}' asociada a '${cli}'.`);
           await cargarMarcasClienteCat();
-          // Si el patio tiene seleccionado a este cliente, refrescar marcas de patio
+          // Actualizar marcas de patio si corresponde
           const cliPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
-          if (cliPatio === cli) {
+          if (cliPatio === cli && typeof actualizarMarcasCliente === 'function') {
             actualizarMarcasCliente(cli);
           }
         } else {

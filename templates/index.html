@@ -3521,16 +3521,43 @@
 
       <!-- Subtab 4: Límites de Retiro por Cliente, Subcliente y Eje -->
       <div id="cat-seccion-clientes" class="hidden space-y-3">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span class="text-xs font-bold text-slate-800">Políticas Técnicas de Retiro por Cliente, Subcliente y Eje (mm)</span>
             <p class="text-[11px] text-slate-500">Configura umbrales mínimos de retiro para llantas según flota, sede operativa y posición de eje</p>
           </div>
-          <button type="button" onclick="abrirModalLimiteCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+          <button type="button" onclick="abrirModalLimiteCliente()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1 self-start sm:self-auto cursor-pointer transition-all">
             <i class="fa-solid fa-gear"></i>
             <span>Nuevo Límite de Retiro</span>
           </button>
         </div>
+
+        <!-- Barra de Búsqueda y Filtros de Límites de Retiro -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2.5 shadow-2xs">
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="filtroBuscadorLimitesCat" oninput="filtrarLimitesCat()" placeholder="Buscar por cliente, sede u observaciones..." class="w-full pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+          </div>
+          <div class="w-full sm:w-auto">
+            <select id="filtroClienteLimitesCat" onchange="filtrarLimitesCat()" class="w-full sm:w-48 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los clientes</option>
+            </select>
+          </div>
+          <div class="w-full sm:w-auto">
+            <select id="filtroEjeLimitesCat" onchange="filtrarLimitesCat()" class="w-full sm:w-40 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los ejes</option>
+              <option value="DIRECCIONAL">Direccional</option>
+              <option value="TRACCIÓN">Tracción</option>
+              <option value="LIBRE">Libre</option>
+              <option value="REPUESTO">Repuesto</option>
+            </select>
+          </div>
+          <button type="button" id="btnLimpiarFiltrosLimitesCat" onclick="limpiarFiltrosLimitesCat()" class="hidden px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all items-center justify-center space-x-1.5 cursor-pointer whitespace-nowrap active:scale-95" title="Restablecer filtros">
+            <i class="fa-solid fa-filter-circle-xmark text-slate-500"></i>
+            <span>Limpiar</span>
+          </button>
+        </div>
+
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
           <table class="w-full text-xs text-left">
             <thead class="bg-slate-900 text-white font-bold">
@@ -3543,7 +3570,7 @@
                 <th class="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100"></tbody>
+            <tbody id="tbodyClientesLimCat" class="divide-y divide-slate-100 bg-white"></tbody>
           </table>
         </div>
 
@@ -3562,35 +3589,248 @@
         </div>
       </div>
 
-      <!-- Subtab: Lista de precios por cliente -->
-      <div id="cat-seccion-precios_cliente" class="hidden space-y-3">
-        <div class="pb-2 border-b border-slate-100">
-          <span class="text-xs font-bold text-slate-800">Lista de precios por cliente</span>
-          <p class="text-[11px] text-slate-500">Precio de la llanta nueva o del reencauche para cada cliente, con fecha de vigencia. Se usa cuando la inspección no trae precio; si no hay precio del cliente, la llanta queda fuera de los cálculos en pesos (CPK, pérdidas).</p>
-        </div>
-        <form onsubmit="guardarPrecioClienteCat(event)" class="grid grid-cols-2 md:grid-cols-7 gap-2 items-end">
-          <input type="text" id="precio_cli" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <input type="text" id="precio_marca" required placeholder="Marca" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <input type="text" id="precio_diseno" placeholder="Diseño (opcional)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <input type="text" id="precio_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-          <select id="precio_tipo" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
-            <option value="Original">Llanta nueva</option>
-            <option value="Reencauche">Reencauche</option>
-          </select>
-          <input type="number" id="precio_valor" required min="1" step="1000" placeholder="Precio COP" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-          <div class="flex gap-2">
-            <input type="date" id="precio_desde" required class="flex-1 px-2 py-1.5 bg-white border border-slate-300 rounded-xl text-xs">
-            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+      <!-- Subtab: Lista y Tarifario de precios por cliente -->
+      <div id="cat-seccion-precios_cliente" class="hidden space-y-4">
+        <!-- Encabezado con Botones de Acción (Excel y Nuevo) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <span class="text-sm font-black text-slate-900 flex items-center space-x-2">
+              <i class="fa-solid fa-tags text-blue-600"></i>
+              <span>Tarifario de Precios por Cliente</span>
+            </span>
+            <p class="text-[11px] text-slate-500">Configura precios vigentes de llanta nueva y reencauche por cliente. Se utiliza para el Costo por Kilómetro (CPK), análisis de pérdidas y balance de inversión.</p>
           </div>
-        </form>
-        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="abrirModalImportarPreciosExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all cursor-pointer active:scale-95">
+              <i class="fa-solid fa-file-excel text-emerald-200"></i>
+              <span>Subir Precios (Excel)</span>
+            </button>
+            <button type="button" onclick="descargarPlantillaPreciosExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-download text-slate-500"></i>
+              <span>Plantilla</span>
+            </button>
+            <button type="button" onclick="exportarPreciosClienteExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer" title="Exportar precios a Excel">
+              <i class="fa-solid fa-file-export text-slate-500"></i>
+              <span>Exportar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs Rápidos de Tarifario -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-list-check"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-blue-700 font-bold uppercase tracking-wider block">Precios Registrados</span>
+              <span id="kpiPreciosTotal" class="text-sm font-black text-blue-950">0 tarifas</span>
+            </div>
+          </div>
+          <div class="bg-indigo-50/80 border border-indigo-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-building-user"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-indigo-700 font-bold uppercase tracking-wider block">Clientes Cubiertos</span>
+              <span id="kpiPreciosClientes" class="text-sm font-black text-indigo-950">0 clientes</span>
+            </div>
+          </div>
+          <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-circle-dollar-to-slot"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Promedio Llanta Nueva</span>
+              <span id="kpiPreciosPromNueva" class="text-xs font-black text-emerald-950">$ 0</span>
+            </div>
+          </div>
+          <div class="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3 flex items-center space-x-3">
+            <span class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </span>
+            <div>
+              <span class="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Promedio Reencauche</span>
+              <span id="kpiPreciosPromReen" class="text-xs font-black text-amber-950">$ 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta: Registrar o Modificar Precio -->
+        <div id="cardFormularioPreciosCliente" class="bg-slate-50/90 border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
+            <div class="flex items-center space-x-2">
+              <span id="badgeModoPrecio" class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+              <span id="tituloFormularioPrecio" class="text-xs font-black text-slate-800 uppercase tracking-wider">Registrar Nuevo Precio de Llanta</span>
+            </div>
+            <span id="avisoModoEdicionPrecio" class="hidden text-[11px] font-bold text-amber-700 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-lg flex items-center space-x-1">
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
+              <span>Modo edición activo</span>
+            </span>
+          </div>
+
+          <form id="formPreciosClienteCat" onsubmit="guardarPrecioClienteCat(event)" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              <!-- Cliente (Desplegable) -->
+              <div class="lg:col-span-2">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-building text-slate-400"></i>
+                  <span>Cliente / Flota *</span>
+                </label>
+                <select id="precio_cli" required onchange="alCambiarClienteFormPrecios()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer uppercase">
+                  <option value="">-- Seleccionar Cliente --</option>
+                </select>
+              </div>
+
+              <!-- Marca (Desplegable) -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-tag text-slate-400"></i>
+                  <span>Marca *</span>
+                </label>
+                <select id="precio_marca" required onchange="alCambiarMarcaFormPrecios()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer uppercase">
+                  <option value="">-- Marca --</option>
+                </select>
+                <input type="text" id="precio_marca_custom" placeholder="Escribe la marca..." class="hidden mt-1.5 w-full px-3 py-1.5 bg-white border border-blue-400 rounded-xl text-xs font-bold uppercase">
+              </div>
+
+              <!-- Diseño (Datalist / Desplegable) -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-fingerprint text-slate-400"></i>
+                  <span>Diseño (Opcional)</span>
+                </label>
+                <input type="text" id="precio_diseno" list="dl_precio_disenos" placeholder="TODOS o ej. X MULTI Z" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                <datalist id="dl_precio_disenos"></datalist>
+              </div>
+
+              <!-- Dimensión (Datalist / Desplegable) -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-ruler-combined text-slate-400"></i>
+                  <span>Dimensión *</span>
+                </label>
+                <input type="text" id="precio_dimension" required list="dl_precio_dimensiones" placeholder="ej. 295/80R22.5" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono">
+                <datalist id="dl_precio_dimensiones"></datalist>
+              </div>
+
+              <!-- Tipo de Llanta -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-arrows-spin text-slate-400"></i>
+                  <span>Tipo *</span>
+                </label>
+                <select id="precio_tipo" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+                  <option value="Original">🔷 Llanta nueva</option>
+                  <option value="Reencauche">🔶 Reencauche</option>
+                </select>
+              </div>
+
+              <!-- Precio COP -->
+              <div class="lg:col-span-1">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                  <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
+                  <span>Precio COP *</span>
+                </label>
+                <input type="number" id="precio_valor" required min="1" step="1000" placeholder="ej. 1850000" oninput="alEscribirPrecioValor(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-emerald-800 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
+                <span id="previewPrecioCOP" class="text-[10px] font-bold text-emerald-600 truncate block mt-0.5">$ 0 COP</span>
+              </div>
+            </div>
+
+            <!-- Fila inferior: Fecha de Vigencia y Botones -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-slate-200/60">
+              <div class="flex items-center space-x-2">
+                <label class="text-[11px] font-bold text-slate-600 flex items-center space-x-1 whitespace-nowrap">
+                  <i class="fa-solid fa-calendar-day text-slate-400"></i>
+                  <span>Vigente desde:</span>
+                </label>
+                <input type="date" id="precio_desde" required class="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500">
+                <span class="text-[10px] text-slate-400 hidden md:inline">Aplica a inspecciones posteriores a esta fecha</span>
+              </div>
+              <div class="flex items-center justify-end space-x-2">
+                <button type="button" id="btnCancelarEdicionPrecio" onclick="cancelarEdicionPrecioCliente()" class="hidden px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer">
+                  <span>Cancelar</span>
+                </button>
+                <button type="submit" id="btnGuardarPrecioCliente" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95">
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  <span id="btnGuardarPrecioClienteTexto">Guardar Precio</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtros de la Tabla de Precios -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2.5 shadow-2xs">
+          <!-- Buscador libre -->
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="filtroBuscadorPreciosCat" oninput="filtrarPreciosClienteCat()" placeholder="Buscar por cliente, marca, diseño o dimensión..." class="w-full pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+          </div>
+
+          <!-- Filtro Cliente -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroClientePreciosCat" onchange="filtrarPreciosClienteCat()" class="w-full sm:w-48 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los clientes</option>
+            </select>
+          </div>
+
+          <!-- Filtro Marca -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroMarcaPreciosCat" onchange="filtrarPreciosClienteCat()" class="w-full sm:w-40 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODAS">Todas las marcas</option>
+            </select>
+          </div>
+
+          <!-- Filtro Tipo -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroTipoPreciosCat" onchange="filtrarPreciosClienteCat()" class="w-full sm:w-36 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+              <option value="TODOS">Todos los tipos</option>
+              <option value="Original">Llanta nueva</option>
+              <option value="Reencauche">Reencauche</option>
+            </select>
+          </div>
+
+          <!-- Botón Limpiar Filtros -->
+          <button type="button" id="btnLimpiarFiltrosPreciosCat" onclick="limpiarFiltrosPreciosCat()" class="hidden px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all items-center justify-center space-x-1.5 cursor-pointer whitespace-nowrap active:scale-95" title="Restablecer filtros">
+            <i class="fa-solid fa-filter-circle-xmark text-slate-500"></i>
+            <span>Limpiar</span>
+          </button>
+        </div>
+
+        <!-- Tabla de Tarifario de Precios -->
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-2xs">
           <table class="w-full text-xs text-left">
-            <thead class="bg-slate-900 text-white font-bold"><tr>
-              <th class="p-2.5">Cliente</th><th class="p-2.5">Marca</th><th class="p-2.5">Diseño</th><th class="p-2.5">Dimensión</th>
-              <th class="p-2.5">Tipo</th><th class="p-2.5 text-right">Precio</th><th class="p-2.5">Vigente desde</th><th class="p-2.5 text-center">Acciones</th>
-            </tr></thead>
-            <tbody id="tbodyPreciosCliente" class="divide-y divide-slate-100"></tbody>
+            <thead class="bg-slate-900 text-white font-bold">
+              <tr>
+                <th class="p-3">Cliente / Flota</th>
+                <th class="p-3">Marca</th>
+                <th class="p-3">Diseño</th>
+                <th class="p-3">Dimensión</th>
+                <th class="p-3 text-center">Tipo</th>
+                <th class="p-3 text-right">Precio Unitario (COP)</th>
+                <th class="p-3 text-center">Vigente Desde</th>
+                <th class="p-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPreciosCliente" class="divide-y divide-slate-100 bg-white">
+              <tr><td colspan="8" class="p-4 text-center text-slate-400 italic">Cargando tarifario de precios...</td></tr>
+            </tbody>
           </table>
+        </div>
+
+        <!-- Barra de Paginación Precios por Cliente (20 resultados por página) -->
+        <div id="contenedorPaginacionPreciosCat" class="mt-2 flex flex-col sm:flex-row items-center justify-between gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-2xs">
+          <div class="text-xs text-slate-500 font-medium flex items-center space-x-1.5">
+            <span>Mostrando</span>
+            <span id="pagInicioPreciosCat" class="font-bold text-slate-800">0</span>
+            <span>-</span>
+            <span id="pagFinPreciosCat" class="font-bold text-slate-800">0</span>
+            <span>de</span>
+            <span id="pagTotalPreciosCat" class="font-bold text-blue-600">0</span>
+            <span>precios (20 por página)</span>
+          </div>
+          <div class="flex items-center space-x-1" id="controlesPaginacionPreciosCat"></div>
         </div>
       </div>
 
@@ -3653,14 +3893,31 @@
             <span class="text-xs font-bold text-slate-800">Stock de seguridad del MRP por medida y eje</span>
             <p class="text-[11px] text-slate-500">Reserva mínima por dimensión y tipo de eje. La de dirección solo se cubre con llantas nuevas. Si una medida no tiene reglas, se usa el stock general del cliente.</p>
           </div>
-          <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2">
-            <input type="text" id="stockseg_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <input type="text" id="stockseg_dimension" required placeholder="Dimensión" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <select id="stockseg_eje" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold">
-              <option value="DIRECCIONAL">Direccional</option><option value="TRACCION">Tracción</option><option value="LIBRE">Libre / remolque</option>
-            </select>
-            <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2.5">
+            <div class="flex-1 min-w-[170px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
+              <select id="stockseg_cliente" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="">-- Seleccionar Cliente --</option>
+              </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Dimensión *</label>
+              <input type="text" id="stockseg_dimension" required list="dl_stockseg_dimensiones" placeholder="ej. 295/80R22.5" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold uppercase focus:outline-none focus:border-blue-500 font-mono">
+              <datalist id="dl_stockseg_dimensiones"></datalist>
+            </div>
+            <div class="w-36">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Eje / Posición *</label>
+              <select id="stockseg_eje" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="DIRECCIONAL">Direccional</option>
+                <option value="TRACCION">Tracción</option>
+                <option value="LIBRE">Libre / remolque</option>
+              </select>
+            </div>
+            <div class="w-24">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cant. Mín. *</label>
+              <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">Guardar Regla</button>
           </form>
           <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Dimensión</th><th class="p-2">Eje</th><th class="p-2 text-center">Cantidad</th><th class="p-2 text-center">Acciones</th></tr></thead>
@@ -3674,11 +3931,24 @@
             <span class="text-xs font-bold text-slate-800">Máximo de reencauches por cliente y marca</span>
             <p class="text-[11px] text-slate-500">Una llanta que ya alcanzó el máximo no puede despacharse otra vez a la planta. "TODAS" aplica a las marcas sin regla propia; sin regla no hay tope.</p>
           </div>
-          <form onsubmit="guardarMaximoReencaucheCat(event)" class="flex flex-wrap items-end gap-2">
-            <input type="text" id="maxreen_cliente" required placeholder="Cliente" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <input type="text" id="maxreen_marca" placeholder="Marca (TODAS)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold uppercase">
-            <input type="number" id="maxreen_valor" required min="0" max="10" step="1" placeholder="Máx." class="w-20 px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold">
-            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl">Guardar</button>
+          <form onsubmit="guardarMaximoReencaucheCat(event)" class="flex flex-wrap items-end gap-2.5">
+            <div class="flex-1 min-w-[170px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
+              <select id="maxreen_cliente" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="">-- Seleccionar Cliente --</option>
+              </select>
+            </div>
+            <div class="flex-1 min-w-[160px]">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Marca *</label>
+              <select id="maxreen_marca" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
+                <option value="TODAS">TODAS LAS MARCAS</option>
+              </select>
+            </div>
+            <div class="w-24">
+              <label class="text-[10px] font-bold text-slate-600 block mb-1">Tope Máx. *</label>
+              <input type="number" id="maxreen_valor" required min="0" max="10" step="1" placeholder="Máx." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">Guardar Tope</button>
           </form>
           <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Marca</th><th class="p-2 text-center">Máx. reencauches</th><th class="p-2 text-center">Acciones</th></tr></thead>
@@ -4777,9 +5047,20 @@
             <option value="Reencauche">Banda de Reencauche</option>
           </select>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Marca *</label><input type="text" id="mod_marca" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label><input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Dimensión</label><input type="text" id="mod_dimension" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase"></div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Marca *</label>
+          <input type="text" id="mod_marca" list="dl_marcas_modelo_catalogo" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+          <datalist id="dl_marcas_modelo_catalogo"></datalist>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label>
+          <input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Dimensión</label>
+          <input type="text" id="mod_dimension" list="dl_dimensiones_modelo_catalogo" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+          <datalist id="dl_dimensiones_modelo_catalogo"></datalist>
+        </div>
         <div><label class="font-bold text-slate-600 block mb-1">Profundidad Inicial (mm) *</label><input type="number" step="0.1" id="mod_prof" placeholder="16.5" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Aplicación / Notas</label><input type="text" id="mod_desc" placeholder="Toda Posición / Direccional" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
         <div class="pt-2 flex justify-end space-x-2">
@@ -4956,12 +5237,18 @@
       <div class="space-y-2.5 text-xs">
         <div>
           <label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota *</label>
-          <input type="text" id="lim_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+          <select id="lim_cliente" onchange="alCambiarClienteModalLimite()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+            <option value="">-- Seleccionar Cliente --</option>
+          </select>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-600 block mb-1">Sede / Subcliente</label>
-            <input type="text" id="lim_subcliente" list="dl_subclientes" placeholder="TODOS o Sede Norte" value="TODOS" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+            <select id="lim_subcliente" onchange="alCambiarSubclienteModalLimite()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+              <option value="TODOS">TODOS (Toda la flota)</option>
+              <option value="__OTRA__">+ Escribir otra sede...</option>
+            </select>
+            <input type="text" id="lim_subcliente_custom" placeholder="Nombre de la nueva sede" class="hidden mt-1.5 w-full p-1.5 bg-white border border-blue-400 rounded-xl font-bold uppercase text-xs">
           </div>
           <div>
             <label class="font-bold text-slate-600 block mb-1">Eje / Posición *</label>
@@ -5009,16 +5296,74 @@
       <div class="space-y-3 text-xs">
         <div>
           <label class="font-bold text-slate-600 block mb-1">Cliente / Empresa *</label>
-          <input type="text" id="asoc_marca_cliente" list="dl_clientes" placeholder="ej. TransCarga" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase">
+          <select id="asoc_marca_cliente" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+            <option value="">-- Seleccionar Cliente --</option>
+          </select>
         </div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Marca a Vincular *</label>
-          <input type="text" id="asoc_marca_nombre" list="dl_marcas_todas" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-bold">
-          <datalist id="dl_marcas_todas"></datalist>
+          <select id="asoc_marca_nombre_select" onchange="alCambiarMarcaAsocModal()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
+            <option value="">-- Seleccionar Marca del Catálogo --</option>
+            <option value="__OTRA__">+ Escribir otra marca...</option>
+          </select>
+          <input type="text" id="asoc_marca_nombre_custom" placeholder="Nombre de la marca a vincular" class="hidden mt-1.5 w-full p-1.5 bg-white border border-blue-400 rounded-xl font-bold uppercase text-xs">
+          <input type="hidden" id="asoc_marca_nombre">
         </div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalAsociarMarcaCliente()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarAsociacionMarcaCliente()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-500/20">Asociar Marca</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR PRECIOS POR CLIENTE DESDE EXCEL -->
+  <div id="modalImportarPreciosExcel" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-black text-slate-900 flex items-center space-x-2">
+          <i class="fa-solid fa-file-excel text-emerald-600"></i>
+          <span>Importar Precios desde Excel</span>
+        </h3>
+        <button type="button" onclick="cerrarModalImportarPreciosExcel()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs text-slate-500">Sube un archivo Excel (.xlsx o .xls) con las tarifas de llantas nuevas y reencauches por cliente:</p>
+        
+        <div id="dropZonePreciosExcel" class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50">
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-emerald-600 mb-2"></i>
+          <span class="block text-xs font-bold text-slate-700">Arrastra tu archivo aquí o haz clic para examinar</span>
+          <span id="lblArchivoPreciosSeleccionado" class="block text-[11px] text-slate-400 mt-1">Formatos permitidos: .xlsx, .xls</span>
+          <input type="file" id="filePreciosExcelInput" accept=".xlsx,.xls" class="hidden" onchange="alSeleccionarArchivoPreciosExcel(event)">
+        </div>
+
+        <div class="p-3 bg-blue-50/70 border border-blue-200/70 rounded-2xl text-[11px] text-slate-700 space-y-1">
+          <span class="font-bold text-blue-900 block flex items-center space-x-1">
+            <i class="fa-solid fa-circle-info text-blue-600"></i>
+            <span>Columnas esperadas en el archivo:</span>
+          </span>
+          <div class="text-[10px] text-slate-600 pl-4 list-disc space-y-0.5">
+            <div>• <strong class="text-slate-800">Cliente</strong> (Nombre de la flota registrada)</div>
+            <div>• <strong class="text-slate-800">Marca</strong> (ej. MICHELIN, GOODYEAR, BANDAG)</div>
+            <div>• <strong class="text-slate-800">Diseño</strong> (Opcional, ej. X MULTI Z o vacío para todos)</div>
+            <div>• <strong class="text-slate-800">Dimensión</strong> (ej. 295/80R22.5 o 11R22.5)</div>
+            <div>• <strong class="text-slate-800">Tipo</strong> (Llanta nueva / Original o Reencauche)</div>
+            <div>• <strong class="text-slate-800">Precio</strong> (Valor en pesos COP, sin puntos ni comas)</div>
+            <div>• <strong class="text-slate-800">Vigente Desde</strong> (Fecha en formato AAAA-MM-DD)</div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" onclick="descargarPlantillaPreciosExcel()" class="text-xs text-blue-600 hover:underline font-bold flex items-center space-x-1 cursor-pointer">
+            <i class="fa-solid fa-download"></i>
+            <span>Descargar plantilla guía</span>
+          </button>
+          <button type="button" id="btnSubirPreciosExcel" onclick="ejecutarImportarPreciosExcel()" disabled class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow text-xs cursor-pointer transition-all active:scale-95">
+            Subir e Importar
+          </button>
         </div>
       </div>
     </div>

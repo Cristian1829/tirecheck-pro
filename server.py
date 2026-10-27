@@ -1769,6 +1769,125 @@ def api_eliminar_precio_cliente(precio_id: int, usuario_actual: dict = Depends(r
     return {"status": "ok"}
 
 
+@app.get("/api/precios-cliente/plantilla-excel")
+def api_descargar_plantilla_precios_cliente(usuario_actual: dict = Depends(obtener_usuario_actual)):
+    columnas = ["Cliente", "Marca", "Diseño", "Dimensión", "Tipo", "Precio", "Vigente Desde"]
+    ejemplos = [
+        {
+            "Cliente": "TRANSCARGA ANDINA S.A.S.",
+            "Marca": "MICHELIN",
+            "Diseño": "X MULTI Z",
+            "Dimensión": "295/80R22.5",
+            "Tipo": "Llanta nueva",
+            "Precio": 1850000,
+            "Vigente Desde": "2026-01-01"
+        },
+        {
+            "Cliente": "TRANSCARGA ANDINA S.A.S.",
+            "Marca": "MICHELIN",
+            "Diseño": "X MULTI D",
+            "Dimensión": "295/80R22.5",
+            "Tipo": "Llanta nueva",
+            "Precio": 1920000,
+            "Vigente Desde": "2026-01-01"
+        },
+        {
+            "Cliente": "TRANSCARGA ANDINA S.A.S.",
+            "Marca": "BANDAG",
+            "Diseño": "BDR-HT",
+            "Dimensión": "295/80R22.5",
+            "Tipo": "Reencauche",
+            "Precio": 720000,
+            "Vigente Desde": "2026-01-01"
+        }
+    ]
+    df = pd.DataFrame(ejemplos, columns=columnas)
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Precios_Cliente", index=False)
+        ws = writer.sheets["Precios_Cliente"]
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = col[0].column_letter
+            ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+    data = buf.getvalue()
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=Plantilla_Precios_Cliente.xlsx"}
+    )
+
+
+@app.get("/api/precios-cliente/exportar-excel")
+def api_exportar_precios_cliente_excel(cliente: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    lista = database.listar_precios_cliente(cliente)
+    filas = []
+    for p in lista:
+        filas.append({
+            "Cliente": p["cliente"],
+            "Marca": p["marca"],
+            "Diseño": p["diseno"] or "TODOS",
+            "Dimensión": p["dimension"],
+            "Tipo": "Llanta nueva" if p["tipo"] == "Original" else "Reencauche",
+            "Precio COP": p["precio"],
+            "Vigente Desde": p["vigente_desde"]
+        })
+    df = pd.DataFrame(filas, columns=["Cliente", "Marca", "Diseño", "Dimensión", "Tipo", "Precio COP", "Vigente Desde"])
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Precios_Por_Cliente", index=False)
+        ws = writer.sheets["Precios_Por_Cliente"]
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = col[0].column_letter
+            ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+    f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
+    filename = f"Precios_Por_Cliente_{f_str}.xlsx"
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.post("/api/precios-cliente/importar-excel")
+async def api_importar_precios_cliente_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(requerir_admin_o_jefatura)):
+    filename = file.filename or ""
+    if not filename.lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
+
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    clientes_autorizados = None
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        clientes_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+
+    try:
+        res = database.importar_precios_cliente_excel(tmp_path, clientes_autorizados=clientes_autorizados)
+        return {
+            "status": "ok",
+            "registros_guardados": res["registros_guardados"],
+            "total_filas": res["total_filas"],
+            "errores": res["errores"],
+            "total_errores": res["total_errores"],
+            "message": f"Se procesaron {res['registros_guardados']} precios con éxito ({res['total_filas']} filas analizadas)."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al importar precios desde Excel: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+
+
+
 class StockSeguridadItem(BaseModel):
     cliente: str
     dimension: str

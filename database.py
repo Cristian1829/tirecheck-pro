@@ -4011,17 +4011,22 @@ def vida_llanta(vida='', num_reencauches=None, ciclo=None) -> str:
     m = re.search(r'R\s*(\d+)', v) or re.search(r'REENCAUCHE\s*(\d+)', v)
     if m:
         n = int(m.group(1))
-    elif v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') or 'ORIG' in v:
+    elif v in ('', 'ORIGINAL', 'ORIG', 'NUEVA', 'NUEVO') or 'ORIG' in v or 'NUEV' in v:
         n = 0 if not num_reencauches else to_int(num_reencauches)
     else:  # 'REENCAUCHE' sin número
         n = max(to_int(num_reencauches), to_int(ciclo, 1) - 1, 1)
-    if v in ('', 'ORIGINAL', 'ORIG', 'NUEVA') and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
+    if (v in ('', 'ORIGINAL', 'ORIG', 'NUEVA', 'NUEVO') or 'ORIG' in v or 'NUEV' in v) and ciclo and to_int(ciclo, 1) > 1 and not num_reencauches:
         n = to_int(ciclo, 1) - 1
     return 'Original' if n <= 0 else f'R{n}'
 
 
 def _tipo_precio(vida) -> str:
     """La lista distingue llanta nueva ('Original') de reencauche ('Reencauche', aplica a R1, R2…)."""
+    v = str(vida or '').strip().upper()
+    if 'NUEV' in v or 'ORIG' in v:
+        return 'Original'
+    if 'REEN' in v or 'RECAL' in v:
+        return 'Reencauche'
     return 'Original' if vida_llanta(vida) == 'Original' and str(vida or '').strip().upper() != 'REENCAUCHE' else 'Reencauche'
 
 
@@ -4056,6 +4061,96 @@ def eliminar_precio_cliente(precio_id) -> bool:
         n = conn.execute("DELETE FROM precios_llanta_cliente WHERE id = ?", (to_int(precio_id),)).rowcount
         conn.commit()
     return n > 0
+
+
+def importar_precios_cliente_excel(file_path: str, clientes_autorizados=None) -> dict:
+    df = pd.read_excel(file_path, sheet_name=0)
+    cols_norm_map = {normalizar_texto(c): c for c in df.columns}
+
+    alias_map = {
+        'cliente': ['cliente', 'empresa', 'flota', 'cuenta', 'nombre cliente'],
+        'marca': ['marca', 'fabricante', 'brand'],
+        'diseno': ['diseno', 'diseño', 'modelo', 'dibujo', 'banda'],
+        'dimension': ['dimension', 'dimensión', 'medida', 'tamano', 'tamaño', 'dim'],
+        'tipo': ['tipo', 'tipo llanta', 'tipo_llanta', 'condicion', 'condición', 'vida'],
+        'precio': ['precio', 'precio cop', 'precio_cop', 'valor', 'costo', 'tarifa'],
+        'vigente_desde': ['vigente desde', 'vigente_desde', 'fecha vigencia', 'vigencia', 'fecha', 'desde', 'fecha_vigencia']
+    }
+
+    col_encontradas = {}
+    for canonico, lista in alias_map.items():
+        for item in lista:
+            norm = normalizar_texto(item)
+            if norm in cols_norm_map:
+                col_encontradas[canonico] = cols_norm_map[norm]
+                break
+
+    if 'cliente' not in col_encontradas or 'marca' not in col_encontradas or 'dimension' not in col_encontradas or 'precio' not in col_encontradas:
+        raise ValueError("El archivo Excel debe contener al menos las columnas: Cliente, Marca, Dimensión y Precio.")
+
+    registros_guardados = 0
+    errores = []
+    hoy = datetime.now(BOGOTA_TZ).strftime("%Y-%m-%d")
+
+    for idx, row in df.iterrows():
+        fila_num = idx + 2
+        try:
+            cli_raw = row[col_encontradas['cliente']] if not pd.isna(row[col_encontradas['cliente']]) else ''
+            cli = str(cli_raw).strip().upper()
+            if not cli:
+                continue
+
+            if clientes_autorizados and not any(c.upper() == cli for c in clientes_autorizados):
+                errores.append(f"Fila {fila_num}: No tiene permisos para registrar precios del cliente '{cli}'")
+                continue
+
+            mar_raw = row[col_encontradas['marca']] if not pd.isna(row[col_encontradas['marca']]) else ''
+            mar = str(mar_raw).strip().upper()
+            if not mar:
+                errores.append(f"Fila {fila_num}: Falta la marca de la llanta")
+                continue
+
+            dis_raw = row[col_encontradas['diseno']] if ('diseno' in col_encontradas and not pd.isna(row[col_encontradas['diseno']])) else ''
+            dis = str(dis_raw).strip().upper()
+
+            dim_raw = row[col_encontradas['dimension']] if not pd.isna(row[col_encontradas['dimension']]) else ''
+            dim = str(dim_raw).strip().upper()
+            if not dim:
+                errores.append(f"Fila {fila_num}: Falta la dimensión de la llanta")
+                continue
+
+            tipo_raw = row[col_encontradas['tipo']] if ('tipo' in col_encontradas and not pd.isna(row[col_encontradas['tipo']])) else 'Original'
+            tipo_str = str(tipo_raw).strip()
+
+            precio_val = to_float(row[col_encontradas['precio']])
+            if precio_val <= 0:
+                errores.append(f"Fila {fila_num}: El precio debe ser mayor a 0 (valor: {row[col_encontradas['precio']]})")
+                continue
+
+            vig_raw = row[col_encontradas['vigente_desde']] if ('vigente_desde' in col_encontradas and not pd.isna(row[col_encontradas['vigente_desde']])) else ''
+            if isinstance(vig_raw, (pd.Timestamp, date, datetime)):
+                vig_str = vig_raw.strftime("%Y-%m-%d")
+            else:
+                vig_str = str(vig_raw).strip()[:10]
+                if not re.match(r'^\d{4}-\d{2}-\d{2}$', vig_str):
+                    vig_str = hoy
+
+            ok = guardar_precio_cliente(cli, mar, dis, dim, tipo_str, precio_val, vig_str)
+            if ok:
+                registros_guardados += 1
+            else:
+                errores.append(f"Fila {fila_num}: Error al guardar en la base de datos")
+        except Exception as e:
+            errores.append(f"Fila {fila_num}: {str(e)}")
+
+    return {
+        "status": "ok",
+        "total_filas": len(df),
+        "registros_guardados": registros_guardados,
+        "errores": errores[:25],
+        "total_errores": len(errores)
+    }
+
 
 
 def cargar_lista_precios():
