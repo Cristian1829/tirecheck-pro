@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 21:53:35`
+- **Fecha de Generación:** `2026-10-26 22:01:43`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `58,592` líneas
-- **Tamaño Total de Código Fuente:** `2950.4 KB` (`3,021,253` bytes)
+- **Líneas Totales de Código:** `58,747` líneas
+- **Tamaño Total de Código Fuente:** `2958.9 KB` (`3,029,901` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -481,7 +481,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6142 | 413.5 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6186 | 417.0 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
@@ -491,7 +491,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 1938 | 93.4 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2049 | 98.4 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
@@ -23321,7 +23321,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6142 líneas | 423,401 bytes (413.5 KB)
+- **Métricas:** 6186 líneas | 426,982 bytes (417.0 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -26763,11 +26763,55 @@ if __name__ == '__main__':
 
       <!-- Subtab 3: Catálogo de Modelos de Llanta -->
       <div id="cat-seccion-modelos" class="hidden space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">Modelos con Profundidad Inicial de Fábrica</span>
-          <button id="btnNuevoModeloCat" type="button" onclick="abrirModalNuevoModelo()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold text-slate-700">Modelos con Profundidad Inicial de Fábrica</span>
+            <span id="badgeContadorModelosCat" class="hidden text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-mono"></span>
+          </div>
+          <button id="btnNuevoModeloCat" type="button" onclick="abrirModalNuevoModelo()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1 self-start sm:self-auto cursor-pointer active:scale-95 transition-all">
             <i class="fa-solid fa-plus"></i>
             <span>Agregar Modelo</span>
+          </button>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtros de Modelos -->
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2.5 shadow-2xs">
+          <!-- Buscador de texto libre -->
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="filtroBuscadorModelosCat" oninput="filtrarModelosCat()" placeholder="Buscar por marca, diseño, dimensión, tipo..." class="w-full pl-8 pr-7 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+            <button type="button" id="btnLimpiarBuscadorModelosCat" onclick="limpiarBuscadorModelosCat()" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 text-xs p-1" title="Limpiar búsqueda">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Filtro Tipo -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroTipoModelosCat" onchange="filtrarModelosCat()" class="w-full sm:w-36 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+              <option value="TODOS">Todos los tipos</option>
+              <option value="NUEVA">Nueva</option>
+              <option value="REENCAUCHE">Reencauche</option>
+            </select>
+          </div>
+
+          <!-- Filtro Marca -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroMarcaModelosCat" onchange="filtrarModelosCat()" class="w-full sm:w-44 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+              <option value="TODAS">Todas las marcas</option>
+            </select>
+          </div>
+
+          <!-- Filtro Dimensión -->
+          <div class="w-full sm:w-auto">
+            <select id="filtroDimensionModelosCat" onchange="filtrarModelosCat()" class="w-full sm:w-44 py-1.5 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer">
+              <option value="TODAS">Todas las dimensiones</option>
+            </select>
+          </div>
+
+          <!-- Botón Limpiar Filtros -->
+          <button type="button" id="btnLimpiarFiltrosModelosCat" onclick="limpiarFiltrosModelosCat()" class="hidden px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all items-center justify-center space-x-1.5 cursor-pointer whitespace-nowrap active:scale-95" title="Restablecer todos los filtros">
+            <i class="fa-solid fa-filter-circle-xmark text-slate-500"></i>
+            <span>Limpiar</span>
           </button>
         </div>
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -42760,7 +42804,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 1938 líneas | 95,685 bytes (93.4 KB)
+- **Métricas:** 2049 líneas | 100,752 bytes (98.4 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43248,14 +43292,119 @@ if __name__ == '__main__':
 
     let paginaActualModelosCat = 1;
     const ITEMS_POR_PAGINA_MODELOS = 25;
+    let catalogoModelosFiltrados = null;
 
     async function cargarModelosCat() {
       const res = await fetch('/api/modelos-llanta');
       if (res.ok) {
         catalogoModelosCache = await res.json();
-        paginaActualModelosCat = 1;
-        renderizarTablaModelosCat();
+        poblarOpcionesFiltrosModelosCat();
+        filtrarModelosCat();
       }
+    }
+
+    function poblarOpcionesFiltrosModelosCat() {
+      const lista = catalogoModelosCache || [];
+      const selMarca = document.getElementById('filtroMarcaModelosCat');
+      const selDim = document.getElementById('filtroDimensionModelosCat');
+
+      if (selMarca) {
+        const valActual = selMarca.value || 'TODAS';
+        const marcas = Array.from(new Set(lista.map(m => String(m.marca || '').trim().toUpperCase()).filter(Boolean))).sort();
+        selMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+        if (marcas.includes(valActual)) {
+          selMarca.value = valActual;
+        } else {
+          selMarca.value = 'TODAS';
+        }
+      }
+
+      if (selDim) {
+        const valActual = selDim.value || 'TODAS';
+        const dims = Array.from(new Set(lista.map(m => String(m.dimension || '').trim().toUpperCase()).filter(Boolean))).sort();
+        selDim.innerHTML = '<option value="TODAS">Todas las dimensiones</option>' +
+          dims.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+        if (dims.includes(valActual)) {
+          selDim.value = valActual;
+        } else {
+          selDim.value = 'TODAS';
+        }
+      }
+    }
+
+    function limpiarBuscadorModelosCat() {
+      const elB = document.getElementById('filtroBuscadorModelosCat');
+      if (elB) elB.value = '';
+      filtrarModelosCat();
+    }
+
+    function limpiarFiltrosModelosCat() {
+      const elB = document.getElementById('filtroBuscadorModelosCat');
+      if (elB) elB.value = '';
+      const elT = document.getElementById('filtroTipoModelosCat');
+      if (elT) elT.value = 'TODOS';
+      const elM = document.getElementById('filtroMarcaModelosCat');
+      if (elM) elM.value = 'TODAS';
+      const elD = document.getElementById('filtroDimensionModelosCat');
+      if (elD) elD.value = 'TODAS';
+      filtrarModelosCat();
+    }
+
+    function filtrarModelosCat() {
+      const q = (document.getElementById('filtroBuscadorModelosCat')?.value || '').trim().toLowerCase();
+      const fTipo = (document.getElementById('filtroTipoModelosCat')?.value || 'TODOS').trim().toUpperCase();
+      const fMarca = (document.getElementById('filtroMarcaModelosCat')?.value || 'TODAS').trim().toUpperCase();
+      const fDim = (document.getElementById('filtroDimensionModelosCat')?.value || 'TODAS').trim().toUpperCase();
+
+      const btnLimpiar = document.getElementById('btnLimpiarFiltrosModelosCat');
+      const btnLimpiarBuscador = document.getElementById('btnLimpiarBuscadorModelosCat');
+      const hayFiltros = Boolean(q) || fTipo !== 'TODOS' || fMarca !== 'TODAS' || fDim !== 'TODAS';
+
+      if (btnLimpiar) {
+        btnLimpiar.classList.toggle('hidden', !hayFiltros);
+        btnLimpiar.classList.toggle('flex', hayFiltros);
+      }
+      if (btnLimpiarBuscador) {
+        btnLimpiarBuscador.classList.toggle('hidden', !q);
+      }
+
+      const lista = catalogoModelosCache || [];
+      catalogoModelosFiltrados = lista.filter(m => {
+        if (fTipo !== 'TODOS') {
+          const t = String(m.tipo_llanta || '').trim().toUpperCase();
+          if (t !== fTipo) return false;
+        }
+        if (fMarca !== 'TODAS') {
+          const ma = String(m.marca || '').trim().toUpperCase();
+          if (ma !== fMarca) return false;
+        }
+        if (fDim !== 'TODAS') {
+          const d = String(m.dimension || '').trim().toUpperCase();
+          if (d !== fDim) return false;
+        }
+        if (q) {
+          const texto = `${m.marca || ''} ${m.diseno || ''} ${m.dimension || ''} ${m.tipo_llanta || ''} ${m.descripcion || ''} ${m.prof_inicial || ''}`.toLowerCase();
+          if (!texto.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const badge = document.getElementById('badgeContadorModelosCat');
+      if (badge) {
+        if (hayFiltros) {
+          badge.textContent = `${catalogoModelosFiltrados.length} de ${lista.length} modelos`;
+          badge.classList.remove('hidden');
+        } else if (lista.length > 0) {
+          badge.textContent = `${lista.length} modelos`;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      paginaActualModelosCat = 1;
+      renderizarTablaModelosCat();
     }
 
     function renderizarTablaModelosCat() {
@@ -43263,9 +43412,15 @@ if __name__ == '__main__':
       const contenedor = document.getElementById('contenedorPaginacionModelosCat');
       if (!tbody) return;
 
-      const lista = catalogoModelosCache || [];
+      const lista = catalogoModelosFiltrados !== null ? catalogoModelosFiltrados : (catalogoModelosCache || []);
+      const totalOriginal = (catalogoModelosCache || []).length;
+      const hayFiltros = catalogoModelosFiltrados !== null && catalogoModelosFiltrados.length !== totalOriginal;
+
       if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">No hay modelos de llanta registrados</td></tr>`;
+        const msg = hayFiltros
+          ? 'No se encontraron modelos que coincidan con los filtros aplicados. <button type="button" onclick="limpiarFiltrosModelosCat()" class="ml-1 text-blue-600 hover:underline font-bold cursor-pointer">Limpiar filtros</button>'
+          : 'No hay modelos de llanta registrados.';
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 font-medium">${msg}</td></tr>`;
         if (contenedor) contenedor.classList.add('hidden');
         return;
       }
@@ -43282,19 +43437,19 @@ if __name__ == '__main__':
 
       tbody.innerHTML = paginaItems.map(m => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-bold">${m.tipo_llanta}</td>
-          <td class="p-2.5 font-black text-slate-900">${m.marca}</td>
-          <td class="p-2.5 font-bold text-slate-800">${m.diseno}</td>
-          <td class="p-2.5 text-slate-700">${m.dimension}</td>
+          <td class="p-2.5 font-bold">${escapeHtml(m.tipo_llanta || '')}</td>
+          <td class="p-2.5 font-black text-slate-900">${escapeHtml(m.marca || '')}</td>
+          <td class="p-2.5 font-bold text-slate-800">${escapeHtml(m.diseno || '')}</td>
+          <td class="p-2.5 text-slate-700">${escapeHtml(m.dimension || '')}</td>
           <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
-          <td class="p-2.5 text-slate-500">${m.descripcion || '-'}</td>
+          <td class="p-2.5 text-slate-500">${escapeHtml(m.descripcion || '-')}</td>
           <td class="p-2.5 text-center">
             ${puedeEditar ? `
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar modelo y sincronizar prof. inicial en BD">
+                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar modelo y sincronizar prof. inicial en BD">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent(m.marca + ' ' + m.diseno)}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar modelo del catálogo">
+                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent((m.marca || '') + ' ' + (m.diseno || ''))}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar modelo del catálogo">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>

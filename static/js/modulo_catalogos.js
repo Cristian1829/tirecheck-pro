@@ -482,14 +482,119 @@
 
     let paginaActualModelosCat = 1;
     const ITEMS_POR_PAGINA_MODELOS = 25;
+    let catalogoModelosFiltrados = null;
 
     async function cargarModelosCat() {
       const res = await fetch('/api/modelos-llanta');
       if (res.ok) {
         catalogoModelosCache = await res.json();
-        paginaActualModelosCat = 1;
-        renderizarTablaModelosCat();
+        poblarOpcionesFiltrosModelosCat();
+        filtrarModelosCat();
       }
+    }
+
+    function poblarOpcionesFiltrosModelosCat() {
+      const lista = catalogoModelosCache || [];
+      const selMarca = document.getElementById('filtroMarcaModelosCat');
+      const selDim = document.getElementById('filtroDimensionModelosCat');
+
+      if (selMarca) {
+        const valActual = selMarca.value || 'TODAS';
+        const marcas = Array.from(new Set(lista.map(m => String(m.marca || '').trim().toUpperCase()).filter(Boolean))).sort();
+        selMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+        if (marcas.includes(valActual)) {
+          selMarca.value = valActual;
+        } else {
+          selMarca.value = 'TODAS';
+        }
+      }
+
+      if (selDim) {
+        const valActual = selDim.value || 'TODAS';
+        const dims = Array.from(new Set(lista.map(m => String(m.dimension || '').trim().toUpperCase()).filter(Boolean))).sort();
+        selDim.innerHTML = '<option value="TODAS">Todas las dimensiones</option>' +
+          dims.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+        if (dims.includes(valActual)) {
+          selDim.value = valActual;
+        } else {
+          selDim.value = 'TODAS';
+        }
+      }
+    }
+
+    function limpiarBuscadorModelosCat() {
+      const elB = document.getElementById('filtroBuscadorModelosCat');
+      if (elB) elB.value = '';
+      filtrarModelosCat();
+    }
+
+    function limpiarFiltrosModelosCat() {
+      const elB = document.getElementById('filtroBuscadorModelosCat');
+      if (elB) elB.value = '';
+      const elT = document.getElementById('filtroTipoModelosCat');
+      if (elT) elT.value = 'TODOS';
+      const elM = document.getElementById('filtroMarcaModelosCat');
+      if (elM) elM.value = 'TODAS';
+      const elD = document.getElementById('filtroDimensionModelosCat');
+      if (elD) elD.value = 'TODAS';
+      filtrarModelosCat();
+    }
+
+    function filtrarModelosCat() {
+      const q = (document.getElementById('filtroBuscadorModelosCat')?.value || '').trim().toLowerCase();
+      const fTipo = (document.getElementById('filtroTipoModelosCat')?.value || 'TODOS').trim().toUpperCase();
+      const fMarca = (document.getElementById('filtroMarcaModelosCat')?.value || 'TODAS').trim().toUpperCase();
+      const fDim = (document.getElementById('filtroDimensionModelosCat')?.value || 'TODAS').trim().toUpperCase();
+
+      const btnLimpiar = document.getElementById('btnLimpiarFiltrosModelosCat');
+      const btnLimpiarBuscador = document.getElementById('btnLimpiarBuscadorModelosCat');
+      const hayFiltros = Boolean(q) || fTipo !== 'TODOS' || fMarca !== 'TODAS' || fDim !== 'TODAS';
+
+      if (btnLimpiar) {
+        btnLimpiar.classList.toggle('hidden', !hayFiltros);
+        btnLimpiar.classList.toggle('flex', hayFiltros);
+      }
+      if (btnLimpiarBuscador) {
+        btnLimpiarBuscador.classList.toggle('hidden', !q);
+      }
+
+      const lista = catalogoModelosCache || [];
+      catalogoModelosFiltrados = lista.filter(m => {
+        if (fTipo !== 'TODOS') {
+          const t = String(m.tipo_llanta || '').trim().toUpperCase();
+          if (t !== fTipo) return false;
+        }
+        if (fMarca !== 'TODAS') {
+          const ma = String(m.marca || '').trim().toUpperCase();
+          if (ma !== fMarca) return false;
+        }
+        if (fDim !== 'TODAS') {
+          const d = String(m.dimension || '').trim().toUpperCase();
+          if (d !== fDim) return false;
+        }
+        if (q) {
+          const texto = `${m.marca || ''} ${m.diseno || ''} ${m.dimension || ''} ${m.tipo_llanta || ''} ${m.descripcion || ''} ${m.prof_inicial || ''}`.toLowerCase();
+          if (!texto.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const badge = document.getElementById('badgeContadorModelosCat');
+      if (badge) {
+        if (hayFiltros) {
+          badge.textContent = `${catalogoModelosFiltrados.length} de ${lista.length} modelos`;
+          badge.classList.remove('hidden');
+        } else if (lista.length > 0) {
+          badge.textContent = `${lista.length} modelos`;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      paginaActualModelosCat = 1;
+      renderizarTablaModelosCat();
     }
 
     function renderizarTablaModelosCat() {
@@ -497,9 +602,15 @@
       const contenedor = document.getElementById('contenedorPaginacionModelosCat');
       if (!tbody) return;
 
-      const lista = catalogoModelosCache || [];
+      const lista = catalogoModelosFiltrados !== null ? catalogoModelosFiltrados : (catalogoModelosCache || []);
+      const totalOriginal = (catalogoModelosCache || []).length;
+      const hayFiltros = catalogoModelosFiltrados !== null && catalogoModelosFiltrados.length !== totalOriginal;
+
       if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">No hay modelos de llanta registrados</td></tr>`;
+        const msg = hayFiltros
+          ? 'No se encontraron modelos que coincidan con los filtros aplicados. <button type="button" onclick="limpiarFiltrosModelosCat()" class="ml-1 text-blue-600 hover:underline font-bold cursor-pointer">Limpiar filtros</button>'
+          : 'No hay modelos de llanta registrados.';
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 font-medium">${msg}</td></tr>`;
         if (contenedor) contenedor.classList.add('hidden');
         return;
       }
@@ -516,19 +627,19 @@
 
       tbody.innerHTML = paginaItems.map(m => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-bold">${m.tipo_llanta}</td>
-          <td class="p-2.5 font-black text-slate-900">${m.marca}</td>
-          <td class="p-2.5 font-bold text-slate-800">${m.diseno}</td>
-          <td class="p-2.5 text-slate-700">${m.dimension}</td>
+          <td class="p-2.5 font-bold">${escapeHtml(m.tipo_llanta || '')}</td>
+          <td class="p-2.5 font-black text-slate-900">${escapeHtml(m.marca || '')}</td>
+          <td class="p-2.5 font-bold text-slate-800">${escapeHtml(m.diseno || '')}</td>
+          <td class="p-2.5 text-slate-700">${escapeHtml(m.dimension || '')}</td>
           <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
-          <td class="p-2.5 text-slate-500">${m.descripcion || '-'}</td>
+          <td class="p-2.5 text-slate-500">${escapeHtml(m.descripcion || '-')}</td>
           <td class="p-2.5 text-center">
             ${puedeEditar ? `
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all" title="Editar modelo y sincronizar prof. inicial en BD">
+                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar modelo y sincronizar prof. inicial en BD">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent(m.marca + ' ' + m.diseno)}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all" title="Eliminar modelo del catálogo">
+                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent((m.marca || '') + ' ' + (m.diseno || ''))}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar modelo del catálogo">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
