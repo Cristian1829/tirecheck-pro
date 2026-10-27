@@ -14,6 +14,14 @@
       return '$ ' + num.toLocaleString('es-CO');
     }
 
+    // Vida escrita siempre igual: 'Original', 'R1', 'R2'... ('ORIGINAL' / 'original' / vacío -> 'Original')
+    function vidaLegible(vida) {
+      const v = String(vida || '').trim();
+      if (!v || v.toUpperCase() === 'ORIGINAL') return 'Original';
+      if (/^R\d+$/i.test(v)) return v.toUpperCase();
+      return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+    }
+
     async function cargarModuloBodegasMRP() {
       // 1. Control de Licencia LIGHT vs PRO
       const bannerLic = document.getElementById('bannerLicenciaBodegasLight');
@@ -429,11 +437,11 @@
         case 'BODEGA_4_REENCAUCHADAS':
           return `<span class="bg-teal-100 text-teal-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-teal-300">B4: Reencauchada</span>`;
         case 'BODEGA_5_REPARACION':
-          return `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">B5: Vulcanizadora</span>`;
+          return `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">B5: Reparación</span>`;
         case 'BODEGA_6_FVU':
           return `<span class="bg-rose-100 text-rose-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-rose-300">B6: Desecho FVU</span>`;
         case 'BODEGA_7_CHATARRIZADA':
-          return `<span class="bg-slate-200 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300">B7: Chatarrizada</span>`;
+          return `<span class="bg-slate-200 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300">B7: Disposición final</span>`;
         case 'MONTADA_OPERACION':
           return `<span class="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-300">En Operación</span>`;
         default:
@@ -514,15 +522,15 @@
             </td>
             <td class="p-3 font-semibold text-slate-700">${ll.dimension || '-'}</td>
             <td class="p-3 text-center">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${ll.vida_actual === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
-                ${ll.vida_actual || 'Original'}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${vidaLegible(ll.vida_actual) === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
+                ${vidaLegible(ll.vida_actual)}
               </span>
             </td>
             <td class="p-3 text-center font-black ${ll.prof_actual_min <= 3.0 ? 'text-rose-600' : 'text-slate-800'}">
-              ${ll.prof_actual_min != null ? Number(ll.prof_actual_min).toFixed(1) + ' mm' : '-'}
+              ${ll.prof_actual_min != null ? fmtDec(Number(ll.prof_actual_min), 1) + ' mm' : '-'}
             </td>
             <td class="p-3">${detalleVehiculo}</td>
-            <td class="p-3 text-right font-bold text-slate-800">${costoTotalFormateado}</td>
+            <td class="p-3 text-right font-bold text-slate-800 whitespace-nowrap">${costoTotalFormateado}</td>
             <td class="p-3 text-center">${renderizarBadgeGarantia(ll.estado_garantia)}</td>
             <td class="p-3 text-center">
               <div class="flex items-center justify-center space-x-1">
@@ -1011,7 +1019,7 @@
           const profActual = (ll && ll.prof_actual_min != null) ? Number(ll.prof_actual_min) : 8.0;
           if (profActual <= 3.0) {
             alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-rose-50 text-rose-900 border-rose-300 flex items-start space-x-2';
-            alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + profActual.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
+            alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + fmtDec(profActual, 1) + ' mm) está en o por debajo del límite de retiro (3,0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
           } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
             alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
             alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y quedará disponible en patio para recambio o apareo dual.</span>`;
@@ -1116,7 +1124,7 @@
             pRec.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
             setTimeout(() => pRec.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
           }
-          mostrarToast('⛔ La profundidad (' + profCheck.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). No puede enviarse a Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).', true);
+          mostrarToast('⛔ La profundidad (' + fmtDec(profCheck, 1) + ' mm) está en o por debajo del límite de retiro (3,0 mm). No puede enviarse a Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).', true);
           return;
         }
       } else if (destino === 'BODEGA_3_REENCAUCHE') {
@@ -1264,7 +1272,7 @@
         boxResumen.innerHTML = `
           <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca || '-'} ${llanta.dimension || ''}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual || 'Original'} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
-          <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? Number(llanta.prof_actual_min).toFixed(1) + ' mm' : '-'}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? fmtDec(Number(llanta.prof_actual_min), 1) + ' mm' : '-'}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Costo Total Acum.:</span><strong class="text-emerald-700">${formatearPesosBodega(llanta.costo_acumulado_total || 0)}</strong></div>
         `;
       }
@@ -1359,7 +1367,7 @@
           : '';
 
         const detalleProf = ev.prof_min_mm > 0 
-          ? `<span class="text-slate-500 ml-2">Prof: ${Number(ev.prof_min_mm).toFixed(1)} mm</span>` 
+          ? `<span class="text-slate-500 ml-2">Prof: ${fmtDec(Number(ev.prof_min_mm), 1)} mm</span>` 
           : '';
 
         html += `
@@ -1510,7 +1518,7 @@
           const dimEl = document.getElementById('txtTallerDim');
           if (dimEl) dimEl.textContent = ll.dimension || '-';
           const profEl = document.getElementById('txtTallerProfMin');
-          if (profEl) profEl.textContent = `${Number(ll.prof_actual_min || 0).toFixed(1)} mm`;
+          if (profEl) profEl.textContent = `${fmtDec(Number(ll.prof_actual_min || 0), 1)} mm`;
           const kmMontEl = document.getElementById('txtTallerKmMont');
           if (kmMontEl) kmMontEl.textContent = Number(ll.km_montaje_actual || 0).toLocaleString();
           const kmRodEl = document.getElementById('txtTallerKmRodados');
@@ -1781,7 +1789,7 @@
       document.getElementById('hv_marca').textContent = ft.marca || '-';
       document.getElementById('hv_diseno').textContent = ft.diseno || '-';
       document.getElementById('hv_dimension').textContent = ft.dimension || '-';
-      document.getElementById('hv_prof_act').textContent = `${Number(data.profundidad_actual_min || 0).toFixed(1)} mm`;
+      document.getElementById('hv_prof_act').textContent = `${fmtDec(Number(data.profundidad_actual_min || 0), 1)} mm`;
       document.getElementById('hv_ubicacion').textContent = data.ubicacion_bodega || data.estado_actual || '-';
       document.getElementById('hv_cliente').textContent = data.cliente_propietario || '-';
 
@@ -1789,7 +1797,7 @@
       document.getElementById('hv_kpi_km').textContent = `${Number(met.km_totales || 0).toLocaleString()} km`;
       // Sin precio registrado se dice así, en lugar de mostrar $0
       document.getElementById('hv_kpi_costo').textContent = met.costo_total_invertido ? `$ ${Number(met.costo_total_invertido).toLocaleString('es-CO')}` : 'Sin precio';
-      document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${Number(met.cpk_global).toFixed(2)} / km` : 'Sin precio';
+      document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${fmtDec(Number(met.cpk_global), 2)} / km` : 'Sin precio';
       document.getElementById('hv_kpi_rendimiento').textContent = `${Number(met.rendimiento_km_mm || 0).toLocaleString()} km/mm`;
       document.getElementById('hv_kpi_ahorro').textContent = met.ahorro_generado_vs_nueva != null ? `$ ${Number(met.ahorro_generado_vs_nueva).toLocaleString('es-CO')}` : 'Sin precio';
 
@@ -1817,11 +1825,11 @@
                 <td class="p-2.5 font-black text-slate-900">Ciclo ${c.ciclo}</td>
                 <td class="p-2.5 font-bold">${c.tipo}</td>
                 <td class="p-2.5 text-slate-600">${c.banda_diseno || '-'}</td>
-                <td class="p-2.5 text-center font-mono">${Number(c.prof_inicial || 0).toFixed(1)} mm</td>
-                <td class="p-2.5 text-center font-mono font-bold">${Number(c.prof_final || 0).toFixed(1)} mm</td>
+                <td class="p-2.5 text-center font-mono">${fmtDec(Number(c.prof_inicial || 0), 1)} mm</td>
+                <td class="p-2.5 text-center font-mono font-bold">${fmtDec(Number(c.prof_final || 0), 1)} mm</td>
                 <td class="p-2.5 text-right font-mono font-bold">${Number(c.km_recorridos || 0).toLocaleString()} km</td>
                 <td class="p-2.5 text-right font-mono">$ ${Number(c.costo || 0).toLocaleString('es-CO')}</td>
-                <td class="p-2.5 text-right font-mono font-black text-indigo-700">$ ${Number(c.cpk || 0).toFixed(2)}</td>
+                <td class="p-2.5 text-right font-mono font-black text-indigo-700">$ ${fmtDec(Number(c.cpk || 0), 2)}</td>
               </tr>
             `;
           });
@@ -1850,7 +1858,7 @@
                   </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
                     ${m.odometro_vehiculo > 0 ? `Odómetro: ${Number(m.odometro_vehiculo).toLocaleString()} km | ` : ''}
-                    ${m.profundidad_momento > 0 ? `Prof: ${Number(m.profundidad_momento).toFixed(1)} mm | ` : ''}
+                    ${m.profundidad_momento > 0 ? `Prof: ${fmtDec(Number(m.profundidad_momento), 1)} mm | ` : ''}
                     ${m.motivo ? `Motivo: ${m.motivo}` : ''}
                   </div>
                 </div>

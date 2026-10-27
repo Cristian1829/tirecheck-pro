@@ -166,6 +166,19 @@
       scrollbar-width: none;
     }
 
+    /* Distintivos que no deben partirse en dos líneas (su clase la reescribe el JS) */
+    #badgeLicenciaActiva, #kpi10_efectividad_badge, #kpi15_brecha_badge, #kpi18_badge_garantia,
+    #badge_cascos_salvamento, #badge_cambiazos_total { white-space: nowrap; }
+
+    /* Barra de pestañas: centrado "seguro" (si no caben, no se corta la primera a la izquierda) y
+       desvanecido en el borde que tiene pestañas ocultas, para que se note que se puede desplazar */
+    @media (min-width: 1024px) {
+      #navTabs { justify-content: safe center; }
+    }
+    #navTabs.fade-izq { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
+    #navTabs.fade-der { -webkit-mask-image: linear-gradient(to left, transparent, #000 28px); mask-image: linear-gradient(to left, transparent, #000 28px); }
+    #navTabs.fade-izq.fade-der { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+
     /* Píldora del carrusel táctil de llantas */
     .carrusel-tire-pill {
       min-width: 50px;
@@ -533,7 +546,7 @@
 
   <!-- ================= 3. BARRA DE NAVEGACIÓN (TABS) ================= -->
   <nav class="w-full bg-[#081221] border-b border-slate-800 px-1 sm:px-2 lg:px-4 z-20 shadow-lg select-none">
-      <div class="w-full max-w-[1720px] mx-auto flex items-center justify-start lg:justify-center space-x-0.5 sm:space-x-1 xl:space-x-2 overflow-x-auto no-scrollbar scroll-smooth" id="navTabs">
+      <div class="w-full max-w-[1720px] mx-auto flex items-center justify-start space-x-0.5 sm:space-x-1 xl:space-x-2 overflow-x-auto no-scrollbar scroll-smooth" id="navTabs">
           
           <!-- Pestaña 1: Inspección de Patio (Activa por defecto) -->
           <button type="button" onclick="navegarTab('patio')" id="nav-btn-patio" data-tab="patio" class="nav-tab active tab-active flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-semibold text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap" aria-current="page">
@@ -1244,16 +1257,16 @@
             </div>
 
             <!-- Botones de Acción: En PC se muestra dentro de la tarjeta; en MÓVIL se OCULTA para no duplicarse con la barra sticky inferior -->
-            <div class="hidden lg:flex items-center space-x-2.5 pt-2">
-              <button type="submit" id="btnGuardar" class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
+            <div class="hidden lg:flex items-stretch space-x-2.5 pt-2">
+              <button type="submit" id="btnGuardar" title="Guardar esta llanta y pasar a la siguiente posición" class="flex-1 min-w-0 whitespace-nowrap py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
                 <i class="fa-solid fa-circle-check text-base"></i>
-                <span>Guardar & Siguiente Llanta</span>
+                <span>Guardar y siguiente</span>
               </button>
-              <button type="button" onclick="confirmarFinalizarInspeccion()" id="btnFinalizarDesk" class="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all" title="Finalizar Inspección de este Vehículo">
+              <button type="button" onclick="confirmarFinalizarInspeccion()" id="btnFinalizarDesk" class="whitespace-nowrap shrink-0 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all" title="Finalizar Inspección de este Vehículo">
                 <i class="fa-solid fa-flag-checkered text-sm"></i>
                 <span>Finalizar</span>
               </button>
-              <button type="button" onclick="limpiarTodoParaNuevaInspeccion()" id="btnLimpiarTodoDesk" class="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Limpiar todo el formulario y chasis para ingresar una nueva inspección">
+              <button type="button" onclick="limpiarTodoParaNuevaInspeccion()" id="btnLimpiarTodoDesk" class="whitespace-nowrap shrink-0 py-3.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Limpiar todo el formulario y chasis para ingresar una nueva inspección">
                 <i class="fa-solid fa-rotate-left text-sm text-slate-600"></i>
                 <span>Limpiar Todo</span>
               </button>
@@ -1323,7 +1336,7 @@
             <i class="fa-solid fa-file-export"></i>
             <span>Exportar Excel</span>
           </button>
-          <button type="button" onclick="cargarBaseInspecciones()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">
+          <button type="button" onclick="cargarBaseInspecciones()" title="Actualizar inspecciones" aria-label="Actualizar inspecciones" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
         </div>
@@ -1389,7 +1402,7 @@
           <div class="space-y-1">
             <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Sede:</label>
             <select id="filtroBDSede" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
-              <option value="TODOS">Todas las Sedes</option>
+              <option value="TODOS">Todas</option>
             </select>
           </div>
 
@@ -1431,7 +1444,7 @@
           <div class="space-y-1">
             <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Desgaste / Estado:</label>
             <select id="filtroBDSemaforo" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
-              <option value="TODOS">Todos los Estados</option>
+              <option value="TODOS">Todos</option>
               <option value="CRITICO">🔴 Crítico (≤ 3.0 mm)</option>
               <option value="ALERTA">🟡 Precaución (3.1 - 5.0 mm)</option>
               <option value="OPTIMO">🟢 Óptimo (> 5.0 mm)</option>
@@ -1546,19 +1559,19 @@
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
           <select id="filtro_diag_cliente" name="filtroDiagCliente" data-alias="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todos los Clientes</option>
+            <option value="Todos">Todos</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcliente:</label>
           <select id="filtro_diag_subcliente" name="filtroDiagSede" data-alias="filtroDiagSede" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todas las Sedes</option>
+            <option value="Todos">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo Operación:</label>
           <select id="filtro_diag_operacion" name="filtroDiagOperacion" data-alias="filtroDiagOperacion" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todas las Operaciones</option>
+            <option value="Todos">Todas</option>
           </select>
         </div>
         <div>
@@ -1572,7 +1585,7 @@
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtro por Acción:</label>
           <select id="filtro_diag_accion" name="filtroDiagAlerta" data-alias="filtroDiagAlerta" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todas las Acciones</option>
+            <option value="Todos">Todas</option>
             <option value="Retiro Inmediato">🔴 Retiro Inmediato (≤ Límite)</option>
             <option value="Próximas a Cambio">🟡 Próximas a Cambio (+2.0 mm)</option>
             <option value="Estado OK">🟢 Estado OK (Sin Alertas)</option>
@@ -1806,7 +1819,7 @@
             </h2>
             <span id="badgeLicenciaActiva" class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-700 border border-sky-400/40">LICENCIA FULL / PRO</span>
           </div>
-          <p class="text-xs text-slate-500">20 KPIs ejecutivos organizados en 5 pestañas homologadas con visualización 2x HD y reglas técnicas avanzadas</p>
+          <p class="text-xs text-slate-500">20 KPIs ejecutivos organizados en 6 pestañas con visualización 2x HD y reglas técnicas avanzadas</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -1847,51 +1860,51 @@
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Cliente:</label>
           <select id="filtroKpiCliente" onchange="alCambiarFiltroKpiCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todos los Clientes</option>
+            <option value="TODOS">Todos</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcli:</label>
           <select id="filtroKpiSubcliente" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Sedes</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Operación:</label>
           <select id="filtroKpiOperacion" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Operaciones</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipología:</label>
           <select id="filtroKpiTipologia" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Tipologías</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Marca:</label>
           <select id="filtroKpiMarca" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Marcas</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Dimensión:</label>
           <select id="filtroKpiDimension" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Dimensiones</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Eje Temporal:</label>
           <select id="filtroKpiEjeTemporal" onchange="cargarSuite20Kpis()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="mes">Por Mes (YYYY-MM)</option>
-            <option value="insp">Por Corte (INSP 1..N)</option>
+            <option value="mes">Por mes</option>
+            <option value="insp">Por corte</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Base de cálculo:</label>
           <select id="filtroKpiBase" onchange="cargarSuite20Kpis()" title="Última inspección: estado actual de cada posición. Historial: todas las inspecciones del periodo." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="ultima">Última inspección</option>
-            <option value="historial">Historial completo</option>
+            <option value="ultima">Última</option>
+            <option value="historial">Historial</option>
           </select>
         </div>
         <div>
@@ -1914,7 +1927,7 @@
           </div>
           <div class="text-left leading-tight">
             <span class="block font-bold text-xs tracking-tight text-white">1. Inspección & Parque</span>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90">KPI 01-04</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90 whitespace-nowrap shrink-0">KPI 01-04</span>
           </div>
         </button>
 
@@ -1925,7 +1938,7 @@
           </div>
           <div class="text-left leading-tight">
             <span class="block font-bold text-xs tracking-tight text-slate-700">2. Mantenimiento & Pérdida</span>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 05-11</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 05-11</span>
           </div>
         </button>
 
@@ -1939,7 +1952,7 @@
               <span class="block font-bold text-xs tracking-tight text-slate-700">3. Producto & Proyecciones</span>
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 12-16</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 12-16</span>
           </div>
         </button>
 
@@ -1953,7 +1966,7 @@
               <span class="block font-bold text-xs tracking-tight text-slate-700">4. Tablero Bajas / FVU</span>
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 17-19</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 17-19</span>
           </div>
         </button>
 
@@ -1967,7 +1980,7 @@
               <span class="block font-bold text-xs tracking-tight text-slate-700">5. Balance 7 Bodegas MRP</span>
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 20</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 20</span>
           </div>
         </button>
 
@@ -2081,7 +2094,7 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">KPI 01 · Auditoría</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 whitespace-nowrap shrink-0">KPI 01 · Auditoría</span>
               <h3 class="text-base font-black tracking-tight">Cumplimiento de Inspección vs. Parque Vehicular Activo</h3>
             </div>
             <p class="text-xs text-slate-300 mt-0.5">Mide la cobertura de auditoría sobre el censo total de vehículos registrados en padrón</p>
@@ -2119,7 +2132,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">KPI 02</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 02</span>
                   <h4 class="text-sm font-black text-slate-900">Volumen Auditado Mes a Mes</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Total de llantas rodando vs. vehículos auditados en corte mensual</p>
@@ -2143,7 +2156,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">KPI 03</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 whitespace-nowrap shrink-0">KPI 03</span>
                   <h4 class="text-sm font-black text-slate-900">% de Reencauche y Unidades por Ciclo</h4>
                 </div>
                 <p id="kpi03_subtitulo" class="text-[11px] text-slate-400">Alineación a la meta de reencauche del cliente y ciclo de vida (Original, R1, R2, R3+)</p>
@@ -2172,7 +2185,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 04</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 04</span>
               <h4 class="text-sm font-black text-slate-900">Composición de Flota (Tipología, Marca y Dimensión)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Distribución fotográfica en patio por configuración vehicular, marca instalada y dimensión de neumático</p>
@@ -2228,7 +2241,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 05</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 05</span>
               <h4 class="text-sm font-black text-slate-900">Cuadro de Retiros y Cambios Inmediatos</h4>
             </div>
             <p class="text-[11px] text-slate-400">Identificación de llantas a límite de retiro con blindaje de Par Direccional (Pos 1 y 2)</p>
@@ -2267,7 +2280,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-800">KPI 06</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-800 whitespace-nowrap shrink-0">KPI 06</span>
               <h4 class="text-sm font-black text-slate-900">Seguimiento de Alineación y Costo de Milímetros Perdidos</h4>
             </div>
             <p class="text-[11px] text-slate-400">Diferencia entre hombros (&ge; 2.0 mm) y valor económico del desgaste prematuro</p>
@@ -2308,7 +2321,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800">KPI 07</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 whitespace-nowrap shrink-0">KPI 07</span>
                   <h4 class="text-sm font-black text-slate-900">Plan de Rotaciones Tándem (Equis Larga)</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Balanceo de desgaste inter-eje (&Delta; &ge; 1.5 mm) con jerarquía de tráiler</p>
@@ -2338,7 +2351,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 08</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 08</span>
                   <h4 class="text-sm font-black text-slate-900">Duales Mal Apareados (&gt; 3 mm) & Cruce Bodega 2</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Frecuencia mensual y sugerencias de emparejamiento con llantas de recambio</p>
@@ -2367,7 +2380,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 09</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 09</span>
                   <h4 class="text-sm font-black text-slate-900">Estado de Presiones PSI & Desperdicio Combustible</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Distribución de 4 rangos de calibración y cálculo de consumo diésel</p>
@@ -2399,7 +2412,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800">KPI 10</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800 whitespace-nowrap shrink-0">KPI 10</span>
                   <h4 class="text-sm font-black text-slate-900">Diagrama de Pareto de Novedades & Taller</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Regla 80/20 de causas mecánicas y efectividad de resolución de novedades</p>
@@ -2423,7 +2436,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 11 · Financiero</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 11 · Financiero</span>
               <h4 class="text-sm font-black text-slate-900">Impacto Económico Interanual: Pérdida mm vs. Costo Monetario ($)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Suma consolidada de pérdidas por desalineación, desbalance y descalibración de presión</p>
@@ -2465,16 +2478,16 @@
       <!-- KPI 12: Las 4 Tarjetas Maestras de Desempeño de Flota -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">mm Gastados Prom.</span>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Milímetros gastados por la llanta más desgastada de la flota">mm Gastados (Máx.)</span>
           <span id="kpi12_mm_gastados" class="text-2xl font-black text-indigo-600 block mt-1 font-mono">0,0 mm</span>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Profundidad Actual</span>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Profundidad de la llanta más crítica de la flota">Profundidad Mínima</span>
           <span id="kpi12_prof_actual" class="text-2xl font-black text-emerald-600 block mt-1 font-mono">0,0 mm</span>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">% Desgaste Flota</span>
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Desgaste de la llanta más gastada de la flota">% Desgaste Máx.</span>
             <span id="kpi12_pct_desgaste" class="text-xs font-black text-slate-800 font-mono">0,0%</span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-2.5 mt-2 overflow-hidden">
@@ -2492,7 +2505,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">KPI 13</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 13</span>
               <h4 class="text-sm font-black text-slate-900">Km Rodados Reales vs. Proyección Final al Límite de Retiro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Comparación de avance actual vs. proyección calculada hasta el milímetro mínimo de seguridad</p>
@@ -2511,7 +2524,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800">KPI 14</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800 whitespace-nowrap shrink-0">KPI 14</span>
               <h4 class="text-sm font-black text-slate-900">Tríada Multidimensional Sincronizada: Proyección, Km/mm y CPK proyectado ($)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Visualización simultánea de rendimiento técnico y financiero reagrupado dinámicamente</p>
@@ -2589,7 +2602,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">KPI 15</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 15</span>
                   <h4 class="text-sm font-black text-slate-900">Potencial de Llanta: Promedio vs. Envolventes Máx y Mín</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Filtrado estricto de madurez (&ge; 1.5 mm de desgaste) y brecha frente al mejor registro</p>
@@ -2613,7 +2626,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 16</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 16</span>
                   <h4 class="text-sm font-black text-slate-900">Curva de Proyección por Rango de Desgaste</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Comportamiento del caucho en las 5 bandas de madurez (0-40%, 40-60%, 60-80%, 80-100%, Retiro)</p>
@@ -2649,7 +2662,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 17</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 17</span>
               <h4 class="text-sm font-black text-slate-900">Indicadores Globales de Fin de Vida Útil (FVU)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Evolución mensual de carcasas desechadas, índice de reencauchabilidad y ratio de ciclos</p>
@@ -2683,7 +2696,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800">KPI 18</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800 whitespace-nowrap shrink-0">KPI 18</span>
               <h4 class="text-sm font-black text-slate-900">Participación FVU: Marca, Ciclo y Causal de Daño</h4>
             </div>
             <p class="text-[11px] text-slate-400">Detección de patrones de fallo prematuro y filtro interactivo cruzado</p>
@@ -2715,6 +2728,7 @@
             </div>
           </div>
         </div>
+        <p id="kpi18_nota_inconsistente" class="hidden mt-3 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5"></p>
       </article>
 
       <!-- KPI 19: Profundidad de Retiro y Dispersión por mm -->
@@ -2722,7 +2736,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 19</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 19</span>
               <h4 class="text-sm font-black text-slate-900">Profundidad de Baja (Máx / Prom / Mín) & Dispersión por Milímetro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Milímetros de caucho desperdiciados y scrap económico por retiros antes de tiempo</p>
@@ -2761,10 +2775,10 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 20 · MRP</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 20 · MRP</span>
               <h4 class="text-base font-black text-slate-900">Planeación de Necesidades de Llantas (MRP) vs. Balance de 7 Bodegas</h4>
             </div>
-            <p class="text-xs text-slate-500">Demanda neta por retiros de flota + reposición FVU + 15% seguridad vs. stock disponible (B1 + B2 + B3x0.90 + B4)</p>
+            <p class="text-xs text-slate-500">Demanda neta por retiros de flota + reposición FVU + stock de seguridad (por medida y eje) vs. stock disponible (B1 + B2 + B3x0.90 + B4)</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button type="button" onclick="exportarMrpExcel()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
@@ -2799,7 +2813,7 @@
                 <th class="p-2.5">Dimensión / Medida</th>
                 <th class="p-2.5 text-center">Demanda Retiros</th>
                 <th class="p-2.5 text-center">Bajas FVU</th>
-                <th class="p-2.5 text-center">Margen Seg. (15%)</th>
+                <th class="p-2.5 text-center">Stock Seguridad</th>
                 <th class="p-2.5 text-center bg-rose-950 text-rose-300 font-black">NECESIDAD BRUTA</th>
                 <!-- Bodegas -->
                 <th class="p-2.5 text-center">B1 (Nuevas)</th>
@@ -2907,6 +2921,34 @@
       </div>
     </div>
 
+    <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
+    <div id="subvista-kpi-6" class="hidden space-y-4">
+      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-sky-100 text-sky-800 whitespace-nowrap">Tendencias</span>
+              <h4 class="text-sm font-black text-slate-900">Tendencia de la flota mes a mes</h4>
+            </div>
+            <p class="text-[11px] text-slate-500">Foto de la flota al cierre de cada mes (última inspección de cada posición hasta ese mes).</p>
+          </div>
+          <button type="button" onclick="exportarGraficoPngHd('canvasTendencias', 'Tendencias_Flota')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0">
+            <i class="fa-solid fa-camera"></i>
+          </button>
+        </div>
+        <div class="relative h-64"><canvas id="canvasTendencias"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr>
+              <th class="p-2 text-left">Mes</th><th class="p-2 text-right">Vehículos inspeccionados</th><th class="p-2 text-right">Presión correcta</th>
+              <th class="p-2 text-right">En límite de retiro</th><th class="p-2 text-right">Prof. mínima prom.</th><th class="p-2 text-right">Alerta alineación</th><th class="p-2 text-right">CPK operativo</th>
+            </tr></thead>
+            <tbody id="tbodyTendencias" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
     <!-- 4. Tabla Detallada de Trazabilidad y KPIs -->
     <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -2989,25 +3031,6 @@
       </div>
     </div>
 
-    <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
-    <div id="subvista-kpi-6" class="hidden space-y-4">
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-        <div class="pb-2 border-b border-slate-100">
-          <h4 class="text-sm font-black text-slate-900">Tendencia de la flota mes a mes</h4>
-          <p class="text-[11px] text-slate-500">Foto de la flota al cierre de cada mes (última inspección de cada posición hasta ese mes).</p>
-        </div>
-        <div class="h-64"><canvas id="canvasTendencias"></canvas></div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
-            <thead class="bg-slate-900 text-white"><tr>
-              <th class="p-2 text-left">Mes</th><th class="p-2 text-right">Vehículos inspeccionados</th><th class="p-2 text-right">Presión correcta</th>
-              <th class="p-2 text-right">En límite de retiro</th><th class="p-2 text-right">Prof. mínima prom.</th><th class="p-2 text-right">Alerta alineación</th><th class="p-2 text-right">CPK operativo</th>
-            </tr></thead>
-            <tbody id="tbodyTendencias" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </article>
-    </div>
   </section>
 
   <!-- ============================================================== -->
@@ -3108,7 +3131,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente</label>
           <select id="filtro_comp_cliente" onchange="alCambiarClienteComposicion()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todos los Clientes</option>
+            <option value="TODOS">Todos</option>
           </select>
         </div>
 
@@ -3116,7 +3139,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sede / Patio</label>
           <select id="filtro_comp_subcliente" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todas las Sedes</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
 
@@ -3124,7 +3147,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de Eje</label>
           <select id="filtro_comp_tipo_eje" onchange="alCambiarTipoEjeSelectComposicion()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todos los Ejes</option>
+            <option value="TODOS">Todos</option>
             <option value="direccional">Eje Direccional</option>
             <option value="traccion">Eje de Tracción</option>
             <option value="libre">Eje Libre / Remolque</option>
@@ -3135,7 +3158,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Condición / Vida</label>
           <select id="filtro_comp_vida" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODAS">Todas las Vidas</option>
+            <option value="TODAS">Todas</option>
             <option value="ORIGINAL">Solo Original (Nueva)</option>
             <option value="REENCAUCHE">Solo Reencauchadas</option>
           </select>
@@ -3145,7 +3168,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Marca</label>
           <select id="filtro_comp_marca" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todas las Marcas</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
 
@@ -3153,7 +3176,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dimensión</label>
           <select id="filtro_comp_dimension" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todas las Medidas</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
 
@@ -3161,7 +3184,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diseño de Banda</label>
           <select id="filtro_comp_diseno" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todos los Diseños</option>
+            <option value="TODOS">Todos</option>
           </select>
         </div>
       </div>
@@ -4033,7 +4056,7 @@
             <div>
               <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                 <span>Las 7 Bodegas, Kardex y Balance MRP</span>
-                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">KPI 20 PRO</span>
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 whitespace-nowrap shrink-0">KPI 20 PRO</span>
               </h2>
               <p class="text-xs text-slate-500">Gestión de ciclo de vida de carcasas, vulcanizadora, reencauche, garantías y abastecimiento inteligente</p>
             </div>
@@ -4045,7 +4068,7 @@
           <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
             <i class="fa-solid fa-building text-slate-400 text-xs mr-2"></i>
             <select id="selBodegaCliente" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-              <option value="">Todos los Clientes</option>
+              <option value="">Todos</option>
             </select>
           </div>
 
@@ -4053,7 +4076,7 @@
           <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
             <i class="fa-solid fa-ruler-combined text-slate-400 text-xs mr-2"></i>
             <select id="selBodegaDimension" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-              <option value="">Todas las Dimensiones</option>
+              <option value="">Todas</option>
             </select>
           </div>
 
@@ -4140,7 +4163,7 @@
           <!-- B5: Reparación Mayor -->
           <div onclick="filtrarInventarioPorBodega('BODEGA_5_REPARACION')" id="cardBodega_BODEGA_5_REPARACION" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-amber-200 bg-amber-50/50 hover:bg-amber-50 hover:shadow-md transition-all">
             <div class="flex items-center justify-between text-[11px] font-bold text-amber-800 mb-1">
-              <span>B5: Vulcaniz.</span>
+              <span>B5: Reparación</span>
               <i class="fa-solid fa-wrench text-amber-500"></i>
             </div>
             <div class="text-2xl font-black text-amber-950 my-0.5 font-mono" id="cardCant_B5">0</div>
@@ -4160,7 +4183,7 @@
           <!-- B7: Chatarrizadas -->
           <div onclick="filtrarInventarioPorBodega('BODEGA_7_CHATARRIZADA')" id="cardBodega_BODEGA_7_CHATARRIZADA" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-slate-300 bg-slate-100 hover:bg-slate-200/70 hover:shadow-md transition-all">
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
-              <span>B7: Chatarra</span>
+              <span>B7: Disposición final</span>
               <i class="fa-solid fa-recycle text-slate-500"></i>
             </div>
             <div class="text-2xl font-black text-slate-900 my-0.5 font-mono" id="cardCant_B7">0</div>

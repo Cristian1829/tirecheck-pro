@@ -104,8 +104,8 @@
       const puedeEditar = esAdminOJefatura();
       tbody.innerHTML = lista.map(c => {
         const licBadge = (c.tipo_licencia === 'PRO') 
-          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">PRO (Bodegas & MRP)</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">LIGHT</span>';
+          ? '<span title="Incluye Bodegas y MRP" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">PRO</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap">LIGHT</span>';
 
         const reqMes = (c.requiere_mes_siguiente !== false && c.requiere_mes_siguiente !== 0);
         const diasNum = c.dias_espera_inspeccion || 20;
@@ -126,10 +126,10 @@
                 <i class="fa-solid fa-building text-slate-400 text-xs"></i>
                 <span>${c.cliente}</span>
               </div>
-              <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? c.fecha_actualizacion.slice(0, 10) : 'Al día'}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? fmtFecha(c.fecha_actualizacion) : 'Al día'}</div>
             </td>
             <td class="p-3 text-center">${licBadge}</td>
-            <td class="p-3 text-center font-mono font-black text-rose-700">${Number(c.limite_retiro_mm || 3.0).toFixed(1)} mm</td>
+            <td class="p-3 text-center font-mono font-black text-rose-700 whitespace-nowrap">${fmtDec(Number(c.limite_retiro_mm || 3.0), 1)} mm</td>
             <td class="p-3 text-center">${freqBadge}</td>
             <td class="p-3 max-w-[200px]">${subChips}</td>
             <td class="p-3 text-center">
@@ -951,7 +951,7 @@
             <td class="p-2.5 font-black text-slate-900">${escapeHtml(c.cliente)}</td>
             <td class="p-2.5 font-bold text-slate-700">${escapeHtml(c.subcliente || 'TODOS')}</td>
             <td class="p-2.5 text-center">${badgeEje}</td>
-            <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
+            <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm whitespace-nowrap">${fmtDec(c.limite_retiro_mm, 1)} mm</td>
             <td class="p-2.5 text-slate-600">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-2.5 text-center">
               <div class="flex items-center justify-center space-x-1">
@@ -1677,7 +1677,7 @@
           if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             archivoPreciosExcelSeleccionado = e.dataTransfer.files[0];
             const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
-            if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+            if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${fmtDec((archivoPreciosExcelSeleccionado.size / 1024), 1)} KB)`;
             const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
             if (btnImportar) btnImportar.disabled = false;
           }
@@ -1697,7 +1697,7 @@
       if (e.target.files && e.target.files[0]) {
         archivoPreciosExcelSeleccionado = e.target.files[0];
         const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
-        if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+        if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${fmtDec((archivoPreciosExcelSeleccionado.size / 1024), 1)} KB)`;
         const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
         if (btnImportar) btnImportar.disabled = false;
       }

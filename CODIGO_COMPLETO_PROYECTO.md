@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 14:38:34`
+- **Fecha de Generación:** `2026-10-27 16:22:07`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,520` líneas
-- **Tamaño Total de Código Fuente:** `3060.3 KB` (`3,133,785` bytes)
+- **Líneas Totales de Código:** `60,624` líneas
+- **Tamaño Total de Código Fuente:** `3065.8 KB` (`3,139,391` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -469,7 +469,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2639 | 121.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10787 | 539.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 10798 | 540.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2112 | 103.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -481,18 +481,18 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6536 | 441.1 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6559 | 437.3 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
-| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
+| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1042 | 45.4 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2233 | 99.7 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2259 | 101.0 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
-| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1222 | 58.2 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.7 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
-| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
+| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1228 | 58.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 134.6 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2131 | 113.0 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
@@ -6465,7 +6465,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10787 líneas | 552,403 bytes (539.5 KB)
+- **Métricas:** 10798 líneas | 553,286 bytes (540.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -16196,6 +16196,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (SOLO FULL)
     # =========================================================================
     marcas_fvu, ciclos_fvu, causales_fvu, alertas_garantia = {}, {'Original': 0, 'R1': 0, 'R2': 0, 'R3+': 0}, {}, []
+    bajas_prof_inconsistente = []
     if cant_fvu > 0 and es_full:
         for ll in llantas_fvu:
             # Campos vacíos en la base llegan como None: sin 'or' salían rotulados "None" en las gráficas
@@ -16215,16 +16216,25 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             cs_f = str(ll.get('causal_baja_fvu') or '').strip() or 'Sin causal registrada'
             causales_fvu[cs_f] = causales_fvu.get(cs_f, 0) + 1
 
-            p_ini_f = to_float(ll.get('prof_inicial', 18.0), 18.0)
-            p_act_f = to_float(ll.get('prof_actual_min', 0.0))
-            pct_desg_f = max(0.0, ((p_ini_f - p_act_f) / max(1.0, p_ini_f - 3.0)) * 100.0)
-            if pct_desg_f < 30.0 or ll.get('estado_garantia') in ('Posible Garantía', 'En Reclamación'):
+            # Posible garantía: baja con menos del 30 % de desgaste, o reclamación ya abierta. Una profundidad
+            # actual mayor que la inicial es un dato imposible: se informa aparte y no cuenta como garantía
+            # (antes todas esas bajas salían con 0 % de desgaste y "en garantía"). Sin profundidad inicial no se supone 18 mm.
+            p_ini_f = to_float(ll.get('prof_inicial'))
+            p_act_f = to_float(ll.get('prof_actual_min'))
+            estado_g = str(ll.get('estado_garantia') or '').strip()
+            inconsistente = p_ini_f > 0 and p_act_f > p_ini_f
+            if inconsistente:
+                bajas_prof_inconsistente.append(ll.get('numero_interno', ''))
+            pct_desg_f = (max(0.0, ((p_ini_f - p_act_f) / max(1.0, p_ini_f - 3.0)) * 100.0)
+                          if p_ini_f > 0 and p_act_f > 0 and not inconsistente else None)
+            en_reclamo = estado_g in ('Posible Garantía', 'En Reclamación') or 'RECLAM' in estado_g.upper()
+            if (pct_desg_f is not None and pct_desg_f < 30.0) or en_reclamo:
                 alertas_garantia.append({
                     'numero_interno': ll.get('numero_interno', ''),
                     'marca': mk_f,
                     'causal': cs_f,
-                    'pct_desgaste': round(pct_desg_f, 1),
-                    'estado_garantia': ll.get('estado_garantia', 'Posible Garantía')
+                    'pct_desgaste': round(pct_desg_f, 1) if pct_desg_f is not None else None,
+                    'estado_garantia': estado_g or 'Posible Garantía'
                 })
 
     tot_cs = max(1, sum(causales_fvu.values()))
@@ -16238,7 +16248,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "por_marca": {"labels": list(marcas_fvu.keys()), "valores": list(marcas_fvu.values())},
         "por_ciclo": {"labels": list(ciclos_fvu.keys()), "valores": list(ciclos_fvu.values())},
         "por_causal": {"labels": cs_labels, "valores": cs_valores, "porcentajes": cs_pcts},
-        "alertas_garantia": alertas_garantia
+        "alertas_garantia": alertas_garantia,
+        "bajas_profundidad_inconsistente": len(bajas_prof_inconsistente)
     }
 
     # =========================================================================
@@ -23716,7 +23727,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6536 líneas | 451,706 bytes (441.1 KB)
+- **Métricas:** 6559 líneas | 447,837 bytes (437.3 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -23887,6 +23898,19 @@ if __name__ == '__main__':
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+    /* Distintivos que no deben partirse en dos líneas (su clase la reescribe el JS) */
+    #badgeLicenciaActiva, #kpi10_efectividad_badge, #kpi15_brecha_badge, #kpi18_badge_garantia,
+    #badge_cascos_salvamento, #badge_cambiazos_total { white-space: nowrap; }
+
+    /* Barra de pestañas: centrado "seguro" (si no caben, no se corta la primera a la izquierda) y
+       desvanecido en el borde que tiene pestañas ocultas, para que se note que se puede desplazar */
+    @media (min-width: 1024px) {
+      #navTabs { justify-content: safe center; }
+    }
+    #navTabs.fade-izq { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
+    #navTabs.fade-der { -webkit-mask-image: linear-gradient(to left, transparent, #000 28px); mask-image: linear-gradient(to left, transparent, #000 28px); }
+    #navTabs.fade-izq.fade-der { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 
     /* Píldora del carrusel táctil de llantas */
     .carrusel-tire-pill {
@@ -24255,7 +24279,7 @@ if __name__ == '__main__':
 
   <!-- ================= 3. BARRA DE NAVEGACIÓN (TABS) ================= -->
   <nav class="w-full bg-[#081221] border-b border-slate-800 px-1 sm:px-2 lg:px-4 z-20 shadow-lg select-none">
-      <div class="w-full max-w-[1720px] mx-auto flex items-center justify-start lg:justify-center space-x-0.5 sm:space-x-1 xl:space-x-2 overflow-x-auto no-scrollbar scroll-smooth" id="navTabs">
+      <div class="w-full max-w-[1720px] mx-auto flex items-center justify-start space-x-0.5 sm:space-x-1 xl:space-x-2 overflow-x-auto no-scrollbar scroll-smooth" id="navTabs">
           
           <!-- Pestaña 1: Inspección de Patio (Activa por defecto) -->
           <button type="button" onclick="navegarTab('patio')" id="nav-btn-patio" data-tab="patio" class="nav-tab active tab-active flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-semibold text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap" aria-current="page">
@@ -24966,16 +24990,16 @@ if __name__ == '__main__':
             </div>
 
             <!-- Botones de Acción: En PC se muestra dentro de la tarjeta; en MÓVIL se OCULTA para no duplicarse con la barra sticky inferior -->
-            <div class="hidden lg:flex items-center space-x-2.5 pt-2">
-              <button type="submit" id="btnGuardar" class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
+            <div class="hidden lg:flex items-stretch space-x-2.5 pt-2">
+              <button type="submit" id="btnGuardar" title="Guardar esta llanta y pasar a la siguiente posición" class="flex-1 min-w-0 whitespace-nowrap py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center space-x-2 transition-all">
                 <i class="fa-solid fa-circle-check text-base"></i>
-                <span>Guardar & Siguiente Llanta</span>
+                <span>Guardar y siguiente</span>
               </button>
-              <button type="button" onclick="confirmarFinalizarInspeccion()" id="btnFinalizarDesk" class="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all" title="Finalizar Inspección de este Vehículo">
+              <button type="button" onclick="confirmarFinalizarInspeccion()" id="btnFinalizarDesk" class="whitespace-nowrap shrink-0 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs rounded-2xl shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all" title="Finalizar Inspección de este Vehículo">
                 <i class="fa-solid fa-flag-checkered text-sm"></i>
                 <span>Finalizar</span>
               </button>
-              <button type="button" onclick="limpiarTodoParaNuevaInspeccion()" id="btnLimpiarTodoDesk" class="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Limpiar todo el formulario y chasis para ingresar una nueva inspección">
+              <button type="button" onclick="limpiarTodoParaNuevaInspeccion()" id="btnLimpiarTodoDesk" class="whitespace-nowrap shrink-0 py-3.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Limpiar todo el formulario y chasis para ingresar una nueva inspección">
                 <i class="fa-solid fa-rotate-left text-sm text-slate-600"></i>
                 <span>Limpiar Todo</span>
               </button>
@@ -25045,7 +25069,7 @@ if __name__ == '__main__':
             <i class="fa-solid fa-file-export"></i>
             <span>Exportar Excel</span>
           </button>
-          <button type="button" onclick="cargarBaseInspecciones()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">
+          <button type="button" onclick="cargarBaseInspecciones()" title="Actualizar inspecciones" aria-label="Actualizar inspecciones" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
         </div>
@@ -25111,7 +25135,7 @@ if __name__ == '__main__':
           <div class="space-y-1">
             <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Sede:</label>
             <select id="filtroBDSede" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
-              <option value="TODOS">Todas las Sedes</option>
+              <option value="TODOS">Todas</option>
             </select>
           </div>
 
@@ -25153,7 +25177,7 @@ if __name__ == '__main__':
           <div class="space-y-1">
             <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Desgaste / Estado:</label>
             <select id="filtroBDSemaforo" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
-              <option value="TODOS">Todos los Estados</option>
+              <option value="TODOS">Todos</option>
               <option value="CRITICO">🔴 Crítico (≤ 3.0 mm)</option>
               <option value="ALERTA">🟡 Precaución (3.1 - 5.0 mm)</option>
               <option value="OPTIMO">🟢 Óptimo (> 5.0 mm)</option>
@@ -25268,19 +25292,19 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
           <select id="filtro_diag_cliente" name="filtroDiagCliente" data-alias="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todos los Clientes</option>
+            <option value="Todos">Todos</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcliente:</label>
           <select id="filtro_diag_subcliente" name="filtroDiagSede" data-alias="filtroDiagSede" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todas las Sedes</option>
+            <option value="Todos">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo Operación:</label>
           <select id="filtro_diag_operacion" name="filtroDiagOperacion" data-alias="filtroDiagOperacion" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todas las Operaciones</option>
+            <option value="Todos">Todas</option>
           </select>
         </div>
         <div>
@@ -25294,7 +25318,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtro por Acción:</label>
           <select id="filtro_diag_accion" name="filtroDiagAlerta" data-alias="filtroDiagAlerta" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
-            <option value="Todos">Todas las Acciones</option>
+            <option value="Todos">Todas</option>
             <option value="Retiro Inmediato">🔴 Retiro Inmediato (≤ Límite)</option>
             <option value="Próximas a Cambio">🟡 Próximas a Cambio (+2.0 mm)</option>
             <option value="Estado OK">🟢 Estado OK (Sin Alertas)</option>
@@ -25528,7 +25552,7 @@ if __name__ == '__main__':
             </h2>
             <span id="badgeLicenciaActiva" class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-700 border border-sky-400/40">LICENCIA FULL / PRO</span>
           </div>
-          <p class="text-xs text-slate-500">20 KPIs ejecutivos organizados en 5 pestañas homologadas con visualización 2x HD y reglas técnicas avanzadas</p>
+          <p class="text-xs text-slate-500">20 KPIs ejecutivos organizados en 6 pestañas con visualización 2x HD y reglas técnicas avanzadas</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -25569,51 +25593,51 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Cliente:</label>
           <select id="filtroKpiCliente" onchange="alCambiarFiltroKpiCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todos los Clientes</option>
+            <option value="TODOS">Todos</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcli:</label>
           <select id="filtroKpiSubcliente" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Sedes</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Operación:</label>
           <select id="filtroKpiOperacion" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Operaciones</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipología:</label>
           <select id="filtroKpiTipologia" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Tipologías</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Marca:</label>
           <select id="filtroKpiMarca" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Marcas</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Dimensión:</label>
           <select id="filtroKpiDimension" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="TODOS">Todas las Dimensiones</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Eje Temporal:</label>
           <select id="filtroKpiEjeTemporal" onchange="cargarSuite20Kpis()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="mes">Por Mes (YYYY-MM)</option>
-            <option value="insp">Por Corte (INSP 1..N)</option>
+            <option value="mes">Por mes</option>
+            <option value="insp">Por corte</option>
           </select>
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Base de cálculo:</label>
           <select id="filtroKpiBase" onchange="cargarSuite20Kpis()" title="Última inspección: estado actual de cada posición. Historial: todas las inspecciones del periodo." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
-            <option value="ultima">Última inspección</option>
-            <option value="historial">Historial completo</option>
+            <option value="ultima">Última</option>
+            <option value="historial">Historial</option>
           </select>
         </div>
         <div>
@@ -25636,7 +25660,7 @@ if __name__ == '__main__':
           </div>
           <div class="text-left leading-tight">
             <span class="block font-bold text-xs tracking-tight text-white">1. Inspección & Parque</span>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90">KPI 01-04</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-indigo-300 opacity-90 whitespace-nowrap shrink-0">KPI 01-04</span>
           </div>
         </button>
 
@@ -25647,7 +25671,7 @@ if __name__ == '__main__':
           </div>
           <div class="text-left leading-tight">
             <span class="block font-bold text-xs tracking-tight text-slate-700">2. Mantenimiento & Pérdida</span>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 05-11</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 05-11</span>
           </div>
         </button>
 
@@ -25661,7 +25685,7 @@ if __name__ == '__main__':
               <span class="block font-bold text-xs tracking-tight text-slate-700">3. Producto & Proyecciones</span>
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 12-16</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 12-16</span>
           </div>
         </button>
 
@@ -25675,7 +25699,7 @@ if __name__ == '__main__':
               <span class="block font-bold text-xs tracking-tight text-slate-700">4. Tablero Bajas / FVU</span>
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 17-19</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 17-19</span>
           </div>
         </button>
 
@@ -25689,7 +25713,7 @@ if __name__ == '__main__':
               <span class="block font-bold text-xs tracking-tight text-slate-700">5. Balance 7 Bodegas MRP</span>
               <span class="subtab-kpi-pro-badge text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xs">FULL</span>
             </div>
-            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400">KPI 20</span>
+            <span class="subtab-kpi-sub block text-[9.5px] font-mono text-slate-400 whitespace-nowrap shrink-0">KPI 20</span>
           </div>
         </button>
 
@@ -25803,7 +25827,7 @@ if __name__ == '__main__':
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">KPI 01 · Auditoría</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 whitespace-nowrap shrink-0">KPI 01 · Auditoría</span>
               <h3 class="text-base font-black tracking-tight">Cumplimiento de Inspección vs. Parque Vehicular Activo</h3>
             </div>
             <p class="text-xs text-slate-300 mt-0.5">Mide la cobertura de auditoría sobre el censo total de vehículos registrados en padrón</p>
@@ -25841,7 +25865,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">KPI 02</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 02</span>
                   <h4 class="text-sm font-black text-slate-900">Volumen Auditado Mes a Mes</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Total de llantas rodando vs. vehículos auditados en corte mensual</p>
@@ -25865,7 +25889,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">KPI 03</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 whitespace-nowrap shrink-0">KPI 03</span>
                   <h4 class="text-sm font-black text-slate-900">% de Reencauche y Unidades por Ciclo</h4>
                 </div>
                 <p id="kpi03_subtitulo" class="text-[11px] text-slate-400">Alineación a la meta de reencauche del cliente y ciclo de vida (Original, R1, R2, R3+)</p>
@@ -25894,7 +25918,7 @@ if __name__ == '__main__':
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 04</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 04</span>
               <h4 class="text-sm font-black text-slate-900">Composición de Flota (Tipología, Marca y Dimensión)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Distribución fotográfica en patio por configuración vehicular, marca instalada y dimensión de neumático</p>
@@ -25950,7 +25974,7 @@ if __name__ == '__main__':
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 05</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 05</span>
               <h4 class="text-sm font-black text-slate-900">Cuadro de Retiros y Cambios Inmediatos</h4>
             </div>
             <p class="text-[11px] text-slate-400">Identificación de llantas a límite de retiro con blindaje de Par Direccional (Pos 1 y 2)</p>
@@ -25989,7 +26013,7 @@ if __name__ == '__main__':
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-800">KPI 06</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-sky-100 text-sky-800 whitespace-nowrap shrink-0">KPI 06</span>
               <h4 class="text-sm font-black text-slate-900">Seguimiento de Alineación y Costo de Milímetros Perdidos</h4>
             </div>
             <p class="text-[11px] text-slate-400">Diferencia entre hombros (&ge; 2.0 mm) y valor económico del desgaste prematuro</p>
@@ -26030,7 +26054,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800">KPI 07</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 whitespace-nowrap shrink-0">KPI 07</span>
                   <h4 class="text-sm font-black text-slate-900">Plan de Rotaciones Tándem (Equis Larga)</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Balanceo de desgaste inter-eje (&Delta; &ge; 1.5 mm) con jerarquía de tráiler</p>
@@ -26060,7 +26084,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 08</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 08</span>
                   <h4 class="text-sm font-black text-slate-900">Duales Mal Apareados (&gt; 3 mm) & Cruce Bodega 2</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Frecuencia mensual y sugerencias de emparejamiento con llantas de recambio</p>
@@ -26089,7 +26113,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 09</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 09</span>
                   <h4 class="text-sm font-black text-slate-900">Estado de Presiones PSI & Desperdicio Combustible</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Distribución de 4 rangos de calibración y cálculo de consumo diésel</p>
@@ -26121,7 +26145,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800">KPI 10</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800 whitespace-nowrap shrink-0">KPI 10</span>
                   <h4 class="text-sm font-black text-slate-900">Diagrama de Pareto de Novedades & Taller</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Regla 80/20 de causas mecánicas y efectividad de resolución de novedades</p>
@@ -26145,7 +26169,7 @@ if __name__ == '__main__':
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 11 · Financiero</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 11 · Financiero</span>
               <h4 class="text-sm font-black text-slate-900">Impacto Económico Interanual: Pérdida mm vs. Costo Monetario ($)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Suma consolidada de pérdidas por desalineación, desbalance y descalibración de presión</p>
@@ -26187,16 +26211,16 @@ if __name__ == '__main__':
       <!-- KPI 12: Las 4 Tarjetas Maestras de Desempeño de Flota -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">mm Gastados Prom.</span>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Milímetros gastados por la llanta más desgastada de la flota">mm Gastados (Máx.)</span>
           <span id="kpi12_mm_gastados" class="text-2xl font-black text-indigo-600 block mt-1 font-mono">0,0 mm</span>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Profundidad Actual</span>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Profundidad de la llanta más crítica de la flota">Profundidad Mínima</span>
           <span id="kpi12_prof_actual" class="text-2xl font-black text-emerald-600 block mt-1 font-mono">0,0 mm</span>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">% Desgaste Flota</span>
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Desgaste de la llanta más gastada de la flota">% Desgaste Máx.</span>
             <span id="kpi12_pct_desgaste" class="text-xs font-black text-slate-800 font-mono">0,0%</span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-2.5 mt-2 overflow-hidden">
@@ -26214,7 +26238,7 @@ if __name__ == '__main__':
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">KPI 13</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 13</span>
               <h4 class="text-sm font-black text-slate-900">Km Rodados Reales vs. Proyección Final al Límite de Retiro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Comparación de avance actual vs. proyección calculada hasta el milímetro mínimo de seguridad</p>
@@ -26233,7 +26257,7 @@ if __name__ == '__main__':
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800">KPI 14</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800 whitespace-nowrap shrink-0">KPI 14</span>
               <h4 class="text-sm font-black text-slate-900">Tríada Multidimensional Sincronizada: Proyección, Km/mm y CPK proyectado ($)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Visualización simultánea de rendimiento técnico y financiero reagrupado dinámicamente</p>
@@ -26311,7 +26335,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">KPI 15</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 15</span>
                   <h4 class="text-sm font-black text-slate-900">Potencial de Llanta: Promedio vs. Envolventes Máx y Mín</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Filtrado estricto de madurez (&ge; 1.5 mm de desgaste) y brecha frente al mejor registro</p>
@@ -26335,7 +26359,7 @@ if __name__ == '__main__':
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 16</span>
+                  <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 16</span>
                   <h4 class="text-sm font-black text-slate-900">Curva de Proyección por Rango de Desgaste</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Comportamiento del caucho en las 5 bandas de madurez (0-40%, 40-60%, 60-80%, 80-100%, Retiro)</p>
@@ -26371,7 +26395,7 @@ if __name__ == '__main__':
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 17</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 17</span>
               <h4 class="text-sm font-black text-slate-900">Indicadores Globales de Fin de Vida Útil (FVU)</h4>
             </div>
             <p class="text-[11px] text-slate-400">Evolución mensual de carcasas desechadas, índice de reencauchabilidad y ratio de ciclos</p>
@@ -26405,7 +26429,7 @@ if __name__ == '__main__':
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800">KPI 18</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fuchsia-100 text-fuchsia-800 whitespace-nowrap shrink-0">KPI 18</span>
               <h4 class="text-sm font-black text-slate-900">Participación FVU: Marca, Ciclo y Causal de Daño</h4>
             </div>
             <p class="text-[11px] text-slate-400">Detección de patrones de fallo prematuro y filtro interactivo cruzado</p>
@@ -26437,6 +26461,7 @@ if __name__ == '__main__':
             </div>
           </div>
         </div>
+        <p id="kpi18_nota_inconsistente" class="hidden mt-3 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5"></p>
       </article>
 
       <!-- KPI 19: Profundidad de Retiro y Dispersión por mm -->
@@ -26444,7 +26469,7 @@ if __name__ == '__main__':
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">KPI 19</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800 whitespace-nowrap shrink-0">KPI 19</span>
               <h4 class="text-sm font-black text-slate-900">Profundidad de Baja (Máx / Prom / Mín) & Dispersión por Milímetro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Milímetros de caucho desperdiciados y scrap económico por retiros antes de tiempo</p>
@@ -26483,10 +26508,10 @@ if __name__ == '__main__':
         <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">KPI 20 · MRP</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 whitespace-nowrap shrink-0">KPI 20 · MRP</span>
               <h4 class="text-base font-black text-slate-900">Planeación de Necesidades de Llantas (MRP) vs. Balance de 7 Bodegas</h4>
             </div>
-            <p class="text-xs text-slate-500">Demanda neta por retiros de flota + reposición FVU + 15% seguridad vs. stock disponible (B1 + B2 + B3x0.90 + B4)</p>
+            <p class="text-xs text-slate-500">Demanda neta por retiros de flota + reposición FVU + stock de seguridad (por medida y eje) vs. stock disponible (B1 + B2 + B3x0.90 + B4)</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button type="button" onclick="exportarMrpExcel()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all active:scale-95">
@@ -26521,7 +26546,7 @@ if __name__ == '__main__':
                 <th class="p-2.5">Dimensión / Medida</th>
                 <th class="p-2.5 text-center">Demanda Retiros</th>
                 <th class="p-2.5 text-center">Bajas FVU</th>
-                <th class="p-2.5 text-center">Margen Seg. (15%)</th>
+                <th class="p-2.5 text-center">Stock Seguridad</th>
                 <th class="p-2.5 text-center bg-rose-950 text-rose-300 font-black">NECESIDAD BRUTA</th>
                 <!-- Bodegas -->
                 <th class="p-2.5 text-center">B1 (Nuevas)</th>
@@ -26629,6 +26654,34 @@ if __name__ == '__main__':
       </div>
     </div>
 
+    <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
+    <div id="subvista-kpi-6" class="hidden space-y-4">
+      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-sky-100 text-sky-800 whitespace-nowrap">Tendencias</span>
+              <h4 class="text-sm font-black text-slate-900">Tendencia de la flota mes a mes</h4>
+            </div>
+            <p class="text-[11px] text-slate-500">Foto de la flota al cierre de cada mes (última inspección de cada posición hasta ese mes).</p>
+          </div>
+          <button type="button" onclick="exportarGraficoPngHd('canvasTendencias', 'Tendencias_Flota')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0">
+            <i class="fa-solid fa-camera"></i>
+          </button>
+        </div>
+        <div class="relative h-64"><canvas id="canvasTendencias"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
+            <thead class="bg-slate-900 text-white"><tr>
+              <th class="p-2 text-left">Mes</th><th class="p-2 text-right">Vehículos inspeccionados</th><th class="p-2 text-right">Presión correcta</th>
+              <th class="p-2 text-right">En límite de retiro</th><th class="p-2 text-right">Prof. mínima prom.</th><th class="p-2 text-right">Alerta alineación</th><th class="p-2 text-right">CPK operativo</th>
+            </tr></thead>
+            <tbody id="tbodyTendencias" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
     <!-- 4. Tabla Detallada de Trazabilidad y KPIs -->
     <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -26711,25 +26764,6 @@ if __name__ == '__main__':
       </div>
     </div>
 
-    <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
-    <div id="subvista-kpi-6" class="hidden space-y-4">
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-        <div class="pb-2 border-b border-slate-100">
-          <h4 class="text-sm font-black text-slate-900">Tendencia de la flota mes a mes</h4>
-          <p class="text-[11px] text-slate-500">Foto de la flota al cierre de cada mes (última inspección de cada posición hasta ese mes).</p>
-        </div>
-        <div class="h-64"><canvas id="canvasTendencias"></canvas></div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
-            <thead class="bg-slate-900 text-white"><tr>
-              <th class="p-2 text-left">Mes</th><th class="p-2 text-right">Vehículos inspeccionados</th><th class="p-2 text-right">Presión correcta</th>
-              <th class="p-2 text-right">En límite de retiro</th><th class="p-2 text-right">Prof. mínima prom.</th><th class="p-2 text-right">Alerta alineación</th><th class="p-2 text-right">CPK operativo</th>
-            </tr></thead>
-            <tbody id="tbodyTendencias" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </article>
-    </div>
   </section>
 
   <!-- ============================================================== -->
@@ -26830,7 +26864,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente</label>
           <select id="filtro_comp_cliente" onchange="alCambiarClienteComposicion()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todos los Clientes</option>
+            <option value="TODOS">Todos</option>
           </select>
         </div>
 
@@ -26838,7 +26872,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sede / Patio</label>
           <select id="filtro_comp_subcliente" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todas las Sedes</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
 
@@ -26846,7 +26880,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de Eje</label>
           <select id="filtro_comp_tipo_eje" onchange="alCambiarTipoEjeSelectComposicion()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todos los Ejes</option>
+            <option value="TODOS">Todos</option>
             <option value="direccional">Eje Direccional</option>
             <option value="traccion">Eje de Tracción</option>
             <option value="libre">Eje Libre / Remolque</option>
@@ -26857,7 +26891,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Condición / Vida</label>
           <select id="filtro_comp_vida" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODAS">Todas las Vidas</option>
+            <option value="TODAS">Todas</option>
             <option value="ORIGINAL">Solo Original (Nueva)</option>
             <option value="REENCAUCHE">Solo Reencauchadas</option>
           </select>
@@ -26867,7 +26901,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Marca</label>
           <select id="filtro_comp_marca" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todas las Marcas</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
 
@@ -26875,7 +26909,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dimensión</label>
           <select id="filtro_comp_dimension" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todas las Medidas</option>
+            <option value="TODOS">Todas</option>
           </select>
         </div>
 
@@ -26883,7 +26917,7 @@ if __name__ == '__main__':
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diseño de Banda</label>
           <select id="filtro_comp_diseno" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
-            <option value="TODOS">Todos los Diseños</option>
+            <option value="TODOS">Todos</option>
           </select>
         </div>
       </div>
@@ -27755,7 +27789,7 @@ if __name__ == '__main__':
             <div>
               <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                 <span>Las 7 Bodegas, Kardex y Balance MRP</span>
-                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">KPI 20 PRO</span>
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 whitespace-nowrap shrink-0">KPI 20 PRO</span>
               </h2>
               <p class="text-xs text-slate-500">Gestión de ciclo de vida de carcasas, vulcanizadora, reencauche, garantías y abastecimiento inteligente</p>
             </div>
@@ -27767,7 +27801,7 @@ if __name__ == '__main__':
           <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
             <i class="fa-solid fa-building text-slate-400 text-xs mr-2"></i>
             <select id="selBodegaCliente" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-              <option value="">Todos los Clientes</option>
+              <option value="">Todos</option>
             </select>
           </div>
 
@@ -27775,7 +27809,7 @@ if __name__ == '__main__':
           <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-2xs">
             <i class="fa-solid fa-ruler-combined text-slate-400 text-xs mr-2"></i>
             <select id="selBodegaDimension" onchange="cargarModuloBodegasMRP()" class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-              <option value="">Todas las Dimensiones</option>
+              <option value="">Todas</option>
             </select>
           </div>
 
@@ -27862,7 +27896,7 @@ if __name__ == '__main__':
           <!-- B5: Reparación Mayor -->
           <div onclick="filtrarInventarioPorBodega('BODEGA_5_REPARACION')" id="cardBodega_BODEGA_5_REPARACION" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-amber-200 bg-amber-50/50 hover:bg-amber-50 hover:shadow-md transition-all">
             <div class="flex items-center justify-between text-[11px] font-bold text-amber-800 mb-1">
-              <span>B5: Vulcaniz.</span>
+              <span>B5: Reparación</span>
               <i class="fa-solid fa-wrench text-amber-500"></i>
             </div>
             <div class="text-2xl font-black text-amber-950 my-0.5 font-mono" id="cardCant_B5">0</div>
@@ -27882,7 +27916,7 @@ if __name__ == '__main__':
           <!-- B7: Chatarrizadas -->
           <div onclick="filtrarInventarioPorBodega('BODEGA_7_CHATARRIZADA')" id="cardBodega_BODEGA_7_CHATARRIZADA" class="card-bodega cursor-pointer rounded-2xl p-3 border-2 border-slate-300 bg-slate-100 hover:bg-slate-200/70 hover:shadow-md transition-all">
             <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
-              <span>B7: Chatarra</span>
+              <span>B7: Disposición final</span>
               <i class="fa-solid fa-recycle text-slate-500"></i>
             </div>
             <div class="text-2xl font-black text-slate-900 my-0.5 font-mono" id="cardCant_B7">0</div>
@@ -33170,7 +33204,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/app_core.js`
 - **Descripción:** Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación
-- **Métricas:** 1012 líneas | 44,965 bytes (43.9 KB)
+- **Métricas:** 1042 líneas | 46,516 bytes (45.4 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -33183,6 +33217,35 @@ if __name__ == '__main__':
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    // Desvanecido de la barra de pestañas en el lado que tiene pestañas ocultas (ver #navTabs en el CSS)
+    function actualizarDesvanecidoNav() {
+      const nav = document.getElementById('navTabs');
+      if (!nav) return;
+      nav.classList.toggle('fade-izq', nav.scrollLeft > 2);
+      nav.classList.toggle('fade-der', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2);
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const nav = document.getElementById('navTabs');
+      if (!nav) return;
+      nav.addEventListener('scroll', actualizarDesvanecidoNav, { passive: true });
+      window.addEventListener('resize', actualizarDesvanecidoNav);
+      actualizarDesvanecidoNav();
+    });
+
+    // Formatos de pantalla (colombianos). Los campos de formulario siguen con punto decimal.
+    // Número con coma decimal: fmtDec(3, 1) -> "3,0"; fmtDec(1234.5, 1) -> "1.234,5"
+    function fmtDec(valor, decimales = 1) {
+      const n = Number(valor);
+      if (!isFinite(n)) return '-';
+      return n.toLocaleString('es-CO', { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
+    }
+
+    // Fecha 'AAAA-MM-DD[...]' -> 'DD/MM/AAAA' (lo que no sea una fecha se devuelve igual)
+    function fmtFecha(valor) {
+      const m = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? `${m[3]}/${m[2]}/${m[1]}` : (valor || '-');
     }
 
     // ==========================================
@@ -34054,7 +34117,8 @@ if __name__ == '__main__':
         if (rol === 'admin' || rol === 'administrador') rolTag = 'ADMIN';
         else if (rol === 'jefatura' || rol === 'jefe' || rol === 'jefe_llantas') rolTag = 'JEFATURA LLANTAS';
         else if (rol === 'gerencia' || rol === 'gerente') rolTag = 'GERENCIA';
-        lbl.textContent = `${usuarioActual.nombre_completo} [${rolTag}]`;
+        // Sin nombre completo registrado se muestra el usuario (antes salía "undefined")
+        lbl.textContent = `${usuarioActual.nombre_completo || usuarioActual.username || 'Usuario'} [${rolTag}]`;
       }
 
       // Control de visibilidad de pestañas de navegación según permisos del perfil
@@ -34592,8 +34656,8 @@ if __name__ == '__main__':
 
       if (d) {
         const mm = d.limite_retiro_mm || 3.0;
-        document.getElementById('lblMmRetiroCliente').textContent = Number(mm).toFixed(1);
-        document.getElementById('lblMmAlerta').textContent = Number(mm).toFixed(1);
+        document.getElementById('lblMmRetiroCliente').textContent = fmtDec(Number(mm), 1);
+        document.getElementById('lblMmAlerta').textContent = fmtDec(Number(mm), 1);
         if (d.tipo_licencia) {
           clienteLicenciaCaptura = d.tipo_licencia;
           window.clienteLicenciaCaptura = d.tipo_licencia;
@@ -36630,7 +36694,7 @@ if __name__ == '__main__':
             const bHist = document.getElementById('badgeHistorialPrevia');
             if (bHist) {
               bHist.classList.remove('hidden');
-              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + lt.ult_prof_min.toFixed(1) + ' mm' : ''})`;
+              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + fmtDec(lt.ult_prof_min, 1) + ' mm' : ''})`;
             }
 
             // Precargar especificaciones técnicas de la llanta
@@ -38350,7 +38414,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_basedatos.js`
 - **Descripción:** Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel
-- **Métricas:** 887 líneas | 42,597 bytes (41.6 KB)
+- **Métricas:** 887 líneas | 42,552 bytes (41.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -38414,10 +38478,10 @@ if __name__ == '__main__':
       const tipologias = Array.from(new Set(data.map(r => (r.tipologia || '').trim()).filter(Boolean))).sort();
       const marcas = Array.from(new Set(data.map(r => (r.marca || '').trim()).filter(Boolean))).sort();
 
-      selCli.innerHTML = '<option value="TODOS">Todos los Clientes</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      selTip.innerHTML = '<option value="TODOS">Todas las Tipologías</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
-      selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+      selCli.innerHTML = '<option value="TODOS">Todos</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+      selOp.innerHTML = '<option value="TODOS">Todas</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+      selTip.innerHTML = '<option value="TODOS">Todas</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
+      selMar.innerHTML = '<option value="TODOS">Todas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
 
       // Restaurar si aún existen
       if (clientes.includes(valCli)) selCli.value = valCli;
@@ -38443,7 +38507,7 @@ if __name__ == '__main__':
           .filter(Boolean)
       )).sort();
 
-      selSede.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+      selSede.innerHTML = '<option value="TODOS">Todas</option>' +
         sedes.map(s => `<option value="${s}">${s}</option>`).join('');
 
       if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
@@ -38668,7 +38732,7 @@ if __name__ == '__main__':
                 </button>
               ` : ''}
             </td>
-            <td class="p-2.5 font-mono text-slate-600">${r.fecha || '-'}</td>
+            <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${fmtFecha(r.fecha)}</td>
             <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
             <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
             <td class="p-2.5">${r.tipo_operacion || '-'}</td>
@@ -39248,7 +39312,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 2233 líneas | 102,046 bytes (99.7 KB)
+- **Métricas:** 2259 líneas | 103,377 bytes (101.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -39306,9 +39370,9 @@ if __name__ == '__main__':
         display: (ctx) => {
           const ds = ctx.dataset;
           if (ds && ds.data && ds.data.length > 10) {
-            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1);
+            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1) ? 'auto' : false;
           }
-          return true;
+          return 'auto';
         },
         backgroundColor: bgColor,
         borderRadius: 5,
@@ -39316,6 +39380,19 @@ if __name__ == '__main__':
         font: { weight: '800', size: 10 },
         padding: { top: 2, bottom: 2, left: 6, right: 6 },
         formatter: formatter || ((val) => (val !== null && val !== undefined) ? formatCO_Miles(val) : '')
+      };
+    }
+
+    // Eje con nombres largos (marcas, causas, tipologías): se acortan con "…"; el nombre completo queda en el tooltip
+    function ticksEtiquetaCorta(maxLetras = 14, rotacionMax = 45) {
+      return {
+        autoSkip: false,
+        maxRotation: rotacionMax,
+        font: { weight: 'bold', size: 10 },
+        callback: function (valor) {
+          const texto = String(this.getLabelForValue(valor) ?? '');
+          return texto.length > maxLetras ? texto.slice(0, maxLetras - 1) + '…' : texto;
+        }
       };
     }
 
@@ -39961,8 +40038,9 @@ if __name__ == '__main__':
             scales: {
               y: {
                 min: 0,
-                max: 100,
-                ticks: { callback: (v) => `${v}%` },
+                // Margen sobre el 100 % para que la etiqueta de un mes en 100 % no quede pegada al borde
+                max: 112,
+                ticks: { stepSize: 20, callback: (v) => (v <= 100 ? `${v}%` : '') },
                 grid: { color: 'rgba(226, 232, 240, 0.6)' }
               },
               x: { ticks: { font: { weight: 'bold', size: 10 } } }
@@ -40039,7 +40117,8 @@ if __name__ == '__main__':
               datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff')
             },
             scales: {
-              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
+              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } },
+              y: { ticks: ticksEtiquetaCorta(22, 0) }
             }
           }
         });
@@ -40504,7 +40583,7 @@ if __name__ == '__main__':
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 24, right: 12, bottom: 8, left: 8 } },
+          layout: { padding: { top: 24, right: 12, bottom: 8, left: 28 } },
           animation: animacionCascadaStandard,
           plugins: {
             legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } }
@@ -40512,7 +40591,7 @@ if __name__ == '__main__':
           scales: {
             y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Cantidad' } },
             y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => `${v}%` } },
-            x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            x: { ticks: ticksEtiquetaCorta(18) }
           }
         }
       });
@@ -40691,7 +40770,7 @@ if __name__ == '__main__':
               grid: { color: 'rgba(226, 232, 240, 0.6)' },
               ticks: { callback: (v) => formatCO_Miles(v) }
             },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+            x: { ticks: ticksEtiquetaCorta(14) }
           }
         }
       });
@@ -40733,7 +40812,7 @@ if __name__ == '__main__':
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -40741,7 +40820,7 @@ if __name__ == '__main__':
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { ticks: ticksEtiquetaCorta(14) }
             }
           }
         });
@@ -40769,7 +40848,7 @@ if __name__ == '__main__':
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -40777,7 +40856,7 @@ if __name__ == '__main__':
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Decimal(v, 1), font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { ticks: ticksEtiquetaCorta(14) }
             }
           }
         });
@@ -40805,7 +40884,7 @@ if __name__ == '__main__':
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -40813,7 +40892,7 @@ if __name__ == '__main__':
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 1)}`, font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { ticks: ticksEtiquetaCorta(14) }
             }
           }
         });
@@ -40850,7 +40929,8 @@ if __name__ == '__main__':
     function _mesLegible(m) {
       const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
       const [a, mm] = String(m || '').split('-');
-      return mm ? `${nombres[parseInt(mm, 10) - 1]} ${a}` : m;
+      // 'Sep 26', igual que las demás gráficas mensuales (antes 'Sep 2026')
+      return mm ? `${nombres[parseInt(mm, 10) - 1]} ${String(a).slice(-2)}` : m;
     }
 
     // KPI CPK: los 4 costos por kilómetro (sin dato = sin precio o sin km suficientes)
@@ -40940,7 +41020,7 @@ if __name__ == '__main__':
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 24 } },
           animation: animacionCascadaStandard,
           plugins: {
             legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
@@ -40961,7 +41041,7 @@ if __name__ == '__main__':
               grid: { color: 'rgba(226, 232, 240, 0.6)' },
               ticks: { callback: (v) => formatCO_Miles(v) }
             },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+            x: { ticks: ticksEtiquetaCorta(14) }
           }
         }
       });
@@ -41145,6 +41225,16 @@ if __name__ == '__main__':
       destruirChartSuite('kpi18_ciclo');
       destruirChartSuite('kpi18_causal');
       if (!d) return;
+
+      // Bajas con profundidad actual mayor que la inicial: dato imposible, no se cuentan como garantía
+      const notaInc = document.getElementById('kpi18_nota_inconsistente');
+      if (notaInc) {
+        const nInc = d.bajas_profundidad_inconsistente || 0;
+        notaInc.classList.toggle('hidden', !nInc);
+        notaInc.textContent = nInc
+          ? `⚠️ ${formatCO_Miles(nInc)} bajas tienen la profundidad actual mayor que la inicial (dato imposible): no se cuentan como garantía. Corrija su profundidad en Bodegas.`
+          : '';
+      }
 
       // Badge garantía
       const badgeGarantia = document.getElementById('kpi18_badge_garantia');
@@ -41492,7 +41582,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_diagnostico.js`
 - **Descripción:** Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes
-- **Métricas:** 1018 líneas | 54,270 bytes (53.0 KB)
+- **Métricas:** 1018 líneas | 54,241 bytes (53.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -41584,7 +41674,7 @@ if __name__ == '__main__':
 
       if (selCli) {
         const valCli = selCli.value || 'Todos';
-        selCli.innerHTML = '<option value="Todos">Todos los Clientes</option>' +
+        selCli.innerHTML = '<option value="Todos">Todos</option>' +
           clientes.map(c => `<option value="${c}">${c}</option>`).join('');
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
@@ -41593,7 +41683,7 @@ if __name__ == '__main__':
 
       if (selOp) {
         const valOp = selOp.value || 'Todos';
-        selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
+        selOp.innerHTML = '<option value="Todos">Todas</option>' +
           operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
         if (operaciones.includes(valOp)) selOp.value = valOp;
       }
@@ -41615,7 +41705,7 @@ if __name__ == '__main__':
           .filter(Boolean)
       )).sort();
 
-      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
+      selSede.innerHTML = '<option value="Todos">Todas</option>' +
         sedes.map(s => `<option value="${s}">${s}</option>`).join('');
 
       if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
@@ -41938,7 +42028,7 @@ if __name__ == '__main__':
             <!-- 1. Placa -->
             <td class="p-2.5 font-black text-slate-900">
               <div>${r['Vehículo/Placa']}</div>
-              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${r.Fecha}</div>` : ''}
+              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${fmtFecha(r.Fecha)}</div>` : ''}
             </td>
             <!-- 2. Cliente / Sede -->
             <td class="p-2.5">
@@ -42256,7 +42346,7 @@ if __name__ == '__main__':
             dotColor = 'bg-slate-400';
           }
 
-          const valTxt = pb > 0 ? pb.toFixed(1) : '0.0';
+          const valTxt = pb > 0 ? fmtDec(pb, 1) : '0,0';
           const numInterno = cel.numero_interno || cel.serie || '';
           const lim = cel.limite !== undefined ? cel.limite : (r.limite || 3.0);
           const tooltip = `Pos P${p} (${cel.eje || 'Eje'}) | PB: ${valTxt} mm | Límite: ${lim} mm | ${cel.estado || ''} ${cel.accion ? '- ' + cel.accion : ''} ${cel.marca ? '| ' + cel.marca : ''} ${numInterno ? '| #' + numInterno : ''} ${cel.psi ? '| ' + cel.psi + ' PSI' : ''}`.trim();
@@ -42276,7 +42366,7 @@ if __name__ == '__main__':
 
         const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
         const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
-        const limTxt = (r.limite ? Number(r.limite).toFixed(1) : '3.0') + ' mm';
+        const limTxt = (r.limite ? fmtDec(Number(r.limite), 1) : '3,0') + ' mm';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
@@ -42521,7 +42611,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_trazabilidad.js`
 - **Descripción:** Módulo Trazabilidad: Historial y caracterización de flota
-- **Métricas:** 1222 líneas | 59,595 bytes (58.2 KB)
+- **Métricas:** 1228 líneas | 59,868 bytes (58.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -42632,7 +42722,7 @@ if __name__ == '__main__':
         } else {
           selCli.disabled = false;
           selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
-          const lblTodos = clisAsignados.length > 1 ? 'Todas Mis Flotas Asignadas' : 'Todos los Clientes';
+          const lblTodos = clisAsignados.length > 1 ? 'Mis flotas' : 'Todos';
           selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
             clientes.map(c => `<option value="${c}">${c}</option>`).join('');
           if (valCliActual && clientes.includes(valCliActual)) {
@@ -42650,7 +42740,7 @@ if __name__ == '__main__':
         : (data || []);
       const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
       if (selSub) {
-        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+        selSub.innerHTML = '<option value="TODOS">Todas</option>' +
           subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
         if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
         else selSub.value = 'TODOS';
@@ -42659,7 +42749,7 @@ if __name__ == '__main__':
       // Operaciones
       const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
       if (selOp) {
-        selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' +
+        selOp.innerHTML = '<option value="TODOS">Todas</option>' +
           operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
         if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
         else selOp.value = 'TODOS';
@@ -42668,7 +42758,7 @@ if __name__ == '__main__':
       // Marcas
       const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
       if (selMar) {
-        selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' +
+        selMar.innerHTML = '<option value="TODOS">Todas</option>' +
           marcas.map(m => `<option value="${m}">${m}</option>`).join('');
         if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
         else selMar.value = 'TODOS';
@@ -42711,7 +42801,7 @@ if __name__ == '__main__':
 
       if (elTotal) elTotal.textContent = data.length.toLocaleString();
       if (elKm) elKm.textContent = prom_km_mm.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
-      if (elCpk) elCpk.textContent = `$${prom_cpk.toFixed(4)}`;
+      if (elCpk) elCpk.textContent = `$ ${fmtDec(prom_cpk, 1)}`;
       if (elProy) elProy.textContent = `${Math.round(prom_proy).toLocaleString()} km`;
 
       // Paginación estricta de 25 registros por página
@@ -42738,13 +42828,13 @@ if __name__ == '__main__':
           <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
           <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
           <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm} mm</td>
-          <td class="p-2.5 text-center font-mono">${(d.porcentaje_desgaste || 0).toFixed(1)}%</td>
+          <td class="p-2.5 text-center font-mono">${fmtDec((d.porcentaje_desgaste || 0), 1)}%</td>
           <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
           <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
           <td class="p-2.5 text-right font-mono">$${(d.precio || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$${(d.cpk || 0).toFixed(4)}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$ ${fmtDec(d.cpk || 0, 1)}</td>
           <td class="p-2.5 text-right font-mono">${Math.round(d.proyeccion_total_km || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono">$${(d.cpk_proyectado || 0).toFixed(4)}</td>
+          <td class="p-2.5 text-right font-mono">$ ${fmtDec(d.cpk_proyectado || 0, 1)}</td>
           <td class="p-2.5 text-right font-mono font-black text-purple-700">${Math.round(d.km_restantes || 0).toLocaleString()} km</td>
         </tr>
       `).join('');
@@ -42881,7 +42971,7 @@ if __name__ == '__main__':
           ? cacheKpis.filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
           : cacheKpis;
         const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
-        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+        selSub.innerHTML = '<option value="TODOS">Todas</option>' +
           subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
         selSub.value = 'TODOS';
       }
@@ -42973,11 +43063,12 @@ if __name__ == '__main__':
           const raw = await res.json();
           cacheComposicionLlantas = (Array.isArray(raw) ? raw : []).map(item => ({
             ...item,
-            marca: normalizarTextoComp(item.marca, 'GENÉRICA'),
-            diseno: normalizarTextoComp(item.diseno, 'ESTÁNDAR'),
-            dimension: normalizarTextoComp(item.dimension, 'ESTÁNDAR'),
-            cliente: normalizarTextoComp(item.cliente, 'FLOTA GENERAL'),
-            subcliente: normalizarTextoComp(item.subcliente, 'SEDE PRINCIPAL'),
+            // Dato vacío = "SIN ..." (antes GENÉRICA / ESTÁNDAR / FLOTA GENERAL: parecían marcas, medidas y clientes reales)
+            marca: normalizarTextoComp(item.marca, 'SIN MARCA'),
+            diseno: normalizarTextoComp(item.diseno, 'SIN DISEÑO'),
+            dimension: normalizarTextoComp(item.dimension, 'SIN MEDIDA'),
+            cliente: normalizarTextoComp(item.cliente, 'SIN CLIENTE'),
+            subcliente: normalizarTextoComp(item.subcliente, 'SIN SEDE'),
             vida: normalizarTextoComp(item.vida, 'ORIGINAL'),
             tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase()
           }));
@@ -43008,7 +43099,7 @@ if __name__ == '__main__':
       const valorCliPrevio = selCli.value || 'TODOS';
       const clientesUnicos = Array.from(new Set(cacheComposicionLlantas.map(x => x.cliente).filter(Boolean))).sort();
 
-      let htmlCli = '<option value="TODOS">Todos los Clientes</option>';
+      let htmlCli = '<option value="TODOS">Todos</option>';
       clientesUnicos.forEach(c => {
         htmlCli += `<option value="${c}">${c}</option>`;
       });
@@ -43051,10 +43142,10 @@ if __name__ == '__main__':
       const dims = Array.from(new Set(conjunto.map(x => x.dimension).filter(Boolean))).sort();
       const disenos = Array.from(new Set(conjunto.map(x => x.diseno).filter(Boolean))).sort();
 
-      rellenarSelect(selSub, subs, 'Todas las Sedes');
-      rellenarSelect(selMarca, marcas, 'Todas las Marcas');
-      rellenarSelect(selDim, dims, 'Todas las Medidas');
-      rellenarSelect(selDis, disenos, 'Todos los Diseños');
+      rellenarSelect(selSub, subs, 'Todas');
+      rellenarSelect(selMarca, marcas, 'Todas');
+      rellenarSelect(selDim, dims, 'Todas');
+      rellenarSelect(selDis, disenos, 'Todos');
     }
 
     function alCambiarClienteComposicion() {
@@ -43216,32 +43307,37 @@ if __name__ == '__main__':
         if (elTopDis) elTopDis.textContent = '—';
         if (elSubDis) elSubDis.textContent = '0 llantas montadas (0.0%)';
       } else {
-        const pctR = ((cntReenc / totalLlantas) * 100).toFixed(1);
-        const pctO = ((cntOrig / totalLlantas) * 100).toFixed(1);
+        const pctR = fmtDec(((cntReenc / totalLlantas) * 100), 1);
+        const pctO = fmtDec(((cntOrig / totalLlantas) * 100), 1);
         if (elPctReenc) elPctReenc.textContent = `${pctR}%`;
         if (elCntReenc) elCntReenc.textContent = `${cntReenc} llanta(s) reencauchada(s)`;
         if (elPctOrig) elPctOrig.textContent = `${pctO}%`;
         if (elCntOrig) elCntOrig.textContent = `${cntOrig} llanta(s) originales`;
 
-        const arrM = Object.entries(mapaMarcas).sort((a, b) => b[1] - a[1]);
-        const arrDm = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
-        const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
+        // La marca, medida y diseño "principal" son el valor real más frecuente: los "SIN ..." solo si no hay otro
+        const principalPrimero = mapa => {
+          const arr = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
+          return [...arr.filter(([k]) => !k.startsWith('SIN ')), ...arr.filter(([k]) => k.startsWith('SIN '))];
+        };
+        const arrM = principalPrimero(mapaMarcas);
+        const arrDm = principalPrimero(mapaDimensiones);
+        const arrDs = principalPrimero(mapaDisenos);
 
         if (arrM.length > 0) {
           const [mNom, mCant] = arrM[0];
-          const mPct = ((mCant / totalLlantas) * 100).toFixed(1);
+          const mPct = fmtDec(((mCant / totalLlantas) * 100), 1);
           if (elTopMarca) elTopMarca.textContent = mNom;
           if (elSubMarca) elSubMarca.textContent = `${mCant} llantas (${mPct}%)`;
         }
         if (arrDm.length > 0) {
           const [dNom, dCant] = arrDm[0];
-          const dPct = ((dCant / totalLlantas) * 100).toFixed(1);
+          const dPct = fmtDec(((dCant / totalLlantas) * 100), 1);
           if (elTopDim) elTopDim.textContent = dNom;
           if (elSubDim) elSubDim.textContent = `${dCant} llantas (${dPct}%)`;
         }
         if (arrDs.length > 0) {
           const [sNom, sCant] = arrDs[0];
-          const sPct = ((sCant / totalLlantas) * 100).toFixed(1);
+          const sPct = fmtDec(((sCant / totalLlantas) * 100), 1);
           if (elTopDis) elTopDis.textContent = sNom;
           if (elSubDis) elSubDis.textContent = `${sCant} llantas montadas (${sPct}%)`;
         }
@@ -43252,7 +43348,7 @@ if __name__ == '__main__':
       const llantasDireccionales = dataFiltrada.filter(x => x.tipo_eje === 'direccional');
       const totalDir = llantasDireccionales.length;
       const reencEnDir = llantasDireccionales.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctReencDir = totalDir > 0 ? ((reencEnDir / totalDir) * 100).toFixed(1) : '0.0';
+      const pctReencDir = totalDir > 0 ? fmtDec(((reencEnDir / totalDir) * 100), 1) : '0,0';
 
       const cardR1 = document.getElementById('card_regla_oro_1');
       const badgeR1 = document.getElementById('badge_regla_oro_1');
@@ -43271,7 +43367,7 @@ if __name__ == '__main__':
         }
         if (descR1) {
           descR1.className = 'text-[11px] text-rose-800 mt-0.5 leading-snug font-medium';
-          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0.0%.`;
+          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0,0%.`;
         }
       } else {
         if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-300 shadow-sm';
@@ -43292,11 +43388,11 @@ if __name__ == '__main__':
       // Regla de Oro 2: Adopción Renovado Remolques y Tracción
       const llantasLibres = dataFiltrada.filter(x => x.tipo_eje === 'libre');
       const reencLibres = llantasLibres.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctLibres = llantasLibres.length > 0 ? ((reencLibres / llantasLibres.length) * 100).toFixed(1) : '0.0';
+      const pctLibres = llantasLibres.length > 0 ? fmtDec(((reencLibres / llantasLibres.length) * 100), 1) : '0,0';
 
       const llantasTrac = dataFiltrada.filter(x => x.tipo_eje === 'traccion');
       const reencTrac = llantasTrac.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctTrac = llantasTrac.length > 0 ? ((reencTrac / llantasTrac.length) * 100).toFixed(1) : '0.0';
+      const pctTrac = llantasTrac.length > 0 ? fmtDec(((reencTrac / llantasTrac.length) * 100), 1) : '0,0';
 
       const badgeR2 = document.getElementById('badge_regla_oro_2');
       const descR2 = document.getElementById('txt_regla_oro_2_desc');
@@ -43323,7 +43419,7 @@ if __name__ == '__main__':
             badgeR3.textContent = 'ALTA DISPERSIÓN';
           }
           if (titR3) titR3.textContent = '⚠️ Dispersión Dimensional';
-          if (descR3) descR3.textContent = `Medida líder concentra ${topDimPct.toFixed(1)}% con ${totalDimsDistintas} medidas activas. Se sugiere racionalizar.`;
+          if (descR3) descR3.textContent = `Medida líder concentra ${fmtDec(topDimPct, 1)}% con ${totalDimsDistintas} medidas activas. Se sugiere racionalizar.`;
         } else {
           if (cardR3) cardR3.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-200';
           if (badgeR3) {
@@ -43331,7 +43427,7 @@ if __name__ == '__main__':
             badgeR3.textContent = 'ESTANDARIZADA';
           }
           if (titR3) titR3.textContent = '✅ Estandarización Óptima';
-          if (descR3) descR3.textContent = `Medida principal concentra ${topDimPct.toFixed(1)}% en ${totalDimsDistintas} dimensión(es).`;
+          if (descR3) descR3.textContent = `Medida principal concentra ${fmtDec(topDimPct, 1)}% en ${totalDimsDistintas} dimensión(es).`;
         }
       }
 
@@ -43394,8 +43490,8 @@ if __name__ == '__main__':
             }
           });
         } else {
-          const pOrig = ((cntOrig / totVida) * 100).toFixed(1);
-          const pReenc = ((cntReenc / totVida) * 100).toFixed(1);
+          const pOrig = fmtDec(((cntOrig / totVida) * 100), 1);
+          const pReenc = fmtDec(((cntReenc / totVida) * 100), 1);
 
           chartsComposicion.vida = new Chart(ctxVida, {
             type: 'doughnut',
@@ -43461,7 +43557,7 @@ if __name__ == '__main__':
 
           const paletaMarcas = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#94a3b8'];
           const labelsM = top7M.map(([m, cnt]) => {
-            const p = ((cnt / totalLlantas) * 100).toFixed(1);
+            const p = fmtDec(((cnt / totalLlantas) * 100), 1);
             return `${m} (${p}%)`;
           });
           const dataM = top7M.map(([, cnt]) => cnt);
@@ -43529,7 +43625,7 @@ if __name__ == '__main__':
 
           const paletaDim = ['#7c3aed', '#0891b2', '#d97706', '#059669', '#1d4ed8', '#c026d3', '#94a3b8'];
           const labelsD = top6D.map(([d, cnt]) => {
-            const p = ((cnt / totalLlantas) * 100).toFixed(1);
+            const p = fmtDec(((cnt / totalLlantas) * 100), 1);
             return `${d} (${p}%)`;
           });
           const dataD = top6D.map(([, cnt]) => cnt);
@@ -43614,7 +43710,7 @@ if __name__ == '__main__':
                   callbacks: {
                     label: (ctx) => {
                       const cnt = ctx.raw;
-                      const p = ((cnt / totalLlantas) * 100).toFixed(1);
+                      const p = fmtDec(((cnt / totalLlantas) * 100), 1);
                       return ` ${cnt} llantas (${p}%)`;
                     }
                   }
@@ -43669,14 +43765,14 @@ if __name__ == '__main__':
 
       let html = '';
       combinaciones.forEach(c => {
-        const pctFlota = totalLlantasFlota > 0 ? ((c.total / totalLlantasFlota) * 100).toFixed(1) : '0.0';
+        const pctFlota = totalLlantasFlota > 0 ? fmtDec(((c.total / totalLlantasFlota) * 100), 1) : '0,0';
         let profPromText = '—';
         let semaforoProf = 'text-slate-600 bg-slate-100 border border-slate-200';
         let semaforoDot = 'bg-slate-400';
 
         if (c.cantProf > 0) {
           const prom = (c.sumaProf / c.cantProf);
-          profPromText = `${prom.toFixed(1)} mm`;
+          profPromText = `${fmtDec(prom, 1)} mm`;
           if (prom >= 9.0) {
             semaforoProf = 'text-emerald-700 bg-emerald-50 border border-emerald-200/80';
             semaforoDot = 'bg-emerald-500';
@@ -43754,7 +43850,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 2872 líneas | 134,827 bytes (131.7 KB)
+- **Métricas:** 2872 líneas | 137,793 bytes (134.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43864,8 +43960,8 @@ if __name__ == '__main__':
       const puedeEditar = esAdminOJefatura();
       tbody.innerHTML = lista.map(c => {
         const licBadge = (c.tipo_licencia === 'PRO') 
-          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">PRO (Bodegas & MRP)</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300">LIGHT</span>';
+          ? '<span title="Incluye Bodegas y MRP" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">PRO</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap">LIGHT</span>';
 
         const reqMes = (c.requiere_mes_siguiente !== false && c.requiere_mes_siguiente !== 0);
         const diasNum = c.dias_espera_inspeccion || 20;
@@ -43886,10 +43982,10 @@ if __name__ == '__main__':
                 <i class="fa-solid fa-building text-slate-400 text-xs"></i>
                 <span>${c.cliente}</span>
               </div>
-              <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? c.fecha_actualizacion.slice(0, 10) : 'Al día'}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? fmtFecha(c.fecha_actualizacion) : 'Al día'}</div>
             </td>
             <td class="p-3 text-center">${licBadge}</td>
-            <td class="p-3 text-center font-mono font-black text-rose-700">${Number(c.limite_retiro_mm || 3.0).toFixed(1)} mm</td>
+            <td class="p-3 text-center font-mono font-black text-rose-700 whitespace-nowrap">${fmtDec(Number(c.limite_retiro_mm || 3.0), 1)} mm</td>
             <td class="p-3 text-center">${freqBadge}</td>
             <td class="p-3 max-w-[200px]">${subChips}</td>
             <td class="p-3 text-center">
@@ -44711,7 +44807,7 @@ if __name__ == '__main__':
             <td class="p-2.5 font-black text-slate-900">${escapeHtml(c.cliente)}</td>
             <td class="p-2.5 font-bold text-slate-700">${escapeHtml(c.subcliente || 'TODOS')}</td>
             <td class="p-2.5 text-center">${badgeEje}</td>
-            <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm">${c.limite_retiro_mm} mm</td>
+            <td class="p-2.5 text-center font-black text-rose-700 font-mono text-sm whitespace-nowrap">${fmtDec(c.limite_retiro_mm, 1)} mm</td>
             <td class="p-2.5 text-slate-600">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-2.5 text-center">
               <div class="flex items-center justify-center space-x-1">
@@ -45437,7 +45533,7 @@ if __name__ == '__main__':
           if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             archivoPreciosExcelSeleccionado = e.dataTransfer.files[0];
             const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
-            if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+            if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${fmtDec((archivoPreciosExcelSeleccionado.size / 1024), 1)} KB)`;
             const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
             if (btnImportar) btnImportar.disabled = false;
           }
@@ -45457,7 +45553,7 @@ if __name__ == '__main__':
       if (e.target.files && e.target.files[0]) {
         archivoPreciosExcelSeleccionado = e.target.files[0];
         const lbl = document.getElementById('lblArchivoPreciosSeleccionado');
-        if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${(archivoPreciosExcelSeleccionado.size / 1024).toFixed(1)} KB)`;
+        if (lbl) lbl.textContent = `Archivo: ${archivoPreciosExcelSeleccionado.name} (${fmtDec((archivoPreciosExcelSeleccionado.size / 1024), 1)} KB)`;
         const btnImportar = document.getElementById('btnSubirPreciosExcel') || document.getElementById('btnEjecutarImportarPreciosExcel');
         if (btnImportar) btnImportar.disabled = false;
       }
@@ -46636,7 +46732,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_bodegas.js`
 - **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
-- **Métricas:** 2123 líneas | 113,217 bytes (110.6 KB)
+- **Métricas:** 2131 líneas | 115,762 bytes (113.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -46654,6 +46750,14 @@ if __name__ == '__main__':
     function formatearPesosBodega(val) {
       const num = Number(val) || 0;
       return '$ ' + num.toLocaleString('es-CO');
+    }
+
+    // Vida escrita siempre igual: 'Original', 'R1', 'R2'... ('ORIGINAL' / 'original' / vacío -> 'Original')
+    function vidaLegible(vida) {
+      const v = String(vida || '').trim();
+      if (!v || v.toUpperCase() === 'ORIGINAL') return 'Original';
+      if (/^R\d+$/i.test(v)) return v.toUpperCase();
+      return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
     }
 
     async function cargarModuloBodegasMRP() {
@@ -47071,11 +47175,11 @@ if __name__ == '__main__':
         case 'BODEGA_4_REENCAUCHADAS':
           return `<span class="bg-teal-100 text-teal-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-teal-300">B4: Reencauchada</span>`;
         case 'BODEGA_5_REPARACION':
-          return `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">B5: Vulcanizadora</span>`;
+          return `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">B5: Reparación</span>`;
         case 'BODEGA_6_FVU':
           return `<span class="bg-rose-100 text-rose-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-rose-300">B6: Desecho FVU</span>`;
         case 'BODEGA_7_CHATARRIZADA':
-          return `<span class="bg-slate-200 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300">B7: Chatarrizada</span>`;
+          return `<span class="bg-slate-200 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300">B7: Disposición final</span>`;
         case 'MONTADA_OPERACION':
           return `<span class="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-300">En Operación</span>`;
         default:
@@ -47156,15 +47260,15 @@ if __name__ == '__main__':
             </td>
             <td class="p-3 font-semibold text-slate-700">${ll.dimension || '-'}</td>
             <td class="p-3 text-center">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${ll.vida_actual === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
-                ${ll.vida_actual || 'Original'}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${vidaLegible(ll.vida_actual) === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
+                ${vidaLegible(ll.vida_actual)}
               </span>
             </td>
             <td class="p-3 text-center font-black ${ll.prof_actual_min <= 3.0 ? 'text-rose-600' : 'text-slate-800'}">
-              ${ll.prof_actual_min != null ? Number(ll.prof_actual_min).toFixed(1) + ' mm' : '-'}
+              ${ll.prof_actual_min != null ? fmtDec(Number(ll.prof_actual_min), 1) + ' mm' : '-'}
             </td>
             <td class="p-3">${detalleVehiculo}</td>
-            <td class="p-3 text-right font-bold text-slate-800">${costoTotalFormateado}</td>
+            <td class="p-3 text-right font-bold text-slate-800 whitespace-nowrap">${costoTotalFormateado}</td>
             <td class="p-3 text-center">${renderizarBadgeGarantia(ll.estado_garantia)}</td>
             <td class="p-3 text-center">
               <div class="flex items-center justify-center space-x-1">
@@ -47653,7 +47757,7 @@ if __name__ == '__main__':
           const profActual = (ll && ll.prof_actual_min != null) ? Number(ll.prof_actual_min) : 8.0;
           if (profActual <= 3.0) {
             alertaBox.className = 'text-xs p-3 rounded-xl border font-bold bg-rose-50 text-rose-900 border-rose-300 flex items-start space-x-2';
-            alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + profActual.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
+            alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + fmtDec(profActual, 1) + ' mm) está en o por debajo del límite de retiro (3,0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
           } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
             alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
             alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y quedará disponible en patio para recambio o apareo dual.</span>`;
@@ -47758,7 +47862,7 @@ if __name__ == '__main__':
             pRec.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
             setTimeout(() => pRec.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500'), 3000);
           }
-          mostrarToast('⛔ La profundidad (' + profCheck.toFixed(1) + ' mm) está en o por debajo del límite de retiro (3.0 mm). No puede enviarse a Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).', true);
+          mostrarToast('⛔ La profundidad (' + fmtDec(profCheck, 1) + ' mm) está en o por debajo del límite de retiro (3,0 mm). No puede enviarse a Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).', true);
           return;
         }
       } else if (destino === 'BODEGA_3_REENCAUCHE') {
@@ -47906,7 +48010,7 @@ if __name__ == '__main__':
         boxResumen.innerHTML = `
           <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca || '-'} ${llanta.dimension || ''}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual || 'Original'} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
-          <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? Number(llanta.prof_actual_min).toFixed(1) + ' mm' : '-'}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? fmtDec(Number(llanta.prof_actual_min), 1) + ' mm' : '-'}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Costo Total Acum.:</span><strong class="text-emerald-700">${formatearPesosBodega(llanta.costo_acumulado_total || 0)}</strong></div>
         `;
       }
@@ -48001,7 +48105,7 @@ if __name__ == '__main__':
           : '';
 
         const detalleProf = ev.prof_min_mm > 0 
-          ? `<span class="text-slate-500 ml-2">Prof: ${Number(ev.prof_min_mm).toFixed(1)} mm</span>` 
+          ? `<span class="text-slate-500 ml-2">Prof: ${fmtDec(Number(ev.prof_min_mm), 1)} mm</span>` 
           : '';
 
         html += `
@@ -48152,7 +48256,7 @@ if __name__ == '__main__':
           const dimEl = document.getElementById('txtTallerDim');
           if (dimEl) dimEl.textContent = ll.dimension || '-';
           const profEl = document.getElementById('txtTallerProfMin');
-          if (profEl) profEl.textContent = `${Number(ll.prof_actual_min || 0).toFixed(1)} mm`;
+          if (profEl) profEl.textContent = `${fmtDec(Number(ll.prof_actual_min || 0), 1)} mm`;
           const kmMontEl = document.getElementById('txtTallerKmMont');
           if (kmMontEl) kmMontEl.textContent = Number(ll.km_montaje_actual || 0).toLocaleString();
           const kmRodEl = document.getElementById('txtTallerKmRodados');
@@ -48423,7 +48527,7 @@ if __name__ == '__main__':
       document.getElementById('hv_marca').textContent = ft.marca || '-';
       document.getElementById('hv_diseno').textContent = ft.diseno || '-';
       document.getElementById('hv_dimension').textContent = ft.dimension || '-';
-      document.getElementById('hv_prof_act').textContent = `${Number(data.profundidad_actual_min || 0).toFixed(1)} mm`;
+      document.getElementById('hv_prof_act').textContent = `${fmtDec(Number(data.profundidad_actual_min || 0), 1)} mm`;
       document.getElementById('hv_ubicacion').textContent = data.ubicacion_bodega || data.estado_actual || '-';
       document.getElementById('hv_cliente').textContent = data.cliente_propietario || '-';
 
@@ -48431,7 +48535,7 @@ if __name__ == '__main__':
       document.getElementById('hv_kpi_km').textContent = `${Number(met.km_totales || 0).toLocaleString()} km`;
       // Sin precio registrado se dice así, en lugar de mostrar $0
       document.getElementById('hv_kpi_costo').textContent = met.costo_total_invertido ? `$ ${Number(met.costo_total_invertido).toLocaleString('es-CO')}` : 'Sin precio';
-      document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${Number(met.cpk_global).toFixed(2)} / km` : 'Sin precio';
+      document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${fmtDec(Number(met.cpk_global), 2)} / km` : 'Sin precio';
       document.getElementById('hv_kpi_rendimiento').textContent = `${Number(met.rendimiento_km_mm || 0).toLocaleString()} km/mm`;
       document.getElementById('hv_kpi_ahorro').textContent = met.ahorro_generado_vs_nueva != null ? `$ ${Number(met.ahorro_generado_vs_nueva).toLocaleString('es-CO')}` : 'Sin precio';
 
@@ -48459,11 +48563,11 @@ if __name__ == '__main__':
                 <td class="p-2.5 font-black text-slate-900">Ciclo ${c.ciclo}</td>
                 <td class="p-2.5 font-bold">${c.tipo}</td>
                 <td class="p-2.5 text-slate-600">${c.banda_diseno || '-'}</td>
-                <td class="p-2.5 text-center font-mono">${Number(c.prof_inicial || 0).toFixed(1)} mm</td>
-                <td class="p-2.5 text-center font-mono font-bold">${Number(c.prof_final || 0).toFixed(1)} mm</td>
+                <td class="p-2.5 text-center font-mono">${fmtDec(Number(c.prof_inicial || 0), 1)} mm</td>
+                <td class="p-2.5 text-center font-mono font-bold">${fmtDec(Number(c.prof_final || 0), 1)} mm</td>
                 <td class="p-2.5 text-right font-mono font-bold">${Number(c.km_recorridos || 0).toLocaleString()} km</td>
                 <td class="p-2.5 text-right font-mono">$ ${Number(c.costo || 0).toLocaleString('es-CO')}</td>
-                <td class="p-2.5 text-right font-mono font-black text-indigo-700">$ ${Number(c.cpk || 0).toFixed(2)}</td>
+                <td class="p-2.5 text-right font-mono font-black text-indigo-700">$ ${fmtDec(Number(c.cpk || 0), 2)}</td>
               </tr>
             `;
           });
@@ -48492,7 +48596,7 @@ if __name__ == '__main__':
                   </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
                     ${m.odometro_vehiculo > 0 ? `Odómetro: ${Number(m.odometro_vehiculo).toLocaleString()} km | ` : ''}
-                    ${m.profundidad_momento > 0 ? `Prof: ${Number(m.profundidad_momento).toFixed(1)} mm | ` : ''}
+                    ${m.profundidad_momento > 0 ? `Prof: ${fmtDec(Number(m.profundidad_momento), 1)} mm | ` : ''}
                     ${m.motivo ? `Motivo: ${m.motivo}` : ''}
                   </div>
                 </div>

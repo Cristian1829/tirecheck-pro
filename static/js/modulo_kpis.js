@@ -52,9 +52,9 @@
         display: (ctx) => {
           const ds = ctx.dataset;
           if (ds && ds.data && ds.data.length > 10) {
-            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1);
+            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1) ? 'auto' : false;
           }
-          return true;
+          return 'auto';
         },
         backgroundColor: bgColor,
         borderRadius: 5,
@@ -62,6 +62,19 @@
         font: { weight: '800', size: 10 },
         padding: { top: 2, bottom: 2, left: 6, right: 6 },
         formatter: formatter || ((val) => (val !== null && val !== undefined) ? formatCO_Miles(val) : '')
+      };
+    }
+
+    // Eje con nombres largos (marcas, causas, tipologías): se acortan con "…"; el nombre completo queda en el tooltip
+    function ticksEtiquetaCorta(maxLetras = 14, rotacionMax = 45) {
+      return {
+        autoSkip: false,
+        maxRotation: rotacionMax,
+        font: { weight: 'bold', size: 10 },
+        callback: function (valor) {
+          const texto = String(this.getLabelForValue(valor) ?? '');
+          return texto.length > maxLetras ? texto.slice(0, maxLetras - 1) + '…' : texto;
+        }
       };
     }
 
@@ -707,8 +720,9 @@
             scales: {
               y: {
                 min: 0,
-                max: 100,
-                ticks: { callback: (v) => `${v}%` },
+                // Margen sobre el 100 % para que la etiqueta de un mes en 100 % no quede pegada al borde
+                max: 112,
+                ticks: { stepSize: 20, callback: (v) => (v <= 100 ? `${v}%` : '') },
                 grid: { color: 'rgba(226, 232, 240, 0.6)' }
               },
               x: { ticks: { font: { weight: 'bold', size: 10 } } }
@@ -785,7 +799,8 @@
               datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff')
             },
             scales: {
-              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } }
+              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } },
+              y: { ticks: ticksEtiquetaCorta(22, 0) }
             }
           }
         });
@@ -1250,7 +1265,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 24, right: 12, bottom: 8, left: 8 } },
+          layout: { padding: { top: 24, right: 12, bottom: 8, left: 28 } },
           animation: animacionCascadaStandard,
           plugins: {
             legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } }
@@ -1258,7 +1273,7 @@
           scales: {
             y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Cantidad' } },
             y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => `${v}%` } },
-            x: { ticks: { font: { weight: 'bold', size: 10 } } }
+            x: { ticks: ticksEtiquetaCorta(18) }
           }
         }
       });
@@ -1437,7 +1452,7 @@
               grid: { color: 'rgba(226, 232, 240, 0.6)' },
               ticks: { callback: (v) => formatCO_Miles(v) }
             },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+            x: { ticks: ticksEtiquetaCorta(14) }
           }
         }
       });
@@ -1479,7 +1494,7 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -1487,7 +1502,7 @@
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { ticks: ticksEtiquetaCorta(14) }
             }
           }
         });
@@ -1515,7 +1530,7 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -1523,7 +1538,7 @@
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => formatCO_Decimal(v, 1), font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { ticks: ticksEtiquetaCorta(14) }
             }
           }
         });
@@ -1551,7 +1566,7 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 26, right: 8, bottom: 8, left: 8 } },
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -1559,7 +1574,7 @@
             },
             scales: {
               y: { beginAtZero: true, grace: '15%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 1)}`, font: { size: 9 } } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { ticks: ticksEtiquetaCorta(14) }
             }
           }
         });
@@ -1596,7 +1611,8 @@
     function _mesLegible(m) {
       const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
       const [a, mm] = String(m || '').split('-');
-      return mm ? `${nombres[parseInt(mm, 10) - 1]} ${a}` : m;
+      // 'Sep 26', igual que las demás gráficas mensuales (antes 'Sep 2026')
+      return mm ? `${nombres[parseInt(mm, 10) - 1]} ${String(a).slice(-2)}` : m;
     }
 
     // KPI CPK: los 4 costos por kilómetro (sin dato = sin precio o sin km suficientes)
@@ -1686,7 +1702,7 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 24 } },
           animation: animacionCascadaStandard,
           plugins: {
             legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
@@ -1707,7 +1723,7 @@
               grid: { color: 'rgba(226, 232, 240, 0.6)' },
               ticks: { callback: (v) => formatCO_Miles(v) }
             },
-            x: { ticks: { font: { weight: 'bold', size: 11 } } }
+            x: { ticks: ticksEtiquetaCorta(14) }
           }
         }
       });
@@ -1891,6 +1907,16 @@
       destruirChartSuite('kpi18_ciclo');
       destruirChartSuite('kpi18_causal');
       if (!d) return;
+
+      // Bajas con profundidad actual mayor que la inicial: dato imposible, no se cuentan como garantía
+      const notaInc = document.getElementById('kpi18_nota_inconsistente');
+      if (notaInc) {
+        const nInc = d.bajas_profundidad_inconsistente || 0;
+        notaInc.classList.toggle('hidden', !nInc);
+        notaInc.textContent = nInc
+          ? `⚠️ ${formatCO_Miles(nInc)} bajas tienen la profundidad actual mayor que la inicial (dato imposible): no se cuentan como garantía. Corrija su profundidad en Bodegas.`
+          : '';
+      }
 
       // Badge garantía
       const badgeGarantia = document.getElementById('kpi18_badge_garantia');

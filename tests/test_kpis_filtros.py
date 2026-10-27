@@ -202,6 +202,19 @@ def test_administrador_ve_todo_y_usuario_la_licencia_del_cliente(test_db, hoy_fi
     assert database.obtener_suite_completa_20_kpis({"cliente": A})["licencia"] == "FULL"
 
 
+def test_baja_con_profundidad_imposible_no_es_garantia(test_db, hoy_fijo):
+    """Caso COLTANQUES: 32 bajas con 18 mm actuales y 16 mm iniciales salían todas 'en garantía'."""
+    _escenario()
+    with database.get_connection() as conn:
+        # A-FVU: dato imposible (actual > inicial); A-FVU2: 5 % de desgaste real -> posible garantía
+        conn.execute("UPDATE llantas_maestro SET prof_inicial = 16, prof_actual_min = 18 WHERE numero_interno = 'A-FVU'")
+        conn.execute("UPDATE llantas_maestro SET prof_inicial = 21.5, prof_actual_min = 20.6 WHERE numero_interno = 'A-FVU2'")
+        conn.commit()
+    k18 = _suite(cliente=A)["kpi_18"]
+    assert k18["bajas_profundidad_inconsistente"] == 1
+    assert [a["numero_interno"] for a in k18["alertas_garantia"]] == ["A-FVU2"]
+
+
 def test_filtros_con_tilde(test_db, hoy_fijo):
     """UPPER de SQLite no sube las tildes: 'Camión' y 'CAMIÓN' no coincidían en padrón ni bodegas."""
     _escenario()

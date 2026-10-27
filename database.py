@@ -9725,6 +9725,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (SOLO FULL)
     # =========================================================================
     marcas_fvu, ciclos_fvu, causales_fvu, alertas_garantia = {}, {'Original': 0, 'R1': 0, 'R2': 0, 'R3+': 0}, {}, []
+    bajas_prof_inconsistente = []
     if cant_fvu > 0 and es_full:
         for ll in llantas_fvu:
             # Campos vacíos en la base llegan como None: sin 'or' salían rotulados "None" en las gráficas
@@ -9744,16 +9745,25 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             cs_f = str(ll.get('causal_baja_fvu') or '').strip() or 'Sin causal registrada'
             causales_fvu[cs_f] = causales_fvu.get(cs_f, 0) + 1
 
-            p_ini_f = to_float(ll.get('prof_inicial', 18.0), 18.0)
-            p_act_f = to_float(ll.get('prof_actual_min', 0.0))
-            pct_desg_f = max(0.0, ((p_ini_f - p_act_f) / max(1.0, p_ini_f - 3.0)) * 100.0)
-            if pct_desg_f < 30.0 or ll.get('estado_garantia') in ('Posible Garantía', 'En Reclamación'):
+            # Posible garantía: baja con menos del 30 % de desgaste, o reclamación ya abierta. Una profundidad
+            # actual mayor que la inicial es un dato imposible: se informa aparte y no cuenta como garantía
+            # (antes todas esas bajas salían con 0 % de desgaste y "en garantía"). Sin profundidad inicial no se supone 18 mm.
+            p_ini_f = to_float(ll.get('prof_inicial'))
+            p_act_f = to_float(ll.get('prof_actual_min'))
+            estado_g = str(ll.get('estado_garantia') or '').strip()
+            inconsistente = p_ini_f > 0 and p_act_f > p_ini_f
+            if inconsistente:
+                bajas_prof_inconsistente.append(ll.get('numero_interno', ''))
+            pct_desg_f = (max(0.0, ((p_ini_f - p_act_f) / max(1.0, p_ini_f - 3.0)) * 100.0)
+                          if p_ini_f > 0 and p_act_f > 0 and not inconsistente else None)
+            en_reclamo = estado_g in ('Posible Garantía', 'En Reclamación') or 'RECLAM' in estado_g.upper()
+            if (pct_desg_f is not None and pct_desg_f < 30.0) or en_reclamo:
                 alertas_garantia.append({
                     'numero_interno': ll.get('numero_interno', ''),
                     'marca': mk_f,
                     'causal': cs_f,
-                    'pct_desgaste': round(pct_desg_f, 1),
-                    'estado_garantia': ll.get('estado_garantia', 'Posible Garantía')
+                    'pct_desgaste': round(pct_desg_f, 1) if pct_desg_f is not None else None,
+                    'estado_garantia': estado_g or 'Posible Garantía'
                 })
 
     tot_cs = max(1, sum(causales_fvu.values()))
@@ -9767,7 +9777,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "por_marca": {"labels": list(marcas_fvu.keys()), "valores": list(marcas_fvu.values())},
         "por_ciclo": {"labels": list(ciclos_fvu.keys()), "valores": list(ciclos_fvu.values())},
         "por_causal": {"labels": cs_labels, "valores": cs_valores, "porcentajes": cs_pcts},
-        "alertas_garantia": alertas_garantia
+        "alertas_garantia": alertas_garantia,
+        "bajas_profundidad_inconsistente": len(bajas_prof_inconsistente)
     }
 
     # =========================================================================

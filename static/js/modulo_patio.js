@@ -393,8 +393,8 @@
 
       if (d) {
         const mm = d.limite_retiro_mm || 3.0;
-        document.getElementById('lblMmRetiroCliente').textContent = Number(mm).toFixed(1);
-        document.getElementById('lblMmAlerta').textContent = Number(mm).toFixed(1);
+        document.getElementById('lblMmRetiroCliente').textContent = fmtDec(Number(mm), 1);
+        document.getElementById('lblMmAlerta').textContent = fmtDec(Number(mm), 1);
         if (d.tipo_licencia) {
           clienteLicenciaCaptura = d.tipo_licencia;
           window.clienteLicenciaCaptura = d.tipo_licencia;
@@ -2431,7 +2431,7 @@
             const bHist = document.getElementById('badgeHistorialPrevia');
             if (bHist) {
               bHist.classList.remove('hidden');
-              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + lt.ult_prof_min.toFixed(1) + ' mm' : ''})`;
+              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + fmtDec(lt.ult_prof_min, 1) + ' mm' : ''})`;
             }
 
             // Precargar especificaciones técnicas de la llanta

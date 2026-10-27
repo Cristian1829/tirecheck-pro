@@ -97,9 +97,9 @@ SECCIONES = [
          "pesos. Muestra cuánto cuesta no corregir las novedades detectadas en las inspecciones.", ["canvasKpi11_impacto"]),
     ]),
     (3, "3. Producto & Proyecciones", True, [
-        ("kpi_12", "KPI 12 · Desgaste promedio de la flota",
-         "Milímetros gastados en promedio, profundidad actual, porcentaje de desgaste y recorrido promedio de las llantas "
-         "con profundidad inicial registrada. Resume en qué punto de su vida útil está la flota.", []),
+        ("kpi_12", "KPI 12 · Desgaste de la flota",
+         "Milímetros gastados, profundidad y porcentaje de desgaste de la llanta más crítica de la flota (la más gastada), "
+         "y recorrido promedio de las llantas con profundidad inicial registrada. Muestra el peor caso que hay que atender.", []),
         ("kpi_13", "KPI 13 · Recorrido real vs. proyección al límite de retiro",
          "Compara lo que cada grupo de llantas ya rodó con lo que se proyecta que rodará hasta llegar al límite de retiro, "
          "según su ritmo de desgaste. La diferencia es el recorrido que aún queda por aprovechar.", ["canvasKpi13_comparativo"]),
@@ -280,9 +280,9 @@ def _detalle(clave, d, u):
                          r.get('estado') or '-'] for r in rot],
                        [110, 200, 120, 110], vacio="Desgaste equilibrado: no se requieren rotaciones en este corte.")]
     if clave == 'kpi_12':
-        return [_cifras([("mm gastados prom.", f"{format_num_es(d.get('mm_gastados') or 0)} mm"),
-                         ("Profundidad actual", f"{format_num_es(d.get('profundidad_actual') or 0)} mm"),
-                         ("% desgaste flota", _pct(d.get('pct_desgaste') or 0)),
+        return [_cifras([("mm gastados (máx.)", f"{format_num_es(d.get('mm_gastados') or 0)} mm"),
+                         ("Profundidad mínima", f"{format_num_es(d.get('profundidad_actual') or 0)} mm"),
+                         ("% desgaste máx.", _pct(d.get('pct_desgaste') or 0)),
                          (f"Recorrido prom. ({u})", format_miles_es(d.get('km_recorridos') or 0))])]
     if clave == 'kpi_cpk':
         f = d.get('flota') or {}

@@ -9,6 +9,35 @@
         .replace(/'/g, '&#39;');
     }
 
+    // Desvanecido de la barra de pestañas en el lado que tiene pestañas ocultas (ver #navTabs en el CSS)
+    function actualizarDesvanecidoNav() {
+      const nav = document.getElementById('navTabs');
+      if (!nav) return;
+      nav.classList.toggle('fade-izq', nav.scrollLeft > 2);
+      nav.classList.toggle('fade-der', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2);
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const nav = document.getElementById('navTabs');
+      if (!nav) return;
+      nav.addEventListener('scroll', actualizarDesvanecidoNav, { passive: true });
+      window.addEventListener('resize', actualizarDesvanecidoNav);
+      actualizarDesvanecidoNav();
+    });
+
+    // Formatos de pantalla (colombianos). Los campos de formulario siguen con punto decimal.
+    // Número con coma decimal: fmtDec(3, 1) -> "3,0"; fmtDec(1234.5, 1) -> "1.234,5"
+    function fmtDec(valor, decimales = 1) {
+      const n = Number(valor);
+      if (!isFinite(n)) return '-';
+      return n.toLocaleString('es-CO', { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
+    }
+
+    // Fecha 'AAAA-MM-DD[...]' -> 'DD/MM/AAAA' (lo que no sea una fecha se devuelve igual)
+    function fmtFecha(valor) {
+      const m = String(valor || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? `${m[3]}/${m[2]}/${m[1]}` : (valor || '-');
+    }
+
     // ==========================================
     // INTERCEPTOR GLOBAL DE FETCH (AUTENTICACIÓN & 401)
     // ==========================================
@@ -878,7 +907,8 @@
         if (rol === 'admin' || rol === 'administrador') rolTag = 'ADMIN';
         else if (rol === 'jefatura' || rol === 'jefe' || rol === 'jefe_llantas') rolTag = 'JEFATURA LLANTAS';
         else if (rol === 'gerencia' || rol === 'gerente') rolTag = 'GERENCIA';
-        lbl.textContent = `${usuarioActual.nombre_completo} [${rolTag}]`;
+        // Sin nombre completo registrado se muestra el usuario (antes salía "undefined")
+        lbl.textContent = `${usuarioActual.nombre_completo || usuarioActual.username || 'Usuario'} [${rolTag}]`;
       }
 
       // Control de visibilidad de pestañas de navegación según permisos del perfil

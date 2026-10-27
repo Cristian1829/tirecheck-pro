@@ -58,10 +58,10 @@
       const tipologias = Array.from(new Set(data.map(r => (r.tipologia || '').trim()).filter(Boolean))).sort();
       const marcas = Array.from(new Set(data.map(r => (r.marca || '').trim()).filter(Boolean))).sort();
 
-      selCli.innerHTML = '<option value="TODOS">Todos los Clientes</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      selTip.innerHTML = '<option value="TODOS">Todas las Tipologías</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
-      selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+      selCli.innerHTML = '<option value="TODOS">Todos</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+      selOp.innerHTML = '<option value="TODOS">Todas</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+      selTip.innerHTML = '<option value="TODOS">Todas</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
+      selMar.innerHTML = '<option value="TODOS">Todas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
 
       // Restaurar si aún existen
       if (clientes.includes(valCli)) selCli.value = valCli;
@@ -87,7 +87,7 @@
           .filter(Boolean)
       )).sort();
 
-      selSede.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+      selSede.innerHTML = '<option value="TODOS">Todas</option>' +
         sedes.map(s => `<option value="${s}">${s}</option>`).join('');
 
       if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
@@ -312,7 +312,7 @@
                 </button>
               ` : ''}
             </td>
-            <td class="p-2.5 font-mono text-slate-600">${r.fecha || '-'}</td>
+            <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${fmtFecha(r.fecha)}</td>
             <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
             <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
             <td class="p-2.5">${r.tipo_operacion || '-'}</td>

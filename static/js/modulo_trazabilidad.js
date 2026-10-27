@@ -105,7 +105,7 @@
         } else {
           selCli.disabled = false;
           selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
-          const lblTodos = clisAsignados.length > 1 ? 'Todas Mis Flotas Asignadas' : 'Todos los Clientes';
+          const lblTodos = clisAsignados.length > 1 ? 'Mis flotas' : 'Todos';
           selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
             clientes.map(c => `<option value="${c}">${c}</option>`).join('');
           if (valCliActual && clientes.includes(valCliActual)) {
@@ -123,7 +123,7 @@
         : (data || []);
       const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
       if (selSub) {
-        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+        selSub.innerHTML = '<option value="TODOS">Todas</option>' +
           subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
         if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
         else selSub.value = 'TODOS';
@@ -132,7 +132,7 @@
       // Operaciones
       const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
       if (selOp) {
-        selOp.innerHTML = '<option value="TODOS">Todas las Operaciones</option>' +
+        selOp.innerHTML = '<option value="TODOS">Todas</option>' +
           operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
         if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
         else selOp.value = 'TODOS';
@@ -141,7 +141,7 @@
       // Marcas
       const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
       if (selMar) {
-        selMar.innerHTML = '<option value="TODOS">Todas las Marcas</option>' +
+        selMar.innerHTML = '<option value="TODOS">Todas</option>' +
           marcas.map(m => `<option value="${m}">${m}</option>`).join('');
         if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
         else selMar.value = 'TODOS';
@@ -184,7 +184,7 @@
 
       if (elTotal) elTotal.textContent = data.length.toLocaleString();
       if (elKm) elKm.textContent = prom_km_mm.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
-      if (elCpk) elCpk.textContent = `$${prom_cpk.toFixed(4)}`;
+      if (elCpk) elCpk.textContent = `$ ${fmtDec(prom_cpk, 1)}`;
       if (elProy) elProy.textContent = `${Math.round(prom_proy).toLocaleString()} km`;
 
       // Paginación estricta de 25 registros por página
@@ -211,13 +211,13 @@
           <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
           <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
           <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm} mm</td>
-          <td class="p-2.5 text-center font-mono">${(d.porcentaje_desgaste || 0).toFixed(1)}%</td>
+          <td class="p-2.5 text-center font-mono">${fmtDec((d.porcentaje_desgaste || 0), 1)}%</td>
           <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
           <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
           <td class="p-2.5 text-right font-mono">$${(d.precio || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$${(d.cpk || 0).toFixed(4)}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$ ${fmtDec(d.cpk || 0, 1)}</td>
           <td class="p-2.5 text-right font-mono">${Math.round(d.proyeccion_total_km || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono">$${(d.cpk_proyectado || 0).toFixed(4)}</td>
+          <td class="p-2.5 text-right font-mono">$ ${fmtDec(d.cpk_proyectado || 0, 1)}</td>
           <td class="p-2.5 text-right font-mono font-black text-purple-700">${Math.round(d.km_restantes || 0).toLocaleString()} km</td>
         </tr>
       `).join('');
@@ -354,7 +354,7 @@
           ? cacheKpis.filter(d => String(d.cliente || '').toUpperCase() === cliFiltro.toUpperCase())
           : cacheKpis;
         const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
-        selSub.innerHTML = '<option value="TODOS">Todas las Sedes</option>' +
+        selSub.innerHTML = '<option value="TODOS">Todas</option>' +
           subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
         selSub.value = 'TODOS';
       }
@@ -446,11 +446,12 @@
           const raw = await res.json();
           cacheComposicionLlantas = (Array.isArray(raw) ? raw : []).map(item => ({
             ...item,
-            marca: normalizarTextoComp(item.marca, 'GENÉRICA'),
-            diseno: normalizarTextoComp(item.diseno, 'ESTÁNDAR'),
-            dimension: normalizarTextoComp(item.dimension, 'ESTÁNDAR'),
-            cliente: normalizarTextoComp(item.cliente, 'FLOTA GENERAL'),
-            subcliente: normalizarTextoComp(item.subcliente, 'SEDE PRINCIPAL'),
+            // Dato vacío = "SIN ..." (antes GENÉRICA / ESTÁNDAR / FLOTA GENERAL: parecían marcas, medidas y clientes reales)
+            marca: normalizarTextoComp(item.marca, 'SIN MARCA'),
+            diseno: normalizarTextoComp(item.diseno, 'SIN DISEÑO'),
+            dimension: normalizarTextoComp(item.dimension, 'SIN MEDIDA'),
+            cliente: normalizarTextoComp(item.cliente, 'SIN CLIENTE'),
+            subcliente: normalizarTextoComp(item.subcliente, 'SIN SEDE'),
             vida: normalizarTextoComp(item.vida, 'ORIGINAL'),
             tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase()
           }));
@@ -481,7 +482,7 @@
       const valorCliPrevio = selCli.value || 'TODOS';
       const clientesUnicos = Array.from(new Set(cacheComposicionLlantas.map(x => x.cliente).filter(Boolean))).sort();
 
-      let htmlCli = '<option value="TODOS">Todos los Clientes</option>';
+      let htmlCli = '<option value="TODOS">Todos</option>';
       clientesUnicos.forEach(c => {
         htmlCli += `<option value="${c}">${c}</option>`;
       });
@@ -524,10 +525,10 @@
       const dims = Array.from(new Set(conjunto.map(x => x.dimension).filter(Boolean))).sort();
       const disenos = Array.from(new Set(conjunto.map(x => x.diseno).filter(Boolean))).sort();
 
-      rellenarSelect(selSub, subs, 'Todas las Sedes');
-      rellenarSelect(selMarca, marcas, 'Todas las Marcas');
-      rellenarSelect(selDim, dims, 'Todas las Medidas');
-      rellenarSelect(selDis, disenos, 'Todos los Diseños');
+      rellenarSelect(selSub, subs, 'Todas');
+      rellenarSelect(selMarca, marcas, 'Todas');
+      rellenarSelect(selDim, dims, 'Todas');
+      rellenarSelect(selDis, disenos, 'Todos');
     }
 
     function alCambiarClienteComposicion() {
@@ -689,32 +690,37 @@
         if (elTopDis) elTopDis.textContent = '—';
         if (elSubDis) elSubDis.textContent = '0 llantas montadas (0.0%)';
       } else {
-        const pctR = ((cntReenc / totalLlantas) * 100).toFixed(1);
-        const pctO = ((cntOrig / totalLlantas) * 100).toFixed(1);
+        const pctR = fmtDec(((cntReenc / totalLlantas) * 100), 1);
+        const pctO = fmtDec(((cntOrig / totalLlantas) * 100), 1);
         if (elPctReenc) elPctReenc.textContent = `${pctR}%`;
         if (elCntReenc) elCntReenc.textContent = `${cntReenc} llanta(s) reencauchada(s)`;
         if (elPctOrig) elPctOrig.textContent = `${pctO}%`;
         if (elCntOrig) elCntOrig.textContent = `${cntOrig} llanta(s) originales`;
 
-        const arrM = Object.entries(mapaMarcas).sort((a, b) => b[1] - a[1]);
-        const arrDm = Object.entries(mapaDimensiones).sort((a, b) => b[1] - a[1]);
-        const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
+        // La marca, medida y diseño "principal" son el valor real más frecuente: los "SIN ..." solo si no hay otro
+        const principalPrimero = mapa => {
+          const arr = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
+          return [...arr.filter(([k]) => !k.startsWith('SIN ')), ...arr.filter(([k]) => k.startsWith('SIN '))];
+        };
+        const arrM = principalPrimero(mapaMarcas);
+        const arrDm = principalPrimero(mapaDimensiones);
+        const arrDs = principalPrimero(mapaDisenos);
 
         if (arrM.length > 0) {
           const [mNom, mCant] = arrM[0];
-          const mPct = ((mCant / totalLlantas) * 100).toFixed(1);
+          const mPct = fmtDec(((mCant / totalLlantas) * 100), 1);
           if (elTopMarca) elTopMarca.textContent = mNom;
           if (elSubMarca) elSubMarca.textContent = `${mCant} llantas (${mPct}%)`;
         }
         if (arrDm.length > 0) {
           const [dNom, dCant] = arrDm[0];
-          const dPct = ((dCant / totalLlantas) * 100).toFixed(1);
+          const dPct = fmtDec(((dCant / totalLlantas) * 100), 1);
           if (elTopDim) elTopDim.textContent = dNom;
           if (elSubDim) elSubDim.textContent = `${dCant} llantas (${dPct}%)`;
         }
         if (arrDs.length > 0) {
           const [sNom, sCant] = arrDs[0];
-          const sPct = ((sCant / totalLlantas) * 100).toFixed(1);
+          const sPct = fmtDec(((sCant / totalLlantas) * 100), 1);
           if (elTopDis) elTopDis.textContent = sNom;
           if (elSubDis) elSubDis.textContent = `${sCant} llantas montadas (${sPct}%)`;
         }
@@ -725,7 +731,7 @@
       const llantasDireccionales = dataFiltrada.filter(x => x.tipo_eje === 'direccional');
       const totalDir = llantasDireccionales.length;
       const reencEnDir = llantasDireccionales.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctReencDir = totalDir > 0 ? ((reencEnDir / totalDir) * 100).toFixed(1) : '0.0';
+      const pctReencDir = totalDir > 0 ? fmtDec(((reencEnDir / totalDir) * 100), 1) : '0,0';
 
       const cardR1 = document.getElementById('card_regla_oro_1');
       const badgeR1 = document.getElementById('badge_regla_oro_1');
@@ -744,7 +750,7 @@
         }
         if (descR1) {
           descR1.className = 'text-[11px] text-rose-800 mt-0.5 leading-snug font-medium';
-          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0.0%.`;
+          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0,0%.`;
         }
       } else {
         if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-300 shadow-sm';
@@ -765,11 +771,11 @@
       // Regla de Oro 2: Adopción Renovado Remolques y Tracción
       const llantasLibres = dataFiltrada.filter(x => x.tipo_eje === 'libre');
       const reencLibres = llantasLibres.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctLibres = llantasLibres.length > 0 ? ((reencLibres / llantasLibres.length) * 100).toFixed(1) : '0.0';
+      const pctLibres = llantasLibres.length > 0 ? fmtDec(((reencLibres / llantasLibres.length) * 100), 1) : '0,0';
 
       const llantasTrac = dataFiltrada.filter(x => x.tipo_eje === 'traccion');
       const reencTrac = llantasTrac.filter(x => esLlantaReencauchadaComp(x.vida)).length;
-      const pctTrac = llantasTrac.length > 0 ? ((reencTrac / llantasTrac.length) * 100).toFixed(1) : '0.0';
+      const pctTrac = llantasTrac.length > 0 ? fmtDec(((reencTrac / llantasTrac.length) * 100), 1) : '0,0';
 
       const badgeR2 = document.getElementById('badge_regla_oro_2');
       const descR2 = document.getElementById('txt_regla_oro_2_desc');
@@ -796,7 +802,7 @@
             badgeR3.textContent = 'ALTA DISPERSIÓN';
           }
           if (titR3) titR3.textContent = '⚠️ Dispersión Dimensional';
-          if (descR3) descR3.textContent = `Medida líder concentra ${topDimPct.toFixed(1)}% con ${totalDimsDistintas} medidas activas. Se sugiere racionalizar.`;
+          if (descR3) descR3.textContent = `Medida líder concentra ${fmtDec(topDimPct, 1)}% con ${totalDimsDistintas} medidas activas. Se sugiere racionalizar.`;
         } else {
           if (cardR3) cardR3.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-200';
           if (badgeR3) {
@@ -804,7 +810,7 @@
             badgeR3.textContent = 'ESTANDARIZADA';
           }
           if (titR3) titR3.textContent = '✅ Estandarización Óptima';
-          if (descR3) descR3.textContent = `Medida principal concentra ${topDimPct.toFixed(1)}% en ${totalDimsDistintas} dimensión(es).`;
+          if (descR3) descR3.textContent = `Medida principal concentra ${fmtDec(topDimPct, 1)}% en ${totalDimsDistintas} dimensión(es).`;
         }
       }
 
@@ -867,8 +873,8 @@
             }
           });
         } else {
-          const pOrig = ((cntOrig / totVida) * 100).toFixed(1);
-          const pReenc = ((cntReenc / totVida) * 100).toFixed(1);
+          const pOrig = fmtDec(((cntOrig / totVida) * 100), 1);
+          const pReenc = fmtDec(((cntReenc / totVida) * 100), 1);
 
           chartsComposicion.vida = new Chart(ctxVida, {
             type: 'doughnut',
@@ -934,7 +940,7 @@
 
           const paletaMarcas = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#94a3b8'];
           const labelsM = top7M.map(([m, cnt]) => {
-            const p = ((cnt / totalLlantas) * 100).toFixed(1);
+            const p = fmtDec(((cnt / totalLlantas) * 100), 1);
             return `${m} (${p}%)`;
           });
           const dataM = top7M.map(([, cnt]) => cnt);
@@ -1002,7 +1008,7 @@
 
           const paletaDim = ['#7c3aed', '#0891b2', '#d97706', '#059669', '#1d4ed8', '#c026d3', '#94a3b8'];
           const labelsD = top6D.map(([d, cnt]) => {
-            const p = ((cnt / totalLlantas) * 100).toFixed(1);
+            const p = fmtDec(((cnt / totalLlantas) * 100), 1);
             return `${d} (${p}%)`;
           });
           const dataD = top6D.map(([, cnt]) => cnt);
@@ -1087,7 +1093,7 @@
                   callbacks: {
                     label: (ctx) => {
                       const cnt = ctx.raw;
-                      const p = ((cnt / totalLlantas) * 100).toFixed(1);
+                      const p = fmtDec(((cnt / totalLlantas) * 100), 1);
                       return ` ${cnt} llantas (${p}%)`;
                     }
                   }
@@ -1142,14 +1148,14 @@
 
       let html = '';
       combinaciones.forEach(c => {
-        const pctFlota = totalLlantasFlota > 0 ? ((c.total / totalLlantasFlota) * 100).toFixed(1) : '0.0';
+        const pctFlota = totalLlantasFlota > 0 ? fmtDec(((c.total / totalLlantasFlota) * 100), 1) : '0,0';
         let profPromText = '—';
         let semaforoProf = 'text-slate-600 bg-slate-100 border border-slate-200';
         let semaforoDot = 'bg-slate-400';
 
         if (c.cantProf > 0) {
           const prom = (c.sumaProf / c.cantProf);
-          profPromText = `${prom.toFixed(1)} mm`;
+          profPromText = `${fmtDec(prom, 1)} mm`;
           if (prom >= 9.0) {
             semaforoProf = 'text-emerald-700 bg-emerald-50 border border-emerald-200/80';
             semaforoDot = 'bg-emerald-500';

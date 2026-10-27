@@ -86,7 +86,7 @@
 
       if (selCli) {
         const valCli = selCli.value || 'Todos';
-        selCli.innerHTML = '<option value="Todos">Todos los Clientes</option>' +
+        selCli.innerHTML = '<option value="Todos">Todos</option>' +
           clientes.map(c => `<option value="${c}">${c}</option>`).join('');
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
@@ -95,7 +95,7 @@
 
       if (selOp) {
         const valOp = selOp.value || 'Todos';
-        selOp.innerHTML = '<option value="Todos">Todas las Operaciones</option>' +
+        selOp.innerHTML = '<option value="Todos">Todas</option>' +
           operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
         if (operaciones.includes(valOp)) selOp.value = valOp;
       }
@@ -117,7 +117,7 @@
           .filter(Boolean)
       )).sort();
 
-      selSede.innerHTML = '<option value="Todos">Todas las Sedes</option>' +
+      selSede.innerHTML = '<option value="Todos">Todas</option>' +
         sedes.map(s => `<option value="${s}">${s}</option>`).join('');
 
       if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
@@ -440,7 +440,7 @@
             <!-- 1. Placa -->
             <td class="p-2.5 font-black text-slate-900">
               <div>${r['Vehículo/Placa']}</div>
-              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${r.Fecha}</div>` : ''}
+              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${fmtFecha(r.Fecha)}</div>` : ''}
             </td>
             <!-- 2. Cliente / Sede -->
             <td class="p-2.5">
@@ -758,7 +758,7 @@
             dotColor = 'bg-slate-400';
           }
 
-          const valTxt = pb > 0 ? pb.toFixed(1) : '0.0';
+          const valTxt = pb > 0 ? fmtDec(pb, 1) : '0,0';
           const numInterno = cel.numero_interno || cel.serie || '';
           const lim = cel.limite !== undefined ? cel.limite : (r.limite || 3.0);
           const tooltip = `Pos P${p} (${cel.eje || 'Eje'}) | PB: ${valTxt} mm | Límite: ${lim} mm | ${cel.estado || ''} ${cel.accion ? '- ' + cel.accion : ''} ${cel.marca ? '| ' + cel.marca : ''} ${numInterno ? '| #' + numInterno : ''} ${cel.psi ? '| ' + cel.psi + ' PSI' : ''}`.trim();
@@ -778,7 +778,7 @@
 
         const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
         const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
-        const limTxt = (r.limite ? Number(r.limite).toFixed(1) : '3.0') + ' mm';
+        const limTxt = (r.limite ? fmtDec(Number(r.limite), 1) : '3,0') + ' mm';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
