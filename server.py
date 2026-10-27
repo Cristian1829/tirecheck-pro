@@ -1227,7 +1227,8 @@ def _filtros_suite_kpis(usuario_actual, cliente, subcliente, tipo_operacion, tip
         "base": base,
         "unidad": unidad,
         "horizonte_meses": horizonte_meses,
-        "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
+        "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else "",
+        "es_admin": es_rol_admin(rol, user)
     }
 
 

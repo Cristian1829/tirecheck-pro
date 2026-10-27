@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 14:12:50`
+- **Fecha de Generación:** `2026-10-27 14:38:34`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,451` líneas
-- **Tamaño Total de Código Fuente:** `3056.3 KB` (`3,129,679` bytes)
+- **Líneas Totales de Código:** `60,520` líneas
+- **Tamaño Total de Código Fuente:** `3060.3 KB` (`3,133,785` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,8 +468,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2638 | 121.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10782 | 539.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2639 | 121.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10787 | 539.5 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2112 | 103.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -488,7 +488,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2170 | 96.0 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2233 | 99.7 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1222 | 58.2 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.7 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2638 líneas | 124,199 bytes (121.3 KB)
+- **Métricas:** 2639 líneas | 124,245 bytes (121.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5047,7 +5047,8 @@ def _filtros_suite_kpis(usuario_actual, cliente, subcliente, tipo_operacion, tip
         "base": base,
         "unidad": unidad,
         "horizonte_meses": horizonte_meses,
-        "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else ""
+        "usuario": usuario_actual["username"] if not es_rol_admin(rol, user) else "",
+        "es_admin": es_rol_admin(rol, user)
     }
 
 
@@ -6464,7 +6465,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10782 líneas | 552,078 bytes (539.1 KB)
+- **Métricas:** 10787 líneas | 552,403 bytes (539.5 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -15018,7 +15019,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # Licencia efectiva: siempre la configurada para el cliente. El parámetro solo permite ver la
     # vista LIGHT de un cliente FULL (vista previa); nunca sube un cliente LIGHT a FULL.
     lic_db = obtener_licencia_cliente(cliente)
-    licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    licencia_cliente = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    # El administrador ve todos los indicadores de cualquier cliente; los usuarios, los de la licencia del cliente
+    vista_admin = bool(filtros.get('es_admin'))
+    licencia = 'FULL' if vista_admin else licencia_cliente
     if lic_param == 'LIGHT':
         licencia = 'LIGHT'
     es_full = (licencia == 'FULL')
@@ -16407,6 +16411,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     return {
         "licencia": licencia,
+        "licencia_cliente": licencia_cliente,
+        "vista_administrador": vista_admin,
         "disponible_en_licencia": es_full,
         "pestanas": {
             "pestana_1": {"titulo": "1. 🚛 Inspección & Parque", "kpis": ["kpi_01", "kpi_02", "kpi_03", "kpi_04"]},
@@ -39242,7 +39248,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 2170 líneas | 98,311 bytes (96.0 KB)
+- **Métricas:** 2233 líneas | 102,046 bytes (99.7 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -39263,6 +39269,10 @@ if __name__ == '__main__':
     }
 
     let modoLicenciaSuite = 'FULL'; // 'LIGHT' o 'FULL'
+    // true solo si el usuario pidió ver la vista LIGHT con el conmutador. Antes se enviaba la licencia mostrada:
+    // tras consultar un cliente LIGHT, los siguientes clientes FULL también salían en LIGHT
+    let vistaPreviaLight = false;
+    const PESTANAS_SOLO_FULL = [3, 4, 5];
     let unidadSuite = 'km'; // 'km' u 'h' (vehículos medidos por horas de motor)
     const uMed = () => unidadSuite;
     let datosSuite20Actuales = null;
@@ -39316,6 +39326,36 @@ if __name__ == '__main__':
         } catch (e) {}
         delete instanciasChartsSuite[chartId];
       }
+    }
+
+    // Aviso sobre cada gráfica que no tiene información para dibujar (sin datos, o todos vacíos o en cero)
+    const MSG_SIN_DATOS = 'No hay información suficiente para generar esta gráfica con los filtros seleccionados.';
+
+    function graficoTieneDatos(chart) {
+      if (!chart || !(chart.data.datasets || []).length) return false;
+      const porPuntos = ['bubble', 'scatter'].includes(chart.config.type);
+      if (!porPuntos && !(chart.data.labels || []).length) return false;
+      return chart.data.datasets.some(ds => (ds.data || []).some(v => {
+        const n = (v !== null && typeof v === 'object') ? (v.y ?? v.r ?? v.x) : v;
+        return typeof n === 'number' && isFinite(n) && n !== 0;
+      }));
+    }
+
+    function marcarGraficasSinDatos(num) {
+      document.querySelectorAll(`#subvista-kpi-${num} canvas`).forEach(cv => {
+        const caja = cv.parentElement;
+        if (!caja) return;
+        let aviso = caja.querySelector(':scope > .aviso-sin-datos');
+        const sinDatos = !graficoTieneDatos(Chart.getChart(cv));
+        if (sinDatos && !aviso) {
+          if (getComputedStyle(caja).position === 'static') caja.classList.add('relative');
+          aviso = document.createElement('div');
+          aviso.className = 'aviso-sin-datos absolute inset-0 flex items-center justify-center text-center px-6 text-xs font-semibold text-slate-400 bg-white/90 rounded-xl';
+          aviso.innerHTML = `<span><i class="fa-solid fa-chart-simple mr-1.5"></i>${MSG_SIN_DATOS}</span>`;
+          caja.appendChild(aviso);
+        }
+        if (aviso) aviso.classList.toggle('hidden', !sinDatos);
+      });
     }
 
     function exportarGraficoPngHd(canvasId, filename = 'grafico_kpi') {
@@ -39375,7 +39415,8 @@ if __name__ == '__main__':
           await esperarCuadro();
           for (const cv of document.querySelectorAll(`#subvista-kpi-${num} canvas`)) {
             const chart = Chart.getChart(cv);
-            if (!chart || !cv.width || !cv.height) continue;
+            // Sin datos no se captura: el PDF pone su aviso de "sin datos" en lugar de una gráfica vacía
+            if (!chart || !cv.width || !cv.height || !graficoTieneDatos(chart)) continue;
             // Sin animación para capturar el estado final; fondo blanco porque el canvas es transparente
             chart.stop();
             chart.options.animation = false;
@@ -39451,6 +39492,11 @@ if __name__ == '__main__':
     }
 
     function cambiarSubpestanaKpis(num) {
+      // Con licencia LIGHT no se puede entrar a las pestañas exclusivas de FULL / PRO
+      if (modoLicenciaSuite === 'LIGHT' && PESTANAS_SOLO_FULL.includes(num)) {
+        mostrarToast('🔒 Esta pestaña es exclusiva de la licencia FULL / PRO', true);
+        return;
+      }
       subpestanaKpiActiva = num;
       for (let i = 1; i <= 6; i++) {
         const sub = document.getElementById(`subvista-kpi-${i}`);
@@ -39494,12 +39540,20 @@ if __name__ == '__main__':
       if (av5) av5.classList.toggle('hidden', !esLight);
       // En LIGHT esas pestañas no se recalculan: se oculta su contenido para no dejar a la vista
       // las gráficas del cliente anterior (pasaba al ir de un cliente FULL a uno LIGHT)
-      [3, 4, 5].forEach(n => {
+      PESTANAS_SOLO_FULL.forEach(n => {
         const sub = document.getElementById(`subvista-kpi-${n}`);
-        if (!sub) return;
-        [...sub.children].forEach(hijo => {
-          if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
-        });
+        if (sub) {
+          [...sub.children].forEach(hijo => {
+            if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
+          });
+        }
+        // Botón de la pestaña bloqueado en LIGHT
+        const btn = document.getElementById(`btnSubtabKpi${n}`);
+        if (btn) {
+          btn.classList.toggle('opacity-40', esLight);
+          btn.classList.toggle('cursor-not-allowed', esLight);
+          btn.title = esLight ? 'Exclusivo licencia FULL / PRO' : '';
+        }
       });
 
       // En LIGHT, ocultar KPI 01 padrón o banner
@@ -39509,6 +39563,11 @@ if __name__ == '__main__':
 
     function cambiarModoLicenciaSuite(nuevoModo, recargar = true) {
       modoLicenciaSuite = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'FULL';
+      // recargar = true: lo pidió el usuario con el conmutador; false: lo impuso el servidor
+      if (recargar) vistaPreviaLight = (modoLicenciaSuite === 'LIGHT');
+      if (modoLicenciaSuite === 'LIGHT' && PESTANAS_SOLO_FULL.includes(subpestanaKpiActiva)) {
+        cambiarSubpestanaKpis(1);
+      }
       const badge = document.getElementById('badgeLicenciaActiva');
       const btnLight = document.getElementById('btnModoLight');
       const btnPro = document.getElementById('btnModoPro');
@@ -39580,7 +39639,8 @@ if __name__ == '__main__':
         params.append('base', document.getElementById('filtroKpiBase')?.value || 'ultima');
         params.append('unidad', document.getElementById('filtroKpiUnidad')?.value || 'km');
         params.append('agrupar_kpi14', agrupacionKpi14Actual);
-        params.append('licencia', modoLicenciaSuite);
+        // Sin licencia el servidor aplica la del cliente (o FULL para el administrador)
+        if (vistaPreviaLight) params.append('licencia', 'LIGHT');
 
         const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
         const headers = tok ? { 'Authorization': `Bearer ${tok}` } : {};
@@ -39599,6 +39659,14 @@ if __name__ == '__main__':
         // La licencia efectiva la decide el servidor según la configuración del cliente
         if (data.licencia && data.licencia !== modoLicenciaSuite) {
           cambiarModoLicenciaSuite(data.licencia, false);
+        }
+        // El administrador ve todo; se le indica cuando el cliente en realidad tiene LIGHT
+        // (se fija en cada respuesta: el aviso no debe quedar pegado al pasar a otro cliente)
+        const badge = document.getElementById('badgeLicenciaActiva');
+        if (badge) {
+          badge.textContent = data.licencia === 'LIGHT' ? 'LICENCIA LIGHT (OPERATIVA)'
+            : (data.vista_administrador && data.licencia_cliente === 'LIGHT')
+              ? 'VISTA ADMINISTRADOR · CLIENTE CON LICENCIA LIGHT' : 'LICENCIA FULL / PRO';
         }
 
         renderizarTodaLaSuite20(data);
@@ -39682,6 +39750,7 @@ if __name__ == '__main__':
           if (data.kpi_tendencias) renderTendencias(data.kpi_tendencias);
           break;
       }
+      marcarGraficasSinDatos(num);
     }
 
     // ==========================================

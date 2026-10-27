@@ -8548,7 +8548,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # Licencia efectiva: siempre la configurada para el cliente. El parámetro solo permite ver la
     # vista LIGHT de un cliente FULL (vista previa); nunca sube un cliente LIGHT a FULL.
     lic_db = obtener_licencia_cliente(cliente)
-    licencia = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    licencia_cliente = 'FULL' if lic_db in ('PRO', 'FULL') else 'LIGHT'
+    # El administrador ve todos los indicadores de cualquier cliente; los usuarios, los de la licencia del cliente
+    vista_admin = bool(filtros.get('es_admin'))
+    licencia = 'FULL' if vista_admin else licencia_cliente
     if lic_param == 'LIGHT':
         licencia = 'LIGHT'
     es_full = (licencia == 'FULL')
@@ -9937,6 +9940,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
     return {
         "licencia": licencia,
+        "licencia_cliente": licencia_cliente,
+        "vista_administrador": vista_admin,
         "disponible_en_licencia": es_full,
         "pestanas": {
             "pestana_1": {"titulo": "1. 🚛 Inspección & Parque", "kpis": ["kpi_01", "kpi_02", "kpi_03", "kpi_04"]},

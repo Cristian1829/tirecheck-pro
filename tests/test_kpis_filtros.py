@@ -187,6 +187,21 @@ def test_sin_marca_y_marca_de_banda_en_calidad_de_datos(test_db, hoy_fijo):
     assert "MICHELIN" not in database.marcas_de_banda() and "BANDAG" in database.marcas_de_banda()
 
 
+def test_administrador_ve_todo_y_usuario_la_licencia_del_cliente(test_db, hoy_fijo):
+    """El administrador ve FULL en cualquier cliente; el usuario de un cliente LIGHT, solo LIGHT."""
+    _escenario()
+    database.guardar_licencia_cliente(B, "LIGHT")
+    usuario = database.obtener_suite_completa_20_kpis({"cliente": B})
+    assert usuario["licencia"] == "LIGHT" and not usuario["kpi_13"]["labels"]
+    admin = database.obtener_suite_completa_20_kpis({"cliente": B, "es_admin": True})
+    assert admin["licencia"] == "FULL" and admin["licencia_cliente"] == "LIGHT" and admin["vista_administrador"]
+    assert admin["kpi_13"]["disponible"]
+    # El administrador puede ver la vista LIGHT a propósito
+    assert database.obtener_suite_completa_20_kpis({"cliente": B, "es_admin": True, "licencia": "LIGHT"})["licencia"] == "LIGHT"
+    # Sin pedir LIGHT, un cliente FULL sale FULL (antes la pantalla mandaba la licencia del cliente anterior)
+    assert database.obtener_suite_completa_20_kpis({"cliente": A})["licencia"] == "FULL"
+
+
 def test_filtros_con_tilde(test_db, hoy_fijo):
     """UPPER de SQLite no sube las tildes: 'Camión' y 'CAMIÓN' no coincidían en padrón ni bodegas."""
     _escenario()

@@ -15,6 +15,10 @@
     }
 
     let modoLicenciaSuite = 'FULL'; // 'LIGHT' o 'FULL'
+    // true solo si el usuario pidió ver la vista LIGHT con el conmutador. Antes se enviaba la licencia mostrada:
+    // tras consultar un cliente LIGHT, los siguientes clientes FULL también salían en LIGHT
+    let vistaPreviaLight = false;
+    const PESTANAS_SOLO_FULL = [3, 4, 5];
     let unidadSuite = 'km'; // 'km' u 'h' (vehículos medidos por horas de motor)
     const uMed = () => unidadSuite;
     let datosSuite20Actuales = null;
@@ -68,6 +72,36 @@
         } catch (e) {}
         delete instanciasChartsSuite[chartId];
       }
+    }
+
+    // Aviso sobre cada gráfica que no tiene información para dibujar (sin datos, o todos vacíos o en cero)
+    const MSG_SIN_DATOS = 'No hay información suficiente para generar esta gráfica con los filtros seleccionados.';
+
+    function graficoTieneDatos(chart) {
+      if (!chart || !(chart.data.datasets || []).length) return false;
+      const porPuntos = ['bubble', 'scatter'].includes(chart.config.type);
+      if (!porPuntos && !(chart.data.labels || []).length) return false;
+      return chart.data.datasets.some(ds => (ds.data || []).some(v => {
+        const n = (v !== null && typeof v === 'object') ? (v.y ?? v.r ?? v.x) : v;
+        return typeof n === 'number' && isFinite(n) && n !== 0;
+      }));
+    }
+
+    function marcarGraficasSinDatos(num) {
+      document.querySelectorAll(`#subvista-kpi-${num} canvas`).forEach(cv => {
+        const caja = cv.parentElement;
+        if (!caja) return;
+        let aviso = caja.querySelector(':scope > .aviso-sin-datos');
+        const sinDatos = !graficoTieneDatos(Chart.getChart(cv));
+        if (sinDatos && !aviso) {
+          if (getComputedStyle(caja).position === 'static') caja.classList.add('relative');
+          aviso = document.createElement('div');
+          aviso.className = 'aviso-sin-datos absolute inset-0 flex items-center justify-center text-center px-6 text-xs font-semibold text-slate-400 bg-white/90 rounded-xl';
+          aviso.innerHTML = `<span><i class="fa-solid fa-chart-simple mr-1.5"></i>${MSG_SIN_DATOS}</span>`;
+          caja.appendChild(aviso);
+        }
+        if (aviso) aviso.classList.toggle('hidden', !sinDatos);
+      });
     }
 
     function exportarGraficoPngHd(canvasId, filename = 'grafico_kpi') {
@@ -127,7 +161,8 @@
           await esperarCuadro();
           for (const cv of document.querySelectorAll(`#subvista-kpi-${num} canvas`)) {
             const chart = Chart.getChart(cv);
-            if (!chart || !cv.width || !cv.height) continue;
+            // Sin datos no se captura: el PDF pone su aviso de "sin datos" en lugar de una gráfica vacía
+            if (!chart || !cv.width || !cv.height || !graficoTieneDatos(chart)) continue;
             // Sin animación para capturar el estado final; fondo blanco porque el canvas es transparente
             chart.stop();
             chart.options.animation = false;
@@ -203,6 +238,11 @@
     }
 
     function cambiarSubpestanaKpis(num) {
+      // Con licencia LIGHT no se puede entrar a las pestañas exclusivas de FULL / PRO
+      if (modoLicenciaSuite === 'LIGHT' && PESTANAS_SOLO_FULL.includes(num)) {
+        mostrarToast('🔒 Esta pestaña es exclusiva de la licencia FULL / PRO', true);
+        return;
+      }
       subpestanaKpiActiva = num;
       for (let i = 1; i <= 6; i++) {
         const sub = document.getElementById(`subvista-kpi-${i}`);
@@ -246,12 +286,20 @@
       if (av5) av5.classList.toggle('hidden', !esLight);
       // En LIGHT esas pestañas no se recalculan: se oculta su contenido para no dejar a la vista
       // las gráficas del cliente anterior (pasaba al ir de un cliente FULL a uno LIGHT)
-      [3, 4, 5].forEach(n => {
+      PESTANAS_SOLO_FULL.forEach(n => {
         const sub = document.getElementById(`subvista-kpi-${n}`);
-        if (!sub) return;
-        [...sub.children].forEach(hijo => {
-          if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
-        });
+        if (sub) {
+          [...sub.children].forEach(hijo => {
+            if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
+          });
+        }
+        // Botón de la pestaña bloqueado en LIGHT
+        const btn = document.getElementById(`btnSubtabKpi${n}`);
+        if (btn) {
+          btn.classList.toggle('opacity-40', esLight);
+          btn.classList.toggle('cursor-not-allowed', esLight);
+          btn.title = esLight ? 'Exclusivo licencia FULL / PRO' : '';
+        }
       });
 
       // En LIGHT, ocultar KPI 01 padrón o banner
@@ -261,6 +309,11 @@
 
     function cambiarModoLicenciaSuite(nuevoModo, recargar = true) {
       modoLicenciaSuite = (nuevoModo === 'LIGHT') ? 'LIGHT' : 'FULL';
+      // recargar = true: lo pidió el usuario con el conmutador; false: lo impuso el servidor
+      if (recargar) vistaPreviaLight = (modoLicenciaSuite === 'LIGHT');
+      if (modoLicenciaSuite === 'LIGHT' && PESTANAS_SOLO_FULL.includes(subpestanaKpiActiva)) {
+        cambiarSubpestanaKpis(1);
+      }
       const badge = document.getElementById('badgeLicenciaActiva');
       const btnLight = document.getElementById('btnModoLight');
       const btnPro = document.getElementById('btnModoPro');
@@ -332,7 +385,8 @@
         params.append('base', document.getElementById('filtroKpiBase')?.value || 'ultima');
         params.append('unidad', document.getElementById('filtroKpiUnidad')?.value || 'km');
         params.append('agrupar_kpi14', agrupacionKpi14Actual);
-        params.append('licencia', modoLicenciaSuite);
+        // Sin licencia el servidor aplica la del cliente (o FULL para el administrador)
+        if (vistaPreviaLight) params.append('licencia', 'LIGHT');
 
         const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
         const headers = tok ? { 'Authorization': `Bearer ${tok}` } : {};
@@ -351,6 +405,14 @@
         // La licencia efectiva la decide el servidor según la configuración del cliente
         if (data.licencia && data.licencia !== modoLicenciaSuite) {
           cambiarModoLicenciaSuite(data.licencia, false);
+        }
+        // El administrador ve todo; se le indica cuando el cliente en realidad tiene LIGHT
+        // (se fija en cada respuesta: el aviso no debe quedar pegado al pasar a otro cliente)
+        const badge = document.getElementById('badgeLicenciaActiva');
+        if (badge) {
+          badge.textContent = data.licencia === 'LIGHT' ? 'LICENCIA LIGHT (OPERATIVA)'
+            : (data.vista_administrador && data.licencia_cliente === 'LIGHT')
+              ? 'VISTA ADMINISTRADOR · CLIENTE CON LICENCIA LIGHT' : 'LICENCIA FULL / PRO';
         }
 
         renderizarTodaLaSuite20(data);
@@ -434,6 +496,7 @@
           if (data.kpi_tendencias) renderTendencias(data.kpi_tendencias);
           break;
       }
+      marcarGraficasSinDatos(num);
     }
 
     // ==========================================
