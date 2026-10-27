@@ -71,6 +71,16 @@ def startup_migracion_produccion():
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
+@app.middleware("http")
+async def no_cachear_js_de_la_app(request: Request, call_next):
+    """Los módulos JS de la app se revalidan en cada carga (304 si no cambiaron). Sin Cache-Control el
+    navegador los guardaba a su criterio y, tras un despliegue, seguía mostrando pantallas viejas."""
+    response = await call_next(request)
+    if request.url.path.startswith("/static/js/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 # ==========================================
 # MODELOS PYDANTIC
 # ==========================================

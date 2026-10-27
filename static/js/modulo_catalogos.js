@@ -103,15 +103,27 @@
 
       const puedeEditar = esAdminOJefatura();
       tbody.innerHTML = lista.map(c => {
-        const licBadge = (c.tipo_licencia === 'PRO') 
-          ? '<span title="Incluye Bodegas y MRP" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">PRO</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap">LIGHT</span>';
+        // Plan y frecuencia: rótulo corto y su detalle debajo (antes eran píldoras que se partían en 2 y 3 líneas)
+        const celdaDosLineas = (principal, detalle, clasePrincipal, titulo) =>
+          `<div class="inline-flex flex-col items-center leading-tight whitespace-nowrap" title="${titulo}">` +
+          `<span class="${clasePrincipal}">${principal}</span>` +
+          `<span class="text-[9.5px] font-semibold text-slate-400 mt-0.5">${detalle}</span></div>`;
+
+        const licBadge = (c.tipo_licencia === 'PRO')
+          ? celdaDosLineas('PRO', 'Bodegas y MRP',
+              'px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300',
+              'Licencia PRO: incluye Bodegas, MRP y todos los indicadores')
+          : celdaDosLineas('LIGHT', 'Operativa',
+              'px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300',
+              'Licencia LIGHT: indicadores operativos');
 
         const reqMes = (c.requiere_mes_siguiente !== false && c.requiere_mes_siguiente !== 0);
         const diasNum = c.dias_espera_inspeccion || 20;
         const freqBadge = reqMes
-          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200" title="Mes siguiente y mínimo ${diasNum} días transcurridos">📅 Mes sig. + ${diasNum}d</span>`
-          : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Habilita exactamente a los ${diasNum} días de la última inspección">⚡ ${diasNum}d corridos</span>`;
+          ? celdaDosLineas('<i class="fa-regular fa-calendar text-indigo-500 mr-1"></i>Mes siguiente', `mín. ${diasNum} días`,
+              'text-[11px] font-bold text-indigo-800', `Se habilita en el mes siguiente y con mínimo ${diasNum} días desde la última inspección`)
+          : celdaDosLineas(`<i class="fa-solid fa-bolt text-emerald-500 mr-1"></i>Cada ${diasNum} días`, 'días corridos',
+              'text-[11px] font-bold text-emerald-800', `Se habilita a los ${diasNum} días de la última inspección`);
 
         const subChips = (c.subclientes && c.subclientes.length > 0)
           ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${s}</span>`).join('')

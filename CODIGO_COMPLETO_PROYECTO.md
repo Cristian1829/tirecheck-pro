@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 16:22:07`
+- **Fecha de Generación:** `2026-10-27 16:29:39`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,624` líneas
-- **Tamaño Total de Código Fuente:** `3065.8 KB` (`3,139,391` bytes)
+- **Líneas Totales de Código:** `60,646` líneas
+- **Tamaño Total de Código Fuente:** `3066.9 KB` (`3,140,523` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2639 | 121.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2649 | 121.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 10798 | 540.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
@@ -491,7 +491,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2259 | 101.0 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1228 | 58.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 134.6 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2884 | 135.2 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2131 | 113.0 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2639 líneas | 124,245 bytes (121.3 KB)
+- **Métricas:** 2649 líneas | 124,718 bytes (121.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3890,6 +3890,16 @@ def startup_migracion_produccion():
 # Montar directorio de recursos estáticos (imágenes HD, CSS, logos)
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.middleware("http")
+async def no_cachear_js_de_la_app(request: Request, call_next):
+    """Los módulos JS de la app se revalidan en cada carga (304 si no cambiaron). Sin Cache-Control el
+    navegador los guardaba a su criterio y, tras un despliegue, seguía mostrando pantallas viejas."""
+    response = await call_next(request)
+    if request.url.path.startswith("/static/js/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 # ==========================================
 # MODELOS PYDANTIC
@@ -43850,7 +43860,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 2872 líneas | 137,793 bytes (134.6 KB)
+- **Métricas:** 2884 líneas | 138,452 bytes (135.2 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43959,15 +43969,27 @@ if __name__ == '__main__':
 
       const puedeEditar = esAdminOJefatura();
       tbody.innerHTML = lista.map(c => {
-        const licBadge = (c.tipo_licencia === 'PRO') 
-          ? '<span title="Incluye Bodegas y MRP" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">PRO</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap">LIGHT</span>';
+        // Plan y frecuencia: rótulo corto y su detalle debajo (antes eran píldoras que se partían en 2 y 3 líneas)
+        const celdaDosLineas = (principal, detalle, clasePrincipal, titulo) =>
+          `<div class="inline-flex flex-col items-center leading-tight whitespace-nowrap" title="${titulo}">` +
+          `<span class="${clasePrincipal}">${principal}</span>` +
+          `<span class="text-[9.5px] font-semibold text-slate-400 mt-0.5">${detalle}</span></div>`;
+
+        const licBadge = (c.tipo_licencia === 'PRO')
+          ? celdaDosLineas('PRO', 'Bodegas y MRP',
+              'px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300',
+              'Licencia PRO: incluye Bodegas, MRP y todos los indicadores')
+          : celdaDosLineas('LIGHT', 'Operativa',
+              'px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-700 border border-slate-300',
+              'Licencia LIGHT: indicadores operativos');
 
         const reqMes = (c.requiere_mes_siguiente !== false && c.requiere_mes_siguiente !== 0);
         const diasNum = c.dias_espera_inspeccion || 20;
         const freqBadge = reqMes
-          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200" title="Mes siguiente y mínimo ${diasNum} días transcurridos">📅 Mes sig. + ${diasNum}d</span>`
-          : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Habilita exactamente a los ${diasNum} días de la última inspección">⚡ ${diasNum}d corridos</span>`;
+          ? celdaDosLineas('<i class="fa-regular fa-calendar text-indigo-500 mr-1"></i>Mes siguiente', `mín. ${diasNum} días`,
+              'text-[11px] font-bold text-indigo-800', `Se habilita en el mes siguiente y con mínimo ${diasNum} días desde la última inspección`)
+          : celdaDosLineas(`<i class="fa-solid fa-bolt text-emerald-500 mr-1"></i>Cada ${diasNum} días`, 'días corridos',
+              'text-[11px] font-bold text-emerald-800', `Se habilita a los ${diasNum} días de la última inspección`);
 
         const subChips = (c.subclientes && c.subclientes.length > 0)
           ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${s}</span>`).join('')
