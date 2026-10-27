@@ -152,6 +152,26 @@ def test_marca_escrita_distinto_es_una_sola_barra(test_db, hoy_fijo):
     assert s["kpi_04"]["marca"]["valores"][s["kpi_04"]["marca"]["labels"].index("BRIDGESTONE")] == 2
 
 
+def test_llanta_desmontada_no_sale_en_la_foto_actual(test_db, hoy_fijo):
+    """Una llanta inspeccionada y luego desmontada en Bodegas seguía en composición y KPI 13-15 con su marca
+    (caso reportado: salía la marca ZETA en un cliente que ya no tiene llantas ZETA montadas)."""
+    import modulo_bodegas_taller as taller
+    _escenario()
+    _insp(A, "SEDE NORTE", "AAA101", "Z-1", "2026-10-12", 31000, posicion=6, marca="ZETA", prof_ext=15,
+          prof_cent=15, prof_int=15)
+    assert "ZETA" in _suite(cliente=A)["kpi_04"]["marca"]["labels"]
+    r = taller.desmontar_llanta_taller({"numero_interno": "Z-1", "cliente": A, "bodega_destino": "BODEGA_2_RECAMBIO",
+                                        "odometro_vehiculo": 31000, "motivo": "Cambio de marca"})
+    assert r.get("ok"), r
+    s = _suite(cliente=A)
+    for clave in ("kpi_04", "kpi_13", "kpi_14", "kpi_15"):
+        assert "ZETA" not in json.dumps(s[clave]), clave
+    # Las demás llantas montadas siguen igual
+    assert sorted(s["kpi_04"]["marca"]["labels"]) == ["BRIDGESTONE", "MICHELIN"]
+    # En el historial completo la inspección de la ZETA sí cuenta: fue real
+    assert "ZETA" in _suite(cliente=A, base="historial")["kpi_04"]["marca"]["labels"]
+
+
 def test_filtros_con_tilde(test_db, hoy_fijo):
     """UPPER de SQLite no sube las tildes: 'Camión' y 'CAMIÓN' no coincidían en padrón ni bodegas."""
     _escenario()

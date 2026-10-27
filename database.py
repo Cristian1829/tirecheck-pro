@@ -8129,6 +8129,51 @@ def resolver_fecha_baja_fvu():
     return fecha_de
 
 
+_SALIDAS_KARDEX = ('DESMONTE', 'BAJA', 'CHATARR', 'ENVIO')
+
+
+def quitar_llantas_desmontadas(df_corte: pd.DataFrame) -> pd.DataFrame:
+    """
+    Quita de la foto actual (última inspección de cada posición) las llantas que el kardex muestra fuera
+    de ese vehículo después de inspeccionadas: desmontadas, dadas de baja, enviadas a planta o montadas
+    en otra placa. Sin esto seguían contando como rodando, con su marca, en composición y proyecciones.
+    Sin movimiento posterior en el kardex la llanta se deja (el kardex es la fuente oficial).
+    """
+    if df_corte is None or df_corte.empty or 'numero_interno' not in df_corte.columns:
+        return df_corte
+    ultimo_mov = {}
+    try:
+        with get_connection() as conn:
+            for cli, sn, pl, tipo, f in conn.execute("""
+                SELECT MAYUS(TRIM(cliente)), MAYUS(TRIM(numero_interno)), MAYUS(TRIM(IFNULL(placa, ''))),
+                       UPPER(IFNULL(tipo_movimiento, '')), SUBSTR(fecha_movimiento, 1, 10)
+                FROM kardex_movimientos_llanta
+                WHERE TRIM(IFNULL(numero_interno, '')) <> ''
+                ORDER BY fecha_movimiento, id
+            """):
+                ultimo_mov[(cli, sn)] = (pl, tipo, f or '')
+    except Exception:
+        return df_corte
+    if not ultimo_mov:
+        return df_corte
+
+    def sigue_montada(r):
+        sn = str(r.get('numero_interno') or '').strip().upper()
+        if sn in ('', 'SN', 'NONE', 'NAN'):
+            return True
+        mov = ultimo_mov.get((str(r.get('cliente') or '').strip().upper(), sn))
+        if not mov or mov[2] < str(r.get('fecha') or '')[:10]:
+            return True
+        pl, tipo, _ = mov
+        if tipo.startswith(_SALIDAS_KARDEX):
+            return False
+        if 'MONTAJE' in tipo and pl and pl != str(r.get('placa') or '').strip().upper():
+            return False
+        return True
+
+    return df_corte[df_corte.apply(sigue_montada, axis=1)]
+
+
 def preparar_corte_mrp(df_inspecciones: pd.DataFrame, lim_posicion=None) -> pd.DataFrame:
     """
     Última medición de cada llanta con su mínima, límite de retiro y eje según la estructura
@@ -8773,6 +8818,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         # Estado actual: última inspección de cada posición (siempre se usa para el MRP: es un plan de compra)
         df_corte = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Sin las llantas que el kardex ya sacó del vehículo después de su última inspección
+        df_corte = quitar_llantas_desmontadas(df_corte)
         # Base de los indicadores según el selector: última inspección o historial completo
         df_patio = df_corte if base == 'ultima' else df.sort_values(by=['fecha', 'id'], ascending=[False, False]).copy()
         # Los repuestos no ruedan: no entran a desgaste, rendimiento ni proyecciones

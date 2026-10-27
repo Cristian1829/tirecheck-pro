@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 13:21:22`
+- **Fecha de Generación:** `2026-10-27 13:40:20`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,366` líneas
-- **Tamaño Total de Código Fuente:** `3051.9 KB` (`3,125,122` bytes)
+- **Líneas Totales de Código:** `60,413` líneas
+- **Tamaño Total de Código Fuente:** `3054.0 KB` (`3,127,262` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -469,7 +469,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
 | [server.py](#archivo-serverpy) | `python` | 2638 | 121.3 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10710 | 535.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [database.py](#archivo-databasepy) | `python` | 10757 | 537.7 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2112 | 103.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -6464,7 +6464,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10710 líneas | 548,471 bytes (535.6 KB)
+- **Métricas:** 10757 líneas | 550,611 bytes (537.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -14599,6 +14599,51 @@ def resolver_fecha_baja_fvu():
     return fecha_de
 
 
+_SALIDAS_KARDEX = ('DESMONTE', 'BAJA', 'CHATARR', 'ENVIO')
+
+
+def quitar_llantas_desmontadas(df_corte: pd.DataFrame) -> pd.DataFrame:
+    """
+    Quita de la foto actual (última inspección de cada posición) las llantas que el kardex muestra fuera
+    de ese vehículo después de inspeccionadas: desmontadas, dadas de baja, enviadas a planta o montadas
+    en otra placa. Sin esto seguían contando como rodando, con su marca, en composición y proyecciones.
+    Sin movimiento posterior en el kardex la llanta se deja (el kardex es la fuente oficial).
+    """
+    if df_corte is None or df_corte.empty or 'numero_interno' not in df_corte.columns:
+        return df_corte
+    ultimo_mov = {}
+    try:
+        with get_connection() as conn:
+            for cli, sn, pl, tipo, f in conn.execute("""
+                SELECT MAYUS(TRIM(cliente)), MAYUS(TRIM(numero_interno)), MAYUS(TRIM(IFNULL(placa, ''))),
+                       UPPER(IFNULL(tipo_movimiento, '')), SUBSTR(fecha_movimiento, 1, 10)
+                FROM kardex_movimientos_llanta
+                WHERE TRIM(IFNULL(numero_interno, '')) <> ''
+                ORDER BY fecha_movimiento, id
+            """):
+                ultimo_mov[(cli, sn)] = (pl, tipo, f or '')
+    except Exception:
+        return df_corte
+    if not ultimo_mov:
+        return df_corte
+
+    def sigue_montada(r):
+        sn = str(r.get('numero_interno') or '').strip().upper()
+        if sn in ('', 'SN', 'NONE', 'NAN'):
+            return True
+        mov = ultimo_mov.get((str(r.get('cliente') or '').strip().upper(), sn))
+        if not mov or mov[2] < str(r.get('fecha') or '')[:10]:
+            return True
+        pl, tipo, _ = mov
+        if tipo.startswith(_SALIDAS_KARDEX):
+            return False
+        if 'MONTAJE' in tipo and pl and pl != str(r.get('placa') or '').strip().upper():
+            return False
+        return True
+
+    return df_corte[df_corte.apply(sigue_montada, axis=1)]
+
+
 def preparar_corte_mrp(df_inspecciones: pd.DataFrame, lim_posicion=None) -> pd.DataFrame:
     """
     Última medición de cada llanta con su mínima, límite de retiro y eje según la estructura
@@ -15243,6 +15288,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
         # Estado actual: última inspección de cada posición (siempre se usa para el MRP: es un plan de compra)
         df_corte = df.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first').copy()
+        # Sin las llantas que el kardex ya sacó del vehículo después de su última inspección
+        df_corte = quitar_llantas_desmontadas(df_corte)
         # Base de los indicadores según el selector: última inspección o historial completo
         df_patio = df_corte if base == 'ultima' else df.sort_values(by=['fecha', 'id'], ascending=[False, False]).copy()
         # Los repuestos no ruedan: no entran a desgaste, rendimiento ni proyecciones
