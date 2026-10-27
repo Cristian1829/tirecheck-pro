@@ -1189,6 +1189,87 @@
       tbody.innerHTML = html;
     }
 
+    // PDF de Composición: lo que muestra la pantalla (filtros, tarjetas, reglas de oro, gráficas y matriz)
+    async function exportarComposicionPdf() {
+      const vista = document.getElementById('vista-composicion');
+      const tbody = document.getElementById('tbody_composicion_flota');
+      if (!vista || !tbody || /Cargando|Consultando/.test(tbody.innerText)) {
+        mostrarToast('Espere a que cargue la composición de la flota', true);
+        return;
+      }
+      const btn = document.getElementById('btnExportarComposicionPdf');
+      if (btn) btn.disabled = true;
+      const txt = id => (document.getElementById(id)?.textContent || '').trim().replace(/\s+/g, ' ');
+
+      // Filtros con el texto que ve el usuario
+      const filtros = {};
+      vista.querySelectorAll('select[id^="filtro_comp_"]').forEach(sel => {
+        const etiqueta = (sel.closest('div')?.querySelector('label')?.textContent || sel.id).replace(':', '').trim();
+        filtros[etiqueta] = sel.options[sel.selectedIndex]?.text || 'Todos';
+      });
+      const ejeSel = document.getElementById('filtro_comp_tipo_eje');
+
+      const tarjetas = [
+        { etiqueta: 'Total llantas', valor: txt('comp_kpi_total_llantas'), detalle: txt('comp_kpi_total_vehiculos') },
+        { etiqueta: '% Reencauche', valor: txt('comp_kpi_pct_reenc'), detalle: txt('comp_kpi_cnt_reenc') },
+        { etiqueta: '% Original (nueva)', valor: txt('comp_kpi_pct_orig'), detalle: txt('comp_kpi_cnt_orig') },
+        { etiqueta: 'Marca principal', valor: txt('comp_kpi_top_marca'), detalle: txt('comp_kpi_sub_marca') },
+        { etiqueta: 'Dimensión principal', valor: txt('comp_kpi_top_dim'), detalle: txt('comp_kpi_sub_dim') },
+        { etiqueta: 'Diseño principal', valor: txt('comp_kpi_top_diseno'), detalle: txt('comp_kpi_sub_diseno') }
+      ];
+      const reglas = [1, 2, 3, 4].map(n => ({
+        titulo: txt(`txt_regla_oro_${n}_titulo`), estado: txt(`badge_regla_oro_${n}`), detalle: txt(`txt_regla_oro_${n}_desc`)
+      }));
+
+      // Gráficas sobre fondo blanco (el canvas es transparente); las que no tienen datos no se envían
+      const graficos = {};
+      ['chartCompVidaEje', 'chartCompMarcas', 'chartCompDimensiones', 'chartCompDisenos'].forEach(id => {
+        const cv = document.getElementById(id);
+        const chart = cv && Chart.getChart(cv);
+        if (!chart || !cv.width || (typeof graficoTieneDatos === 'function' && !graficoTieneDatos(chart))) return;
+        const lienzo = document.createElement('canvas');
+        lienzo.width = cv.width;
+        lienzo.height = cv.height;
+        const ctx = lienzo.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        ctx.drawImage(cv, 0, 0);
+        graficos[id] = lienzo.toDataURL('image/jpeg', 0.9);
+      });
+
+      const tabla = tbody.closest('table');
+      const matriz = {
+        encabezados: [...(tabla?.querySelectorAll('thead th') || [])].map(th => th.textContent.trim().replace(/\s+/g, ' ')),
+        filas: [...tbody.querySelectorAll('tr')].filter(tr => tr.children.length > 1)
+          .map(tr => [...tr.children].map(td => td.textContent.trim().replace(/\s+/g, ' ')))
+      };
+
+      try {
+        const res = await fetch('/api/composicion/exportar-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filtros, eje: ejeSel ? ejeSel.options[ejeSel.selectedIndex]?.text || '' : '', tarjetas, reglas, graficos, matriz })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'TireAnalyze_Composicion_Flota.pdf';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast('📄 PDF de composición generado');
+      } catch (e) {
+        console.error('Error exportando PDF de composición:', e);
+        mostrarToast(`No se pudo generar el PDF: ${e.message}`, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function exportarComposicionExcel() {
       const tbody = document.getElementById('tbody_composicion_flota');
       if (!tbody) return;

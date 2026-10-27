@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 16:29:39`
+- **Fecha de Generación:** `2026-10-27 16:45:26`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,646` líneas
-- **Tamaño Total de Código Fuente:** `3066.9 KB` (`3,140,523` bytes)
+- **Líneas Totales de Código:** `60,752` líneas
+- **Tamaño Total de Código Fuente:** `3072.6 KB` (`3,146,391` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,7 +468,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2649 | 121.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [server.py](#archivo-serverpy) | `python` | 2670 | 122.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
 | [database.py](#archivo-databasepy) | `python` | 10798 | 540.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
@@ -481,7 +481,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6559 | 437.3 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6563 | 437.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
@@ -490,7 +490,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2259 | 101.0 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
-| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1228 | 58.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
+| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1309 | 62.8 KB | Módulo Trazabilidad: Historial y caracterización de flota |
 | [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2884 | 135.2 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2131 | 113.0 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2649 líneas | 124,718 bytes (121.8 KB)
+- **Métricas:** 2670 líneas | 125,715 bytes (122.8 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5076,6 +5076,27 @@ class ExportarKpisPdfItem(BaseModel):
     unidad: str = "km"
     horizonte_meses: float = 3
     graficos: dict = {}
+
+
+class ExportarComposicionPdfItem(BaseModel):
+    filtros: dict = {}
+    eje: str = ""
+    tarjetas: list = []
+    reglas: list = []
+    graficos: dict = {}
+    matriz: dict = {}
+
+
+@app.post("/api/composicion/exportar-pdf", dependencies=[Depends(requerir_vista("composicion"))])
+def api_composicion_exportar_pdf(item: ExportarComposicionPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """PDF de Composición de Flota con lo que muestra la pantalla (ya filtrado por el alcance del usuario)."""
+    try:
+        pdf_bytes = pdf_kpis.generar_pdf_composicion(item.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar el PDF de composición: {str(e)}")
+    filename = f"TireAnalyze_Composicion_Flota_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 @app.post("/api/kpis/exportar-pdf", dependencies=[Depends(requerir_vista("kpis"))])
@@ -23737,7 +23758,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6559 líneas | 447,837 bytes (437.3 KB)
+- **Métricas:** 6563 líneas | 448,260 bytes (437.8 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -26801,6 +26822,10 @@ if __name__ == '__main__':
           <button type="button" onclick="exportarComposicionExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer">
             <i class="fa-solid fa-file-excel"></i>
             <span>Exportar Matriz Excel</span>
+          </button>
+          <button type="button" id="btnExportarComposicionPdf" onclick="exportarComposicionPdf()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-wait">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>Exportar PDF</span>
           </button>
         </div>
       </div>
@@ -42621,7 +42646,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_trazabilidad.js`
 - **Descripción:** Módulo Trazabilidad: Historial y caracterización de flota
-- **Métricas:** 1228 líneas | 59,868 bytes (58.5 KB)
+- **Métricas:** 1309 líneas | 64,316 bytes (62.8 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43814,6 +43839,87 @@ if __name__ == '__main__':
         `;
       });
       tbody.innerHTML = html;
+    }
+
+    // PDF de Composición: lo que muestra la pantalla (filtros, tarjetas, reglas de oro, gráficas y matriz)
+    async function exportarComposicionPdf() {
+      const vista = document.getElementById('vista-composicion');
+      const tbody = document.getElementById('tbody_composicion_flota');
+      if (!vista || !tbody || /Cargando|Consultando/.test(tbody.innerText)) {
+        mostrarToast('Espere a que cargue la composición de la flota', true);
+        return;
+      }
+      const btn = document.getElementById('btnExportarComposicionPdf');
+      if (btn) btn.disabled = true;
+      const txt = id => (document.getElementById(id)?.textContent || '').trim().replace(/\s+/g, ' ');
+
+      // Filtros con el texto que ve el usuario
+      const filtros = {};
+      vista.querySelectorAll('select[id^="filtro_comp_"]').forEach(sel => {
+        const etiqueta = (sel.closest('div')?.querySelector('label')?.textContent || sel.id).replace(':', '').trim();
+        filtros[etiqueta] = sel.options[sel.selectedIndex]?.text || 'Todos';
+      });
+      const ejeSel = document.getElementById('filtro_comp_tipo_eje');
+
+      const tarjetas = [
+        { etiqueta: 'Total llantas', valor: txt('comp_kpi_total_llantas'), detalle: txt('comp_kpi_total_vehiculos') },
+        { etiqueta: '% Reencauche', valor: txt('comp_kpi_pct_reenc'), detalle: txt('comp_kpi_cnt_reenc') },
+        { etiqueta: '% Original (nueva)', valor: txt('comp_kpi_pct_orig'), detalle: txt('comp_kpi_cnt_orig') },
+        { etiqueta: 'Marca principal', valor: txt('comp_kpi_top_marca'), detalle: txt('comp_kpi_sub_marca') },
+        { etiqueta: 'Dimensión principal', valor: txt('comp_kpi_top_dim'), detalle: txt('comp_kpi_sub_dim') },
+        { etiqueta: 'Diseño principal', valor: txt('comp_kpi_top_diseno'), detalle: txt('comp_kpi_sub_diseno') }
+      ];
+      const reglas = [1, 2, 3, 4].map(n => ({
+        titulo: txt(`txt_regla_oro_${n}_titulo`), estado: txt(`badge_regla_oro_${n}`), detalle: txt(`txt_regla_oro_${n}_desc`)
+      }));
+
+      // Gráficas sobre fondo blanco (el canvas es transparente); las que no tienen datos no se envían
+      const graficos = {};
+      ['chartCompVidaEje', 'chartCompMarcas', 'chartCompDimensiones', 'chartCompDisenos'].forEach(id => {
+        const cv = document.getElementById(id);
+        const chart = cv && Chart.getChart(cv);
+        if (!chart || !cv.width || (typeof graficoTieneDatos === 'function' && !graficoTieneDatos(chart))) return;
+        const lienzo = document.createElement('canvas');
+        lienzo.width = cv.width;
+        lienzo.height = cv.height;
+        const ctx = lienzo.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        ctx.drawImage(cv, 0, 0);
+        graficos[id] = lienzo.toDataURL('image/jpeg', 0.9);
+      });
+
+      const tabla = tbody.closest('table');
+      const matriz = {
+        encabezados: [...(tabla?.querySelectorAll('thead th') || [])].map(th => th.textContent.trim().replace(/\s+/g, ' ')),
+        filas: [...tbody.querySelectorAll('tr')].filter(tr => tr.children.length > 1)
+          .map(tr => [...tr.children].map(td => td.textContent.trim().replace(/\s+/g, ' ')))
+      };
+
+      try {
+        const res = await fetch('/api/composicion/exportar-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filtros, eje: ejeSel ? ejeSel.options[ejeSel.selectedIndex]?.text || '' : '', tarjetas, reglas, graficos, matriz })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'TireAnalyze_Composicion_Flota.pdf';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast('📄 PDF de composición generado');
+      } catch (e) {
+        console.error('Error exportando PDF de composición:', e);
+        mostrarToast(`No se pudo generar el PDF: ${e.message}`, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     function exportarComposicionExcel() {

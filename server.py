@@ -1258,6 +1258,27 @@ class ExportarKpisPdfItem(BaseModel):
     graficos: dict = {}
 
 
+class ExportarComposicionPdfItem(BaseModel):
+    filtros: dict = {}
+    eje: str = ""
+    tarjetas: list = []
+    reglas: list = []
+    graficos: dict = {}
+    matriz: dict = {}
+
+
+@app.post("/api/composicion/exportar-pdf", dependencies=[Depends(requerir_vista("composicion"))])
+def api_composicion_exportar_pdf(item: ExportarComposicionPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """PDF de Composición de Flota con lo que muestra la pantalla (ya filtrado por el alcance del usuario)."""
+    try:
+        pdf_bytes = pdf_kpis.generar_pdf_composicion(item.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar el PDF de composición: {str(e)}")
+    filename = f"TireAnalyze_Composicion_Flota_{ahora_bogota().strftime('%Y%m%d')}.pdf"
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
 @app.post("/api/kpis/exportar-pdf", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_exportar_pdf(item: ExportarKpisPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     """PDF de la suite de KPIs: gráficos capturados en pantalla + cifras recalculadas con los mismos filtros."""

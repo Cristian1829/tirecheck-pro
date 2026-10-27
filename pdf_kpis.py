@@ -7,6 +7,7 @@ que explica qué muestra. En licencia LIGHT solo salen las pestañas operativas 
 import base64
 import html
 import io
+import re
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -422,6 +423,135 @@ def generar_pdf_kpis(datos: dict, graficos: dict, filtros: dict) -> bytes:
         el.append(Spacer(1, 6))
         el.append(Paragraph("Licencia LIGHT: este informe incluye los indicadores operativos. Las proyecciones, el CPK, el tablero "
                             "de bajas y el MRP de bodegas hacen parte de la licencia FULL / PRO.", _s_vacio))
+
+    doc.build(el, canvasmaker=_Canvas)
+    return buffer.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# Informe de Composición & Caracterización de Flota
+# Lo arma con lo que muestra la pantalla (tarjetas, reglas de oro, gráficas y matriz ya filtradas),
+# igual que el PDF de los KPI: las gráficas llegan capturadas del navegador.
+# ---------------------------------------------------------------------------
+GRAFICAS_COMPOSICION = [
+    ("chartCompVidaEje", "Condición de vida por eje",
+     "Proporción de llantas originales (nuevas) frente a reencauchadas en el eje seleccionado. Sirve para verificar la "
+     "política de reencauche: en el eje direccional debería haber cero reencauches y en tracción y remolque la mayor "
+     "parte de la flota debería estar renovada."),
+    ("chartCompMarcas", "Participación por marca (top 7)",
+     "Cuántas llantas de cada fabricante están montadas en la flota. Una flota concentrada en pocas marcas es más fácil "
+     "de negociar, abastecer y comparar en rendimiento; muchas marcas con poca participación indican compras dispersas."),
+    ("chartCompDimensiones", "Distribución por dimensión (top 6)",
+     "Reparto de la flota por medida de llanta. Lo recomendado es que la medida principal concentre al menos el 70 % "
+     "del inventario: menos medidas distintas significa menos stock de respaldo y más intercambiabilidad entre vehículos."),
+    ("chartCompDisenos", "Diseños de rodamiento con mayor presencia (top 6)",
+     "Los modelos o bandas más usados en la flota. Ayuda a ver si se está estandarizando el diseño por tipo de eje y a "
+     "detectar diseños con muy pocas unidades que complican la rotación y el apareo de duales."),
+]
+
+
+_RE_SIN_FUENTE = re.compile(r'[^\u0000-ɏ‐-‧€≤≥×]')
+
+
+def _sin_emojis(valor):
+    """Texto de la pantalla sin emojis ni íconos: la fuente del PDF no los tiene y salían como cuadros (■)."""
+    if isinstance(valor, dict):
+        return {k: _sin_emojis(v) for k, v in valor.items()}
+    if isinstance(valor, list):
+        return [_sin_emojis(v) for v in valor]
+    if isinstance(valor, str) and not valor.startswith('data:'):
+        return re.sub(r'\s{2,}', ' ', _RE_SIN_FUENTE.sub('', valor)).strip()
+    return valor
+
+
+def generar_pdf_composicion(datos: dict) -> bytes:
+    """datos: {filtros: {etiqueta: valor}, eje, tarjetas: [{etiqueta, valor, detalle}], reglas: [{titulo, estado, detalle}],
+    graficos: {id_canvas: data URL}, matriz: {encabezados: [...], filas: [[...]]}}"""
+    datos = _sin_emojis(datos or {})
+    graficos = datos.get('graficos') or {}
+
+    class _Canvas(ConsolidadoNumberedCanvas):
+        _titulo = "INFORME DE COMPOSICIÓN Y CARACTERIZACIÓN DE FLOTA"
+        _fecha = ahora_bogota().strftime('%d/%m/%Y')
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=68, bottomMargin=32,
+                            title="Composición de Flota - TireAnalyze Pro")
+    el = [Paragraph("Composición y Caracterización de Flota", _s_titulo),
+          Paragraph("Radiografía de la flota activa: ciclo de vida, tipo de eje, marcas, medidas y diseños, con las reglas "
+                    "de oro de estandarización evaluadas sobre los filtros seleccionados.", _s_explica),
+          Spacer(1, 6)]
+
+    # Filtros aplicados (3 por fila)
+    filtros = [(k, v) for k, v in (datos.get('filtros') or {}).items()]
+    if filtros:
+        celdas = [Paragraph(f"<b>{_e(k)}:</b> {_e(v)}", _s_texto) for k, v in filtros]
+        celdas += [''] * (-len(celdas) % 3)
+        t = Table([celdas[i:i + 3] for i in range(0, len(celdas), 3)], colWidths=[180] * 3)
+        t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8fafc')),
+                               ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
+                               ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+                               ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4)]))
+        el += [t, Spacer(1, 8)]
+
+    # Tarjetas resumen
+    tarjetas = datos.get('tarjetas') or []
+    if tarjetas:
+        el.append(_encabezado_seccion("Resumen de la flota"))
+        el.append(Spacer(1, 6))
+        for i in range(0, len(tarjetas), 3):
+            grupo = tarjetas[i:i + 3]
+            el.append(_cifras([(f"{t.get('etiqueta', '')} · {t.get('detalle', '')}" if t.get('detalle') else t.get('etiqueta', ''),
+                                t.get('valor', '—')) for t in grupo]))
+            el.append(Spacer(1, 4))
+        el.append(Spacer(1, 6))
+
+    # Reglas de oro
+    reglas = datos.get('reglas') or []
+    if reglas:
+        el.append(_encabezado_seccion("Reglas de oro de estandarización"))
+        el.append(Spacer(1, 4))
+        el.append(Paragraph("Cuatro controles de buenas prácticas sobre la flota filtrada: cero reencauches en el eje "
+                            "direccional, nivel de renovación en tracción y remolque, concentración de medidas y homogeneidad "
+                            "de los duales.", _s_explica))
+        el.append(Spacer(1, 4))
+        el.append(_tabla(["Regla", "Estado", "Resultado"],
+                         [[r.get('titulo', ''), r.get('estado', ''), r.get('detalle', '')] for r in reglas],
+                         [150, 90, 300]))
+        el.append(Spacer(1, 10))
+
+    # Gráficas, cada una con su explicación
+    el.append(PageBreak())
+    el.append(_encabezado_seccion("Gráficas de composición"))
+    el.append(Spacer(1, 6))
+    for n, (canvas_id, titulo, explica) in enumerate(GRAFICAS_COMPOSICION):
+        if n:
+            el.append(Spacer(1, 10))
+        if canvas_id == "chartCompVidaEje" and datos.get('eje'):
+            titulo = f"{titulo} — {datos['eje']}"
+        g = _bloque_graficos([canvas_id], graficos)
+        el.append(KeepTogether([Paragraph(_e(titulo), _s_kpi), Paragraph(_e(explica), _s_explica), Spacer(1, 4),
+                                g if g is not None else Paragraph("Sin datos para graficar con los filtros seleccionados.",
+                                                                  _s_vacio)]))
+
+    # Matriz marca × diseño × medida
+    matriz = datos.get('matriz') or {}
+    filas = (matriz.get('filas') or [])[:200]
+    encabezados = matriz.get('encabezados') or []
+    if encabezados:
+        el.append(PageBreak())
+        el.append(_encabezado_seccion("Matriz de participación e inventario"))
+        el.append(Spacer(1, 4))
+        el.append(Paragraph("Desglose de las llantas en servicio por combinación de marca, diseño y medida, con cuántas son "
+                            "originales y reencauchadas, su participación en la flota y la profundidad promedio. Las "
+                            "combinaciones con muchas llantas y baja profundidad son las próximas compras o reencauches.",
+                            _s_explica))
+        el.append(Spacer(1, 4))
+        n_col = len(encabezados)
+        anchos = [ANCHO / n_col] * n_col
+        el.append(_tabla(encabezados, [list(f)[:n_col] + [''] * (n_col - len(f)) for f in filas], anchos))
+        if len(matriz.get('filas') or []) > 200:
+            el.append(Paragraph(f"Se muestran 200 de {len(matriz['filas'])} combinaciones.", _s_vacio))
 
     doc.build(el, canvasmaker=_Canvas)
     return buffer.getvalue()

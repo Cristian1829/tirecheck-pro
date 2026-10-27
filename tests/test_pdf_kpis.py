@@ -138,3 +138,23 @@ def test_imagen_invalida_no_rompe():
 def test_pdf_con_suite_real_vacia(test_db):
     datos = database.obtener_suite_completa_20_kpis({})
     assert pdf_kpis.generar_pdf_kpis(datos, {}, {}).startswith(b"%PDF")
+
+
+def test_pdf_composicion():
+    """PDF de Composición con lo que muestra la pantalla: filtros, tarjetas, reglas, gráficas y matriz."""
+    datos = {
+        "filtros": {"Cliente": "COLTANQUES", "Sede / Patio": "Todas"},
+        "eje": "Todos los ejes",
+        "tarjetas": [{"etiqueta": "Total llantas", "valor": "32", "detalle": "6 vehículos activos"},
+                     {"etiqueta": "Marca principal", "valor": "MICHELIN", "detalle": "8 llantas (25,0%)"}],
+        "reglas": [{"titulo": "Cero Reencauches en Dirección", "estado": "CUMPLE", "detalle": "0,0% en eje direccional"}],
+        "graficos": {c: _data_url_jpeg(900, 500) for c, _, _ in pdf_kpis.GRAFICAS_COMPOSICION},
+        "matriz": {"encabezados": ["Marca", "Diseño", "Total"], "filas": [["MICHELIN", "X MULTI", "8"]] * 3},
+    }
+    pdf = pdf_kpis.generar_pdf_composicion(datos)
+    assert pdf.startswith(b"%PDF")
+    assert hojas_en_blanco(pdf) == []
+    # Los emojis de la pantalla no llegan al PDF (la fuente no los tiene y salían como cuadros)
+    assert pdf_kpis._sin_emojis("🚨 REGLA DE ORO 1 INCUMPLIDA · 0,0% ≥ 70%") == "REGLA DE ORO 1 INCUMPLIDA · 0,0% ≥ 70%"
+    # Sin gráficas ni matriz también sale (con sus avisos de "sin datos")
+    assert pdf_kpis.generar_pdf_composicion({}).startswith(b"%PDF")
