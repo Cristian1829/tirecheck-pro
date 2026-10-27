@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 09:18:02`
+- **Fecha de Generación:** `2026-10-27 09:36:22`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,129` líneas
-- **Tamaño Total de Código Fuente:** `3024.8 KB` (`3,097,396` bytes)
+- **Líneas Totales de Código:** `60,140` líneas
+- **Tamaño Total de Código Fuente:** `3025.5 KB` (`3,098,162` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,14 +468,14 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2592 | 116.5 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10654 | 521.1 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2594 | 116.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10663 | 521.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
-| [app.py](#archivo-apppy) | `python` | 2288 | 124.2 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
+| [app.py](#archivo-apppy) | `python` | 2288 | 124.3 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
 
 ### 4. Frontend Web SPA & Plantillas
 
@@ -491,7 +491,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.6 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2872 | 131.7 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
 | [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2123 | 110.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2592 líneas | 119,296 bytes (116.5 KB)
+- **Métricas:** 2594 líneas | 119,384 bytes (116.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -5366,16 +5366,18 @@ def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
 
 @app.post("/api/modelos-llanta")
 def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
-    ok = database.guardar_modelo_llanta(item.tipo_llanta, item.marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
+    marca = (item.marca or "").strip().upper()
+    ok = database.guardar_modelo_llanta(item.tipo_llanta, marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
     return {"status": "ok" if ok else "error"}
 
 @app.put("/api/modelos-llanta")
 def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
+        marca = (item.marca or "").strip().upper()
         res = database.actualizar_modelo_llanta(
             modelo_id=item.id,
             tipo_llanta=item.tipo_llanta,
-            marca=item.marca,
+            marca=marca,
             diseno=item.diseno,
             dimension=item.dimension,
             prof_inicial=item.prof_inicial,
@@ -6418,7 +6420,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10654 líneas | 533,633 bytes (521.1 KB)
+- **Métricas:** 10663 líneas | 534,153 bytes (521.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -7203,27 +7205,27 @@ def inicializar_bd():
         if cursor.fetchone()[0] == 0:
             modelos_seed = [
                 # Llantas Nuevas Originales
-                ('Nueva', 'Michelin', 'X Multi D', '295/80R22.5', 21.5, 'Tracción Regional'),
-                ('Nueva', 'Michelin', 'X Multi Z', '295/80R22.5', 16.5, 'Toda Posición / Direccional'),
-                ('Nueva', 'Bridgestone', 'M726 EL', '295/80R22.5', 24.5, 'Tracción Larga Distancia'),
-                ('Nueva', 'Bridgestone', 'R268 Ecopia', '295/80R22.5', 16.0, 'Direccional / Toda Posición'),
-                ('Nueva', 'Goodyear', 'KMax D', '295/80R22.5', 22.0, 'Tracción Carretera'),
-                ('Nueva', 'Goodyear', 'KMax S', '295/80R22.5', 16.0, 'Direccional Autopista'),
-                ('Nueva', 'Pirelli', 'TG01', '295/80R22.5', 22.5, 'Tracción Mixta'),
-                ('Nueva', 'Pirelli', 'FG01', '295/80R22.5', 16.5, 'Direccional Mixta'),
-                ('Nueva', 'Hankook', 'DH35', '295/80R22.5', 20.5, 'Tracción Regional'),
-                ('Nueva', 'Hankook', 'AH35', '295/80R22.5', 15.5, 'Direccional'),
-                ('Nueva', 'Double Coin', 'RLB450', '11R22.5', 22.0, 'Tracción'),
-                ('Nueva', 'Double Coin', 'RR9', '11R22.5', 15.0, 'Direccional'),
+                ('Nueva', 'MICHELIN', 'X Multi D', '295/80R22.5', 21.5, 'Tracción Regional'),
+                ('Nueva', 'MICHELIN', 'X Multi Z', '295/80R22.5', 16.5, 'Toda Posición / Direccional'),
+                ('Nueva', 'BRIDGESTONE', 'M726 EL', '295/80R22.5', 24.5, 'Tracción Larga Distancia'),
+                ('Nueva', 'BRIDGESTONE', 'R268 Ecopia', '295/80R22.5', 16.0, 'Direccional / Toda Posición'),
+                ('Nueva', 'GOODYEAR', 'KMax D', '295/80R22.5', 22.0, 'Tracción Carretera'),
+                ('Nueva', 'GOODYEAR', 'KMax S', '295/80R22.5', 16.0, 'Direccional Autopista'),
+                ('Nueva', 'PIRELLI', 'TG01', '295/80R22.5', 22.5, 'Tracción Mixta'),
+                ('Nueva', 'PIRELLI', 'FG01', '295/80R22.5', 16.5, 'Direccional Mixta'),
+                ('Nueva', 'HANKOOK', 'DH35', '295/80R22.5', 20.5, 'Tracción Regional'),
+                ('Nueva', 'HANKOOK', 'AH35', '295/80R22.5', 15.5, 'Direccional'),
+                ('Nueva', 'DOUBLE COIN', 'RLB450', '11R22.5', 22.0, 'Tracción'),
+                ('Nueva', 'DOUBLE COIN', 'RR9', '11R22.5', 15.0, 'Direccional'),
                 # Reencauches / Bandas
-                ('Reencauche', 'Bandag', 'BDM', '295/80R22.5', 21.0, 'Banda Tracción Alta Adherencia'),
-                ('Reencauche', 'Bandag', 'B710', '295/80R22.5', 20.0, 'Banda Tracción Carretera'),
-                ('Reencauche', 'Bandag', 'ECL Drive', '295/80R22.5', 22.0, 'Tracción Severa'),
-                ('Reencauche', 'Bandag', 'B197 Trailer', '295/80R22.5', 14.5, 'Banda Trailer / Arrastre'),
-                ('Reencauche', 'Marangoni', 'Ringtread RD-G', '295/80R22.5', 21.5, 'Anillo Tracción'),
-                ('Reencauche', 'Marangoni', 'RTL Energeia', '295/80R22.5', 14.0, 'Anillo Remolque/Trailer'),
-                ('Reencauche', 'Vipal', 'VT100', '295/80R22.5', 19.5, 'Tracción Urbana y Regional'),
-                ('Reencauche', 'Vipal', 'VL110', '295/80R22.5', 14.0, 'Arrastre Liviano y Pesado')
+                ('Reencauche', 'BANDAG', 'BDM', '295/80R22.5', 21.0, 'Banda Tracción Alta Adherencia'),
+                ('Reencauche', 'BANDAG', 'B710', '295/80R22.5', 20.0, 'Banda Tracción Carretera'),
+                ('Reencauche', 'BANDAG', 'ECL Drive', '295/80R22.5', 22.0, 'Tracción Severa'),
+                ('Reencauche', 'BANDAG', 'B197 Trailer', '295/80R22.5', 14.5, 'Banda Trailer / Arrastre'),
+                ('Reencauche', 'MARANGONI', 'Ringtread RD-G', '295/80R22.5', 21.5, 'Anillo Tracción'),
+                ('Reencauche', 'MARANGONI', 'RTL Energeia', '295/80R22.5', 14.0, 'Anillo Remolque/Trailer'),
+                ('Reencauche', 'VIPAL', 'VT100', '295/80R22.5', 19.5, 'Tracción Urbana y Regional'),
+                ('Reencauche', 'VIPAL', 'VL110', '295/80R22.5', 14.0, 'Arrastre Liviano y Pesado')
             ]
             cursor.executemany("""
                 INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion)
@@ -7237,6 +7239,13 @@ def inicializar_bd():
             cursor.executemany("INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion) VALUES (?, ?, ?, ?, ?, ?)", catalogo_modelos_colombia.modelos_colombia())
             nuevas = cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas").fetchone()[0] - antes
             cursor.execute("INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas) VALUES ('catalogo_modelos_colombia_v1', datetime('now'), ?)", (nuevas,))
+
+        # Garantizar que todas las marcas en el catálogo de modelos queden en mayúsculas
+        cursor.execute("""
+            UPDATE OR IGNORE catalogo_modelos_llantas
+            SET marca = UPPER(TRIM(marca))
+            WHERE marca IS NOT NULL AND marca != UPPER(TRIM(marca))
+        """)
 
         # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
         conn.execute("""
@@ -10909,10 +10918,10 @@ def buscar_modelos_llantas_filtro(termino=''):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion
+            SELECT id, tipo_llanta, UPPER(TRIM(marca)) as marca, diseno, dimension, prof_inicial, descripcion
             FROM catalogo_modelos_llantas
             WHERE LOWER(marca) LIKE ? OR LOWER(diseno) LIKE ? OR LOWER(dimension) LIKE ? OR LOWER(tipo_llanta) LIKE ?
-            ORDER BY marca ASC, diseno ASC LIMIT 25
+            ORDER BY UPPER(TRIM(marca)) ASC, diseno ASC LIMIT 25
         ''', (t, t, t, t))
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
@@ -12072,7 +12081,7 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
 def obtener_catalogo_modelos():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, marca ASC, diseno ASC')
+        cursor.execute('SELECT id, tipo_llanta, UPPER(TRIM(marca)) as marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, UPPER(TRIM(marca)) ASC, diseno ASC')
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
@@ -12213,7 +12222,8 @@ def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original', ban
     return 0.0
 
 def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion=''):
-    tipo = str(tipo_llanta or 'NUEVA').strip().upper()
+    tipo_raw = str(tipo_llanta or 'Nueva').strip()
+    tipo = 'Reencauche' if 'reen' in tipo_raw.lower() else 'Nueva'
     m = str(marca or '').strip().upper()
     d = str(diseno or '').strip().upper()
     dim = str(dimension or '').strip().upper()
@@ -12229,12 +12239,13 @@ def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, d
 
 def actualizar_modelo_llanta(modelo_id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion='', actualizar_bd=True):
     mid = int(modelo_id)
-    tipo = str(tipo_llanta or 'NUEVA').strip().capitalize()
-    m_new = str(marca or '').strip()
-    d_new = str(diseno or '').strip()
-    dim_new = str(dimension or '').strip()
+    tipo_raw = str(tipo_llanta or 'Nueva').strip()
+    tipo = 'Reencauche' if 'reen' in tipo_raw.lower() else 'Nueva'
+    m_new = str(marca or '').strip().upper()
+    d_new = str(diseno or '').strip().upper()
+    dim_new = str(dimension or '').strip().upper()
     prof_new = to_float(prof_inicial, 0.0)
-    desc_new = str(descripcion or '').strip()
+    desc_new = str(descripcion or '').strip().upper()
 
     if not m_new or not d_new or prof_new <= 0:
         raise ValueError("Marca, diseño y una profundidad inicial mayor a 0 son obligatorios.")
@@ -21233,7 +21244,7 @@ def seccion_fotos(llantas: List[Dict[str, Any]]) -> List[Any]:
 
 - **Ruta:** `app.py`
 - **Descripción:** Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario
-- **Métricas:** 2288 líneas | 127,218 bytes (124.2 KB)
+- **Métricas:** 2288 líneas | 127,250 bytes (124.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -23104,8 +23115,8 @@ class AppInspeccionLlantas(tk.Tk):
                   font=('Segoe UI', 8, 'italic'), foreground='blue').grid(row=6, column=0, columnspan=2, pady=6)
 
         def guardar():
-            m = var_m.get().strip()
-            d = var_d.get().strip()
+            m = var_m.get().strip().upper()
+            d = var_d.get().strip().upper()
             if not m or not d:
                 messagebox.showwarning('Atención', 'Marca y Diseño son obligatorios.')
                 return
@@ -23173,8 +23184,8 @@ class AppInspeccionLlantas(tk.Tk):
         ttk.Entry(f, textvariable=var_desc, width=25).grid(row=5, column=1, sticky='w', pady=4)
 
         def guardar():
-            m = var_m.get().strip()
-            d = var_d.get().strip()
+            m = var_m.get().strip().upper()
+            d = var_d.get().strip().upper()
             if not m or not d:
                 messagebox.showwarning('Atención', 'Marca y Diseño son obligatorios.')
                 return
@@ -23535,7 +23546,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6531 líneas | 451,045 bytes (440.5 KB)
+- **Métricas:** 6531 líneas | 451,089 bytes (440.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -28590,7 +28601,7 @@ if __name__ == '__main__':
         </div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Marca *</label>
-          <input type="text" id="mod_marca" list="dl_marcas_modelo_catalogo" placeholder="ej. Michelin" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
+          <input type="text" id="mod_marca" list="dl_marcas_modelo_catalogo" placeholder="ej. MICHELIN" oninput="this.value = this.value.toUpperCase()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase focus:bg-white focus:border-blue-500">
           <datalist id="dl_marcas_modelo_catalogo"></datalist>
         </div>
         <div>
@@ -43363,7 +43374,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 2872 líneas | 134,745 bytes (131.6 KB)
+- **Métricas:** 2872 líneas | 134,827 bytes (131.7 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43997,7 +44008,7 @@ if __name__ == '__main__':
       tbody.innerHTML = paginaItems.map(m => `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="p-2.5 font-bold">${escapeHtml(m.tipo_llanta || '')}</td>
-          <td class="p-2.5 font-black text-slate-900">${escapeHtml(m.marca || '')}</td>
+          <td class="p-2.5 font-black text-slate-900">${escapeHtml((m.marca || '').toUpperCase())}</td>
           <td class="p-2.5 font-bold text-slate-800">${escapeHtml(m.diseno || '')}</td>
           <td class="p-2.5 text-slate-700">${escapeHtml(m.dimension || '')}</td>
           <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
@@ -44068,9 +44079,9 @@ if __name__ == '__main__':
       if (dlD) dlD.innerHTML = obtenerListaDimensionesDisponibles().map(d => `<option value="${escapeHtml(d)}">`).join('');
 
       document.getElementById('mod_tipo').value = m.tipo_llanta;
-      document.getElementById('mod_marca').value = m.marca;
-      document.getElementById('mod_diseno').value = m.diseno;
-      document.getElementById('mod_dimension').value = m.dimension;
+      document.getElementById('mod_marca').value = (m.marca || '').toUpperCase();
+      document.getElementById('mod_diseno').value = (m.diseno || '').toUpperCase();
+      document.getElementById('mod_dimension').value = (m.dimension || '').toUpperCase();
       document.getElementById('mod_prof').value = m.prof_inicial;
       document.getElementById('mod_desc').value = m.descripcion || '';
       document.getElementById('modalNuevoModelo').classList.remove('hidden');

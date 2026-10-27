@@ -1865,8 +1865,8 @@ class AppInspeccionLlantas(tk.Tk):
                   font=('Segoe UI', 8, 'italic'), foreground='blue').grid(row=6, column=0, columnspan=2, pady=6)
 
         def guardar():
-            m = var_m.get().strip()
-            d = var_d.get().strip()
+            m = var_m.get().strip().upper()
+            d = var_d.get().strip().upper()
             if not m or not d:
                 messagebox.showwarning('Atención', 'Marca y Diseño son obligatorios.')
                 return
@@ -1934,8 +1934,8 @@ class AppInspeccionLlantas(tk.Tk):
         ttk.Entry(f, textvariable=var_desc, width=25).grid(row=5, column=1, sticky='w', pady=4)
 
         def guardar():
-            m = var_m.get().strip()
-            d = var_d.get().strip()
+            m = var_m.get().strip().upper()
+            d = var_d.get().strip().upper()
             if not m or not d:
                 messagebox.showwarning('Atención', 'Marca y Diseño son obligatorios.')
                 return

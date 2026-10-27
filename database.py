@@ -779,27 +779,27 @@ def inicializar_bd():
         if cursor.fetchone()[0] == 0:
             modelos_seed = [
                 # Llantas Nuevas Originales
-                ('Nueva', 'Michelin', 'X Multi D', '295/80R22.5', 21.5, 'Tracción Regional'),
-                ('Nueva', 'Michelin', 'X Multi Z', '295/80R22.5', 16.5, 'Toda Posición / Direccional'),
-                ('Nueva', 'Bridgestone', 'M726 EL', '295/80R22.5', 24.5, 'Tracción Larga Distancia'),
-                ('Nueva', 'Bridgestone', 'R268 Ecopia', '295/80R22.5', 16.0, 'Direccional / Toda Posición'),
-                ('Nueva', 'Goodyear', 'KMax D', '295/80R22.5', 22.0, 'Tracción Carretera'),
-                ('Nueva', 'Goodyear', 'KMax S', '295/80R22.5', 16.0, 'Direccional Autopista'),
-                ('Nueva', 'Pirelli', 'TG01', '295/80R22.5', 22.5, 'Tracción Mixta'),
-                ('Nueva', 'Pirelli', 'FG01', '295/80R22.5', 16.5, 'Direccional Mixta'),
-                ('Nueva', 'Hankook', 'DH35', '295/80R22.5', 20.5, 'Tracción Regional'),
-                ('Nueva', 'Hankook', 'AH35', '295/80R22.5', 15.5, 'Direccional'),
-                ('Nueva', 'Double Coin', 'RLB450', '11R22.5', 22.0, 'Tracción'),
-                ('Nueva', 'Double Coin', 'RR9', '11R22.5', 15.0, 'Direccional'),
+                ('Nueva', 'MICHELIN', 'X Multi D', '295/80R22.5', 21.5, 'Tracción Regional'),
+                ('Nueva', 'MICHELIN', 'X Multi Z', '295/80R22.5', 16.5, 'Toda Posición / Direccional'),
+                ('Nueva', 'BRIDGESTONE', 'M726 EL', '295/80R22.5', 24.5, 'Tracción Larga Distancia'),
+                ('Nueva', 'BRIDGESTONE', 'R268 Ecopia', '295/80R22.5', 16.0, 'Direccional / Toda Posición'),
+                ('Nueva', 'GOODYEAR', 'KMax D', '295/80R22.5', 22.0, 'Tracción Carretera'),
+                ('Nueva', 'GOODYEAR', 'KMax S', '295/80R22.5', 16.0, 'Direccional Autopista'),
+                ('Nueva', 'PIRELLI', 'TG01', '295/80R22.5', 22.5, 'Tracción Mixta'),
+                ('Nueva', 'PIRELLI', 'FG01', '295/80R22.5', 16.5, 'Direccional Mixta'),
+                ('Nueva', 'HANKOOK', 'DH35', '295/80R22.5', 20.5, 'Tracción Regional'),
+                ('Nueva', 'HANKOOK', 'AH35', '295/80R22.5', 15.5, 'Direccional'),
+                ('Nueva', 'DOUBLE COIN', 'RLB450', '11R22.5', 22.0, 'Tracción'),
+                ('Nueva', 'DOUBLE COIN', 'RR9', '11R22.5', 15.0, 'Direccional'),
                 # Reencauches / Bandas
-                ('Reencauche', 'Bandag', 'BDM', '295/80R22.5', 21.0, 'Banda Tracción Alta Adherencia'),
-                ('Reencauche', 'Bandag', 'B710', '295/80R22.5', 20.0, 'Banda Tracción Carretera'),
-                ('Reencauche', 'Bandag', 'ECL Drive', '295/80R22.5', 22.0, 'Tracción Severa'),
-                ('Reencauche', 'Bandag', 'B197 Trailer', '295/80R22.5', 14.5, 'Banda Trailer / Arrastre'),
-                ('Reencauche', 'Marangoni', 'Ringtread RD-G', '295/80R22.5', 21.5, 'Anillo Tracción'),
-                ('Reencauche', 'Marangoni', 'RTL Energeia', '295/80R22.5', 14.0, 'Anillo Remolque/Trailer'),
-                ('Reencauche', 'Vipal', 'VT100', '295/80R22.5', 19.5, 'Tracción Urbana y Regional'),
-                ('Reencauche', 'Vipal', 'VL110', '295/80R22.5', 14.0, 'Arrastre Liviano y Pesado')
+                ('Reencauche', 'BANDAG', 'BDM', '295/80R22.5', 21.0, 'Banda Tracción Alta Adherencia'),
+                ('Reencauche', 'BANDAG', 'B710', '295/80R22.5', 20.0, 'Banda Tracción Carretera'),
+                ('Reencauche', 'BANDAG', 'ECL Drive', '295/80R22.5', 22.0, 'Tracción Severa'),
+                ('Reencauche', 'BANDAG', 'B197 Trailer', '295/80R22.5', 14.5, 'Banda Trailer / Arrastre'),
+                ('Reencauche', 'MARANGONI', 'Ringtread RD-G', '295/80R22.5', 21.5, 'Anillo Tracción'),
+                ('Reencauche', 'MARANGONI', 'RTL Energeia', '295/80R22.5', 14.0, 'Anillo Remolque/Trailer'),
+                ('Reencauche', 'VIPAL', 'VT100', '295/80R22.5', 19.5, 'Tracción Urbana y Regional'),
+                ('Reencauche', 'VIPAL', 'VL110', '295/80R22.5', 14.0, 'Arrastre Liviano y Pesado')
             ]
             cursor.executemany("""
                 INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion)
@@ -813,6 +813,13 @@ def inicializar_bd():
             cursor.executemany("INSERT OR IGNORE INTO catalogo_modelos_llantas (tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion) VALUES (?, ?, ?, ?, ?, ?)", catalogo_modelos_colombia.modelos_colombia())
             nuevas = cursor.execute("SELECT COUNT(*) FROM catalogo_modelos_llantas").fetchone()[0] - antes
             cursor.execute("INSERT INTO _control_migraciones (nombre, fecha_ejecucion, filas_afectadas) VALUES ('catalogo_modelos_colombia_v1', datetime('now'), ?)", (nuevas,))
+
+        # Garantizar que todas las marcas en el catálogo de modelos queden en mayúsculas
+        cursor.execute("""
+            UPDATE OR IGNORE catalogo_modelos_llantas
+            SET marca = UPPER(TRIM(marca))
+            WHERE marca IS NOT NULL AND marca != UPPER(TRIM(marca))
+        """)
 
         # Tabla Maestra de Asociación Placa <-> Vehículo (Tipología, Cliente, etc.)
         conn.execute("""
@@ -4485,10 +4492,10 @@ def buscar_modelos_llantas_filtro(termino=''):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion
+            SELECT id, tipo_llanta, UPPER(TRIM(marca)) as marca, diseno, dimension, prof_inicial, descripcion
             FROM catalogo_modelos_llantas
             WHERE LOWER(marca) LIKE ? OR LOWER(diseno) LIKE ? OR LOWER(dimension) LIKE ? OR LOWER(tipo_llanta) LIKE ?
-            ORDER BY marca ASC, diseno ASC LIMIT 25
+            ORDER BY UPPER(TRIM(marca)) ASC, diseno ASC LIMIT 25
         ''', (t, t, t, t))
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
@@ -5648,7 +5655,7 @@ def actualizar_tipologia(nombre_antiguo, nombre_nuevo, descripcion='', cant_llan
 def obtener_catalogo_modelos():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, marca ASC, diseno ASC')
+        cursor.execute('SELECT id, tipo_llanta, UPPER(TRIM(marca)) as marca, diseno, dimension, prof_inicial, descripcion FROM catalogo_modelos_llantas ORDER BY tipo_llanta ASC, UPPER(TRIM(marca)) ASC, diseno ASC')
         cols = ['id', 'tipo_llanta', 'marca', 'diseno', 'dimension', 'prof_inicial', 'descripcion']
         return [dict(zip(cols, r)) for r in cursor.fetchall()]
 
@@ -5789,7 +5796,8 @@ def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original', ban
     return 0.0
 
 def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion=''):
-    tipo = str(tipo_llanta or 'NUEVA').strip().upper()
+    tipo_raw = str(tipo_llanta or 'Nueva').strip()
+    tipo = 'Reencauche' if 'reen' in tipo_raw.lower() else 'Nueva'
     m = str(marca or '').strip().upper()
     d = str(diseno or '').strip().upper()
     dim = str(dimension or '').strip().upper()
@@ -5805,12 +5813,13 @@ def guardar_modelo_llanta(tipo_llanta, marca, diseno, dimension, prof_inicial, d
 
 def actualizar_modelo_llanta(modelo_id, tipo_llanta, marca, diseno, dimension, prof_inicial, descripcion='', actualizar_bd=True):
     mid = int(modelo_id)
-    tipo = str(tipo_llanta or 'NUEVA').strip().capitalize()
-    m_new = str(marca or '').strip()
-    d_new = str(diseno or '').strip()
-    dim_new = str(dimension or '').strip()
+    tipo_raw = str(tipo_llanta or 'Nueva').strip()
+    tipo = 'Reencauche' if 'reen' in tipo_raw.lower() else 'Nueva'
+    m_new = str(marca or '').strip().upper()
+    d_new = str(diseno or '').strip().upper()
+    dim_new = str(dimension or '').strip().upper()
     prof_new = to_float(prof_inicial, 0.0)
-    desc_new = str(descripcion or '').strip()
+    desc_new = str(descripcion or '').strip().upper()
 
     if not m_new or not d_new or prof_new <= 0:
         raise ValueError("Marca, diseño y una profundidad inicial mayor a 0 son obligatorios.")

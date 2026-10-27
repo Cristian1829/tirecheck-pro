@@ -628,7 +628,7 @@
       tbody.innerHTML = paginaItems.map(m => `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="p-2.5 font-bold">${escapeHtml(m.tipo_llanta || '')}</td>
-          <td class="p-2.5 font-black text-slate-900">${escapeHtml(m.marca || '')}</td>
+          <td class="p-2.5 font-black text-slate-900">${escapeHtml((m.marca || '').toUpperCase())}</td>
           <td class="p-2.5 font-bold text-slate-800">${escapeHtml(m.diseno || '')}</td>
           <td class="p-2.5 text-slate-700">${escapeHtml(m.dimension || '')}</td>
           <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
@@ -699,9 +699,9 @@
       if (dlD) dlD.innerHTML = obtenerListaDimensionesDisponibles().map(d => `<option value="${escapeHtml(d)}">`).join('');
 
       document.getElementById('mod_tipo').value = m.tipo_llanta;
-      document.getElementById('mod_marca').value = m.marca;
-      document.getElementById('mod_diseno').value = m.diseno;
-      document.getElementById('mod_dimension').value = m.dimension;
+      document.getElementById('mod_marca').value = (m.marca || '').toUpperCase();
+      document.getElementById('mod_diseno').value = (m.diseno || '').toUpperCase();
+      document.getElementById('mod_dimension').value = (m.dimension || '').toUpperCase();
       document.getElementById('mod_prof').value = m.prof_inicial;
       document.getElementById('mod_desc').value = m.descripcion || '';
       document.getElementById('modalNuevoModelo').classList.remove('hidden');

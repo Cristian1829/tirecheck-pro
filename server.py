@@ -1546,16 +1546,18 @@ def api_modelos_llanta(usuario_actual: dict = Depends(obtener_usuario_actual)):
 
 @app.post("/api/modelos-llanta")
 def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
-    ok = database.guardar_modelo_llanta(item.tipo_llanta, item.marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
+    marca = (item.marca or "").strip().upper()
+    ok = database.guardar_modelo_llanta(item.tipo_llanta, marca, item.diseno, item.dimension, item.prof_inicial, item.descripcion)
     return {"status": "ok" if ok else "error"}
 
 @app.put("/api/modelos-llanta")
 def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
     try:
+        marca = (item.marca or "").strip().upper()
         res = database.actualizar_modelo_llanta(
             modelo_id=item.id,
             tipo_llanta=item.tipo_llanta,
-            marca=item.marca,
+            marca=marca,
             diseno=item.diseno,
             dimension=item.dimension,
             prof_inicial=item.prof_inicial,

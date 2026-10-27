@@ -23,7 +23,7 @@ def test_se_cargan_una_sola_vez_y_respetan_lo_borrado(test_db):
         assert conn.execute("SELECT COUNT(*) FROM _control_migraciones WHERE nombre='catalogo_modelos_colombia_v1'").fetchone()[0] == 1
         total = _contar(conn)
         assert total >= 100
-        conn.execute("DELETE FROM catalogo_modelos_llantas WHERE marca='Linglong'")
+        conn.execute("DELETE FROM catalogo_modelos_llantas WHERE UPPER(marca)='LINGLONG'")
         conn.commit()
         borradas = total - _contar(conn)
     assert borradas > 0
