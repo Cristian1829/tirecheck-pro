@@ -1311,6 +1311,10 @@
             <i class="fa-solid fa-file-excel"></i>
             <span>Importar Excel</span>
           </button>
+          <button type="button" id="btnEdicionMultipleBD" onclick="abrirModalEdicionMultipleBD()" class="hidden px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all cursor-pointer" title="Modificar múltiples registros seleccionados (Solo Administrador)">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Editar Seleccionados (<span id="lblCantSeleccionadosBD">0</span>)</span>
+          </button>
           <button type="button" onclick="descargarPlantillaExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex items-center space-x-1.5">
             <i class="fa-solid fa-download"></i>
             <span>Plantilla</span>
@@ -1444,6 +1448,9 @@
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
             <tr>
+              <th id="thCheckTodosBD" class="p-2.5 text-center w-10 hidden">
+                <input type="checkbox" id="chkSeleccionarTodosBD" onchange="toggleSeleccionarTodosBD(this.checked)" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" title="Seleccionar / deseleccionar todos">
+              </th>
               <th class="p-2.5 text-center">ID</th>
               <th class="p-2.5 text-center">Acciones</th>
               <th class="p-2.5">Fecha</th>
@@ -4331,6 +4338,162 @@
   </div>
   <!-- MODALES DE OPERACIÓN (EDITAR, IMPORTAR EXCEL, NUEVO MODELO, ETC)-->
   <!-- ============================================================== -->
+
+  <!-- MODAL: EDICIÓN DE MÚLTIPLES REGISTROS (EXCLUSIVO ADMINISTRADOR) -->
+  <div id="modalEdicionMultipleBD" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-sm">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-900 leading-tight">
+              Edición de Múltiples Registros
+            </h3>
+            <p class="text-xs text-slate-500 font-medium">
+              Solo Administrador · Aplicar cambios en bloque a <span id="lblCantRegistrosModalMultiple" class="font-bold text-indigo-600 font-mono">0</span> registros seleccionados
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalEdicionMultipleBD()" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-lg transition-colors border border-slate-200">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-indigo-50/80 rounded-2xl border border-indigo-200/70 text-xs text-indigo-950 flex items-start space-x-2">
+        <i class="fa-solid fa-circle-info text-indigo-600 text-sm mt-0.5 flex-shrink-0"></i>
+        <p>Marca la casilla de los campos que deseas modificar. Los campos que dejes desmarcados conservarán intacto su valor original en los registros seleccionados.</p>
+      </div>
+
+      <form id="formEdicionMultipleBD" onsubmit="ejecutarEdicionMultipleBD(event)" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto p-1 custom-scroll">
+          
+          <!-- Campo: Fecha -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_fecha" onchange="toggleCampoEM('fecha')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Fecha</span>
+            </label>
+            <input type="date" id="em_fecha" disabled class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Cliente -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_cliente" onchange="toggleCampoEM('cliente')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Cliente</span>
+            </label>
+            <input type="text" id="em_cliente" disabled placeholder="Nombre del Cliente" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Sede / Subcliente -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_subcliente" onchange="toggleCampoEM('subcliente')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Sede / Subcliente</span>
+            </label>
+            <input type="text" id="em_subcliente" disabled placeholder="Sede o Proyecto" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Operación -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_tipo_operacion" onchange="toggleCampoEM('tipo_operacion')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Operación</span>
+            </label>
+            <input type="text" id="em_tipo_operacion" disabled placeholder="Tipo de Operación" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Tipología -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_tipologia" onchange="toggleCampoEM('tipologia')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Tipología</span>
+            </label>
+            <input type="text" id="em_tipologia" disabled placeholder="Ej: Dobletroque (6x4)" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Marca -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_marca" onchange="toggleCampoEM('marca')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Marca</span>
+            </label>
+            <input type="text" id="em_marca" disabled placeholder="Marca de Llanta" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Diseño -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_diseno" onchange="toggleCampoEM('diseno')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Diseño</span>
+            </label>
+            <input type="text" id="em_diseno" disabled placeholder="Diseño de banda" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Dimensión -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_dimension" onchange="toggleCampoEM('dimension')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Dimensión</span>
+            </label>
+            <input type="text" id="em_dimension" disabled placeholder="Ej: 295/80R22.5" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Vida -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_vida" onchange="toggleCampoEM('vida')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Condición / Vida</span>
+            </label>
+            <select id="em_vida" disabled class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+              <option value="Original">Original (Nueva)</option>
+              <option value="R1">Reencauche 1 (R1)</option>
+              <option value="R2">Reencauche 2 (R2)</option>
+              <option value="R3">Reencauche 3 (R3)</option>
+              <option value="R4">Reencauche 4 (R4)</option>
+              <option value="R5">Reencauche 5 (R5)</option>
+            </select>
+          </div>
+
+          <!-- Campo: Presión PSI -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_psi" onchange="toggleCampoEM('psi')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Presión (PSI)</span>
+            </label>
+            <input type="number" id="em_psi" disabled placeholder="Ej: 110" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Novedades -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 sm:col-span-2">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_novedades" onchange="toggleCampoEM('novedades')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Novedades / Observaciones</span>
+            </label>
+            <input type="text" id="em_novedades" disabled placeholder="Observación general para los registros seleccionados" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+          <button type="button" onclick="deseleccionarTodosBD()" class="text-xs text-slate-500 hover:text-slate-800 font-bold underline">
+            Deseleccionar todos
+          </button>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="cerrarModalEdicionMultipleBD()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 font-bold rounded-xl text-slate-700">
+              Cancelar
+            </button>
+            <button type="submit" id="btnGuardarEdicionMultiple" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow flex items-center space-x-1.5 cursor-pointer">
+              <i class="fa-solid fa-check"></i>
+              <span>Aplicar Cambios en Lote</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL: EDITAR INSPECCIÓN -->
   <div id="modalEditarInspeccion" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">

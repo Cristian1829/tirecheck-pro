@@ -3072,6 +3072,90 @@ def vaciar_inspecciones():
         conn.execute("DELETE FROM inspecciones")
         conn.commit()
 
+
+def actualizar_inspecciones_en_lote(ids, cambios):
+    """
+    Actualiza múltiples registros de inspección en lote (operación reservada para el Administrador).
+    Aplica únicamente los campos especificados en 'cambios' sobre la lista de IDs indicada.
+    """
+    if not ids or not cambios:
+        return 0
+
+    campos_permitidos = {
+        'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'tipologia',
+        'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'psi', 'novedades'
+    }
+
+    cambios_validos = {k: v for k, v in cambios.items() if k in campos_permitidos and v is not None}
+    if not cambios_validos:
+        return 0
+
+    # Normalizaciones de vida y banda
+    if 'vida' in cambios_validos or 'banda_reen' in cambios_validos:
+        v_in = cambios_validos.get('vida', '')
+        b_in = cambios_validos.get('banda_reen', '')
+        vida_f, banda_f = normalizar_vida_y_banda(v_in, b_in)
+        if 'vida' in cambios_validos:
+            cambios_validos['vida'] = vida_f
+        if 'banda_reen' in cambios_validos:
+            cambios_validos['banda_reen'] = banda_f
+
+    # Normalizar campos de texto en mayúsculas
+    for c in ['cliente', 'subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'novedades']:
+        if c in cambios_validos:
+            cambios_validos[c] = str(cambios_validos[c]).strip().upper()
+
+    if 'fecha' in cambios_validos:
+        cambios_validos['fecha'] = str(cambios_validos['fecha']).strip()[:10]
+
+    if 'psi' in cambios_validos:
+        try:
+            cambios_validos['psi'] = float(cambios_validos['psi'])
+        except (ValueError, TypeError):
+            cambios_validos.pop('psi', None)
+
+    if not cambios_validos:
+        return 0
+
+    set_parts = []
+    valores = []
+    for k, v in cambios_validos.items():
+        set_parts.append(f"{k} = ?")
+        valores.append(v)
+
+    set_sql = ", ".join(set_parts)
+    ids_lista = [int(i) for i in ids if str(i).isdigit() or isinstance(i, int)]
+    if not ids_lista:
+        return 0
+
+    placeholders = ",".join("?" for _ in ids_lista)
+    sql = f"UPDATE inspecciones SET {set_sql} WHERE id IN ({placeholders})"
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql, valores + ids_lista)
+        filas_afectadas = cursor.rowcount
+
+        # Sincronizar catálogo de vehículos y marcas si cambiaron tipología, cliente o subcliente
+        if any(c in cambios_validos for c in ['cliente', 'subcliente', 'tipo_operacion', 'tipologia']):
+            cursor.execute(f"""
+                SELECT DISTINCT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+                FROM inspecciones WHERE id IN ({placeholders})
+            """, ids_lista)
+            for row in cursor.fetchall():
+                if row[0]:
+                    sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5], conn=conn)
+
+        if 'cliente' in cambios_validos or 'marca' in cambios_validos:
+            cursor.execute(f"SELECT DISTINCT cliente, marca FROM inspecciones WHERE id IN ({placeholders})", ids_lista)
+            for row in cursor.fetchall():
+                if row[0] and row[1]:
+                    sincronizar_marca_cliente(row[0], row[1], conn=conn)
+
+        conn.commit()
+
+    return filas_afectadas
+
 def cargar_excel_a_bd(file_path, clientes_autorizados=None):
     df = pd.read_excel(file_path, sheet_name=0)
     cols_norm_map = {normalizar_texto(c): c for c in df.columns}

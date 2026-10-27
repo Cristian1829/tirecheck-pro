@@ -135,6 +135,10 @@ class InspeccionItem(BaseModel):
     foto_novedad: str = ""
     tipo_licencia: Optional[str] = None
 
+class EdicionMultipleInspeccionesRequest(BaseModel):
+    ids: list[int]
+    cambios: dict
+
 class NuevaOperacionItem(BaseModel):
     nombre: str
 
@@ -649,8 +653,8 @@ def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = De
 @app.post("/api/inspecciones/importar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
-    if es_rol_gerencia(rol):
-        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede importar inspecciones")
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        raise HTTPException(status_code=403, detail="Solo el administrador puede realizar importaciones o ediciones masivas de inspecciones")
     filename = file.filename or ""
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
@@ -743,6 +747,29 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
 
     reg_id = database.insertar_inspeccion(datos)
     return {"status": "ok", "id": reg_id, "message": "Inspección guardada correctamente"}
+
+@app.put("/api/inspecciones/edicion-multiple", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_edicion_multiple_inspecciones(req: EdicionMultipleInspeccionesRequest, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        raise HTTPException(status_code=403, detail="Solo el administrador puede realizar ediciones de múltiples registros")
+
+    if not req.ids:
+        raise HTTPException(status_code=400, detail="Debe seleccionar al menos un registro para editar")
+    if not req.cambios:
+        raise HTTPException(status_code=400, detail="No se han especificado campos para actualizar")
+
+    if "subcliente" in req.cambios and req.cambios["subcliente"] is not None:
+        sub = str(req.cambios["subcliente"]).strip()
+        if not sub or sub.lower().startswith("ej."):
+            raise HTTPException(status_code=400, detail="La Sede / Subcliente es obligatoria si se incluye en la edición")
+
+    cant = database.actualizar_inspecciones_en_lote(req.ids, req.cambios)
+    return {
+        "status": "ok",
+        "registros_actualizados": cant,
+        "message": f"Se actualizaron exitosamente {cant} registros en la base de datos."
+    }
 
 @app.put("/api/inspecciones/{inspeccion_id}")
 def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):

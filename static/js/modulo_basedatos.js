@@ -2,6 +2,7 @@
     // VISTA 2: BASE DE INSPECCIONES (CRUD, FILTROS & EXCEL)
     // ==========================================
     let bdFiltrosPoblados = false;
+    let inspeccionesSeleccionadasBD = new Set();
 
     async function cargarBaseInspecciones() {
       const tbody = document.getElementById('tbodyInspecciones');
@@ -226,10 +227,14 @@
       const contenedorPaginacion = document.getElementById('contenedorPaginacionBD');
       if (!tbody) return;
 
+      const esAdm = esUsuarioAdmin();
+      const thCheck = document.getElementById('thCheckTodosBD');
+      if (thCheck) thCheck.classList.toggle('hidden', !esAdm);
+
       if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="25" class="p-12 text-center text-slate-400">
+            <td colspan="26" class="p-12 text-center text-slate-400">
               <div class="flex flex-col items-center justify-center space-y-2">
                 <i class="fa-solid fa-filter-circle-xmark text-3xl text-slate-300"></i>
                 <span class="font-bold text-slate-600">No se encontraron inspecciones con los filtros seleccionados</span>
@@ -242,6 +247,7 @@
           </tr>
         `;
         if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        actualizarEstadoSeleccionBD();
         return;
       }
 
@@ -280,8 +286,16 @@
           </button>
         ` : `<span class="text-slate-300 font-medium text-xs">Sin fotos</span>`;
 
+        const isChecked = inspeccionesSeleccionadasBD.has(r.id);
+        const tdCheck = esAdm ? `
+          <td class="p-2.5 text-center">
+            <input type="checkbox" class="chk-insp-item w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="alCambiarCheckFilaBD(${r.id}, this.checked)">
+          </td>
+        ` : '';
+
         return `
-          <tr class="hover:bg-slate-50 transition-colors">
+          <tr class="hover:bg-slate-50 transition-colors ${isChecked ? 'bg-indigo-50/70 font-semibold' : ''}">
+            ${tdCheck}
             <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
             <td class="p-2.5 text-center whitespace-nowrap">
               ${tieneFotos ? `
@@ -344,6 +358,7 @@
       }).join('');
 
       actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin);
+      actualizarEstadoSeleccionBD();
     }
 
     function actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin) {
@@ -604,6 +619,10 @@
 
     // Funciones de Excel
     function abrirModalImportarExcel() {
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede realizar importaciones masivas', true);
+        return;
+      }
       const m = document.getElementById('modalImportarExcel');
       m.classList.remove('hidden');
       m.classList.add('flex');
@@ -655,6 +674,10 @@
     }
 
     async function ejecutarImportarExcel() {
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede realizar importaciones masivas', true);
+        return;
+      }
       const f = fileInput.files[0];
       if (!f) return;
       const btn = document.getElementById('btnSubirExcel');
@@ -682,6 +705,183 @@
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Subir e Importar';
+      }
+    }
+
+    // ==========================================
+    // EDICIÓN DE MÚLTIPLES REGISTROS (SOLO ADMINISTRADOR)
+    // ==========================================
+    function alCambiarCheckFilaBD(id, checked) {
+      if (checked) {
+        inspeccionesSeleccionadasBD.add(id);
+      } else {
+        inspeccionesSeleccionadasBD.delete(id);
+      }
+      actualizarEstadoSeleccionBD();
+    }
+
+    function toggleSeleccionarTodosBD(checked) {
+      if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) return;
+      const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, cacheFiltradasBD.length);
+      const paginaItems = cacheFiltradasBD.slice(inicio, fin);
+
+      paginaItems.forEach(r => {
+        if (checked) {
+          inspeccionesSeleccionadasBD.add(r.id);
+        } else {
+          inspeccionesSeleccionadasBD.delete(r.id);
+        }
+      });
+      renderizarTablaBD();
+    }
+
+    function deseleccionarTodosBD() {
+      inspeccionesSeleccionadasBD.clear();
+      const chkTodos = document.getElementById('chkSeleccionarTodosBD');
+      if (chkTodos) chkTodos.checked = false;
+      renderizarTablaBD();
+    }
+
+    function actualizarEstadoSeleccionBD() {
+      const cant = inspeccionesSeleccionadasBD.size;
+      const btn = document.getElementById('btnEdicionMultipleBD');
+      const lbl = document.getElementById('lblCantSeleccionadosBD');
+      const esAdm = esUsuarioAdmin();
+
+      if (btn && lbl) {
+        lbl.textContent = cant;
+        if (esAdm && cant > 0) {
+          btn.classList.remove('hidden');
+        } else {
+          btn.classList.add('hidden');
+        }
+      }
+
+      const chkTodos = document.getElementById('chkSeleccionarTodosBD');
+      if (chkTodos && cacheFiltradasBD && cacheFiltradasBD.length > 0) {
+        const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
+        const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, cacheFiltradasBD.length);
+        const paginaItems = cacheFiltradasBD.slice(inicio, fin);
+        chkTodos.checked = paginaItems.length > 0 && paginaItems.every(r => inspeccionesSeleccionadasBD.has(r.id));
+      }
+    }
+
+    function toggleCampoEM(campo) {
+      const chk = document.getElementById(`chk_em_${campo}`);
+      const inp = document.getElementById(`em_${campo}`);
+      if (chk && inp) {
+        inp.disabled = !chk.checked;
+        if (chk.checked) inp.focus();
+      }
+    }
+
+    function abrirModalEdicionMultipleBD() {
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede hacer ediciones de múltiples registros', true);
+        return;
+      }
+      const cant = inspeccionesSeleccionadasBD.size;
+      if (cant === 0) {
+        mostrarToast('⚠️ Selecciona al menos una inspección con la casilla de verificación', true);
+        return;
+      }
+      const lbl = document.getElementById('lblCantRegistrosModalMultiple');
+      if (lbl) lbl.textContent = cant;
+
+      ['fecha', 'cliente', 'subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'psi', 'novedades'].forEach(c => {
+        const chk = document.getElementById(`chk_em_${c}`);
+        const inp = document.getElementById(`em_${c}`);
+        if (chk) chk.checked = false;
+        if (inp) {
+          inp.disabled = true;
+          if (inp.tagName === 'SELECT') {
+            inp.selectedIndex = 0;
+          } else {
+            inp.value = '';
+          }
+        }
+      });
+
+      const m = document.getElementById('modalEdicionMultipleBD');
+      if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      }
+    }
+
+    function cerrarModalEdicionMultipleBD() {
+      const m = document.getElementById('modalEdicionMultipleBD');
+      if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      }
+    }
+
+    async function ejecutarEdicionMultipleBD(e) {
+      e.preventDefault();
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede hacer ediciones de múltiples registros', true);
+        return;
+      }
+      const ids = Array.from(inspeccionesSeleccionadasBD);
+      if (ids.length === 0) {
+        mostrarToast('⚠️ No hay registros seleccionados', true);
+        return;
+      }
+
+      const cambios = {};
+      const campos = ['fecha', 'cliente', 'subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'psi', 'novedades'];
+      let camposMarcados = 0;
+
+      campos.forEach(c => {
+        const chk = document.getElementById(`chk_em_${c}`);
+        const inp = document.getElementById(`em_${c}`);
+        if (chk && chk.checked && inp) {
+          camposMarcados++;
+          cambios[c] = inp.value;
+        }
+      });
+
+      if (camposMarcados === 0) {
+        mostrarToast('⚠️ Marca al menos un campo para actualizar en lote', true);
+        return;
+      }
+
+      if ('subcliente' in cambios && !String(cambios.subcliente).trim()) {
+        mostrarToast('⚠️ Si marcas Sede / Subcliente, debes ingresar un valor válido', true);
+        document.getElementById('em_subcliente')?.focus();
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btnGuardarEdicionMultiple');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Aplicando cambios...';
+      }
+
+      try {
+        const res = await fetch('/api/inspecciones/edicion-multiple', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ids, cambios: cambios })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          cerrarModalEdicionMultipleBD();
+          deseleccionarTodosBD();
+          mostrarToast(`🎉 ${data.message || `Se actualizaron ${ids.length} registros con éxito`}`);
+          cargarBaseInspecciones();
+        } else {
+          mostrarToast(data.detail || 'Error al aplicar cambios de edición múltiple', true);
+        }
+      } catch (err) {
+        mostrarToast('Error de red al guardar la edición múltiple', true);
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Aplicar Cambios en Lote';
+        }
       }
     }
 

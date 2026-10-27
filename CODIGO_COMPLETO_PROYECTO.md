@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-26 17:23:53`
+- **Fecha de Generación:** `2026-10-26 21:22:54`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `57,986` líneas
-- **Tamaño Total de Código Fuente:** `2920.0 KB` (`2,990,042` bytes)
+- **Líneas Totales de Código:** `58,466` líneas
+- **Tamaño Total de Código Fuente:** `2944.2 KB` (`3,014,812` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -468,8 +468,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2446 | 110.2 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10433 | 511.6 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [server.py](#archivo-serverpy) | `python` | 2473 | 111.6 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 10517 | 514.9 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
 | [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
 | [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2111 | 103.7 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
@@ -481,13 +481,13 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 5979 | 401.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6142 | 413.5 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
 | [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
-| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1006 | 43.5 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
+| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1012 | 43.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
 | [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4140 | 187.4 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
-| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 687 | 34.0 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
+| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.5 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
 | [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2044 | 89.4 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
 | [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 987 | 51.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
 | [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1212 | 57.5 KB | Módulo Trazabilidad: Historial y caracterización de flota |
@@ -3814,7 +3814,7 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2446 líneas | 112,849 bytes (110.2 KB)
+- **Métricas:** 2473 líneas | 114,269 bytes (111.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -3954,6 +3954,10 @@ class InspeccionItem(BaseModel):
     usuario_registro: str = ""
     foto_novedad: str = ""
     tipo_licencia: Optional[str] = None
+
+class EdicionMultipleInspeccionesRequest(BaseModel):
+    ids: list[int]
+    cambios: dict
 
 class NuevaOperacionItem(BaseModel):
     nombre: str
@@ -4469,8 +4473,8 @@ def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = De
 @app.post("/api/inspecciones/importar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
-    if es_rol_gerencia(rol):
-        raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede importar inspecciones")
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        raise HTTPException(status_code=403, detail="Solo el administrador puede realizar importaciones o ediciones masivas de inspecciones")
     filename = file.filename or ""
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
@@ -4563,6 +4567,29 @@ def api_guardar_inspeccion(item: InspeccionItem, usuario_actual: dict = Depends(
 
     reg_id = database.insertar_inspeccion(datos)
     return {"status": "ok", "id": reg_id, "message": "Inspección guardada correctamente"}
+
+@app.put("/api/inspecciones/edicion-multiple", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_edicion_multiple_inspecciones(req: EdicionMultipleInspeccionesRequest, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    rol = str(usuario_actual.get("rol", "")).strip().lower()
+    if not es_rol_admin(rol, usuario_actual.get("username")):
+        raise HTTPException(status_code=403, detail="Solo el administrador puede realizar ediciones de múltiples registros")
+
+    if not req.ids:
+        raise HTTPException(status_code=400, detail="Debe seleccionar al menos un registro para editar")
+    if not req.cambios:
+        raise HTTPException(status_code=400, detail="No se han especificado campos para actualizar")
+
+    if "subcliente" in req.cambios and req.cambios["subcliente"] is not None:
+        sub = str(req.cambios["subcliente"]).strip()
+        if not sub or sub.lower().startswith("ej."):
+            raise HTTPException(status_code=400, detail="La Sede / Subcliente es obligatoria si se incluye en la edición")
+
+    cant = database.actualizar_inspecciones_en_lote(req.ids, req.cambios)
+    return {
+        "status": "ok",
+        "registros_actualizados": cant,
+        "message": f"Se actualizaron exitosamente {cant} registros en la base de datos."
+    }
 
 @app.put("/api/inspecciones/{inspeccion_id}")
 def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -6272,7 +6299,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10433 líneas | 523,899 bytes (511.6 KB)
+- **Métricas:** 10517 líneas | 527,211 bytes (514.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -9349,6 +9376,90 @@ def vaciar_inspecciones():
     with get_connection() as conn:
         conn.execute("DELETE FROM inspecciones")
         conn.commit()
+
+
+def actualizar_inspecciones_en_lote(ids, cambios):
+    """
+    Actualiza múltiples registros de inspección en lote (operación reservada para el Administrador).
+    Aplica únicamente los campos especificados en 'cambios' sobre la lista de IDs indicada.
+    """
+    if not ids or not cambios:
+        return 0
+
+    campos_permitidos = {
+        'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'tipologia',
+        'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'psi', 'novedades'
+    }
+
+    cambios_validos = {k: v for k, v in cambios.items() if k in campos_permitidos and v is not None}
+    if not cambios_validos:
+        return 0
+
+    # Normalizaciones de vida y banda
+    if 'vida' in cambios_validos or 'banda_reen' in cambios_validos:
+        v_in = cambios_validos.get('vida', '')
+        b_in = cambios_validos.get('banda_reen', '')
+        vida_f, banda_f = normalizar_vida_y_banda(v_in, b_in)
+        if 'vida' in cambios_validos:
+            cambios_validos['vida'] = vida_f
+        if 'banda_reen' in cambios_validos:
+            cambios_validos['banda_reen'] = banda_f
+
+    # Normalizar campos de texto en mayúsculas
+    for c in ['cliente', 'subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'novedades']:
+        if c in cambios_validos:
+            cambios_validos[c] = str(cambios_validos[c]).strip().upper()
+
+    if 'fecha' in cambios_validos:
+        cambios_validos['fecha'] = str(cambios_validos['fecha']).strip()[:10]
+
+    if 'psi' in cambios_validos:
+        try:
+            cambios_validos['psi'] = float(cambios_validos['psi'])
+        except (ValueError, TypeError):
+            cambios_validos.pop('psi', None)
+
+    if not cambios_validos:
+        return 0
+
+    set_parts = []
+    valores = []
+    for k, v in cambios_validos.items():
+        set_parts.append(f"{k} = ?")
+        valores.append(v)
+
+    set_sql = ", ".join(set_parts)
+    ids_lista = [int(i) for i in ids if str(i).isdigit() or isinstance(i, int)]
+    if not ids_lista:
+        return 0
+
+    placeholders = ",".join("?" for _ in ids_lista)
+    sql = f"UPDATE inspecciones SET {set_sql} WHERE id IN ({placeholders})"
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(sql, valores + ids_lista)
+        filas_afectadas = cursor.rowcount
+
+        # Sincronizar catálogo de vehículos y marcas si cambiaron tipología, cliente o subcliente
+        if any(c in cambios_validos for c in ['cliente', 'subcliente', 'tipo_operacion', 'tipologia']):
+            cursor.execute(f"""
+                SELECT DISTINCT placa, tipologia, cliente, subcliente, tipo_operacion, kilometraje
+                FROM inspecciones WHERE id IN ({placeholders})
+            """, ids_lista)
+            for row in cursor.fetchall():
+                if row[0]:
+                    sincronizar_vehiculo_catalogo(row[0], row[1], row[2], row[3], row[4], row[5], conn=conn)
+
+        if 'cliente' in cambios_validos or 'marca' in cambios_validos:
+            cursor.execute(f"SELECT DISTINCT cliente, marca FROM inspecciones WHERE id IN ({placeholders})", ids_lista)
+            for row in cursor.fetchall():
+                if row[0] and row[1]:
+                    sincronizar_marca_cliente(row[0], row[1], conn=conn)
+
+        conn.commit()
+
+    return filas_afectadas
 
 def cargar_excel_a_bd(file_path, clientes_autorizados=None):
     df = pd.read_excel(file_path, sheet_name=0)
@@ -23168,7 +23279,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 5979 líneas | 411,401 bytes (401.8 KB)
+- **Métricas:** 6142 líneas | 423,401 bytes (413.5 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -24485,6 +24596,10 @@ if __name__ == '__main__':
             <i class="fa-solid fa-file-excel"></i>
             <span>Importar Excel</span>
           </button>
+          <button type="button" id="btnEdicionMultipleBD" onclick="abrirModalEdicionMultipleBD()" class="hidden px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all cursor-pointer" title="Modificar múltiples registros seleccionados (Solo Administrador)">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Editar Seleccionados (<span id="lblCantSeleccionadosBD">0</span>)</span>
+          </button>
           <button type="button" onclick="descargarPlantillaExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex items-center space-x-1.5">
             <i class="fa-solid fa-download"></i>
             <span>Plantilla</span>
@@ -24618,6 +24733,9 @@ if __name__ == '__main__':
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
             <tr>
+              <th id="thCheckTodosBD" class="p-2.5 text-center w-10 hidden">
+                <input type="checkbox" id="chkSeleccionarTodosBD" onchange="toggleSeleccionarTodosBD(this.checked)" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" title="Seleccionar / deseleccionar todos">
+              </th>
               <th class="p-2.5 text-center">ID</th>
               <th class="p-2.5 text-center">Acciones</th>
               <th class="p-2.5">Fecha</th>
@@ -27505,6 +27623,162 @@ if __name__ == '__main__':
   </div>
   <!-- MODALES DE OPERACIÓN (EDITAR, IMPORTAR EXCEL, NUEVO MODELO, ETC)-->
   <!-- ============================================================== -->
+
+  <!-- MODAL: EDICIÓN DE MÚLTIPLES REGISTROS (EXCLUSIVO ADMINISTRADOR) -->
+  <div id="modalEdicionMultipleBD" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 my-8 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-sm">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-900 leading-tight">
+              Edición de Múltiples Registros
+            </h3>
+            <p class="text-xs text-slate-500 font-medium">
+              Solo Administrador · Aplicar cambios en bloque a <span id="lblCantRegistrosModalMultiple" class="font-bold text-indigo-600 font-mono">0</span> registros seleccionados
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="cerrarModalEdicionMultipleBD()" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-lg transition-colors border border-slate-200">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-indigo-50/80 rounded-2xl border border-indigo-200/70 text-xs text-indigo-950 flex items-start space-x-2">
+        <i class="fa-solid fa-circle-info text-indigo-600 text-sm mt-0.5 flex-shrink-0"></i>
+        <p>Marca la casilla de los campos que deseas modificar. Los campos que dejes desmarcados conservarán intacto su valor original en los registros seleccionados.</p>
+      </div>
+
+      <form id="formEdicionMultipleBD" onsubmit="ejecutarEdicionMultipleBD(event)" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto p-1 custom-scroll">
+          
+          <!-- Campo: Fecha -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_fecha" onchange="toggleCampoEM('fecha')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Fecha</span>
+            </label>
+            <input type="date" id="em_fecha" disabled class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Cliente -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_cliente" onchange="toggleCampoEM('cliente')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Cliente</span>
+            </label>
+            <input type="text" id="em_cliente" disabled placeholder="Nombre del Cliente" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Sede / Subcliente -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_subcliente" onchange="toggleCampoEM('subcliente')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Sede / Subcliente</span>
+            </label>
+            <input type="text" id="em_subcliente" disabled placeholder="Sede o Proyecto" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Operación -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_tipo_operacion" onchange="toggleCampoEM('tipo_operacion')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Operación</span>
+            </label>
+            <input type="text" id="em_tipo_operacion" disabled placeholder="Tipo de Operación" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Tipología -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_tipologia" onchange="toggleCampoEM('tipologia')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Tipología</span>
+            </label>
+            <input type="text" id="em_tipologia" disabled placeholder="Ej: Dobletroque (6x4)" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Marca -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_marca" onchange="toggleCampoEM('marca')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Marca</span>
+            </label>
+            <input type="text" id="em_marca" disabled placeholder="Marca de Llanta" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Diseño -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_diseno" onchange="toggleCampoEM('diseno')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Diseño</span>
+            </label>
+            <input type="text" id="em_diseno" disabled placeholder="Diseño de banda" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Dimensión -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_dimension" onchange="toggleCampoEM('dimension')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Dimensión</span>
+            </label>
+            <input type="text" id="em_dimension" disabled placeholder="Ej: 295/80R22.5" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold uppercase text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Vida -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_vida" onchange="toggleCampoEM('vida')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Condición / Vida</span>
+            </label>
+            <select id="em_vida" disabled class="w-full p-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+              <option value="Original">Original (Nueva)</option>
+              <option value="R1">Reencauche 1 (R1)</option>
+              <option value="R2">Reencauche 2 (R2)</option>
+              <option value="R3">Reencauche 3 (R3)</option>
+              <option value="R4">Reencauche 4 (R4)</option>
+              <option value="R5">Reencauche 5 (R5)</option>
+            </select>
+          </div>
+
+          <!-- Campo: Presión PSI -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_psi" onchange="toggleCampoEM('psi')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Presión (PSI)</span>
+            </label>
+            <input type="number" id="em_psi" disabled placeholder="Ej: 110" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+          <!-- Campo: Novedades -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 sm:col-span-2">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" id="chk_em_novedades" onchange="toggleCampoEM('novedades')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
+              <span class="font-bold text-slate-700">Modificar Novedades / Observaciones</span>
+            </label>
+            <input type="text" id="em_novedades" disabled placeholder="Observación general para los registros seleccionados" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-700 disabled:opacity-50 disabled:bg-slate-100">
+          </div>
+
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+          <button type="button" onclick="deseleccionarTodosBD()" class="text-xs text-slate-500 hover:text-slate-800 font-bold underline">
+            Deseleccionar todos
+          </button>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="cerrarModalEdicionMultipleBD()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 font-bold rounded-xl text-slate-700">
+              Cancelar
+            </button>
+            <button type="submit" id="btnGuardarEdicionMultiple" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow flex items-center space-x-1.5 cursor-pointer">
+              <i class="fa-solid fa-check"></i>
+              <span>Aplicar Cambios en Lote</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL: EDITAR INSPECCIÓN -->
   <div id="modalEditarInspeccion" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
@@ -32065,7 +32339,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/app_core.js`
 - **Descripción:** Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación
-- **Métricas:** 1006 líneas | 44,522 bytes (43.5 KB)
+- **Métricas:** 1012 líneas | 44,965 bytes (43.9 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -33006,11 +33280,17 @@ if __name__ == '__main__':
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
 
-      // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear ni importar inspecciones.
+      // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear inspecciones.
       const btnNuevaInspBD = document.getElementById('btnNuevaInspBD');
       if (btnNuevaInspBD) btnNuevaInspBD.classList.toggle('hidden', esGere);
+
+      // REGLA: Solo el Administrador puede realizar importaciones o ediciones de múltiples registros en Base de Inspecciones
       const btnImportarExcelBD = document.getElementById('btnImportarExcelBD');
-      if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', esGere);
+      if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', !esAdmin);
+      const thCheckTodos = document.getElementById('thCheckTodosBD');
+      if (thCheckTodos) thCheckTodos.classList.toggle('hidden', !esAdmin);
+      const btnEdicionMultipleBD = document.getElementById('btnEdicionMultipleBD');
+      if (btnEdicionMultipleBD && !esAdmin) btnEdicionMultipleBD.classList.add('hidden');
 
       // Configurar estado de clientes asignados en la vista de Patio
       configurarClientesUsuarioEnInspeccion();
@@ -37233,7 +37513,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_basedatos.js`
 - **Descripción:** Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel
-- **Métricas:** 687 líneas | 34,866 bytes (34.0 KB)
+- **Métricas:** 887 líneas | 42,461 bytes (41.5 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -37241,6 +37521,7 @@ if __name__ == '__main__':
     // VISTA 2: BASE DE INSPECCIONES (CRUD, FILTROS & EXCEL)
     // ==========================================
     let bdFiltrosPoblados = false;
+    let inspeccionesSeleccionadasBD = new Set();
 
     async function cargarBaseInspecciones() {
       const tbody = document.getElementById('tbodyInspecciones');
@@ -37465,10 +37746,14 @@ if __name__ == '__main__':
       const contenedorPaginacion = document.getElementById('contenedorPaginacionBD');
       if (!tbody) return;
 
+      const esAdm = esUsuarioAdmin();
+      const thCheck = document.getElementById('thCheckTodosBD');
+      if (thCheck) thCheck.classList.toggle('hidden', !esAdm);
+
       if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="25" class="p-12 text-center text-slate-400">
+            <td colspan="26" class="p-12 text-center text-slate-400">
               <div class="flex flex-col items-center justify-center space-y-2">
                 <i class="fa-solid fa-filter-circle-xmark text-3xl text-slate-300"></i>
                 <span class="font-bold text-slate-600">No se encontraron inspecciones con los filtros seleccionados</span>
@@ -37481,6 +37766,7 @@ if __name__ == '__main__':
           </tr>
         `;
         if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
+        actualizarEstadoSeleccionBD();
         return;
       }
 
@@ -37519,8 +37805,16 @@ if __name__ == '__main__':
           </button>
         ` : `<span class="text-slate-300 font-medium text-xs">Sin fotos</span>`;
 
+        const isChecked = inspeccionesSeleccionadasBD.has(r.id);
+        const tdCheck = esAdm ? `
+          <td class="p-2.5 text-center">
+            <input type="checkbox" class="chk-insp-item w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="alCambiarCheckFilaBD(${r.id}, this.checked)">
+          </td>
+        ` : '';
+
         return `
-          <tr class="hover:bg-slate-50 transition-colors">
+          <tr class="hover:bg-slate-50 transition-colors ${isChecked ? 'bg-indigo-50/70 font-semibold' : ''}">
+            ${tdCheck}
             <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
             <td class="p-2.5 text-center whitespace-nowrap">
               ${tieneFotos ? `
@@ -37583,6 +37877,7 @@ if __name__ == '__main__':
       }).join('');
 
       actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin);
+      actualizarEstadoSeleccionBD();
     }
 
     function actualizarBarraPaginacionBD(totalRegistros, totalPaginas, inicio, fin) {
@@ -37843,6 +38138,10 @@ if __name__ == '__main__':
 
     // Funciones de Excel
     function abrirModalImportarExcel() {
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede realizar importaciones masivas', true);
+        return;
+      }
       const m = document.getElementById('modalImportarExcel');
       m.classList.remove('hidden');
       m.classList.add('flex');
@@ -37894,6 +38193,10 @@ if __name__ == '__main__':
     }
 
     async function ejecutarImportarExcel() {
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede realizar importaciones masivas', true);
+        return;
+      }
       const f = fileInput.files[0];
       if (!f) return;
       const btn = document.getElementById('btnSubirExcel');
@@ -37921,6 +38224,183 @@ if __name__ == '__main__':
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Subir e Importar';
+      }
+    }
+
+    // ==========================================
+    // EDICIÓN DE MÚLTIPLES REGISTROS (SOLO ADMINISTRADOR)
+    // ==========================================
+    function alCambiarCheckFilaBD(id, checked) {
+      if (checked) {
+        inspeccionesSeleccionadasBD.add(id);
+      } else {
+        inspeccionesSeleccionadasBD.delete(id);
+      }
+      actualizarEstadoSeleccionBD();
+    }
+
+    function toggleSeleccionarTodosBD(checked) {
+      if (!cacheFiltradasBD || cacheFiltradasBD.length === 0) return;
+      const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, cacheFiltradasBD.length);
+      const paginaItems = cacheFiltradasBD.slice(inicio, fin);
+
+      paginaItems.forEach(r => {
+        if (checked) {
+          inspeccionesSeleccionadasBD.add(r.id);
+        } else {
+          inspeccionesSeleccionadasBD.delete(r.id);
+        }
+      });
+      renderizarTablaBD();
+    }
+
+    function deseleccionarTodosBD() {
+      inspeccionesSeleccionadasBD.clear();
+      const chkTodos = document.getElementById('chkSeleccionarTodosBD');
+      if (chkTodos) chkTodos.checked = false;
+      renderizarTablaBD();
+    }
+
+    function actualizarEstadoSeleccionBD() {
+      const cant = inspeccionesSeleccionadasBD.size;
+      const btn = document.getElementById('btnEdicionMultipleBD');
+      const lbl = document.getElementById('lblCantSeleccionadosBD');
+      const esAdm = esUsuarioAdmin();
+
+      if (btn && lbl) {
+        lbl.textContent = cant;
+        if (esAdm && cant > 0) {
+          btn.classList.remove('hidden');
+        } else {
+          btn.classList.add('hidden');
+        }
+      }
+
+      const chkTodos = document.getElementById('chkSeleccionarTodosBD');
+      if (chkTodos && cacheFiltradasBD && cacheFiltradasBD.length > 0) {
+        const inicio = (paginaActualBD - 1) * ITEMS_POR_PAGINA_BD;
+        const fin = Math.min(inicio + ITEMS_POR_PAGINA_BD, cacheFiltradasBD.length);
+        const paginaItems = cacheFiltradasBD.slice(inicio, fin);
+        chkTodos.checked = paginaItems.length > 0 && paginaItems.every(r => inspeccionesSeleccionadasBD.has(r.id));
+      }
+    }
+
+    function toggleCampoEM(campo) {
+      const chk = document.getElementById(`chk_em_${campo}`);
+      const inp = document.getElementById(`em_${campo}`);
+      if (chk && inp) {
+        inp.disabled = !chk.checked;
+        if (chk.checked) inp.focus();
+      }
+    }
+
+    function abrirModalEdicionMultipleBD() {
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede hacer ediciones de múltiples registros', true);
+        return;
+      }
+      const cant = inspeccionesSeleccionadasBD.size;
+      if (cant === 0) {
+        mostrarToast('⚠️ Selecciona al menos una inspección con la casilla de verificación', true);
+        return;
+      }
+      const lbl = document.getElementById('lblCantRegistrosModalMultiple');
+      if (lbl) lbl.textContent = cant;
+
+      ['fecha', 'cliente', 'subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'psi', 'novedades'].forEach(c => {
+        const chk = document.getElementById(`chk_em_${c}`);
+        const inp = document.getElementById(`em_${c}`);
+        if (chk) chk.checked = false;
+        if (inp) {
+          inp.disabled = true;
+          if (inp.tagName === 'SELECT') {
+            inp.selectedIndex = 0;
+          } else {
+            inp.value = '';
+          }
+        }
+      });
+
+      const m = document.getElementById('modalEdicionMultipleBD');
+      if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      }
+    }
+
+    function cerrarModalEdicionMultipleBD() {
+      const m = document.getElementById('modalEdicionMultipleBD');
+      if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      }
+    }
+
+    async function ejecutarEdicionMultipleBD(e) {
+      e.preventDefault();
+      if (!esUsuarioAdmin()) {
+        mostrarToast('⛔ Solo el administrador puede hacer ediciones de múltiples registros', true);
+        return;
+      }
+      const ids = Array.from(inspeccionesSeleccionadasBD);
+      if (ids.length === 0) {
+        mostrarToast('⚠️ No hay registros seleccionados', true);
+        return;
+      }
+
+      const cambios = {};
+      const campos = ['fecha', 'cliente', 'subcliente', 'tipo_operacion', 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'psi', 'novedades'];
+      let camposMarcados = 0;
+
+      campos.forEach(c => {
+        const chk = document.getElementById(`chk_em_${c}`);
+        const inp = document.getElementById(`em_${c}`);
+        if (chk && chk.checked && inp) {
+          camposMarcados++;
+          cambios[c] = inp.value;
+        }
+      });
+
+      if (camposMarcados === 0) {
+        mostrarToast('⚠️ Marca al menos un campo para actualizar en lote', true);
+        return;
+      }
+
+      if ('subcliente' in cambios && !String(cambios.subcliente).trim()) {
+        mostrarToast('⚠️ Si marcas Sede / Subcliente, debes ingresar un valor válido', true);
+        document.getElementById('em_subcliente')?.focus();
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btnGuardarEdicionMultiple');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Aplicando cambios...';
+      }
+
+      try {
+        const res = await fetch('/api/inspecciones/edicion-multiple', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ids, cambios: cambios })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          cerrarModalEdicionMultipleBD();
+          deseleccionarTodosBD();
+          mostrarToast(`🎉 ${data.message || `Se actualizaron ${ids.length} registros con éxito`}`);
+          cargarBaseInspecciones();
+        } else {
+          mostrarToast(data.detail || 'Error al aplicar cambios de edición múltiple', true);
+        }
+      } catch (err) {
+        mostrarToast('Error de red al guardar la edición múltiple', true);
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Aplicar Cambios en Lote';
+        }
       }
     }
 ```

@@ -935,11 +935,17 @@
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
 
-      // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear ni importar inspecciones.
+      // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear inspecciones.
       const btnNuevaInspBD = document.getElementById('btnNuevaInspBD');
       if (btnNuevaInspBD) btnNuevaInspBD.classList.toggle('hidden', esGere);
+
+      // REGLA: Solo el Administrador puede realizar importaciones o ediciones de múltiples registros en Base de Inspecciones
       const btnImportarExcelBD = document.getElementById('btnImportarExcelBD');
-      if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', esGere);
+      if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', !esAdmin);
+      const thCheckTodos = document.getElementById('thCheckTodosBD');
+      if (thCheckTodos) thCheckTodos.classList.toggle('hidden', !esAdmin);
+      const btnEdicionMultipleBD = document.getElementById('btnEdicionMultipleBD');
+      if (btnEdicionMultipleBD && !esAdmin) btnEdicionMultipleBD.classList.add('hidden');
 
       // Configurar estado de clientes asignados en la vista de Patio
       configurarClientesUsuarioEnInspeccion();
