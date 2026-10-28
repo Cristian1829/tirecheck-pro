@@ -2022,6 +2022,34 @@ def api_exportar_padron(cliente: str = "", sede: str = "", admin: dict = Depends
                             f"Parque_{nombre}_{ahora_bogota().strftime('%Y%m%d')}.xlsx")
 
 
+class VehiculoPadronItem(BaseModel):
+    cliente: str
+    placa: str
+    tipologia: str
+    sede: str = ""
+    km_actual: Optional[float] = None
+    fabricante: str = ""
+    linea: str = ""
+
+
+@app.post("/api/padron/vehiculo")
+def api_guardar_vehiculo_padron(item: VehiculoPadronItem, admin: dict = Depends(requerir_admin)):
+    try:
+        res = database.guardar_vehiculo_padron(item.cliente, item.placa, item.tipologia, item.sede, item.km_actual,
+                                               item.fabricante, item.linea)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    res["message"] = f"Vehículo {res['placa']} {'agregado al' if res['nuevo'] else 'actualizado en el'} parque."
+    return sanitizar_nativos(res)
+
+
+@app.delete("/api/padron/vehiculo")
+def api_eliminar_vehiculo_padron(cliente: str, placa: str, admin: dict = Depends(requerir_admin)):
+    if not database.eliminar_vehiculo_padron(cliente, placa):
+        raise HTTPException(status_code=404, detail="Ese vehículo no está en el parque del cliente")
+    return {"status": "ok", "message": f"Vehículo {str(placa).strip().upper()} eliminado del parque."}
+
+
 @app.post("/api/padron/importar-excel")
 async def api_importar_padron(cliente: str = "", sede: str = "", file: UploadFile = File(...), admin: dict = Depends(requerir_admin)):
     if not (file.filename or "").lower().endswith((".xlsx", ".xls")):

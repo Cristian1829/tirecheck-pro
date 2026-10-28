@@ -3252,8 +3252,9 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
         cursor = conn.cursor()
         for idx, row in df.iterrows():
             placa_raw = row[col_encontradas['placa']] if 'placa' in col_encontradas and not pd.isna(row[col_encontradas['placa']]) else ''
-            placa = str(placa_raw).strip().upper()
-            if not placa or placa == 'NAN':
+            # Igual que en el parque: un número interno leído como 101.0 queda "101" y empata con el parque
+            placa = _placa_padron(placa_raw)
+            if not placa:
                 continue
             
             pos = to_int(row[col_encontradas['posicion']]) if 'posicion' in col_encontradas else 1
@@ -6502,13 +6503,13 @@ def contar_vehiculos_padron(cliente: str) -> int:
 
 
 def cliente_tiene_parque_cargado(cliente: str) -> bool:
-    """True si el administrador ya cargó por archivo el parque del cliente (si no, todo funciona como antes)."""
+    """True si el administrador ya cargó el parque del cliente, por archivo o a mano (si no, todo funciona como antes)."""
     if not cliente or str(cliente).strip().upper() == 'TODOS':
         return False
     try:
         with get_connection() as conn:
             r = conn.execute("SELECT 1 FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))"
-                             " AND origen = 'archivo' LIMIT 1", (cliente,)).fetchone()
+                             " AND origen IN ('archivo', 'manual') LIMIT 1", (cliente,)).fetchone()
             return r is not None
     except Exception:
         return False
@@ -6659,8 +6660,112 @@ def listar_padron_cliente(cliente: str, sede: str = '') -> list:
     q += " ORDER BY p.activo DESC, p.placa"
     with get_connection() as conn:
         filas = conn.execute(q, par).fetchall()
-    return [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": r[3], "linea": r[4],
-             "km_actual": r[5], "activo": bool(r[6]), "origen": r[7], "ultima_inspeccion": r[8] or ''} for r in filas]
+    lista = [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": r[3], "linea": r[4],
+              "km_actual": r[5], "activo": bool(r[6]), "origen": r[7], "ultima_inspeccion": r[8] or ''} for r in filas]
+    if not cliente_tiene_parque_cargado(cli):
+        # Sin parque cargado el KPI 01 mide contra lo ya inspeccionado: se muestran también esos vehículos
+        vistos = {v["placa"].upper() for v in lista}
+        lista += [v for v in _vehiculos_inspeccionados_cliente(cli, s) if v["placa"] not in vistos]
+        lista.sort(key=lambda v: (not v["activo"], v["placa"]))
+    return lista
+
+
+def _vehiculos_inspeccionados_cliente(cliente: str, sede: str = '') -> list:
+    """Vehículos con inspecciones del cliente, con los datos de su última inspección (parque automático)."""
+    q = """
+        SELECT MAYUS(TRIM(i.placa)), MAYUS(TRIM(IFNULL(i.subcliente, ''))), IFNULL(i.tipologia, ''),
+               MAX(i.kilometraje), MAX(substr(i.fecha, 1, 10))
+        FROM inspecciones i
+        WHERE MAYUS(TRIM(i.cliente)) = ? AND TRIM(IFNULL(i.placa, '')) != ''
+          AND i.id = (SELECT j.id FROM inspecciones j WHERE MAYUS(TRIM(j.placa)) = MAYUS(TRIM(i.placa))
+                        AND MAYUS(TRIM(j.cliente)) = MAYUS(TRIM(i.cliente)) ORDER BY j.fecha DESC, j.id DESC LIMIT 1)
+    """
+    par = [cliente]
+    if sede and sede != 'TODOS':
+        q += " AND MAYUS(TRIM(IFNULL(i.subcliente, ''))) = ?"
+        par.append(sede)
+    q += " GROUP BY MAYUS(TRIM(i.placa))"
+    with get_connection() as conn:
+        filas = conn.execute(q, par).fetchall()
+    return [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": "", "linea": "",
+             "km_actual": r[3] if r[3] and r[3] > 0 else None, "activo": True, "origen": "inspecciones",
+             "ultima_inspeccion": r[4] or ''} for r in filas]
+
+
+def _materializar_parque_automatico(cliente: str, conn):
+    """
+    Antes del primer cambio a mano en un cliente sin parque cargado, los vehículos que hoy forman su parque
+    automático (padrón y vehículos inspeccionados) se guardan como parque: así agregar o quitar uno no deja
+    el parque reducido a ese solo vehículo.
+    """
+    if cliente_tiene_parque_cargado(cliente):
+        return
+    for v in _vehiculos_inspeccionados_cliente(cliente):
+        conn.execute("""INSERT OR IGNORE INTO padron_vehiculos_cliente
+                            (cliente, subcliente, placa, tipologia, estado_operativo, activo, km_actual, origen)
+                        VALUES (?, ?, ?, ?, 'Activo', 1, ?, 'manual')""",
+                     (cliente, v["sede"], v["placa"], v["tipologia"], v["km_actual"]))
+    conn.execute("UPDATE padron_vehiculos_cliente SET origen = 'manual' WHERE MAYUS(TRIM(cliente)) = ? AND activo = 1",
+                 (cliente,))
+
+
+def _tipologia_catalogo(tipologia):
+    """Nombre de la tipología tal como está en el catálogo, o None si no existe."""
+    with get_connection() as conn:
+        tipologias = {ee.clave_tipologia(r[0]): r[0] for r in conn.execute(
+            "SELECT nombre FROM catalogo_tipologias WHERE nombre IS NOT NULL").fetchall()}
+    return tipologias.get(ee.clave_tipologia(tipologia)) if str(tipologia or '').strip() else None
+
+
+def guardar_vehiculo_padron(cliente: str, placa, tipologia: str, sede: str = '', km_actual=None,
+                            fabricante: str = '', linea: str = '') -> dict:
+    """Agrega (o actualiza y reactiva) un vehículo del parque a mano. Cuenta como parque cargado."""
+    cli = str(cliente or '').strip().upper()
+    pl = _placa_padron(placa)
+    if not cli or cli == 'TODOS':
+        raise ValueError("Seleccione el cliente.")
+    if not pl:
+        raise ValueError("Escriba la placa o el número interno.")
+    tip = _tipologia_catalogo(tipologia)
+    if not tip:
+        raise ValueError(f"La tipología '{tipologia}' no existe en Catálogos → Tipologías." if tipologia else "Seleccione la tipología.")
+    km = to_float(km_actual, 0.0)
+    km = km if km > 0 else None
+    sede_n = str(sede or '').strip().upper()
+    with get_connection() as conn:
+        existia = conn.execute("SELECT 1 FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = ? AND MAYUS(TRIM(placa)) = ?",
+                               (cli, pl)).fetchone() is not None
+        _materializar_parque_automatico(cli, conn)
+        conn.execute("""
+            INSERT INTO padron_vehiculos_cliente
+                (cliente, subcliente, placa, tipologia, estado_operativo, activo, fabricante, linea, km_actual, origen, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, 'Activo', 1, ?, ?, ?, 'manual', CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente, placa) DO UPDATE SET
+                subcliente = CASE WHEN excluded.subcliente != '' THEN excluded.subcliente ELSE padron_vehiculos_cliente.subcliente END,
+                tipologia = excluded.tipologia, activo = 1, fabricante = excluded.fabricante, linea = excluded.linea,
+                km_actual = COALESCE(excluded.km_actual, padron_vehiculos_cliente.km_actual),
+                origen = CASE WHEN padron_vehiculos_cliente.origen = 'archivo' THEN 'archivo' ELSE 'manual' END,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """, (cli, sede_n, pl, tip, str(fabricante or '').strip().upper(), str(linea or '').strip().upper(), km))
+        sincronizar_vehiculo_catalogo(pl, tip, cli, sede_n, kilometraje=km or 0.0, conn=conn)
+        conn.commit()
+    return {"status": "ok", "placa": pl, "nuevo": not existia}
+
+
+def eliminar_vehiculo_padron(cliente: str, placa) -> bool:
+    """Quita un vehículo del parque del cliente (sus inspecciones no se tocan)."""
+    cli = str(cliente or '').strip().upper()
+    pl = _placa_padron(placa)
+    with get_connection() as conn:
+        # Sin parque cargado, el vehículo puede venir solo de las inspecciones: primero se fija el parque actual
+        _materializar_parque_automatico(cli, conn)
+        cur = conn.execute("DELETE FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = ? AND MAYUS(TRIM(placa)) = ?",
+                           (cli, pl))
+        if cur.rowcount == 0:
+            conn.rollback()
+            return False
+        conn.commit()
+        return True
 
 
 def obtener_licencia_cliente(cliente: str) -> str:

@@ -88,16 +88,21 @@
       if (!res.ok) throw new Error(data.detail || 'Error');
       cacheParque = data.vehiculos || [];
       const origen = document.getElementById('kpiParqueOrigen');
-      if (origen) origen.textContent = data.parque_cargado ? 'Archivo cargado' : 'Sin archivo (automático)';
+      if (origen) {
+        origen.textContent = data.parque_cargado ? 'Cargado por el administrador' : 'Automático (inspeccionados)';
+        origen.title = data.parque_cargado ? 'El KPI 01 mide contra este parque'
+          : 'Sin parque cargado: son los vehículos ya inspeccionados. Al subir un archivo o agregar/eliminar un vehículo, este listado pasa a ser el parque del cliente.';
+      }
     }
 
     async function cargarParqueCat() {
       const cliente = document.getElementById('selParqueCliente')?.value || '';
       document.getElementById('resultadoParque')?.classList.add('hidden');
+      cerrarFormVehiculoParque();
       cacheParque = [];
       if (cliente) {
         const tbody = document.getElementById('tbodyParqueCat');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Cargando…</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Cargando…</td></tr>';
         try {
           await consultarParque(cliente);
         } catch (e) {
@@ -123,7 +128,7 @@
       if (btnExp) btnExp.disabled = !cliente;
 
       if (!cliente) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>';
         return;
       }
       const q = (document.getElementById('buscarParque')?.value || '').trim().toUpperCase();
@@ -134,7 +139,7 @@
         return [v.placa, v.sede, v.tipologia, v.fabricante, v.linea].some(x => String(x || '').toUpperCase().includes(q));
       });
       if (!lista.length) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">${cacheParque.length ? 'Ningún vehículo coincide con la búsqueda.' : 'Este cliente no tiene vehículos en el parque.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400 italic">${cacheParque.length ? 'Ningún vehículo coincide con la búsqueda.' : 'Este cliente no tiene vehículos en el parque.'}</td></tr>`;
         return;
       }
       tbody.innerHTML = lista.map(v => {
@@ -153,8 +158,96 @@
           <td class="p-2.5 text-right font-mono whitespace-nowrap">${v.km_actual ? fmtDec(v.km_actual, 0) : '—'}</td>
           <td class="p-2.5 text-center whitespace-nowrap">${v.ultima_inspeccion ? fmtFecha(v.ultima_inspeccion) : 'Nunca'}</td>
           <td class="p-2.5 text-center">${estado}</td>
+          <td class="p-2.5 text-center whitespace-nowrap">
+            <button type="button" onclick="editarVehiculoParque('${escapeHtml(v.placa)}')" class="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700" title="Editar ${escapeHtml(v.placa)}" aria-label="Editar ${escapeHtml(v.placa)}"><i class="fa-solid fa-pen"></i></button>
+            <button type="button" onclick="eliminarVehiculoParque('${escapeHtml(v.placa)}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700" title="Eliminar ${escapeHtml(v.placa)} del parque" aria-label="Eliminar ${escapeHtml(v.placa)} del parque"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
         </tr>`;
       }).join('');
+    }
+
+    // Agregar o editar un vehículo a mano (también cuenta como parque cargado)
+    async function abrirFormVehiculoParque(v = null) {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      if (!cliente) return mostrarToast('Seleccione primero el cliente', true);
+      const sel = document.getElementById('vpTipologia');
+      if (sel && sel.options.length <= 1) {
+        try {
+          const r = await fetch('/api/tipologias');
+          const tips = r.ok ? await r.json() : [];
+          sel.innerHTML = '<option value="">Seleccione…</option>' +
+            tips.map(t => `<option value="${escapeHtml(t.nombre)}">${escapeHtml(t.nombre)}</option>`).join('');
+        } catch (e) {}
+      }
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+      set('vpPlaca', v ? v.placa : '');
+      set('vpSede', v ? v.sede : '');
+      set('vpKm', v && v.km_actual ? Math.round(v.km_actual) : '');
+      set('vpFabricante', v ? v.fabricante : '');
+      set('vpLinea', v ? v.linea : '');
+      // La tipología del parque puede venir en otra escritura: se elige la del catálogo que coincide
+      const clave = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const opt = v ? [...sel.options].find(o => o.value && clave(o.value) === clave(v.tipologia)) : null;
+      sel.value = opt ? opt.value : '';
+      document.getElementById('vpPlaca').readOnly = !!v;
+      document.getElementById('tituloVehiculoParque').textContent = v ? `Editar ${v.placa} · ${cliente}` : `Agregar vehículo al parque de ${cliente}`;
+      const card = document.getElementById('cardVehiculoParque');
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById(v ? 'vpTipologia' : 'vpPlaca').focus();
+    }
+
+    function editarVehiculoParque(placa) {
+      const v = cacheParque.find(x => x.placa === placa);
+      if (v) abrirFormVehiculoParque(v);
+    }
+
+    function cerrarFormVehiculoParque() {
+      document.getElementById('cardVehiculoParque')?.classList.add('hidden');
+    }
+
+    async function guardarVehiculoParque() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      const val = id => (document.getElementById(id)?.value || '').trim();
+      const placa = val('vpPlaca').toUpperCase();
+      if (!placa) return mostrarToast('Escriba la placa o el número interno', true);
+      if (!val('vpTipologia')) return mostrarToast('Seleccione la tipología', true);
+      const btn = document.getElementById('btnGuardarVehiculoParque');
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch('/api/padron/vehiculo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cliente, placa, tipologia: val('vpTipologia'), sede: val('vpSede'),
+                                 km_actual: val('vpKm') ? Number(val('vpKm')) : null,
+                                 fabricante: val('vpFabricante'), linea: val('vpLinea') })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo guardar');
+        mostrarToast(d.message);
+        cerrarFormVehiculoParque();
+        await consultarParque(cliente);
+        renderizarParqueCat();
+      } catch (e) {
+        mostrarToast(e.message, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function eliminarVehiculoParque(placa) {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      if (!confirm(`¿Eliminar ${placa} del parque de ${cliente}?\nSus inspecciones no se borran; solo deja de contar en el % de inspección.`)) return;
+      try {
+        const res = await fetch(`/api/padron/vehiculo?cliente=${encodeURIComponent(cliente)}&placa=${encodeURIComponent(placa)}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo eliminar');
+        mostrarToast(d.message);
+        await consultarParque(cliente);
+        renderizarParqueCat();
+      } catch (e) {
+        mostrarToast(e.message, true);
+      }
     }
 
     function descargarPlantillaParque() {
@@ -1399,7 +1492,7 @@
         filtrarPreciosClienteCat();
       } catch (e) {
         console.error("Error al cargar precios:", e);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-rose-600">No se pudieron cargar los precios</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-rose-600">No se pudieron cargar los precios</td></tr>';
       }
     }
 
@@ -1548,7 +1641,7 @@
       if (lista.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" class="p-8 text-center text-slate-400">
+            <td colspan="9" class="p-8 text-center text-slate-400">
               <i class="fa-solid fa-tags text-3xl mb-2 text-slate-300 block"></i>
               No se encontraron precios registrados con los filtros aplicados.
             </td>

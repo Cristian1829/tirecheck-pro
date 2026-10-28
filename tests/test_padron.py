@@ -152,3 +152,92 @@ def test_endpoints_solo_admin(test_db, tmp_path, auth_client, inspector_token):
     with open(ruta, "rb") as fh:
         assert otro.post(f"/api/padron/importar-excel?cliente={CLI}",
                          files={"file": ("parque.xlsx", fh, "application/vnd.ms-excel")}).status_code == 403
+
+
+def test_agregar_y_eliminar_vehiculo_a_mano(test_db):
+    tip = _tipologia()
+    assert not database.cliente_tiene_parque_cargado(CLI)
+    with pytest.raises(ValueError):
+        database.guardar_vehiculo_padron(CLI, "GGG001", "NO EXISTE")
+    r = database.guardar_vehiculo_padron(CLI, " ggg001 ", tip.upper(), sede="Sede Uno", km_actual=12000,
+                                         fabricante="hino", linea=300)
+    assert r["nuevo"] and r["placa"] == "GGG001"
+    # Un vehículo agregado a mano ya cuenta como parque cargado
+    assert database.cliente_tiene_parque_cargado(CLI)
+    v = database.listar_padron_cliente(CLI)[0]
+    assert (v["sede"], v["tipologia"], v["fabricante"], v["linea"], v["km_actual"]) == ("SEDE UNO", tip, "HINO", "300", 12000)
+    # Editar: misma placa, otros datos; el km no se pierde si no se envía
+    assert not database.guardar_vehiculo_padron(CLI, "GGG001", tip, fabricante="ISUZU")["nuevo"]
+    v = database.listar_padron_cliente(CLI)[0]
+    assert v["fabricante"] == "ISUZU" and v["km_actual"] == 12000
+
+    _insp("GGG001", "2026-10-08", tip)
+    assert database.eliminar_vehiculo_padron(CLI, "ggg001")
+    # Sin vehículos cargados el cliente vuelve al parque automático (lo inspeccionado)
+    assert not database.cliente_tiene_parque_cargado(CLI)
+    assert [v["origen"] for v in database.listar_padron_cliente(CLI)] == ["inspecciones"]
+    assert not database.eliminar_vehiculo_padron(CLI, "NO-EXISTE")
+    # La inspección del vehículo sigue intacta
+    with database.get_connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inspecciones WHERE placa = 'GGG001'").fetchone()[0] == 1
+
+
+def test_endpoints_vehiculo_manual(test_db, auth_client, inspector_token):
+    tip = _tipologia()
+    r = auth_client.post("/api/padron/vehiculo", json={"cliente": CLI, "placa": "HHH001", "tipologia": tip})
+    assert r.status_code == 200 and "agregado" in r.json()["message"]
+    assert auth_client.post("/api/padron/vehiculo", json={"cliente": CLI, "placa": "", "tipologia": tip}).status_code == 400
+    otro = TestClient(server.app)
+    otro.headers.update({"Authorization": f"Bearer {inspector_token}"})
+    assert otro.post("/api/padron/vehiculo", json={"cliente": CLI, "placa": "X", "tipologia": tip}).status_code == 403
+    assert otro.delete(f"/api/padron/vehiculo?cliente={CLI}&placa=HHH001").status_code == 403
+    assert auth_client.delete(f"/api/padron/vehiculo?cliente={CLI}&placa=HHH001").status_code == 200
+    assert auth_client.delete(f"/api/padron/vehiculo?cliente={CLI}&placa=HHH001").status_code == 404
+
+
+def test_inspeccion_importada_con_numero_interno_empata_con_el_parque(test_db, tmp_path):
+    """Un número interno que Excel lee como 101.0 entra como "101" en las inspecciones, igual que en el parque."""
+    tip = _tipologia()
+    database.guardar_vehiculo_padron(CLI, 101, tip)
+    filas = [{"Fecha": "2026-10-08", "Cliente": CLI, "Sede": "SEDE UNO", "Placa": 101.0, "Posicion": 1,
+              "Tipologia": tip, "Marca": "MICHELIN", "Dimension": "295/80R22.5", "Prof Ext": 10, "Prof Cent": 10,
+              "Prof Int": 10, "PSI": 100, "Kilometraje": 1000},
+             {"Fecha": "2026-10-08", "Cliente": CLI, "Sede": "SEDE UNO", "Placa": None, "Posicion": 1}]
+    database.cargar_excel_a_bd(_excel(tmp_path, filas, "insp.xlsx"))
+    with database.get_connection() as conn:
+        assert [r[0] for r in conn.execute("SELECT DISTINCT placa FROM inspecciones")] == ["101"]
+    k = database.obtener_suite_completa_20_kpis({"cliente": CLI})["kpi_01"]
+    assert (k["vehiculos_inspeccionados"], k["total_padron_activo"]) == (1, 1)
+
+
+def test_sin_parque_cargado_se_ven_los_vehiculos_inspeccionados(test_db):
+    """Un cliente con inspecciones pero sin parque cargado muestra sus vehículos inspeccionados (parque automático)."""
+    tip = _tipologia()
+    for p in ("III001", "III002", "III003"):
+        _insp(p, "2026-10-08", tip)
+    lista = database.listar_padron_cliente(CLI)
+    assert {v["placa"] for v in lista} == {"III001", "III002", "III003"}
+    assert all(v["origen"] == "inspecciones" and v["activo"] and v["ultima_inspeccion"] == "2026-10-08" for v in lista)
+    assert not database.cliente_tiene_parque_cargado(CLI)
+
+    # Agregar uno a mano conserva los inspeccionados en el parque (no queda de un solo vehículo)
+    database.guardar_vehiculo_padron(CLI, "III009", tip)
+    assert database.cliente_tiene_parque_cargado(CLI)
+    k = database.obtener_suite_completa_20_kpis({"cliente": CLI})["kpi_01"]
+    assert (k["vehiculos_inspeccionados"], k["total_padron_activo"]) == (3, 4)
+
+    # Eliminar uno que solo venía de las inspecciones lo saca del parque
+    assert database.eliminar_vehiculo_padron(CLI, "III002")
+    k = database.obtener_suite_completa_20_kpis({"cliente": CLI})["kpi_01"]
+    assert (k["vehiculos_inspeccionados"], k["total_padron_activo"]) == (2, 3)
+
+
+def test_eliminar_en_cliente_sin_parque_cargado(test_db):
+    tip = _tipologia()
+    for p in ("JJJ001", "JJJ002"):
+        _insp(p, "2026-10-08", tip)
+    assert database.eliminar_vehiculo_padron(CLI, "JJJ001")
+    assert {v["placa"] for v in database.listar_padron_cliente(CLI)} == {"JJJ002"}
+    # Una placa que no es del cliente no cambia nada
+    assert not database.eliminar_vehiculo_padron("OTRO CLIENTE", "JJJ002")
+    assert not database.cliente_tiene_parque_cargado("OTRO CLIENTE")

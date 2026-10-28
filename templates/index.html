@@ -4009,6 +4009,10 @@
             <p class="text-[11px] text-slate-500">Cargue todos los vehículos del cliente para medir mes a mes qué porcentaje se inspeccionó y cuáles faltan (KPI 01). Si un cliente no tiene parque cargado, el KPI sigue funcionando como antes.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="abrirFormVehiculoParque()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-plus"></i>
+              <span>Agregar vehículo</span>
+            </button>
             <button type="button" onclick="descargarPlantillaParque()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer">
               <i class="fa-solid fa-download text-slate-500"></i>
               <span>Plantilla</span>
@@ -4041,6 +4045,33 @@
           </div>
           <p class="text-[11px] text-slate-500">Columnas: <b>Placa / N° interno</b> y <b>Tipología</b> (obligatorias), <b>Km actual</b>, <b>Fabricante</b> y <b>Línea</b>; opcional <b>Sede</b>. La placa o número interno debe ser el mismo que se digita al inspeccionar. <b>El archivo reemplaza el parque del cliente:</b> los vehículos que no vengan quedan inactivos.</p>
           <div id="resultadoParque" class="hidden text-xs rounded-2xl border p-3"></div>
+        </div>
+
+        <div id="cardVehiculoParque" class="hidden bg-blue-50/60 border border-blue-200 rounded-3xl p-4 sm:p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span id="tituloVehiculoParque" class="text-xs font-black text-blue-950">Agregar vehículo al parque</span>
+            <button type="button" onclick="cerrarFormVehiculoParque()" class="w-7 h-7 rounded-full hover:bg-blue-100 text-blue-900 flex items-center justify-center" aria-label="Cerrar formulario"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Placa / N° interno *</span>
+              <input type="text" id="vpPlaca" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase font-mono"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipología *</span>
+              <select id="vpTipologia" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"><option value="">Seleccione…</option></select></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sede</span>
+              <input type="text" id="vpSede" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Km actual</span>
+              <input type="number" id="vpKm" min="0" step="1" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fabricante</span>
+              <input type="text" id="vpFabricante" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Línea</span>
+              <input type="text" id="vpLinea" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase"></label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="cerrarFormVehiculoParque()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">Cancelar</button>
+            <button type="button" id="btnGuardarVehiculoParque" onclick="guardarVehiculoParque()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center space-x-1.5 disabled:opacity-50">
+              <i class="fa-solid fa-floppy-disk"></i><span>Guardar vehículo</span>
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -4080,10 +4111,11 @@
                 <th class="p-2.5 text-right whitespace-nowrap">Km actual</th>
                 <th class="p-2.5 text-center whitespace-nowrap">Última inspección</th>
                 <th class="p-2.5 text-center">Estado</th>
+                <th class="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody id="tbodyParqueCat">
-              <tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>
+              <tr><td colspan="9" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>
             </tbody>
           </table>
         </div>
