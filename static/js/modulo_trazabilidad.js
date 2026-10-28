@@ -99,15 +99,15 @@
       if (selCli) {
         if (clisAsignados.length === 1) {
           const unico = clisAsignados[0];
-          selCli.innerHTML = `<option value="${unico}" selected>${unico} (Fijo)</option>`;
+          selCli.innerHTML = `<option value="${escapeHtml(unico)}" selected>${escapeHtml(unico)} (Fijo)</option>`;
           selCli.disabled = true;
           selCli.classList.add('bg-slate-100', 'cursor-not-allowed');
         } else {
           selCli.disabled = false;
           selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
           const lblTodos = clisAsignados.length > 1 ? 'Mis flotas' : 'Todos';
-          selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
-            clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          selCli.innerHTML = `<option value="TODOS">${escapeHtml(lblTodos)}</option>` +
+            clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valCliActual && clientes.includes(valCliActual)) {
             selCli.value = valCliActual;
           } else {
@@ -124,7 +124,7 @@
       const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
       if (selSub) {
         selSub.innerHTML = '<option value="TODOS">Todas</option>' +
-          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+          subclientes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
         if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
         else selSub.value = 'TODOS';
       }
@@ -133,7 +133,7 @@
       const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
       if (selOp) {
         selOp.innerHTML = '<option value="TODOS">Todas</option>' +
-          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+          operaciones.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
         if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
         else selOp.value = 'TODOS';
       }
@@ -142,7 +142,7 @@
       const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
       if (selMar) {
         selMar.innerHTML = '<option value="TODOS">Todas</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
         if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
         else selMar.value = 'TODOS';
       }
@@ -199,18 +199,18 @@
 
       tbody.innerHTML = paginaItems.map(d => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-black text-slate-900">${d.numero_interno || '-'}</td>
-          <td class="p-2.5 font-bold text-blue-700">${d.placa || '-'}</td>
-          <td class="p-2.5 text-center font-bold">${d.posicion}</td>
-          <td class="p-2.5">${d.marca} ${d.diseno}</td>
-          <td class="p-2.5">${d.dimension || '-'}</td>
-          <td class="p-2.5">${d.vida || '-'}</td>
-          <td class="p-2.5">${d.banda_reen || '-'}</td>
-          <td class="p-2.5 text-center font-mono">${d.prof_inicial} mm</td>
-          <td class="p-2.5 text-center font-mono font-bold">${d.prof_actual_min} mm</td>
+          <td class="p-2.5 font-black text-slate-900">${escapeHtml(d.numero_interno || '-')}</td>
+          <td class="p-2.5 font-bold text-blue-700">${escapeHtml(d.placa || '-')}</td>
+          <td class="p-2.5 text-center font-bold">${escapeHtml(d.posicion)}</td>
+          <td class="p-2.5">${escapeHtml(d.marca)} ${escapeHtml(d.diseno)}</td>
+          <td class="p-2.5">${escapeHtml(d.dimension || '-')}</td>
+          <td class="p-2.5">${escapeHtml(d.vida || '-')}</td>
+          <td class="p-2.5">${escapeHtml(d.banda_reen || '-')}</td>
+          <td class="p-2.5 text-center font-mono">${escapeHtml(d.prof_inicial)} mm</td>
+          <td class="p-2.5 text-center font-mono font-bold">${escapeHtml(d.prof_actual_min)} mm</td>
           <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
           <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
-          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm} mm</td>
+          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${escapeHtml(d.desgaste_mm)} mm</td>
           <td class="p-2.5 text-center font-mono">${fmtDec((d.porcentaje_desgaste || 0), 1)}%</td>
           <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
           <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
@@ -355,7 +355,7 @@
           : cacheKpis;
         const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
         selSub.innerHTML = '<option value="TODOS">Todas</option>' +
-          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+          subclientes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
         selSub.value = 'TODOS';
       }
       cargarSuite20Kpis();
@@ -484,7 +484,7 @@
 
       let htmlCli = '<option value="TODOS">Todos</option>';
       clientesUnicos.forEach(c => {
-        htmlCli += `<option value="${c}">${c}</option>`;
+        htmlCli += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`;
       });
       selCli.innerHTML = htmlCli;
 
@@ -511,9 +511,9 @@
       const rellenarSelect = (el, lista, etiquetaTodos) => {
         if (!el) return;
         const prev = el.value || 'TODOS';
-        let h = `<option value="TODOS">${etiquetaTodos}</option>`;
+        let h = `<option value="TODOS">${escapeHtml(etiquetaTodos)}</option>`;
         lista.forEach(val => {
-          h += `<option value="${val}">${val}</option>`;
+          h += `<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`;
         });
         el.innerHTML = h;
         if (lista.includes(prev)) el.value = prev;
@@ -1170,12 +1170,12 @@
 
         html += `
           <tr class="hover:bg-cyan-50/40 transition-colors duration-150 border-b border-slate-100 last:border-b-0">
-            <td class="p-3 font-bold text-slate-900">${c.marca}</td>
-            <td class="p-3 text-slate-800 font-semibold">${c.diseno}</td>
-            <td class="p-3 font-mono text-slate-600 text-[11px]">${c.dimension}</td>
-            <td class="p-3 text-center text-blue-600 font-bold">${c.orig}</td>
-            <td class="p-3 text-center text-emerald-600 font-bold">${c.reenc}</td>
-            <td class="p-3 text-center text-slate-900 font-black">${c.total}</td>
+            <td class="p-3 font-bold text-slate-900">${escapeHtml(c.marca)}</td>
+            <td class="p-3 text-slate-800 font-semibold">${escapeHtml(c.diseno)}</td>
+            <td class="p-3 font-mono text-slate-600 text-[11px]">${escapeHtml(c.dimension)}</td>
+            <td class="p-3 text-center text-blue-600 font-bold">${escapeHtml(c.orig)}</td>
+            <td class="p-3 text-center text-emerald-600 font-bold">${escapeHtml(c.reenc)}</td>
+            <td class="p-3 text-center text-slate-900 font-black">${escapeHtml(c.total)}</td>
             <td class="p-3 text-center text-indigo-600 font-extrabold">${pctFlota}%</td>
             <td class="p-3 text-center">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black ${semaforoProf}">

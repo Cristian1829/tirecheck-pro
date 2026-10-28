@@ -87,7 +87,7 @@
       if (selCli) {
         const valCli = selCli.value || 'Todos';
         selCli.innerHTML = '<option value="Todos">Todos</option>' +
-          clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
 
@@ -96,7 +96,7 @@
       if (selOp) {
         const valOp = selOp.value || 'Todos';
         selOp.innerHTML = '<option value="Todos">Todas</option>' +
-          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+          operaciones.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
         if (operaciones.includes(valOp)) selOp.value = valOp;
       }
     }
@@ -118,7 +118,7 @@
       )).sort();
 
       selSede.innerHTML = '<option value="Todos">Todas</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+        sedes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
       if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
         selSede.value = valSedeActual;
@@ -413,19 +413,19 @@
               }
               return `<span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded border ${cls} leading-snug">
                         <i class="fa-solid ${ico} mr-1.5 shrink-0 text-[9px]"></i>
-                        <span>${b.texto}</span>
+                        <span>${escapeHtml(b.texto)}</span>
                       </span>`;
             }).join('') +
           `</div>`;
         } else {
           const lineas = [];
-          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${r.Detalle_Cambio}</span>`);
-          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${r.Detalle_Proximas}</span>`);
-          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${r.Detalle_Alineacion}</span>`);
-          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${r.Detalle_Dual}</span>`);
-          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${r.Detalle_Auto_Ajuste}</span>`);
-          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${r.Detalle_Calibracion_PSI}</span>`);
-          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${r.Detalle_Pendientes}</span>`);
+          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${escapeHtml(r.Detalle_Cambio)}</span>`);
+          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${escapeHtml(r.Detalle_Proximas)}</span>`);
+          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${escapeHtml(r.Detalle_Alineacion)}</span>`);
+          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${escapeHtml(r.Detalle_Dual)}</span>`);
+          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${escapeHtml(r.Detalle_Auto_Ajuste)}</span>`);
+          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${escapeHtml(r.Detalle_Calibracion_PSI)}</span>`);
+          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(r.Detalle_Pendientes)}</span>`);
           if (lineas.length === 0) {
             lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
           } else if (lineas.length === 1 && r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') {
@@ -444,13 +444,13 @@
             </td>
             <!-- 2. Cliente / Sede -->
             <td class="p-2.5">
-              <div class="font-bold text-slate-800">${r.Cliente || '-'}</div>
-              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${r.Subcliente}</div>` : ''}
+              <div class="font-bold text-slate-800">${escapeHtml(r.Cliente || '-')}</div>
+              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${escapeHtml(r.Subcliente)}</div>` : ''}
             </td>
             <!-- 3. Tipología -->
             <td class="p-2.5">
-              <div class="font-bold text-slate-700">${r.Tipo || '-'}</div>
-              ${r.Operación ? `<div class="text-[10px] text-slate-400">${r.Operación}</div>` : ''}
+              <div class="font-bold text-slate-700">${escapeHtml(r.Tipo || '-')}</div>
+              ${r.Operación ? `<div class="text-[10px] text-slate-400">${escapeHtml(r.Operación)}</div>` : ''}
             </td>
             <!-- 4. Inspeccionadas -->
             <td class="p-2.5 text-center">
@@ -496,7 +496,7 @@
             <td class="p-2.5">${bloquesHtml}</td>
             <!-- 12. Plan PDF -->
             <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}', '${r.Cliente || ''}', '${r.Tipo || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${escapeHtml(r.Fecha || '')}', '${escapeHtml(r.Cliente || '')}', '${escapeHtml(r.Tipo || '')}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
                 <i class="fa-solid fa-file-pdf mr-1"></i>PDF
               </button>
             </td>
@@ -776,14 +776,14 @@
           `;
         }).join('');
 
-        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
-        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
+        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${escapeHtml(r.subcliente)}</span>` : '';
+        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${escapeHtml(r.tipologia)}">${escapeHtml(r.tipologia)}</span>` : '-';
         const limTxt = (r.limite ? fmtDec(Number(r.limite), 1) : '3,0') + ' mm';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${r.placa}</td>
-            <td class="p-2.5 text-left font-bold text-slate-700">${r.cliente || '-'}${subClienteTxt}</td>
+            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${escapeHtml(r.placa)}</td>
+            <td class="p-2.5 text-left font-bold text-slate-700">${escapeHtml(r.cliente || '-')}${subClienteTxt}</td>
             <td class="p-2.5 text-left text-slate-600 text-[11px]">${tipoTxt}</td>
             <td class="p-2 text-center font-mono font-bold text-slate-600">${limTxt}</td>
             ${celdasPos}
@@ -806,8 +806,8 @@
             ${posiciones.map(p => {
               const t = posTotales[p];
               return `
-                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos P${p}: ${t.rojo} Retiro Urgente, ${t.amarillo} Próxima a Cambio, ${t.verde} Óptima">
-                  <span class="text-rose-700 font-black">${t.rojo}</span>/<span class="text-amber-700 font-bold">${t.amarillo}</span>/<span class="text-emerald-700 font-bold">${t.verde}</span>
+                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos P${p}: ${escapeHtml(t.rojo)} Retiro Urgente, ${escapeHtml(t.amarillo)} Próxima a Cambio, ${escapeHtml(t.verde)} Óptima">
+                  <span class="text-rose-700 font-black">${escapeHtml(t.rojo)}</span>/<span class="text-amber-700 font-bold">${escapeHtml(t.amarillo)}</span>/<span class="text-emerald-700 font-bold">${escapeHtml(t.verde)}</span>
                 </td>
               `;
             }).join('')}

@@ -320,11 +320,11 @@
         const stockUtil = r.stock_disponible_util != null ? r.stock_disponible_util : (r.stock_util_total || 0);
 
         // Proyección: cuántas llegan al límite dentro del horizonte, retorno de reencauche y desecho
-        const proyBadge = `<span class="block text-[9px] text-slate-500" title="Llegan al límite dentro de ${r.horizonte_meses ?? 3} meses; sin historial suficiente: ${r.llantas_sin_ritmo || 0}">${r.demanda_proyectada || 0} proyectadas a ${r.horizonte_meses ?? 3} m</span>
-          <span class="block text-[9px] text-emerald-700" title="Cascos que volverán reencauchados / llantas que saldrán como desecho">↺ ${r.retorno_reencauche_proyectado || 0} · desecho ${r.desecho_proyectado || 0}</span>`;
+        const proyBadge = `<span class="block text-[9px] text-slate-500" title="Llegan al límite dentro de ${r.horizonte_meses ?? 3} meses; sin historial suficiente: ${escapeHtml(r.llantas_sin_ritmo || 0)}">${escapeHtml(r.demanda_proyectada || 0)} proyectadas a ${r.horizonte_meses ?? 3} m</span>
+          <span class="block text-[9px] text-emerald-700" title="Cascos que volverán reencauchados / llantas que saldrán como desecho">↺ ${escapeHtml(r.retorno_reencauche_proyectado || 0)} · desecho ${escapeHtml(r.desecho_proyectado || 0)}</span>`;
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-3 font-black text-slate-900">${r.dimension}</td>
+            <td class="p-3 font-black text-slate-900">${escapeHtml(r.dimension)}</td>
             <td class="p-3 text-center bg-rose-50/30">
               <span class="font-bold">${demRetiro}</span>
               ${parDirBadge}
@@ -494,17 +494,17 @@
       paginaItems.forEach(ll => {
         let detalleVehiculo = '-';
         if (ll.ubicacion_bodega === 'MONTADA_OPERACION' && ll.placa_actual) {
-          detalleVehiculo = `<span class="font-black text-blue-900">${ll.placa_actual}</span> <span class="text-slate-500 text-[10px]">Pos ${ll.posicion_actual || '-'}</span>`;
+          detalleVehiculo = `<span class="font-black text-blue-900">${escapeHtml(ll.placa_actual)}</span> <span class="text-slate-500 text-[10px]">Pos ${escapeHtml(ll.posicion_actual || '-')}</span>`;
         } else if (ll.ubicacion_bodega === 'BODEGA_3_REENCAUCHE') {
-          detalleVehiculo = `<span class="font-medium text-slate-700">${ll.proveedor_actual || 'En planta'}</span> ${ll.dias_en_planta > 0 ? `<span class="text-[10px] text-amber-700 font-bold">(${ll.dias_en_planta} d)</span>` : ''}`;
+          detalleVehiculo = `<span class="font-medium text-slate-700">${escapeHtml(ll.proveedor_actual || 'En planta')}</span> ${ll.dias_en_planta > 0 ? `<span class="text-[10px] text-amber-700 font-bold">(${escapeHtml(ll.dias_en_planta)} d)</span>` : ''}`;
         } else if (ll.ubicacion_bodega === 'BODEGA_2_RECAMBIO' && ll.reservada_para_dual) {
           detalleVehiculo = `<span class="text-emerald-700 font-bold text-[10px]">Reservada para Dual (KPI 08)</span>`;
         } else if (ll.ubicacion_bodega === 'BODEGA_6_FVU') {
-          detalleVehiculo = `<span class="text-rose-700 font-bold text-[10px]">${ll.causal_baja_fvu || 'Baja Prematura'}</span>`;
+          detalleVehiculo = `<span class="text-rose-700 font-bold text-[10px]">${escapeHtml(ll.causal_baja_fvu || 'Baja Prematura')}</span>`;
         } else if (ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
-          detalleVehiculo = `<span class="text-slate-500 text-[10px]">${ll.numero_acta_ambiental || 'Acta Ambiental'}</span>`;
+          detalleVehiculo = `<span class="text-slate-500 text-[10px]">${escapeHtml(ll.numero_acta_ambiental || 'Acta Ambiental')}</span>`;
         } else if (ll.proveedor_actual) {
-          detalleVehiculo = `<span class="text-slate-600 text-[10px]">${ll.proveedor_actual}</span>`;
+          detalleVehiculo = `<span class="text-slate-600 text-[10px]">${escapeHtml(ll.proveedor_actual)}</span>`;
         }
 
         const costoTotalFormateado = formatearPesosBodega(ll.costo_acumulado_total || ll.costo_ciclo_actual || 0);
@@ -513,14 +513,14 @@
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-3 font-black text-slate-900 flex items-center space-x-1.5">
-              <span>${ll.numero_interno}</span>
+              <span>${escapeHtml(ll.numero_interno)}</span>
             </td>
             <td class="p-3">${renderizarBadgeUbicacionBodega(ll.ubicacion_bodega)}</td>
             <td class="p-3">
-              <div class="font-bold text-slate-800">${ll.marca || ''}</div>
-              <div class="text-[10px] text-slate-400 uppercase">${ll.diseno || ''}</div>
+              <div class="font-bold text-slate-800">${escapeHtml(ll.marca || '')}</div>
+              <div class="text-[10px] text-slate-400 uppercase">${escapeHtml(ll.diseno || '')}</div>
             </td>
-            <td class="p-3 font-semibold text-slate-700">${ll.dimension || '-'}</td>
+            <td class="p-3 font-semibold text-slate-700">${escapeHtml(ll.dimension || '-')}</td>
             <td class="p-3 text-center">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${vidaLegible(ll.vida_actual) === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
                 ${vidaLegible(ll.vida_actual)}
@@ -1022,7 +1022,7 @@
             alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + fmtDec(profActual, 1) + ' mm) está en o por debajo del límite de retiro (3,0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
           } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
             alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
-            alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y quedará disponible en patio para recambio o apareo dual.</span>`;
+            alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${escapeHtml(ll.placa_actual)}</strong> (Pos ${escapeHtml(ll.posicion_actual)}) y quedará disponible en patio para recambio o apareo dual.</span>`;
           } else {
             alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
             alertaBox.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i><span>La llanta estará en stock reutilizable en patio para servicio rápido.</span>';
@@ -1270,8 +1270,8 @@
       const boxResumen = document.getElementById('boxKardexResumenLlanta');
       if (boxResumen && llanta) {
         boxResumen.innerHTML = `
-          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca || '-'} ${llanta.dimension || ''}</strong></div>
-          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual || 'Original'} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${escapeHtml(llanta.marca || '-')} ${escapeHtml(llanta.dimension || '')}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${escapeHtml(llanta.vida_actual || 'Original')} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? fmtDec(Number(llanta.prof_actual_min), 1) + ' mm' : '-'}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Costo Total Acum.:</span><strong class="text-emerald-700">${formatearPesosBodega(llanta.costo_acumulado_total || 0)}</strong></div>
         `;
@@ -1505,7 +1505,7 @@
           }
 
           const serialEl = document.getElementById('txtTallerSerial');
-          if (serialEl) serialEl.innerHTML = `<i class="fa-solid fa-ring text-blue-600 mr-1.5"></i>${ll.numero_interno}`;
+          if (serialEl) serialEl.innerHTML = `<i class="fa-solid fa-ring text-blue-600 mr-1.5"></i>${escapeHtml(ll.numero_interno)}`;
           const badgeCond = document.getElementById('badgeTallerCondicion');
           if (badgeCond) {
             badgeCond.textContent = ll.vida_actual || (ll.ciclo_actual > 1 ? `Reencauche (R${ll.ciclo_actual - 1})` : 'Original');
@@ -1657,7 +1657,7 @@
             const cicloTxt = (ll.ciclo_actual && ll.ciclo_actual > 1) ? `R${ll.ciclo_actual - 1}` : 'Original';
             const disableDir = esDir && ll.ciclo_actual > 1 ? 'disabled' : '';
             const tagDir = esDir && ll.ciclo_actual > 1 ? ' [⛔ RECHAZADA EN DIRECCIONAL]' : '';
-            opts += `<option value="${ll.numero_interno}" ${disableDir}>${ll.numero_interno} | ${ll.marca || ll.marca_origen} (${ll.dimension}) - ${cicloTxt} - ${ll.prof_actual_min || 0} mm${tagDir}</option>`;
+            opts += `<option value="${escapeHtml(ll.numero_interno)}" ${disableDir}>${escapeHtml(ll.numero_interno)} | ${escapeHtml(ll.marca || ll.marca_origen)} (${escapeHtml(ll.dimension)}) - ${cicloTxt} - ${escapeHtml(ll.prof_actual_min || 0)} mm${tagDir}</option>`;
           });
           selStock.innerHTML = opts;
         }
@@ -1822,9 +1822,9 @@
           ciclos.forEach(c => {
             hCiclos += `
               <tr class="hover:bg-slate-50">
-                <td class="p-2.5 font-black text-slate-900">Ciclo ${c.ciclo}</td>
-                <td class="p-2.5 font-bold">${c.tipo}</td>
-                <td class="p-2.5 text-slate-600">${c.banda_diseno || '-'}</td>
+                <td class="p-2.5 font-black text-slate-900">Ciclo ${escapeHtml(c.ciclo)}</td>
+                <td class="p-2.5 font-bold">${escapeHtml(c.tipo)}</td>
+                <td class="p-2.5 text-slate-600">${escapeHtml(c.banda_diseno || '-')}</td>
                 <td class="p-2.5 text-center font-mono">${fmtDec(Number(c.prof_inicial || 0), 1)} mm</td>
                 <td class="p-2.5 text-center font-mono font-bold">${fmtDec(Number(c.prof_final || 0), 1)} mm</td>
                 <td class="p-2.5 text-right font-mono font-bold">${Number(c.km_recorridos || 0).toLocaleString()} km</td>
@@ -1853,8 +1853,8 @@
                 </span>
                 <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 text-xs">
                   <div class="flex items-center justify-between font-bold text-slate-800">
-                    <span>${m.tipo_movimiento} (${m.bodega_origen || '-'} → ${m.bodega_destino || '-'})</span>
-                    <span class="text-[10px] text-slate-400">${m.fecha_movimiento || ''}</span>
+                    <span>${escapeHtml(m.tipo_movimiento)} (${escapeHtml(m.bodega_origen || '-')} → ${escapeHtml(m.bodega_destino || '-')})</span>
+                    <span class="text-[10px] text-slate-400">${escapeHtml(m.fecha_movimiento || '')}</span>
                   </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
                     ${m.odometro_vehiculo > 0 ? `Odómetro: ${Number(m.odometro_vehiculo).toLocaleString()} km | ` : ''}

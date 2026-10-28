@@ -82,6 +82,96 @@ async def no_cachear_js_de_la_app(request: Request, call_next):
         response.headers["Cache-Control"] = "no-cache"
     return response
 
+
+# Cabeceras de seguridad. La CSP permite solo los CDN que usa la app; 'unsafe-inline' sigue porque las pantallas usan
+# onclick="..." en línea (la defensa contra XSS es limpiar los textos al guardarlos y escaparlos al pintarlos).
+_CDN = "https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com"
+_CSP = "; ".join([
+    "default-src 'self'",
+    f"script-src 'self' 'unsafe-inline' {_CDN}",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+    "img-src 'self' data: blob:",
+    f"connect-src 'self' {_CDN} https://fonts.googleapis.com https://fonts.gstatic.com",  # el service worker precarga los CDN
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+])
+_CABECERAS_SEGURIDAD = {
+    "Content-Security-Policy": _CSP,
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(self), microphone=(), geolocation=(), payment=(), usb=()",
+}
+
+
+@app.middleware("http")
+async def cabeceras_de_seguridad(request: Request, call_next):
+    response = await call_next(request)
+    for nombre, valor in _CABECERAS_SEGURIDAD.items():
+        response.headers.setdefault(nombre, valor)
+    return response
+
+# Seguridad (XSS almacenado): todo texto que llega en JSON a la API se guarda sin < > " ' `.
+# Se exceptúan contraseñas, fotos/firmas/imágenes y campos que son JSON o esquemas, y las rutas que no guardan nada.
+_CLAVES_SIN_LIMPIAR = ('password', 'clave', 'contrasena', 'foto', 'firma', 'imagen', 'grafico', 'base64', 'esquema', 'json', 'token')
+_RUTAS_SIN_LIMPIAR = ('/api/login', '/api/kpis/exportar-pdf', '/api/composicion/exportar-pdf')
+
+
+def _limpiar_json_entrada(obj, clave=''):
+    if isinstance(obj, str):
+        return obj if any(k in clave.lower() for k in _CLAVES_SIN_LIMPIAR) else database.limpiar_texto_entrada(obj)
+    if isinstance(obj, list):
+        return [_limpiar_json_entrada(x, clave) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _limpiar_json_entrada(v, str(k)) for k, v in obj.items()}
+    return obj
+
+
+class LimpiarTextoEntrada:
+    """Middleware ASGI: limpia el cuerpo JSON de POST/PUT/PATCH a la API antes de que llegue a la ruta."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (scope["type"] != "http" or scope["method"] not in ("POST", "PUT", "PATCH")
+                or not scope["path"].startswith("/api/") or scope["path"] in _RUTAS_SIN_LIMPIAR):
+            return await self.app(scope, receive, send)
+        tipo = dict(scope["headers"]).get(b"content-type", b"").decode("latin-1").lower()
+        if "application/json" not in tipo:
+            return await self.app(scope, receive, send)
+
+        cuerpo, mas = b"", True
+        while mas:
+            mensaje = await receive()
+            cuerpo += mensaje.get("body", b"")
+            mas = mensaje.get("more_body", False)
+        try:
+            nuevo = json.dumps(_limpiar_json_entrada(json.loads(cuerpo)), ensure_ascii=False).encode("utf-8")
+        except Exception:
+            nuevo = cuerpo  # no es JSON válido: la ruta responderá el error de siempre
+        scope = dict(scope)
+        scope["headers"] = [(k, v) for k, v in scope["headers"] if k != b"content-length"] + [(b"content-length", str(len(nuevo)).encode())]
+        entregado = False
+
+        async def recibir():
+            nonlocal entregado
+            if not entregado:
+                entregado = True
+                return {"type": "http.request", "body": nuevo, "more_body": False}
+            return await receive()
+
+        await self.app(scope, recibir, send)
+
+
+app.add_middleware(LimpiarTextoEntrada)
+
 # ==========================================
 # MODELOS PYDANTIC
 # ==========================================
@@ -384,6 +474,25 @@ def requerir_admin_o_jefatura(usuario_actual: dict = Depends(obtener_usuario_act
     if not (es_rol_admin(rol, user) or es_rol_jefatura(rol)):
         raise HTTPException(status_code=403, detail="Se requieren permisos de jefatura o administrador")
     return usuario_actual
+
+def exigir_cliente_del_usuario(usuario_actual: dict, cliente: str):
+    """Un usuario que no es administrador solo cambia la configuración de sus clientes asignados (jefatura incluida)."""
+    if es_rol_admin(str(usuario_actual.get("rol", "")).strip().lower(), usuario_actual.get("username")):
+        return
+    clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+    cli = str(cliente or "").strip().upper()
+    if not cli or not any(c.strip().upper() == cli for c in clis):
+        raise HTTPException(status_code=403, detail="No tiene permisos sobre la configuración de este cliente")
+
+
+def _cliente_de_registro(tabla: str, registro_id: int) -> str:
+    """Cliente dueño de una fila de configuración (para validar permisos al editar o borrar por id)."""
+    with database.get_connection() as conn:
+        fila = conn.execute(f"SELECT cliente FROM {tabla} WHERE id = ?", (registro_id,)).fetchone()
+    if not fila:
+        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+    return fila[0] or ""
+
 
 def resolver_filtro_usuario_inspecciones(usuario_actual: dict, usuario_param: str = "") -> Optional[str]:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -1569,12 +1678,12 @@ def api_crear_operacion(item: NuevaOperacionItem, admin: dict = Depends(requerir
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/operaciones")
-def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin)):
     ok = database.actualizar_operacion(item.nombre_antiguo, item.nombre_nuevo)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/operaciones")
-def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin)):
     ok = database.eliminar_operacion(nombre)
     return {"status": "ok" if ok else "error"}
 
@@ -1601,7 +1710,7 @@ def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
-def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin)):
     try:
         ok = database.actualizar_tipologia(
             nombre_antiguo=item.nombre_antiguo,
@@ -1623,7 +1732,7 @@ def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requer
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/tipologias")
-def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin)):
     try:
         ok = database.eliminar_tipologia(nombre)
         return {"status": "ok" if ok else "error"}
@@ -1653,7 +1762,7 @@ def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_ad
     return {"status": "ok" if ok else "error"}
 
 @app.put("/api/modelos-llanta")
-def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin)):
     try:
         marca = (item.marca or "").strip().upper()
         res = database.actualizar_modelo_llanta(
@@ -1671,7 +1780,7 @@ def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/modelos-llanta/{modelo_id}")
-def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin)):
     try:
         ok = database.eliminar_modelo_llanta(modelo_id)
         return {"status": "ok" if ok else "error"}
@@ -1704,6 +1813,7 @@ def api_clientes_directorio(usuario_actual: dict = Depends(obtener_usuario_actua
 
 @app.post("/api/clientes-directorio")
 def api_crear_cliente_directorio(item: ClienteDirectorioItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, item.cliente)
     try:
         res = database.crear_o_actualizar_cliente(item.model_dump())
         if not res.get("ok"):
@@ -1723,6 +1833,7 @@ def api_crear_cliente_directorio(item: ClienteDirectorioItem, admin: dict = Depe
 
 @app.delete("/api/clientes-directorio/{cliente}")
 def api_eliminar_cliente_directorio(cliente: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, cliente)
     res = database.eliminar_cliente_directorio(cliente)
     if not res.get("ok"):
         raise HTTPException(status_code=400, detail=res.get("mensaje", "No se pudo eliminar el cliente"))
@@ -1744,6 +1855,7 @@ def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje
 
 @app.post("/api/configuraciones-clientes")
 def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, item.cliente)
     ok = database.guardar_limite_retiro_cliente(
         cliente=item.cliente,
         limite_retiro_mm=item.limite_retiro_mm,
@@ -1755,6 +1867,8 @@ def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Dep
 
 @app.put("/api/configuraciones-clientes")
 def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_limites_retiro", item.id))
+    exigir_cliente_del_usuario(admin, item.cliente)
     try:
         ok = database.actualizar_limite_retiro_cliente(
             limite_id=item.id,
@@ -1770,6 +1884,8 @@ def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict 
 
 @app.put("/api/configuraciones-clientes/{limite_id}")
 def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_limites_retiro", limite_id))
+    exigir_cliente_del_usuario(admin, item.cliente)
     try:
         ok = database.actualizar_limite_retiro_cliente(
             limite_id=limite_id,
@@ -1785,6 +1901,7 @@ def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteI
 
 @app.delete("/api/configuraciones-clientes/{limite_id}")
 def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_limites_retiro", limite_id))
     ok = database.eliminar_limite_retiro_cliente(limite_id)
     return sanitizar_nativos({"status": "ok" if ok else "error"})
 
@@ -1818,15 +1935,16 @@ def api_guardar_marca_cliente(item: MarcaClienteItem, usuario_actual: dict = Dep
     m = str(item.marca or "").strip().upper()
     if not cli or not m:
         raise HTTPException(status_code=400, detail="Cliente y marca son obligatorios")
-    if rol not in ("admin", "jefatura"):
+    if not es_rol_admin(rol, usuario_actual.get("username")):
         clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis and not any(c.lower() == cli.lower() for c in clis):
+        if not any(c.lower() == cli.lower() for c in clis):
             raise HTTPException(status_code=403, detail="No tiene permisos para parametrizar marcas en este cliente")
     database.guardar_marca_cliente(cli, m)
     return sanitizar_nativos({"status": "ok", "mensaje": f"Marca '{m}' asociada a '{cli}' exitosamente"})
 
 @app.delete("/api/configuracion-marcas-cliente/{marca_id}")
 def api_eliminar_marca_cliente_id(marca_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_marcas_cliente", marca_id))
     ok = database.eliminar_marca_cliente_por_id(marca_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
@@ -1834,6 +1952,7 @@ def api_eliminar_marca_cliente_id(marca_id: int, admin: dict = Depends(requerir_
 
 @app.delete("/api/configuracion-marcas-cliente")
 def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, cliente)
     ok = database.eliminar_marca_cliente(cliente, marca)
     if not ok:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")

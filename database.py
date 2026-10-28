@@ -159,6 +159,16 @@ def to_int(val, default=0):
 _conexion_compartida = contextvars.ContextVar('_conexion_compartida', default=None)
 
 
+# Seguridad: los textos que se guardan no llevan < > " ' ` (con ellos un dato podía volverse HTML o código en las
+# pantallas: XSS almacenado). Ningún dato de llantas, vehículos o clientes los necesita.
+_SIN_CARACTERES_HTML = str.maketrans('', '', '<>"' + "'`")
+
+
+def limpiar_texto_entrada(valor):
+    """Quita < > " ' ` de un texto (los demás tipos pasan igual)."""
+    return valor.translate(_SIN_CARACTERES_HTML) if isinstance(valor, str) else valor
+
+
 @contextmanager
 def conexion_compartida():
     if _conexion_compartida.get() is not None:
@@ -3370,9 +3380,11 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
             val = validar_inspeccion_candados(datos, conn=conn, es_cargue_masivo=True)
             if not val.get('valido', True):
                 raise ValueError(f"Fila {idx + 2} (Placa {placa}, Pos {pos}): {val.get('mensaje')}")
+            # Sin caracteres de HTML en los textos del archivo (XSS almacenado)
+            datos = {k: (v if k == 'foto_novedad' else limpiar_texto_entrada(v)) for k, v in datos.items()}
 
             # Asegurar número interno asignado en caso de autogeneración
-            num_final = str(datos.get('numero_interno', num_interno)).strip().upper()
+            num_final = limpiar_texto_entrada(str(datos.get('numero_interno', num_interno)).strip().upper())
 
             cursor.execute("""
                 INSERT INTO inspecciones (
@@ -4248,7 +4260,7 @@ def importar_precios_cliente_excel(file_path: str, clientes_autorizados=None) ->
                 if not re.match(r'^\d{4}-\d{2}-\d{2}$', vig_str):
                     vig_str = hoy
 
-            ok = guardar_precio_cliente(cli, mar, dis, dim, tipo_str, precio_val, vig_str)
+            ok = guardar_precio_cliente(*[limpiar_texto_entrada(x) for x in (cli, mar, dis, dim, tipo_str)], precio_val, vig_str)
             if ok:
                 registros_guardados += 1
             else:
@@ -6579,7 +6591,7 @@ def _placa_padron(valor) -> str:
         return ''
     if isinstance(valor, float) and valor.is_integer():
         valor = int(valor)  # Excel entrega los números internos como 101.0
-    texto = re.sub(r'\s+', ' ', str(valor)).strip().upper()
+    texto = limpiar_texto_entrada(re.sub(r'\s+', ' ', str(valor)).strip().upper())
     return '' if texto in ('NAN', 'NONE') else texto
 
 
@@ -6589,8 +6601,8 @@ def importar_padron_cliente_excel(file_path: str, cliente: str, sede: str = '') 
     los vehículos del archivo quedan activos y los que no vienen quedan inactivos (no se borran).
     Con sede, el reemplazo es solo de esa sede.
     """
-    cli = str(cliente or '').strip().upper()
-    sede_n = str(sede or '').strip().upper()
+    cli = limpiar_texto_entrada(str(cliente or '').strip().upper())
+    sede_n = limpiar_texto_entrada(str(sede or '').strip().upper())
     if not cli or cli == 'TODOS':
         raise ValueError("Seleccione el cliente al que pertenece el parque.")
     if sede_n == 'TODOS':

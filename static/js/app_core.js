@@ -514,7 +514,7 @@
               <span class="text-[10px] text-slate-400">${escapeHtml(it.fecha || '')}</span>
             </div>
             <div class="text-[11px] text-slate-600 mt-0.5 truncate">
-              <b>${escapeHtml(it.marca || '')}</b> ${escapeHtml(it.diseno || '')} · ${escapeHtml(it.dimension || '')} · ${it.prof_cent || 0} mm · ${it.psi || 0} PSI
+              <b>${escapeHtml(it.marca || '')}</b> ${escapeHtml(it.diseno || '')} · ${escapeHtml(it.dimension || '')} · ${escapeHtml(it.prof_cent || 0)} mm · ${escapeHtml(it.psi || 0)} PSI
             </div>
             ${it.novedades ? `<div class="text-[10px] text-amber-700 font-semibold mt-0.5 truncate"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(it.novedades)}</div>` : ''}
           </div>

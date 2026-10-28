@@ -58,10 +58,10 @@
       const tipologias = Array.from(new Set(data.map(r => (r.tipologia || '').trim()).filter(Boolean))).sort();
       const marcas = Array.from(new Set(data.map(r => (r.marca || '').trim()).filter(Boolean))).sort();
 
-      selCli.innerHTML = '<option value="TODOS">Todos</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      selOp.innerHTML = '<option value="TODOS">Todas</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      selTip.innerHTML = '<option value="TODOS">Todas</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
-      selMar.innerHTML = '<option value="TODOS">Todas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+      selCli.innerHTML = '<option value="TODOS">Todos</option>' + clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      selOp.innerHTML = '<option value="TODOS">Todas</option>' + operaciones.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+      selTip.innerHTML = '<option value="TODOS">Todas</option>' + tipologias.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      selMar.innerHTML = '<option value="TODOS">Todas</option>' + marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
 
       // Restaurar si aún existen
       if (clientes.includes(valCli)) selCli.value = valCli;
@@ -88,7 +88,7 @@
       )).sort();
 
       selSede.innerHTML = '<option value="TODOS">Todas</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+        sedes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
       if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
         selSede.value = valSedeActual;
@@ -281,7 +281,7 @@
         const nFotos = r.fotos_cantidad != null ? Number(r.fotos_cantidad) : obtenerListaFotos(r.foto_novedad).length;
         const tieneFotos = nFotos > 0;
         const htmlBotonFotos = tieneFotos ? `
-          <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${nFotos} foto(s) de evidencia de forma ordenada">
+          <button type="button" onclick="abrirGaleriaFotosPorId(${escapeHtml(r.id)})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${nFotos} foto(s) de evidencia de forma ordenada">
             <i class="fa-solid fa-camera text-blue-600 text-[11px]"></i>
             <span>Ver foto${nFotos > 1 ? 's' : ''} (${nFotos})</span>
           </button>
@@ -290,45 +290,45 @@
         const isChecked = inspeccionesSeleccionadasBD.has(r.id);
         const tdCheck = esAdm ? `
           <td class="p-2.5 text-center">
-            <input type="checkbox" class="chk-insp-item w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="alCambiarCheckFilaBD(${r.id}, this.checked)">
+            <input type="checkbox" class="chk-insp-item w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''} onchange="alCambiarCheckFilaBD(${escapeHtml(r.id)}, this.checked)">
           </td>
         ` : '';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors ${isChecked ? 'bg-indigo-50/70 font-semibold' : ''}">
             ${tdCheck}
-            <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
+            <td class="p-2.5 text-center font-bold text-slate-400">${escapeHtml(r.id)}</td>
             <td class="p-2.5 text-center whitespace-nowrap">
               ${tieneFotos ? `
-                <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
+                <button type="button" onclick="abrirGaleriaFotosPorId(${escapeHtml(r.id)})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
                   <i class="fa-solid fa-camera"></i>
                 </button>
               ` : ''}
               ${esAdminOJefatura() ? `
-                <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
+                <button type="button" onclick="abrirModalEditarInspeccion(${escapeHtml(r.id)})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
+                <button type="button" onclick="eliminarInspeccion(${escapeHtml(r.id)}, '${escapeHtml(r.placa)}', ${escapeHtml(r.posicion)})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
             </td>
             <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${fmtFecha(r.fecha)}</td>
-            <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
-            <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
-            <td class="p-2.5">${r.tipo_operacion || '-'}</td>
-            <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${r.placa || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-800">${r.numero_interno || '-'}</td>
+            <td class="p-2.5 font-bold text-slate-900">${escapeHtml(r.cliente || '-')}</td>
+            <td class="p-2.5 text-slate-500">${escapeHtml(r.subcliente || '-')}</td>
+            <td class="p-2.5">${escapeHtml(r.tipo_operacion || '-')}</td>
+            <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${escapeHtml(r.placa || '-')}</td>
+            <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.numero_interno || '-')}</td>
             <td class="p-2.5 text-center font-black">
               <span class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-800 font-mono text-xs">
                 ${r.posicion}
               </span>
             </td>
             <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
-            <td class="p-2.5">${r.tipologia || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-800">${r.marca || '-'}</td>
-            <td class="p-2.5">${r.diseno || '-'}</td>
-            <td class="p-2.5 font-mono text-[11px]">${r.dimension || '-'}</td>
+            <td class="p-2.5">${escapeHtml(r.tipologia || '-')}</td>
+            <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.marca || '-')}</td>
+            <td class="p-2.5">${escapeHtml(r.diseno || '-')}</td>
+            <td class="p-2.5 font-mono text-[11px]">${escapeHtml(r.dimension || '-')}</td>
             <td class="p-2.5">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${
                 esVidaReencauche(r.vida) || (r.banda_reen && r.banda_reen !== '-') 
@@ -338,13 +338,13 @@
                 ${(r.vida && r.vida !== '-') ? r.vida : (r.banda_reen && r.banda_reen !== '-' ? 'REENCAUCHE' : 'ORIGINAL')}
               </span>
             </td>
-            <td class="p-2.5 text-slate-500">${r.banda_reen || '-'}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_ext}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_cent}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_int}${badgeAlerta}</td>
+            <td class="p-2.5 text-slate-500">${escapeHtml(r.banda_reen || '-')}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${escapeHtml(r.prof_ext)}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${escapeHtml(r.prof_cent)}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${escapeHtml(r.prof_int)}${badgeAlerta}</td>
             <td class="p-2.5 text-center font-mono font-bold ${
               (parseFloat(r.psi) < 90 || parseFloat(r.psi) > 120) ? 'text-amber-600 bg-amber-50/60 rounded' : 'text-slate-700'
-            }">${r.psi}</td>
+            }">${escapeHtml(r.psi)}</td>
             <td class="p-2.5 max-w-xs truncate" title="${escapeHtml(r.novedades || '')}">
               ${escapeHtml(r.novedades) || '-'}
             </td>
@@ -352,7 +352,7 @@
               ${htmlBotonFotos}
             </td>
             <td class="p-2.5 text-right font-mono text-slate-600">$${(r.precio || 0).toLocaleString()}</td>
-            <td class="p-2.5 text-center font-mono text-slate-400">${r.prof_inicial || 0}</td>
+            <td class="p-2.5 text-center font-mono text-slate-400">${escapeHtml(r.prof_inicial || 0)}</td>
             <td class="p-2.5 text-right font-mono text-slate-400">${(r.km_montaje || 0).toLocaleString()}</td>
           </tr>
         `;
@@ -905,7 +905,7 @@
         const lista = r.ok ? await r.json() : [];
         const nombres = [...new Set(lista.map(c => c.cliente).filter(Boolean))].sort();
         sel.innerHTML = '<option value="">Seleccione un cliente…</option>' +
-          nombres.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+          nombres.map(n => `<option value="${escapeHtml(escapeHtml(n))}">${escapeHtml(escapeHtml(n))}</option>`).join('');
       } catch (e) {}
       modal.classList.remove('hidden');
       modal.classList.add('flex');

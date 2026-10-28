@@ -121,15 +121,15 @@
           ? `ej. MICHELIN (Marcas de ${cliente})`
           : `ej. MICHELIN (Catálogo completo de marcas)`;
 
-        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholder}</option>`;
+        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${escapeHtml(placeholder)}</option>`;
 
         if (mostrarTodas && cliente) {
-          html += `<option value="__solo_cliente__" class="font-bold text-emerald-700 bg-emerald-50">🔍 Volver a marcas frecuentes de ${cliente}</option>`;
+          html += `<option value="__solo_cliente__" class="font-bold text-emerald-700 bg-emerald-50">🔍 Volver a marcas frecuentes de ${escapeHtml(cliente)}</option>`;
         }
 
         unicos.forEach(m => {
           const isSel = (valorPrevio && valorPrevio.trim().toUpperCase() === m);
-          html += `<option value="${m}" ${isSel ? 'selected' : ''}>${m}</option>`;
+          html += `<option value="${escapeHtml(m)}" ${isSel ? 'selected' : ''}>${escapeHtml(m)}</option>`;
         });
 
         if (!mostrarTodas && cliente) {
@@ -263,10 +263,10 @@
             }
           });
 
-          let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholderTexto}</option>`;
+          let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${escapeHtml(placeholderTexto)}</option>`;
           unicos.forEach(it => {
             const isSel = (valorPrevio && valorPrevio.toLowerCase() === it.toLowerCase());
-            html += `<option value="${it}" ${isSel ? 'selected' : ''}>${it}</option>`;
+            html += `<option value="${escapeHtml(it)}" ${isSel ? 'selected' : ''}>${escapeHtml(it)}</option>`;
           });
           html += `<option value="__nuevo__" class="font-bold text-blue-600 bg-blue-50">+ Agregar nuevo valor...</option>`;
           sel.innerHTML = html;
@@ -279,7 +279,7 @@
 
           // Mantener compatibilidad con datalist si existe en el DOM
           const dl = document.getElementById(`dl_${elementId}`) || document.getElementById(`dl_${elementId}s`);
-          if (dl) dl.innerHTML = unicos.map(i => `<option value="${i}">`).join('');
+          if (dl) dl.innerHTML = unicos.map(i => `<option value="${escapeHtml(i)}">`).join('');
         } catch(ePop) {}
       }
     }
@@ -310,7 +310,7 @@
       if (ops) {
         const selOp = document.getElementById('tipo_operacion');
         if (selOp) {
-          selOp.innerHTML = ops.map(op => `<option value="${op}">${op}</option>`).join('');
+          selOp.innerHTML = ops.map(op => `<option value="${escapeHtml(op)}">${escapeHtml(op)}</option>`).join('');
           if (seleccionarOp) selOp.value = seleccionarOp;
         }
       }
@@ -329,7 +329,7 @@
       if (tips) {
         const selTip = document.getElementById('tipologia');
         if (selTip) {
-          selTip.innerHTML = tips.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
+          selTip.innerHTML = tips.map(t => `<option value="${escapeHtml(t.nombre)}">${escapeHtml(t.nombre)}</option>`).join('');
           if (seleccionarTip) selTip.value = seleccionarTip;
           cambioTipologia();
         }
@@ -347,7 +347,7 @@
         if (res.ok) {
           const items = await res.json();
           const dl = document.getElementById(elementId);
-          if (dl) dl.innerHTML = items.map(i => `<option value="${i}">`).join('');
+          if (dl) dl.innerHTML = items.map(i => `<option value="${escapeHtml(i)}">`).join('');
         }
       } catch(e) {}
     }
@@ -715,7 +715,7 @@
         }
 
         svg += `
-          <g id="neumatico_node_${p.pos}" class="tire-interactive-node" onclick="seleccionarPosicion(${p.pos})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarPosicion(${p.pos});}" role="button" tabindex="0" aria-label="${ariaTitle}">
+          <g id="neumatico_node_${escapeHtml(p.pos)}" class="tire-interactive-node" onclick="seleccionarPosicion(${escapeHtml(p.pos)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarPosicion(${escapeHtml(p.pos)});}" role="button" tabindex="0" aria-label="${ariaTitle}">
             <title>${ariaTitle}</title>
             
             <!-- A. Anillo y Fondo de Selección Activa (Contorno azul 2.5px más fondo azul muy tenue #EFF6FF) -->
@@ -753,7 +753,7 @@
         if (tieneNovedad) {
           svg += `
             <!-- Insignia: '!' Ámbar para Con Novedad -->
-            <g id="badge_warn_${p.pos}">
+            <g id="badge_warn_${escapeHtml(p.pos)}">
               <circle cx="${x + 32}" cy="${y + 8.5}" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.6"/>
               <line x1="${x + 32}" y1="${y + 4.8}" x2="${x + 32}" y2="${y + 9}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
               <circle cx="${x + 32}" cy="${y + 11.8}" r="1" fill="#FFFFFF"/>
@@ -762,7 +762,7 @@
         } else if (esInspeccionada) {
           svg += `
             <!-- Insignia: Check Verde para Registrada -->
-            <g id="badge_ok_${p.pos}">
+            <g id="badge_ok_${escapeHtml(p.pos)}">
               <circle cx="${x + 32}" cy="${y + 8.5}" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.6"/>
               <path d="M ${x + 29.5} ${y + 8.5} L ${x + 31.5} ${y + 10.5} L ${x + 34.5} ${y + 6.8}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
@@ -1145,8 +1145,8 @@
             }`;
             
             btn.innerHTML = `
-              <span>${p.pos}</span>
-              <span class="text-[9px] opacity-60">(${p.rol || ''})</span>
+              <span>${escapeHtml(p.pos)}</span>
+              <span class="text-[9px] opacity-60">(${escapeHtml(p.rol || '')})</span>
               ${iconoBadge}
             `;
             btn.onclick = () => seleccionarPosicion(p.pos);
@@ -2994,8 +2994,8 @@
             box.classList.remove('hidden');
             list.innerHTML = matches.slice(0, 3).map(m => `
               <div onclick='seleccionarLlantaCatalogo(${JSON.stringify(m)})' class="p-1.5 bg-white border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 flex items-center justify-between">
-                <span class="font-bold text-slate-900">${m.marca} ${m.diseno} (${m.dimension})</span>
-                <span class="font-black text-blue-700 font-mono">${m.prof_inicial} mm</span>
+                <span class="font-bold text-slate-900">${escapeHtml(m.marca)} ${escapeHtml(m.diseno)} (${escapeHtml(m.dimension)})</span>
+                <span class="font-black text-blue-700 font-mono">${escapeHtml(m.prof_inicial)} mm</span>
               </div>
             `).join('');
           } else {

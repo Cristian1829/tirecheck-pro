@@ -948,13 +948,13 @@
       } else {
         tbody.innerHTML = ultimasAlertasCambiazo.map(a => `
           <tr class="hover:bg-rose-50/50 transition-colors">
-            <td class="p-2.5 font-bold text-slate-900">${a.placa || ''}</td>
-            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${a.posicion || ''}</td>
-            <td class="p-2.5 font-mono text-slate-400 line-through">${a.serial_anterior || ''}</td>
-            <td class="p-2.5 font-mono font-bold text-rose-600">${a.serial_actual || ''}</td>
-            <td class="p-2.5 text-right font-mono font-bold">${a.prof_actual_min || 0} mm</td>
-            <td class="p-2.5 text-slate-400 text-xs">${a.fecha_anterior || ''}</td>
-            <td class="p-2.5 text-slate-700 font-semibold text-xs">${a.fecha_actual || ''}</td>
+            <td class="p-2.5 font-bold text-slate-900">${escapeHtml(a.placa || '')}</td>
+            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${escapeHtml(a.posicion || '')}</td>
+            <td class="p-2.5 font-mono text-slate-400 line-through">${escapeHtml(a.serial_anterior || '')}</td>
+            <td class="p-2.5 font-mono font-bold text-rose-600">${escapeHtml(a.serial_actual || '')}</td>
+            <td class="p-2.5 text-right font-mono font-bold">${escapeHtml(a.prof_actual_min || 0)} mm</td>
+            <td class="p-2.5 text-slate-400 text-xs">${escapeHtml(a.fecha_anterior || '')}</td>
+            <td class="p-2.5 text-slate-700 font-semibold text-xs">${escapeHtml(a.fecha_actual || '')}</td>
             <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Sustitución sin Kardex</span></td>
           </tr>
         `).join('');
@@ -989,11 +989,11 @@
         } else {
           tbodyCruz.innerHTML = d.tabla_cruzada.map(r => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold text-slate-800">${r.dimension || '-'}</td>
-              <td class="p-2.5 text-center font-mono">${r.direccional || 0}</td>
-              <td class="p-2.5 text-center font-mono">${r.traccion || 0}</td>
-              <td class="p-2.5 text-center font-mono">${r.arrastre || 0}</td>
-              <td class="p-2.5 text-right font-black font-mono text-rose-700 bg-rose-50/50">${r.total || 0}</td>
+              <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.dimension || '-')}</td>
+              <td class="p-2.5 text-center font-mono">${escapeHtml(r.direccional || 0)}</td>
+              <td class="p-2.5 text-center font-mono">${escapeHtml(r.traccion || 0)}</td>
+              <td class="p-2.5 text-center font-mono">${escapeHtml(r.arrastre || 0)}</td>
+              <td class="p-2.5 text-right font-black font-mono text-rose-700 bg-rose-50/50">${escapeHtml(r.total || 0)}</td>
             </tr>
           `).join('');
         }
@@ -1057,7 +1057,7 @@
 
             return `
               <tr class="hover:bg-slate-100 transition-colors">
-                <td class="p-2 text-left font-bold text-slate-900 sticky left-0 bg-white border-r border-slate-200">${r.placa || '-'}</td>
+                <td class="p-2 text-left font-bold text-slate-900 sticky left-0 bg-white border-r border-slate-200">${escapeHtml(r.placa || '-')}</td>
                 ${celdas}
               </tr>
             `;
@@ -1107,12 +1107,12 @@
         } else {
           tbody.innerHTML = d.tabla_perdidas.map(r => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
+              <td class="p-2.5 font-bold font-mono text-slate-900">${escapeHtml(r.placa || '-')}</td>
               <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos1_mm, 1)}</td>
               <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos2_mm, 1)}</td>
               <td class="p-2.5 text-center font-mono font-black text-rose-600">${formatCO_Decimal(r.total_mm, 1)} mm</td>
               <td class="p-2.5 text-right font-mono font-bold text-slate-900">${modoLicenciaSuite === 'FULL' ? formatCO_Moneda(r.perdida_pesos) : 'Modo LIGHT'}</td>
-              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${r.accion || 'Alinear Dirección'}</span></td>
+              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${escapeHtml(r.accion || 'Alinear Dirección')}</span></td>
             </tr>
           `).join('');
         }
@@ -1129,8 +1129,8 @@
         } else {
           tbody.innerHTML = d.rotaciones_sugeridas.map(r => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
-              <td class="p-2.5 text-center font-medium text-indigo-700 font-mono">${r.esquema || 'P3 ↔ P9 / P4 ↔ P10'}</td>
+              <td class="p-2.5 font-bold font-mono text-slate-900">${escapeHtml(r.placa || '-')}</td>
+              <td class="p-2.5 text-center font-medium text-indigo-700 font-mono">${escapeHtml(r.esquema || 'P3 ↔ P9 / P4 ↔ P10')}</td>
               <td class="p-2.5 text-center font-mono font-black text-amber-600">&Delta; ${formatCO_Decimal(r.delta_ejes_mm, 1)} mm</td>
               <td class="p-2.5 text-center">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${r.estado === 'Reincidente' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
@@ -1186,12 +1186,12 @@
           cont.innerHTML = d.cruces_bodega2.map(c => `
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
               <div>
-                <span class="font-mono font-black text-slate-900">${c.placa || '-'}</span>
-                <span class="text-slate-500 ml-1.5">${c.pacha || 'P3-P4'} (&Delta; ${formatCO_Decimal(c.diferencia_mm, 1)} mm)</span>
+                <span class="font-mono font-black text-slate-900">${escapeHtml(c.placa || '-')}</span>
+                <span class="text-slate-500 ml-1.5">${escapeHtml(c.pacha || 'P3-P4')} (&Delta; ${formatCO_Decimal(c.diferencia_mm, 1)} mm)</span>
               </div>
               <div class="text-right">
-                <span class="text-[10px] text-indigo-600 font-bold block">Bodega 2: ${c.llanta_b2_sugerida || 'Stock disponible'}</span>
-                <span class="text-[10px] text-slate-500 font-mono">${c.milimetraje_b2 || 0} mm</span>
+                <span class="text-[10px] text-indigo-600 font-bold block">Bodega 2: ${escapeHtml(c.llanta_b2_sugerida || 'Stock disponible')}</span>
+                <span class="text-[10px] text-slate-500 font-mono">${escapeHtml(c.milimetraje_b2 || 0)} mm</span>
               </div>
             </div>
           `).join('');
@@ -1612,7 +1612,7 @@
       const pct = v => (v === null || v === undefined) ? '-' : `${formatCO_Decimal(v, 1)}%`;
       const tb = document.getElementById('tbodyTendencias');
       if (tb) tb.innerHTML = meses.slice().reverse().map(m => `<tr>
-          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${m.vehiculos_inspeccionados}${m.pct_cumplimiento_parque == null ? '' : `<span class="block text-[10px] text-indigo-600 font-bold whitespace-nowrap">${pct(m.pct_cumplimiento_parque)} del parque</span>`}</td>
+          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${escapeHtml(m.vehiculos_inspeccionados)}${m.pct_cumplimiento_parque == null ? '' : `<span class="block text-[10px] text-indigo-600 font-bold whitespace-nowrap">${pct(m.pct_cumplimiento_parque)} del parque</span>`}</td>
           <td class="p-2 text-right">${pct(m.pct_presion_correcta)}</td><td class="p-2 text-right">${pct(m.pct_en_retiro)}</td>
           <td class="p-2 text-right">${m.prof_minima_promedio == null ? '-' : formatCO_Decimal(m.prof_minima_promedio, 1) + ' mm'}</td>
           <td class="p-2 text-right">${pct(m.pct_alerta_alineacion)}</td>
@@ -1656,11 +1656,11 @@
       set('kpiCpkAdmin', adm.length ? fmt(adm[adm.length - 1].cpk_administrativo) : 'Sin dato');
       set('kpiCpkNota', `${f.llantas_con_cpk || 0} vidas de llanta con CPK; ${f.llantas_sin_precio || 0} sin precio (registre la lista de precios del cliente en Catálogos).`);
       const tv = document.getElementById('tbodyCpkPorVida');
-      if (tv) tv.innerHTML = (k.por_vida || []).map(v => `<tr><td class="p-2 font-bold">${v.vida}</td><td class="p-2 text-right">${v.llantas}</td>
+      if (tv) tv.innerHTML = (k.por_vida || []).map(v => `<tr><td class="p-2 font-bold">${escapeHtml(v.vida)}</td><td class="p-2 text-right">${escapeHtml(v.llantas)}</td>
         <td class="p-2 text-right font-mono">${fmt(v.cpk_operativo)}</td><td class="p-2 text-right font-mono">${fmt(v.cpk_proyectado)}</td></tr>`).join('')
         || '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin datos</td></tr>';
       const ta = document.getElementById('tbodyCpkAdmin');
-      if (ta) ta.innerHTML = (k.administrativo || []).slice().reverse().map(m => `<tr><td class="p-2 font-bold">${m.mes}</td>
+      if (ta) ta.innerHTML = (k.administrativo || []).slice().reverse().map(m => `<tr><td class="p-2 font-bold">${escapeHtml(m.mes)}</td>
         <td class="p-2 text-right font-mono">${m.inversion ? formatCO_Moneda(m.inversion) : '-'}</td>
         <td class="p-2 text-right font-mono">${m.km_flota ? Number(m.km_flota).toLocaleString('es-CO') : '-'}</td>
         <td class="p-2 text-right font-mono">${fmt(m.cpk_administrativo)}</td></tr>`).join('')
@@ -2265,7 +2265,7 @@
             return `
               <tr class="hover:bg-slate-50 transition-colors">
                 <!-- Demanda -->
-                <td class="p-2.5 font-black text-slate-900 font-mono">${m.dimension || '-'}</td>
+                <td class="p-2.5 font-black text-slate-900 font-mono">${escapeHtml(m.dimension || '-')}</td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.demanda_flota)}</td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.reposicion_bajas_fvu)}</td>
                 <td class="p-2.5 text-center text-slate-500 font-mono">+${formatCO_Miles(m.margen_seguridad)}</td>
@@ -2273,7 +2273,7 @@
                 <!-- Bodegas -->
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b1)}</td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b2)}</td>
-                <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${m.stock_b3})</span></td>
+                <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${escapeHtml(m.stock_b3)})</span></td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b4)}</td>
                 <td class="p-2.5 text-center font-black bg-emerald-50 text-emerald-700 font-mono">${formatCO_Miles(m.stock_disponible)}</td>
                 <!-- Compra -->

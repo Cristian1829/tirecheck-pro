@@ -77,7 +77,7 @@
         } catch (e) {}
         const nombres = [...new Set((cacheDirectorioClientes || []).map(c => c.cliente).filter(Boolean))].sort();
         sel.innerHTML = '<option value="">Seleccione un cliente…</option>' +
-          nombres.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+          nombres.map(n => `<option value="${escapeHtml(escapeHtml(n))}">${escapeHtml(escapeHtml(n))}</option>`).join('');
       }
       cargarParqueCat();
     }
@@ -176,7 +176,7 @@
           const r = await fetch('/api/tipologias');
           const tips = r.ok ? await r.json() : [];
           sel.innerHTML = '<option value="">Seleccione…</option>' +
-            tips.map(t => `<option value="${escapeHtml(t.nombre)}">${escapeHtml(t.nombre)}</option>`).join('');
+            tips.map(t => `<option value="${escapeHtml(escapeHtml(t.nombre))}">${escapeHtml(escapeHtml(t.nombre))}</option>`).join('');
         } catch (e) {}
       }
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
@@ -365,7 +365,7 @@
               'text-[11px] font-bold text-emerald-800', `Se habilita a los ${diasNum} días de la última inspección`);
 
         const subChips = (c.subclientes && c.subclientes.length > 0)
-          ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${s}</span>`).join('')
+          ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${escapeHtml(s)}</span>`).join('')
           : '<span class="text-slate-400 italic text-[11px]">Principal</span>';
 
         const serialCliSeguro = String(c.cliente || '').replace(/'/g, "\\'");
@@ -375,7 +375,7 @@
             <td class="p-3">
               <div class="font-black text-slate-900 flex items-center space-x-1.5">
                 <i class="fa-solid fa-building text-slate-400 text-xs"></i>
-                <span>${c.cliente}</span>
+                <span>${escapeHtml(c.cliente)}</span>
               </div>
               <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? fmtFecha(c.fecha_actualizacion) : 'Al día'}</div>
             </td>
@@ -384,14 +384,14 @@
             <td class="p-3 text-center">${freqBadge}</td>
             <td class="p-3 max-w-[200px]">${subChips}</td>
             <td class="p-3 text-center">
-              <span class="font-bold text-slate-800">${c.vehiculos_count || 0}</span>
-              <span class="text-[10px] text-slate-400 block">${c.inspecciones_count || 0} insp</span>
+              <span class="font-bold text-slate-800">${escapeHtml(c.vehiculos_count || 0)}</span>
+              <span class="text-[10px] text-slate-400 block">${escapeHtml(c.inspecciones_count || 0)} insp</span>
             </td>
             <td class="p-3 text-center">
-              <span class="font-black ${c.llantas_count > 0 ? 'text-blue-700' : 'text-slate-400'}">${c.llantas_count || 0}</span>
+              <span class="font-black ${c.llantas_count > 0 ? 'text-blue-700' : 'text-slate-400'}">${escapeHtml(c.llantas_count || 0)}</span>
             </td>
             <td class="p-3 text-center">
-              <span class="font-bold text-slate-700">${c.marcas_count || 0}</span>
+              <span class="font-bold text-slate-700">${escapeHtml(c.marcas_count || 0)}</span>
             </td>
             <td class="p-3 text-slate-600 max-w-[180px] truncate" title="${escapeHtml(c.observaciones || '')}">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-3 text-center">
@@ -572,12 +572,12 @@
       if (res.ok) {
         const ops = await res.json();
         const box = document.getElementById('listaOperacionesCat');
-        const puedeEditar = esAdminOJefatura();
+        const puedeEditar = esUsuarioAdmin();  // catálogo compartido por todos los clientes
         box.innerHTML = ops.map(op => `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-            <span class="font-bold text-slate-800">${op}</span>
+            <span class="font-bold text-slate-800">${escapeHtml(op)}</span>
             ${puedeEditar ? `
-              <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
+              <button type="button" onclick="eliminarOperacionCat('${escapeHtml(op)}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
             ` : ''}
           </div>
         `).join('');
@@ -604,19 +604,19 @@
       if (res.ok) {
         const tips = await res.json();
         const box = document.getElementById('listaTipologiasCat');
-        const puedeEditar = esAdminOJefatura();
+        const puedeEditar = esUsuarioAdmin();  // catálogo compartido por todos los clientes
         box.innerHTML = tips.map(t => {
           return `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:shadow-sm transition-all flex flex-col justify-between">
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
-                  <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
+                  <span class="font-black text-slate-900 text-sm">${escapeHtml(t.nombre)}</span>
                   <div class="flex items-center space-x-1.5">
                     ${t.permite_reencauche_direccion ? `<span class="text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full" title="Esta tipología permite llantas reencauchadas en eje direccional">Reencauche Dir.</span>` : ''}
-                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${escapeHtml(t.cant_llantas)} llantas</span>
                   </div>
                 </div>
-                <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
+                <p class="text-xs text-slate-500 min-h-[1.5rem]">${escapeHtml(t.descripcion || 'Sin descripción')}</p>
               </div>
               ${puedeEditar ? `
                 <div class="pt-2 border-t border-slate-200/70 flex items-center justify-end space-x-1.5">
@@ -753,7 +753,7 @@
         const valActual = selMarca.value || 'TODAS';
         const marcas = Array.from(new Set(lista.map(m => String(m.marca || '').trim().toUpperCase()).filter(Boolean))).sort();
         selMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
-          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+          marcas.map(m => `<option value="${escapeHtml(escapeHtml(m))}">${escapeHtml(escapeHtml(m))}</option>`).join('');
         if (marcas.includes(valActual)) {
           selMarca.value = valActual;
         } else {
@@ -765,7 +765,7 @@
         const valActual = selDim.value || 'TODAS';
         const dims = Array.from(new Set(lista.map(m => String(m.dimension || '').trim().toUpperCase()).filter(Boolean))).sort();
         selDim.innerHTML = '<option value="TODAS">Todas las dimensiones</option>' +
-          dims.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+          dims.map(d => `<option value="${escapeHtml(escapeHtml(d))}">${escapeHtml(escapeHtml(d))}</option>`).join('');
         if (dims.includes(valActual)) {
           selDim.value = valActual;
         } else {
@@ -874,7 +874,7 @@
       const inicio = (paginaActualModelosCat - 1) * ITEMS_POR_PAGINA_MODELOS;
       const fin = Math.min(inicio + ITEMS_POR_PAGINA_MODELOS, totalRegistros);
       const paginaItems = lista.slice(inicio, fin);
-      const puedeEditar = esAdminOJefatura();
+      const puedeEditar = esUsuarioAdmin();  // catálogo compartido por todos los clientes
 
       tbody.innerHTML = paginaItems.map(m => `
         <tr class="hover:bg-slate-50 transition-colors">
@@ -882,15 +882,15 @@
           <td class="p-2.5 font-black text-slate-900">${escapeHtml((m.marca || '').toUpperCase())}</td>
           <td class="p-2.5 font-bold text-slate-800">${escapeHtml(m.diseno || '')}</td>
           <td class="p-2.5 text-slate-700">${escapeHtml(m.dimension || '')}</td>
-          <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
+          <td class="p-2.5 text-center font-mono font-black text-blue-700">${escapeHtml(m.prof_inicial)} mm</td>
           <td class="p-2.5 text-slate-500">${escapeHtml(m.descripcion || '-')}</td>
           <td class="p-2.5 text-center">
             ${puedeEditar ? `
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar modelo y sincronizar prof. inicial en BD">
+                <button type="button" onclick="abrirModalEditarModelo(${escapeHtml(m.id)})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar modelo y sincronizar prof. inicial en BD">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent((m.marca || '') + ' ' + (m.diseno || ''))}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar modelo del catálogo">
+                <button type="button" onclick="eliminarModeloCat(${escapeHtml(m.id)}, '${encodeURIComponent((m.marca || '') + ' ' + (m.diseno || ''))}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar modelo del catálogo">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -1120,7 +1120,7 @@
       const valPrev = selCli.value || 'TODOS';
       const clis = Array.from(new Set((catalogoLimitesCache || []).map(c => c.cliente))).sort();
       selCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
-        clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        clis.map(c => `<option value="${escapeHtml(escapeHtml(c))}">${escapeHtml(escapeHtml(c))}</option>`).join('');
       if (clis.includes(valPrev)) selCli.value = valPrev;
     }
 
@@ -1206,10 +1206,10 @@
             <td class="p-2.5 text-slate-600">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-2.5 text-center">
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar límite de retiro">
+                <button type="button" onclick="abrirModalEditarLimiteCliente(${escapeHtml(c.id)})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar límite de retiro">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar regla de límite">
+                <button type="button" onclick="eliminarLimiteCliente(${escapeHtml(c.id)})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar regla de límite">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -1243,7 +1243,7 @@
       let html = '<option value="TODOS">TODOS (Toda la flota)</option>';
       subclientes.forEach(s => {
         if (s && s.toUpperCase() !== 'TODOS') {
-          html += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+          html += `<option value="${escapeHtml(escapeHtml(s))}">${escapeHtml(escapeHtml(s))}</option>`;
         }
       });
       html += '<option value="__OTRA__">+ Escribir otra sede...</option>';
@@ -1275,7 +1275,7 @@
       if (selCli) {
         const clientes = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          clientes.map(c => `<option value="${escapeHtml(escapeHtml(c))}">${escapeHtml(escapeHtml(c))}</option>`).join('');
         selCli.value = '';
       }
 
@@ -1302,7 +1302,7 @@
         const clientes = obtenerListaClientesDisponibles();
         if (!clientes.includes(c.cliente)) clientes.push(c.cliente);
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clientes.sort().map(cli => `<option value="${escapeHtml(cli)}">${escapeHtml(cli)}</option>`).join('');
+          clientes.sort().map(cli => `<option value="${escapeHtml(escapeHtml(cli))}">${escapeHtml(escapeHtml(cli))}</option>`).join('');
         selCli.value = c.cliente;
       }
 
@@ -1463,7 +1463,7 @@
           const valPrevio = selCliForm.value;
           const todosClientes = obtenerListaClientesDisponibles();
           selCliForm.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-            todosClientes.map(c => `<option value="${c}">${c}</option>`).join('');
+            todosClientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valPrevio && todosClientes.includes(valPrevio)) {
             selCliForm.value = valPrevio;
           }
@@ -1476,7 +1476,7 @@
           const valPrev = selFiltroCli.value;
           const clientesFiltro = Array.from(new Set([...clientesUnicos, ...obtenerListaClientesDisponibles()])).sort();
           selFiltroCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
-            clientesFiltro.map(c => `<option value="${c}">${c}</option>`).join('');
+            clientesFiltro.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valPrev) selFiltroCli.value = valPrev;
         }
 
@@ -1485,7 +1485,7 @@
           const valPrev = selFiltroMarca.value;
           const marcasFiltro = Array.from(new Set(preciosClienteCatCache.map(p => p.marca).filter(Boolean))).sort();
           selFiltroMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
-            marcasFiltro.map(m => `<option value="${m}">${m}</option>`).join('');
+            marcasFiltro.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
           if (valPrev) selFiltroMarca.value = valPrev;
         }
 
@@ -1512,17 +1512,17 @@
       if (marcasAsociadas.length > 0) {
         opts += `<optgroup label="⭐ Marcas Habituales de ${cli}">`;
         marcasAsociadas.forEach(m => {
-          opts += `<option value="${m}">${m}</option>`;
+          opts += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
         });
         opts += `</optgroup>`;
         opts += `<optgroup label="Otras Marcas del Catálogo">`;
         todasMarcas.filter(m => !marcasAsociadas.includes(m)).forEach(m => {
-          opts += `<option value="${m}">${m}</option>`;
+          opts += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
         });
         opts += `</optgroup>`;
       } else {
         todasMarcas.forEach(m => {
-          opts += `<option value="${m}">${m}</option>`;
+          opts += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
         });
       }
       opts += '<option value="__OTRA__">+ Escribir otra marca...</option>';
@@ -1568,10 +1568,10 @@
       }
 
       if (dlDisenos) {
-        dlDisenos.innerHTML = Array.from(disenosSugeridos).sort().map(d => `<option value="${d}">`).join('');
+        dlDisenos.innerHTML = Array.from(disenosSugeridos).sort().map(d => `<option value="${escapeHtml(d)}">`).join('');
       }
       if (dlDims) {
-        dlDims.innerHTML = Array.from(dimsSugeridas).sort().map(d => `<option value="${d}">`).join('');
+        dlDims.innerHTML = Array.from(dimsSugeridas).sort().map(d => `<option value="${escapeHtml(d)}">`).join('');
       }
     }
 
@@ -1671,30 +1671,30 @@
              </span>`;
 
         const disenoHtml = p.diseno && p.diseno.trim() && p.diseno !== 'TODOS'
-          ? `<span class="font-semibold text-slate-700">${p.diseno}</span>`
+          ? `<span class="font-semibold text-slate-700">${escapeHtml(p.diseno)}</span>`
           : `<span class="text-slate-400 italic font-mono text-[11px]">Todos</span>`;
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-3 font-bold text-slate-900">${p.cliente}</td>
+            <td class="p-3 font-bold text-slate-900">${escapeHtml(p.cliente)}</td>
             <td class="p-3">
               <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
                 ${p.marca}
               </span>
             </td>
             <td class="p-3">${disenoHtml}</td>
-            <td class="p-3 font-mono font-bold text-slate-700 text-xs">${p.dimension}</td>
+            <td class="p-3 font-mono font-bold text-slate-700 text-xs">${escapeHtml(p.dimension)}</td>
             <td class="p-3 text-center">${badgeTipo}</td>
             <td class="p-3 text-right font-mono font-black text-slate-900 text-xs">
               $ ${Number(p.precio).toLocaleString('es-CO')}
             </td>
-            <td class="p-3 text-center font-mono text-slate-500 text-[11px]">${p.vigente_desde || '-'}</td>
+            <td class="p-3 text-center font-mono text-slate-500 text-[11px]">${escapeHtml(p.vigente_desde || '-')}</td>
             <td class="p-3 text-center">
               <div class="inline-flex items-center space-x-1">
-                <button type="button" onclick="editarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Modificar precio">
+                <button type="button" onclick="editarPrecioClienteCat(${escapeHtml(p.id)})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Modificar precio">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Eliminar tarifa">
+                <button type="button" onclick="eliminarPrecioClienteCat(${escapeHtml(p.id)})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Eliminar tarifa">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
@@ -2014,14 +2014,14 @@
         const valPrev = selCli.value;
         const clis = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+          clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
       }
 
       const dlDims = document.getElementById('dl_stockseg_dimensiones');
       if (dlDims) {
         const dims = obtenerListaDimensionesDisponibles();
-        dlDims.innerHTML = dims.map(d => `<option value="${d}">`).join('');
+        dlDims.innerHTML = dims.map(d => `<option value="${escapeHtml(d)}">`).join('');
       }
 
       try {
@@ -2030,9 +2030,9 @@
         const nombreEje = { DIRECCIONAL: 'Direccional', TRACCION: 'Tracción', LIBRE: 'Libre / remolque' };
         tbody.innerHTML = lista.length ? lista.map(r => {
           const q = s => String(s).replace(/'/g, "\\'");
-          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2 font-mono">${r.dimension}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
-            <td class="p-2 text-center font-bold">${r.cantidad}</td>
-            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
+          return `<tr><td class="p-2 font-bold">${escapeHtml(r.cliente)}</td><td class="p-2 font-mono">${escapeHtml(r.dimension)}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
+            <td class="p-2 text-center font-bold">${escapeHtml(r.cantidad)}</td>
+            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${escapeHtml(r.eje)}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="5" class="p-2 text-slate-400 italic">Sin reglas: se usa el stock de seguridad general de cada cliente</td></tr>';
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
@@ -2078,7 +2078,7 @@
         const valPrev = selCli.value;
         const clis = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+          clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
       }
 
@@ -2087,7 +2087,7 @@
         const valPrev = selMarca.value;
         const marcas = obtenerListaMarcasDisponibles();
         selMarca.innerHTML = '<option value="TODAS">TODAS LAS MARCAS</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
         if (valPrev) selMarca.value = valPrev;
       }
 
@@ -2096,8 +2096,8 @@
         const lista = res.ok ? await res.json() : [];
         tbody.innerHTML = lista.length ? lista.map(r => {
           const cli = String(r.cliente).replace(/'/g, "\\'"), mar = String(r.marca).replace(/'/g, "\\'");
-          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2">${r.marca}</td>
-            <td class="p-2 text-center font-mono font-bold">${r.max_reencauches}</td>
+          return `<tr><td class="p-2 font-bold">${escapeHtml(r.cliente)}</td><td class="p-2">${escapeHtml(r.marca)}</td>
+            <td class="p-2 text-center font-mono font-bold">${escapeHtml(r.max_reencauches)}</td>
             <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin reglas: no hay tope de reencauches</td></tr>';
       } catch (e) {
@@ -2141,7 +2141,7 @@
           const valPrevio = selFiltro.value;
           const clientesUnicos = Array.from(new Set(marcasClienteCatCache.map(m => m.cliente))).sort();
           selFiltro.innerHTML = `<option value="">TODOS LOS CLIENTES (${clientesUnicos.length})</option>` +
-            clientesUnicos.map(c => `<option value="${c}">${c}</option>`).join('');
+            clientesUnicos.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valPrevio) selFiltro.value = valPrevio;
         }
 
@@ -2197,7 +2197,7 @@
 
       tbody.innerHTML = paginaItems.map(item => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-bold text-slate-900">${item.cliente}</td>
+          <td class="p-2.5 font-bold text-slate-900">${escapeHtml(item.cliente)}</td>
           <td class="p-2.5">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
               <i class="fa-solid fa-tag mr-1 text-[10px]"></i>
@@ -2206,7 +2206,7 @@
           </td>
           <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
           <td class="p-2.5 text-center">
-            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Desvincular marca de este cliente">
+            <button type="button" onclick="eliminarMarcaClientePorId(${escapeHtml(item.id)}, '${escapeHtml(item.cliente)}', '${escapeHtml(item.marca)}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Desvincular marca de este cliente">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -2233,7 +2233,7 @@
         const pref = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
         const clis = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+          clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (pref && clis.includes(pref)) selCli.value = pref;
       }
 
@@ -2241,7 +2241,7 @@
       if (selMarca) {
         const marcas = obtenerListaMarcasDisponibles();
         selMarca.innerHTML = '<option value="">-- Seleccionar Marca del Catálogo --</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('') +
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('') +
           '<option value="__OTRA__">+ Escribir otra marca...</option>';
         selMarca.value = '';
       }
@@ -2402,7 +2402,7 @@
       if (clis.length === 1) {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
       }
-      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${c}</span>`).join('')}</div>`;
+      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${escapeHtml(c)}</span>`).join('')}</div>`;
     }
 
     async function cargarUsuariosCat() {
@@ -2448,8 +2448,8 @@
           }
           tbody.innerHTML = usuariosCatCache.map(u => `
             <tr class="hover:bg-slate-50 transition-colors">
-              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
-              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
+              <td class="p-2.5 font-black text-slate-900">${escapeHtml(u.username)}</td>
+              <td class="p-2.5 font-bold">${escapeHtml(u.nombre_completo)}</td>
               <td class="p-2.5 text-center font-bold uppercase text-[10px]">
                 ${renderizarBadgeRol(u.rol)}
               </td>
@@ -2460,14 +2460,14 @@
               </td>
               <td class="p-2.5 text-center">
                 <div class="flex items-center justify-center space-x-1">
-                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
+                  <button type="button" onclick="abrirModalEditarUsuario('${escapeHtml(u.username)}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
                     <i class="fa-solid fa-user-pen"></i>
                   </button>
-                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
+                  <button type="button" onclick="abrirModalResetPassword('${escapeHtml(u.username)}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
                     <i class="fa-solid fa-key"></i>
                   </button>
                   ${String(u.username).toLowerCase() !== 'admin' ? `
-                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
+                    <button type="button" onclick="eliminarUsuarioCat('${escapeHtml(u.username)}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
                       <i class="fa-solid fa-trash"></i>
                     </button>
                   ` : `
@@ -2500,7 +2500,7 @@
           tbody.innerHTML = `
             <tr>
               <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
-                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${e.message}</div>
+                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${escapeHtml(e.message)}</div>
                 <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
                   <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
                 </button>
@@ -2783,7 +2783,7 @@
         let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
         clis.forEach(c => {
           const isSel = (valorPrevio && valorPrevio === c);
-          html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
+          html += `<option value="${escapeHtml(c)}" ${isSel ? 'selected' : ''}>${escapeHtml(c)}</option>`;
         });
         selCli.innerHTML = html;
         if (valorPrevio && clis.includes(valorPrevio)) {
