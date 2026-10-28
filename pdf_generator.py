@@ -1131,25 +1131,10 @@ def renderizar_informe(datos) -> bytes:
 
     style_par_obs = ParagraphStyle('ObsPar', fontName='Helvetica', fontSize=7.0, leading=9.5, textColor=colors.HexColor('#1E293B'))
     elements.append(Paragraph(" ".join(obs_lines), style_par_obs))
-    elements.append(Spacer(1, 4))
-
-    # =========================================================================
-    # SECCIÓN 9: CRITERIOS DE DIAGNÓSTICO APLICADOS
-    # =========================================================================
-    elements.append(Paragraph("Criterios de diagnóstico aplicados", style_sec_tit))
-    criterios_html = f"""
-    <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({texto_limite}).<br/>
-    <b>Alineación y geometría de ejes:</b> diferencia de 2,0 mm o más entre la profundidad exterior e interior en llantas direccionales o en ejes de trailer / eje libre.<br/>
-    <b>Dual mal apareado:</b> diferencia de más de 2,5 mm entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
-    <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
-    La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
-    """
-    style_crit = ParagraphStyle('CritPar', fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#475569'))
-    elements.append(Paragraph(criterios_html, style_crit))
     elements.append(Spacer(1, 10))
 
     # =========================================================================
-    # SECCIÓN 10: FIRMAS
+    # SECCIÓN 9: FIRMAS
     # =========================================================================
     style_sub_firma = ParagraphStyle('FirmSub', fontName='Helvetica', fontSize=7.0, leading=9.0, textColor=colors.HexColor('#0F172A'), alignment=1)
     firma_data = [

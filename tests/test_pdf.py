@@ -27,6 +27,13 @@ def test_generar_pdf_plan_mantenimiento(test_db):
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b'%PDF-')
 
+    # El informe por placa ya no lleva la sección de criterios de diagnóstico
+    from pypdf import PdfReader
+    import io
+    texto = "".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf_bytes)).pages)
+    assert "Criterios de diagnóstico" not in texto
+    assert "Dimensiones homogéneas" not in texto
+
 def test_generar_pdf_consolidado(test_db):
     # Insertar datos para consolidado
     datos = {
