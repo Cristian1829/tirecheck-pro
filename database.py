@@ -11,6 +11,7 @@ import hmac
 import secrets
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
+import contextvars
 from typing import Optional
 import sys
 import catalogo_modelos_colombia
@@ -152,8 +153,31 @@ def to_int(val, default=0):
     except (ValueError, TypeError):
         return default
 
+# Conexión compartida (opcional): dentro de `with conexion_compartida():` todas las llamadas a get_connection usan la
+# misma conexión. Sirve a procesos de solo lectura que hacen miles de consultas cortas (el paquete offline del patio
+# abría ~4.800 conexiones).
+_conexion_compartida = contextvars.ContextVar('_conexion_compartida', default=None)
+
+
+@contextmanager
+def conexion_compartida():
+    if _conexion_compartida.get() is not None:
+        yield _conexion_compartida.get()
+        return
+    with get_connection() as conn:
+        token = _conexion_compartida.set(conn)
+        try:
+            yield conn
+        finally:
+            _conexion_compartida.reset(token)
+
+
 @contextmanager
 def get_connection():
+    compartida = _conexion_compartida.get()
+    if compartida is not None:
+        yield compartida
+        return
     conn = sqlite3.connect(DB_PATH, timeout=15.0)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
@@ -885,6 +909,17 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_placa ON inspecciones (cliente, placa)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_numero_interno_fecha ON kardex_movimientos_llanta (numero_interno, fecha_movimiento DESC)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_estado_act ON llantas_maestro (cliente, estado_actual)")
+        # Índices sobre UPPER(...): la sincronización de llantas busca con UPPER(cliente) = ? y sin ellos recorría la
+        # tabla completa por cada llanta (el arranque crecía con el cuadrado de los datos: 1,4 s -> 0,05 s)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maestro_up_cliente_num ON llantas_maestro (UPPER(cliente), UPPER(numero_interno))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maestro_up_placa_pos ON llantas_maestro (UPPER(placa_actual), posicion_actual)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_up_cliente_num ON kardex_movimientos_llanta (UPPER(cliente), UPPER(numero_interno))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_novedades_up_num ON llantas_novedades_registro (UPPER(numero_interno))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_up_num_cliente ON inspecciones (UPPER(TRIM(numero_interno)), UPPER(TRIM(cliente)))")
+        # Búsquedas por placa con UPPER(TRIM(placa)) = ? (perfil del vehículo, patio, paquete offline)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_up_placa ON inspecciones (UPPER(TRIM(placa)), fecha, id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_catalogo_vehiculos_up_placa ON catalogo_vehiculos (UPPER(TRIM(placa)))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_padron_up_placa ON padron_vehiculos_cliente (UPPER(TRIM(placa)))")
 
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
@@ -2970,7 +3005,13 @@ def insertar_inspeccion(datos):
 
 def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
     with get_connection() as conn:
-        col_foto = "foto_novedad" if incluir_fotos else "CASE WHEN foto_novedad IS NOT NULL AND TRIM(foto_novedad) != '' AND TRIM(foto_novedad) != '[]' THEN '1' ELSE '' END AS tiene_foto, '' AS foto_novedad"
+        # Sin fotos: solo cuántas tiene cada inspección (las fotos son ~75 % del peso de la lista)
+        col_foto = "foto_novedad" if incluir_fotos else """
+            CASE WHEN foto_novedad IS NOT NULL AND TRIM(foto_novedad) != '' AND TRIM(foto_novedad) != '[]' THEN '1' ELSE '' END AS tiene_foto,
+            CASE WHEN foto_novedad IS NULL OR TRIM(foto_novedad) IN ('', '[]') THEN 0
+                 WHEN TRIM(foto_novedad) LIKE '[%' AND json_valid(foto_novedad) THEN json_array_length(foto_novedad)
+                 ELSE 1 END AS fotos_cantidad,
+            '' AS foto_novedad"""
         query = f"""
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
@@ -3099,31 +3140,45 @@ def vaciar_inspecciones():
         conn.commit()
 
 
-# Lo que deja un cargue de inspecciones por Excel (cargar_excel_a_bd) para un cliente. La licencia, los límites,
-# los precios, las bodegas y el kardex del cliente no se tocan.
+# Lo que deja un cargue de inspecciones por Excel para un cliente: las inspecciones, sus vehículos y marcas, y las llantas
+# que la sincronización crea a partir de ellas (maestro, kardex, ciclos, movimientos y novedades). La licencia, los
+# límites de retiro y los precios del cliente no se tocan.
+_LLANTAS_DEL_CLIENTE = "(MAYUS(TRIM(IFNULL(cliente, ''))) = :cli OR MAYUS(TRIM(IFNULL(cliente_propietario, ''))) = :cli)"
+# Ciclos, movimientos y novedades se ligan por dueño; sin dueño, por número interno si ese número es solo de este cliente
+_HISTORIA_DE_LLANTA = f"""(MAYUS(TRIM(IFNULL(cliente_propietario, ''))) = :cli
+    OR (TRIM(IFNULL(cliente_propietario, '')) = ''
+        AND MAYUS(TRIM(numero_interno)) IN (SELECT MAYUS(TRIM(numero_interno)) FROM llantas_maestro WHERE {_LLANTAS_DEL_CLIENTE})
+        AND MAYUS(TRIM(numero_interno)) NOT IN (SELECT MAYUS(TRIM(numero_interno)) FROM llantas_maestro WHERE NOT {_LLANTAS_DEL_CLIENTE})))"""
+_POR_CLIENTE = "MAYUS(TRIM(cliente)) = :cli"
+# Orden de borrado: primero lo que depende de las llantas del maestro
 _TABLAS_CARGUE_CLIENTE = (
-    ('inspecciones', 'Inspecciones'),
-    ('catalogo_vehiculos', 'Vehículos del catálogo'),
-    ('padron_vehiculos_cliente', 'Vehículos del parque'),
-    ('configuracion_marcas_cliente', 'Marcas del cliente'),
+    ('inspecciones', 'Inspecciones', _POR_CLIENTE),
+    ('catalogo_vehiculos', 'Vehículos del catálogo', _POR_CLIENTE),
+    ('padron_vehiculos_cliente', 'Vehículos del parque', _POR_CLIENTE),
+    ('configuracion_marcas_cliente', 'Marcas del cliente', _POR_CLIENTE),
+    ('llantas_ciclos', 'Ciclos de vida de llantas', _HISTORIA_DE_LLANTA),
+    ('llantas_movimientos', 'Movimientos de llantas', _HISTORIA_DE_LLANTA),
+    ('llantas_novedades_registro', 'Novedades de llantas', _HISTORIA_DE_LLANTA),
+    ('kardex_movimientos_llanta', 'Movimientos de kardex', _POR_CLIENTE),
+    ('llantas_maestro', 'Llantas en bodegas y vehículos', _LLANTAS_DEL_CLIENTE),
 )
 
 
 def eliminar_datos_cargados_cliente(cliente: str, ejecutar: bool = False) -> dict:
     """Cuenta (y con ejecutar=True borra) los datos de cargue de un cliente: deshace un Excel subido por error."""
-    cli = str(cliente or '').strip()
-    if not cli or cli.upper() in ('TODOS', 'TODAS'):
+    cli = str(cliente or '').strip().upper()
+    if not cli or cli in ('TODOS', 'TODAS'):
         raise ValueError("Indique un cliente.")
+    par = {"cli": cli}
     with get_connection() as conn:
-        conteo = {tabla: conn.execute(f"SELECT COUNT(*) FROM {tabla} WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))",
-                                      (cli,)).fetchone()[0]
-                  for tabla, _ in _TABLAS_CARGUE_CLIENTE}
+        conteo = {t: conn.execute(f"SELECT COUNT(*) FROM {t} WHERE {cond}", par).fetchone()[0]
+                  for t, _, cond in _TABLAS_CARGUE_CLIENTE}
         if ejecutar:
-            for tabla, _ in _TABLAS_CARGUE_CLIENTE:
-                conn.execute(f"DELETE FROM {tabla} WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))", (cli,))
+            for t, _, cond in _TABLAS_CARGUE_CLIENTE:
+                conn.execute(f"DELETE FROM {t} WHERE {cond}", par)
             conn.commit()
-    return {"cliente": cli.upper(), "ejecutado": ejecutar,
-            "detalle": [{"tabla": t, "nombre": n, "registros": conteo[t]} for t, n in _TABLAS_CARGUE_CLIENTE],
+    return {"cliente": cli, "ejecutado": ejecutar,
+            "detalle": [{"tabla": t, "nombre": n, "registros": conteo[t]} for t, n, _ in _TABLAS_CARGUE_CLIENTE],
             "total": sum(conteo.values())}
 
 
@@ -3367,6 +3422,9 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
                 conn=conn
             )
             registros_insertados += 1
+        # Las llantas del archivo pasan a Bodegas de una vez (antes solo al reiniciar el servidor)
+        if registros_insertados:
+            sincronizar_maestro_desde_inspecciones(conn)
         conn.commit()
     return registros_insertados
 
@@ -6672,19 +6730,21 @@ def listar_padron_cliente(cliente: str, sede: str = '') -> list:
 
 def _vehiculos_inspeccionados_cliente(cliente: str, sede: str = '') -> list:
     """Vehículos con inspecciones del cliente, con los datos de su última inspección (parque automático)."""
+    # Última inspección de cada placa con ROW_NUMBER (antes una subconsulta por fila: crecía con el cuadrado)
     q = """
-        SELECT MAYUS(TRIM(i.placa)), MAYUS(TRIM(IFNULL(i.subcliente, ''))), IFNULL(i.tipologia, ''),
-               MAX(i.kilometraje), MAX(substr(i.fecha, 1, 10))
-        FROM inspecciones i
-        WHERE MAYUS(TRIM(i.cliente)) = ? AND TRIM(IFNULL(i.placa, '')) != ''
-          AND i.id = (SELECT j.id FROM inspecciones j WHERE MAYUS(TRIM(j.placa)) = MAYUS(TRIM(i.placa))
-                        AND MAYUS(TRIM(j.cliente)) = MAYUS(TRIM(i.cliente)) ORDER BY j.fecha DESC, j.id DESC LIMIT 1)
+        SELECT placa, sede, tipologia, kilometraje, fecha FROM (
+            SELECT MAYUS(TRIM(placa)) AS placa, MAYUS(TRIM(IFNULL(subcliente, ''))) AS sede,
+                   IFNULL(tipologia, '') AS tipologia, kilometraje, substr(fecha, 1, 10) AS fecha,
+                   ROW_NUMBER() OVER (PARTITION BY MAYUS(TRIM(placa)) ORDER BY fecha DESC, id DESC) AS n
+            FROM inspecciones
+            WHERE MAYUS(TRIM(cliente)) = ? AND TRIM(IFNULL(placa, '')) != ''
+        ) WHERE n = 1
     """
     par = [cliente]
     if sede and sede != 'TODOS':
-        q += " AND MAYUS(TRIM(IFNULL(i.subcliente, ''))) = ?"
+        q += " AND sede = ?"
         par.append(sede)
-    q += " GROUP BY MAYUS(TRIM(i.placa))"
+    q += " ORDER BY placa"
     with get_connection() as conn:
         filas = conn.execute(q, par).fetchall()
     return [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": "", "linea": "",
@@ -7174,6 +7234,23 @@ def _mes_a_espanol(val_str: str) -> str:
     return s
 
 
+def _ultimo_corte_por_vehiculo(df):
+    """
+    Última fecha inspeccionada de cada vehículo y, en esa fecha, el último registro de cada posición (último dato
+    no vacío de cada columna). Un solo groupby en lugar de uno por vehículo (las gráficas hacían ~32.000).
+    """
+    if df.empty or 'placa' not in df.columns:
+        return pd.DataFrame()
+    f_max = df.groupby('placa')['fecha_str'].transform('max')
+    rec = df[df['fecha_str'] == f_max]
+    if rec.empty:
+        return pd.DataFrame()
+    if 'id' in rec.columns:
+        rec = rec.sort_values('id').groupby(['placa', 'posicion'], as_index=False).last()
+        return rec[[c for c in df.columns if c in rec.columns]]
+    return rec.sort_values('placa', kind='stable').reset_index(drop=True)
+
+
 def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
     """
     Calcula los datos analíticos completos y blindados para el Tablero Ejecutivo
@@ -7480,15 +7557,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         # MUESTRA AUDITADA (Último Corte por Vehículo)
         # ----------------------------------------------------------------------
         # Agrupar por placa y tomar la fecha más reciente
-        grupos_corte = []
-        for placa_v, grp in df.groupby('placa'):
-            f_max = grp['fecha_str'].max()
-            grp_rec = grp[grp['fecha_str'] == f_max]
-            if 'id' in grp_rec.columns:
-                grp_rec = grp_rec.sort_values('id').groupby('posicion', as_index=False).last()
-            grupos_corte.append(grp_rec)
-
-        df_ultimo_corte = pd.concat(grupos_corte, ignore_index=True) if grupos_corte else pd.DataFrame()
+        df_ultimo_corte = _ultimo_corte_por_vehiculo(df)
 
         if not df_ultimo_corte.empty:
             vehiculos_cnt = df_ultimo_corte['placa'].nunique()
@@ -7676,14 +7745,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
                 sub_df = df[df['periodo_mes'] == p_key]
 
             # Tomar último estado por vehículo dentro de este periodo
-            sub_corte = []
-            for _, grp in sub_df.groupby('placa'):
-                f_max = grp['fecha_str'].max()
-                g_f = grp[grp['fecha_str'] == f_max]
-                if 'id' in g_f.columns:
-                    g_f = g_f.sort_values('id').groupby('posicion', as_index=False).last()
-                sub_corte.append(g_f)
-            df_p = pd.concat(sub_corte, ignore_index=True) if sub_corte else pd.DataFrame()
+            df_p = _ultimo_corte_por_vehiculo(sub_df)
 
             if df_p.empty:
                 continue
@@ -8609,13 +8671,18 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
         kmes = km_mes_veh.get(str(r.get('placa', '')).strip().upper())
         return ((p_min - lim) * kmm / kmes) if (kmm and kmes) else None
 
+    # Estructura y llantas por posición de cada vehículo: se arman una vez (antes una vez por cada medida)
+    vehiculos_corte = []
+    if df_corte is not None and not df_corte.empty:
+        for placa, grp in df_corte.groupby('placa'):
+            vehiculos_corte.append((lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist()),
+                                    {to_int(r['posicion']): r for _, r in grp.iterrows()}))
+
     filas = []
     for dim in dimensiones:
         dem_dir, dem_otros, dem_proyectada, sin_ritmo, retiradas = 0, 0, 0, 0, 0
-        if df_corte is not None and not df_corte.empty:
-            for placa, grp in df_corte.groupby('placa'):
-                est = lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist())
-                por_pos = {to_int(r['posicion']): r for _, r in grp.iterrows()}
+        if vehiculos_corte:
+            for est, por_pos in vehiculos_corte:
                 en_dim = lambda r: str(r.get('dimension', '')).strip().upper() == dim.upper()
                 for pos, r in por_pos.items():
                     if not en_dim(r):
@@ -10681,6 +10748,12 @@ from modulo_bodegas_taller import (
 # =============================================================================
 
 def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
+    """Paquete de pre-carga para el patio offline, armado con una sola conexión (antes una por consulta)."""
+    with conexion_compartida():
+        return _armar_paquete_offline_patio(cliente, usuario)
+
+
+def _armar_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
     """
     Retorna en un único JSON compacto todo el paquete de pre-carga para patio offline:
     - tipologias completas (con esquema y posiciones)

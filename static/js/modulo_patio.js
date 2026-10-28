@@ -1721,11 +1721,18 @@
     // ==========================================
     // VISOR MODAL DE GALERÍA DE FOTOS (BASE DE DATOS & FORMULARIO)
     // ==========================================
-    function abrirGaleriaFotosPorId(inspeccionId) {
+    async function abrirGaleriaFotosPorId(inspeccionId) {
       const reg = cacheTodasInspecciones.find(x => x.id === inspeccionId);
       if (!reg) {
         mostrarToast('No se encontró la inspección en memoria', true);
         return;
+      }
+      // La lista de la base llega sin fotos: se piden al abrir la galería y se guardan para la próxima vez
+      if (!obtenerListaFotos(reg.foto_novedad).length && Number(reg.fotos_cantidad) > 0) {
+        try {
+          const res = await fetch(`/api/inspecciones/${inspeccionId}`);
+          if (res.ok) reg.foto_novedad = (await res.json()).foto_novedad || '';
+        } catch (e) {}
       }
       const fotos = obtenerListaFotos(reg.foto_novedad);
       if (fotos.length === 0) {

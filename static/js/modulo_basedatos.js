@@ -277,12 +277,13 @@
           colorDesgaste = 'text-amber-600 font-bold';
         }
 
-        const fotos = obtenerListaFotos(r.foto_novedad);
-        const tieneFotos = fotos.length > 0;
+        // La lista llega sin fotos, solo con cuántas tiene (fotos_cantidad)
+        const nFotos = r.fotos_cantidad != null ? Number(r.fotos_cantidad) : obtenerListaFotos(r.foto_novedad).length;
+        const tieneFotos = nFotos > 0;
         const htmlBotonFotos = tieneFotos ? `
-          <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${fotos.length} foto(s) de evidencia de forma ordenada">
+          <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${nFotos} foto(s) de evidencia de forma ordenada">
             <i class="fa-solid fa-camera text-blue-600 text-[11px]"></i>
-            <span>Ver foto${fotos.length > 1 ? 's' : ''} (${fotos.length})</span>
+            <span>Ver foto${nFotos > 1 ? 's' : ''} (${nFotos})</span>
           </button>
         ` : `<span class="text-slate-300 font-medium text-xs">Sin fotos</span>`;
 

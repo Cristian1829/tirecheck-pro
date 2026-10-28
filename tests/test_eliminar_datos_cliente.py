@@ -45,6 +45,30 @@ def test_borra_solo_el_cliente_y_conserva_su_licencia(test_db):
     assert database.obtener_licencia_cliente(MALO) == "PRO"
 
 
+def test_borra_las_llantas_que_creo_el_cargue(test_db):
+    """La sincronización crea llantas y kardex desde las inspecciones: borrar el cliente no deja llantas fantasma."""
+    _escenario()
+    with database.get_connection() as conn:
+        database.sincronizar_maestro_desde_inspecciones(conn)
+        conn.execute("INSERT INTO kardex_movimientos_llanta (fecha_movimiento, cliente, numero_interno, bodega_origen, bodega_destino, tipo_movimiento) "
+                     "VALUES ('2026-10-08', ?, 'SN-M1', 'BODEGA_1_NUEVAS', 'MONTADA_OPERACION', 'MONTAJE')", (MALO,))
+        # Historia sin dueño: se borra solo si el número interno es únicamente de este cliente
+        conn.execute("INSERT INTO llantas_ciclos (numero_interno, numero_ciclo) VALUES ('SN-M1', 1)")
+        conn.execute("INSERT INTO llantas_ciclos (numero_interno, numero_ciclo) VALUES ('SN-O1', 1)")
+    prev = {d["tabla"]: d["registros"] for d in database.eliminar_datos_cargados_cliente(MALO)["detalle"]}
+    assert prev["llantas_maestro"] == 3 and prev["kardex_movimientos_llanta"] >= 1 and prev["llantas_ciclos"] == 1
+
+    database.eliminar_datos_cargados_cliente(MALO, ejecutar=True)
+    with database.get_connection() as conn:
+        q = lambda sql: conn.execute(sql).fetchone()[0]
+        assert q(f"SELECT COUNT(*) FROM llantas_maestro WHERE cliente = '{MALO}'") == 0
+        assert q(f"SELECT COUNT(*) FROM kardex_movimientos_llanta WHERE cliente = '{MALO}'") == 0
+        assert q("SELECT COUNT(*) FROM llantas_ciclos WHERE numero_interno = 'SN-M1'") == 0
+        # Lo del otro cliente sigue intacto
+        assert q(f"SELECT COUNT(*) FROM llantas_maestro WHERE cliente = '{OTRO}'") == 1
+        assert q("SELECT COUNT(*) FROM llantas_ciclos WHERE numero_interno = 'SN-O1'") == 1
+
+
 def test_endpoint_exige_admin_confirmacion_y_hace_respaldo(test_db, auth_client, inspector_token):
     _escenario()
     prev = auth_client.get(f"/api/admin/datos-cliente?cliente={MALO}")

@@ -8,6 +8,7 @@ PDF y bodegas deben preguntar aquí en lugar de suponer por el número de posici
 El esquema es la lista JSON guardada en catalogo_tipologias.esquema_json:
     [{"eje": 1, "tipo": "direccional", "posiciones": [{"pos": 1, "lado": "izq", "rol": "direccional"}, ...]}, ...]
 """
+import functools
 import re
 import unicodedata
 
@@ -19,9 +20,18 @@ def _sin_tildes(texto):
     return ''.join(c for c in unicodedata.normalize('NFD', str(texto or '')) if unicodedata.category(c) != 'Mn')
 
 
+@functools.lru_cache(maxsize=4096)
+def _clave_tipologia(nombre):
+    return re.sub(r'[^a-z0-9]', '', _sin_tildes(nombre).lower())
+
+
 def clave_tipologia(nombre):
     """'Camión Sencillo (4x2)', 'CAMION SENCILLO 4X2' -> 'camionsencillo4x2' (para emparejar con el catálogo)."""
-    return re.sub(r'[^a-z0-9]', '', _sin_tildes(nombre).lower())
+    # Se llama miles de veces por consulta con pocas tipologías distintas: se recuerda el resultado
+    try:
+        return _clave_tipologia(nombre)
+    except TypeError:  # valor no hashable
+        return re.sub(r'[^a-z0-9]', '', _sin_tildes(nombre).lower())
 
 
 def normalizar_tipo_eje(tipo):

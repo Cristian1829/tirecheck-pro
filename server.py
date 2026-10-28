@@ -608,7 +608,8 @@ def sanitizar_nativos(obj):
 @app.get("/api/inspecciones")
 def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-    df = database.obtener_todas_inspecciones(usuario=filtro_u)
+    # La lista va sin fotos (solo su cantidad): la galería y la edición las piden por inspección
+    df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
     return sanitizar_nativos(df.to_dict(orient="records"))
 
 
@@ -988,6 +989,7 @@ def api_diagnostico_graficos(
 
 
 def _estilizar_hoja_excel(ws, color_header="0F172A"):
+    from copy import copy
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
 
@@ -1010,55 +1012,78 @@ def _estilizar_hoja_excel(ws, color_header="0F172A"):
     alerta_ambar_fill = PatternFill(start_color='FEF3C7', end_color='FEF3C7', fill_type='solid')
     alerta_ambar_font = Font(name='Segoe UI', size=9, bold=True, color='92400E')
 
+    centrado = Alignment(horizontal='center', vertical='center')
+
     ws.freeze_panes = 'A2'
-    if ws.max_row >= 1 and ws.max_column >= 1:
+    # max_row / max_column recorren todas las celdas cada vez que se leen: se calculan una sola vez
+    # (dentro del ciclo hacían que exportar el diagnóstico tardara ~11 s con 1.700 inspecciones)
+    n_filas, n_cols = ws.max_row, ws.max_column
+    if n_filas >= 1 and n_cols >= 1:
         ws.auto_filter.ref = ws.dimensions
         ws.row_dimensions[1].height = 28
 
-        for col_idx in range(1, ws.max_column + 1):
-            cell = ws.cell(row=1, column=col_idx)
+        anchos = [0] * n_cols
+
+        def medir(col_idx, val):
+            v = str(val or '')
+            if '\n' in v:
+                v = max(v.split('\n'), key=len)
+            anchos[col_idx] = max(anchos[col_idx], len(v))
+
+        encabezados = []
+        for col_idx, cell in enumerate(next(ws.iter_rows(min_row=1, max_row=1, max_col=n_cols))):
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = header_align
             cell.border = thin_border
+            encabezados.append(str(cell.value or '').upper())
+            medir(col_idx, cell.value)
 
-        for row_idx in range(2, ws.max_row + 1):
+        # Asignar font/fill/border celda por celda obliga a openpyxl a comparar estilos miles de veces: la primera
+        # celda de cada tipo se estiliza normal y las demás copian su registro de estilo (conservando su formato numérico)
+        estilos = {}
+        for row_idx, fila in enumerate(ws.iter_rows(min_row=2, max_row=n_filas, max_col=n_cols), start=2):
             ws.row_dimensions[row_idx].height = 20
             is_even = (row_idx % 2 == 0)
-            for col_idx in range(1, ws.max_column + 1):
-                cell = ws.cell(row=row_idx, column=col_idx)
+            for col_idx, cell in enumerate(fila):
                 val = cell.value
-                cell.border = thin_border
-                cell.font = body_font
-
-                if is_even:
-                    cell.fill = zebra_fill
+                medir(col_idx, val)
 
                 val_str = str(val or '').strip().upper()
+                tipo = 'normal'
                 if val_str == 'SÍ':
-                    col_name = str(ws.cell(row=1, column=col_idx).value or '').upper()
+                    col_name = encabezados[col_idx]
                     if 'CAMBIO' in col_name:
-                        cell.fill = alerta_roja_fill
-                        cell.font = alerta_roja_font
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        tipo = 'roja'
                     elif any(k in col_name for k in ['ALINEACION', 'ALINEACIÓN', 'DUAL']):
-                        cell.fill = alerta_ambar_fill
-                        cell.font = alerta_ambar_font
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        tipo = 'ambar'
                     else:
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        tipo = 'centrado'
                 elif val_str in ('NO', 'OK'):
-                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                    tipo = 'centrado'
+                clave = (tipo, is_even and tipo in ('normal', 'centrado'))
 
-        for col in ws.columns:
-            col_letter = get_column_letter(col[0].column)
-            max_len = 0
-            for cell in col:
-                v = str(cell.value or '')
-                if '\n' in v:
-                    v = max(v.split('\n'), key=len)
-                max_len = max(max_len, len(v))
-            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 11), 50)
+                if clave in estilos:
+                    st = copy(estilos[clave])
+                    st.numFmtId = cell._style.numFmtId if cell._style is not None else 0
+                    cell._style = st
+                    continue
+                cell.border = thin_border
+                cell.font = body_font
+                if is_even:
+                    cell.fill = zebra_fill
+                if tipo == 'roja':
+                    cell.fill = alerta_roja_fill
+                    cell.font = alerta_roja_font
+                elif tipo == 'ambar':
+                    cell.fill = alerta_ambar_fill
+                    cell.font = alerta_ambar_font
+                if tipo != 'normal':
+                    cell.alignment = centrado
+                estilos[clave] = copy(cell._style)
+
+        for col_idx, max_len in enumerate(anchos):
+            ws.column_dimensions[get_column_letter(col_idx + 1)].width = min(max(max_len + 3, 11), 50)
 
 
 @app.get("/api/diagnostico/exportar-excel", dependencies=[Depends(requerir_vista("diagnostico"))])
@@ -2392,7 +2417,7 @@ def api_resumen_datos_cliente(cliente: str = "", admin: dict = Depends(requerir_
 
 @app.post("/api/admin/datos-cliente/eliminar")
 def api_eliminar_datos_cliente(item: EliminarDatosClienteItem, admin: dict = Depends(requerir_admin)):
-    """Deshace un cargue por error: borra inspecciones, vehículos, parque y marcas del cliente, con respaldo previo."""
+    """Deshace un cargue por error: borra inspecciones, vehículos, parque, marcas, llantas y kardex del cliente, con respaldo previo."""
     import shutil
     cliente = str(item.cliente or '').strip()
     if not cliente or cliente.upper() != str(item.confirmacion or '').strip().upper():
