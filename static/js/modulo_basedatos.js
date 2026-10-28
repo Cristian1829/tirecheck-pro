@@ -885,3 +885,103 @@
       }
     }
 
+    // ==========================================
+    // ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador)
+    // ==========================================
+    let resumenEliminarCliente = null;
+
+    async function abrirModalEliminarDatosCliente() {
+      const modal = document.getElementById('modalEliminarDatosCliente');
+      const sel = document.getElementById('selEliminarDatosCliente');
+      if (!modal || !sel) return;
+      mostrarVistaEliminarDatosCliente(false);
+      resumenEliminarCliente = null;
+      document.getElementById('txtConfirmarEliminarDatosCliente').value = '';
+      document.getElementById('resumenEliminarDatosCliente').classList.add('hidden');
+      validarConfirmacionEliminarDatosCliente();
+      try {
+        const r = await fetch('/api/clientes-directorio');
+        const lista = r.ok ? await r.json() : [];
+        const nombres = [...new Set(lista.map(c => c.cliente).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Seleccione un cliente…</option>' +
+          nombres.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      } catch (e) {}
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Formulario de borrado o, tras borrar, la confirmación de éxito (solo con el botón Cerrar)
+    function mostrarVistaEliminarDatosCliente(exito) {
+      document.getElementById('formEliminarDatosCliente')?.classList.toggle('hidden', exito);
+      document.getElementById('exitoEliminarDatosCliente')?.classList.toggle('hidden', !exito);
+      document.getElementById('btnEjecutarEliminarDatosCliente')?.classList.toggle('hidden', exito);
+      const cerrar = document.getElementById('btnCerrarEliminarDatosCliente');
+      if (cerrar) cerrar.textContent = exito ? 'Cerrar' : 'Cancelar';
+    }
+
+    function cerrarModalEliminarDatosCliente() {
+      const modal = document.getElementById('modalEliminarDatosCliente');
+      if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    }
+
+    async function previsualizarEliminarDatosCliente() {
+      const cliente = document.getElementById('selEliminarDatosCliente').value;
+      const caja = document.getElementById('resumenEliminarDatosCliente');
+      resumenEliminarCliente = null;
+      document.getElementById('txtConfirmarEliminarDatosCliente').value = '';
+      validarConfirmacionEliminarDatosCliente();
+      if (!cliente) { caja.classList.add('hidden'); return; }
+      caja.classList.remove('hidden');
+      caja.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Contando registros…';
+      try {
+        const res = await fetch(`/api/admin/datos-cliente?cliente=${encodeURIComponent(cliente)}`);
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'Error');
+        resumenEliminarCliente = d;
+        caja.innerHTML = `<b>Se eliminarán ${fmtDec(d.total, 0)} registros de ${escapeHtml(d.cliente)}:</b>` +
+          `<ul class="list-disc ml-5 mt-1">${d.detalle.map(x => `<li>${escapeHtml(x.nombre)}: ${fmtDec(x.registros, 0)}</li>`).join('')}</ul>`;
+      } catch (e) {
+        caja.innerHTML = `No se pudo consultar el cliente: ${escapeHtml(e.message)}`;
+      }
+      validarConfirmacionEliminarDatosCliente();
+    }
+
+    function validarConfirmacionEliminarDatosCliente() {
+      const cliente = document.getElementById('selEliminarDatosCliente')?.value || '';
+      const escrito = (document.getElementById('txtConfirmarEliminarDatosCliente')?.value || '').trim().toUpperCase();
+      const btn = document.getElementById('btnEjecutarEliminarDatosCliente');
+      if (btn) btn.disabled = !(cliente && resumenEliminarCliente && resumenEliminarCliente.total > 0 && escrito === cliente.trim().toUpperCase());
+    }
+
+    async function ejecutarEliminarDatosCliente() {
+      const cliente = document.getElementById('selEliminarDatosCliente').value;
+      const confirmacion = document.getElementById('txtConfirmarEliminarDatosCliente').value;
+      const btn = document.getElementById('btnEjecutarEliminarDatosCliente');
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Eliminando…';
+      try {
+        const res = await fetch('/api/admin/datos-cliente/eliminar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cliente, confirmacion })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo eliminar');
+        // Confirmación en la misma ventana: qué se borró y dónde quedó la copia de seguridad
+        document.getElementById('exitoEliminarTexto').innerHTML =
+          `Se eliminaron <b>${fmtDec(d.total, 0)} registros</b> del cliente <b>${escapeHtml(d.cliente)}</b>.`;
+        document.getElementById('exitoEliminarDetalle').innerHTML = (d.detalle || [])
+          .map(x => `<li><i class="fa-solid fa-check text-emerald-500 mr-1.5"></i>${escapeHtml(x.nombre)}: <b>${fmtDec(x.registros, 0)}</b></li>`).join('');
+        document.getElementById('exitoEliminarRespaldo').innerHTML =
+          `<i class="fa-solid fa-shield-halved mr-1"></i>Copia de seguridad guardada: <b>${escapeHtml(d.respaldo || '')}</b>`;
+        mostrarVistaEliminarDatosCliente(true);
+        mostrarToast(`Datos de ${d.cliente} eliminados`);
+        cargarBaseInspecciones();
+      } catch (e) {
+        alert('❌ ' + e.message);
+      } finally {
+        btn.innerHTML = original;
+        validarConfirmacionEliminarDatosCliente();
+      }
+    }

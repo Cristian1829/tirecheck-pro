@@ -2348,6 +2348,49 @@ def api_admin_db_info(admin: dict = Depends(requerir_admin)):
         "total_usuarios": total_usr
     }
 
+class EliminarDatosClienteItem(BaseModel):
+    cliente: str
+    confirmacion: str  # el nombre del cliente escrito de nuevo
+
+
+@app.get("/api/admin/datos-cliente")
+def api_resumen_datos_cliente(cliente: str = "", admin: dict = Depends(requerir_admin)):
+    """Vista previa: cuántos registros del cargue tiene el cliente (no borra nada)."""
+    try:
+        return sanitizar_nativos(database.eliminar_datos_cargados_cliente(cliente, ejecutar=False))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/admin/datos-cliente/eliminar")
+def api_eliminar_datos_cliente(item: EliminarDatosClienteItem, admin: dict = Depends(requerir_admin)):
+    """Deshace un cargue por error: borra inspecciones, vehículos, parque y marcas del cliente, con respaldo previo."""
+    import shutil
+    cliente = str(item.cliente or '').strip()
+    if not cliente or cliente.upper() != str(item.confirmacion or '').strip().upper():
+        raise HTTPException(status_code=400, detail="Escriba el nombre exacto del cliente para confirmar.")
+    try:
+        previo = database.eliminar_datos_cargados_cliente(cliente, ejecutar=False)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not previo["total"]:
+        raise HTTPException(status_code=404, detail=f"El cliente {cliente.upper()} no tiene datos para eliminar.")
+    # Copia de la base completa antes de borrar, igual que al restaurar la semilla
+    backups_dir = os.path.join(os.path.dirname(os.path.abspath(database.DB_PATH)), "backups")
+    os.makedirs(backups_dir, exist_ok=True)
+    nombre = re.sub(r'[^A-Za-z0-9]+', '_', cliente.upper()).strip('_')
+    backup_path = os.path.join(backups_dir, f"antes_de_borrar_{nombre}_{ahora_bogota().strftime('%Y%m%d_%H%M%S')}.db")
+    try:
+        shutil.copy2(database.DB_PATH, backup_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"No se pudo hacer la copia de seguridad; no se borró nada: {e}")
+    res = database.eliminar_datos_cargados_cliente(cliente, ejecutar=True)
+    print(f"[ADMIN] {admin.get('username')} borró los datos de cargue de {res['cliente']}: {res['detalle']} (respaldo {backup_path})")
+    res["respaldo"] = os.path.basename(backup_path)
+    res["message"] = f"Se eliminaron {res['total']} registros de {res['cliente']}. Copia de seguridad: {res['respaldo']}"
+    return sanitizar_nativos(res)
+
+
 @app.post("/api/admin/restaurar-seed")
 def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
     import shutil

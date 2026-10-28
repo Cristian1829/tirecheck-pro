@@ -3099,6 +3099,34 @@ def vaciar_inspecciones():
         conn.commit()
 
 
+# Lo que deja un cargue de inspecciones por Excel (cargar_excel_a_bd) para un cliente. La licencia, los límites,
+# los precios, las bodegas y el kardex del cliente no se tocan.
+_TABLAS_CARGUE_CLIENTE = (
+    ('inspecciones', 'Inspecciones'),
+    ('catalogo_vehiculos', 'Vehículos del catálogo'),
+    ('padron_vehiculos_cliente', 'Vehículos del parque'),
+    ('configuracion_marcas_cliente', 'Marcas del cliente'),
+)
+
+
+def eliminar_datos_cargados_cliente(cliente: str, ejecutar: bool = False) -> dict:
+    """Cuenta (y con ejecutar=True borra) los datos de cargue de un cliente: deshace un Excel subido por error."""
+    cli = str(cliente or '').strip()
+    if not cli or cli.upper() in ('TODOS', 'TODAS'):
+        raise ValueError("Indique un cliente.")
+    with get_connection() as conn:
+        conteo = {tabla: conn.execute(f"SELECT COUNT(*) FROM {tabla} WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))",
+                                      (cli,)).fetchone()[0]
+                  for tabla, _ in _TABLAS_CARGUE_CLIENTE}
+        if ejecutar:
+            for tabla, _ in _TABLAS_CARGUE_CLIENTE:
+                conn.execute(f"DELETE FROM {tabla} WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))", (cli,))
+            conn.commit()
+    return {"cliente": cli.upper(), "ejecutado": ejecutar,
+            "detalle": [{"tabla": t, "nombre": n, "registros": conteo[t]} for t, n in _TABLAS_CARGUE_CLIENTE],
+            "total": sum(conteo.values())}
+
+
 def actualizar_inspecciones_en_lote(ids, cambios):
     """
     Actualiza múltiples registros de inspección en lote (operación reservada para el Administrador).

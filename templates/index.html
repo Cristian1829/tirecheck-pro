@@ -1324,6 +1324,10 @@
             <i class="fa-solid fa-file-excel"></i>
             <span>Importar Excel</span>
           </button>
+          <button type="button" id="btnEliminarDatosClienteBD" onclick="abrirModalEliminarDatosCliente()" class="hidden px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 flex items-center space-x-1.5" title="Deshacer un cargue por error (Solo Administrador)">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Eliminar datos de un cliente</span>
+          </button>
           <button type="button" id="btnEdicionMultipleBD" onclick="abrirModalEdicionMultipleBD()" class="hidden px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all cursor-pointer" title="Modificar múltiples registros seleccionados (Solo Administrador)">
             <i class="fa-solid fa-layer-group"></i>
             <span>Editar Seleccionados (<span id="lblCantSeleccionadosBD">0</span>)</span>
@@ -6655,5 +6659,53 @@
   <script src="/static/js/modulo_patio.js"></script>
   <script src="/static/js/modulo_bodegas.js"></script>
   <script src="/static/js/app_init.js"></script>
+    <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
+    <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-rose-700 to-rose-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <i class="fa-solid fa-trash-can text-rose-200 text-lg"></i>
+            <div>
+              <h3 class="text-sm font-black">Eliminar datos cargados de un cliente</h3>
+              <p class="text-[11px] text-rose-100">Para deshacer un archivo de inspecciones subido por error</p>
+            </div>
+          </div>
+          <button type="button" onclick="cerrarModalEliminarDatosCliente()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <!-- Confirmación de borrado exitoso (reemplaza el formulario) -->
+        <div id="exitoEliminarDatosCliente" class="hidden p-5 sm:p-6 text-xs text-center space-y-3" role="status" aria-live="polite">
+          <span class="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+            <i class="fa-solid fa-circle-check"></i>
+          </span>
+          <h4 id="exitoEliminarTitulo" class="text-base font-black text-slate-900">Borrado exitoso</h4>
+          <p id="exitoEliminarTexto" class="text-slate-600"></p>
+          <ul id="exitoEliminarDetalle" class="inline-block text-left text-slate-700 space-y-0.5"></ul>
+          <p id="exitoEliminarRespaldo" class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 break-all"></p>
+        </div>
+        <div id="formEliminarDatosCliente" class="p-4 sm:p-5 space-y-3 text-xs">
+          <p class="text-slate-600">Borra las <b>inspecciones</b>, los <b>vehículos del catálogo</b>, el <b>parque</b> y las <b>marcas</b> del cliente. Se conservan su licencia, límites de retiro, precios, bodegas y kardex. Antes de borrar se guarda una copia de seguridad de toda la base.</p>
+          <label class="block">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cliente</span>
+            <select id="selEliminarDatosCliente" onchange="previsualizarEliminarDatosCliente()" class="mt-1 w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-white">
+              <option value="">Seleccione un cliente…</option>
+            </select>
+          </label>
+          <div id="resumenEliminarDatosCliente" class="hidden rounded-2xl border border-rose-200 bg-rose-50 p-3 text-rose-900"></div>
+          <label class="block">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Para confirmar, escriba el nombre del cliente</span>
+            <input type="text" id="txtConfirmarEliminarDatosCliente" oninput="validarConfirmacionEliminarDatosCliente()" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase">
+          </label>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" id="btnCerrarEliminarDatosCliente" onclick="cerrarModalEliminarDatosCliente()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl">Cancelar</button>
+          <button type="button" id="btnEjecutarEliminarDatosCliente" onclick="ejecutarEliminarDatosCliente()" disabled class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1.5">
+            <i class="fa-solid fa-trash-can"></i><span>Eliminar definitivamente</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
 </body>
 </html>

@@ -975,6 +975,8 @@
       // REGLA: Solo el Administrador puede realizar importaciones o ediciones de múltiples registros en Base de Inspecciones
       const btnImportarExcelBD = document.getElementById('btnImportarExcelBD');
       if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', !esAdmin);
+      const btnEliminarDatosClienteBD = document.getElementById('btnEliminarDatosClienteBD');
+      if (btnEliminarDatosClienteBD) btnEliminarDatosClienteBD.classList.toggle('hidden', !esAdmin);
       const thCheckTodos = document.getElementById('thCheckTodosBD');
       if (thCheckTodos) thCheckTodos.classList.toggle('hidden', !esAdmin);
       const btnEdicionMultipleBD = document.getElementById('btnEdicionMultipleBD');
