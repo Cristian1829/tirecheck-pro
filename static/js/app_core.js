@@ -964,6 +964,9 @@
       // REGLA: solo el superadmin puede ver y crear nuevos usuarios
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
+      // REGLA: solo el administrador carga el parque automotor de los clientes
+      const subtabParque = document.getElementById('subtab-btn-parque');
+      if (subtabParque) subtabParque.classList.toggle('hidden', !esAdmin);
 
       // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear inspecciones.
       const btnNuevaInspBD = document.getElementById('btnNuevaInspBD');

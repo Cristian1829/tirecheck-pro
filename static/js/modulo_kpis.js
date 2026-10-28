@@ -537,23 +537,48 @@
       if (elBar) elBar.style.width = `${pct}%`;
       const numPend = (d.placas_pendientes || []).length;
       if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${numPend})`;
+      if (d.parque_cargado && elPct) elPct.title = 'Contra el parque automotor cargado por el administrador';
+      pendientesKpi01 = d.placas_pendientes || [];
+      const btnExp = document.getElementById('btnExportarPendientesKpi01');
+      if (btnExp) btnExp.classList.toggle('hidden', !pendientesKpi01.length);
 
-      // Llenar tabla del modal
+      // Llenar tabla del modal (con parque cargado salen todos los que faltan)
       const tbody = document.getElementById('tbodyModalPlacasPendientes');
       if (tbody) {
         if (!d.placas_pendientes || d.placas_pendientes.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">¡Excelente! El 100% de los vehículos del padrón han sido inspeccionados.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">¡Excelente! El 100% de los vehículos del padrón han sido inspeccionados.</td></tr>';
         } else {
-          tbody.innerHTML = (d.placas_pendientes || []).slice(0, 25).map(p => `
+          const lista = d.parque_cargado ? d.placas_pendientes : d.placas_pendientes.slice(0, 25);
+          tbody.innerHTML = lista.map(p => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-black text-slate-900 font-mono">${p.placa || '-'}</td>
-              <td class="p-2.5 text-slate-600">${p.cliente || '-'} ${p.subcliente ? `/ ${p.subcliente}` : ''}</td>
-              <td class="p-2.5 text-slate-600">${p.tipologia || '-'}</td>
-              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${p.estado_padron || 'Activo'}</span></td>
+              <td class="p-2.5 font-black text-slate-900 font-mono whitespace-nowrap">${escapeHtml(p.placa || '-')}</td>
+              <td class="p-2.5 text-slate-600">${escapeHtml(p.subcliente || '-')}</td>
+              <td class="p-2.5 text-slate-600">${escapeHtml(p.tipologia || '-')}</td>
+              <td class="p-2.5 text-slate-600">${escapeHtml([p.fabricante, p.linea].filter(Boolean).join(' ') || '-')}</td>
+              <td class="p-2.5 text-center whitespace-nowrap">${p.ultima_inspeccion ? fmtFecha(p.ultima_inspeccion) : (d.parque_cargado ? 'Nunca' : '-')}</td>
             </tr>
           `).join('');
         }
       }
+    }
+
+    let pendientesKpi01 = [];
+
+    // Faltantes del KPI 01 a Excel (CSV con separador ';' para Excel en español)
+    function exportarPendientesKpi01() {
+      if (!pendientesKpi01.length) return;
+      const celda = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const filas = [['Placa / N° interno', 'Sede', 'Tipología', 'Fabricante', 'Línea', 'Última inspección']]
+        .concat(pendientesKpi01.map(p => [p.placa, p.subcliente, p.tipologia, p.fabricante, p.linea, p.ultima_inspeccion || 'Nunca']));
+      const csv = '\ufeff' + filas.map(f => f.map(celda).join(';')).join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vehiculos_pendientes_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     // KPI 02: Volumen Auditado Mes a Mes (Mixto Doble Eje)
@@ -1587,7 +1612,7 @@
       const pct = v => (v === null || v === undefined) ? '-' : `${formatCO_Decimal(v, 1)}%`;
       const tb = document.getElementById('tbodyTendencias');
       if (tb) tb.innerHTML = meses.slice().reverse().map(m => `<tr>
-          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${m.vehiculos_inspeccionados}</td>
+          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${m.vehiculos_inspeccionados}${m.pct_cumplimiento_parque == null ? '' : `<span class="block text-[10px] text-indigo-600 font-bold whitespace-nowrap">${pct(m.pct_cumplimiento_parque)} del parque</span>`}</td>
           <td class="p-2 text-right">${pct(m.pct_presion_correcta)}</td><td class="p-2 text-right">${pct(m.pct_en_retiro)}</td>
           <td class="p-2 text-right">${m.prof_minima_promedio == null ? '-' : formatCO_Decimal(m.prof_minima_promedio, 1) + ' mm'}</td>
           <td class="p-2 text-right">${pct(m.pct_alerta_alineacion)}</td>
@@ -1597,12 +1622,16 @@
       const ctx = document.getElementById('canvasTendencias');
       if (!ctx || !meses.length) return;
       const serie = (k, label, color) => ({ label, data: meses.map(m => m[k]), borderColor: color, backgroundColor: color, tension: 0.25, spanGaps: true });
+      const series = [
+        serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
+        serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
+        serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')];
+      if (meses.some(m => m.pct_cumplimiento_parque != null)) {
+        series.unshift({ ...serie('pct_cumplimiento_parque', 'Parque inspeccionado (%)', '#4f46e5'), borderWidth: 3 });
+      }
       instanciasChartsSuite['tendencias'] = new Chart(ctx, {
         type: 'line',
-        data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: [
-          serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
-          serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
-          serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')] },
+        data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: series },
         options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } },
                    scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } }
       });

@@ -2854,19 +2854,23 @@
             <table class="w-full text-xs text-left">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
                 <tr>
-                  <th class="p-2.5">Placa</th>
-                  <th class="p-2.5">Cliente / Sede</th>
+                  <th class="p-2.5 whitespace-nowrap">Placa / N° interno</th>
+                  <th class="p-2.5">Sede</th>
                   <th class="p-2.5">Tipología</th>
-                  <th class="p-2.5 text-center">Estado Padrón</th>
+                  <th class="p-2.5">Fabricante / Línea</th>
+                  <th class="p-2.5 text-center whitespace-nowrap">Última inspección</th>
                 </tr>
               </thead>
               <tbody id="tbodyModalPlacasPendientes" class="divide-y divide-slate-100 font-medium">
-                <tr><td colspan="4" class="p-4 text-center text-slate-400">Sin vehículos pendientes</td></tr>
+                <tr><td colspan="5" class="p-4 text-center text-slate-400">Sin vehículos pendientes</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" id="btnExportarPendientesKpi01" onclick="exportarPendientesKpi01()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all flex items-center space-x-1.5">
+            <i class="fa-solid fa-file-excel"></i><span>Exportar faltantes</span>
+          </button>
           <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">
             Cerrar
           </button>
@@ -3373,6 +3377,7 @@
         <button type="button" onclick="mostrarSubtabCat('clientes')" id="subtab-btn-clientes" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Límites de Retiro</button>
         <button type="button" onclick="mostrarSubtabCat('marcas_cliente')" id="subtab-btn-marcas_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Marcas por Cliente</button>
         <button type="button" onclick="mostrarSubtabCat('precios_cliente')" id="subtab-btn-precios_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Precios por Cliente</button>
+        <button type="button" onclick="mostrarSubtabCat('parque')" id="subtab-btn-parque" class="hidden px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Parque Automotor</button>
         <button type="button" onclick="mostrarSubtabCat('usuarios')" id="subtab-btn-usuarios" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Usuarios & Roles</button>
       </div>
 
@@ -3985,6 +3990,97 @@
           <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Marca</th><th class="p-2 text-center">Máx. reencauches</th><th class="p-2 text-center">Acciones</th></tr></thead>
             <tbody id="tbodyMaximosReencauche" class="divide-y divide-slate-100 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Subtab: Parque Automotor por cliente (solo administrador) -->
+      <div id="cat-seccion-parque" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <span class="text-sm font-black text-slate-900 flex items-center space-x-2">
+              <i class="fa-solid fa-truck-moving text-blue-600"></i>
+              <span>Parque Automotor por Cliente</span>
+            </span>
+            <p class="text-[11px] text-slate-500">Cargue todos los vehículos del cliente para medir mes a mes qué porcentaje se inspeccionó y cuáles faltan (KPI 01). Si un cliente no tiene parque cargado, el KPI sigue funcionando como antes.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="descargarPlantillaParque()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-download text-slate-500"></i>
+              <span>Plantilla</span>
+            </button>
+            <button type="button" id="btnExportarParque" onclick="exportarParqueExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50" title="Exportar el parque del cliente a Excel">
+              <i class="fa-solid fa-file-export text-slate-500"></i>
+              <span>Exportar</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/90 border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <label class="block">
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cliente</span>
+              <select id="selParqueCliente" onchange="cargarParqueCat()" class="mt-1 w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-white">
+                <option value="">Seleccione un cliente…</option>
+              </select>
+            </label>
+            <label class="block md:col-span-2">
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Archivo del parque (.xlsx)</span>
+              <div class="mt-1 flex flex-col sm:flex-row gap-2">
+                <input type="file" id="fileParqueExcel" accept=".xlsx,.xls" class="flex-1 min-w-0 text-xs file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-slate-200 file:text-slate-700 file:font-bold">
+                <button type="button" id="btnSubirParque" onclick="subirParqueExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap">
+                  <i class="fa-solid fa-file-excel text-emerald-200"></i>
+                  <span>Subir parque</span>
+                </button>
+              </div>
+            </label>
+          </div>
+          <p class="text-[11px] text-slate-500">Columnas: <b>Placa / N° interno</b> y <b>Tipología</b> (obligatorias), <b>Km actual</b>, <b>Fabricante</b> y <b>Línea</b>; opcional <b>Sede</b>. La placa o número interno debe ser el mismo que se digita al inspeccionar. <b>El archivo reemplaza el parque del cliente:</b> los vehículos que no vengan quedan inactivos.</p>
+          <div id="resultadoParque" class="hidden text-xs rounded-2xl border p-3"></div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3">
+            <span class="text-[10px] text-blue-700 font-bold uppercase tracking-wider block">Vehículos activos</span>
+            <span id="kpiParqueActivos" class="text-sm font-black text-blue-950">—</span>
+          </div>
+          <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3">
+            <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Inspeccionados este mes</span>
+            <span id="kpiParqueMes" class="text-sm font-black text-emerald-950">—</span>
+          </div>
+          <div class="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3">
+            <span class="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Faltan este mes</span>
+            <span id="kpiParqueFaltan" class="text-sm font-black text-amber-950">—</span>
+          </div>
+          <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3">
+            <span class="text-[10px] text-slate-600 font-bold uppercase tracking-wider block">Origen del parque</span>
+            <span id="kpiParqueOrigen" class="text-sm font-black text-slate-900">—</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+          <input type="search" id="buscarParque" oninput="renderizarParqueCat()" placeholder="Buscar placa, tipología, fabricante…" class="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white">
+          <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 whitespace-nowrap">
+            <input type="checkbox" id="chkParqueSoloFaltantes" onchange="renderizarParqueCat()"> Solo los que faltan este mes
+          </label>
+        </div>
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table class="w-full text-xs">
+            <thead class="bg-slate-900 text-white">
+              <tr>
+                <th class="p-2.5 text-left whitespace-nowrap">Placa / N° interno</th>
+                <th class="p-2.5 text-left">Sede</th>
+                <th class="p-2.5 text-left">Tipología</th>
+                <th class="p-2.5 text-left">Fabricante</th>
+                <th class="p-2.5 text-left">Línea</th>
+                <th class="p-2.5 text-right whitespace-nowrap">Km actual</th>
+                <th class="p-2.5 text-center whitespace-nowrap">Última inspección</th>
+                <th class="p-2.5 text-center">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyParqueCat">
+              <tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>
+            </tbody>
           </table>
         </div>
       </div>

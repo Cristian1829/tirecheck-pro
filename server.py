@@ -1,5 +1,6 @@
 import io
 import math
+import re
 import os
 import socket
 import tempfile
@@ -1966,6 +1967,84 @@ async def api_importar_precios_cliente_excel(file: UploadFile = File(...), usuar
 
 
 
+# =========================================================================
+# PARQUE AUTOMOTOR POR CLIENTE (solo administrador): base del % de inspección
+# =========================================================================
+def _excel_respuesta(df, hoja, filename):
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name=hoja, index=False)
+        ws = writer.sheets[hoja]
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            ws.column_dimensions[col[0].column_letter].width = max(max_len + 4, 14)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.get("/api/padron/plantilla-excel")
+def api_plantilla_padron(admin: dict = Depends(requerir_admin)):
+    columnas = ["Placa / N° interno", "Tipología", "Km actual", "Fabricante", "Línea"]
+    ejemplos = [
+        {"Placa / N° interno": "TKL123", "Tipología": "TRACTOCAMION 3S3", "Km actual": 245000, "Fabricante": "KENWORTH", "Línea": "T800"},
+        {"Placa / N° interno": "101", "Tipología": "BUS 2 EJES", "Km actual": None, "Fabricante": "MERCEDES-BENZ", "Línea": "OF 1721"},
+    ]
+    return _excel_respuesta(pd.DataFrame(ejemplos, columns=columnas), "Parque_Automotor", "Plantilla_Parque_Automotor.xlsx")
+
+
+@app.get("/api/padron")
+def api_listar_padron(cliente: str = "", sede: str = "", admin: dict = Depends(requerir_admin)):
+    vehiculos = database.listar_padron_cliente(cliente, sede)
+    return sanitizar_nativos({
+        "cliente": str(cliente or '').strip().upper(),
+        "parque_cargado": database.cliente_tiene_parque_cargado(cliente),
+        "vehiculos": vehiculos,
+    })
+
+
+@app.get("/api/padron/exportar-excel")
+def api_exportar_padron(cliente: str = "", sede: str = "", admin: dict = Depends(requerir_admin)):
+    mes = ahora_bogota().strftime("%Y-%m")
+    filas = [{
+        "Placa / N° interno": v["placa"], "Sede": v["sede"], "Tipología": v["tipologia"],
+        "Km actual": v["km_actual"], "Fabricante": v["fabricante"], "Línea": v["linea"],
+        "Estado": "Activo" if v["activo"] else "Inactivo",
+        "Última inspección": v["ultima_inspeccion"],
+        "Inspeccionado este mes": "Sí" if v["ultima_inspeccion"][:7] == mes else "No",
+    } for v in database.listar_padron_cliente(cliente, sede)]
+    columnas = ["Placa / N° interno", "Sede", "Tipología", "Km actual", "Fabricante", "Línea", "Estado",
+                "Última inspección", "Inspeccionado este mes"]
+    nombre = re.sub(r'[^A-Za-z0-9]+', '_', str(cliente or 'cliente').strip()).strip('_') or 'cliente'
+    return _excel_respuesta(pd.DataFrame(filas, columns=columnas), "Parque_Automotor",
+                            f"Parque_{nombre}_{ahora_bogota().strftime('%Y%m%d')}.xlsx")
+
+
+@app.post("/api/padron/importar-excel")
+async def api_importar_padron(cliente: str = "", sede: str = "", file: UploadFile = File(...), admin: dict = Depends(requerir_admin)):
+    if not (file.filename or "").lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+    try:
+        res = database.importar_padron_cliente_excel(tmp_path, cliente, sede)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer el archivo del parque: {str(e)}")
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+    res["message"] = (f"Parque cargado: {res['nuevos']} nuevos, {res['actualizados']} actualizados"
+                      f" y {res['desactivados']} quedaron inactivos.")
+    return sanitizar_nativos(res)
+
 class StockSeguridadItem(BaseModel):
     cliente: str
     dimension: str
@@ -2454,7 +2533,7 @@ def api_taller_posicion_info(
     if not cliente and placa:
         with database.get_connection() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (placa,))
+            cur.execute("SELECT cliente FROM padron_vehiculos_cliente WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (placa,))
             r_v = cur.fetchone()
             if r_v and r_v[0]:
                 cliente = r_v[0]
@@ -2507,7 +2586,7 @@ def api_taller_montar(
     if not cliente and item.get("placa"):
         with database.get_connection() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (str(item.get("placa")).strip(),))
+            cur.execute("SELECT cliente FROM padron_vehiculos_cliente WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (str(item.get("placa")).strip(),))
             r_v = cur.fetchone()
             if r_v and r_v[0]:
                 cliente = r_v[0]

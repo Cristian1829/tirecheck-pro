@@ -266,7 +266,15 @@ def _detalle(clave, d, u):
         if fuente:
             out.append(Paragraph(fuente, _s_vacio))
         pend = d.get('placas_pendientes') or []
-        if pend:
+        if pend and d.get('parque_cargado'):
+            # Parque cargado por el administrador: todos los que faltan, con datos para ubicarlos
+            out.append(Paragraph("Medido contra el parque automotor cargado para el cliente.", _s_vacio))
+            out.append(Spacer(1, 4))
+            out.append(_tabla(["Placa / N° interno", "Sede", "Tipología", "Fabricante / línea", "Última inspección"],
+                              [[p.get('placa') or '-', p.get('subcliente') or '-', p.get('tipologia') or '-',
+                                ' '.join(x for x in (p.get('fabricante'), p.get('linea')) if x) or '-',
+                                p.get('ultima_inspeccion') or 'Nunca'] for p in pend], [95, 90, 130, 140, 85]))
+        elif pend:
             out.append(Spacer(1, 4))
             out.append(_tabla(["Placa pendiente", "Cliente / sede", "Tipología"],
                               [[p.get('placa') or '-', f"{p.get('cliente') or '-'}{' / ' + p['subcliente'] if p.get('subcliente') else ''}",
@@ -325,6 +333,15 @@ def _detalle(clave, d, u):
                        vacio="No hay inventario ni necesidades para los filtros seleccionados.")]
     if clave == 'kpi_tendencias':
         meses = (d.get('meses') or [])[::-1]
+        if any(x.get('pct_cumplimiento_parque') is not None for x in meses):
+            # Con parque cargado: % del parque inspeccionado en cada mes
+            return [_tabla(["Mes", "Vehículos insp.", "% del parque", "Presión correcta", "En límite de retiro",
+                            "Prof. mín. prom.", "Alerta alineación", "CPK operativo"],
+                           [[x.get('mes'), x.get('vehiculos_inspeccionados'), _pct(x.get('pct_cumplimiento_parque')),
+                             _pct(x.get('pct_presion_correcta')), _pct(x.get('pct_en_retiro')),
+                             '—' if x.get('prof_minima_promedio') is None else f"{format_num_es(x['prof_minima_promedio'])} mm",
+                             _pct(x.get('pct_alerta_alineacion')), _cpk(x.get('cpk_operativo'), u)] for x in meses],
+                           [50, 55, 55, 65, 70, 65, 65, 115], vacio="Sin inspecciones en el periodo.")]
         return [_tabla(["Mes", "Vehículos insp.", "Presión correcta", "En límite de retiro", "Prof. mín. prom.",
                         "Alerta alineación", "CPK operativo"],
                        [[x.get('mes'), x.get('vehiculos_inspeccionados'), _pct(x.get('pct_presion_correcta')),

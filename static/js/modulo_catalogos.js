@@ -6,13 +6,13 @@
     function mostrarSubtabCat(subtab) {
       const esAdmin = esUsuarioAdmin();
       const puedeVerClientes = esAdminOJefatura();
-      if (subtab === 'usuarios' && !esAdmin) {
+      if ((subtab === 'usuarios' || subtab === 'parque') && !esAdmin) {
         subtab = 'operaciones';
       }
       if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'precios_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
         subtab = 'operaciones';
       }
-      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'precios_cliente', 'usuarios'];
+      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'precios_cliente', 'parque', 'usuarios'];
       tabs.forEach(t => {
         const sec = document.getElementById(`cat-seccion-${t}`);
         if (sec) sec.classList.add('hidden');
@@ -29,6 +29,8 @@
         cargarDirectorioClientesCat();
       } else if (subtab === 'usuarios' && esAdmin) {
         cargarUsuariosCat();
+      } else if (subtab === 'parque' && esAdmin) {
+        prepararParqueCat();
       } else if (subtab === 'clientes' && puedeVerClientes) {
         cargarClientesLimCat();
       } else if (subtab === 'precios_cliente' && puedeVerClientes) {
@@ -57,6 +59,150 @@
       cargarModelosCat();
       if (esUsuarioAdmin()) {
         cargarUsuariosCat();
+      }
+    }
+
+    // ==========================================
+    // PARQUE AUTOMOTOR POR CLIENTE (solo administrador)
+    // ==========================================
+    let cacheParque = [];
+
+    async function prepararParqueCat() {
+      const sel = document.getElementById('selParqueCliente');
+      if (!sel) return;
+      if (sel.options.length <= 1) {
+        try {
+          const r = await fetch('/api/clientes-directorio');
+          if (r.ok) cacheDirectorioClientes = await r.json();
+        } catch (e) {}
+        const nombres = [...new Set((cacheDirectorioClientes || []).map(c => c.cliente).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Seleccione un cliente…</option>' +
+          nombres.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      }
+      cargarParqueCat();
+    }
+
+    async function consultarParque(cliente) {
+      const res = await fetch(`/api/padron?cliente=${encodeURIComponent(cliente)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+      cacheParque = data.vehiculos || [];
+      const origen = document.getElementById('kpiParqueOrigen');
+      if (origen) origen.textContent = data.parque_cargado ? 'Archivo cargado' : 'Sin archivo (automático)';
+    }
+
+    async function cargarParqueCat() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      document.getElementById('resultadoParque')?.classList.add('hidden');
+      cacheParque = [];
+      if (cliente) {
+        const tbody = document.getElementById('tbodyParqueCat');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Cargando…</td></tr>';
+        try {
+          await consultarParque(cliente);
+        } catch (e) {
+          mostrarToast('No se pudo cargar el parque del cliente', true);
+        }
+      }
+      renderizarParqueCat();
+    }
+
+    function renderizarParqueCat() {
+      const tbody = document.getElementById('tbodyParqueCat');
+      if (!tbody) return;
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      const mes = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).slice(0, 7);
+      const activos = cacheParque.filter(v => v.activo);
+      const delMes = activos.filter(v => (v.ultima_inspeccion || '').slice(0, 7) === mes);
+      const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      set('kpiParqueActivos', cliente ? `${activos.length} vehículos` : '—');
+      set('kpiParqueMes', cliente ? `${delMes.length} (${fmtDec(activos.length ? 100 * delMes.length / activos.length : 0, 1)}%)` : '—');
+      set('kpiParqueFaltan', cliente ? `${activos.length - delMes.length} vehículos` : '—');
+      if (!cliente) set('kpiParqueOrigen', '—');
+      const btnExp = document.getElementById('btnExportarParque');
+      if (btnExp) btnExp.disabled = !cliente;
+
+      if (!cliente) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>';
+        return;
+      }
+      const q = (document.getElementById('buscarParque')?.value || '').trim().toUpperCase();
+      const soloFaltan = document.getElementById('chkParqueSoloFaltantes')?.checked;
+      const lista = cacheParque.filter(v => {
+        if (soloFaltan && (!v.activo || (v.ultima_inspeccion || '').slice(0, 7) === mes)) return false;
+        if (!q) return true;
+        return [v.placa, v.sede, v.tipologia, v.fabricante, v.linea].some(x => String(x || '').toUpperCase().includes(q));
+      });
+      if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">${cacheParque.length ? 'Ningún vehículo coincide con la búsqueda.' : 'Este cliente no tiene vehículos en el parque.'}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = lista.map(v => {
+        const inspMes = (v.ultima_inspeccion || '').slice(0, 7) === mes;
+        const estado = !v.activo
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Inactivo</span>'
+          : inspMes
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap">Inspeccionado</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 whitespace-nowrap">Falta este mes</span>';
+        return `<tr class="border-t border-slate-100 ${v.activo ? '' : 'opacity-60'}">
+          <td class="p-2.5 font-bold font-mono text-slate-900 whitespace-nowrap">${escapeHtml(v.placa)}</td>
+          <td class="p-2.5">${escapeHtml(v.sede || '—')}</td>
+          <td class="p-2.5">${escapeHtml(v.tipologia || '—')}</td>
+          <td class="p-2.5">${escapeHtml(v.fabricante || '—')}</td>
+          <td class="p-2.5">${escapeHtml(v.linea || '—')}</td>
+          <td class="p-2.5 text-right font-mono whitespace-nowrap">${v.km_actual ? fmtDec(v.km_actual, 0) : '—'}</td>
+          <td class="p-2.5 text-center whitespace-nowrap">${v.ultima_inspeccion ? fmtFecha(v.ultima_inspeccion) : 'Nunca'}</td>
+          <td class="p-2.5 text-center">${estado}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function descargarPlantillaParque() {
+      window.location.href = '/api/padron/plantilla-excel';
+    }
+
+    function exportarParqueExcel() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      if (!cliente) return mostrarToast('Seleccione un cliente', true);
+      window.location.href = `/api/padron/exportar-excel?cliente=${encodeURIComponent(cliente)}`;
+    }
+
+    async function subirParqueExcel() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      const archivo = document.getElementById('fileParqueExcel')?.files?.[0];
+      if (!cliente) return mostrarToast('Seleccione el cliente del parque', true);
+      if (!archivo) return mostrarToast('Seleccione el archivo de Excel', true);
+      const activos = cacheParque.filter(v => v.activo).length;
+      if (!confirm(`Se reemplazará el parque de ${cliente} (${activos} vehículos activos hoy).\nLos vehículos que no vengan en el archivo quedarán inactivos. ¿Continuar?`)) return;
+
+      const btn = document.getElementById('btnSubirParque');
+      const original = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando…'; }
+      const caja = document.getElementById('resultadoParque');
+      try {
+        const fd = new FormData();
+        fd.append('file', archivo);
+        const res = await fetch(`/api/padron/importar-excel?cliente=${encodeURIComponent(cliente)}`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Error al procesar el archivo');
+        if (caja) {
+          const errores = (data.errores || []).map(e => `<li>${escapeHtml(e)}</li>`).join('');
+          const masErr = data.total_errores > (data.errores || []).length ? `<li>…y ${data.total_errores - data.errores.length} más.</li>` : '';
+          caja.className = `text-xs rounded-2xl border p-3 ${data.total_errores ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`;
+          caja.innerHTML = `<b>${escapeHtml(data.message)}</b>` +
+            (data.total_errores ? `<p class="mt-1 font-semibold">${data.total_errores} fila(s) no se cargaron:</p><ul class="list-disc ml-5 mt-1 space-y-0.5">${errores}${masErr}</ul>` : '');
+        }
+        mostrarToast('✅ Parque cargado');
+        document.getElementById('fileParqueExcel').value = '';
+        await consultarParque(cliente);
+        renderizarParqueCat();
+      } catch (e) {
+        if (caja) {
+          caja.className = 'text-xs rounded-2xl border p-3 bg-rose-50 border-rose-200 text-rose-800';
+          caja.innerHTML = `<b>No se cargó el parque:</b> ${escapeHtml(e.message)}`;
+        }
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
       }
     }
 

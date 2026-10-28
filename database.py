@@ -399,6 +399,12 @@ def inicializar_bd():
                 UNIQUE(cliente, placa)
             )
         """)
+        # Parque cargado por archivo: datos del vehículo y origen ('auto' = backfill, 'archivo' = cargue del admin)
+        cols_padron = [r[1] for r in cursor.execute("PRAGMA table_info(padron_vehiculos_cliente)").fetchall()]
+        for col, tipo in (('fabricante', "TEXT DEFAULT ''"), ('linea', "TEXT DEFAULT ''"),
+                          ('km_actual', 'REAL'), ('origen', "TEXT DEFAULT 'auto'")):
+            if col not in cols_padron:
+                cursor.execute(f"ALTER TABLE padron_vehiculos_cliente ADD COLUMN {col} {tipo}")
 
         # Backfill inicial seguro del padrón desde inspecciones históricas
         cursor.execute("SELECT COUNT(*) FROM padron_vehiculos_cliente")
@@ -6467,6 +6473,168 @@ def contar_vehiculos_padron(cliente: str) -> int:
         return 0
 
 
+def cliente_tiene_parque_cargado(cliente: str) -> bool:
+    """True si el administrador ya cargó por archivo el parque del cliente (si no, todo funciona como antes)."""
+    if not cliente or str(cliente).strip().upper() == 'TODOS':
+        return False
+    try:
+        with get_connection() as conn:
+            r = conn.execute("SELECT 1 FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))"
+                             " AND origen = 'archivo' LIMIT 1", (cliente,)).fetchone()
+            return r is not None
+    except Exception:
+        return False
+
+
+def _placa_padron(valor) -> str:
+    """Placa o número interno tal como se digita en la inspección: sin espacios sobrantes y en mayúscula."""
+    if valor is None or (isinstance(valor, float) and pd.isna(valor)):
+        return ''
+    if isinstance(valor, float) and valor.is_integer():
+        valor = int(valor)  # Excel entrega los números internos como 101.0
+    texto = re.sub(r'\s+', ' ', str(valor)).strip().upper()
+    return '' if texto in ('NAN', 'NONE') else texto
+
+
+def importar_padron_cliente_excel(file_path: str, cliente: str, sede: str = '') -> dict:
+    """
+    Carga el parque automotor de un cliente desde Excel y REEMPLAZA el que tenía:
+    los vehículos del archivo quedan activos y los que no vienen quedan inactivos (no se borran).
+    Con sede, el reemplazo es solo de esa sede.
+    """
+    cli = str(cliente or '').strip().upper()
+    sede_n = str(sede or '').strip().upper()
+    if not cli or cli == 'TODOS':
+        raise ValueError("Seleccione el cliente al que pertenece el parque.")
+    if sede_n == 'TODOS':
+        sede_n = ''
+
+    df = pd.read_excel(file_path, sheet_name=0)
+    cols_norm_map = {normalizar_texto(c): c for c in df.columns}
+    alias_map = {
+        'placa': ['placa / n° interno', 'placa / no interno', 'placa / numero interno', 'placa', 'n° interno',
+                  'numero interno', 'número interno', 'no interno', 'interno', 'codigo', 'código', 'vehiculo', 'vehículo'],
+        'tipologia': ['tipologia', 'tipología', 'tipo vehiculo', 'tipo de vehiculo', 'tipo', 'configuracion'],
+        'km': ['km actual', 'km', 'kilometraje', 'kilometraje actual', 'odometro', 'odómetro'],
+        'fabricante': ['fabricante', 'marca', 'marca vehiculo'],
+        'linea': ['linea', 'línea', 'modelo', 'referencia'],
+        'sede': ['sede', 'sede / patio', 'subcliente', 'patio'],
+    }
+    col = {}
+    for canonico, lista in alias_map.items():
+        for item in lista:
+            norm = normalizar_texto(item)
+            if norm in cols_norm_map:
+                col[canonico] = cols_norm_map[norm]
+                break
+    if 'placa' not in col or 'tipologia' not in col:
+        raise ValueError("El archivo debe tener al menos las columnas 'Placa / N° interno' y 'Tipología'.")
+
+    def celda(row, clave):
+        # Texto de la celda; una línea o sede numérica (4300 → 4300.0 en Excel) queda sin el ".0"
+        return _placa_padron(row[col[clave]]) if clave in col else ''
+
+    # La tipología se empareja con el catálogo como en el diagrama: "CAMION SENCILLO 4X2" = "Camión Sencillo (4x2)"
+    with get_connection() as conn:
+        tipologias = {ee.clave_tipologia(r[0]): r[0] for r in conn.execute(
+            "SELECT nombre FROM catalogo_tipologias WHERE nombre IS NOT NULL").fetchall()}
+
+    errores, filas, vistas = [], [], {}
+    for idx, row in df.iterrows():
+        fila_num = idx + 2
+        placa = _placa_padron(row[col['placa']])
+        tip_raw = celda(row, 'tipologia')
+        if not placa and not tip_raw:
+            continue  # fila vacía
+        if not placa:
+            errores.append(f"Fila {fila_num}: falta la placa o el número interno")
+            continue
+        if placa in vistas:
+            errores.append(f"Fila {fila_num}: {placa} está repetida (ya viene en la fila {vistas[placa]})")
+            continue
+        tip = tipologias.get(ee.clave_tipologia(tip_raw)) if tip_raw else None
+        if not tip:
+            errores.append(f"Fila {fila_num}: {placa} sin tipología" if not tip_raw else
+                           f"Fila {fila_num}: la tipología '{tip_raw}' de {placa} no existe en Catálogos → Tipologías")
+            continue
+        km = to_float(row[col['km']], 0.0) if 'km' in col else 0.0
+        vistas[placa] = fila_num
+        filas.append({
+            'placa': placa, 'tipologia': tip,
+            'sede': sede_n or celda(row, 'sede').upper(),
+            'fabricante': celda(row, 'fabricante').upper(), 'linea': celda(row, 'linea').upper(),
+            'km': km if km > 0 else None,
+        })
+
+    if not filas:
+        return {"status": "ok", "total_filas": len(df), "nuevos": 0, "actualizados": 0, "desactivados": 0,
+                "errores": errores[:25], "total_errores": len(errores)}
+
+    nuevos = actualizados = 0
+    with get_connection() as conn:
+        cur = conn.cursor()
+        q_prev = "SELECT MAYUS(TRIM(placa)) FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = ?"
+        par_prev = [cli]
+        if sede_n:
+            q_prev += " AND MAYUS(TRIM(IFNULL(subcliente, ''))) = ?"
+            par_prev.append(sede_n)
+        existentes = {r[0] for r in cur.execute("SELECT MAYUS(TRIM(placa)) FROM padron_vehiculos_cliente"
+                                                 " WHERE MAYUS(TRIM(cliente)) = ?", (cli,)).fetchall()}
+        alcance = {r[0] for r in cur.execute(q_prev, par_prev).fetchall()}
+
+        for f in filas:
+            if f['placa'] in existentes:
+                actualizados += 1
+            else:
+                nuevos += 1
+            cur.execute("""
+                INSERT INTO padron_vehiculos_cliente
+                    (cliente, subcliente, placa, tipologia, estado_operativo, activo, fabricante, linea, km_actual, origen, fecha_actualizacion)
+                VALUES (?, ?, ?, ?, 'Activo', 1, ?, ?, ?, 'archivo', CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente, placa) DO UPDATE SET
+                    subcliente = CASE WHEN excluded.subcliente != '' THEN excluded.subcliente ELSE padron_vehiculos_cliente.subcliente END,
+                    tipologia = excluded.tipologia, activo = 1, fabricante = excluded.fabricante, linea = excluded.linea,
+                    km_actual = COALESCE(excluded.km_actual, padron_vehiculos_cliente.km_actual),
+                    origen = 'archivo', fecha_actualizacion = CURRENT_TIMESTAMP
+            """, (cli, f['sede'], f['placa'], f['tipologia'], f['fabricante'], f['linea'], f['km']))
+            sincronizar_vehiculo_catalogo(f['placa'], f['tipologia'], cli, f['sede'], kilometraje=f['km'] or 0.0, conn=conn)
+
+        # Reemplazo: lo que no vino en el archivo deja de contar en el parque
+        fuera = sorted(alcance - set(vistas))
+        for placa in fuera:
+            cur.execute("UPDATE padron_vehiculos_cliente SET activo = 0, origen = 'archivo', fecha_actualizacion = CURRENT_TIMESTAMP"
+                        " WHERE MAYUS(TRIM(cliente)) = ? AND MAYUS(TRIM(placa)) = ?", (cli, placa))
+        conn.commit()
+
+    return {"status": "ok", "total_filas": len(df), "nuevos": nuevos, "actualizados": actualizados,
+            "desactivados": len(fuera), "errores": errores[:25], "total_errores": len(errores)}
+
+
+def listar_padron_cliente(cliente: str, sede: str = '') -> list:
+    """Parque del cliente (activos e inactivos) con la fecha de la última inspección de cada vehículo."""
+    cli = str(cliente or '').strip().upper()
+    if not cli or cli == 'TODOS':
+        return []
+    q = """
+        SELECT p.placa, IFNULL(p.subcliente, ''), IFNULL(p.tipologia, ''), IFNULL(p.fabricante, ''), IFNULL(p.linea, ''),
+               p.km_actual, p.activo, IFNULL(p.origen, 'auto'),
+               (SELECT MAX(substr(i.fecha, 1, 10)) FROM inspecciones i
+                 WHERE MAYUS(TRIM(i.placa)) = MAYUS(TRIM(p.placa)) AND MAYUS(TRIM(i.cliente)) = MAYUS(TRIM(p.cliente)))
+        FROM padron_vehiculos_cliente p
+        WHERE MAYUS(TRIM(p.cliente)) = ?
+    """
+    par = [cli]
+    s = str(sede or '').strip().upper()
+    if s and s != 'TODOS':
+        q += " AND MAYUS(TRIM(IFNULL(p.subcliente, ''))) = ?"
+        par.append(s)
+    q += " ORDER BY p.activo DESC, p.placa"
+    with get_connection() as conn:
+        filas = conn.execute(q, par).fetchall()
+    return [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": r[3], "linea": r[4],
+             "km_actual": r[5], "activo": bool(r[6]), "origen": r[7], "ultima_inspeccion": r[8] or ''} for r in filas]
+
+
 def obtener_licencia_cliente(cliente: str) -> str:
     """
     Retorna 'LIGHT' o 'PRO' para el cliente especificado. Sin licencia configurada: 'LIGHT'.
@@ -8852,9 +9020,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
 
     # 2. Padrón de vehículos
+    # Parque cargado por archivo (solo admin): mide contra ese parque y se ve también en LIGHT.
+    # Sin archivo, todo sigue como antes.
+    parque_cargado = cliente_tiene_parque_cargado(cliente)
     with get_connection() as conn:
         cur = conn.cursor()
-        qp = "SELECT MAYUS(TRIM(placa)), MAYUS(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo') FROM padron_vehiculos_cliente WHERE activo = 1"
+        qp = ("SELECT MAYUS(TRIM(placa)), MAYUS(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo'),"
+              " IFNULL(fabricante, ''), IFNULL(linea, '') FROM padron_vehiculos_cliente WHERE activo = 1")
         par_p = []
         if cliente and cliente != "TODOS":
             qp += " AND MAYUS(TRIM(cliente)) = ?"
@@ -8908,10 +9080,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     placas_padron = {r[0] for r in padron_rows} if padron_rows else set()
     todas_placas_parque = placas_padron | placas_insp_corte
     total_padron = len(todas_placas_parque) if todas_placas_parque else len(padron_rows)
+    if parque_cargado:
+        # El parque es el del archivo: lo inspeccionado fuera de él se informa aparte
+        total_padron = len(placas_padron)
+        fuente_padron = 'archivo'
     if total_padron == 0:
         fuente_padron = 'sin_padron'
 
-    vehiculos_auditados_mes = len(placas_insp_corte)
+    vehiculos_auditados_mes = len(placas_insp_corte & placas_padron) if parque_cargado else len(placas_insp_corte)
     placas_fuera_padron = len(placas_insp_corte - placas_padron) if placas_padron else 0
     # Sin parque no hay cumplimiento que medir
     cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / total_padron) * 100.0), 1) if total_padron > 0 else None
@@ -8925,6 +9101,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 "tipologia": r[2],
                 "estado_operativo": r[3]
             })
+    if parque_cargado and placas_pendientes:
+        # Datos del vehículo y última inspección (de cualquier fecha) para saber a cuáles ir
+        datos_parque = {r[0]: r for r in padron_rows}
+        with get_connection() as conn:
+            ultimas = dict(conn.execute(
+                "SELECT MAYUS(TRIM(placa)), MAX(substr(fecha, 1, 10)) FROM inspecciones"
+                " WHERE MAYUS(TRIM(cliente)) = ? GROUP BY MAYUS(TRIM(placa))", (str(cliente).strip().upper(),)).fetchall())
+        for p in placas_pendientes:
+            r = datos_parque.get(p["placa"])
+            p["fabricante"] = r[4] if r and len(r) > 4 else ''
+            p["linea"] = r[5] if r and len(r) > 5 else ''
+            p["ultima_inspeccion"] = ultimas.get(p["placa"]) or ''
 
     # 3. Llantas en Maestro / Bodegas / FVU
     with get_connection() as conn:
@@ -8952,8 +9140,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 01: % Cumplimiento de Inspección vs Parque Vehicular (SOLO FULL)
     # =========================================================================
     kpi_01 = {
-        "disponible": es_full,
-        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "disponible": es_full or parque_cargado,
+        "mensaje": "" if (es_full or parque_cargado) else "🔒 Exclusivo Licencia FULL",
+        "parque_cargado": parque_cargado,
         "cumplimiento_pct": cumplimiento_pct,
         "porcentaje_cumplimiento": cumplimiento_pct,
         "vehiculos_auditados": vehiculos_auditados_mes,
@@ -9627,6 +9816,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             }
             if es_full:
                 punto["cpk_operativo"] = calcular_cpk_llantas(hasta, unidad)["flota"]["cpk_operativo"]
+            if parque_cargado and placas_padron:
+                # % del parque del archivo inspeccionado en el mes (vehículos, sin filtro de marca ni medida)
+                del_mes = df_vehiculos[df_vehiculos['fecha'].astype(str).str[:7] == mes_t]['placa']                     if not df_vehiculos.empty else pd.Series(dtype=str)
+                insp_mes = set(del_mes.dropna().astype(str).str.upper().str.strip()) & placas_padron
+                punto["pct_cumplimiento_parque"] = _redondear(100.0 * len(insp_mes) / len(placas_padron), 1)
+                punto["vehiculos_parque_inspeccionados"] = len(insp_mes)
             meses_t.append(punto)
     kpi_tendencias = {"disponible": True, "mensaje": "", "meses": meses_t}
 
