@@ -201,6 +201,10 @@ class EditarUsuarioItem(BaseModel):
 class ResetPasswordItem(BaseModel):
     nueva_password: str
 
+class CambioClavePropiaItem(BaseModel):
+    clave_actual: str
+    clave_nueva: str
+
 class ConfigLicenciaClienteItem(BaseModel):
     cliente: str
     tipo_licencia: str = "LIGHT"  # "LIGHT" o "PRO"
@@ -348,17 +352,22 @@ def _obtener_o_crear_secret_key() -> str:
             f.write(nueva_key)
         return nueva_key
     except Exception as e:
-        print(f"[SECURITY] Advertencia: No se pudo persistir secret key en archivo ({e}), usando fallback.")
-        return "tireanalyze-pro-fallback-secret-key-2026-production"
+        # Nunca una clave fija: con ella cualquiera podría fabricar sesiones válidas. Una clave al azar
+        # solo dura mientras el servidor esté encendido (al reiniciar hay que volver a ingresar).
+        print(f"[SECURITY] Advertencia: No se pudo guardar la clave secreta en archivo ({e}). Se usa una clave "
+              "temporal: las sesiones se cerrarán al reiniciar. Configure la variable TIREANALYZE_SECRET_KEY.")
+        return secrets.token_hex(32)
 
 SECRET_KEY = _obtener_o_crear_secret_key()
 TOKEN_EXPIRATION_SECONDS = 604800  # 7 días (para jornadas de campo en zonas remotas sin cobertura)
 
-def crear_token_acceso(username: str, rol: str) -> str:
+def crear_token_acceso(username: str, rol: str, version: int = 0) -> str:
     payload = {
         "sub": username,
         "rol": rol,
-        "exp": int(time.time()) + TOKEN_EXPIRATION_SECONDS
+        "exp": int(time.time()) + TOKEN_EXPIRATION_SECONDS,
+        "ver": int(version or 0),             # versión de sesión del usuario: si cambia, la sesión deja de servir
+        "jti": secrets.token_urlsafe(12),     # identificador de esta sesión (para cerrarla con «Salir»)
     }
     payload_json = json.dumps(payload, separators=(',', ':'))
     payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
@@ -385,32 +394,43 @@ def verificar_token(token: str) -> Optional[dict]:
     except Exception:
         return None
 
-def obtener_usuario_actual(request: Request) -> dict:
-    token = None
+def _token_de_request(request: Request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header[7:].strip()
-    elif "tireanalyze_token" in request.cookies:
-        token = request.cookies.get("tireanalyze_token")
-    elif "tirecheck_token" in request.cookies:
-        token = request.cookies.get("tirecheck_token")
-    elif "token" in request.query_params:
-        token = request.query_params.get("token")
-    
+        return auth_header[7:].strip()
+    if "tireanalyze_token" in request.cookies:
+        return request.cookies.get("tireanalyze_token")
+    if "tirecheck_token" in request.cookies:
+        return request.cookies.get("tirecheck_token")
+    if "token" in request.query_params:
+        return request.query_params.get("token")
+    return None
+
+# Rutas que se pueden usar aunque el usuario deba cambiar su clave o no tenga cliente asignado
+_RUTAS_DE_SESION = ("/api/usuario-actual", "/api/logout", "/api/mi-cuenta/cambiar-clave")
+
+def obtener_usuario_actual(request: Request) -> dict:
+    token = _token_de_request(request)
     if not token:
         raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
-    
+
     payload = verificar_token(token)
     if not payload or not payload.get("sub"):
         raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
-    
+
     usr = database.obtener_usuario_por_username(payload["sub"])
     if not usr or not usr.get("activo"):
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    # Sesión cerrada: por cambio de clave o «cerrar en todos los equipos» (versión) o por «Salir» (jti)
+    if int(payload.get("ver", 0) or 0) != int(usr.get("sesion_version") or 0) or database.sesion_revocada(payload.get("jti")):
+        raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
+    if usr.get("debe_cambiar_clave") and request.url.path not in _RUTAS_DE_SESION:
+        raise HTTPException(status_code=403, detail="Debe cambiar su contraseña antes de continuar.",
+                            headers={"X-Requiere-Cambio-Clave": "1"})
     # Sin cliente asignado (y sin ser administrador) no hay alcance de datos: solo puede ver su sesión
-    if usuario_sin_alcance(usr) and request.url.path not in ("/api/usuario-actual", "/api/logout"):
+    if usuario_sin_alcance(usr) and request.url.path not in _RUTAS_DE_SESION:
         raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
-    
+
     return usr
 
 def es_rol_admin(rol: str, user: str = "") -> bool:
@@ -2385,59 +2405,135 @@ def api_offline_paquete_patio(
 # RUTAS DE AUTENTICACIÓN Y USUARIOS
 # ==========================================
 
-_login_attempts: dict = {}  # ip -> list of float timestamps
+_login_attempts: dict = {}  # ip -> list of float timestamps (claves incorrectas del último minuto)
+MAX_FALLOS_IP, VENTANA_FALLOS_IP = 8, 60.0
+# El bloqueo por usuario no depende de la IP: frena a quien prueba claves contra una cuenta desde muchas IPs
+MAX_FALLOS_USUARIO, VENTANA_FALLOS_USUARIO = 10, 15 * 60.0
+_origen_ip_informado = False
+
+
+def _ip_cliente(request: Request) -> str:
+    """
+    IP de quien hace la petición. En Railway la conexión llega desde su proxy, así que se usa la cabecera
+    X-Real-IP que pone su borde con la IP del usuario; si no está, la última entrada de X-Forwarded-For.
+    """
+    global _origen_ip_informado
+    real = (request.headers.get("x-real-ip") or "").strip()
+    reenviada = (request.headers.get("x-forwarded-for") or "").strip()
+    if real:
+        ip, origen = real, "X-Real-IP"
+    elif reenviada:
+        ip, origen = reenviada.split(",")[-1].strip(), "X-Forwarded-For"
+    else:
+        ip, origen = (request.client.host if request.client else "127.0.0.1"), "la conexión directa"
+    if not _origen_ip_informado:
+        _origen_ip_informado = True
+        print(f"[LOGIN] La IP de quien ingresa se toma de {origen}.")
+    return ip
+
+
+def _es_https(request: Request) -> bool:
+    return request.url.scheme == "https" or (request.headers.get("x-forwarded-proto") or "").lower() == "https"
+
+
+def _entregar_sesion(request: Request, response: Response, usr: dict) -> str:
+    """Crea la sesión del usuario y la deja en las cookies (solo por HTTPS cuando la conexión lo es)."""
+    token = crear_token_acceso(usr["username"], usr["rol"], usr.get("sesion_version", 0))
+    for nombre in ("tireanalyze_token", "tirecheck_token"):
+        response.set_cookie(
+            key=nombre,
+            value=token,
+            httponly=True,
+            samesite="lax",
+            secure=_es_https(request),
+            max_age=TOKEN_EXPIRATION_SECONDS
+        )
+    return token
+
 
 @app.post("/api/login")
 def api_login(item: LoginItem, request: Request, response: Response):
-    ip = request.client.host if request.client else "127.0.0.1"
+    ip = _ip_cliente(request)
     ahora = time.time()
-    intentos = [t for t in _login_attempts.get(ip, []) if ahora - t < 60.0]
+    intentos = [t for t in _login_attempts.get(ip, []) if ahora - t < VENTANA_FALLOS_IP]
     _login_attempts[ip] = intentos
-    if len(intentos) >= 8:
+    if len(intentos) >= MAX_FALLOS_IP:
         raise HTTPException(
             status_code=429,
             detail="Demasiados intentos fallidos. Intente de nuevo en 60 segundos."
+        )
+    usuario_escrito = (item.username or "").strip().lower()
+    if usuario_escrito and database.fallos_recientes_usuario(usuario_escrito, VENTANA_FALLOS_USUARIO) >= MAX_FALLOS_USUARIO:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiados intentos fallidos con este usuario. Intente de nuevo en 15 minutos."
         )
 
     usr = database.autenticar_usuario(item.username, item.password)
     if not usr:
         _login_attempts[ip].append(ahora)
+        if usuario_escrito:
+            database.registrar_intento_ingreso(usuario_escrito, ip, False, "clave_incorrecta")
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if usuario_sin_alcance(usr):
+        database.registrar_intento_ingreso(usuario_escrito, ip, False, "sin_cliente")
         raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
 
     if ip in _login_attempts:
         _login_attempts[ip] = []
+    database.registrar_intento_ingreso(usuario_escrito, ip, True)
 
-    token = crear_token_acceso(usr["username"], usr["rol"])
-    response.set_cookie(
-        key="tireanalyze_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=TOKEN_EXPIRATION_SECONDS
-    )
-    response.set_cookie(
-        key="tirecheck_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=TOKEN_EXPIRATION_SECONDS
-    )
+    token = _entregar_sesion(request, response, usr)
+    usr.pop("sesion_version", None)
     return {"status": "ok", "token": token, "usuario": usr}
 
 @app.get("/api/usuario-actual")
 def api_usuario_actual(usuario_actual: dict = Depends(obtener_usuario_actual)):
+    usuario = {k: v for k, v in usuario_actual.items() if k != "sesion_version"}
     return sanitizar_nativos({
         "status": "ok",
-        "usuario": usuario_actual
+        "usuario": usuario
     })
 
 @app.post("/api/logout")
-def api_logout(response: Response):
+def api_logout(request: Request, response: Response):
+    # La sesión de este equipo deja de servir aunque alguien haya copiado el token
+    payload = verificar_token(_token_de_request(request) or "")
+    if payload and payload.get("jti"):
+        database.revocar_sesion(payload["jti"], payload.get("exp", 0))
     response.delete_cookie(key="tireanalyze_token")
     response.delete_cookie(key="tirecheck_token")
     return {"status": "ok", "mensaje": "Sesión cerrada correctamente"}
+
+@app.post("/api/mi-cuenta/cambiar-clave")
+def api_cambiar_clave_propia(item: CambioClavePropiaItem, request: Request, response: Response,
+                             usuario_actual: dict = Depends(obtener_usuario_actual)):
+    username = usuario_actual["username"]
+    if database.fallos_recientes_usuario(username, VENTANA_FALLOS_USUARIO) >= MAX_FALLOS_USUARIO:
+        raise HTTPException(status_code=429, detail="Demasiados intentos fallidos con este usuario. Intente de nuevo en 15 minutos.")
+    if not database.verificar_clave_usuario(username, item.clave_actual):
+        database.registrar_intento_ingreso(username, _ip_cliente(request), False, "clave_incorrecta")
+        raise HTTPException(status_code=400, detail="La contraseña actual no es correcta.")
+    error = database.validar_clave_nueva(item.clave_nueva, username)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    if item.clave_nueva.strip() == (item.clave_actual or "").strip():
+        raise HTTPException(status_code=400, detail="La contraseña nueva debe ser distinta de la actual.")
+    version = database.cambiar_password_propia(username, item.clave_nueva)
+    if version is None:
+        raise HTTPException(status_code=400, detail="No se pudo cambiar la contraseña")
+    usr = database.obtener_usuario_por_username(username)
+    token = _entregar_sesion(request, response, usr)  # las demás sesiones del usuario quedan cerradas
+    usr.pop("sesion_version", None)
+    return {"status": "ok", "token": token, "usuario": usr, "mensaje": "Contraseña actualizada. Se cerraron sus sesiones en otros equipos."}
+
+@app.post("/api/mi-cuenta/cerrar-otras-sesiones")
+def api_cerrar_otras_sesiones(request: Request, response: Response, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if database.incrementar_version_sesion(usuario_actual["username"]) is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    usr = database.obtener_usuario_por_username(usuario_actual["username"])
+    token = _entregar_sesion(request, response, usr)  # este equipo sigue con una sesión nueva
+    return {"status": "ok", "token": token, "mensaje": "Se cerraron sus sesiones en los demás equipos."}
 
 @app.get("/api/usuarios")
 def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
@@ -2447,6 +2543,9 @@ def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
 def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
     if usuario_sin_alcance({"rol": item.rol, "username": item.username, "cliente_asignado": item.cliente_asignado}):
         raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
+    error_clave = database.validar_clave_nueva(item.password, item.username)
+    if error_clave:
+        raise HTTPException(status_code=400, detail=error_clave)
     ok = database.crear_usuario(
         username=item.username,
         password=item.password,
@@ -2457,7 +2556,9 @@ def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
         sedes_asignadas=item.sedes_asignadas
     )
     if not ok:
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos")
+    # La clave inicial la conoce el administrador: el usuario la cambia en su primer ingreso
+    database.marcar_cambio_clave(item.username, True)
     return {"status": "ok", "username": item.username}
 
 @app.put("/api/usuarios/{username}")
@@ -2472,6 +2573,11 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
                   "cliente_asignado": item.cliente_asignado if item.cliente_asignado is not None else actual.get("cliente_asignado")}
     if usuario_sin_alcance(resultante):
         raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
+    cambia_clave = bool(item.password and item.password.strip())
+    if cambia_clave:
+        error_clave = database.validar_clave_nueva(item.password, username)
+        if error_clave:
+            raise HTTPException(status_code=400, detail=error_clave)
     ok = database.actualizar_usuario(
         username=username,
         nombre_completo=item.nombre_completo,
@@ -2484,12 +2590,15 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
     )
     if not ok:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
+    if cambia_clave:
+        database.marcar_cambio_clave(username, True)
     return {"status": "ok", "username": username}
 
 @app.post("/api/usuarios/{username}/reset-password")
 def api_reset_password(username: str, item: ResetPasswordItem, admin: dict = Depends(requerir_admin)):
-    if not item.nueva_password or len(item.nueva_password.strip()) < 4:
-        raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 4 caracteres")
+    error_clave = database.validar_clave_nueva(item.nueva_password, username)
+    if error_clave:
+        raise HTTPException(status_code=400, detail=error_clave)
     usr_existente = database.obtener_usuario_por_username(username)
     if not usr_existente:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")

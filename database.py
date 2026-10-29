@@ -9,6 +9,7 @@ import re
 import hashlib
 import hmac
 import secrets
+import time
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 import contextvars
@@ -73,10 +74,16 @@ verificar_y_poblar_seed()
 DB_PATH = _DB_DATA
 
 
+# Iteraciones de PBKDF2-HMAC-SHA256 recomendadas por OWASP (2023). Las pruebas bajan PBKDF2_ITERACIONES para no tardar.
+PBKDF2_ITERACIONES_PRODUCCION = 600_000
+PBKDF2_ITERACIONES = PBKDF2_ITERACIONES_PRODUCCION
+_ITERACIONES_FORMATO_ANTIGUO = 100_000  # hashes 'pbkdf2_sha256$<salt>$<hash>' (sin iteraciones en el texto)
+
+
 def hash_password(password: str) -> str:
     """
-    Genera un hash seguro para la contraseña usando PBKDF2-HMAC-SHA256 con 100,000 iteraciones
-    y un salt aleatorio de 16 bytes. Retorna 'pbkdf2_sha256$<salt_hex>$<hash_hex>'.
+    Genera un hash seguro para la contraseña usando PBKDF2-HMAC-SHA256 y un salt aleatorio de 16 bytes.
+    Retorna 'pbkdf2_sha256$<iteraciones>$<salt_hex>$<hash_hex>'.
     """
     if not isinstance(password, str):
         password = str(password)
@@ -85,38 +92,99 @@ def hash_password(password: str) -> str:
         'sha256',
         password.encode('utf-8'),
         salt.encode('utf-8'),
-        100_000
+        PBKDF2_ITERACIONES
     )
-    return f"pbkdf2_sha256${salt}${hash_bytes.hex()}"
+    return f"pbkdf2_sha256${PBKDF2_ITERACIONES}${salt}${hash_bytes.hex()}"
+
+
+def _partes_hash(stored_password: str):
+    """(iteraciones, salt, hash_hex) de un hash PBKDF2, en formato nuevo o antiguo; None si no lo es."""
+    parts = stored_password.split('$')
+    if len(parts) == 4 and parts[0] == "pbkdf2_sha256" and parts[1].isdigit():
+        return int(parts[1]), parts[2], parts[3]
+    if len(parts) == 3 and parts[0] == "pbkdf2_sha256":
+        return _ITERACIONES_FORMATO_ANTIGUO, parts[1], parts[2]
+    return None
+
+
+def hash_desactualizado(stored_password) -> bool:
+    """True si la contraseña guardada está en texto plano o con menos iteraciones que las actuales."""
+    partes = _partes_hash(str(stored_password or ''))
+    return partes is None or partes[0] < PBKDF2_ITERACIONES
+
 
 def verify_password(plain_password: str, stored_password: str) -> bool:
     """
     Verifica una contraseña en texto plano contra el hash almacenado usando tiempo constante.
-    Si el hash almacenado usa formato 'pbkdf2_sha256$', verifica con PBKDF2.
+    Si el hash almacenado usa formato 'pbkdf2_sha256$', verifica con PBKDF2 (con sus propias iteraciones).
     Si es una contraseña legada en texto plano, compara directamente con hmac.compare_digest.
     """
     if not isinstance(plain_password, str):
         plain_password = str(plain_password)
     if not isinstance(stored_password, str):
         stored_password = str(stored_password)
-    
+
     if stored_password.startswith("pbkdf2_sha256$"):
         try:
-            parts = stored_password.split('$')
-            if len(parts) != 3:
+            partes = _partes_hash(stored_password)
+            if not partes:
                 return False
-            _, salt, hash_hex = parts
+            iteraciones, salt, hash_hex = partes
             computed_bytes = hashlib.pbkdf2_hmac(
                 'sha256',
                 plain_password.encode('utf-8'),
                 salt.encode('utf-8'),
-                100_000
+                iteraciones
             )
             return hmac.compare_digest(computed_bytes.hex(), hash_hex)
         except Exception:
             return False
     else:
         return hmac.compare_digest(plain_password, stored_password)
+
+
+_HASH_FICTICIO = {}  # iteraciones -> hash de una clave aleatoria
+
+
+def verificar_clave_ficticia(password: str) -> None:
+    """Gasta lo mismo que verificar una clave real, para que un usuario inexistente no responda más rápido."""
+    h = _HASH_FICTICIO.get(PBKDF2_ITERACIONES)
+    if h is None:
+        h = _HASH_FICTICIO[PBKDF2_ITERACIONES] = hash_password(secrets.token_hex(16))
+    verify_password(password, h)
+
+
+# Reglas para claves nuevas (NIST 800-63B): mínimo 8 caracteres y no estar entre las más usadas.
+LARGO_MINIMO_CLAVE = 8
+_CLAVES_COMUNES = frozenset("""
+12345678 123456789 1234567890 0123456789 87654321 98765432 12341234 11223344 11111111 00000000
+password password1 password12 password123 passw0rd contraseña contrasena contraseña1 contrasena1
+contraseña123 contrasena123 qwerty123 qwertyuiop asdfghjk asdfghjkl 1q2w3e4r 1qaz2wsx qwe12345 123qwe123
+abc12345 abcd1234 administrador administrator admin123 admin1234 admin12345 iloveyou superman football
+tireanalyze tireanalyze1 tireanalyze123 tirecheck tirecheck1 tirecheck123 llantas llantas123 colombia
+colombia1 colombia123 bogota123 clave123 clave1234 miclave123 usuario123 inspector inspector1 inspector123
+cambiar123 temporal temporal123 bienvenido bienvenido1 bienvenido123
+""".split())
+
+
+def validar_clave_nueva(clave, username: str = '') -> Optional[str]:
+    """Mensaje de error si la clave no cumple las reglas, o None si sirve."""
+    c = (clave or '').strip()
+    if len(c) < LARGO_MINIMO_CLAVE:
+        return f"La contraseña debe tener al menos {LARGO_MINIMO_CLAVE} caracteres."
+    baja = c.lower()
+    if baja in _CLAVES_COMUNES:
+        return "Esa contraseña es de las más usadas y es fácil de adivinar. Elija otra."
+    if username and baja == str(username).strip().lower():
+        return "La contraseña no puede ser igual al nombre de usuario."
+    if len(set(baja)) <= 2:
+        return "La contraseña repite casi el mismo carácter. Elija otra."
+    if baja.isdigit():
+        # Paso entre dígitos en forma circular, para que «34567890» (9→0) también cuente como secuencia
+        pasos = {(int(b) - int(a)) % 10 for a, b in zip(baja, baja[1:])}
+        if pasos in ({1}, {9}):
+            return "La contraseña no puede ser una secuencia de números. Elija otra."
+    return None
 
 def normalizar_texto(texto):
     if not isinstance(texto, str):
@@ -217,6 +285,14 @@ def asegurar_columna_vistas_permitidas(conn):
         # Sedes permitidas por cliente ('CLIENTE|SEDE, …'); vacío = todas las sedes de sus clientes
         if cols_usr and 'sedes_asignadas' not in cols_usr:
             cursor.execute("ALTER TABLE usuarios ADD COLUMN sedes_asignadas TEXT DEFAULT ''")
+            conn.commit()
+        # 1 = debe cambiar su clave antes de usar la app (clave puesta por el administrador o que no cumple las reglas)
+        if cols_usr and 'debe_cambiar_clave' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN debe_cambiar_clave INTEGER DEFAULT 0")
+            conn.commit()
+        # Va en cada sesión (token): al subirla, todas las sesiones abiertas del usuario dejan de servir
+        if cols_usr and 'sesion_version' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN sesion_version INTEGER DEFAULT 0")
             conn.commit()
     except Exception:
         pass
@@ -356,6 +432,27 @@ def inicializar_bd():
 
             # Los usuarios de ejemplo solo se crean en una base vacía: si se borran no deben
             # reaparecer con una contraseña conocida.
+
+        # Registro de ingresos: cada intento de login (exista o no el usuario). Sirve para el bloqueo
+        # por usuario y para que el administrador vea el último ingreso y los intentos fallidos.
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS registro_ingresos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha REAL NOT NULL,          -- segundos desde 1970 (time.time())
+                username TEXT NOT NULL,       -- en minúsculas, tal como se escribió
+                ip TEXT DEFAULT '',
+                exito INTEGER NOT NULL DEFAULT 0,
+                motivo TEXT DEFAULT ''        -- 'clave_incorrecta', 'sin_cliente', '' si entró
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_registro_ingresos_usuario ON registro_ingresos(username, fecha)")
+        # Sesiones cerradas con «Salir» antes de vencer (identificador de la sesión hasta su vencimiento)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sesiones_revocadas (
+                jti TEXT PRIMARY KEY,
+                expira REAL NOT NULL
+            )
+        """)
 
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
@@ -6321,19 +6418,26 @@ def autenticar_usuario(username, password):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'),
+                   COALESCE(debe_cambiar_clave, 0), COALESCE(sesion_version, 0)
             FROM usuarios
             WHERE LOWER(username) = LOWER(?) AND activo = 1
         """, (u,))
         row = cursor.fetchone()
         if not row:
+            verificar_clave_ficticia(p)  # mismo tiempo de respuesta que con un usuario que sí existe
             return None
-        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas = row
+        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas, debe_cambiar, version = row
         if verify_password(p, stored_pwd):
-            # Auto-migración en caso de que aún tuviera contraseña legada en texto plano
-            if not stored_pwd.startswith("pbkdf2_sha256$"):
+            # Auto-migración: texto plano o hash con menos iteraciones de las actuales se vuelve a cifrar
+            if hash_desactualizado(stored_pwd):
                 nuevo_hash = hash_password(p)
                 cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, uid))
+                conn.commit()
+            # Una clave que no cumple las reglas actuales (p. ej. «1234» de los usuarios de ejemplo) se debe cambiar
+            if not debe_cambiar and validar_clave_nueva(p, db_username):
+                debe_cambiar = 1
+                cursor.execute("UPDATE usuarios SET debe_cambiar_clave = 1 WHERE id = ?", (uid,))
                 conn.commit()
             clis = parsear_clientes_asignados(cliente_asignado)
             vistas = parsear_vistas_permitidas(raw_vistas, rol)
@@ -6345,7 +6449,9 @@ def autenticar_usuario(username, password):
                 'cliente_asignado': cliente_asignado or '',
                 'clientes_asignados': clis,
                 'vistas_permitidas': vistas,
-                'activo': bool(activo)
+                'activo': bool(activo),
+                'debe_cambiar_clave': bool(debe_cambiar),
+                'sesion_version': int(version or 0)
             }
     return None
 
@@ -6358,7 +6464,8 @@ def obtener_usuario_por_username(username):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, ''),
+                   COALESCE(debe_cambiar_clave, 0), COALESCE(sesion_version, 0)
             FROM usuarios
             WHERE LOWER(username) = LOWER(?)
         """, (u,))
@@ -6375,7 +6482,9 @@ def obtener_usuario_por_username(username):
                 'clientes_asignados': clis,
                 'sedes_asignadas': row[7] or '',
                 'vistas_permitidas': vistas,
-                'activo': bool(row[5])
+                'activo': bool(row[5]),
+                'debe_cambiar_clave': bool(row[8]),
+                'sesion_version': int(row[9] or 0)
             }
     return None
 
@@ -6384,18 +6493,26 @@ def listar_usuarios():
         asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
-            FROM usuarios
-            ORDER BY id ASC
-        """)
-        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas', 'sedes_asignadas']
+            SELECT u.id, u.username, u.nombre_completo, u.rol, u.cliente_asignado, u.activo, u.fecha_creacion,
+                   COALESCE(u.vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(u.sedes_asignadas, ''),
+                   COALESCE(u.debe_cambiar_clave, 0),
+                   (SELECT MAX(r.fecha) FROM registro_ingresos r WHERE r.username = LOWER(u.username) AND r.exito = 1),
+                   (SELECT COUNT(*) FROM registro_ingresos r WHERE r.username = LOWER(u.username) AND r.exito = 0
+                       AND r.motivo = 'clave_incorrecta' AND r.fecha > ?)
+            FROM usuarios u
+            ORDER BY u.id ASC
+        """, (time.time() - 86400,))
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas', 'sedes_asignadas',
+                'debe_cambiar_clave', 'ultimo_ingreso', 'fallos_24h']
         filas = []
         for r in cursor.fetchall():
             d = dict(zip(cols, r))
             d['clientes_asignados'] = parsear_clientes_asignados(d.get('cliente_asignado'))
             v_list = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
             d['vistas_permitidas'] = ','.join(v_list) if isinstance(v_list, list) else str(v_list or '')
+            d['debe_cambiar_clave'] = bool(d['debe_cambiar_clave'])
+            d['ultimo_ingreso'] = (datetime.fromtimestamp(d['ultimo_ingreso'], BOGOTA_TZ).strftime('%Y-%m-%d %H:%M')
+                                   if d['ultimo_ingreso'] else None)
             filas.append(d)
         return filas
 
@@ -6448,7 +6565,9 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
                 return False
             updates.append("password = ?")
             params.append(hash_password(p_str))
-        
+            # Con clave nueva, las sesiones abiertas con la clave anterior dejan de servir
+            updates.append("sesion_version = COALESCE(sesion_version, 0) + 1")
+
         rol_final = None
         if rol is not None:
             rol_final = rol.strip().lower()
@@ -6491,10 +6610,11 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         conn.commit()
         return cursor.rowcount > 0
 
-def restablecer_password_usuario(username: str, nueva_password: str) -> bool:
+def restablecer_password_usuario(username: str, nueva_password: str, exigir_cambio: bool = True) -> bool:
     """
     Restablece la contraseña de un usuario específico validando que tenga al menos 4 caracteres,
-    la hashea con PBKDF2 y actualiza el registro en la BD.
+    la hashea con PBKDF2 y actualiza el registro en la BD. Cierra las sesiones abiertas del usuario
+    y, como la clave la conoce quien la restableció, le exige cambiarla en su próximo ingreso.
     """
     u = (username or '').strip().lower()
     p = (nueva_password or '').strip()
@@ -6502,10 +6622,113 @@ def restablecer_password_usuario(username: str, nueva_password: str) -> bool:
         return False
     hashed = hash_password(p)
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
-        cursor.execute("UPDATE usuarios SET password = ? WHERE LOWER(username) = LOWER(?)", (hashed, u))
+        cursor.execute("""
+            UPDATE usuarios SET password = ?, debe_cambiar_clave = ?, sesion_version = COALESCE(sesion_version, 0) + 1
+            WHERE LOWER(username) = LOWER(?)
+        """, (hashed, 1 if exigir_cambio else 0, u))
         conn.commit()
         return cursor.rowcount > 0
+
+
+def verificar_clave_usuario(username: str, clave: str) -> bool:
+    """True si la clave es la del usuario activo (para confirmar la clave actual antes de cambiarla)."""
+    u = (username or '').strip()
+    with get_connection() as conn:
+        row = conn.execute("SELECT password FROM usuarios WHERE LOWER(username) = LOWER(?) AND activo = 1", (u,)).fetchone()
+    if not row:
+        verificar_clave_ficticia(clave or '')
+        return False
+    return verify_password((clave or '').strip(), row[0])
+
+
+def cambiar_password_propia(username: str, nueva_password: str) -> Optional[int]:
+    """
+    El usuario cambia su propia clave: queda sin la exigencia de cambio y se cierran sus otras sesiones.
+    Retorna la nueva versión de sesión (para entregarle una sesión nueva en este equipo) o None.
+    """
+    u = (username or '').strip().lower()
+    p = (nueva_password or '').strip()
+    if not u or not p:
+        return None
+    hashed = hash_password(p)
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE usuarios SET password = ?, debe_cambiar_clave = 0, sesion_version = COALESCE(sesion_version, 0) + 1
+            WHERE LOWER(username) = LOWER(?) AND activo = 1
+        """, (hashed, u))
+        conn.commit()
+        if cursor.rowcount == 0:
+            return None
+        return int(conn.execute("SELECT sesion_version FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,)).fetchone()[0])
+
+
+def marcar_cambio_clave(username: str, debe: bool = True) -> None:
+    """Exige (o deja de exigir) que el usuario cambie su clave en el próximo ingreso."""
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        conn.execute("UPDATE usuarios SET debe_cambiar_clave = ? WHERE LOWER(username) = LOWER(?)",
+                     (1 if debe else 0, (username or '').strip()))
+        conn.commit()
+
+
+def incrementar_version_sesion(username: str) -> Optional[int]:
+    """Cierra todas las sesiones abiertas del usuario. Retorna la nueva versión."""
+    u = (username or '').strip()
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        cur = conn.execute("UPDATE usuarios SET sesion_version = COALESCE(sesion_version, 0) + 1 WHERE LOWER(username) = LOWER(?)", (u,))
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        return int(conn.execute("SELECT sesion_version FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,)).fetchone()[0])
+
+
+DIAS_RETENCION_REGISTRO_INGRESOS = 90
+
+
+def registrar_intento_ingreso(username: str, ip: str, exito: bool, motivo: str = '') -> None:
+    """Guarda un intento de ingreso. Los registros de más de 90 días se borran al registrar un ingreso exitoso."""
+    ahora = time.time()
+    with get_connection() as conn:
+        conn.execute("INSERT INTO registro_ingresos (fecha, username, ip, exito, motivo) VALUES (?, ?, ?, ?, ?)",
+                     (ahora, (username or '').strip().lower()[:80], (ip or '')[:64], 1 if exito else 0, motivo))
+        if exito:
+            conn.execute("DELETE FROM registro_ingresos WHERE fecha < ?", (ahora - DIAS_RETENCION_REGISTRO_INGRESOS * 86400,))
+        conn.commit()
+
+
+def fallos_recientes_usuario(username: str, ventana_segundos: float) -> int:
+    """Claves incorrectas para ese nombre de usuario dentro de la ventana y después de su último ingreso exitoso."""
+    u = (username or '').strip().lower()[:80]
+    desde = time.time() - ventana_segundos
+    with get_connection() as conn:
+        row = conn.execute("""
+            SELECT COUNT(*) FROM registro_ingresos
+            WHERE username = ? AND exito = 0 AND motivo = 'clave_incorrecta' AND fecha > ?
+              AND fecha > COALESCE((SELECT MAX(fecha) FROM registro_ingresos WHERE username = ? AND exito = 1), 0)
+        """, (u, desde, u)).fetchone()
+    return int(row[0] or 0)
+
+
+def revocar_sesion(jti: str, expira: float) -> None:
+    """Cierra una sesión puntual (botón «Salir») hasta que habría vencido sola."""
+    if not jti:
+        return
+    with get_connection() as conn:
+        conn.execute("DELETE FROM sesiones_revocadas WHERE expira < ?", (time.time(),))
+        conn.execute("INSERT OR REPLACE INTO sesiones_revocadas (jti, expira) VALUES (?, ?)", (jti, float(expira or 0)))
+        conn.commit()
+
+
+def sesion_revocada(jti: str) -> bool:
+    if not jti:
+        return False
+    with get_connection() as conn:
+        return conn.execute("SELECT 1 FROM sesiones_revocadas WHERE jti = ?", (jti,)).fetchone() is not None
 
 def eliminar_usuario(username):
     u = (username or '').strip().lower()

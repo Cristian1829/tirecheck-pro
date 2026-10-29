@@ -126,9 +126,10 @@ def test_contrasenas_hasheadas_pbkdf2(test_db):
         assert len(rows) >= 2
         for username, stored_pwd in rows:
             assert stored_pwd.startswith("pbkdf2_sha256$"), f"La contraseña de {username} no usa formato PBKDF2"
+            # Formato 'pbkdf2_sha256$<iteraciones>$<salt>$<hash>'
             parts = stored_pwd.split('$')
-            assert len(parts) == 3
-            salt, hash_hex = parts[1], parts[2]
+            assert len(parts) == 4 and parts[1].isdigit()
+            salt, hash_hex = parts[2], parts[3]
             assert len(salt) == 32
             assert len(hash_hex) == 64
 
@@ -358,7 +359,7 @@ def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     # Crear usuario con vistas y múltiples clientes
     payload = {
         "username": "inspector_test",
-        "password": "password123",
+        "password": "Inspeccion-2026",  # «password123» ya no se acepta por ser de las más usadas
         "nombre_completo": "Inspector de Prueba",
         "rol": "inspector",
         "cliente_asignado": "TransCarga, Flota Norte",
@@ -698,21 +699,29 @@ def test_roles_jefatura_y_gerencia(test_db):
         conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username IN ('jefe1', 'gerencia1')")
         conn.commit()
     # 1. Login con jefe1 y gerencia1 creados automáticamente
+    # Con la clave de ejemplo «1234» entran, pero deben cambiarla antes de usar la app
+    def cambiar_clave(token, nueva):
+        r = client.post("/api/mi-cuenta/cambiar-clave", json={"clave_actual": "1234", "clave_nueva": nueva},
+                        headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 200, r.text
+        return r.json()["token"]
+
     res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "1234"})
     assert res_login_jefe.status_code == 200
-    token_jefe = res_login_jefe.json()["token"]
     u_jefe = res_login_jefe.json()["usuario"]
     assert u_jefe["rol"] == "jefatura"
     assert "basedatos" in u_jefe["vistas_permitidas"]
     assert "catalogos" in u_jefe["vistas_permitidas"]
+    assert u_jefe["debe_cambiar_clave"] is True
+    token_jefe = cambiar_clave(res_login_jefe.json()["token"], "Jefatura-Llantas-26")
 
     res_login_gere = client.post("/api/login", json={"username": "gerencia1", "password": "1234"})
     assert res_login_gere.status_code == 200
-    token_gere = res_login_gere.json()["token"]
     u_gere = res_login_gere.json()["usuario"]
     assert u_gere["rol"] == "gerencia"
     assert "basedatos" in u_gere["vistas_permitidas"]
     assert "kpis" in u_gere["vistas_permitidas"]
+    token_gere = cambiar_clave(res_login_gere.json()["token"], "Gerencia-Flotas-26")
 
     client_jefe = TestClient(server.app)
     client_jefe.headers.update({"Authorization": f"Bearer {token_jefe}"})

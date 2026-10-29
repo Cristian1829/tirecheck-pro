@@ -275,7 +275,7 @@
           <label class="block text-xs font-bold text-slate-700 mb-1">Usuario</label>
           <div class="relative">
             <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400 text-xs"></i>
-            <input type="text" id="login_username" placeholder="ej. admin o inspector1" class="w-full touch-target pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900">
+            <input type="text" id="login_username" placeholder="Tu usuario" class="w-full touch-target pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900">
           </div>
         </div>
 
@@ -303,6 +303,65 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- MODAL: MI CUENTA (cambiar mi contraseña; obligatorio si la clave la puso el administrador o no cumple las reglas) -->
+  <div id="modalMiCuenta" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="miCuentaTitulo">
+    <form id="formMiCuenta" onsubmit="guardarCambioClave(event)" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 id="miCuentaTitulo" class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-key text-amber-500"></i>
+          <span>Cambiar mi contraseña</span>
+        </h3>
+        <button type="button" id="btnCerrarMiCuenta" onclick="cerrarModalMiCuenta()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="miCuentaAvisoObligatorio" class="hidden p-2.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-800 font-semibold">
+        <i class="fa-solid fa-shield-halved mr-1"></i>
+        Por seguridad debes cambiar tu contraseña antes de continuar.
+      </div>
+      <input type="text" id="mi_cuenta_usuario" autocomplete="username" class="hidden" tabindex="-1" aria-hidden="true">
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label for="mi_cuenta_actual" class="font-bold text-slate-600 block mb-1">Contraseña actual</label>
+          <div class="relative">
+            <input type="password" id="mi_cuenta_actual" autocomplete="current-password" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold text-base sm:text-xs">
+            <button type="button" onclick="togglePasswordVisibility('mi_cuenta_actual', 'iconEyeMiCuenta1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar">
+              <i id="iconEyeMiCuenta1" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label for="mi_cuenta_nueva" class="font-bold text-slate-600 block mb-1">Contraseña nueva</label>
+          <div class="relative">
+            <input type="password" id="mi_cuenta_nueva" autocomplete="new-password" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold text-base sm:text-xs">
+            <button type="button" onclick="togglePasswordVisibility('mi_cuenta_nueva', 'iconEyeMiCuenta2')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar">
+              <i id="iconEyeMiCuenta2" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label for="mi_cuenta_confirmar" class="font-bold text-slate-600 block mb-1">Repite la contraseña nueva</label>
+          <div class="relative">
+            <input type="password" id="mi_cuenta_confirmar" autocomplete="new-password" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold text-base sm:text-xs">
+            <button type="button" onclick="togglePasswordVisibility('mi_cuenta_confirmar', 'iconEyeMiCuenta3')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar">
+              <i id="iconEyeMiCuenta3" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 leading-snug">Mínimo 8 caracteres. No uses claves comunes como 12345678 o admin123, ni tu nombre de usuario.</p>
+        <div id="mi_cuenta_error" role="alert" class="hidden text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-200 text-center"></div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" id="btnMiCuentaSecundario" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="submit" id="btnGuardarClave" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white rounded-xl font-bold">Guardar contraseña</button>
+        </div>
+      </div>
+      <div id="miCuentaOtrasSesiones" class="pt-3 border-t border-slate-100 text-xs space-y-2">
+        <p class="text-slate-500">¿Ingresaste desde un equipo que no es tuyo?</p>
+        <button type="button" onclick="cerrarOtrasSesiones()" class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i>Cerrar sesión en los demás equipos
+        </button>
+      </div>
+    </form>
   </div>
 
   <!-- ================= 1. TOP UTILITY BAR ================= -->
@@ -343,8 +402,8 @@
           </div>
       </div>
 
-      <!-- Lado Derecho: Estado Offline, Enlace a Servicios y Botón Salir -->
-      <div class="flex items-center space-x-2.5">
+      <!-- Lado Derecho: Estado Offline, Enlace a Servicios, Mi clave y Botón Salir -->
+      <div class="flex items-center space-x-1.5 sm:space-x-2.5">
           <a href="/servicios" target="_blank" title="Ver Servicios y Portafolio Comercial TireAnalyze Pro" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-semibold shadow-sm transition-all duration-200">
               <i class="fa-solid fa-briefcase text-xs text-cyan-400"></i>
               <span>Servicios</span>
@@ -353,6 +412,11 @@
           <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de Conexión y Cola Offline de Patio" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50">
               <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span id="lblTextoEstadoConexion">En línea · Flota Lista Offline</span>
+          </button>
+
+          <button id="btnMiCuenta" type="button" onclick="abrirModalMiCuenta(false)" title="Cambiar mi contraseña" aria-label="Cambiar mi contraseña" class="flex items-center space-x-2 px-2 sm:px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-slate-200 hover:text-white border border-slate-700/80 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
+              <i class="fa-solid fa-key text-xs text-amber-300"></i>
+              <span class="hidden sm:inline">Mi clave</span>
           </button>
 
           <button id="logoutBtn" type="button" onclick="cerrarSesionUsuario()" title="Cerrar Sesión" class="group flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-[#0c182c] hover:bg-red-950/40 text-slate-200 hover:text-red-300 border border-slate-700/80 hover:border-red-500/50 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
@@ -5546,7 +5610,7 @@
       <div class="space-y-3 text-xs">
         <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Contraseña (Mínimo 4 caracteres)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Contraseña inicial (mínimo 8 caracteres; el usuario la cambiará al ingresar)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="usr_rol" onchange="alCambiarRolUsuarioModal('nuevo')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
@@ -5767,7 +5831,7 @@
         <div>
           <label class="font-bold text-slate-600 block mb-1">Nueva Contraseña</label>
           <div class="relative">
-            <input type="password" id="reset_nueva_password" placeholder="Mínimo 4 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
+            <input type="password" id="reset_nueva_password" placeholder="Mínimo 8 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
             <button type="button" onclick="togglePasswordVisibility('reset_nueva_password', 'iconEyeReset1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
               <i id="iconEyeReset1" class="fa-solid fa-eye"></i>
             </button>

@@ -84,11 +84,17 @@
         localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
+        cerrarModalMiCuenta(true);
         mostrarToast('⚠️ Sesión expirada. Sus inspecciones pendientes se conservan en el dispositivo para sincronizar.', true);
         const modalLogin = document.getElementById('modalLogin');
         if (modalLogin) {
           modalLogin.classList.remove('hidden');
         }
+      }
+
+      // El servidor exige cambiar la clave (la puso el administrador o no cumple las reglas)
+      if (response && response.status === 403 && response.headers.get('X-Requiere-Cambio-Clave') === '1') {
+        abrirModalMiCuenta(true);
       }
 
       return response;
@@ -807,6 +813,10 @@
           document.getElementById('modalLogin').classList.add('hidden');
           // Sincronizar datos frescos del usuario en tiempo real con el servidor
           sincronizarUsuarioActualSesion();
+          if (usuarioActual && usuarioActual.debe_cambiar_clave) {
+            abrirModalMiCuenta(true);
+            return false;  // los datos se cargan cuando cambie la clave
+          }
           return true;
         } catch(e) {
           localStorage.removeItem('tireanalyze_usuario_sesion');
@@ -830,6 +840,7 @@
             localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
             actualizarUIUsuario();
             configurarClientesUsuarioEnInspeccion();
+            if (usuarioActual.debe_cambiar_clave) abrirModalMiCuenta(true);
           }
         } else if (res.status === 401) {
           cerrarSesionLocal();
@@ -867,12 +878,11 @@
           localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
           document.getElementById('modalLogin').classList.add('hidden');
           actualizarUIUsuario();
-          cargarCatalogos();
-          validarVida();
-          if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
-          descargarPaquetePatioOffline(false);
-          actualizarIndicadorConexionOffline();
-          mostrarToast(`¡Bienvenido, ${usuarioActual.nombre_completo}!`);
+          if (usuarioActual.debe_cambiar_clave) {
+            abrirModalMiCuenta(true);  // los datos se cargan cuando cambie la clave
+            return;
+          }
+          cargarDatosTrasIngreso();
         } else {
           errBox.textContent = d.detail || 'Usuario o contraseña incorrectos.';
           errBox.classList.remove('hidden');
@@ -883,18 +893,135 @@
       }
     }
 
+    function cargarDatosTrasIngreso() {
+      cargarCatalogos();
+      validarVida();
+      if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
+      descargarPaquetePatioOffline(false);
+      actualizarIndicadorConexionOffline();
+      mostrarToast(`¡Bienvenido, ${usuarioActual.nombre_completo}!`);
+    }
+
     async function cerrarSesionUsuario() {
       if (confirm('¿Deseas cerrar tu sesión actual?')) {
+        // El token va en la cabecera para que el servidor cierre esta sesión aunque alguien lo haya copiado
+        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
         try {
-          await _originalFetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+          await _originalFetch('/api/logout', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
         } catch(e) {}
         localStorage.removeItem('tireanalyze_token');
         localStorage.removeItem('tirecheck_token');
         localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
+        cerrarModalMiCuenta(true);
         document.getElementById('modalLogin').classList.remove('hidden');
         mostrarToast('Sesión cerrada correctamente');
+      }
+    }
+
+    // ==========================================
+    // MI CUENTA: CAMBIAR MI CONTRASEÑA
+    // ==========================================
+    let cambioClaveObligatorio = false;
+
+    function guardarSesionNueva(token, usuario) {
+      // El servidor entrega una sesión nueva al cambiar la clave: las anteriores quedan cerradas
+      if (token) {
+        localStorage.setItem('tireanalyze_token', token);
+        localStorage.setItem('tirecheck_token', token);
+      }
+      if (usuario) {
+        usuarioActual = usuario;
+        localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
+        localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
+      }
+    }
+
+    function abrirModalMiCuenta(obligatorio) {
+      const modal = document.getElementById('modalMiCuenta');
+      if (!modal || !usuarioActual) return;
+      const yaAbierto = !modal.classList.contains('hidden');
+      cambioClaveObligatorio = !!obligatorio || (yaAbierto && cambioClaveObligatorio);
+      if (!yaAbierto) {
+        ['mi_cuenta_actual', 'mi_cuenta_nueva', 'mi_cuenta_confirmar'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('mi_cuenta_error').classList.add('hidden');
+      }
+      document.getElementById('mi_cuenta_usuario').value = usuarioActual.username || '';
+      document.getElementById('miCuentaAvisoObligatorio').classList.toggle('hidden', !cambioClaveObligatorio);
+      document.getElementById('miCuentaOtrasSesiones').classList.toggle('hidden', cambioClaveObligatorio);
+      document.getElementById('btnCerrarMiCuenta').classList.toggle('hidden', cambioClaveObligatorio);
+      const secundario = document.getElementById('btnMiCuentaSecundario');
+      secundario.textContent = cambioClaveObligatorio ? 'Salir' : 'Cancelar';
+      secundario.onclick = cambioClaveObligatorio ? cerrarSesionUsuario : () => cerrarModalMiCuenta();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (!yaAbierto) setTimeout(() => document.getElementById('mi_cuenta_actual').focus(), 50);
+    }
+
+    function cerrarModalMiCuenta(forzar) {
+      if (cambioClaveObligatorio && !forzar) return;  // si es obligatorio solo se sale cambiando la clave o cerrando sesión
+      const modal = document.getElementById('modalMiCuenta');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      cambioClaveObligatorio = false;
+    }
+
+    async function guardarCambioClave(ev) {
+      if (ev) ev.preventDefault();
+      const actual = document.getElementById('mi_cuenta_actual').value.trim();
+      const nueva = document.getElementById('mi_cuenta_nueva').value.trim();
+      const confirmar = document.getElementById('mi_cuenta_confirmar').value.trim();
+      const errBox = document.getElementById('mi_cuenta_error');
+      const mostrarError = (msg) => { errBox.textContent = msg; errBox.classList.remove('hidden'); };
+      errBox.classList.add('hidden');
+
+      if (!actual || !nueva) return mostrarError('Escribe tu contraseña actual y la nueva.');
+      if (nueva.length < 8) return mostrarError('La contraseña nueva debe tener al menos 8 caracteres.');
+      if (nueva !== confirmar) return mostrarError('Las contraseñas nuevas no coinciden.');
+
+      const btn = document.getElementById('btnGuardarClave');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/mi-cuenta/cambiar-clave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clave_actual: actual, clave_nueva: nueva })
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) return mostrarError(d.detail || 'No se pudo cambiar la contraseña.');
+        const eraObligatorio = cambioClaveObligatorio;
+        guardarSesionNueva(d.token, d.usuario);
+        cerrarModalMiCuenta(true);
+        actualizarUIUsuario();
+        mostrarToast(`🔑 ${d.mensaje || 'Contraseña actualizada.'}`);
+        if (eraObligatorio) cargarDatosTrasIngreso();
+      } catch (e) {
+        mostrarError('Error de conexión con el servidor.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function cerrarOtrasSesiones() {
+      if (!confirm('¿Cerrar tu sesión en todos los demás equipos? Este equipo seguirá conectado.')) return;
+      try {
+        const res = await fetch('/api/mi-cuenta/cerrar-otras-sesiones', { method: 'POST' });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+          guardarSesionNueva(d.token, null);
+          cerrarModalMiCuenta();
+          mostrarToast(`✅ ${d.mensaje}`);
+        } else {
+          mostrarToast(d.detail || 'No se pudieron cerrar las sesiones', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión con el servidor', true);
       }
     }
 

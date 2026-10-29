@@ -21,6 +21,12 @@ def hoy_fijo(monkeypatch):
     monkeypatch.setattr(database, "_hoy_bogota", lambda: date(2027, 12, 31))
 
 
+@pytest.fixture(autouse=True)
+def cifrado_rapido(monkeypatch):
+    """Producción cifra las claves con 600.000 iteraciones (~0,4 s por clave); en pruebas bastan 1.000."""
+    monkeypatch.setattr(database, "PBKDF2_ITERACIONES", 1_000)
+
+
 @pytest.fixture
 def test_db():
     """

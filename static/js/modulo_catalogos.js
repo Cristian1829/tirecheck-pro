@@ -2457,6 +2457,11 @@
               <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
               <td class="p-2.5 text-center">
                 ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
+                ${u.debe_cambiar_clave ? '<div class="mt-1"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200" title="Debe cambiar su contraseña en el próximo ingreso">Debe cambiar clave</span></div>' : ''}
+                <div class="mt-1 text-[10px] text-slate-500 whitespace-nowrap" title="Último ingreso">
+                  ${u.ultimo_ingreso ? `<i class="fa-solid fa-right-to-bracket mr-0.5"></i>${escapeHtml(u.ultimo_ingreso)}` : 'Sin ingresos registrados'}
+                </div>
+                ${Number(u.fallos_24h) > 0 ? `<div class="text-[10px] font-bold text-rose-600 whitespace-nowrap" title="Contraseña incorrecta en las últimas 24 horas">${Number(u.fallos_24h)} intento(s) fallido(s) en 24 h</div>` : ''}
               </td>
               <td class="p-2.5 text-center">
                 <div class="flex items-center justify-center space-x-1">
@@ -2841,8 +2846,8 @@
         alert('Por favor completa todos los campos del usuario.');
         return;
       }
-      if (p.length < 4) {
-        alert('La contraseña debe tener al menos 4 caracteres.');
+      if (p.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres.');
         return;
       }
       const rol = document.getElementById('usr_rol').value;
@@ -3068,9 +3073,9 @@
       const errBox = document.getElementById('reset_password_error');
       if (errBox) errBox.classList.add('hidden');
 
-      if (!p1 || p1.length < 4) {
+      if (!p1 || p1.length < 8) {
         if (errBox) {
-          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+          errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
           errBox.classList.remove('hidden');
         }
         return;
@@ -3092,8 +3097,10 @@
         });
         const d = await res.json();
         if (res.ok) {
+          const usuarioReset = targetResetUser;
           cerrarModalResetPassword();
-          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
+          mostrarToast(`🔑 Contraseña restablecida para "${usuarioReset}". Se cerraron sus sesiones y deberá cambiarla al ingresar.`);
+          cargarUsuariosCat();
         } else {
           if (errBox) {
             errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
