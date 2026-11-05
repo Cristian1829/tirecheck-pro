@@ -359,3 +359,27 @@ def test_precio_lista_exige_sesion():
     from fastapi.testclient import TestClient
     import server
     assert TestClient(server.app).get("/api/precio-lista?cliente=X").status_code == 401
+
+
+# ================= DAR DE ALTA EN BODEGA: LISTAS Y BODEGA ELEGIDA =================
+def test_alta_en_bodega_usa_listas_desplegables():
+    html = _leer("templates/index.html")
+    for campo in ("alta_marca", "alta_diseno", "alta_dimension", "alta_banda_reen"):
+        assert f'<select id="{campo}"' in html, campo
+        assert f'<input type="text" id="{campo}"' not in html, campo
+    prof = re.search(r'<input[^>]*id="alta_prof_inicial"[^>]*>', html).group(0)
+    assert 'value="18.0"' not in prof
+    js = _leer("static/js/modulo_bodegas.js")
+    assert "|| 18.0" not in js  # la profundidad no se inventa
+    assert "bodega_inicial:" not in js  # el servidor espera ubicacion_bodega
+
+
+def test_alta_respeta_la_bodega_elegida_y_los_datos(pro):
+    for bodega in ("BODEGA_2_RECAMBIO", "BODEGA_4_REENCAUCHADAS"):
+        serial = f"ALTA-{bodega[7]}"
+        r = pro.post("/api/bodegas/alta", json={
+            "cliente": CLI_PRO, "numero_interno": serial, "ubicacion_bodega": bodega, "marca": "MICHELIN", "diseno": "XZE",
+            "dimension": "295/80R22.5", "vida_actual": "R1", "banda_reen": "BDM", "prof_inicial": 14.5, "prof_actual_min": 14.5, "costo_compra": 987653,
+        })
+        assert r.status_code == 200, r.text
+        assert _ubicacion(serial)[0] == bodega
