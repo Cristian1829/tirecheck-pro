@@ -516,50 +516,132 @@
     // RENDERERS SUB-PESTAÑA 1 (KPI 01 AL 04)
     // ==========================================
 
-    // KPI 01: Cumplimiento de Inspección vs Parque
+    // KPI 01: Cumplimiento de Inspección vs Parque, por mes, por año o en todo el historial
+    let datosKpi01 = null;
+
     function renderizarKpi01(d) {
       if (!d) return;
-      const sinPadron = d.porcentaje_cumplimiento === null || d.porcentaje_cumplimiento === undefined;
-      const pct = sinPadron ? 0 : Math.min(100, Math.max(0, d.porcentaje_cumplimiento));
+      datosKpi01 = d;
+      const sel = document.getElementById('kpi01_periodo');
+      if (sel) {
+        const previo = sel.value;
+        const meses = [...(d.por_mes || [])].reverse();
+        const anios = [...(d.por_anio || [])].reverse();
+        sel.innerHTML =
+          (meses.length ? `<optgroup label="Por mes">${meses.map(m => `<option value="mes:${escapeHtml(m.clave)}">${escapeHtml(m.etiqueta)}${m.clave === d.periodo_actual ? ' (mes actual)' : ''}</option>`).join('')}</optgroup>` : '')
+          + (anios.length ? `<optgroup label="Por año">${anios.map(a => `<option value="anio:${escapeHtml(a.clave)}">Año ${escapeHtml(a.clave)}</option>`).join('')}</optgroup>` : '')
+          + '<option value="historial">Todo el historial</option>';
+        const opciones = [...sel.options].map(o => o.value);
+        sel.value = opciones.includes(previo) ? previo : (d.periodo_actual && opciones.includes(`mes:${d.periodo_actual}`) ? `mes:${d.periodo_actual}` : 'historial');
+      }
+      renderChartKpi01Meses(d);
+      aplicarPeriodoKpi01();
+    }
+
+    function periodoSeleccionadoKpi01() {
+      const d = datosKpi01;
+      const valor = document.getElementById('kpi01_periodo')?.value || 'historial';
+      if (!d || valor === 'historial') {
+        return d ? {
+          etiqueta: 'todo el historial', inspeccionados: d.vehiculos_inspeccionados, total: d.total_padron_activo,
+          pct: d.porcentaje_cumplimiento, pendientes: d.placas_pendientes || []
+        } : null;
+      }
+      const [tipo, clave] = valor.split(':');
+      const lista = tipo === 'anio' ? (d.por_anio || []) : (d.por_mes || []);
+      const p = lista.find(x => x.clave === clave);
+      if (!p) return null;
+      // Los pendientes del periodo llegan como placas: se completan con los datos del parque
+      const pendientes = (p.pendientes || []).map(placa => ({ placa, ...((d.parque || {})[placa] || {}) }));
+      return { etiqueta: tipo === 'anio' ? `el año ${clave}` : p.etiqueta, inspeccionados: p.inspeccionados, total: p.total, pct: p.pct, pendientes };
+    }
+
+    function aplicarPeriodoKpi01() {
+      const d = datosKpi01;
+      const per = periodoSeleccionadoKpi01();
+      if (!d || !per) return;
+      const sinPadron = per.pct === null || per.pct === undefined;
+      const pct = sinPadron ? 0 : Math.min(100, Math.max(0, per.pct));
       const elPct = document.getElementById('kpi01_cumplimiento_pct');
       const elAudPad = document.getElementById('kpi01_auditados_padron');
       const elBar = document.getElementById('kpi01_barra_progreso');
       const elBtnTxt = document.getElementById('btnKpi01Texto');
+      const elTexto = document.getElementById('kpi01_texto_periodo');
+      const elSub = document.getElementById('kpi01_modal_subtitulo');
 
+      if (elTexto) elTexto.textContent = `Inspeccionados en ${per.etiqueta} / Flota`;
+      if (elSub) elSub.textContent = `Unidades activas sin inspección en ${per.etiqueta}`;
       if (elPct) {
         elPct.textContent = sinPadron ? 'Sin padrón' : `${formatCO_Decimal(pct, 1)}%`;
         // Sin padrón cargado el parque son los vehículos ya inspeccionados: se avisa
-        elPct.title = d.fuente_padron === 'vehiculos_inspeccionados'
-          ? 'Sin padrón cargado: el parque son los vehículos ya inspeccionados alguna vez (puede faltar alguno)'
-          : (sinPadron ? 'No hay padrón ni vehículos inspeccionados para medir el cumplimiento' : 'Contra el padrón de vehículos del cliente');
+        elPct.title = d.parque_cargado ? 'Contra el parque automotor cargado por el administrador'
+          : d.fuente_padron === 'vehiculos_inspeccionados'
+            ? 'Sin padrón cargado: el parque son los vehículos ya inspeccionados alguna vez (puede faltar alguno)'
+            : (sinPadron ? 'No hay padrón ni vehículos inspeccionados para medir el cumplimiento' : 'Contra el padrón de vehículos del cliente');
       }
-      if (elAudPad) elAudPad.textContent = `${formatCO_Miles(d.vehiculos_inspeccionados)} / ${formatCO_Miles(d.total_padron_activo)}`;
+      if (elAudPad) elAudPad.textContent = `${formatCO_Miles(per.inspeccionados)} / ${formatCO_Miles(per.total)}`;
       if (elBar) elBar.style.width = `${pct}%`;
-      const numPend = (d.placas_pendientes || []).length;
-      if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${numPend})`;
-      if (d.parque_cargado && elPct) elPct.title = 'Contra el parque automotor cargado por el administrador';
-      pendientesKpi01 = d.placas_pendientes || [];
+      if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${per.pendientes.length})`;
+      pendientesKpi01 = per.pendientes;
       const btnExp = document.getElementById('btnExportarPendientesKpi01');
       if (btnExp) btnExp.classList.toggle('hidden', !pendientesKpi01.length);
 
-      // Llenar tabla del modal (con parque cargado salen todos los que faltan)
+      // Tabla del modal (con parque cargado salen todos los que faltan)
       const tbody = document.getElementById('tbodyModalPlacasPendientes');
       if (tbody) {
-        if (!d.placas_pendientes || d.placas_pendientes.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">¡Excelente! El 100% de los vehículos del padrón han sido inspeccionados.</td></tr>';
+        if (!per.pendientes.length) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">¡Excelente! Todos los vehículos de la flota tienen inspección en ${escapeHtml(per.etiqueta)}.</td></tr>`;
         } else {
-          const lista = d.parque_cargado ? d.placas_pendientes : d.placas_pendientes.slice(0, 25);
+          const lista = d.parque_cargado ? per.pendientes : per.pendientes.slice(0, 25);
           tbody.innerHTML = lista.map(p => `
             <tr class="hover:bg-slate-50">
               <td class="p-2.5 font-black text-slate-900 font-mono whitespace-nowrap">${escapeHtml(p.placa || '-')}</td>
               <td class="p-2.5 text-slate-600">${escapeHtml(p.subcliente || '-')}</td>
               <td class="p-2.5 text-slate-600">${escapeHtml(p.tipologia || '-')}</td>
               <td class="p-2.5 text-slate-600">${escapeHtml([p.fabricante, p.linea].filter(Boolean).join(' ') || '-')}</td>
-              <td class="p-2.5 text-center whitespace-nowrap">${p.ultima_inspeccion ? fmtFecha(p.ultima_inspeccion) : (d.parque_cargado ? 'Nunca' : '-')}</td>
+              <td class="p-2.5 text-center whitespace-nowrap">${p.ultima_inspeccion ? fmtFecha(p.ultima_inspeccion) : 'Nunca'}</td>
             </tr>
           `).join('');
         }
       }
+    }
+
+    // Últimos 12 meses: vehículos inspeccionados cada mes frente al total de la flota
+    function renderChartKpi01Meses(d) {
+      destruirChartSuite('kpi01_meses');
+      const ctx = document.getElementById('canvasKpi01_meses');
+      const meses = (d.por_mes || []).slice(-12);
+      const anio = (d.por_anio || []).slice(-1)[0];
+      const elAnio = document.getElementById('kpi01_texto_anio');
+      if (elAnio) elAnio.textContent = anio ? `Año ${anio.clave}: ${formatCO_Miles(anio.inspeccionados)} de ${formatCO_Miles(anio.total)} vehículos${anio.pct != null ? ` (${formatCO_Decimal(anio.pct, 1)}%)` : ''}` : '';
+      if (!ctx || typeof Chart === 'undefined' || !meses.length) return;
+      instanciasChartsSuite['kpi01_meses'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: meses.map(m => m.etiqueta),
+          datasets: [
+            { type: 'bar', label: 'Vehículos inspeccionados', data: meses.map(m => m.inspeccionados), backgroundColor: 'rgba(52, 211, 153, 0.85)', borderRadius: 6, order: 2 },
+            { type: 'line', label: 'Total flota', data: meses.map(m => m.total), borderColor: '#a5b4fc', backgroundColor: '#a5b4fc', borderDash: [5, 4], pointRadius: 2, tension: 0, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#e2e8f0', font: { size: 10 }, boxWidth: 10 } },
+            datalabels: { display: false },
+            tooltip: {
+              callbacks: {
+                label: c => c.dataset.type === 'line' ? `Total flota: ${formatCO_Miles(c.raw)}`
+                  : `Inspeccionados: ${formatCO_Miles(c.raw)} de ${formatCO_Miles(meses[c.dataIndex].total)}${meses[c.dataIndex].pct != null ? ` (${formatCO_Decimal(meses[c.dataIndex].pct, 1)}%)` : ''}`
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { color: '#cbd5e1', font: { size: 10 } }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { color: '#cbd5e1', font: { size: 10 }, precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } }
+          }
+        }
+      });
     }
 
     let pendientesKpi01 = [];
@@ -807,7 +889,7 @@
           data: {
             labels: dsTip.labels || [],
             datasets: [{
-              label: 'Vehículos',
+              label: 'Llantas',
               data: dsTip.valores || [],
               backgroundColor: '#6366f1',
               borderRadius: 6

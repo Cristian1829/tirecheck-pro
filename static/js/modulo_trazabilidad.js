@@ -426,6 +426,15 @@
       return /^r\d+$/.test(v) || /^\d+r$/.test(v) || ['reenc', 'renov'].some(token => v.includes(token));
     }
 
+    // Reencauchada por la vida o por tener banda registrada (mismo criterio de los KPIs)
+    function esReencauchadaLlantaComp(llanta) {
+      const banda = String(llanta.banda_reen || '').trim().toLowerCase();
+      return esLlantaReencauchadaComp(llanta.vida) || (banda !== '' && !['nan', 'none', '-', 'n/a'].includes(banda));
+    }
+
+    let composicionFiltrada = [];
+    let llantasReglaOro1 = [];
+
     async function cargarComposicionFlotaWeb(forzarRecarga = false) {
       if (!forzarRecarga && cacheComposicionLlantas && cacheComposicionLlantas.length > 0) {
         renderizarComposicionFlotaWeb();
@@ -441,7 +450,7 @@
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       try {
-        const res = await fetch('/api/kpis-llantas', { headers });
+        const res = await fetch('/api/kpis-llantas?foto=actual', { headers });
         if (res.ok) {
           const raw = await res.json();
           cacheComposicionLlantas = (Array.isArray(raw) ? raw : []).map(item => ({
@@ -453,7 +462,8 @@
             cliente: normalizarTextoComp(item.cliente, 'SIN CLIENTE'),
             subcliente: normalizarTextoComp(item.subcliente, 'SIN SEDE'),
             vida: normalizarTextoComp(item.vida, 'ORIGINAL'),
-            tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase()
+            tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase(),
+            es_reencauche: esReencauchadaLlantaComp(item)
           }));
 
           poblarFiltrosComposicionCascada();
@@ -607,7 +617,7 @@
         }
 
         if (vida !== 'TODAS') {
-          const esReenc = esLlantaReencauchadaComp(llanta.vida);
+          const esReenc = llanta.es_reencauche;
           if (vida === 'ORIGINAL' && esReenc) return false;
           if (vida === 'REENCAUCHE' && !esReenc) return false;
         }
@@ -630,8 +640,9 @@
       const mapaDisenos = {};
       const mapaCombinaciones = {};
 
+      composicionFiltrada = dataFiltrada;
       dataFiltrada.forEach(llanta => {
-        const esReenc = esLlantaReencauchadaComp(llanta.vida);
+        const esReenc = llanta.es_reencauche;
         if (esReenc) cntReenc++; else cntOrig++;
 
         mapaMarcas[llanta.marca] = (mapaMarcas[llanta.marca] || 0) + 1;
@@ -730,7 +741,14 @@
       // Regla de Oro 1: Cero Reencauches en Dirección
       const llantasDireccionales = dataFiltrada.filter(x => x.tipo_eje === 'direccional');
       const totalDir = llantasDireccionales.length;
-      const reencEnDir = llantasDireccionales.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      // Las tipologías autorizadas a llevar reencauche en dirección no incumplen la regla
+      llantasReglaOro1 = llantasDireccionales.filter(x => x.es_reencauche && !x.permite_reencauche_direccion);
+      const reencEnDir = llantasReglaOro1.length;
+      const vehiculosR1 = new Set(llantasReglaOro1.map(x => x.placa)).size;
+      const btnR1 = document.getElementById('btnReglaOro1Vehiculos');
+      if (btnR1) btnR1.classList.toggle('hidden', reencEnDir === 0);
+      const txtBtnR1 = document.getElementById('txtBtnReglaOro1');
+      if (txtBtnR1) txtBtnR1.textContent = `Ver ${vehiculosR1} vehículo(s)`;
       const pctReencDir = totalDir > 0 ? fmtDec(((reencEnDir / totalDir) * 100), 1) : '0,0';
 
       const cardR1 = document.getElementById('card_regla_oro_1');
@@ -750,7 +768,7 @@
         }
         if (descR1) {
           descR1.className = 'text-[11px] text-rose-800 mt-0.5 leading-snug font-medium';
-          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0,0%.`;
+          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%) en ${vehiculosR1} vehículo(s). El estándar exige estrictamente 0,0%.`;
         }
       } else {
         if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-300 shadow-sm';
@@ -770,11 +788,11 @@
 
       // Regla de Oro 2: Adopción Renovado Remolques y Tracción
       const llantasLibres = dataFiltrada.filter(x => x.tipo_eje === 'libre');
-      const reencLibres = llantasLibres.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const reencLibres = llantasLibres.filter(x => x.es_reencauche).length;
       const pctLibres = llantasLibres.length > 0 ? fmtDec(((reencLibres / llantasLibres.length) * 100), 1) : '0,0';
 
       const llantasTrac = dataFiltrada.filter(x => x.tipo_eje === 'traccion');
-      const reencTrac = llantasTrac.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const reencTrac = llantasTrac.filter(x => x.es_reencauche).length;
       const pctTrac = llantasTrac.length > 0 ? fmtDec(((reencTrac / llantasTrac.length) * 100), 1) : '0,0';
 
       const badgeR2 = document.getElementById('badge_regla_oro_2');
@@ -1270,40 +1288,88 @@
       }
     }
 
-    function exportarComposicionExcel() {
-      const tbody = document.getElementById('tbody_composicion_flota');
+    // Ventana con los vehículos que incumplen la regla de oro 1, agrupados por placa
+    function abrirModalReglaOro1() {
+      const tbody = document.getElementById('tbodyReglaOro1');
       if (!tbody) return;
+      const lista = [...llantasReglaOro1].sort((a, b) =>
+        String(a.placa).localeCompare(String(b.placa)) || (Number(a.posicion) || 0) - (Number(b.posicion) || 0));
+      const vehiculos = new Set(lista.map(x => x.placa)).size;
+      const sub = document.getElementById('lblReglaOro1Sub');
+      if (sub) sub.textContent = `${lista.length} llanta(s) reencauchada(s) en eje direccional en ${vehiculos} vehículo(s)`;
+      let placaAnterior = null;
+      tbody.innerHTML = lista.length ? lista.map(l => {
+        const nueva = l.placa !== placaAnterior;
+        placaAnterior = l.placa;
+        return `
+          <tr class="hover:bg-rose-50/50 ${nueva ? 'border-t-2 border-rose-100' : ''}">
+            <td class="p-2.5 font-black font-mono text-slate-900">${nueva ? escapeHtml(l.placa || '-') : ''}</td>
+            <td class="p-2.5 text-slate-600">${nueva ? escapeHtml([l.cliente, l.subcliente].filter(Boolean).join(' / ')) : ''}</td>
+            <td class="p-2.5 text-slate-600">${nueva ? escapeHtml(l.tipologia || '-') : ''}</td>
+            <td class="p-2.5 text-center font-bold">${escapeHtml(l.posicion)}</td>
+            <td class="p-2.5 font-mono">${escapeHtml(l.numero_interno || '-')}</td>
+            <td class="p-2.5">${escapeHtml(l.marca)} / ${escapeHtml(l.diseno)}</td>
+            <td class="p-2.5 font-bold text-rose-700">${escapeHtml(l.vida)}${l.banda_reen ? ' / ' + escapeHtml(l.banda_reen) : ''}</td>
+            <td class="p-2.5 whitespace-nowrap">${l.fecha_ult_insp ? fmtFecha(String(l.fecha_ult_insp).slice(0, 10)) : '-'}</td>
+          </tr>`;
+      }).join('') : '<tr><td colspan="8" class="p-4 text-center text-slate-400">No hay llantas reencauchadas en eje direccional</td></tr>';
+      const m = document.getElementById('modalReglaOro1');
+      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
 
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      if (rows.length === 0 || rows[0].innerText.includes('No se encontraron') || rows[0].innerText.includes('Cargando')) {
-        mostrarToast('No hay datos disponibles en la matriz para exportar', true);
+    function cerrarModalReglaOro1() {
+      const m = document.getElementById('modalReglaOro1');
+      if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    // Excel organizado (Resumen, Matriz con subtotales por marca, Por marca, Por dimensión, Inventario y Regla de oro 1)
+    async function exportarComposicionExcel() {
+      if (!composicionFiltrada.length) {
+        mostrarToast('No hay llantas con los filtros seleccionados para exportar', true);
         return;
       }
-
-      let csv = '\uFEFF';
-      csv += 'Marca;Diseño;Dimensión;Original;Reencauche;Total Llantas;% Part. Flota;Prof. Promedio\r\n';
-
-      rows.forEach(tr => {
-        const cols = Array.from(tr.querySelectorAll('td')).map(td => {
-          let text = td.innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
-          return `"${text.replace(/"/g, '""')}"`;
-        });
-        if (cols.length === 8) {
-          csv += cols.join(';') + '\r\n';
-        }
+      const vista = document.getElementById('vista-composicion');
+      const txt = id => (document.getElementById(id)?.textContent || '').trim().replace(/\s+/g, ' ');
+      const filtros = {};
+      vista?.querySelectorAll('select[id^="filtro_comp_"]').forEach(sel => {
+        const etiqueta = (sel.closest('div')?.querySelector('label')?.textContent || sel.id).replace(':', '').trim();
+        filtros[etiqueta] = sel.options[sel.selectedIndex]?.text || 'Todos';
       });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const now = new Date();
-      const fechaStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-      link.setAttribute('href', url);
-      link.setAttribute('download', `Composicion_Flota_TireAnalyze_${fechaStr}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      mostrarToast('✅ Matriz de Composición de Flota exportada exitosamente');
+      const tarjetas = [
+        { etiqueta: '% Reencauche', valor: txt('comp_kpi_pct_reenc'), detalle: txt('comp_kpi_cnt_reenc') },
+        { etiqueta: '% Original (nueva)', valor: txt('comp_kpi_pct_orig'), detalle: txt('comp_kpi_cnt_orig') },
+        { etiqueta: 'Vehículos', valor: txt('comp_kpi_total_vehiculos'), detalle: '' },
+        { etiqueta: 'Marca principal', valor: txt('comp_kpi_top_marca'), detalle: txt('comp_kpi_sub_marca') },
+        { etiqueta: 'Dimensión principal', valor: txt('comp_kpi_top_dim'), detalle: txt('comp_kpi_sub_dim') },
+        { etiqueta: 'Diseño principal', valor: txt('comp_kpi_top_diseno'), detalle: txt('comp_kpi_sub_diseno') }
+      ];
+      const reglas = [1, 2, 3, 4].map(n => ({
+        titulo: txt(`txt_regla_oro_${n}_titulo`), estado: txt(`badge_regla_oro_${n}`), detalle: txt(`txt_regla_oro_${n}_desc`)
+      }));
+      const campos = ['cliente', 'subcliente', 'placa', 'posicion', 'tipo_eje', 'tipologia', 'numero_interno', 'marca', 'diseno', 'dimension',
+        'vida', 'banda_reen', 'prof_actual_min', 'fecha_ult_insp', 'es_reencauche', 'permite_reencauche_direccion'];
+      const llantas = composicionFiltrada.map(l => Object.fromEntries(campos.map(c => [c, l[c] ?? ''])));
+      try {
+        const res = await fetch('/api/composicion/exportar-excel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filtros, tarjetas, reglas, llantas })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'TireAnalyze_Composicion_Flota.xlsx';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast('✅ Excel de composición generado');
+      } catch (e) {
+        console.error('Error exportando Excel de composición:', e);
+        mostrarToast(`No se pudo generar el Excel: ${e.message}`, true);
+      }
     }
 

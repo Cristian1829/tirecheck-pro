@@ -2154,8 +2154,14 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-col">
+              <label for="kpi01_periodo" class="text-[10px] uppercase font-bold text-slate-300">Periodo</label>
+              <select id="kpi01_periodo" onchange="aplicarPeriodoKpi01()" class="mt-0.5 px-2.5 py-1.5 bg-white/10 border border-white/20 rounded-xl text-xs font-bold text-white [&>option]:text-slate-900 [&>optgroup]:text-slate-900">
+                <option value="">Cargando...</option>
+              </select>
+            </div>
             <div class="text-right">
-              <span class="text-xs text-slate-400 block font-medium">Auditados / Padrón</span>
+              <span id="kpi01_texto_periodo" class="text-xs text-slate-400 block font-medium">Inspeccionados / Flota</span>
               <span id="kpi01_auditados_padron" class="text-lg font-black text-white font-mono">0 / 0</span>
             </div>
             <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-center">
@@ -2174,6 +2180,15 @@
           <div class="w-full bg-slate-800/80 rounded-full h-3 p-0.5 border border-slate-700/60 overflow-hidden">
             <div id="kpi01_barra_progreso" class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 transition-all duration-700" style="width: 0%;"></div>
           </div>
+        </div>
+
+        <!-- Vehículos inspeccionados mes a mes frente al total de la flota -->
+        <div class="mt-4 bg-white/5 border border-white/10 rounded-2xl p-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[11px] font-bold text-slate-200">Vehículos inspeccionados por mes vs. total de la flota</span>
+            <span id="kpi01_texto_anio" class="text-[11px] font-bold text-emerald-300"></span>
+          </div>
+          <div class="relative h-40"><canvas id="canvasKpi01_meses"></canvas></div>
         </div>
       </article>
 
@@ -2895,7 +2910,7 @@
             <i class="fa-solid fa-list-check text-indigo-400 text-lg"></i>
             <div>
               <h3 class="text-sm font-black">Vehículos del Padrón Pendientes de Inspección</h3>
-              <p class="text-[11px] text-slate-300">Unidades activas sin corte registrado en el mes consultado</p>
+              <p id="kpi01_modal_subtitulo" class="text-[11px] text-slate-300">Unidades activas sin inspección en el periodo consultado</p>
             </div>
           </div>
           <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
@@ -3114,7 +3129,7 @@
           </button>
           <button type="button" onclick="exportarComposicionExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer">
             <i class="fa-solid fa-file-excel"></i>
-            <span>Exportar Matriz Excel</span>
+            <span>Exportar Excel</span>
           </button>
           <button type="button" id="btnExportarComposicionPdf" onclick="exportarComposicionPdf()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-wait">
             <i class="fa-solid fa-file-pdf"></i>
@@ -3135,6 +3150,9 @@
           </div>
           <div class="text-xs font-bold text-slate-800" id="txt_regla_oro_1_titulo">Cero Reencauches en Dirección</div>
           <p class="text-[11px] text-slate-500 mt-0.5 leading-snug" id="txt_regla_oro_1_desc">El estándar técnico exige estrictamente 0.0% de llantas reencauchadas en el eje directriz.</p>
+          <button type="button" id="btnReglaOro1Vehiculos" onclick="abrirModalReglaOro1()" class="hidden mt-2 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition-all cursor-pointer">
+            <i class="fa-solid fa-truck mr-1"></i><span id="txtBtnReglaOro1">Ver vehículos</span>
+          </button>
         </div>
 
         <!-- Regla 2: Adopción Renovado Tracción y Remolques -->
@@ -6739,6 +6757,46 @@
   <!-- ============================================================== -->
   <!-- MÓDULOS JAVASCRIPT MODULARES (OPTIMIZADOS PARA CACHÉ Y PATIO)   -->
   <!-- ============================================================== -->
+    <!-- Vehículos que incumplen la regla de oro 1 (reencauche en eje direccional) -->
+    <div id="modalReglaOro1" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-rose-700 to-rose-900 text-white flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-black">Regla de oro 1: vehículos con reencauche en dirección</h3>
+            <p id="lblReglaOro1Sub" class="text-[11px] text-rose-100">Llantas reencauchadas en eje direccional</p>
+          </div>
+          <button type="button" onclick="cerrarModalReglaOro1()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scroll flex-1">
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5">Placa</th>
+                  <th class="p-2.5">Cliente / Sede</th>
+                  <th class="p-2.5">Tipología</th>
+                  <th class="p-2.5 text-center">Pos.</th>
+                  <th class="p-2.5">N° interno</th>
+                  <th class="p-2.5">Marca / Diseño</th>
+                  <th class="p-2.5">Vida / Banda</th>
+                  <th class="p-2.5 whitespace-nowrap">Última inspección</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyReglaOro1" class="divide-y divide-slate-100 font-medium"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="exportarComposicionExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all">
+            <i class="fa-solid fa-file-excel mr-1"></i>Exportar a Excel
+          </button>
+          <button type="button" onclick="cerrarModalReglaOro1()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
   <script src="/static/js/app_core.js"></script>
   <script src="/static/js/modulo_basedatos.js"></script>
   <script src="/static/js/modulo_kpis.js"></script>

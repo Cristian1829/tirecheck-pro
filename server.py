@@ -1446,6 +1446,170 @@ def api_composicion_exportar_pdf(item: ExportarComposicionPdfItem, usuario_actua
                     headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+class ExportarComposicionExcelItem(BaseModel):
+    filtros: dict = {}
+    tarjetas: list = []
+    reglas: list = []
+    llantas: list = []
+
+
+def _celda_texto(valor):
+    """Texto seguro para una celda de Excel (un texto que empieza por = + - @ no debe ejecutarse como fórmula)."""
+    t = "" if valor is None else str(valor)
+    return "'" + t if t[:1] in ("=", "+", "-", "@") else t
+
+
+def construir_excel_composicion(item: dict) -> bytes:
+    """
+    Excel de Composición de Flota a partir de las llantas que muestra la pantalla (ya filtradas):
+    Resumen, Matriz Marca × Diseño × Medida con subtotales por marca, totales por marca y por medida,
+    inventario llanta por llanta y vehículos que incumplen la regla de oro 1.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+
+    llantas = [l for l in (item.get("llantas") or []) if isinstance(l, dict)]
+    total = len(llantas)
+    oscuro, claro, sub = PatternFill("solid", fgColor="0F172A"), PatternFill("solid", fgColor="E0F2FE"), PatternFill("solid", fgColor="F1F5F9")
+    borde = Border(*(Side(style="thin", color="CBD5E1"),) * 4)
+    blanco, negrita = Font(bold=True, color="FFFFFF"), Font(bold=True)
+
+    def es_reenc(l):
+        return bool(l.get("es_reencauche"))
+
+    def hoja(wb, titulo, encabezados, filas, anchos, primera=False):
+        ws = wb.active if primera else wb.create_sheet()
+        ws.title = titulo
+        ws.append([_celda_texto(h) for h in encabezados])
+        for c in ws[1]:
+            c.font, c.fill, c.alignment, c.border = blanco, oscuro, Alignment(horizontal="center", vertical="center", wrap_text=True), borde
+        for f in filas:
+            ws.append([_celda_texto(v) if isinstance(v, str) else v for v in f])
+        for i, ancho in enumerate(anchos, 1):
+            ws.column_dimensions[get_column_letter(i)].width = ancho
+        ws.freeze_panes = "A2"
+        return ws
+
+    wb = Workbook()
+    # 1. Resumen
+    ws = wb.active
+    ws.title = "Resumen"
+    ws.append(["Composición de Flota - TireAnalyze Pro"])
+    ws["A1"].font = Font(bold=True, size=14)
+    ws.append([f"Generado: {ahora_bogota().strftime('%Y-%m-%d %H:%M')}"])
+    ws.append([])
+    ws.append(["Filtros"]); ws.cell(ws.max_row, 1).font = negrita
+    for k, v in (item.get("filtros") or {}).items():
+        ws.append([_celda_texto(k), _celda_texto(v)])
+    ws.append([])
+    ws.append(["Indicador", "Valor", "Detalle"]); [setattr(c, "font", negrita) for c in ws[ws.max_row]]
+    ws.append(["Total llantas instaladas", total, "Última inspección de cada posición, sin las llantas desmontadas"])
+    for t in item.get("tarjetas") or []:
+        if isinstance(t, dict) and t.get("etiqueta") != "Total llantas":
+            ws.append([_celda_texto(t.get("etiqueta")), _celda_texto(t.get("valor")), _celda_texto(t.get("detalle"))])
+    ws.append([])
+    ws.append(["Reglas de oro", "Estado", "Detalle"]); [setattr(c, "font", negrita) for c in ws[ws.max_row]]
+    for r in item.get("reglas") or []:
+        if isinstance(r, dict):
+            ws.append([_celda_texto(r.get("titulo")), _celda_texto(r.get("estado")), _celda_texto(r.get("detalle"))])
+    for col, ancho in (("A", 34), ("B", 26), ("C", 80)):
+        ws.column_dimensions[col].width = ancho
+
+    # 2. Matriz Marca × Diseño × Medida, agrupada por marca con subtotal
+    grupos = {}
+    for l in llantas:
+        clave = (str(l.get("marca") or "SIN MARCA"), str(l.get("diseno") or "SIN DISEÑO"), str(l.get("dimension") or "SIN MEDIDA"))
+        g = grupos.setdefault(clave, {"orig": 0, "reenc": 0, "prof": []})
+        g["reenc" if es_reenc(l) else "orig"] += 1
+        p = to_float_seguro(l.get("prof_actual_min"))
+        if p > 0:
+            g["prof"].append(p)
+    por_marca = {}
+    for (m, d, dm), g in grupos.items():
+        por_marca.setdefault(m, []).append((d, dm, g))
+    ws = hoja(wb, "Matriz", ["Marca", "Diseño", "Dimensión", "Original", "Reencauche", "Total llantas", "% Part. flota", "Prof. promedio (mm)"],
+              [], [22, 26, 16, 11, 12, 13, 13, 18])
+    for marca in sorted(por_marca, key=lambda m: (-sum(g["orig"] + g["reenc"] for _, _, g in por_marca[m]), m)):
+        filas = sorted(por_marca[marca], key=lambda x: (-(x[2]["orig"] + x[2]["reenc"]), x[0], x[1]))
+        for d, dm, g in filas:
+            tot = g["orig"] + g["reenc"]
+            ws.append([_celda_texto(marca), _celda_texto(d), _celda_texto(dm), g["orig"], g["reenc"], tot,
+                       tot / total if total else 0, round(sum(g["prof"]) / len(g["prof"]), 1) if g["prof"] else None])
+        o = sum(g["orig"] for _, _, g in filas); r = sum(g["reenc"] for _, _, g in filas)
+        todas = [p for _, _, g in filas for p in g["prof"]]
+        ws.append([f"Subtotal {marca}", "", "", o, r, o + r, (o + r) / total if total else 0,
+                   round(sum(todas) / len(todas), 1) if todas else None])
+        for c in ws[ws.max_row]:
+            c.font, c.fill = negrita, sub
+    o_t = sum(g["orig"] for g in grupos.values()); r_t = sum(g["reenc"] for g in grupos.values())
+    ws.append(["TOTAL FLOTA", "", "", o_t, r_t, o_t + r_t, 1 if total else 0, None])
+    for c in ws[ws.max_row]:
+        c.font, c.fill = negrita, claro
+    for fila in ws.iter_rows(min_row=2):
+        fila[6].number_format = "0.0%"
+        for c in fila:
+            c.border = borde
+
+    def resumen_por(campo, titulo, encabezado, faltante):
+        cuenta = {}
+        for l in llantas:
+            k = str(l.get(campo) or faltante)
+            c = cuenta.setdefault(k, [0, 0])
+            c[1 if es_reenc(l) else 0] += 1
+        filas = [[_celda_texto(k), o, r, o + r, (o + r) / total if total else 0] for k, (o, r) in sorted(cuenta.items(), key=lambda x: (-sum(x[1]), x[0]))]
+        filas.append(["TOTAL", sum(f[1] for f in filas), sum(f[2] for f in filas), total, 1 if total else 0])
+        w = hoja(wb, titulo, [encabezado, "Original", "Reencauche", "Total llantas", "% Part. flota"], filas, [26, 11, 12, 13, 13])
+        for fila in w.iter_rows(min_row=2):
+            fila[4].number_format = "0.0%"
+        for c in w[w.max_row]:
+            c.font, c.fill = negrita, claro
+
+    resumen_por("marca", "Por marca", "Marca", "SIN MARCA")
+    resumen_por("dimension", "Por dimensión", "Dimensión", "SIN MEDIDA")
+
+    # 3. Inventario llanta por llanta
+    orden = sorted(llantas, key=lambda l: (str(l.get("cliente") or ""), str(l.get("placa") or ""), int(to_float_seguro(l.get("posicion")))))
+    hoja(wb, "Inventario llantas",
+         ["Cliente", "Sede", "Placa", "Posición", "Eje", "N° interno", "Marca", "Diseño", "Dimensión", "Vida", "Banda", "Prof. mín. (mm)", "Última inspección"],
+         [[l.get("cliente"), l.get("subcliente"), l.get("placa"), int(to_float_seguro(l.get("posicion"))), l.get("tipo_eje"), l.get("numero_interno"),
+           l.get("marca"), l.get("diseno"), l.get("dimension"), l.get("vida"), l.get("banda_reen"),
+           to_float_seguro(l.get("prof_actual_min")) or None, str(l.get("fecha_ult_insp") or "")[:10]] for l in orden],
+         [22, 16, 11, 9, 12, 14, 18, 22, 14, 11, 14, 14, 15])
+
+    # 4. Regla de oro 1: reencauches en eje direccional
+    incumplen = [l for l in orden if l.get("tipo_eje") == "direccional" and es_reenc(l) and not l.get("permite_reencauche_direccion")]
+    hoja(wb, "Regla de oro 1",
+         ["Placa", "Cliente", "Sede", "Tipología", "Posición", "N° interno", "Marca", "Diseño", "Vida", "Banda", "Última inspección"],
+         [[l.get("placa"), l.get("cliente"), l.get("subcliente"), l.get("tipologia"), int(to_float_seguro(l.get("posicion"))), l.get("numero_interno"),
+           l.get("marca"), l.get("diseno"), l.get("vida"), l.get("banda_reen"), str(l.get("fecha_ult_insp") or "")[:10]] for l in incumplen]
+         or [["Sin incumplimientos: no hay llantas reencauchadas en eje direccional"]],
+         [11, 22, 16, 22, 9, 14, 18, 22, 10, 14, 15])
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def to_float_seguro(v) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+@app.post("/api/composicion/exportar-excel", dependencies=[Depends(requerir_vista("composicion"))])
+def api_composicion_exportar_excel(item: ExportarComposicionExcelItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Excel organizado de Composición de Flota con las llantas que muestra la pantalla (ya filtradas por el alcance del usuario)."""
+    try:
+        contenido = construir_excel_composicion(item.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar el Excel de composición: {str(e)}")
+    filename = f"TireAnalyze_Composicion_Flota_{ahora_bogota().strftime('%Y%m%d_%H%M')}.xlsx"
+    return Response(content=contenido, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
 @app.post("/api/kpis/exportar-pdf", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_exportar_pdf(item: ExportarKpisPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     """PDF de la suite de KPIs: gráficos capturados en pantalla + cifras recalculadas con los mismos filtros."""
@@ -1504,8 +1668,10 @@ def api_kpis_llantas(
     banda_reen: str = "",
     usuario: str = "",
     tipologia: str = "",
+    foto: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
+    """Indicadores por llanta. foto=actual: solo las llantas instaladas hoy (Composición de Flota)."""
     filtros = {
         'cliente': cliente,
         'subcliente': subcliente,
@@ -1529,7 +1695,7 @@ def api_kpis_llantas(
     elif usuario_actual.get("cliente_asignado"):
         filtros['usuario'] = usuario_actual["username"]
 
-    raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
+    raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros, foto_actual=(foto.strip().lower() == "actual"))
     return sanitizar_nativos(raw)
 
 @app.get("/api/kpis-llantas/exportar-excel", dependencies=[Depends(requerir_vista("composicion", "kpis"))])

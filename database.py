@@ -5317,15 +5317,16 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
     totales_posicion = {int(p): {'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0, 'total': 0} for p in posiciones}
     resumen_global = {'total_vehiculos': 0, 'total_llantas': 0, 'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0}
 
-    for placa, group in df.groupby('placa', sort=False):
-        # Mismo criterio que analizar_inspecciones_df: fecha más reciente y última inspección por posición
-        if 'fecha' in group.columns and not group['fecha'].dropna().empty:
-            fecha_max = group['fecha'].astype(str).str[:10].max()
-            group = group[group['fecha'].astype(str).str[:10] == fecha_max]
-        if 'id' in group.columns:
-            group_ult = group.sort_values('id').groupby('posicion', as_index=False).last()
-        else:
-            group_ult = group.drop_duplicates(subset=['posicion'], keep='last')
+    # Última inspección de cada posición del vehículo, sin las llantas que el kardex ya desmontó (la misma foto de la
+    # flota de «Marcas Instaladas» y Composición). Antes solo contaban las posiciones inspeccionadas en la fecha más
+    # reciente: si ese día se revisó una sola llanta, el vehículo aparecía con una sola llanta.
+    orden = [c for c in ('fecha', 'id') if c in df.columns]
+    df_ult = (df.sort_values(orden) if orden else df).drop_duplicates(subset=['placa', 'posicion'], keep='last')
+    if {'cliente', 'numero_interno', 'fecha'}.issubset(df_ult.columns):
+        df_ult = quitar_llantas_desmontadas(df_ult)
+
+    for placa, group_ult in df_ult.groupby('placa', sort=False):
+        group_ult = group_ult.sort_values('posicion').reset_index(drop=True)
 
         cli = str(group_ult['cliente'].iloc[0] or '').strip().upper() if 'cliente' in group_ult.columns else ''
         sub = str(group_ult['subcliente'].iloc[0] or '').strip().upper() if 'subcliente' in group_ult.columns else ''
@@ -6416,7 +6417,7 @@ def eliminar_modelo_llanta(modelo_id):
         conn.commit()
     return True
 
-def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
+def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actual=False):
     """
     Calcula trazabilidad e indicadores clave de desempeno (KPIs) por llanta:
     - CPK (Costo Por Kilometro): Precio / Km Rodados
@@ -6426,6 +6427,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
     - Proyeccion Total Km: Rendimiento * mm_utiles
     - % Desgaste y CPK Proyectado
     Permite filtrar por cliente, subcliente, tipo_operacion, marca, diseno, dimension, vida, banda_reen.
+
+    foto_actual=True (Composición de Flota): una fila por llanta instalada hoy, es decir la última inspección de cada
+    posición sin las llantas que el kardex ya desmontó; es la misma base de «Marcas Instaladas» (KPI 04). Sin esto
+    contaban llantas ya retiradas, una posición con llanta cambiada contaba dos veces y todas las «SN» eran una sola.
     """
     filtros = filtros or {}
     usuario_filtro = filtros.get('usuario')
@@ -6444,8 +6449,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
                    prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion,
                    tipologia, usuario_registro
             FROM inspecciones
-            WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
+            WHERE 1=1
         """
+        if not foto_actual:
+            query += " AND numero_interno IS NOT NULL AND TRIM(numero_interno) != ''"
         params = []
         if numero_interno and str(numero_interno).strip():
             query += " AND UPPER(TRIM(numero_interno)) LIKE UPPER(TRIM(?))"
@@ -6484,12 +6491,37 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
     resultados = []
     cache_esquemas = {}
+    cache_reenc_dir = {}
     ref_precio_t, _ = construir_referencias_llanta(df)
-    # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
-    ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
-    posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
-        lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
-    for num, group in df.groupby('numero_interno'):
+    if foto_actual:
+        df = df.copy()
+        df['numero_interno'] = df['numero_interno'].fillna('').astype(str).str.strip()
+        df['_pl'] = df['placa'].fillna('').astype(str).str.strip().str.upper()
+        df['_sn'] = df['numero_interno'].str.upper()
+        df['_cli'] = df['cliente'].fillna('').astype(str).str.strip().str.upper()
+        foto = df.sort_values(['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['_pl', 'posicion'], keep='first')
+        foto = quitar_llantas_desmontadas(foto)
+        posiciones_por_placa = foto.groupby('_pl')['posicion'].apply(lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
+        por_serial = {k: g for k, g in df.groupby(['_cli', '_sn'])}
+
+        def _grupos():
+            for _, fila in foto.iterrows():
+                sn = fila['_sn']
+                if sn and sn not in ('SN', 'NONE', 'NAN', 'S/N'):
+                    g = por_serial[(fila['_cli'], sn)]
+                    # Historia de la llanta hasta esta inspección (la que la deja en esta posición)
+                    g = g[(g['fecha'] < fila['fecha']) | ((g['fecha'] == fila['fecha']) & (g['id'] <= fila['id']))]
+                else:
+                    g = foto.loc[[fila.name]]  # sin número: cada posición es su propia llanta
+                yield (fila['numero_interno'] or 'SN'), g
+        grupos = _grupos()
+    else:
+        # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
+        ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
+        posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
+            lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
+        grupos = df.groupby('numero_interno')
+    for num, group in grupos:
         group = group.sort_values(by=['fecha', 'id'])
         primera = group.iloc[0]
         ultima = group.iloc[-1]
@@ -6566,6 +6598,9 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         eje_est = lim_posicion.tipo_eje(tip_norm, pos_int, posiciones_por_placa.get(str(ultima['placa']).strip().upper(), [pos_int]))
         tipo_eje = {'DIRECCIONAL': 'direccional', 'TRACCIÓN': 'traccion', 'LIBRE': 'libre', 'REPUESTO': 'repuesto'}.get(
             eje_est, determinar_tipo_eje_posicion(tip_norm, pos_int, cache_esquemas))
+        # Tipologías autorizadas a llevar reencauche en dirección (el candado de inspección ya las respeta)
+        if tip_norm not in cache_reenc_dir:
+            cache_reenc_dir[tip_norm] = bool(tipologia_permite_reencauche_direccion(tip_norm)) if tip_norm else False
 
         resultados.append({
             'numero_interno': num,
@@ -6577,6 +6612,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
             'vida': vida_norm,
             'tipologia': tip_norm,
             'tipo_eje': tipo_eje,
+            'permite_reencauche_direccion': cache_reenc_dir.get(tip_norm, False),
             'banda_reen': ultima.get('banda_reen', ''),
             'cliente': ultima.get('cliente', ''),
             'subcliente': ultima.get('subcliente', ''),
@@ -9412,6 +9448,48 @@ def _redondear(valor, decimales=0):
     return round(v, decimales) if decimales else round(v)
 
 
+def _kpi01_por_periodo(df_vehiculos, padron_rows, placas_padron, total_padron, parque_cargado) -> dict:
+    """
+    KPI 01 por mes y por año: cuántos vehículos del parque se inspeccionaron en cada periodo (mes en curso
+    incluido, aunque aún no tenga inspecciones). El parque es el actual; con parque cargado solo cuentan sus placas.
+    """
+    if df_vehiculos is None or df_vehiculos.empty:
+        pl_fecha = pd.DataFrame(columns=['placa', 'dia'])
+    else:
+        pl_fecha = pd.DataFrame({
+            'placa': df_vehiculos['placa'].fillna('').astype(str).str.strip().str.upper(),
+            'dia': df_vehiculos['fecha'].astype(str).str[:10],
+        })
+        pl_fecha = pl_fecha[(pl_fecha['placa'] != '') & (pl_fecha['dia'].str.len() == 10)]
+    hoy = _hoy_bogota()
+    mes_hoy, anio_hoy = hoy.strftime('%Y-%m'), hoy.strftime('%Y')
+    orden_parque = [r[0] for r in padron_rows] if padron_rows else []
+
+    def resumen(clave, etiqueta, tipo, placas):
+        aud = len(placas & placas_padron) if parque_cargado else len(placas)
+        pend = [p for p in orden_parque if p not in placas]
+        return {
+            "clave": clave, "etiqueta": etiqueta, "tipo": tipo,
+            "inspeccionados": aud, "total": total_padron,
+            "pct": round(min(100.0, aud / total_padron * 100.0), 1) if total_padron else None,
+            "pendientes": pend,
+        }
+
+    meses = sorted(set(pl_fecha['dia'].str[:7]) | {mes_hoy})[-24:]
+    anios = sorted(set(pl_fecha['dia'].str[:4]) | {anio_hoy})
+    por_mes = [resumen(m, _mes_a_espanol(m), 'mes', set(pl_fecha.loc[pl_fecha['dia'].str[:7] == m, 'placa'])) for m in meses]
+    por_anio = [resumen(a, a, 'anio', set(pl_fecha.loc[pl_fecha['dia'].str[:4] == a, 'placa'])) for a in anios]
+    # Datos de cada vehículo del parque para la lista de pendientes de cualquier periodo
+    ultima = pl_fecha.groupby('placa')['dia'].max().to_dict() if not pl_fecha.empty else {}
+    parque = {
+        r[0]: {"subcliente": r[1] if len(r) > 1 else '', "tipologia": r[2] if len(r) > 2 else '',
+               "fabricante": r[4] if len(r) > 4 else '', "linea": r[5] if len(r) > 5 else '',
+               "ultima_inspeccion": ultima.get(r[0], '')}
+        for r in (padron_rows or [])
+    }
+    return {"por_mes": por_mes, "por_anio": por_anio, "periodo_actual": mes_hoy, "parque": parque}
+
+
 def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     """
     Calcula la Suite Analítica de los 20 KPIs organizados en las 5 Pestañas Estándar Homologadas
@@ -9878,6 +9956,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "fuente_padron": fuente_padron,
         "periodo_corte": _mes_a_espanol(periodo_reciente) if periodo_reciente else "Actual"
     }
+    kpi_01.update(_kpi01_por_periodo(df_vehiculos, padron_rows, placas_padron, total_padron, parque_cargado))
 
     # =========================================================================
     # KPI 02: Volumen Auditado Mes a Mes (Llantas vs Vehículos)
@@ -9965,8 +10044,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     else:
         tip_counts, mar_counts, dim_counts, dim_pcts = pd.Series(dtype=int), pd.Series(dtype=int), pd.Series(dtype=int), []
 
+    def _top_con_otras(serie, n=8):
+        if len(serie) <= n:
+            return serie
+        return pd.concat([serie.iloc[:n - 1], pd.Series({'Otras': int(serie.iloc[n - 1:].sum())})])
+
+    tip_counts, mar_counts = _top_con_otras(tip_counts), _top_con_otras(mar_counts)
+    if len(dim_counts) > 8:
+        dim_counts = _top_con_otras(dim_counts)
+        dim_pcts = [round((v / tot_dim) * 100.0, 1) for v in dim_counts.values.tolist()]
     kpi_04 = {
         "disponible": True,
+        "total_llantas": int(len(df_patio)),
         "tipologia": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
         "tipologias": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
         "marca": {"labels": [str(x) for x in mar_counts.index[:8]], "valores": [int(x) for x in mar_counts.values[:8]]},

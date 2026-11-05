@@ -7,6 +7,20 @@ from server import app
 
 client = TestClient(app)
 
+
+@pytest.fixture(scope="module", autouse=True)
+def base_temporal_del_modulo(tmp_path_factory):
+    """
+    Base propia del módulo (antes escribía en data/inspecciones.db, la base local real). Es de módulo y no por
+    prueba porque varias pruebas usan los vehículos que crea una anterior.
+    """
+    original = database.DB_PATH
+    database.DB_PATH = str(tmp_path_factory.mktemp("semaforos") / "semaforos.db")
+    database.inicializar_bd()
+    yield
+    database.DB_PATH = original
+
+
 @pytest.fixture(autouse=True)
 def setup_db():
     database.inicializar_bd()
@@ -185,6 +199,12 @@ def test_api_matriz_semaforos(inspector_token):
 
 def test_pdf_consolidado_incluye_matriz_semaforos():
     """Verifica que el PDF consolidado se genere con la matriz de semáforos por posición"""
+    database.insertar_inspeccion({
+        'fecha': '2026-10-14', 'cliente': 'FLOTA PDF', 'subcliente': 'SEDE A', 'tipo_operacion': 'CARGA',
+        'placa': 'PDF101', 'posicion': 1, 'kilometraje': 50000, 'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'MICHELIN', 'diseno': 'XZE', 'dimension': '295/80R22.5', 'vida': 'Original',
+        'prof_ext': 8.0, 'prof_cent': 8.0, 'prof_int': 8.0, 'psi': 100, 'numero_interno': 'PDF-1'
+    })
     pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada()
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 2000
