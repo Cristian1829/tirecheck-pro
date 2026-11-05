@@ -10,4 +10,5 @@ python-multipart>=0.0.9
 requests>=2.31.0
 tzdata>=2024.1
 pytz>=2024.1
-
+SQLAlchemy>=2.0.0
+qrcode>=7.4

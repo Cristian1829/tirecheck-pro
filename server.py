@@ -657,6 +657,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
+  // Motores es otra app: sus datos con sesión no se guardan en esta caché
+  if (url.pathname === '/motores' || url.pathname.startsWith('/motores/') || url.pathname.startsWith('/api/motores/') || url.pathname.startsWith('/static/js/motores/')) return;
+
   // Navegación HTML: Network-First con Fallback a Caché
   if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/' || url.pathname === '/app' || url.pathname === '/login') {
     event.respondWith(
@@ -3056,6 +3059,18 @@ def api_bodegas_pdf_acta_chatarrizacion(
     }
     pdf_bytes = pdf_generator.generar_pdf_acta_chatarrizacion(datos_pdf)
     return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename=acta_fvu_{numero_interno}.pdf"})
+
+
+# ==========================================
+# APP APARTE: CONTROL DE MOTORES
+# ==========================================
+# Base de datos, usuarios y sesión propios (motores/). Un fallo aquí no debe tumbar TireAnalyze.
+try:
+    from motores.rutas import iniciar as iniciar_motores, router as router_motores
+    iniciar_motores()
+    app.include_router(router_motores)
+except Exception as e:
+    print(f"[MOTORES] No se pudo iniciar la app de Motores: {e}")
 
 
 # ==========================================

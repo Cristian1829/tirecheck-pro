@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control y Certificación de Motores | Marino Trejos</title>
+  <link rel="stylesheet" href="/static/js/motores/app.css">
+  <link rel="icon" href="/static/img/motores/logo_motor_service_nyc.png">
+</head>
+<body>
+
+  <!-- ================= LOGIN DE MOTORES ================= -->
+  <div id="vista-login" class="acceso-fondo" hidden>
+    <form id="form-login" class="acceso-caja" onsubmit="Acceso.login(event)">
+      <img class="acceso-logo" src="/static/img/motores/logo_marino_horizontal.png" alt="Marino Trejos Mechanic">
+      <h1>Login Motores</h1>
+      <p class="sub">Control de Motores y Certificación</p>
+      <div id="login-error" class="acceso-error" role="alert"></div>
+      <div class="form-group">
+        <label for="login-usuario">Usuario</label>
+        <input type="text" id="login-usuario" class="form-control" autocomplete="username" autocapitalize="none" required>
+      </div>
+      <div class="form-group">
+        <label for="login-clave">Contraseña</label>
+        <input type="password" id="login-clave" class="form-control" autocomplete="current-password" required>
+      </div>
+      <button type="submit" id="login-boton" class="btn btn-primary btn-lg">Ingresar</button>
+      <a class="acceso-volver" href="/">← Volver a TireAnalyze Pro</a>
+    </form>
+  </div>
+
+  <!-- ================= CAMBIO DE CONTRASEÑA ================= -->
+  <div id="vista-cambio" class="acceso-fondo" hidden>
+    <form id="form-cambio" class="acceso-caja" onsubmit="Acceso.cambiarClave(event)">
+      <h1>Cambiar contraseña</h1>
+      <p class="sub" id="cambio-aviso">Por seguridad debe elegir una contraseña nueva antes de continuar.</p>
+      <div id="cambio-error" class="acceso-error" role="alert"></div>
+      <div class="form-group">
+        <label for="cambio-actual">Contraseña actual</label>
+        <input type="password" id="cambio-actual" class="form-control" autocomplete="current-password" required>
+      </div>
+      <div class="form-group">
+        <label for="cambio-nueva">Contraseña nueva (mínimo 8 caracteres)</label>
+        <input type="password" id="cambio-nueva" class="form-control" autocomplete="new-password" required minlength="8">
+      </div>
+      <div class="form-group">
+        <label for="cambio-repetir">Repita la contraseña nueva</label>
+        <input type="password" id="cambio-repetir" class="form-control" autocomplete="new-password" required minlength="8">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg">Guardar contraseña</button>
+      <button type="button" id="cambio-cancelar" class="btn btn-outline" style="margin-top:0.5rem;" onclick="Acceso.entrarApp()">Cancelar</button>
+    </form>
+  </div>
+
+  <!-- ================= APLICACIÓN ================= -->
+  <div id="vista-app" hidden>
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand" onclick="App.switchTab('dashboard')">
+        <img class="brand-logo" src="/static/img/motores/logo_motor_service_nyc.png" alt="Motor Service NYC">
+        <div class="brand-text">
+          <h1>CONTROL DE MOTORES & CERTIFICACIÓN</h1>
+          <span>Marino Trejos Mechanic • Tirak / Tractel / Blocstop</span>
+        </div>
+      </a>
+      <div class="nav-sesion">
+        <div class="nav-network-badge" id="nav-network-btn" onclick="App.showNetworkModal()">
+          <span class="pulse-dot"></span>
+          <span id="nav-ip-display">Conectar Móvil / Tablet</span>
+          <span style="font-size: 0.9rem;">📲</span>
+        </div>
+        <span class="nav-usuario" id="nav-usuario"></span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="Acceso.mostrarCambioClave(false)">Mi clave</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="Acceso.salir()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVEGACIÓN POR PESTAÑAS -->
+  <nav class="tab-navigation">
+    <div class="tab-container">
+      <button class="tab-btn active" data-tab="dashboard">
+        <span>📊</span> Panel Principal
+      </button>
+      <button class="tab-btn" data-tab="ingreso">
+        <span>📥</span> Módulo A: Ingreso (Check-In)
+      </button>
+      <button class="tab-btn" data-tab="salidas">
+        <span>📤</span> Módulo B: Salidas y Despachos
+      </button>
+      <button class="tab-btn" data-tab="certificados">
+        <span>📜</span> Módulo C: Certificados de Calidad
+      </button>
+      <button class="tab-btn" data-tab="historial">
+        <span>🔍</span> Trazabilidad & Historial
+      </button>
+      <button class="tab-btn" data-tab="clientes">
+        <span>👥</span> Directorio Clientes
+      </button>
+      <button class="tab-btn" data-tab="usuarios" id="tab-btn-usuarios" hidden>
+        <span>🔑</span> Usuarios
+      </button>
+    </div>
+  </nav>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="main-wrapper">
+
+    <!-- ================= TAB 1: DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab-pane active">
+      <!-- Estadísticas Rápidas -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📋</div>
+          <div class="stat-info">
+            <h3 id="stat-total-ordenes">0</h3>
+            <p>Órdenes Totales</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">🛠️</div>
+          <div class="stat-info">
+            <h3 id="stat-ordenes-taller">0</h3>
+            <p>Órdenes Activas</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">⚙️</div>
+          <div class="stat-info">
+            <h3 id="stat-motores-taller">0</h3>
+            <p>Motores en Taller</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📜</div>
+          <div class="stat-info">
+            <h3 id="stat-certificados">0</h3>
+            <p>Certificados Emitidos</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accesos Rápidos Operativos -->
+      <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="font-size:1.1rem; font-weight:700;">Acciones Operativas Rápidas</h3>
+            <p style="font-size:0.85rem; color:var(--gray-500);">Acceda directamente a los flujos principales de trabajo del taller</p>
+          </div>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="App.switchTab('ingreso')">
+              <span>📥</span> Nuevo Ingreso (Formato 1)
+            </button>
+            <button class="btn btn-success" onclick="App.switchTab('salidas')">
+              <span>🚚</span> Despacho / Salida de Motores
+            </button>
+            <button class="btn btn-secondary" onclick="App.switchTab('certificados')">
+              <span>📜</span> Emitir Certificado de Calidad
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Órdenes Recientes -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>📋</span> Órdenes de Mantenimiento Recientes</div>
+            <div class="card-subtitle">Seguimiento de recepción, estado de reparación y entregas</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="App.loadRecentActivity()">🔄 Actualizar</button>
+        </div>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>No. Orden</th>
+                <th>Cliente / Compañía</th>
+                <th>Cant. Motores</th>
+                <th>Fecha Ingreso</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-recent-orders">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:2rem; color:var(--gray-500);">Cargando órdenes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: MÓDULO A - INGRESO (CHECK-IN) ================= -->
+    <section id="tab-ingreso" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>📥</span> Módulo A: Ingreso de Motores (Formato 1 - Motors Intake)</div>
+            <div class="card-subtitle">Registre el ingreso de equipos al taller con fotos de recepción y firmas digitales</div>
+          </div>
+          <span class="status-badge" style="background:#e0f2fe; color:#0369a1;">Paso 1: Recepción</span>
+        </div>
+
+        <form id="form-ingreso" onsubmit="App.submitIngresoForm(event)">
+          <!-- Datos Generales de la Orden -->
+          <div class="form-grid">
+            <div class="form-group">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label for="ingreso-company" style="margin-bottom:0;">Nombre de la Compañía / Cliente *</label>
+                <a href="javascript:void(0)" onclick="App.openClientModal()" style="font-size:0.75rem; color:var(--primary); font-weight:600; text-decoration:underline;">+ Crear / Editar</a>
+              </div>
+              <input type="text" id="ingreso-company" class="form-control" list="datalist-customers" placeholder="Seleccione o escriba el cliente..." required>
+              <datalist id="datalist-customers"></datalist>
+              <datalist id="datalist-makes"></datalist>
+              <datalist id="datalist-models"></datalist>
+            </div>
+            <div class="form-group">
+              <label for="ingreso-date-in">Fecha y Hora de Ingreso (Date In) *</label>
+              <input type="datetime-local" id="ingreso-date-in" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="ingreso-notes">Observaciones Generales de la Orden</label>
+              <input type="text" id="ingreso-notes" class="form-control" placeholder="Ej: Trabajo urgente, proyecto fachada 5ta Ave...">
+            </div>
+          </div>
+
+          <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--gray-200);">
+
+          <!-- Detalle de Motores Dinámico -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h3 style="font-size:1.05rem; font-weight:700; color:var(--dark);">Motores que Ingresan a la Orden</h3>
+              <p style="font-size:0.8rem; color:var(--gray-500);">Agregue uno o varios motores a esta misma orden de trabajo</p>
+            </div>
+            <button type="button" class="btn btn-outline" id="btn-add-motor-row">
+              <span>➕</span> Agregar Otro Motor
+            </button>
+          </div>
+
+          <div id="motor-items-container">
+            <!-- Filas dinámicas generadas por JS -->
+          </div>
+
+          <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--gray-200);">
+
+          <!-- Firmas Digitales de Entrada -->
+          <h3 style="font-size:1.05rem; font-weight:700; color:var(--dark); margin-bottom:0.25rem;">Firmas Digitales de Recepción</h3>
+          <p style="font-size:0.8rem; color:var(--gray-500); margin-bottom:1rem;">Firma en pantalla táctil o con el ratón</p>
+
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));">
+            <!-- Firma Drop Off (Cliente) -->
+            <div class="signature-box">
+              <div class="signature-box-header">
+                <span class="sig-title">Firma: Entrega Cliente (Drop Off)</span>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-clear-dropoff">Borrar</button>
+              </div>
+              <div class="signature-canvas-wrap">
+                <canvas id="canvas-dropoff" class="signature-canvas"></canvas>
+                <div class="sig-placeholder-text" id="placeholder-dropoff">Firme aquí (Cliente / Chofer)</div>
+              </div>
+              <div class="form-group" style="margin-top:0.5rem; margin-bottom:0;">
+                <label style="font-size:0.75rem;">Nombre de quien entrega:</label>
+                <input type="text" id="ingreso-dropoff-name" class="form-control" placeholder="Ej: John Miller" value="Cliente / Transportista">
+              </div>
+            </div>
+
+            <!-- Firma Received (Marino Trejos / Taller) -->
+            <div class="signature-box">
+              <div class="signature-box-header">
+                <span class="sig-title">Firma: Recibe Taller (Received)</span>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-clear-received">Borrar</button>
+              </div>
+              <div class="signature-canvas-wrap">
+                <canvas id="canvas-received" class="signature-canvas"></canvas>
+                <div class="sig-placeholder-text" id="placeholder-received">Firme aquí (Mecánico / Receptor)</div>
+              </div>
+              <div class="form-group" style="margin-top:0.5rem; margin-bottom:0;">
+                <label style="font-size:0.75rem;">Nombre de quien recibe:</label>
+                <input type="text" id="ingreso-received-name" class="form-control" placeholder="Ej: Marino Trejos" value="Marino Trejos">
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón de Envío -->
+          <div style="margin-top:1.5rem; text-align:right;">
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-ingreso">
+              💾 Guardar Ingreso y Generar PDF (Formato 1)
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: MÓDULO B - SALIDAS Y DESPACHOS ================= -->
+    <section id="tab-salidas" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>📤</span> Módulo B: Salidas y Despachos (Entregas Parciales o Totales)</div>
+            <div class="card-subtitle">Despache los motores listos tras mantenimiento, capture fotos de salida y genere el recibo</div>
+          </div>
+          <span class="status-badge" style="background:#dcfce7; color:#166534;">Paso 2: Despacho</span>
+        </div>
+
+        <form id="form-dispatch" onsubmit="App.submitDispatchForm(event)">
+          <!-- Selector de Orden -->
+          <div class="form-grid" style="grid-template-columns: 2fr 1fr; align-items:flex-end;">
+            <div class="form-group">
+              <label for="dispatch-order-select">Seleccione la Orden a Despachar *</label>
+              <select id="dispatch-order-select" class="form-control" onchange="App.onDispatchOrderSelected()" required>
+                <option value="">Cargando órdenes pendientes...</option>
+              </select>
+            </div>
+            <div class="form-group" style="padding-bottom:1rem;">
+              <div id="dispatch-type-indicator">
+                <span class="status-badge" style="background:#f1f5f9; color:#64748b;">Seleccione una orden</span>
+              </div>
+            </div>
+          </div>
+
+          <hr style="margin: 1rem 0; border: 0; border-top: 1px solid var(--gray-200);">
+
+          <!-- Lista de Motores a Seleccionar -->
+          <div id="dispatch-motors-list">
+            <div style="text-align: center; color: var(--gray-500); padding: 2rem;">
+              Seleccione una orden arriba para ver los motores disponibles para despacho.
+            </div>
+          </div>
+
+          <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--gray-200);">
+
+          <!-- Firmas Digitales de Despacho / Salida -->
+          <h3 style="font-size:1.05rem; font-weight:700; color:var(--dark); margin-bottom:0.25rem;">Firmas Digitales de Entrega</h3>
+          <p style="font-size:0.8rem; color:var(--gray-500); margin-bottom:1rem;">Confirmación de despacho por parte de la empresa y conformidad del cliente receptor</p>
+
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));">
+            <!-- Firma Entrega Empresa -->
+            <div class="signature-box">
+              <div class="signature-box-header">
+                <span class="sig-title">Firma: Entrega Empresa (Delivered)</span>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-clear-disp-emp">Borrar</button>
+              </div>
+              <div class="signature-canvas-wrap">
+                <canvas id="canvas-dispatch-emp" class="signature-canvas"></canvas>
+                <div class="sig-placeholder-text" id="placeholder-dispatch-emp">Firme aquí (Marino Trejos)</div>
+              </div>
+              <div class="form-group" style="margin-top:0.5rem; margin-bottom:0;">
+                <label style="font-size:0.75rem;">Nombre de quien entrega:</label>
+                <input type="text" id="dispatch-emp-name" class="form-control" value="Marino Trejos">
+              </div>
+            </div>
+
+            <!-- Firma Recibe Cliente -->
+            <div class="signature-box">
+              <div class="signature-box-header">
+                <span class="sig-title">Firma: Recibe Cliente (Received)</span>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-clear-disp-cli">Borrar</button>
+              </div>
+              <div class="signature-canvas-wrap">
+                <canvas id="canvas-dispatch-cli" class="signature-canvas"></canvas>
+                <div class="sig-placeholder-text" id="placeholder-dispatch-cli">Firme aquí (Cliente que retira)</div>
+              </div>
+              <div class="form-group" style="margin-top:0.5rem; margin-bottom:0;">
+                <label style="font-size:0.75rem;">Nombre de quien recibe:</label>
+                <input type="text" id="dispatch-cli-name" class="form-control" value="Recibido por Cliente">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:1rem;">
+            <label for="dispatch-notes">Notas / Observaciones del Despacho</label>
+            <input type="text" id="dispatch-notes" class="form-control" placeholder="Ej: Entregado completo con cables y control colgante...">
+          </div>
+
+          <!-- Botón de Envío -->
+          <div style="margin-top:1.5rem; text-align:right;">
+            <button type="submit" class="btn btn-success btn-lg" id="btn-submit-dispatch">
+              🚚 Procesar Despacho y Generar PDF de Salida
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: MÓDULO C - CERTIFICADOS DE CALIDAD ================= -->
+    <section id="tab-certificados" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>📜</span> Módulo C: Certificado de Calidad (Generación Bajo Demanda)</div>
+            <div class="card-subtitle">Este certificado se emite de forma independiente para cualquier motor cuando esté certificado</div>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="text" id="cert-search-input" class="form-control" placeholder="🔍 Buscar por serial, modelo..." style="width:240px;">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Serial #</th>
+                <th>Marca (Make)</th>
+                <th>Modelo</th>
+                <th>Estado</th>
+                <th>Foto</th>
+                <th>Acción de Certificación</th>
+              </tr>
+            </thead>
+            <tbody id="cert-motors-table">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:2rem; color:var(--gray-500);">Cargando motores...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: MÓDULO D - TRAZABILIDAD & HISTORIAL ================= -->
+    <section id="tab-historial" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>🔍</span> Trazabilidad de Motores & Historial de Certificados</div>
+            <div class="card-subtitle">Consulte la hoja de vida, fechas de ingreso, salida y certificados técnicos emitidos</div>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <input type="text" id="hist-search-input" class="form-control" placeholder="🔍 Buscar por serial o cliente..." style="width:280px;">
+          </div>
+        </div>
+
+        <div id="history-motors-list">
+          <div style="text-align:center; padding:2rem; color:var(--gray-500);">Cargando historial...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 6: MÓDULO E - DIRECTORIO DE CLIENTES ================= -->
+    <section id="tab-clientes" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>👥</span> Directorio de Clientes (Compañías & Contactos)</div>
+            <div class="card-subtitle">Listado de clientes registrados para órdenes de trabajo, certificados y facturación</div>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <input type="text" id="client-search-input" class="form-control" placeholder="🔍 Buscar por nombre, contacto, teléfono..." style="width:280px;">
+            <button type="button" class="btn btn-primary" onclick="App.openClientModal()">
+              <span>➕</span> Nuevo Cliente
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">ID Cliente</th>
+                <th>Company Name (Empresa)</th>
+                <th>Contacto Principal</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Address (Dirección)</th>
+                <th style="width:130px; text-align:center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body">
+              <tr>
+                <td colspan="7" style="text-align:center; padding:2rem; color:var(--gray-500);">Cargando clientes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= USUARIOS DE MOTORES (SOLO ADMINISTRADOR) ================= -->
+    <section id="tab-usuarios" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span>🔑</span> Usuarios de Motores</div>
+            <div class="card-subtitle">Estas cuentas solo sirven para esta app; son distintas de las de TireAnalyze</div>
+          </div>
+        </div>
+        <form id="form-usuario" onsubmit="App.crearUsuario(event)" autocomplete="off">
+          <div class="form-grid">
+            <div class="form-group"><label for="usr-username">Usuario *</label><input type="text" id="usr-username" class="form-control" required minlength="3" maxlength="40" autocapitalize="none"></div>
+            <div class="form-group"><label for="usr-nombre">Nombre</label><input type="text" id="usr-nombre" class="form-control" maxlength="150"></div>
+            <div class="form-group"><label for="usr-rol">Rol</label><select id="usr-rol" class="form-control"><option value="tecnico">Técnico</option><option value="admin">Administrador</option></select></div>
+            <div class="form-group"><label for="usr-clave">Clave temporal *</label><input type="password" id="usr-clave" class="form-control" required minlength="8" autocomplete="new-password"></div>
+          </div>
+          <div style="text-align:right; margin:0.5rem 0 1.25rem;"><button type="submit" class="btn btn-primary">➕ Crear usuario</button></div>
+        </form>
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="usuarios-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: GENERACIÓN DE CERTIFICADO DE CALIDAD (FORMATO 2) ================= -->
+  <div class="modal-backdrop" id="modal-certificate">
+    <div class="modal-dialog" style="max-width: 900px;">
+      <div class="modal-header">
+        <div>
+          <h3>TEST CERTIFICATE (Certificado de Calidad)</h3>
+          <span style="font-size:0.8rem; color:var(--gray-500);">Formato Oficial Técnico MSNYC • Inspección y Pruebas de Carga</span>
+        </div>
+        <button type="button" class="close-btn" onclick="App.closeCertificateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-cert-quality" onsubmit="App.submitCertificateForm(event)">
+          <input type="hidden" id="cert-motor-id">
+
+          <!-- Resumen del Equipo -->
+          <div style="background:var(--primary-light); border:1px solid #bfdbfe; border-radius:var(--radius-md); padding:0.85rem; margin-bottom:1.25rem;">
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+              <div><strong style="font-size:0.75rem; color:var(--gray-600);">CLIENTE:</strong><div id="cert-customer-display" style="font-weight:700;">-</div></div>
+              <div><strong style="font-size:0.75rem; color:var(--gray-600);">MODELO:</strong><div id="cert-model-display" style="font-weight:700;">-</div></div>
+              <div><strong style="font-size:0.75rem; color:var(--gray-600);">SERIAL #:</strong><div id="cert-serial-display" style="font-weight:700; color:var(--primary);">-</div></div>
+              <div>
+                <strong style="font-size:0.75rem; color:var(--gray-600);">NO. CERTIFICADO:</strong>
+                <input type="text" id="cert-number-input" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem;" placeholder="Auto (ej: 10010045)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Fechas y Voltaje -->
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="form-group">
+              <label>Fecha de Prueba (Test Date) *</label>
+              <input type="date" id="cert-test-date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Próximo Servicio (Next Service) *</label>
+              <input type="date" id="cert-next-service" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Voltaje / Fase *</label>
+              <select id="cert-voltage" class="form-control">
+                <option value="220 / ONE PHASE" selected>220 / ONE PHASE</option>
+                <option value="110 / ONE PHASE">110 / ONE PHASE</option>
+                <option value="208-220V / 3-PHASE">208-220V / 3-PHASE</option>
+                <option value="480V / 3-PHASE">480V / 3-PHASE</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Parámetros Eléctricos (Caja Eléctrica) -->
+          <h4 style="font-size:0.95rem; font-weight:700; color:var(--dark); margin:0.75rem 0 0.5rem 0; border-bottom:1px solid var(--gray-200); padding-bottom:0.25rem;">
+            ⚡ Parámetros Eléctricos (Electric Box)
+          </h4>
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+            <div class="form-group">
+              <label>Start Cap. (uF)</label>
+              <input type="text" id="cert-start-cap" class="form-control" value="100 uF">
+            </div>
+            <div class="form-group">
+              <label>Vr. Start (V)</label>
+              <input type="text" id="cert-vr-start" class="form-control" value="330 V">
+            </div>
+            <div class="form-group">
+              <label>Run Cap. (uF)</label>
+              <input type="text" id="cert-run-cap" class="form-control" value="40 uF">
+            </div>
+            <div class="form-group">
+              <label>Vr. Run (V)</label>
+              <input type="text" id="cert-vr-run" class="form-control" value="450 V">
+            </div>
+            <div class="form-group">
+              <label>K1 (OHM)</label>
+              <input type="text" id="cert-k1" class="form-control" value="1.8">
+            </div>
+            <div class="form-group">
+              <label>K2 (OHM)</label>
+              <input type="text" id="cert-k2" class="form-control" value="1.8">
+            </div>
+            <div class="form-group">
+              <label>K3 (OHM)</label>
+              <input type="text" id="cert-k3" class="form-control" value="2.1">
+            </div>
+          </div>
+
+          <!-- Checklist de Inspección y Seguridad -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin:1rem 0 0.5rem 0; border-bottom:1px solid var(--gray-200); padding-bottom:0.25rem;">
+            <h4 style="font-size:0.95rem; font-weight:700; color:var(--dark); margin:0;">
+              🛡️ Inspección Operativa & Seguridad
+            </h4>
+            <div style="display:flex; gap:0.4rem;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="App.setAllCertChecks(true)">Marcar Todos OK</button>
+            </div>
+          </div>
+
+          <div class="check-toggle-grid">
+            <label class="check-item"><input type="checkbox" id="chk-rectifier" class="cert-chk" checked> Rectifier (Rectificador)</label>
+            <label class="check-item"><input type="checkbox" id="chk-brake-lever" class="cert-chk" checked> Brake Release Lever</label>
+            <label class="check-item"><input type="checkbox" id="chk-brake-func" class="cert-chk" checked> Brake Function (Freno)</label>
+            <label class="check-item"><input type="checkbox" id="chk-noise" class="cert-chk" checked> Normal Noise (Sonido)</label>
+            <label class="check-item"><input type="checkbox" id="chk-pin" class="cert-chk" checked> Emergency Pin Descent</label>
+            <label class="check-item"><input type="checkbox" id="chk-disc" class="cert-chk" checked> Brake Disc (Disco freno)</label>
+            <label class="check-item"><input type="checkbox" id="chk-stirrup" class="cert-chk" checked> Stirrup Adapter</label>
+            <label class="check-item"><input type="checkbox" id="chk-load-test" class="cert-chk" checked> Rated Load Test</label>
+          </div>
+
+          <!-- Pruebas de Carga y Freno Secundario Blocstop/Sky-Lock -->
+          <h4 style="font-size:0.95rem; font-weight:700; color:var(--dark); margin:1.25rem 0 0.5rem 0; border-bottom:1px solid var(--gray-200); padding-bottom:0.25rem;">
+            🏋️ Pruebas de Carga & Freno Secundario (Blocstop / Sky-Lock)
+          </h4>
+          <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div class="form-group">
+              <label>Rated Load Capacity (Lbs)</label>
+              <input type="text" id="cert-rated-load" class="form-control" value="1000">
+            </div>
+            <div class="form-group">
+              <label>Overload 125% Test</label>
+              <input type="text" id="cert-overload-pounds" class="form-control" value="1250 POUNDS (125%)">
+            </div>
+            <div class="form-group">
+              <label>Modelo Blocstop / Sky-Lock</label>
+              <input type="text" id="cert-blocstop-model" class="form-control" value="BLOCSTOP BSO 1000">
+            </div>
+            <div class="form-group">
+              <label>Serial Blocstop</label>
+              <input type="text" id="cert-blocstop-serial" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Trigger Speed Test</label>
+              <input type="text" id="cert-trigger-speed" class="form-control" value="Testing Pass">
+            </div>
+            <div class="form-group">
+              <label>Load Test Blocstop</label>
+              <input type="text" id="cert-blocstop-ltest" class="form-control" value="1000 POUNDS Pass">
+            </div>
+            <div class="form-group">
+              <label>Testing Control Descent</label>
+              <input type="text" id="cert-control-descent" class="form-control" value="Testing Pass">
+            </div>
+            <div class="form-group">
+              <label>Rated Load Blocstop</label>
+              <input type="text" id="cert-blocstop-load" class="form-control" value="1000 POUNDS">
+            </div>
+          </div>
+
+          <!-- Descripción del Servicio y Firma Técnica -->
+          <div class="form-group" style="margin-top:0.75rem;">
+            <label>Descripción de los Servicios Realizados (Service Description) *</label>
+            <textarea id="cert-service-desc" class="form-control" rows="2">New warning labels, oil change, oil seal, brake gap adjustment, dynamic rated load test.</textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Técnico Certificador (Certified by) *</label>
+            <input type="text" id="cert-certified-by" class="form-control" value="Marino Trejos | Cert#061821JV1" required>
+          </div>
+
+          <!-- Footer Botones -->
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+            <button type="button" class="btn btn-outline" onclick="App.closeCertificateModal()">Cancelar</button>
+            <button type="submit" class="btn btn-secondary btn-lg" id="btn-submit-cert">
+              📜 Guardar y Emitir Certificado de Calidad (Formato 2)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: GESTIÓN DE CLIENTES (CREAR / EDITAR) ================= -->
+  <div class="modal-backdrop" id="modal-client">
+    <div class="modal-dialog" style="max-width: 650px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="client-modal-title">Editar Cliente</h3>
+          <span style="font-size:0.8rem; color:var(--gray-500);">Actualice los datos comerciales y de contacto del cliente</span>
+        </div>
+        <button type="button" class="close-btn" onclick="App.closeClientModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-client-editor" onsubmit="App.saveClient(event)">
+          <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
+            <div class="form-group">
+              <label for="client-id-input">ID Cliente *</label>
+              <input type="text" id="client-id-input" class="form-control" placeholder="Ej: 21 o auto" required>
+            </div>
+            <div class="form-group">
+              <label for="client-name-input">Company Name (Empresa) *</label>
+              <input type="text" id="client-name-input" class="form-control" placeholder="Nombre completo de la empresa..." required>
+            </div>
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-top:0.5rem;">
+            <div class="form-group">
+              <label for="client-contact-input">Contacto Principal</label>
+              <input type="text" id="client-contact-input" class="form-control" placeholder="Ej: Sunny, Lakhwinder Singh...">
+            </div>
+            <div class="form-group">
+              <label for="client-phone-input">Phone Number (Teléfono)</label>
+              <input type="text" id="client-phone-input" class="form-control" placeholder="Ej: (917) 807-1800">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:0.5rem;">
+            <label for="client-email-input">Email de Contacto</label>
+            <input type="email" id="client-email-input" class="form-control" placeholder="Ej: contacto@empresa.com">
+          </div>
+
+          <div class="form-group" style="margin-top:0.5rem;">
+            <label for="client-address-input">Address (Dirección Física)</label>
+            <input type="text" id="client-address-input" class="form-control" placeholder="Ej: 148-23 94th Ave, Jamaica, NY 11435">
+          </div>
+
+          <!-- Footer Botones -->
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+            <button type="button" class="btn btn-outline" onclick="App.closeClientModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-save-client">
+              💾 Guardar Cliente
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <script src="/static/js/motores/signature_pad.js"></script>
+  <script src="/static/js/motores/app.js"></script>
+</body>
+</html>

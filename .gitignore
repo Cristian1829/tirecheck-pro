@@ -44,4 +44,5 @@ tirecheck.db
 # Claves secretas y backups
 data/.secret_key
 data/backups/
+data/motores/
 
