@@ -606,29 +606,77 @@
       }
     }
 
-    // Últimos 12 meses: vehículos inspeccionados cada mes frente al total de la flota
+    // Últimos 12 meses seguidos (los meses sin inspecciones salen en cero, no se saltan)
+    function mesesSeguidosKpi01(d) {
+      const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const porClave = Object.fromEntries((d.por_mes || []).map(m => [m.clave, m]));
+      const ultimo = d.periodo_actual || ((d.por_mes || []).slice(-1)[0] || {}).clave;
+      if (!ultimo) return [];
+      let [anio, mes] = ultimo.split('-').map(Number);
+      const lista = [];
+      for (let i = 0; i < 12; i++) {
+        const clave = `${anio}-${String(mes).padStart(2, '0')}`;
+        lista.unshift(porClave[clave] || {
+          clave, etiqueta: `${nombres[mes - 1]} ${String(anio).slice(-2)}`, inspeccionados: 0,
+          total: d.total_padron_activo, pct: d.total_padron_activo ? 0 : null
+        });
+        mes -= 1;
+        if (mes === 0) { mes = 12; anio -= 1; }
+      }
+      return lista;
+    }
+
+    // Vehículos inspeccionados cada mes frente al total de la flota (fondo claro para que se lea bien)
     function renderChartKpi01Meses(d) {
       destruirChartSuite('kpi01_meses');
       const ctx = document.getElementById('canvasKpi01_meses');
-      const meses = (d.por_mes || []).slice(-12);
+      const meses = mesesSeguidosKpi01(d);
       const anio = (d.por_anio || []).slice(-1)[0];
       const elAnio = document.getElementById('kpi01_texto_anio');
       if (elAnio) elAnio.textContent = anio ? `Año ${anio.clave}: ${formatCO_Miles(anio.inspeccionados)} de ${formatCO_Miles(anio.total)} vehículos${anio.pct != null ? ` (${formatCO_Decimal(anio.pct, 1)}%)` : ''}` : '';
       if (!ctx || typeof Chart === 'undefined' || !meses.length) return;
+      const angosto = window.innerWidth < 640;
+      const totalMax = Math.max(1, ...meses.map(m => m.total || 0), ...meses.map(m => m.inspeccionados || 0));
+      // Color por cobertura del mes: verde desde 80 %, ámbar desde 50 %, rojo por debajo
+      const colorMes = m => m.pct == null ? '#64748b' : (m.pct >= 80 ? '#059669' : (m.pct >= 50 ? '#d97706' : '#dc2626'));
       instanciasChartsSuite['kpi01_meses'] = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: meses.map(m => m.etiqueta),
           datasets: [
-            { type: 'bar', label: 'Vehículos inspeccionados', data: meses.map(m => m.inspeccionados), backgroundColor: 'rgba(52, 211, 153, 0.85)', borderRadius: 6, order: 2 },
-            { type: 'line', label: 'Total flota', data: meses.map(m => m.total), borderColor: '#a5b4fc', backgroundColor: '#a5b4fc', borderDash: [5, 4], pointRadius: 2, tension: 0, order: 1 }
+            {
+              type: 'bar', label: 'Vehículos inspeccionados', data: meses.map(m => m.inspeccionados),
+              backgroundColor: meses.map(colorMes), borderRadius: 5, maxBarThickness: 46, order: 2,
+              datalabels: {
+                anchor: 'end', align: 'end', offset: 2, clamp: true,
+                color: c => (c.dataset.data[c.dataIndex] ? '#0f172a' : '#94a3b8'),
+                font: { size: angosto ? 9 : 11, weight: 'bold' },
+                formatter: (v, c) => {
+                  const m = meses[c.dataIndex];
+                  if (!v) return '0';  // mes sin inspecciones: un cero discreto
+                  return (angosto || m.pct == null) ? formatCO_Miles(v) : `${formatCO_Miles(v)} · ${formatCO_Decimal(m.pct, 0)}%`;
+                }
+              }
+            },
+            {
+              type: 'line', label: 'Total flota', data: meses.map(m => m.total), borderColor: '#4f46e5', backgroundColor: '#4f46e5',
+              borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#ffffff', pointBorderWidth: 2, tension: 0, order: 1,
+              datalabels: { display: false }
+            }
           ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 6 } },
           plugins: {
-            legend: { labels: { color: '#e2e8f0', font: { size: 10 }, boxWidth: 10 } },
-            datalabels: { display: false },
+            legend: {
+              labels: {
+                color: '#0f172a', font: { size: 11, weight: 'bold' }, usePointStyle: true, boxWidth: 10,
+                // La barra cambia de color según la cobertura: en la leyenda se muestra en verde
+                generateLabels: chart => Chart.defaults.plugins.legend.labels.generateLabels(chart).map(l =>
+                  l.datasetIndex === 0 ? { ...l, fillStyle: '#059669', strokeStyle: '#059669' } : l)
+              }
+            },
             tooltip: {
               callbacks: {
                 label: c => c.dataset.type === 'line' ? `Total flota: ${formatCO_Miles(c.raw)}`
@@ -637,8 +685,12 @@
             }
           },
           scales: {
-            x: { ticks: { color: '#cbd5e1', font: { size: 10 } }, grid: { display: false } },
-            y: { beginAtZero: true, ticks: { color: '#cbd5e1', font: { size: 10 }, precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } }
+            x: { ticks: { color: '#334155', font: { size: angosto ? 9 : 11, weight: 'bold' }, maxRotation: angosto ? 60 : 0, autoSkip: false }, grid: { display: false } },
+            y: {
+              beginAtZero: true, suggestedMax: Math.ceil(totalMax * 1.18),
+              ticks: { color: '#334155', font: { size: 11 }, precision: 0 }, grid: { color: '#e2e8f0' },
+              title: { display: !angosto, text: 'Vehículos', color: '#475569', font: { size: 11, weight: 'bold' } }
+            }
           }
         }
       });
