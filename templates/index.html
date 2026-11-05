@@ -958,8 +958,8 @@
             </button>
           </div>
 
-          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE & DESMONTE RÁPIDO (EXCLUSIVO LICENCIA FULL) -->
-          <div id="seccionTallerPatio" class="pt-3 border-t border-slate-100 space-y-2.5">
+          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE Y DESMONTE. SOLO VERSIÓN PRO: oculto hasta confirmar la licencia del cliente -->
+          <div id="seccionTallerPatio" class="hidden pt-3 border-t border-slate-100 space-y-2.5">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
                 <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
@@ -967,28 +967,12 @@
                 </span>
                 <h4 class="text-xs font-black text-slate-800">Taller en Patio</h4>
                 <span id="badgeTallerPlanFull" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700 border border-purple-200">
-                  FULL
-                </span>
-                <span id="badgeTallerPlanLight" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
-                  LIGHT (Solo Lectura)
+                  PRO
                 </span>
               </div>
               <span id="badgeTallerPos" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200">
                 Posición 1
               </span>
-            </div>
-
-            <!-- Aviso informativo para Versión LIGHT (Sin Taller / Bodegas) -->
-            <div id="bannerTallerLight" class="hidden p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-xs shadow-sm space-y-1.5">
-              <div class="flex items-center gap-2 font-bold text-amber-900">
-                <span class="w-5 h-5 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-[10px]">
-                  <i class="fa-solid fa-lock"></i>
-                </span>
-                <span>Desmontajes y Montajes exclusivos de la Versión FULL</span>
-              </div>
-              <p class="text-[11px] text-amber-800/90 leading-relaxed">
-                Esta cuenta opera con <strong>Licencia Operativa LIGHT</strong>. Los movimientos de taller, reemplazo y desmonte de llantas están habilitados únicamente para la <strong>Licencia Empresarial FULL</strong> (Gestión de 7 Bodegas y Hoja de Vida).
-              </p>
             </div>
 
             <!-- Caja de Estado de la Llanta en la Posición -->
@@ -998,7 +982,7 @@
                   <i class="fa-solid fa-circle-exclamation text-amber-500"></i>
                   <span>Posición disponible (Sin llanta montada)</span>
                 </p>
-                <p class="text-[10px] text-slate-400">Puedes montar una llanta desde Bodega 1 / 2 o dar de alta una nueva</p>
+                <p class="text-[10px] text-slate-400">Puedes montar una llanta desde Bodega 1, 2 o 4, o dar de alta una nueva</p>
               </div>
 
               <div id="tallerLlantaMontada" class="hidden space-y-2">
@@ -1143,12 +1127,12 @@
 
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Precio Unitario ($)</label>
-                  <input type="number" id="precio" step="1000" inputmode="numeric" placeholder="1650000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <input type="number" id="precio" step="any" inputmode="numeric" placeholder="1650000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div>
                   <label id="lblKmMontaje" class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
-                  <input type="number" id="km_montaje" step="100" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <input type="number" id="km_montaje" step="any" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
               </div>
 
@@ -1541,6 +1525,7 @@
               <th class="p-2.5">Placa</th>
               <th class="p-2.5">No. Interno</th>
               <th class="p-2.5 text-center">Pos</th>
+              <th class="p-2.5">Movimiento</th>
               <th class="p-2.5 text-right">Km</th>
               <th class="p-2.5">Tipología</th>
               <th class="p-2.5">Marca</th>
@@ -1561,7 +1546,7 @@
           </thead>
           <tbody id="tbodyInspecciones" class="divide-y divide-slate-100 bg-white text-slate-700 whitespace-nowrap font-medium">
             <tr>
-              <td colspan="25" class="p-8 text-center text-slate-400">Cargando base de inspecciones...</td>
+              <td colspan="26" class="p-8 text-center text-slate-400">Cargando base de inspecciones...</td>
             </tr>
           </tbody>
         </table>
@@ -3837,7 +3822,7 @@
                   <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
                   <span>Precio COP *</span>
                 </label>
-                <input type="number" id="precio_valor" required min="1" step="1000" placeholder="ej. 1850000" oninput="alEscribirPrecioValor(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-emerald-800 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
+                <input type="number" id="precio_valor" required min="1" step="any" placeholder="ej. 1850000" oninput="alEscribirPrecioValor(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-emerald-800 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
                 <span id="previewPrecioCOP" class="text-[10px] font-bold text-emerald-600 truncate block mt-0.5">$ 0 COP</span>
               </div>
             </div>
@@ -4606,7 +4591,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP) *</label>
-            <input type="number" step="1000" id="alta_costo_compra" placeholder="Sin precio: se excluye de los costos" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="alta_costo_compra" placeholder="Sin precio: se excluye de los costos" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Factura</label>
@@ -4729,7 +4714,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-teal-900 mb-1">Costo del Reencauche ($) *</label>
-            <input type="number" step="1000" id="mover_costo_reencauche" placeholder="ej. 650000" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_costo_reencauche" placeholder="ej. 650000" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
 
@@ -4745,7 +4730,7 @@
           </div>
           <div>
             <label class="block text-xs font-bold text-amber-900 mb-1">Costo de Reparación / Vulcanizadora ($) — Se suma al retorno de Bodega 5</label>
-            <input type="number" step="1000" id="mover_costo_reparacion" placeholder="ej. 150000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_costo_reparacion" placeholder="ej. 150000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
 
@@ -4828,7 +4813,7 @@
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Valor Reconocido por Proveedor ($ COP)</label>
-          <input type="number" step="1000" id="garantia_valor_reconocido" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-emerald-700">
+          <input type="number" step="any" id="garantia_valor_reconocido" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-emerald-700">
           <p class="text-[10px] text-slate-400 mt-1">Este valor reduce automáticamente el dinero perdido por fin de vida útil prematura.</p>
         </div>
 
@@ -6202,8 +6187,8 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Odómetro Actual del Vehículo (km) <span class="text-rose-500">*</span></label>
-          <input type="number" id="desm_odometro" required min="0" step="1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
+          <label class="block font-bold text-slate-700 mb-1"><span id="lblDesmOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
+          <input type="number" id="desm_odometro" required min="1" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <div>
@@ -6268,7 +6253,7 @@
       <div class="flex border-b border-slate-200 space-x-2">
         <button type="button" id="tabBtnMontarStock" onclick="cambiarTabMontar('stock')" class="pb-2 text-xs font-black border-b-2 border-blue-600 text-blue-600 flex items-center space-x-1.5">
           <i class="fa-solid fa-warehouse"></i>
-          <span>A. Desde Stock (Bodega 1 / 2)</span>
+          <span>A. Desde Stock (Bodega 1, 2 o 4)</span>
         </button>
         <button type="button" id="tabBtnMontarNueva" onclick="cambiarTabMontar('nueva')" class="pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-700 flex items-center space-x-1.5">
           <i class="fa-solid fa-plus-circle"></i>
@@ -6282,8 +6267,8 @@
         <input type="hidden" id="mont_posicion">
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Odómetro Actual del Vehículo (km) <span class="text-rose-500">*</span></label>
-          <input type="number" id="mont_odometro" required min="0" step="1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
+          <label class="block font-bold text-slate-700 mb-1"><span id="lblMontOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
+          <input type="number" id="mont_odometro" required min="1" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <!-- Pestaña A: Selector de Stock -->
@@ -6321,7 +6306,7 @@
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-0.5">Precio Compra ($)</label>
-              <input type="number" step="1000" id="mont_nueva_precio" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+              <input type="number" step="any" id="mont_nueva_precio" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
             </div>
           </div>
         </div>
@@ -6576,7 +6561,7 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Costo Factura Renovado ($)</label>
-            <input type="number" step="1000" id="ret_costo" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+            <input type="number" step="any" id="ret_costo" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
         </div>
 
@@ -6610,7 +6595,7 @@
         <input type="hidden" id="rep_numero_interno">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Costo de Reparación ($ COP)</label>
-          <input type="number" step="1000" id="rep_costo" value="85000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+          <input type="number" step="any" id="rep_costo" value="85000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Trabajo Realizado</label>
@@ -6648,7 +6633,7 @@
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Valor Acreditado / Nota Crédito ($ COP)</label>
-          <input type="number" step="1000" id="gar_valor" placeholder="Valor de la nota crédito" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+          <input type="number" step="any" id="gar_valor" placeholder="Valor de la nota crédito" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div class="flex justify-end space-x-2 pt-2 border-t">
           <button type="button" onclick="cerrarModalDictamenGarantia()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold">Cancelar</button>

@@ -3,14 +3,46 @@
     // ==========================================
     let bdFiltrosPoblados = false;
     let inspeccionesSeleccionadasBD = new Set();
+    // Montajes y retiros de llantas: por inspección, y los que aún no tienen inspección
+    let movimientosBD = { por_inspeccion: {}, sin_inspeccion: [] };
+
+    async function cargarMovimientosBD() {
+      try {
+        const res = await fetch('/api/inspecciones/movimientos');
+        movimientosBD = res.ok ? await res.json() : { por_inspeccion: {}, sin_inspeccion: [] };
+      } catch (e) {
+        movimientosBD = { por_inspeccion: {}, sin_inspeccion: [] };
+      }
+    }
+
+    // Inspecciones más los movimientos sin inspección, cada uno en el lugar de su fecha
+    function filasBaseConMovimientos() {
+      const filas = [...cacheTodasInspecciones];
+      (movimientosBD.sin_inspeccion || []).forEach(m => {
+        const i = filas.findIndex(r => String(r.fecha || '').slice(0, 10) <= m.fecha);
+        filas.splice(i < 0 ? filas.length : i, 0, m);
+      });
+      return filas;
+    }
+
+    function htmlMovimientosBD(lista) {
+      if (!lista || lista.length === 0) return '<span class="text-slate-300">-</span>';
+      return lista.map(m => {
+        const esMontaje = m.tipo === 'MONTAJE';
+        return `<div class="flex items-start gap-1 text-[11px] font-semibold ${esMontaje ? 'text-blue-700' : 'text-amber-700'} min-w-[190px] whitespace-normal">
+          <i class="fa-solid ${esMontaje ? 'fa-arrow-up' : 'fa-arrow-down'} mt-0.5"></i><span>${escapeHtml(m.texto)}</span>
+        </div>`;
+      }).join('');
+    }
 
     async function cargarBaseInspecciones() {
       const tbody = document.getElementById('tbodyInspecciones');
       if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
-        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
       }
       try {
         const res = await fetch('/api/inspecciones');
+        await cargarMovimientosBD();
         if (res.ok) {
           cacheTodasInspecciones = await res.json();
           const bTotal = document.getElementById('badgeTotalInspecciones');
@@ -21,16 +53,16 @@
           filtrarTablaBD();
         } else if (res.status === 401) {
           if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
           }
         } else {
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="26" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
           }
         }
       } catch (e) {
         if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+          tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
         }
         mostrarToast('Error al cargar inspecciones desde el servidor', true);
       }
@@ -158,7 +190,7 @@
         }
       }
 
-      cacheFiltradasBD = cacheTodasInspecciones.filter(r => {
+      cacheFiltradasBD = filasBaseConMovimientos().filter(r => {
         // 1. Filtro Texto Libre
         if (q) {
           const matchTexto = (r.placa || '').toLowerCase().includes(q) ||
@@ -200,6 +232,7 @@
 
         // 8. Semáforo / Desgaste & Presión
         if (semaforo !== 'TODOS') {
+          if (r.es_movimiento) return false;  // aún sin medición
           const pExt = parseFloat(r.prof_ext) || 0;
           const pCent = parseFloat(r.prof_cent) || 0;
           const pInt = parseFloat(r.prof_int) || 0;
@@ -216,7 +249,7 @@
         return true;
       });
 
-      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.length;
+      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.filter(r => !r.es_movimiento).length;
       document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
 
       renderizarTablaBD();
@@ -262,6 +295,31 @@
       const paginaItems = cacheFiltradasBD.slice(inicio, fin);
 
       tbody.innerHTML = paginaItems.map(r => {
+        if (r.es_movimiento) {
+          return `
+            <tr class="bg-blue-50/60 hover:bg-blue-50 transition-colors">
+              ${esAdm ? '<td class="p-2.5"></td>' : ''}
+              <td class="p-2.5 text-center text-slate-300">-</td>
+              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800">TALLER</span></td>
+              <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${fmtFecha(r.fecha)}</td>
+              <td class="p-2.5 font-bold text-slate-900">${escapeHtml(r.cliente || '-')}</td>
+              <td class="p-2.5 text-slate-500">${escapeHtml(r.subcliente || '-')}</td>
+              <td class="p-2.5">-</td>
+              <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${escapeHtml(r.placa || '-')}</td>
+              <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.numero_interno || '-')}</td>
+              <td class="p-2.5 text-center font-black">
+                <span class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-800 font-mono text-xs">${escapeHtml(r.posicion)}</span>
+              </td>
+              <td class="p-2.5">${htmlMovimientosBD(r.movimientos)}</td>
+              <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
+              <td class="p-2.5">-</td>
+              <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.marca || '-')}</td>
+              <td class="p-2.5">${escapeHtml(r.diseno || '-')}</td>
+              <td class="p-2.5 font-mono text-[11px]">${escapeHtml(r.dimension || '-')}</td>
+              <td class="p-2.5">${escapeHtml(r.vida || '-')}</td>
+              <td colspan="9" class="p-2.5 text-[11px] text-slate-500 italic">Movimiento de taller: esta llanta aún no tiene inspección en esta posición</td>
+            </tr>`;
+        }
         const pExt = parseFloat(r.prof_ext) || 0;
         const pCent = parseFloat(r.prof_cent) || 0;
         const pInt = parseFloat(r.prof_int) || 0;
@@ -324,6 +382,7 @@
                 ${r.posicion}
               </span>
             </td>
+            <td class="p-2.5">${htmlMovimientosBD((movimientosBD.por_inspeccion || {})[r.id])}</td>
             <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
             <td class="p-2.5">${escapeHtml(r.tipologia || '-')}</td>
             <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.marca || '-')}</td>

@@ -1404,26 +1404,63 @@
     // ==============================================================
 
     let posTallerActualInfo = null;
+    let consultaPanelTaller = 0;
     let chartCurvaDesgasteInstance = null;
 
     /**
-     * Valida si el cliente seleccionado opera bajo Licencia FULL / PRO.
-     * En caso de Licencia LIGHT, los montajes y desmontajes están restringidos.
+     * El taller en inspección es de la versión PRO. Solo cuenta lo que confirmó el servidor para el
+     * cliente de esta inspección: sin esa confirmación no se ofrece.
      */
     function esLicenciaFullTaller() {
-      if (posTallerActualInfo && typeof posTallerActualInfo.permite_taller !== 'undefined') {
-        return Boolean(posTallerActualInfo.permite_taller);
+      return Boolean(posTallerActualInfo && posTallerActualInfo.permite_taller);
+    }
+
+    function mostrarSeccionTaller(visible) {
+      const seccion = document.getElementById('seccionTallerPatio');
+      if (seccion) seccion.classList.toggle('hidden', !visible);
+    }
+
+    // Etiquetas del odómetro según la unidad de la placa (km u horas)
+    function textoOdometroTaller() {
+      const horas = typeof unidadPlacaPatio === 'function' && unidadPlacaPatio() === 'HORAS';
+      return horas ? 'Horómetro Actual del Vehículo (horas)' : 'Odómetro Actual del Vehículo (km)';
+    }
+
+    // Tras un movimiento, el formulario y el chasis pasan a mostrar la llanta que está ahora en la posición
+    async function refrescarPosicionTrasMovimiento(pos) {
+      if (typeof verificarInspeccionAnterior === 'function') await verificarInspeccionAnterior();
+      else await actualizarPanelTallerPosicion(pos);
+      if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
+    }
+
+    // La lectura del vehículo usada en el movimiento es la más reciente: la inspección la toma
+    function actualizarLecturaInspeccion(odo) {
+      const inpKm = document.getElementById('kilometraje');
+      if (inpKm && odo > 0 && (parseFloat(inpKm.value) || 0) < odo) {
+        inpKm.value = odo;
+        inpKm.dispatchEvent(new Event('input', { bubbles: true }));
       }
-      if (posTallerActualInfo && posTallerActualInfo.tipo_licencia) {
-        return String(posTallerActualInfo.tipo_licencia).toUpperCase() !== 'LIGHT';
+    }
+
+    // La copia sin conexión del vehículo también debe reflejar el movimiento
+    async function actualizarOfflineTrasMovimiento(placa, pos, llanta, odometro) {
+      try {
+        if (llanta) {
+          await actualizarVehiculoOfflineConNuevaInspeccion({
+            placa, posicion: pos, numero_interno: llanta.numero_interno, marca: llanta.marca, diseno: llanta.diseno,
+            dimension: llanta.dimension, vida: llanta.vida, prof_inicial: llanta.prof_inicial, precio: llanta.precio,
+            km_montaje: odometro, kilometraje: odometro
+          });
+        } else {
+          const veh = await TireAnalyzeOfflineDB.obtenerVehiculo(placa);
+          if (veh && veh.posiciones_previas) {
+            delete veh.posiciones_previas[String(pos)];
+            await TireAnalyzeOfflineDB.guardarVehiculo(veh);
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo actualizar la copia sin conexión:', e);
       }
-      if (typeof window !== 'undefined' && window.clienteLicenciaCaptura) {
-        return String(window.clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
-      }
-      if (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) {
-        return String(clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
-      }
-      return true;
     }
 
     /**
@@ -1438,11 +1475,8 @@
       const boxMontada = document.getElementById('tallerLlantaMontada');
       const btnDesm = document.getElementById('btnTallerDesmontar');
       const btnMont = document.getElementById('btnTallerMontar');
-      const badgeFull = document.getElementById('badgeTallerPlanFull');
-      const badgeLight = document.getElementById('badgeTallerPlanLight');
-      const bannerLight = document.getElementById('bannerTallerLight');
-      const txtDesm = document.getElementById('txtBtnTallerDesmontar');
-      const txtMont = document.getElementById('txtBtnTallerMontar');
+
+      const consulta = ++consultaPanelTaller;
 
       if (!placa || !p) {
         if (badgePos) badgePos.textContent = `Posición ${p || '-'}`;
@@ -1450,45 +1484,26 @@
         if (boxMontada) boxMontada.classList.add('hidden');
         if (btnDesm) btnDesm.disabled = true;
         posTallerActualInfo = null;
+        mostrarSeccionTaller(false);
         return;
       }
 
       try {
         const res = await fetch(`/api/taller/posicion-info?placa=${encodeURIComponent(placa)}&posicion=${p}&cliente=${encodeURIComponent(cliente)}`);
-        if (!res.ok) return;
+        if (consulta !== consultaPanelTaller) return;  // ya se seleccionó otra posición
+        if (!res.ok) {
+          posTallerActualInfo = null;
+          mostrarSeccionTaller(false);
+          return;
+        }
         const data = await res.json();
+        if (consulta !== consultaPanelTaller) return;
         posTallerActualInfo = data;
 
-        const esFull = (typeof data.permite_taller !== 'undefined')
-          ? Boolean(data.permite_taller)
-          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'LIGHT').toUpperCase() !== 'LIGHT');
-
-        // Actualizar badges de licenciamiento y banner explicativo
-        if (esFull) {
-          if (badgeFull) badgeFull.classList.remove('hidden');
-          if (badgeLight) badgeLight.classList.add('hidden');
-          if (bannerLight) bannerLight.classList.add('hidden');
-          if (txtDesm) txtDesm.textContent = 'Desmontar';
-          if (txtMont) txtMont.textContent = 'Montar Llanta';
-          if (btnMont) {
-            btnMont.disabled = false;
-            btnMont.title = 'Montar llanta en esta posición';
-          }
-        } else {
-          if (badgeFull) badgeFull.classList.add('hidden');
-          if (badgeLight) badgeLight.classList.remove('hidden');
-          if (bannerLight) bannerLight.classList.remove('hidden');
-          if (txtDesm) txtDesm.textContent = 'Desmontar (Plan FULL)';
-          if (txtMont) txtMont.textContent = 'Montar (Plan FULL)';
-          if (btnMont) {
-            btnMont.disabled = true;
-            btnMont.title = 'Montajes de taller exclusivos de la Licencia FULL';
-          }
-          if (btnDesm) {
-            btnDesm.disabled = true;
-            btnDesm.title = 'Desmontes de taller exclusivos de la Licencia FULL';
-          }
-        }
+        // Solo la versión PRO ve la opción de montar y desmontar
+        const esPro = Boolean(data.permite_taller);
+        mostrarSeccionTaller(esPro);
+        if (!esPro) return;
 
         if (badgePos) {
           const dirTxt = data.es_direccional ? 'Direccional ⚠️' : 'Tracción / Arrastre';
@@ -1500,8 +1515,8 @@
           if (boxVacio) boxVacio.classList.add('hidden');
           if (boxMontada) boxMontada.classList.remove('hidden');
           if (btnDesm) {
-            btnDesm.disabled = !esFull;
-            if (esFull) btnDesm.title = 'Desmontar llanta instalada';
+            btnDesm.disabled = false;
+            btnDesm.title = 'Desmontar llanta instalada';
           }
 
           const serialEl = document.getElementById('txtTallerSerial');
@@ -1544,7 +1559,7 @@
     // --- MODAL DESMONTAR ---
     function abrirModalTallerDesmontar() {
       if (!esLicenciaFullTaller()) {
-        const msg = 'Los desmontajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        const msg = 'Los desmontajes en patio son exclusivos de la versión PRO.';
         if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
         else alert(msg);
         return;
@@ -1562,6 +1577,7 @@
       document.getElementById('desm_placa').value = placa;
       document.getElementById('desm_posicion').value = pos;
       document.getElementById('lblDesmSerial').textContent = `${ll.numero_interno} (${ll.marca_origen || ll.marca} - ${ll.dimension})`;
+      document.getElementById('lblDesmOdometro').textContent = textoOdometroTaller();
       document.getElementById('desm_odometro').value = kmVeh || '';
       document.getElementById('desm_profundidad').value = Number(ll.prof_actual_min || 3.0).toFixed(1);
       document.getElementById('desm_motivo').value = '';
@@ -1585,6 +1601,7 @@
       const prof = parseFloat(document.getElementById('desm_profundidad').value) || 0;
       const dest = document.getElementById('desm_bodega_destino').value;
       const mot = document.getElementById('desm_motivo').value;
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
 
       try {
         const res = await fetch('/api/taller/desmontar', {
@@ -1592,6 +1609,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             numero_interno: serial,
+            cliente_propietario: cliente,
             odometro_vehiculo: odo,
             profundidad: prof,
             bodega_destino: dest,
@@ -1601,11 +1619,12 @@
         const data = await res.json();
         if (data.ok) {
           cerrarModalTallerDesmontar();
-          alert(`Llanta ${serial} desmontada exitosamente hacia ${dest}`);
-          await actualizarPanelTallerPosicion(pos);
-          if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
+          alert(data.message || `Llanta ${serial} desmontada`);
+          actualizarLecturaInspeccion(odo);
+          await actualizarOfflineTrasMovimiento(placa, pos, null, odo);
+          await refrescarPosicionTrasMovimiento(pos);
         } else {
-          alert('Error: ' + (data.message || data.mensaje || 'No se pudo desmontar la llanta'));
+          alert('Error: ' + (data.detail || data.message || data.mensaje || 'No se pudo desmontar la llanta'));
         }
       } catch (err) {
         alert('Error en conexión al desmontar llanta: ' + err.message);
@@ -1615,7 +1634,7 @@
     // --- MODAL MONTAR ---
     async function abrirModalTallerMontar() {
       if (!esLicenciaFullTaller()) {
-        const msg = 'Los montajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        const msg = 'Los montajes en patio son exclusivos de la versión PRO.';
         if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
         else alert(msg);
         return;
@@ -1627,6 +1646,7 @@
 
       document.getElementById('mont_placa').value = placa;
       document.getElementById('mont_posicion').value = pos;
+      document.getElementById('lblMontOdometro').textContent = textoOdometroTaller();
       document.getElementById('mont_odometro').value = kmVeh || '';
       document.getElementById('lblTallerMontarSub').textContent = `Vehículo ${placa} - Posición ${pos}`;
 
@@ -1639,18 +1659,20 @@
 
       cambiarTabMontar('stock');
 
-      // Cargar lista de stock disponible (B1 y B2)
+      // Cargar lista de stock disponible (B1, B2 y reencauchadas en B4)
       const selStock = document.getElementById('mont_sel_stock');
       selStock.innerHTML = `<option value="">Cargando stock disponible...</option>`;
       try {
         const r1 = await fetch(`/api/bodegas/inventario?cliente=${encodeURIComponent(cliente)}&ubicacion_bodega=BODEGA_1_NUEVAS`);
         const r2 = await fetch(`/api/bodegas/inventario?cliente=${encodeURIComponent(cliente)}&ubicacion_bodega=BODEGA_2_RECAMBIO`);
+        const r4 = await fetch(`/api/bodegas/inventario?cliente=${encodeURIComponent(cliente)}&ubicacion_bodega=BODEGA_4_REENCAUCHADAS`);
         const d1 = await r1.json();
         const d2 = await r2.json();
-        const lista = [...(d1.llantas || []), ...(d2.llantas || [])];
+        const d4 = await r4.json();
+        const lista = [...(d1.llantas || []), ...(d2.llantas || []), ...(d4.llantas || [])];
 
         if (lista.length === 0) {
-          selStock.innerHTML = `<option value="">No hay llantas en stock (B1 o B2) para este cliente</option>`;
+          selStock.innerHTML = `<option value="">No hay llantas en stock (B1, B2 o B4) para este cliente</option>`;
         } else {
           let opts = `<option value="">-- Selecciona una llanta de stock --</option>`;
           lista.forEach(ll => {
@@ -1742,10 +1764,11 @@
         if (data.ok) {
           cerrarModalTallerMontar();
           alert(`Llanta ${payload.numero_interno} montada con éxito en ${placa} Posición ${pos}`);
-          await actualizarPanelTallerPosicion(pos);
-          if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
+          actualizarLecturaInspeccion(odo);
+          await actualizarOfflineTrasMovimiento(placa, pos, data.llanta, odo);
+          await refrescarPosicionTrasMovimiento(pos);
         } else {
-          alert(data.message || data.mensaje || 'Error al montar llanta');
+          alert(data.detail || data.message || data.mensaje || 'Error al montar llanta');
         }
       } catch (err) {
         alert('Error en conexión al montar: ' + err.message);

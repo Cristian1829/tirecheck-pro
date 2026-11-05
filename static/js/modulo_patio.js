@@ -2483,7 +2483,12 @@
       }
     }
 
+    // Profundidad inicial registrada de la llanta recién montada: manda sobre la del catálogo mientras
+    // el formulario siga mostrando esa misma marca y diseño
+    let profInicialLlantaMontada = null;
+
     async function verificarInspeccionAnterior() {
+      profInicialLlantaMontada = null;
       const token = idInspeccionActiva;
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
       const pos = parseInt(document.getElementById('posicion')?.value) || 1;
@@ -2531,20 +2536,34 @@
           const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
           if (!placaFin || placaFin !== placa) return;
 
+          // Si después de la última inspección se montó o retiró una llanta, la posición queda pendiente
+          // y el formulario muestra la llanta que está hoy en ella
+          const llantaCambiada = Boolean(d.llanta_cambiada);
+          if (llantaCambiada || d.llanta_retirada) {
+            posicionesInspeccionadasPlaca.delete(pos);
+            posicionesConNovedadPlaca.delete(pos);
+          }
+
           // Si esta posición ya fue inspeccionada en la sesión actual
-          const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos) || esDeColaPendiente;
+          const yaInspeccionadaHoy = (posicionesInspeccionadasPlaca.has(pos) || esDeColaPendiente) && !llantaCambiada && !d.llanta_retirada;
 
           if (d.encontrado && d.datos) {
-            datosInspeccionAnterior = d.datos;
+            datosInspeccionAnterior = llantaCambiada ? null : d.datos;
+            if (llantaCambiada && d.datos.prof_inicial > 0) {
+              profInicialLlantaMontada = { marca: d.datos.marca, diseno: d.datos.diseno, prof: d.datos.prof_inicial };
+            }
             if (d.datos.marca) cacheUltimaMarcaVehiculo = d.datos.marca;
             if (d.datos.diseno) cacheUltimoDisenoVehiculo = d.datos.diseno;
             if (d.datos.dimension) cacheUltimaDimensionVehiculo = d.datos.dimension;
             const badgeHist = document.getElementById('badgeHistorialPrevia');
             if (badgeHist) {
               badgeHist.classList.remove('hidden');
-              badgeHist.innerHTML = esDeColaPendiente 
-                ? '<i class="fa-solid fa-cloud-arrow-up mr-1 text-blue-500"></i>En Cola Offline: ' + (d.datos.numero_interno || 'S/N')
-                : '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
+              const serialHist = escapeHtml(d.datos.numero_interno || 'S/N');
+              badgeHist.innerHTML = llantaCambiada
+                ? '<i class="fa-solid fa-arrow-up mr-1 text-blue-600"></i>Llanta montada: ' + serialHist
+                : esDeColaPendiente
+                  ? '<i class="fa-solid fa-cloud-arrow-up mr-1 text-blue-500"></i>En Cola Offline: ' + serialHist
+                  : '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + serialHist;
             }
 
             if (yaInspeccionadaHoy) {
@@ -2618,7 +2637,8 @@
 
               // 4. Dimensión: Prevalecer la dimensión fijada en la primera llanta para este vehículo,
               // o cargar la dimensión histórica y fijarla como predeterminada del vehículo.
-              const dimParaCargar = dimensionPredeterminadaVehiculo || d.datos.dimension || '295/80R22.5';
+              // Una llanta recién montada trae su propia dimensión.
+              const dimParaCargar = (llantaCambiada && d.datos.dimension) || dimensionPredeterminadaVehiculo || d.datos.dimension || '295/80R22.5';
               if (dimParaCargar) {
                 asignarValorSelect('dimension', dimParaCargar);
                 if (!dimensionPredeterminadaVehiculo && d.datos.dimension) {
@@ -2691,7 +2711,7 @@
               }
             }
           } else {
-            // Posición sin registro previo
+            // Posición sin registro previo (o con la llanta retirada)
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             document.getElementById('badgeLlantaCliente')?.classList.add('hidden');
             datosInspeccionAnterior = null;
@@ -2745,6 +2765,7 @@
 
               aplicarRestriccionEjeDireccional(pos);
               validarVida();
+              await actualizarPanelTallerPosicion(pos);
             }
           }
 
@@ -2971,7 +2992,9 @@
       if (data && data.prof_inicial > 0) {
         const inp = document.getElementById('prof_inicial');
         if (inp) {
-          inp.value = data.prof_inicial;
+          const fija = profInicialLlantaMontada;
+          const esLaMontada = fija && m.toUpperCase() === String(fija.marca || '').toUpperCase() && d.toUpperCase() === String(fija.diseno || '').toUpperCase();
+          inp.value = esLaMontada ? fija.prof : data.prof_inicial;
         }
       }
     }

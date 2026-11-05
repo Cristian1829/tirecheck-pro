@@ -1951,8 +1951,13 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                 ))
             else:
                 ubi = row_m[1]
-                # Si otra llanta ocupaba esa misma posición en el vehículo, desmontarla a Bodega 2
-                if placa and pos > 0:
+
+                def _desmontar_ocupantes():
+                    # Si otra llanta ocupaba esa misma posición en el vehículo, desmontarla a Bodega 2.
+                    # Solo cuando esta llanta de verdad queda ahí: antes corría también con una llanta ya
+                    # desmontada, y al reiniciar el servidor sacaba a la que se había montado en su lugar.
+                    if not (placa and pos > 0):
+                        return
                     c.execute("""
                         SELECT id, numero_interno, prof_actual_min, vida_actual FROM llantas_maestro
                         WHERE UPPER(cliente) = ? AND ubicacion_bodega = 'MONTADA_OPERACION'
@@ -2012,6 +2017,8 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                     if row_k and fecha_ult_k and fecha_insp_s <= fecha_ult_k:
                         continue
 
+                    _desmontar_ocupantes()
+
                     # Transición automática: llanta de bodega que fue montada en patio
                     c.execute("""
                         UPDATE llantas_maestro SET
@@ -2044,6 +2051,16 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                         cli, subc, serial, ubi, placa, pos, vida, p_min, km_act
                     ))
                 else:
+                    # Un montaje en otra posición posterior a esta inspección manda sobre ella
+                    r_mont = c.execute("""
+                        SELECT SUBSTR(fecha_movimiento, 1, 10), UPPER(TRIM(placa)), posicion FROM kardex_movimientos_llanta
+                        WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ? AND bodega_destino = 'MONTADA_OPERACION'
+                        ORDER BY fecha_movimiento DESC, id DESC LIMIT 1
+                    """, (cli, serial)).fetchone()
+                    if r_mont and str(r_mont[0] or '') >= str(fecha_insp)[:10] and (r_mont[1], to_int(r_mont[2], 0)) != (placa, pos):
+                        continue
+
+                    _desmontar_ocupantes()
                     c.execute("""
                         UPDATE llantas_maestro SET
                             placa_actual = ?,
@@ -2475,6 +2492,43 @@ def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "
                 "ult_prof_min": prof_min,
                 "ult_novedades": row[16] or ""
             }
+        # Sin inspecciones (recién dada de alta o montada por taller): sus datos están en el inventario
+        cursor.execute("""
+            SELECT COALESCE(NULLIF(cliente, ''), cliente_propietario), subcliente, placa_actual, posicion_actual,
+                   COALESCE(NULLIF(marca, ''), marca_origen), COALESCE(NULLIF(diseno, ''), diseno_origen), dimension,
+                   vida_actual, num_reencauches, ciclo_actual, banda_reen,
+                   COALESCE(NULLIF(prof_inicial, 0), prof_inicial_nueva), prof_actual_min,
+                   COALESCE(NULLIF(costo_ciclo_actual, 0), NULLIF(costo_compra_original, 0), precio_compra_inicial),
+                   COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo)
+            FROM llantas_maestro
+            WHERE UPPER(TRIM(numero_interno)) = ?
+              AND (UPPER(TRIM(cliente)) = UPPER(TRIM(?)) OR UPPER(TRIM(cliente_propietario)) = UPPER(TRIM(?)) OR ? = '')
+            LIMIT 1
+        """, (num_norm, cli_norm, cli_norm, cli_norm))
+        m = cursor.fetchone()
+        if m:
+            return {
+                "encontrado": True,
+                "numero_interno": num_norm,
+                "cliente": m[0] or "",
+                "subcliente": m[1] or "",
+                "ult_placa": m[2] or "",
+                "ult_posicion": to_int(m[3], 0) or None,
+                "ult_fecha": "",
+                "marca": m[4] or "",
+                "diseno": m[5] or "",
+                "dimension": m[6] or "",
+                "vida": vida_llanta(m[7], m[8], m[9]),
+                "banda_reen": m[10] or "",
+                "prof_inicial": to_float(m[11]),
+                "precio": to_float(m[13]),
+                "km_montaje": to_float(m[14]),
+                "ult_prof_ext": 0.0,
+                "ult_prof_cent": 0.0,
+                "ult_prof_int": 0.0,
+                "ult_prof_min": to_float(m[12]),
+                "ult_novedades": ""
+            }
     return None
 
 def obtener_posiciones_por_tipologia(tipologia):
@@ -2846,6 +2900,10 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                         f'⛔ CANDADO DE VIDA: La llanta {num_interno} figura como {nombre(v_prev)}; '
                         f'solo puede pasar a R{i_prev + 1}, no a {nombre(vida_val)}. Verifique la vida o registre el reencauche faltante.')}
 
+        # Una llanta recién montada por taller es otra llanta: la frecuencia, el desgaste y la duplicidad
+        # del mes se refieren a la anterior y no le aplican (antes bloqueaban su primera inspección)
+        montaje_nuevo = llanta_recien_montada(cursor, placa, posicion, num_interno, str(datos.get('cliente', '')).strip(), excluir_id)
+
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
         # En la versión LIGHT se permite ingresar las veces que sea necesario la palabra "SN" (Sin Número).
         cliente_val = str(datos.get('cliente', '')).strip()
@@ -2882,7 +2940,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
 
             cursor.execute(sql_dup, tuple(params_dup))
             dup_row = cursor.fetchone()
-            if dup_row:
+            if dup_row and not montaje_nuevo:
                 return {
                     'valido': False,
                     'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} en el mes de inspección ({dup_row[4]}). No se permiten números de llanta duplicados en el mismo mes.'
@@ -2914,7 +2972,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
             if f_nueva_str == f_ult_str:
                 # Misma fecha (misma jornada): verificar si esta posición específica ya fue inspeccionada
                 pos_ya_registradas = [r[1] for r in filas_ant if str(r[0]).strip()[:10] == f_ult_str]
-                if posicion in pos_ya_registradas and not es_cargue_masivo:
+                if posicion in pos_ya_registradas and not es_cargue_masivo and not montaje_nuevo:
                     return {
                         'valido': False,
                         'alerta_mes': True,
@@ -2929,7 +2987,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                     }
             else:
                 # Fecha posterior: debe haber transcurrido la frecuencia configurada por cliente
-                if not es_cargue_masivo:
+                if not es_cargue_masivo and not montaje_nuevo:
                     f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
                     f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
                     f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base, cliente=cliente_val)
@@ -2972,7 +3030,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                 }
 
         # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm, solo en captura secuencial)
-        if not es_cargue_masivo:
+        if not es_cargue_masivo and not montaje_nuevo:
             sql_prof = """
                 SELECT prof_ext, prof_cent, prof_int, fecha FROM inspecciones 
                 WHERE placa = ? AND posicion = ?
@@ -4626,7 +4684,7 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
         if fecha:
             f_str = str(fecha).strip()[:10]
             cursor.execute('''
-                SELECT posicion, novedades
+                SELECT posicion, novedades, numero_interno, cliente
                 FROM inspecciones
                 WHERE UPPER(TRIM(placa)) = ? AND substr(fecha, 1, 10) = ?
                 ORDER BY id ASC
@@ -4637,8 +4695,15 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
         posiciones = []
         posiciones_con_novedad = []
         novedades_map = {}
-        for r in cursor.fetchall():
-            if r[0] is not None:
+        filas = cursor.fetchall()
+        # Si después de inspeccionar se cambió la llanta de la posición, la nueva sigue pendiente
+        ultima_fila = {int(r[0]): r for r in filas if r[0] is not None}
+        cambiadas = {
+            p for p, r in ultima_fila.items()
+            if cambio_de_llanta_en_posicion(cursor, pl, p, r[2], f_str, r[3] or '')[0] != 'igual'
+        }
+        for r in filas:
+            if r[0] is not None and int(r[0]) not in cambiadas:
                 p = int(r[0])
                 if p not in posiciones:
                     posiciones.append(p)
@@ -4663,6 +4728,229 @@ def obtener_posiciones_inspeccionadas_actuales(placa, fecha=None):
     """
     det = obtener_posiciones_inspeccionadas_detalle(placa, fecha)
     return det.get("posiciones", [])
+
+def _llanta_montada_en_posicion(cursor, placa, posicion, cliente=''):
+    """La llanta que el inventario tiene montada en (placa, posición), o None."""
+    cli = str(cliente or '').strip().upper()
+    if cli == 'TODOS':
+        cli = ''
+    cursor.execute("""
+        SELECT numero_interno, numero_serie_dot, marca, marca_origen, diseno, diseno_origen, dimension, vida_actual,
+               ciclo_actual, num_reencauches, banda_reen, prof_inicial, prof_inicial_nueva, prof_actual_min, psi_actual,
+               costo_ciclo_actual, costo_compra_original, precio_compra_inicial,
+               km_montaje_actual, km_montaje_ciclo, km_actual_vehiculo,
+               cliente, cliente_propietario, subcliente, tipo_operacion
+        FROM llantas_maestro
+        WHERE UPPER(TRIM(placa_actual)) = ? AND posicion_actual = ? AND ubicacion_bodega = ?
+          AND (UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ? OR ? = '')
+        ORDER BY fecha_ultimo_movimiento DESC, id DESC LIMIT 1
+    """, (str(placa or '').strip().upper(), to_int(posicion, 0), MONTADA, cli, cli, cli))
+    fila = cursor.fetchone()
+    if not fila:
+        return None
+    return dict(zip([d[0] for d in cursor.description], fila))
+
+
+def _fecha_montaje_en_posicion(cursor, numero_interno, placa, posicion):
+    """Fecha (AAAA-MM-DD) del último montaje de la llanta en esa posición según el kardex, o ''."""
+    r = cursor.execute("""
+        SELECT MAX(SUBSTR(fecha_movimiento, 1, 10)) FROM kardex_movimientos_llanta
+        WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(placa)) = ? AND posicion = ? AND bodega_destino = ?
+    """, (str(numero_interno or '').strip().upper(), str(placa or '').strip().upper(), to_int(posicion, 0), MONTADA)).fetchone()
+    return str(r[0]) if r and r[0] else ''
+
+
+def cambio_de_llanta_en_posicion(cursor, placa, posicion, numero_inspeccion, fecha_inspeccion, cliente=''):
+    """
+    Compara la llanta de la última inspección con lo que hay hoy en la posición, según inventario y kardex:
+    ('igual', None), ('cambiada', llanta montada) o ('retirada', None). Solo cuenta un movimiento registrado
+    en la fecha de la inspección o después; sin movimiento, la inspección sigue siendo la referencia.
+    """
+    serial = str(numero_inspeccion or '').strip().upper()
+    fecha = str(fecha_inspeccion or '')[:10]
+    placa_n = str(placa or '').strip().upper()
+    pos = to_int(posicion, 0)
+    montada = _llanta_montada_en_posicion(cursor, placa_n, pos, cliente)
+    if montada:
+        if str(montada['numero_interno'] or '').strip().upper() == serial:
+            return 'igual', None
+        entrada = _fecha_montaje_en_posicion(cursor, montada['numero_interno'], placa_n, pos)
+        return ('cambiada', montada) if entrada and entrada >= fecha else ('igual', None)
+    if not serial or serial == 'SN':
+        return 'igual', None
+    cli = str(cliente or '').strip().upper()
+    fila = cursor.execute("""
+        SELECT ubicacion_bodega, UPPER(TRIM(placa_actual)), posicion_actual FROM llantas_maestro
+        WHERE UPPER(TRIM(numero_interno)) = ? AND (UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ? OR ? = '')
+    """, (serial, cli, cli, cli)).fetchone()
+    if not fila or (fila[0] == MONTADA and fila[1] == placa_n and to_int(fila[2], 0) == pos):
+        return 'igual', None
+    mov = cursor.execute("""
+        SELECT MAX(SUBSTR(fecha_movimiento, 1, 10)) FROM kardex_movimientos_llanta
+        WHERE UPPER(TRIM(numero_interno)) = ? AND (UPPER(TRIM(cliente)) = ? OR ? = '')
+    """, (serial, cli, cli)).fetchone()
+    return ('retirada', None) if mov and mov[0] and str(mov[0]) >= fecha else ('igual', None)
+
+
+def llanta_recien_montada(cursor, placa, posicion, numero_interno, cliente='', excluir_id=None) -> bool:
+    """True si la llanta está montada en esa posición por un movimiento posterior a la última inspección de otra llanta."""
+    serial = str(numero_interno or '').strip().upper()
+    if not serial or serial == 'SN':
+        return False
+    montada = _llanta_montada_en_posicion(cursor, placa, posicion, cliente)
+    if not montada or str(montada['numero_interno'] or '').strip().upper() != serial:
+        return False
+    entrada = _fecha_montaje_en_posicion(cursor, serial, placa, posicion)
+    if not entrada:
+        return False
+    sql = "SELECT numero_interno, SUBSTR(fecha, 1, 10) FROM inspecciones WHERE UPPER(TRIM(placa)) = ? AND posicion = ?"
+    params = [str(placa or '').strip().upper(), to_int(posicion, 0)]
+    if excluir_id is not None:
+        sql += " AND id != ?"
+        params.append(to_int(excluir_id))
+    prev = cursor.execute(sql + " ORDER BY fecha DESC, id DESC LIMIT 1", params).fetchone()
+    if not prev:
+        return True
+    return str(prev[0] or '').strip().upper() != serial and entrada >= str(prev[1] or '')
+
+
+def _datos_inspeccion_de_llanta(montada: dict, base: dict = None) -> dict:
+    """Datos para el formulario de inspección a partir de la llanta montada; la medición queda por hacer."""
+    datos = dict(base or {})
+    km_montaje = to_float(montada.get('km_montaje_actual')) or to_float(montada.get('km_montaje_ciclo'))
+    precio = (to_float(montada.get('costo_ciclo_actual')) or to_float(montada.get('costo_compra_original'))
+              or to_float(montada.get('precio_compra_inicial')))
+    datos.update({
+        'id': None,
+        'numero_interno': montada.get('numero_interno') or '',
+        'marca': montada.get('marca') or montada.get('marca_origen') or '',
+        'diseno': montada.get('diseno') or montada.get('diseno_origen') or '',
+        'dimension': montada.get('dimension') or '',
+        'vida': vida_llanta(montada.get('vida_actual'), montada.get('num_reencauches'), montada.get('ciclo_actual')),
+        'banda_reen': montada.get('banda_reen') or '',
+        'prof_inicial': to_float(montada.get('prof_inicial')) or to_float(montada.get('prof_inicial_nueva')) or None,
+        'precio': precio or None,
+        'km_montaje': km_montaje or None,
+        'prof_ext': None, 'prof_cent': None, 'prof_int': None, 'psi': None, 'novedades': '',
+    })
+    datos.setdefault('cliente', montada.get('cliente') or montada.get('cliente_propietario') or '')
+    datos.setdefault('subcliente', montada.get('subcliente') or '')
+    return datos
+
+
+def obtener_datos_posicion_inspeccion(placa, posicion) -> dict:
+    """
+    Lo que debe traer el formulario al seleccionar una posición: la última inspección o, si después se montó
+    o se retiró una llanta, la que está hoy en la posición (antes siempre traía la llanta anterior).
+    """
+    prev = obtener_ultima_inspeccion_posicion(placa, posicion)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if prev:
+            estado, montada = cambio_de_llanta_en_posicion(cursor, placa, posicion, prev.get('numero_interno'),
+                                                           prev.get('fecha'), prev.get('cliente') or '')
+            if estado == 'cambiada':
+                return {'encontrado': True, 'datos': _datos_inspeccion_de_llanta(montada, prev), 'llanta_cambiada': True}
+            if estado == 'retirada':
+                return {'encontrado': False, 'llanta_retirada': True}
+            return {'encontrado': True, 'datos': prev}
+        montada = _llanta_montada_en_posicion(cursor, placa, posicion)
+        if montada:
+            return {'encontrado': True, 'datos': _datos_inspeccion_de_llanta(montada), 'llanta_cambiada': True}
+    return {'encontrado': False}
+
+
+def _filtro_clientes_usuario(usuario):
+    """Condición SQL (columnas cliente y subcliente) según los clientes y sedes asignados al usuario."""
+    if not usuario:
+        return '', []
+    usr_info = obtener_usuario_por_username(usuario)
+    if not usr_info or usr_info.get('rol') == 'admin':
+        return '', []
+    clis = parsear_clientes_asignados(usr_info.get('cliente_asignado'))
+    if not clis:
+        return '', []
+    sql = f" AND UPPER(TRIM(cliente)) IN ({', '.join(['UPPER(TRIM(?))'] * len(clis))})"
+    params = [c.upper() for c in clis]
+    for cli_s, sedes in parsear_sedes_asignadas(usr_info.get('sedes_asignadas'), clis).items():
+        sql += f" AND (UPPER(TRIM(cliente)) != ? OR UPPER(TRIM(IFNULL(subcliente, ''))) IN ({', '.join(['?'] * len(sedes))}))"
+        params.extend([cli_s] + sorted(sedes))
+    return sql, params
+
+
+def _bodega_corta(codigo) -> str:
+    """'BODEGA_2_RECAMBIO' -> 'Bodega 2'."""
+    m = re.match(r'BODEGA_(\d)', str(codigo or '').upper())
+    return f"Bodega {m.group(1)}" if m else ''
+
+
+def obtener_movimientos_base_inspecciones(usuario=None) -> dict:
+    """
+    Movimientos de montaje y retiro (kardex) para la Base de inspecciones.
+    por_inspeccion: {id de inspección: textos}. El montaje va en la primera inspección de esa llanta en la
+    posición y el retiro en su última inspección. sin_inspeccion: los que aún no tienen inspección a la cual ir.
+    """
+    filtro, params = _filtro_clientes_usuario(usuario)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        inspecciones = {}
+        for i_id, cli, pl, pos, serial, f in cursor.execute(f"""
+            SELECT id, UPPER(TRIM(cliente)), UPPER(TRIM(placa)), posicion, UPPER(TRIM(numero_interno)), SUBSTR(fecha, 1, 10)
+            FROM inspecciones WHERE 1=1{filtro} ORDER BY fecha ASC, id ASC""", params).fetchall():
+            inspecciones.setdefault((cli, pl, to_int(pos, 0), serial), []).append((f or '', i_id))
+
+        movimientos = cursor.execute(f"""
+            SELECT id, SUBSTR(fecha_movimiento, 1, 10), UPPER(TRIM(cliente)), subcliente, UPPER(TRIM(numero_interno)),
+                   bodega_origen, bodega_destino, UPPER(TRIM(placa)), posicion, km_vehiculo, causal_o_motivo, usuario_registro
+            FROM kardex_movimientos_llanta
+            WHERE TRIM(IFNULL(placa, '')) <> '' AND posicion > 0 AND (bodega_destino = ? OR bodega_origen = ?){filtro}
+            ORDER BY fecha_movimiento ASC, id ASC""", [MONTADA, MONTADA] + params).fetchall()
+
+        unidades, llantas = {}, {}
+        por_inspeccion, sin_inspeccion = {}, []
+        for m_id, f, cli, subc, serial, origen, destino, pl, pos, km, motivo, usuario_reg in movimientos:
+            pos = to_int(pos, 0)
+            if pl not in unidades:
+                unidades[pl] = 'horas' if unidad_medida_placa(pl, conn) == 'HORAS' else 'km'
+            lectura = f" a {to_float(km):,.0f} {unidades[pl]}".replace(',', '.') if to_float(km) > 0 else ''
+            filas = inspecciones.get((cli, pl, pos, serial), [])
+            if destino == MONTADA:
+                tipo = 'MONTAJE'
+                salen = sorted({x[4] for x in movimientos if x[1] == f and x[2] == cli and x[7] == pl and to_int(x[8], 0) == pos
+                                and x[5] == MONTADA and x[6] != MONTADA and x[4] != serial})
+                texto = f"Montada el {f}{lectura}"
+                if origen and origen != MONTADA and _bodega_corta(origen):
+                    texto += f" desde {_bodega_corta(origen)}"
+                if salen:
+                    texto += f", reemplaza a {', '.join(salen)}"
+                destino_insp = next((i for fi, i in filas if fi >= f), None)
+            else:
+                tipo = 'RETIRO'
+                texto = f"Retirada el {f}{lectura} hacia {_bodega_corta(destino) or destino}"
+                if motivo:
+                    texto += f" ({motivo})"
+                destino_insp = next((i for fi, i in reversed(filas) if fi <= f), None)
+            if destino_insp is not None:
+                por_inspeccion.setdefault(destino_insp, []).append({'tipo': tipo, 'texto': texto})
+                continue
+            if (cli, serial) not in llantas:
+                r = cursor.execute("""
+                    SELECT COALESCE(NULLIF(marca, ''), marca_origen), COALESCE(NULLIF(diseno, ''), diseno_origen), dimension,
+                           vida_actual, num_reencauches, ciclo_actual
+                    FROM llantas_maestro WHERE UPPER(TRIM(numero_interno)) = ? AND (UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ?)
+                """, (serial, cli, cli)).fetchone()
+                llantas[(cli, serial)] = r or ('', '', '', '', None, None)
+            ll = llantas[(cli, serial)]
+            sin_inspeccion.append({
+                'es_movimiento': True, 'id': f"mov-{m_id}", 'fecha': f, 'cliente': cli, 'subcliente': str(subc or '').upper(), 'placa': pl,
+                'posicion': pos, 'numero_interno': serial, 'kilometraje': to_float(km), 'marca': ll[0] or '', 'diseno': ll[1] or '',
+                'dimension': ll[2] or '', 'vida': vida_llanta(ll[3], ll[4], ll[5]) if ll[3] else '',
+                'usuario_registro': usuario_reg or '', 'novedades': '', 'tipo_operacion': '', 'tipologia': '', 'banda_reen': '',
+                'movimientos': [{'tipo': tipo, 'texto': texto}],
+            })
+    sin_inspeccion.sort(key=lambda r: r['fecha'], reverse=True)
+    return {'por_inspeccion': por_inspeccion, 'sin_inspeccion': sin_inspeccion}
+
 
 def obtener_ultima_inspeccion_posicion(placa, posicion):
     pl = str(placa or '').strip().upper()

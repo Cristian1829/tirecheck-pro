@@ -206,7 +206,8 @@ def desmontar_llanta_taller(datos: dict) -> dict:
     with database.get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, ubicacion_bodega, estado_actual, placa_actual, posicion_actual, km_montaje_actual,
+            SELECT id, ubicacion_bodega, estado_actual, placa_actual, posicion_actual,
+                   COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo, 0),
                    km_acumulados_total, prof_actual_min, ciclo_actual, cliente_propietario, cliente,
                    costo_ciclo_actual, prof_inicial, prof_inicial_nueva, valor_reconocido_garantia, subcliente, vida_actual
             FROM llantas_maestro
@@ -227,6 +228,8 @@ def desmontar_llanta_taller(datos: dict) -> dict:
         if error:
             return {"ok": False, "status": "error", "message": error}
         p_ini = database.to_float(p_ini_m) or database.to_float(p_ini_n)
+        if odometro > 0 and km_mont and odometro < km_mont:
+            return {"ok": False, "status": "error", "message": f"El odómetro ({odometro:,.0f}) no puede ser menor al del montaje de la llanta ({km_mont:,.0f}).".replace(',', '.')}
 
         # Profundidad suministrada o la última conocida; presión solo si se midió
         prof_momento = database.to_float(datos.get('profundidad') or datos.get('prof_min_mm', prof_min_act), prof_min_act)
@@ -314,7 +317,7 @@ def montar_llanta_taller(datos: dict) -> dict:
         return {"ok": False, "status": "error", "message": "Placa y posición válida (>= 1) son obligatorias para montaje"}
 
     numero_interno = str(datos.get('numero_interno', '')).strip().upper()
-    es_nueva_directa = bool(datos.get('nueva_directa', False))
+    es_nueva_directa = bool(datos.get('es_nueva_directa') or datos.get('nueva_directa'))
 
     with database.get_connection() as conn:
         cursor = conn.cursor()
@@ -326,6 +329,8 @@ def montar_llanta_taller(datos: dict) -> dict:
               AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
         """, (numero_interno, cliente, cliente, cliente))
         row_check = cursor.fetchone()
+        if row_check and es_nueva_directa:
+            return {"ok": False, "status": "error", "message": f"La llanta {numero_interno} ya existe en el inventario: móntela desde Stock o use otro número."}
         if not row_check or es_nueva_directa:
             if not row_check:
                 marca_n = str(datos.get('marca') or '').strip().upper()
@@ -375,6 +380,13 @@ def montar_llanta_taller(datos: dict) -> dict:
             return {"ok": False, "status": "error", "message": error}
         es_reingreso = origen in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA')
 
+        # La lectura del vehículo no retrocede: los km de la llanta se calculan desde aquí
+        if odometro > 0:
+            r_lectura = cursor.execute("SELECT MAX(kilometraje) FROM inspecciones WHERE UPPER(TRIM(placa)) = ?", (placa,)).fetchone()
+            ultima_lectura = database.to_float(r_lectura[0]) if r_lectura else 0.0
+            if odometro < ultima_lectura:
+                return {"ok": False, "status": "error", "message": f"El odómetro ({odometro:,.0f}) no puede ser menor a la última lectura del vehículo {placa} ({ultima_lectura:,.0f}).".replace(',', '.')}
+
         # Candado Direccional: Si es eje direccional y ciclo_actual > 1 (o reencauche), rechazar (salvo si la tipología autoriza)
         perfil_v = database.obtener_perfil_vehiculo(placa)
         tipologia_v = perfil_v.get('tipologia', '') if perfil_v else ''
@@ -389,7 +401,7 @@ def montar_llanta_taller(datos: dict) -> dict:
 
         # Desmonte automático de ocupante previa en la misma posición
         cursor.execute("""
-            SELECT id, numero_interno, prof_actual_min, km_montaje_actual, km_acumulados_total, ciclo_actual
+            SELECT id, numero_interno, prof_actual_min, COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo, 0), km_acumulados_total, ciclo_actual
             FROM llantas_maestro
             WHERE UPPER(placa_actual) = ? AND posicion_actual = ? AND UPPER(numero_interno) != ?
               AND ubicacion_bodega = 'MONTADA_OPERACION'
@@ -1086,40 +1098,41 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         cursor = conn.cursor()
 
         # Buscar llanta instalada en llantas_maestro
-        cursor.execute("""
-            SELECT id, numero_interno, numero_serie_dot, marca_origen, diseno_origen, marca, diseno,
-                   dimension, prof_inicial_nueva, prof_actual_min, psi_actual, ciclo_actual,
-                   vida_actual, banda_reen
-            FROM llantas_maestro
-            WHERE UPPER(placa_actual) = ? AND posicion_actual = ? AND ubicacion_bodega = 'MONTADA_OPERACION'
-        """, (placa, posicion))
-        r_inst = cursor.fetchone()
+        km_recorridos = 0.0
+        r_inst = database._llanta_montada_en_posicion(cursor, placa, posicion, cliente)
         if r_inst:
+            km_mont = database.to_float(r_inst.get('km_montaje_actual')) or database.to_float(r_inst.get('km_montaje_ciclo'))
+            km_recorridos = max(0.0, database.to_float(r_inst.get('km_actual_vehiculo')) - km_mont) if km_mont else 0.0
+            vida_inst = database.vida_llanta(r_inst.get('vida_actual'), r_inst.get('num_reencauches'), r_inst.get('ciclo_actual'))
             llanta_instalada = {
-                "id": r_inst[0],
-                "numero_interno": r_inst[1],
-                "dot": r_inst[2],
-                "marca": r_inst[3] or r_inst[5],
-                "diseno": r_inst[4] or r_inst[6],
-                "dimension": r_inst[7],
-                "prof_inicial": r_inst[8],
-                "profundidad_actual": r_inst[9],
-                "psi_actual": r_inst[10],
-                "ciclo_actual": r_inst[11],
-                "vida": database.vida_llanta(r_inst[12], ciclo=r_inst[11]),
-                "banda": r_inst[13]
+                "numero_interno": r_inst.get('numero_interno'),
+                "dot": r_inst.get('numero_serie_dot'),
+                "marca": r_inst.get('marca') or r_inst.get('marca_origen'),
+                "diseno": r_inst.get('diseno') or r_inst.get('diseno_origen'),
+                "dimension": r_inst.get('dimension'),
+                "prof_inicial": database.to_float(r_inst.get('prof_inicial')) or database.to_float(r_inst.get('prof_inicial_nueva')),
+                "profundidad_actual": r_inst.get('prof_actual_min'),
+                "prof_actual_min": r_inst.get('prof_actual_min'),
+                "psi_actual": r_inst.get('psi_actual'),
+                "ciclo_actual": r_inst.get('ciclo_actual'),
+                "vida": vida_inst,
+                "vida_actual": vida_inst,
+                "banda": r_inst.get('banda_reen'),
+                "km_montaje_actual": km_mont
             }
         else:
-            # Buscar última inspección de patio en esa posición
+            # Buscar última inspección de patio en esa posición (solo si su llanta no se retiró después)
             cursor.execute("""
                 SELECT numero_interno, marca, diseno, dimension, prof_inicial,
-                       prof_ext, prof_cent, prof_int, psi, vida, banda_reen
+                       prof_ext, prof_cent, prof_int, psi, vida, banda_reen, fecha, cliente, km_montaje
                 FROM inspecciones
                 WHERE UPPER(placa) = ? AND posicion = ?
                 ORDER BY fecha DESC, id DESC LIMIT 1
             """, (placa, posicion))
             r_insp = cursor.fetchone()
-            if r_insp and r_insp[0] and r_insp[0].upper() != 'SN':
+            sigue_ahi = bool(r_insp) and database.cambio_de_llanta_en_posicion(
+                cursor, placa, posicion, r_insp[0], r_insp[11], r_insp[12] or cliente)[0] == 'igual'
+            if sigue_ahi and r_insp[0] and r_insp[0].upper() != 'SN':
                 p_vals = [x for x in (database.to_float(r_insp[5]), database.to_float(r_insp[6]), database.to_float(r_insp[7])) if x > 0]
                 p_min = min(p_vals) if p_vals else database.to_float(r_insp[4])
                 llanta_instalada = {
@@ -1129,9 +1142,12 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
                     "dimension": r_insp[3],
                     "prof_inicial": r_insp[4],
                     "profundidad_actual": p_min,
+                    "prof_actual_min": p_min,
                     "psi_actual": r_insp[8],
                     "vida": r_insp[9] or "ORIGINAL",
-                    "banda": r_insp[10]
+                    "vida_actual": r_insp[9] or "ORIGINAL",
+                    "banda": r_insp[10],
+                    "km_montaje_actual": database.to_float(r_insp[13])
                 }
 
         # Tipología y candado direccional
@@ -1182,6 +1198,7 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         "posicion": posicion,
         "es_direccional": es_direccional,
         "llanta_instalada": llanta_instalada,
+        "km_recorridos_en_posicion": km_recorridos,
         "stock_disponible": stock_disponible
     }
 

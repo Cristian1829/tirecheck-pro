@@ -745,6 +745,13 @@ def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(o
     return sanitizar_nativos(df.to_dict(orient="records"))
 
 
+@app.get("/api/inspecciones/movimientos", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_movimientos_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Montajes y retiros de llantas que se muestran en la Base de inspecciones."""
+    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
+    return sanitizar_nativos(database.obtener_movimientos_base_inspecciones(usuario=filtro_u))
+
+
 @app.get("/api/inspecciones/plantilla-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario_actual)):
     _p_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "plantillas", "Plantilla_Cargue_Masivo_Inspecciones.xlsx")
@@ -784,6 +791,8 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
 def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
+    movs = database.obtener_movimientos_base_inspecciones(usuario=filtro_u)["por_inspeccion"]
+    df["movimiento"] = df["id"].map(lambda i: "; ".join(m["texto"] for m in movs.get(i, [])))
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Inspecciones", index=False)
@@ -2363,15 +2372,11 @@ def api_llanta_por_cliente(
 @app.get("/api/inspeccion-anterior")
 def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     verificar_acceso_placa(usuario_actual, placa)  # antes no se validaba el cliente
-    prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
+    # Si después de la última inspección se montó o retiró una llanta, responde con lo que hay hoy en la posición
+    res = database.obtener_datos_posicion_inspeccion(placa, posicion)
     perfil = database.obtener_perfil_vehiculo(placa)
-    if prev:
-        return sanitizar_nativos({
-            "encontrado": True,
-            "datos": prev,
-            "vehiculo_perfil": perfil if perfil.get("encontrado") else None
-        })
-    return {"encontrado": False, "vehiculo_perfil": perfil if perfil.get("encontrado") else None}
+    res["vehiculo_perfil"] = perfil if perfil.get("encontrado") else None
+    return sanitizar_nativos(res)
 
 @app.get("/api/posiciones-inspeccionadas")
 def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -2870,10 +2875,12 @@ def api_taller_posicion_info(
                 if r_i and r_i[0]:
                     cliente = r_i[0]
 
-    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    # Sin un cliente concreto no se sabe la licencia: el taller no se ofrece
+    cliente_real = bool(cliente) and str(cliente).strip().upper() != "TODOS"
+    lic = database.obtener_licencia_cliente(cliente) if cliente_real else "LIGHT"
     data = database.obtener_posicion_taller_info(placa, posicion, cliente)
     data["tipo_licencia"] = lic
-    data["permite_taller"] = (lic != "LIGHT")
+    data["permite_taller"] = (lic == "PRO")
     return sanitizar_nativos(data)
 
 @app.post("/api/taller/desmontar", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
@@ -2890,11 +2897,12 @@ def api_taller_desmontar(
             if r_ll:
                 cliente = r_ll[0] or r_ll[1]
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
-    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
-    if lic == "LIGHT":
+    if not cliente or str(cliente).strip().upper() == "TODOS":
+        raise HTTPException(status_code=400, detail="No se pudo determinar el cliente de la llanta. Seleccione el cliente.")
+    if database.obtener_licencia_cliente(cliente) != "PRO":
         raise HTTPException(
             status_code=403,
-            detail="Los desmontajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+            detail="Los desmontajes en inspección son exclusivos de la versión PRO (Licencia FULL: Gestión Integral de Bodegas y Taller)."
         )
 
     item["cliente_propietario"] = cliente
@@ -2923,11 +2931,12 @@ def api_taller_montar(
                 if r_i and r_i[0]:
                     cliente = r_i[0]
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
-    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
-    if lic == "LIGHT":
+    if not cliente or str(cliente).strip().upper() == "TODOS":
+        raise HTTPException(status_code=400, detail="No se pudo determinar el cliente del vehículo. Seleccione el cliente.")
+    if database.obtener_licencia_cliente(cliente) != "PRO":
         raise HTTPException(
             status_code=403,
-            detail="Los montajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+            detail="Los montajes en inspección son exclusivos de la versión PRO (Licencia FULL: Gestión Integral de Bodegas y Taller)."
         )
 
     item["cliente_propietario"] = cliente
