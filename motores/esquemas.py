@@ -111,9 +111,9 @@ class OrdenCreate(BaseModel):
     numero_orden: Optional[Annotated[str, Field(max_length=50)]] = None
     company_name: Corto
     date_in: Optional[datetime] = None
-    dropoff_name: Optional[Corto] = "Cliente / Transportista"
+    dropoff_name: Optional[Corto] = "Customer"
     firma_dropoff: Optional[DataUrl] = None
-    received_name: Optional[Corto] = "Marino Trejos / Taller"
+    received_name: Optional[Corto] = "Marino Trejos"
     firma_received: Optional[DataUrl] = None
     notas: Optional[Largo] = None
     motores: Annotated[List[MotorCreate], Field(max_length=30)]
@@ -163,7 +163,7 @@ class EntregaSalidaCreate(BaseModel):
     fecha_salida: Optional[datetime] = None
     entrega_empresa_name: Optional[Corto] = "Marino Trejos"
     firma_entrega_empresa: Optional[DataUrl] = None
-    recibe_cliente_name: Optional[Corto] = "Recibido por Cliente"
+    recibe_cliente_name: Optional[Corto] = "Customer"
     firma_recibe_cliente: Optional[DataUrl] = None
     notas: Optional[Largo] = None
     motores_despacho: Annotated[List[EntregaItemCreate], Field(max_length=30)]

@@ -19,6 +19,9 @@ import qrcode
 DIR_LOGOS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "img", "motores")
 
 
+ESTADOS_EN = {"Pendiente": "PENDING", "En Taller": "IN SHOP", "Entregado Parcial": "PARTIALLY DELIVERED", "Entregado Total": "FULLY DELIVERED"}
+
+
 def esc(valor):
     """Texto del usuario listo para un Paragraph de ReportLab (que interpreta sus etiquetas)."""
     return escape(str(valor if valor is not None else ""))
@@ -64,6 +67,8 @@ def generate_entry_pdf(orden):
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=letter,
+        title=f"Motors Form {orden.numero_orden}",
+        author="Marino Trejos Mechanic",
         leftMargin=24,
         rightMargin=24,
         topMargin=18,
@@ -132,25 +137,26 @@ def generate_entry_pdf(orden):
     story.append(Spacer(1, 4))
     
     # Metadatos del Documento
+    entregas = sorted(orden.entregas, key=lambda e: e.id)
     entregados_count = sum(1 for m in orden.motores if m.estado_motor == "Entregado")
     total_motores = len(orden.motores)
-    ultima_entrega = orden.entregas[-1] if orden.entregas else None
+    ultima_entrega = entregas[-1] if entregas else None
 
     date_in_str = orden.date_in.strftime("%Y-%m-%d %H:%M") if orden.date_in else ahora().strftime("%Y-%m-%d %H:%M")
     
     if entregados_count == total_motores and total_motores > 0:
-        estado_label = f"<font color='#16A34A'><b>ENTREGADO TOTAL</b></font> ({total_motores} motores)"
-        date_out_str = orden.date_out.strftime("%Y-%m-%d %H:%M") if orden.date_out else (ultima_entrega.fecha_salida.strftime("%Y-%m-%d %H:%M") if ultima_entrega and ultima_entrega.fecha_salida else "ENTREGADO")
+        estado_label = f"<font color='#16A34A'><b>FULLY DELIVERED</b></font> ({total_motores} motor{'s' if total_motores != 1 else ''})"
+        date_out_str = orden.date_out.strftime("%Y-%m-%d %H:%M") if orden.date_out else (ultima_entrega.fecha_salida.strftime("%Y-%m-%d %H:%M") if ultima_entrega and ultima_entrega.fecha_salida else "DELIVERED")
     elif entregados_count > 0:
-        estado_label = f"<font color='#D97706'><b>ENTREGADO PARCIAL</b></font> ({entregados_count} de {total_motores} despachados)"
-        date_out_str = f"PARCIAL: {ultima_entrega.fecha_salida.strftime('%Y-%m-%d %H:%M')}" if ultima_entrega and ultima_entrega.fecha_salida else "PENDIENTE EN TALLER"
+        estado_label = f"<font color='#D97706'><b>PARTIALLY DELIVERED</b></font> ({entregados_count} of {total_motores} dispatched)"
+        date_out_str = f"PARTIAL: {ultima_entrega.fecha_salida.strftime('%Y-%m-%d %H:%M')}" if ultima_entrega and ultima_entrega.fecha_salida else "PENDING IN SHOP"
     else:
-        estado_label = f"<font color='#2563EB'><b>EN TALLER</b></font> ({total_motores} motores)"
-        date_out_str = "PENDIENTE EN TALLER / IN SHOP"
+        estado_label = f"<font color='#2563EB'><b>IN SHOP</b></font> ({total_motores} motor{'s' if total_motores != 1 else ''})"
+        date_out_str = "PENDING IN SHOP"
     
     qr_filename = f"qr_ord_unified_{orden.id}.png"
     qr_path = os.path.join(uploads_dir, qr_filename)
-    create_qr_code(f"ORDEN: {orden.numero_orden}\nCLIENTE: {orden.company_name}\nESTADO: {orden.estado_orden}\nFECHA IN: {date_in_str}\nFECHA OUT: {date_out_str}", qr_path)
+    create_qr_code(f"ORDER: {orden.numero_orden}\nCOMPANY: {orden.company_name}\nSTATUS: {ESTADOS_EN.get(orden.estado_orden, orden.estado_orden)}\nDATE IN: {date_in_str}\nDATE OUT: {date_out_str}", qr_path)
     qr_img = RLImage(qr_path, width=0.82*inch, height=0.82*inch)
     
     meta_data = [
@@ -187,7 +193,7 @@ def generate_entry_pdf(orden):
     # ==========================================
     # SECCIÓN 1: INGRESO / INTAKE (PHOTO IN)
     # ==========================================
-    sec1_title = Table([[Paragraph("<b>1. INTAKE REGISTRATION (RECEPCIÓN DE EQUIPOS EN TALLER)</b>", sec_banner_in)]], colWidths=[7.6*inch])
+    sec1_title = Table([[Paragraph("<b>1. INTAKE REGISTRATION</b>", sec_banner_in)]], colWidths=[7.6*inch])
     sec1_title.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#1E3A8A')),
         ('TOPPADDING', (0, 0), (-1, -1), 2.5),
@@ -200,8 +206,8 @@ def generate_entry_pdf(orden):
         Paragraph("<b>MAKE</b>", cell_th),
         Paragraph("<b>MODEL</b>", cell_th),
         Paragraph("<b>SERIAL NUMBER</b>", cell_th),
-        Paragraph("<b>PHOTO IN (FOTO INGRESO)</b>", cell_th),
-        Paragraph("<b>OBSERVACIONES DE ENTRADA</b>", cell_th)
+        Paragraph("<b>PHOTO IN</b>", cell_th),
+        Paragraph("<b>INTAKE NOTES</b>", cell_th)
     ]
     in_rows = [in_headers]
     for idx, m in enumerate(orden.motores, 1):
@@ -219,7 +225,7 @@ def generate_entry_pdf(orden):
             Paragraph(esc(str(m.model).upper()), cell_n),
             Paragraph(f"<b>{esc(str(m.serial_number).upper())}</b>", cell_b),
             photo_flowable,
-            Paragraph(esc(m.observaciones or "Ingreso en taller para servicio."), cell_n)
+            Paragraph(esc(m.observaciones or "Received at shop for service."), cell_n)
         ]
         in_rows.append(row)
         
@@ -242,7 +248,7 @@ def generate_entry_pdf(orden):
     marino_stamp_path = os.path.join(assets_dir, "marino_stamp.png")
 
     # Firma 1: Drop Off (Cliente que entrega)
-    sig_dropoff_img = Paragraph("<i>[ Firma Pendiente ]</i>", cell_n)
+    sig_dropoff_img = Paragraph("<i>[ Signature Pending ]</i>", cell_n)
     sig_drop_path = ruta_archivo(orden.firma_dropoff)
     if sig_drop_path and os.path.exists(sig_drop_path):
         try:
@@ -251,7 +257,7 @@ def generate_entry_pdf(orden):
             pass
 
     # Firma 2: Received by Shop (Equipo Marino Trejos que recibe)
-    sig_received_in_img = Paragraph("<i>[ Firma Pendiente ]</i>", cell_n)
+    sig_received_in_img = Paragraph("<i>[ Signature Pending ]</i>", cell_n)
     sig_rec_in_path = ruta_archivo(orden.firma_received)
     if sig_rec_in_path and os.path.exists(sig_rec_in_path):
         try:
@@ -264,13 +270,13 @@ def generate_entry_pdf(orden):
         except Exception:
             pass
 
-    dropoff_str = esc(str(orden.dropoff_name or "CLIENTE").upper())
+    dropoff_str = esc(str(orden.dropoff_name or "CUSTOMER").upper())
     received_in_str = esc(str(orden.received_name or "MARINO TREJOS").upper())
 
     sig_in_data = [
         [
-            Paragraph("<b>1.1 DROP OFF (CLIENT SIGNATURE / ENTREGA CLIENTE)</b>", cell_b),
-            Paragraph("<b>1.2 RECEIVED BY (MARINO TREJOS SHOP / RECIBE TALLER)</b>", cell_b)
+            Paragraph("<b>1.1 DROP OFF (CUSTOMER SIGNATURE)</b>", cell_b),
+            Paragraph("<b>1.2 RECEIVED BY (MARINO TREJOS SHOP)</b>", cell_b)
         ],
         [
             sig_dropoff_img,
@@ -298,7 +304,7 @@ def generate_entry_pdf(orden):
     # ==========================================
     # SECCIÓN 2: ENTREGA / DELIVERY (PHOTO OUT)
     # ==========================================
-    sec2_title = Table([[Paragraph("<b>2. DISPATCH &amp; DELIVERY REGISTRATION (SALIDA Y ENTREGA AL CLIENTE)</b>", sec_banner_out)]], colWidths=[7.6*inch])
+    sec2_title = Table([[Paragraph("<b>2. DISPATCH &amp; DELIVERY REGISTRATION</b>", sec_banner_out)]], colWidths=[7.6*inch])
     sec2_title.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#0D9488')),
         ('TOPPADDING', (0, 0), (-1, -1), 2.5),
@@ -311,16 +317,22 @@ def generate_entry_pdf(orden):
         Paragraph("<b>MAKE</b>", cell_th),
         Paragraph("<b>MODEL</b>", cell_th),
         Paragraph("<b>SERIAL NUMBER</b>", cell_th),
-        Paragraph("<b>PHOTO OUT (FOTO SALIDA)</b>", cell_th),
-        Paragraph("<b>ESTADO DE ENTREGA</b>", cell_th)
+        Paragraph("<b>PHOTO OUT</b>", cell_th),
+        Paragraph("<b>DELIVERY STATUS</b>", cell_th)
     ]
     out_rows = [out_headers]
     # En entregas parciales, los motores pendientes aparecen arriba y los entregados en la parte de abajo
     motores_para_salida = [m for m in orden.motores if m.estado_motor != "Entregado"] + [m for m in orden.motores if m.estado_motor == "Entregado"]
+    entrega_de_motor = {item.motor_id: e for e in entregas for item in e.items}
     for idx, m in enumerate(motores_para_salida, 1):
         if m.estado_motor == "Entregado":
-            status_text = "<font color='#16A34A'><b>ENTREGADO / DELIVERED</b></font><br/><font size='7' color='#15803D'>Inspeccionado y probado</font>"
-            photo_flowable = Paragraph("<font color='#64748B'><i>Entregado (Sin foto)</i></font>", cell_n)
+            entrega = entrega_de_motor.get(m.id)
+            detalle = ""
+            if entrega:
+                fecha = entrega.fecha_salida.strftime("%Y-%m-%d %H:%M") if entrega.fecha_salida else ""
+                detalle = f"<br/><font size='7' color='#15803D'>{fecha} &nbsp;|&nbsp; To: {esc(str(entrega.recibe_cliente_name or 'CUSTOMER').upper())}</font>"
+            status_text = f"<font color='#16A34A'><b>DELIVERED</b></font><br/><font size='7' color='#15803D'>Inspected and tested</font>{detalle}"
+            photo_flowable = Paragraph("<font color='#64748B'><i>Delivered (no photo)</i></font>", cell_n)
             photo_path = ruta_archivo(m.foto_salida_url)
             if photo_path and os.path.exists(photo_path):
                 try:
@@ -329,9 +341,9 @@ def generate_entry_pdf(orden):
                     pass
         else:
             # Motor aún NO entregado (En taller)
-            photo_flowable = Paragraph("<font color='#94A3B8'><i>Pendiente en taller</i></font>", cell_n)
-            status_text = "<font color='#DC2626'><b>PENDIENTE EN TALLER / IN SHOP</b></font><br/><font size='7' color='#DC2626'><b>No entregado aún</b></font>"
-                    
+            photo_flowable = Paragraph("<font color='#94A3B8'><i>Pending in shop</i></font>", cell_n)
+            status_text = "<font color='#DC2626'><b>PENDING IN SHOP</b></font><br/><font size='7' color='#DC2626'><b>Not delivered yet</b></font>"
+
         row = [
             Paragraph(str(idx), cell_n),
             Paragraph(esc(str(m.make).upper()), cell_b),
@@ -355,72 +367,54 @@ def generate_entry_pdf(orden):
     story.append(Spacer(1, 4))
     
     # =======================================================
-    # FIRMAS DE SALIDA (2 FIRMAS: TALLER DELIVERED + CLIENTE RECEIVED)
+    # FIRMAS DE SALIDA: UN BLOQUE POR ENTREGA (TALLER DELIVERED + CLIENTE RECEIVED)
     # =======================================================
-    ultima_entrega = orden.entregas[-1] if orden.entregas else None
-    
-    # Firma 3: Delivered by Shop (Equipo Marino Trejos que entrega)
-    sig_delivered_img = Paragraph("<font color='#94A3B8'><i>[ Pendiente de Entrega ]</i></font>", cell_n)
-    deliv_empresa_nombre = "MARINO TREJOS"
-    
-    # Firma 4: Received by Client (Cliente que retira conforme)
-    sig_received_out_img = Paragraph("<font color='#94A3B8'><i>[ Pendiente de Retiro ]</i></font>", cell_n)
-    recibe_cliente_nombre = "CLIENTE FINAL"
-    
-    if ultima_entrega:
-        deliv_empresa_nombre = esc(str(ultima_entrega.entrega_empresa_name or "MARINO TREJOS").upper())
-        recibe_cliente_nombre = esc(str(ultima_entrega.recibe_cliente_name or "CLIENTE").upper())
-        
-        # Firma empresa despacho
-        sig_deliv_path = ruta_archivo(ultima_entrega.firma_entrega_empresa)
-        if sig_deliv_path and os.path.exists(sig_deliv_path):
+    def _firma(nombre_archivo, pendiente):
+        ruta = ruta_archivo(nombre_archivo)
+        if ruta:
             try:
-                sig_delivered_img = RLImage(sig_deliv_path, width=1.6*inch, height=0.45*inch)
+                return RLImage(ruta, width=1.6*inch, height=0.45*inch)
             except Exception:
                 pass
-        elif os.path.exists(marino_sig_path):
-            try:
-                sig_delivered_img = RLImage(marino_sig_path, width=1.6*inch, height=0.42*inch)
-            except Exception:
-                pass
+        return Paragraph(f"<font color='#94A3B8'><i>[ {pendiente} ]</i></font>", cell_n)
 
-        # Firma cliente recepción salida
-        sig_rec_path = ruta_archivo(ultima_entrega.firma_recibe_cliente)
-        if sig_rec_path and os.path.exists(sig_rec_path):
-            try:
-                sig_received_out_img = RLImage(sig_rec_path, width=1.6*inch, height=0.45*inch)
-            except Exception:
-                pass
-                
-    fecha_salida_sig = ultima_entrega.fecha_salida.strftime("%Y-%m-%d %H:%M") if (ultima_entrega and ultima_entrega.fecha_salida) else "PENDIENTE"
-    sig_out_data = [
-        [
-            Paragraph("<b>2.1 DELIVERED BY (MARINO TREJOS SHOP / ENTREGA TALLER)</b>", cell_b),
-            Paragraph("<b>2.2 RECEIVED BY (CLIENT FINAL RECEIPT / RECIBE CLIENTE)</b>", cell_b)
-        ],
-        [
-            sig_delivered_img,
-            sig_received_out_img
-        ],
-        [
-            Paragraph(f"<b>Delivered by:</b> {deliv_empresa_nombre} &nbsp;|&nbsp; <b>Fecha:</b> {fecha_salida_sig}", cell_n),
-            Paragraph(f"<b>Received by:</b> {recibe_cliente_nombre} &nbsp;|&nbsp; <b>Fecha:</b> {fecha_salida_sig}", cell_n)
-        ]
-    ]
-    sig_out_table = Table(sig_out_data, colWidths=[3.8*inch, 3.8*inch])
-    sig_out_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F0FDFA')),
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#CCFBF1')),
-        ('BOX', (0, 0), (-1, -1), 0.75, colors.HexColor('#99F6E4')),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCFBF1')),
-        ('ALIGN', (0, 1), (-1, 1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
-    story.append(sig_out_table)
-    story.append(Spacer(1, 6))
-    
+    for n, entrega in enumerate(entregas or [None], 1):
+        sufijo = f" - DISPATCH {n} OF {len(entregas)}" if len(entregas) > 1 else ""
+        if entrega:
+            fecha = entrega.fecha_salida.strftime("%Y-%m-%d %H:%M") if entrega.fecha_salida else "PENDING"
+            nombre_taller = esc(str(entrega.entrega_empresa_name or "MARINO TREJOS").upper())
+            nombre_cliente = esc(str(entrega.recibe_cliente_name or "CUSTOMER").upper())
+            firma_taller = _firma(entrega.firma_entrega_empresa, "Delivery Pending")
+            firma_cliente = _firma(entrega.firma_recibe_cliente, "Pickup Pending")
+        else:
+            fecha, nombre_taller, nombre_cliente = "PENDING", "PENDING", "PENDING"
+            firma_taller = _firma(None, "Delivery Pending")
+            firma_cliente = _firma(None, "Pickup Pending")
+        sig_out_table = Table([
+            [
+                Paragraph(f"<b>2.1 DELIVERED BY (MARINO TREJOS SHOP){sufijo}</b>", cell_b),
+                Paragraph(f"<b>2.2 RECEIVED BY (CUSTOMER){sufijo}</b>", cell_b)
+            ],
+            [firma_taller, firma_cliente],
+            [
+                Paragraph(f"<b>Delivered by:</b> {nombre_taller} &nbsp;|&nbsp; <b>Date:</b> {fecha}", cell_n),
+                Paragraph(f"<b>Received by:</b> {nombre_cliente} &nbsp;|&nbsp; <b>Date:</b> {fecha}", cell_n)
+            ]
+        ], colWidths=[3.8*inch, 3.8*inch])
+        sig_out_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F0FDFA')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#CCFBF1')),
+            ('BOX', (0, 0), (-1, -1), 0.75, colors.HexColor('#99F6E4')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCFBF1')),
+            ('ALIGN', (0, 1), (-1, 1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        story.append(KeepTogether(sig_out_table))
+        story.append(Spacer(1, 4))
+    story.append(Spacer(1, 2))
+
     # Sello de Taller Marino Trejos al pie (Certificación Final y Sello Azul)
     stamp_mech = Paragraph("", cell_n)
     if os.path.exists(marino_stamp_path):
@@ -431,7 +425,7 @@ def generate_entry_pdf(orden):
             
     footer_data = [
         [
-            Paragraph("<font size='7.5' color='#64748B'>Este documento unificado certifica las <b>4 firmas obligatorias</b> (Recepción del Cliente y Taller + Despacho del Taller y Retiro Conforme del Cliente) para garantizar la trazabilidad legal y técnica del equipo por parte de <b>Marino Trejos Mechanic</b>.</font>", cell_n),
+            Paragraph("<font size='7.5' color='#64748B'>This unified document records the <b>required signatures</b> (customer drop-off and shop receipt, shop dispatch and customer pickup) to ensure the legal and technical traceability of the equipment by <b>Marino Trejos Mechanic</b>.</font>", cell_n),
             stamp_mech
         ]
     ]
@@ -470,7 +464,7 @@ def generate_certificate_pdf(cert):
     """
     motor = cert.motor
     orden = motor.orden if motor else None
-    customer_name = orden.company_name if orden else "CLIENTE REGISTRADO"
+    customer_name = orden.company_name if orden else "REGISTERED CUSTOMER"
     
     pdf_filename = f"Test_Certificate_{nombre_seguro(cert.test_certificate_no)}.pdf"
     pdf_dir = dir_archivos()
@@ -484,6 +478,8 @@ def generate_certificate_pdf(cert):
     doc = SimpleDocTemplate(
         pdf_path,
         pagesize=letter,
+        title=f"Test Certificate {cert.test_certificate_no}",
+        author="Marino Trejos Mechanic",
         leftMargin=30,
         rightMargin=30,
         topMargin=24,
@@ -712,7 +708,7 @@ def generate_certificate_pdf(cert):
     story.append(Spacer(1, 6))
 
     # SECCIÓN: SERVICE DESCRIPTION
-    desc_header = [Paragraph("<b>SERVICE PERFORMED / DESCRIPCIÓN DEL MANTENIMIENTO:</b>", sec_title)]
+    desc_header = [Paragraph("<b>SERVICE PERFORMED:</b>", sec_title)]
     desc_data = [
         desc_header,
         [Paragraph(esc(cert.service_description or "New warning labels, oil change, oil seal, brake gap adjustment, rated dynamic load test."), cell_n)]
@@ -731,7 +727,10 @@ def generate_certificate_pdf(cert):
     marino_sig_path = os.path.join(assets_dir, "marino_signature.png")
     marino_stamp_path = os.path.join(assets_dir, "marino_stamp.png")
     
-    sig_img = Paragraph("<b>Marino Trejos</b>", cell_b)
+    partes_cert = [p.strip() for p in str(cert.certified_by or "").split("|")]
+    tecnico = esc(partes_cert[0])
+    licencia = esc(partes_cert[1].upper()) if len(partes_cert) > 1 else ""
+    sig_img = Paragraph(f"<b>{tecnico}</b>", cell_b)
     if os.path.exists(marino_sig_path):
         try:
             sig_img = RLImage(marino_sig_path, width=2.2*inch, height=0.65*inch)
@@ -747,7 +746,7 @@ def generate_certificate_pdf(cert):
 
     cert_box_data = [
         [
-            Paragraph("<b>CERTIFIED BY AUTHORIZED TECHNICIAN:</b><br/><br/><b>Marino Trejos</b><br/><b>CERT. # 061821JV1</b><br/><font size='7.5' color='#64748B'>Certified Hoist, Rigging &amp; Safety Specialist</font>", cell_n),
+            Paragraph(f"<b>CERTIFIED BY AUTHORIZED TECHNICIAN:</b><br/><br/><b>{tecnico}</b><br/><b>{licencia}</b><br/><font size='7.5' color='#64748B'>Certified Hoist, Rigging &amp; Safety Specialist</font>", cell_n),
             sig_img,
             stamp_img
         ]

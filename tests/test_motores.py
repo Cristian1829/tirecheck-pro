@@ -5,6 +5,7 @@ ingreso, despacho parcial y total, certificado, clientes, trazabilidad y archivo
 import base64
 import io
 import os
+import re
 import secrets
 
 import pytest
@@ -409,6 +410,67 @@ def test_el_certificado_no_dice_passed_si_el_punto_no_paso(c):
     t = _texto_pdf(c, con_falla["pdf_certificado_url"])
     assert "NOT PASSED" in t and "ONE OR MORE ITEMS NOT PASSED" in t
     assert con_falla["test_certificate_no"] in t
+
+
+PALABRAS_EN_ESPANOL = re.compile(
+    r"\b(ENTREGADO|ENTREGA|ENTREGAS|PENDIENTE|TALLER|FOTO|INGRESO|SALIDA|OBSERVACIONES|CLIENTE|FIRMA|FIRMAS|FECHA|MOTORES|"
+    r"DESPACHADOS|PARCIAL|RECIBE|RECEPCI\u00d3N|DESCRIPCI\u00d3N|MANTENIMIENTO|INSPECCIONADO|ESTADO|TRANSPORTISTA|DOCUMENTO|AUN|A\u00daN)\b",
+    re.I,
+)
+
+
+def test_todo_el_texto_fijo_de_los_pdf_esta_en_ingles(c):
+    pytest.importorskip("pypdf")
+    assert PALABRAS_EN_ESPANOL.search("ENTREGADO TOTAL") and not PALABRAS_EN_ESPANOL.search("DELIVERED")
+    datos = dict(company_name="acme", dropoff_name="john miller", received_name="marino trejos")
+    o = _orden(c, n=3, motores=[{"make": "tirak", "model": "xe 500p", "serial_number": f"s{i}", "foto_ingreso_url": IMG} for i in range(3)], **datos).json()
+    # En taller, parcial y total
+    assert not PALABRAS_EN_ESPANOL.search(_texto_pdf(c, o["pdf_ingreso_url"]))
+    r = _despacho(c, o, o["motores"][:1], recibe_cliente_name="ann lee").json()
+    texto = _texto_pdf(c, r["pdf_salida_url"])
+    assert not PALABRAS_EN_ESPANOL.search(texto) and "PARTIALLY DELIVERED" in texto and "PENDING IN SHOP" in texto
+    r = _despacho(c, o, o["motores"][1:], recibe_cliente_name="ann lee").json()
+    texto = _texto_pdf(c, r["pdf_salida_url"])
+    assert not PALABRAS_EN_ESPANOL.search(texto) and "FULLY DELIVERED" in texto
+    cert = _certificado(c, o["motores"][0]["id"]).json()
+    assert not PALABRAS_EN_ESPANOL.search(_texto_pdf(c, cert["pdf_certificado_url"]))
+
+
+def test_el_pdf_conserva_las_firmas_de_cada_entrega(c):
+    pytest.importorskip("pypdf")
+    o = _orden(c, n=2).json()
+    _despacho(c, o, o["motores"][:1], recibe_cliente_name="primero", fecha_salida="2026-11-06T10:00:00")
+    r = _despacho(c, o, o["motores"][1:], recibe_cliente_name="segundo", fecha_salida="2026-11-07T11:00:00").json()
+    texto = _texto_pdf(c, r["pdf_salida_url"])
+    assert "DISPATCH 1 OF 2" in texto and "DISPATCH 2 OF 2" in texto
+    assert "PRIMERO" in texto and "SEGUNDO" in texto
+    assert "2026-11-06 10:00" in texto and "2026-11-07 11:00" in texto
+
+
+def test_el_certificado_imprime_el_tecnico_registrado(c):
+    pytest.importorskip("pypdf")
+    m = _orden(c, n=1).json()["motores"][0]
+    cert = _certificado(c, m["id"], certified_by="Ana Perez | Cert#ABC123").json()
+    texto = _texto_pdf(c, cert["pdf_certificado_url"])
+    assert "Ana Perez" in texto and "CERT#ABC123" in texto
+    assert "Marino Trejos\n" not in texto and "061821" not in texto
+
+
+def test_fechas_y_numeros_coherentes(c):
+    o = _orden(c, n=1).json()
+    m = o["motores"][0]
+    # Certificado: el próximo servicio va después de la prueba
+    assert _certificado(c, m["id"], test_date="2026-11-05T00:00:00", next_service="2026-11-05T00:00:00").status_code == 400
+    # Salida antes del ingreso
+    assert _despacho(c, o, o["motores"], fecha_salida="2026-11-01T08:00:00").status_code == 400
+    assert c.get(f"/api/motores/orders/{o['id']}").json()["estado_orden"] == "En Taller"
+    # Número oficial repetido: se rechaza; el automático salta los ocupados
+    assert _certificado(c, m["id"], test_certificate_no="10010002").status_code == 200
+    assert _certificado(c, m["id"], test_certificate_no="10010002").status_code == 400
+    assert _certificado(c, m["id"]).json()["test_certificate_no"] == "10010003"
+    # Un número manual no deja hueco en el consecutivo
+    assert _certificado(c, m["id"], test_certificate_no="QA-500").status_code == 200
+    assert _certificado(c, m["id"]).json()["test_certificate_no"] == "10010004"
 
 
 def test_sin_enviar_un_punto_de_seguridad_no_queda_aprobado(c):

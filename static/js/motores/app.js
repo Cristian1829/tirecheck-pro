@@ -451,7 +451,7 @@ const App = {
 
     const companyName = document.getElementById('ingreso-company').value.trim();
     const dateIn = document.getElementById('ingreso-date-in').value;
-    const dropoffName = document.getElementById('ingreso-dropoff-name').value.trim() || 'Cliente';
+    const dropoffName = document.getElementById('ingreso-dropoff-name').value.trim() || 'Customer';
     const receivedName = document.getElementById('ingreso-received-name').value.trim() || 'Marino Trejos';
     const notes = document.getElementById('ingreso-notes').value.trim();
 
@@ -807,7 +807,7 @@ const App = {
       fecha_salida: fechaLocalISO(),
       entrega_empresa_name: (document.getElementById('dispatch-emp-name').value.trim() || 'MARINO TREJOS').toUpperCase(),
       firma_entrega_empresa: firmaEmpresa,
-      recibe_cliente_name: (document.getElementById('dispatch-cli-name').value.trim() || 'RECIBIDO POR CLIENTE').toUpperCase(),
+      recibe_cliente_name: (document.getElementById('dispatch-cli-name').value.trim() || 'CUSTOMER').toUpperCase(),
       firma_recibe_cliente: firmaCliente,
       notas: document.getElementById('dispatch-notes').value.trim(),
       motores_despacho: motoresDespacho
@@ -837,6 +837,7 @@ const App = {
       if (this.signaturePads.dispatchEmpresa) this.signaturePads.dispatchEmpresa.clear();
       if (this.signaturePads.dispatchCliente) this.signaturePads.dispatchCliente.clear();
       this.loadOrdersForDispatch();
+      document.getElementById('dispatch-type-indicator').innerHTML = '<span class="status-badge" style="background:#f1f5f9; color:#64748b;">Seleccione una orden</span>';
 
       // Abrir PDF de Salida
       if (dispatchResult.pdf_salida_url) {
@@ -900,6 +901,7 @@ const App = {
       if (!res.ok) return;
       const motor = await res.json();
       this.currentMotorForCert = motor;
+      document.getElementById('form-cert-quality').reset();
 
       // Precargar datos en modal
       document.getElementById('cert-motor-id').value = motor.id;
@@ -934,6 +936,7 @@ const App = {
       document.getElementById('cert-overload-pounds').value = overload;
       document.getElementById('cert-blocstop-model').value = secondaryModel;
       document.getElementById('cert-blocstop-load').value = `${capacity} POUNDS`;
+      document.getElementById('cert-blocstop-ltest').value = `${capacity} POUNDS Pass`;
 
       // Fechas por defecto (hoy y próximo servicio + 1 año)
       const today = new Date();

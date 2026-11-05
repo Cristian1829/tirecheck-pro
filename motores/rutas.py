@@ -260,7 +260,7 @@ def crear_orden(orden_in: OrdenCreate, db: Session = Depends(get_db)):
         company_name=_mayus(orden_in.company_name),
         date_in=orden_in.date_in or ahora(),
         estado_orden="En Taller",
-        dropoff_name=_mayus(orden_in.dropoff_name) or "CLIENTE",
+        dropoff_name=_mayus(orden_in.dropoff_name) or "CUSTOMER",
         firma_dropoff=firma_dropoff,
         received_name=_mayus(orden_in.received_name) or "MARINO TREJOS",
         firma_received=firma_received,
@@ -351,6 +351,8 @@ def crear_despacho(d: EntregaSalidaCreate, db: Session = Depends(get_db)):
     firma_cliente = _imagen(d.firma_recibe_cliente, "firma_despacho_cliente", firma=True)
     fotos = [_imagen(i.foto_salida_url, "foto_out") for i in d.motores_despacho]
     fecha = d.fecha_salida or ahora()
+    if orden.date_in and fecha < orden.date_in:
+        raise HTTPException(status_code=400, detail="La fecha de salida no puede ser anterior a la fecha de ingreso de la orden.")
 
     entrega = EntregaSalida(
         orden_id=orden.id,
@@ -358,7 +360,7 @@ def crear_despacho(d: EntregaSalidaCreate, db: Session = Depends(get_db)):
         fecha_salida=fecha,
         entrega_empresa_name=_mayus(d.entrega_empresa_name) or "MARINO TREJOS",
         firma_entrega_empresa=firma_empresa,
-        recibe_cliente_name=_mayus(d.recibe_cliente_name) or "RECIBIDO POR CLIENTE",
+        recibe_cliente_name=_mayus(d.recibe_cliente_name) or "CUSTOMER",
         firma_recibe_cliente=firma_cliente,
         notas=d.notas,
     )
@@ -412,7 +414,9 @@ def ver_despacho(dispatch_id: int, db: Session = Depends(get_db)):
 
 # ================= CERTIFICADOS (MÓDULO C) =================
 def _siguiente_certificado(db: Session) -> str:
-    return f"10010{db.query(CertificadoCalidad).count() + 1:03d}"
+    # Consecutivo sobre los números automáticos: uno escrito a mano no le abre un hueco
+    usados = [re.fullmatch(r"10010(\d{3,})", n or "") for (n,) in db.query(CertificadoCalidad.test_certificate_no).all()]
+    return f"10010{max((int(m.group(1)) for m in usados if m), default=0) + 1:03d}"
 
 
 @api.post("/certificates/", response_model=CertificadoCalidadResponse)
@@ -422,8 +426,11 @@ def crear_certificado(c: CertificadoCalidadCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="Motor no encontrado")
     numero = _limpio(c.test_certificate_no) or _siguiente_certificado(db)
     if db.query(CertificadoCalidad).filter(CertificadoCalidad.test_certificate_no == numero).first():
-        numero = f"{numero}-{db.query(CertificadoCalidad).count() + 1}"
+        # Es un número oficial: no se cambia en silencio
+        raise HTTPException(status_code=400, detail=f"Ya existe un certificado con el número {numero}.")
     fecha = c.test_date or ahora()
+    if c.next_service and c.next_service <= fecha:
+        raise HTTPException(status_code=400, detail="El próximo servicio debe ser posterior a la fecha de prueba.")
 
     cert = CertificadoCalidad(
         motor_id=motor.id,
