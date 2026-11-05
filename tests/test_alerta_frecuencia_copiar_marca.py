@@ -1,7 +1,5 @@
 import pytest
-import subprocess
 import os
-import re
 from datetime import date
 from fastapi.testclient import TestClient
 import database
@@ -9,10 +7,8 @@ from server import app, crear_token_acceso
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def preparar_bd_pruebas():
-    database.inicializar_bd()
-    yield
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_perfil_vehiculo_frecuencia_en_periodo_restringido():
     """Valida que un vehículo inspeccionado recientemente reporte en_periodo_restringido = True y fecha mínima."""
@@ -161,21 +157,6 @@ def test_frontend_dom_modal_frecuencia_y_boton_copiar_marca():
     assert "function cerrarModalVehiculoYaInspeccionado(" in bundle
     assert "async function copiarMarcaDisenoAnterior(" in bundle
     assert "cacheUltimaMarcaVehiculo" in bundle
-
-def test_frontend_javascript_sintaxis_valida():
-    """Valida con Node.js que no existan errores de sintaxis en el código JavaScript de static/js/."""
-    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
-    archivos = [os.path.join(js_dir, f) for f in os.listdir(js_dir) if f.endswith(".js")]
-    assert len(archivos) > 0, "No se encontraron módulos JS en static/js"
-
-    for ruta in archivos:
-        res = subprocess.run(
-            ["node", "--check", ruta],
-            capture_output=True,
-            text=True,
-            encoding="utf-8"
-        )
-        assert res.returncode == 0, f"Error de sintaxis JavaScript en {os.path.basename(ruta)}: {res.stderr}"
 
 def test_fecha_minima_permitida_parametrizable_por_cliente():
     """

@@ -1,6 +1,18 @@
+"""Informe técnico por placa y consolidado de jornada en PDF: contenido, filtros y casos especiales."""
+import io
+import re
+
+import pypdf
 import pytest
-import pdf_generator
+
 import database
+import pdf_generator
+
+
+def _texto(pdf_bytes):
+    assert pdf_bytes.startswith(b'%PDF-')
+    return "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(pdf_bytes)).pages)
+
 
 def test_generar_pdf_plan_mantenimiento(test_db):
     # Insertar datos mínimos de un vehículo
@@ -28,9 +40,7 @@ def test_generar_pdf_plan_mantenimiento(test_db):
     assert pdf_bytes.startswith(b'%PDF-')
 
     # El informe por placa ya no lleva la sección de criterios de diagnóstico
-    from pypdf import PdfReader
-    import io
-    texto = "".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf_bytes)).pages)
+    texto = _texto(pdf_bytes)
     assert "Criterios de diagnóstico" not in texto
     assert "Dimensiones homogéneas" not in texto
 
@@ -53,10 +63,10 @@ def test_generar_pdf_consolidado(test_db):
     }
     database.insertar_inspeccion(datos)
 
-    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado')
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes.startswith(b'%PDF-')
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado'))
+    assert "Cliente / Flota: Cliente Consolidado" in texto
+    assert "Vehículos Inspeccionados: 1" in texto
+    assert "Total Llantas Medidas: 1" in texto
 
 def test_generar_pdf_consolidado_cliente_y_sede(test_db):
     # Probar filtrado estricto por cliente y sede
@@ -76,10 +86,12 @@ def test_generar_pdf_consolidado_cliente_y_sede(test_db):
         'psi': 105.0
     }
     database.insertar_inspeccion(datos)
-    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado', subcliente='Sede Norte')
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes.startswith(b'%PDF-')
+    database.insertar_inspeccion({**datos, 'subcliente': 'Sede Sur', 'placa': 'PDF-SUR'})
+    database.insertar_inspeccion({**datos, 'cliente': 'Otro Cliente', 'placa': 'PDF-OTRO'})
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado', subcliente='Sede Norte'))
+    assert "PDF-003" in texto
+    assert "PDF-SUR" not in texto and "PDF-OTRO" not in texto
+    assert "Vehículos Inspeccionados: 1" in texto
 
 
 def test_generar_pdf_consolidado_con_alertas_multiples(test_db):
@@ -133,10 +145,12 @@ def test_generar_pdf_consolidado_con_alertas_multiples(test_db):
         'psi': 110.0
     })
 
-    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Test Alertas')
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes.startswith(b'%PDF-')
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Test Alertas'))
+    assert "Vehículos Inspeccionados: 2" in texto
+    assert "Vehículos con Alerta: 1" in texto
+    assert re.search(r"Sugerencia Retiro / Cambio\s+1\b", texto)
+    assert re.search(r"Alineación y Geometría de Ejes\s+1\b", texto)
+    assert "2,0 mm · V-CRITICO Pos 1" in texto
 
 
 def test_pdf_tecnico_y_consolidado_dimensiones_mixtas(test_db):
@@ -182,10 +196,8 @@ def test_pdf_tecnico_y_consolidado_dimensiones_mixtas(test_db):
     assert pdf_tecnico.startswith(b'%PDF-')
 
     # 2. Informe Consolidado / Ejecutivo
-    pdf_consolidado = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Dims Mixtas')
-    assert isinstance(pdf_consolidado, bytes)
-    assert len(pdf_consolidado) > 1000
-    assert pdf_consolidado.startswith(b'%PDF-')
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Dims Mixtas'))
+    assert re.search(r"Dimensiones Heterogéneas en Unidad\s+1\b", texto)
 
 
 def test_generar_pdf_consolidado_rango_fechas(test_db):
@@ -222,16 +234,14 @@ def test_generar_pdf_consolidado_rango_fechas(test_db):
     })
 
     # 1. Rango que cubre ambas
-    pdf_ambas = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-05-01', fecha_hasta='2026-08-31')
-    assert isinstance(pdf_ambas, bytes)
-    assert len(pdf_ambas) > 1000
-    assert pdf_ambas.startswith(b'%PDF-')
+    ambas = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-05-01', fecha_hasta='2026-08-31'))
+    assert "V-MAYO" in ambas and "V-AGOSTO" in ambas
+    assert "Vehículos Inspeccionados: 2" in ambas
 
     # 2. Rango que solo cubre la segunda
-    pdf_agosto = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-08-01', fecha_hasta='2026-08-31')
-    assert isinstance(pdf_agosto, bytes)
-    assert len(pdf_agosto) > 1000
-    assert pdf_agosto.startswith(b'%PDF-')
+    agosto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-08-01', fecha_hasta='2026-08-31'))
+    assert "V-AGOSTO" in agosto and "V-MAYO" not in agosto
+    assert "Vehículos Inspeccionados: 1" in agosto
 
     # 3. Rango sin coincidencias debe levantar ValueError
     with pytest.raises(ValueError, match="No se encontraron inspecciones"):
@@ -258,13 +268,12 @@ def test_api_pdf_consolidado_con_rango_fechas(test_db, auth_client):
     res = auth_client.get("/api/informe-pdf-consolidado?cliente=Cliente%20API%20PDF&fecha_desde=2026-09-01&fecha_hasta=2026-09-30")
     assert res.status_code == 200
     assert res.headers["content-type"] == "application/pdf"
-    assert res.content.startswith(b"%PDF-")
+    texto = _texto(res.content)
+    assert "Cliente / Flota: Cliente API PDF" in texto
+    assert "Vehículos Inspeccionados: 1" in texto
 
 
 def test_pdf_consolidado_sin_psi_y_layout_cuadrado(test_db):
-    import io
-    import pypdf
-
     # Insertar inspección de vehículo INTERMUNICIPAL con desviación PSI
     for pos in range(1, 7):
         database.insertar_inspeccion({

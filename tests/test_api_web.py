@@ -1,4 +1,5 @@
 import io
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from server import app
@@ -6,6 +7,20 @@ import database
 import server
 
 client = TestClient(app)
+
+
+def _hojas_excel(res):
+    """Cada hoja del Excel descargado como texto plano, para buscar placas y encabezados."""
+    assert res.status_code == 200
+    assert "spreadsheet" in res.headers["content-type"]
+    hojas = pd.read_excel(io.BytesIO(res.content), sheet_name=None, header=None)
+    return {nombre: set(df.astype(str).values.ravel()) for nombre, df in hojas.items()}
+
+
+def _subir_excel(cliente_http, contenido, nombre="cargue.xlsx"):
+    files = {'file': (nombre, contenido, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+    return cliente_http.post("/api/inspecciones/importar-excel", files=files)
+
 
 def test_api_info_servidor():
     res = client.get("/api/servidor/info")
@@ -188,10 +203,19 @@ def test_api_crud_inspeccion(test_db, auth_client):
     assert res_get3.status_code == 404
 
 def test_api_descargar_plantilla_excel(auth_client):
+    """La plantilla trae las columnas que pide el importador y sus filas de ejemplo se cargan sin errores."""
     res = auth_client.get("/api/inspecciones/plantilla-excel")
     assert res.status_code == 200
     assert "spreadsheet" in res.headers["content-type"]
-    assert len(res.content) > 1000
+    plantilla = pd.read_excel(io.BytesIO(res.content))
+    assert {"fecha", "cliente", "placa", "posicion", "kilometraje", "dimension", "prof_ext", "prof_cent", "prof_int",
+            "numero_interno", "prof_inicial"} <= set(plantilla.columns)
+
+    importada = _subir_excel(auth_client, io.BytesIO(res.content), "plantilla.xlsx")
+    assert importada.status_code == 200, importada.text
+    assert importada.json()["registros_importados"] == len(plantilla)
+    placas = {r["placa"] for r in auth_client.get("/api/inspecciones").json()}
+    assert set(plantilla["placa"]) <= placas
 
 def test_api_exportar_excel(test_db, auth_client):
     # Insertar un registro
@@ -206,31 +230,28 @@ def test_api_exportar_excel(test_db, auth_client):
         'prof_int': 12.0
     })
 
-    # Exportar Base de datos
-    res_bd = auth_client.get("/api/inspecciones/exportar-excel")
-    assert res_bd.status_code == 200
-    assert len(res_bd.content) > 1000
+    # Base de datos: la inspección sale en la hoja
+    assert "EXP-01" in _hojas_excel(auth_client.get("/api/inspecciones/exportar-excel"))["Inspecciones"]
 
-    # Exportar Diagnóstico (Sin filtros y con filtros)
-    res_diag = auth_client.get("/api/diagnostico/exportar-excel")
-    assert res_diag.status_code == 200
-    assert len(res_diag.content) > 1000
+    # Diagnóstico sin filtros: plan por vehículo, detalle y la hoja con los filtros aplicados
+    diag = _hojas_excel(auth_client.get("/api/diagnostico/exportar-excel"))
+    assert set(diag) == {"Planes_Accion", "Detalle_Inspecciones", "Filtros_Aplicados"}
+    assert "EXP-01" in diag["Planes_Accion"] and "EXP-01" in diag["Detalle_Inspecciones"]
 
-    # Exportar Diagnóstico con Filtro de Cliente y Alerta
+    # Diagnóstico de otro cliente: no trae la placa y deja constancia del filtro
     res_diag_filt = auth_client.get("/api/diagnostico/exportar-excel?cliente=LA%20SIERRA&alerta=Cambio")
-    assert res_diag_filt.status_code == 200
     assert "attachment; filename=Diagnostico" in res_diag_filt.headers.get("content-disposition", "")
-    assert len(res_diag_filt.content) > 1000
+    filtrado = _hojas_excel(res_diag_filt)
+    assert all("EXP-01" not in celdas for celdas in filtrado.values())
+    assert "LA SIERRA" in filtrado["Filtros_Aplicados"]
 
-    # Exportar Diagnóstico con Filtro de Placa
-    res_diag_placa = auth_client.get("/api/diagnostico/exportar-excel?placa=AAA123")
-    assert res_diag_placa.status_code == 200
-    assert len(res_diag_placa.content) > 1000
+    # Diagnóstico por placa
+    assert "EXP-01" in _hojas_excel(auth_client.get("/api/diagnostico/exportar-excel?placa=EXP-01"))["Planes_Accion"]
 
-    # Exportar KPIs
-    res_kpis = auth_client.get("/api/kpis-llantas/exportar-excel")
-    assert res_kpis.status_code == 200
-    assert len(res_kpis.content) > 1000
+    # KPIs de trazabilidad
+    kpis = _hojas_excel(auth_client.get("/api/kpis-llantas/exportar-excel"))["Trazabilidad_KPIs"]
+    assert "EXP-01" in kpis and "numero_interno" in kpis
+
 
 def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
     # 1. Admin crea un nuevo usuario
@@ -288,7 +309,6 @@ def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
     assert res_del.status_code == 200
 
 def test_api_importar_excel(test_db, auth_client):
-    import pandas as pd
     # Crear un excel temporal en memoria con formato válido
     df = pd.DataFrame([{
         'fecha': '2026-10-01',
@@ -314,15 +334,15 @@ def test_api_importar_excel(test_db, auth_client):
     df.to_excel(buf, index=False)
     buf.seek(0)
 
-    files = {'file': ('test_cargue.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
+    res = _subir_excel(auth_client, buf, 'test_cargue.xlsx')
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"
-    assert data["registros_importados"] >= 1
+    assert data["registros_importados"] == 1
+    fila = next(r for r in auth_client.get("/api/inspecciones").json() if r["placa"] == "IMP-001")
+    assert (fila["numero_interno"], fila["posicion"], fila["prof_ext"], fila["kilometraje"]) == ("LL-IMP-1", 1, 11.0, 80000)
 
 def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
-    import pandas as pd
     # Crear un excel con profundidad exterior 35.0 mm (> 27.0 mm permitidos en R22.5)
     df = pd.DataFrame([{
         'fecha': '2026-10-01',
@@ -348,12 +368,12 @@ def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
     df.to_excel(buf, index=False)
     buf.seek(0)
 
-    files = {'file': ('test_cargue_err.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
+    res = _subir_excel(auth_client, buf, 'test_cargue_err.xlsx')
     assert res.status_code == 400
-    data = res.json()
-    assert "detail" in data
-    assert "CANDADO DE SEGURIDAD" in data["detail"] or "27.0 mm" in data["detail"] or "Fila 2" in data["detail"]
+    detalle = res.json()["detail"]
+    assert "Fila 2 (Placa IMP-ERR, Pos 1)" in detalle and "CANDADO DE SEGURIDAD" in detalle
+    assert "35.0" in detalle
+    assert auth_client.get("/api/inspecciones").json() == []
 
 def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     # Crear usuario con vistas y múltiples clientes

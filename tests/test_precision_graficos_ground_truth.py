@@ -327,6 +327,8 @@ def test_auditoria_kpi06_kpi11_caso1_desalineacion_hombros(test_db):
     # 1 llanta con desalineación de 30 auditadas
     assert kpis["perdidaMm"] == 3.0
     assert kpis["impactoPesos"] == 300000.0
+    # Una sola alerta de alineación y solo en el corte de octubre
+    assert datos["planesMes"]["alineacion"] == [0, 0, 1]
 
     # Evolución mensual: en el último periodo (Octubre) debe reflejar exactamente $300.000
     perdida_mes = datos["perdidaMes"]
@@ -366,8 +368,10 @@ def test_auditoria_kpi07_caso3_despareo_pacha(test_db):
     datos = database.obtener_datos_graficos_diagnostico(filtros)
     planes = datos["planesMes"]
 
-    assert len(planes["duales"]) >= 1
-    assert planes["duales"][-1] >= 1, "No se detectó plan dual para el despareo de pacha"
+    # En QA-102 hay dos pachas desapareadas en octubre: P3/P4 (12,0 vs 8,0 mm) y P7/P8 (4,0 vs 11,0 mm).
+    # Agosto y septiembre tienen todas las llantas parejas.
+    assert planes["labels"] == ["Ago 26", "Sep 26", "Oct 26"]
+    assert planes["duales"] == [0, 0, 2]
 
 
 def test_auditoria_kpi05_caso4_retiro_y_demanda_par_direccional(test_db):
@@ -383,8 +387,8 @@ def test_auditoria_kpi05_caso4_retiro_y_demanda_par_direccional(test_db):
     datos = database.obtener_datos_graficos_diagnostico(filtros)
     planes = datos["planesMes"]
 
-    assert len(planes["cambios"]) >= 1
-    assert planes["cambios"][-1] >= 1, "No se contabilizó el cambio inmediato por límite de retiro"
+    # El par direccional se cambia completo: 2 llantas en octubre y ninguna en los meses sanos
+    assert planes["cambios"] == [0, 0, 2]
 
 
 def test_auditoria_kpi14_caso5_reparacion_rendimiento_proyeccion_cpk(test_db):
@@ -467,34 +471,11 @@ def test_auditoria_licenciamiento_light_vs_pro(test_db):
     assert datos_light["licencia"] == "LIGHT"
 
 
-def test_auditoria_mrp_balance_bodegas_certificacion(test_db):
-    """
-    Certificación de Balance de Bodegas y Demanda Neta MRP
-    Ground-Truth:
-    Demanda / Necesidad Bruta = 8 llantas
-    Stock Útil Disponible en Bodega = 5 llantas
-    Compra Sugerida Neta = 8 - 5 = 3 llantas
-    Pérdida remanente FVU ajustada con bonificación de garantía = $1.000.000 COP
-    """
-    # Módulo analítico de balance MRP de auditoría
-    demanda_bruta = 8
-    stock_util = 5
-    compra_sugerida = max(0, demanda_bruta - stock_util)
-    assert compra_sugerida == 3
-
-    # FVU con garantía
-    perdida_bruta_fvu = 1600000.0
-    bonificacion_garantia = 600000.0
-    perdida_neta_fvu = perdida_bruta_fvu - bonificacion_garantia
-    assert perdida_neta_fvu == 1000000.0
-
-
 def test_auditoria_generacion_pdf_certificado(test_db, tmp_path):
     """
     Verifica que la función generadora del informe PDF certificado de auditoría
     produce un archivo válido, no vacío, con cabecera %PDF y estructura binaria correcta.
     """
-    insertar_datos_auditoria_qa()
     from scripts.sembrar_flota_auditoria_qa import generar_pdf_certificado_auditoria_qa
 
     ruta_pdf = os.path.join(tmp_path, "test_informe_auditoria.pdf")

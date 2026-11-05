@@ -4,7 +4,7 @@ TireAnalyze Pro / TireCheck Pro
 """
 
 import pytest
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import database
 import server
 
@@ -358,7 +358,10 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
     inv_antes = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
     assert inv_antes["ubicacion_bodega"] == "BODEGA_4_REENCAUCHADAS"
 
-    # 2. Registrar inspección en patio con esa llanta
+    # 2. Registrar inspección en patio con esa llanta. El alta queda con la fecha real de hoy y una inspección
+    # igual o anterior al último movimiento no monta la llanta: la inspección va al día siguiente del alta.
+    kardex_alta = auth_client.get(f"/api/bodegas/kardex?cliente={cliente}&numero_interno={serial}").json()["movimientos"]
+    fecha_alta = max(date.fromisoformat(str(m["fecha_movimiento"])[:10]) for m in kardex_alta)
     database.insertar_inspeccion({
         "cliente": cliente,
         "subcliente": "BOGOTA",
@@ -375,7 +378,7 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
         "prof_inicial": 21.0,
         "numero_interno": serial,
         "kilometraje": 45000.0,
-        "fecha": "2026-10-27"
+        "fecha": (fecha_alta + timedelta(days=1)).isoformat()
     })
 
     # 3. Verificar que llantas_maestro se actualizó a MONTADA_OPERACION

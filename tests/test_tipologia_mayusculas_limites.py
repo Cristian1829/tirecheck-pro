@@ -6,9 +6,8 @@ from server import app
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def setup_bd():
-    database.inicializar_bd()
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_generar_esquema_desde_composicion_dobletroque_6x4():
     """

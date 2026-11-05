@@ -2,11 +2,17 @@
 import base64
 import io
 
+import pypdf
 import pytest
 from PIL import Image
 
 import database
 import pdf_kpis
+
+
+def _texto(pdf_bytes):
+    assert pdf_bytes.startswith(b"%PDF")
+    return "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(pdf_bytes)).pages)
 
 
 def _data_url_jpeg(ancho=800, alto=300):
@@ -56,9 +62,12 @@ def test_pdf_full_y_light_con_graficos():
     graficos = {c: _PNG for _, _, _, kpis in pdf_kpis.SECCIONES for _, _, _, ids in kpis for c in ids}
     full = pdf_kpis.generar_pdf_kpis(_DATOS, graficos, {"cliente": "C1"})
     light = pdf_kpis.generar_pdf_kpis({**_DATOS, "licencia": "LIGHT"}, graficos, {})
-    assert full.startswith(b"%PDF") and light.startswith(b"%PDF")
-    # LIGHT lleva menos páginas: no incluye proyecciones, bajas ni MRP
-    assert full.count(b"/Type /Page\n") > light.count(b"/Type /Page\n") or len(full) > len(light)
+    titulos = [s[1] for s in pdf_kpis.SECCIONES]
+    # FULL trae las 6 secciones; LIGHT no incluye proyecciones, bajas ni MRP (secciones 3, 4 y 5)
+    texto_full, texto_light = _texto(full), _texto(light)
+    assert [t in texto_full for t in titulos] == [True] * 6
+    assert [t in texto_light for t in titulos] == [True, True, False, False, False, True]
+    assert len(pypdf.PdfReader(io.BytesIO(light)).pages) < len(pypdf.PdfReader(io.BytesIO(full)).pages)
 
 
 def test_pdf_no_muestra_potencial_de_ahorro(monkeypatch):
@@ -89,8 +98,9 @@ def test_pdf_no_muestra_potencial_de_ahorro(monkeypatch):
 
 def test_pdf_sin_graficos_ni_datos():
     """Sin datos ni capturas el informe sale igual, con los avisos de 'sin datos'."""
-    pdf = pdf_kpis.generar_pdf_kpis({"licencia": "FULL"}, {}, {})
-    assert pdf.startswith(b"%PDF")
+    texto = _texto(pdf_kpis.generar_pdf_kpis({"licencia": "FULL"}, {}, {}))
+    assert all(s[1] in texto for s in pdf_kpis.SECCIONES)
+    assert "sin datos" in texto.lower()
 
 
 def test_graficos_anchos_van_en_fila_completa():
@@ -113,7 +123,7 @@ def hojas_en_blanco(pdf_bytes):
     pdf = pypdfium2.PdfDocument(pdf_bytes)
     vacias = []
     for i in range(len(pdf)):
-        lineas = [l for l in pdf[i].get_textpage().get_text_range().splitlines()
+        lineas = [l for l in pdf[i].get_textpage().get_text_bounded().splitlines()
                   if l.strip() and not any(m in l for m in ("INFORME DE INDICADORES", "Corte:", "Página"))]
         if not lineas:
             vacias.append(i + 1)

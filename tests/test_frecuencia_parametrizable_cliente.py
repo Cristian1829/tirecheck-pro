@@ -7,10 +7,8 @@ from server import app, crear_token_acceso
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def preparar_bd_pruebas():
-    database.inicializar_bd()
-    yield
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_candado_frecuencia_ciudad_limpia_dias_corridos():
     """

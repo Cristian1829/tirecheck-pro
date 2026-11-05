@@ -1,29 +1,47 @@
-import pytest
+"""Matriz de semáforos por posición: profundidad base, límite de retiro en cascada, colores, API, PDF y permisos."""
+import io
+
 import pandas as pd
+import pypdf
+import pytest
 from fastapi.testclient import TestClient
+
 import database
 import pdf_generator
-from server import app
+import server
 
-client = TestClient(app)
+client = TestClient(server.app)
 
-
-@pytest.fixture(scope="module", autouse=True)
-def base_temporal_del_modulo(tmp_path_factory):
-    """
-    Base propia del módulo (antes escribía en data/inspecciones.db, la base local real). Es de módulo y no por
-    prueba porque varias pruebas usan los vehículos que crea una anterior.
-    """
-    original = database.DB_PATH
-    database.DB_PATH = str(tmp_path_factory.mktemp("semaforos") / "semaforos.db")
-    database.inicializar_bd()
-    yield
-    database.DB_PATH = original
+# Cada prueba arranca con su propia base vacía: ninguna depende de lo que dejó otra
+pytestmark = pytest.mark.usefixtures("test_db")
 
 
-@pytest.fixture(autouse=True)
-def setup_db():
-    database.inicializar_bd()
+@pytest.fixture
+def tres_flotas():
+    """ALPHA y BETA asignadas al inspector multiflota; GAMMA es ajena. Un vehículo por flota en tres colores."""
+    database.crear_usuario(
+        username="inspector_multiflotas",
+        password="password123",
+        nombre_completo="Inspector Multi Flotas",
+        rol="inspector",
+        cliente_asignado="FLOTA ALPHA, FLOTA BETA",
+        vistas_permitidas="patio,diagnostico"
+    )
+    for cliente, sede, operacion, placa, prof in (("FLOTA ALPHA", "SEDE A", "URBANO", "ALP101", 4.0),     # amarillo
+                                                  ("FLOTA BETA", "SEDE B", "NACIONAL", "BET202", 7.0),    # verde
+                                                  ("FLOTA GAMMA", "SEDE G", "RURAL", "GAM303", 2.5)):     # rojo
+        database.insertar_inspeccion({
+            'fecha': '2026-10-15', 'cliente': cliente, 'subcliente': sede, 'tipo_operacion': operacion,
+            'placa': placa, 'posicion': 1, 'tipologia': 'Camión Sencillo (4x2)',
+            'prof_ext': prof, 'prof_cent': prof, 'prof_int': prof
+        })
+    return {"Authorization": f"Bearer {server.crear_token_acceso('inspector_multiflotas', 'inspector')}"}
+
+
+def _placas(res):
+    assert res.status_code == 200
+    return sorted(f['placa'] for f in res.json()['filas'])
+
 
 def test_calculo_profundidad_minima_pb():
     """
@@ -185,17 +203,15 @@ def test_umbrales_semaforo_rojo_amarillo_verde_gris():
     assert matriz['totales_posicion'][1]['verde'] == 1
     assert matriz['totales_posicion'][1]['gris'] == 1
 
-def test_api_matriz_semaforos(inspector_token):
-    """Verifica que el endpoint /api/diagnostico/matriz-semaforos responda correctamente"""
-    res = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {inspector_token}"})
-    assert res.status_code == 200
-    data = res.json()
-    assert "posiciones" in data
-    assert "filas" in data
-    assert "totales_posicion" in data
-    assert "resumen_global" in data
-    assert isinstance(data["posiciones"], list)
-    assert isinstance(data["filas"], list)
+def test_api_matriz_semaforos(auth_client, tres_flotas):
+    """El endpoint devuelve cada vehículo con su color y los totales por posición (límite por defecto 3,0 mm)."""
+    data = auth_client.get("/api/diagnostico/matriz-semaforos").json()
+    colores = {f['placa']: f['posiciones']['1']['color'] for f in data['filas']}
+    assert colores == {'ALP101': 'amarillo', 'BET202': 'verde', 'GAM303': 'rojo'}
+    assert data['posiciones'] == [1]
+    totales = data['totales_posicion']['1']
+    assert (totales['rojo'], totales['amarillo'], totales['verde']) == (1, 1, 1)
+
 
 def test_pdf_consolidado_incluye_matriz_semaforos():
     """Verifica que el PDF consolidado se genere con la matriz de semáforos por posición"""
@@ -206,97 +222,25 @@ def test_pdf_consolidado_incluye_matriz_semaforos():
         'prof_ext': 8.0, 'prof_cent': 8.0, 'prof_int': 8.0, 'psi': 100, 'numero_interno': 'PDF-1'
     })
     pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada()
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 2000
     assert pdf_bytes.startswith(b'%PDF-')
+    texto = "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(pdf_bytes)).pages)
+    assert "Matriz de Semáforos por Posición" in texto
+    assert "PDF101" in texto
 
-def test_matriz_semaforos_inspector_multiples_flotas():
-    """
-    Verifica que un usuario inspector con múltiples flotas asignadas (separadas por coma)
-    pueda ver las inspecciones de todas sus flotas asignadas, filtrar por cada una de ellas
-    y no pueda acceder a flotas no asignadas.
-    """
-    import server
+def test_matriz_semaforos_inspector_multiples_flotas(tres_flotas):
+    """Un inspector con varias flotas ve las suyas, puede filtrar por cada una y no entra a una ajena."""
+    url = "/api/diagnostico/matriz-semaforos"
+    assert _placas(client.get(url, headers=tres_flotas)) == ['ALP101', 'BET202']
+    assert _placas(client.get(url + "?cliente=FLOTA ALPHA", headers=tres_flotas)) == ['ALP101']
+    assert _placas(client.get(url + "?cliente=FLOTA BETA", headers=tres_flotas)) == ['BET202']
 
-    # 1. Crear usuarios inspectores
-    database.crear_usuario(
-        username="inspector_multiflotas",
-        password="password123",
-        nombre_completo="Inspector Multi Flotas",
-        rol="inspector",
-        cliente_asignado="FLOTA ALPHA, FLOTA BETA",
-        vistas_permitidas="patio,diagnostico"
-    )
-    token_multi = server.crear_token_acceso("inspector_multiflotas", "inspector")
-
-    # 2. Insertar inspecciones para FLOTA ALPHA, FLOTA BETA y FLOTA GAMMA (ajena)
-    database.insertar_inspeccion({
-        'fecha': '2026-10-15',
-        'cliente': 'FLOTA ALPHA',
-        'subcliente': 'SEDE A',
-        'tipo_operacion': 'URBANO',
-        'placa': 'ALP101',
-        'posicion': 1,
-        'tipologia': 'Camión Sencillo (4x2)',
-        'prof_ext': 6.0, 'prof_cent': 6.0, 'prof_int': 6.0
-    })
-    database.insertar_inspeccion({
-        'fecha': '2026-10-15',
-        'cliente': 'FLOTA BETA',
-        'subcliente': 'SEDE B',
-        'tipo_operacion': 'NACIONAL',
-        'placa': 'BET202',
-        'posicion': 1,
-        'tipologia': 'Camión Sencillo (4x2)',
-        'prof_ext': 7.0, 'prof_cent': 7.0, 'prof_int': 7.0
-    })
-    database.insertar_inspeccion({
-        'fecha': '2026-10-15',
-        'cliente': 'FLOTA GAMMA',
-        'subcliente': 'SEDE G',
-        'tipo_operacion': 'RURAL',
-        'placa': 'GAM303',
-        'posicion': 1,
-        'tipologia': 'Camión Sencillo (4x2)',
-        'prof_ext': 8.0, 'prof_cent': 8.0, 'prof_int': 8.0
-    })
-
-    # Caso A: Consulta sin parámetro cliente (o 'Todos') -> Debe incluir ALP101 y BET202, NUNCA GAM303
-    res_todos = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {token_multi}"})
-    assert res_todos.status_code == 200
-    data_todos = res_todos.json()
-    placas_todos = [f['placa'] for f in data_todos.get('filas', [])]
-    assert 'ALP101' in placas_todos
-    assert 'BET202' in placas_todos
-    assert 'GAM303' not in placas_todos
-    assert len(placas_todos) == 2
-
-    # Caso B: Filtrar por una flota permitida (FLOTA ALPHA)
-    res_alpha = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA ALPHA", headers={"Authorization": f"Bearer {token_multi}"})
-    assert res_alpha.status_code == 200
-    data_alpha = res_alpha.json()
-    placas_alpha = [f['placa'] for f in data_alpha.get('filas', [])]
-    assert 'ALP101' in placas_alpha
-    assert 'BET202' not in placas_alpha
-    assert 'GAM303' not in placas_alpha
-
-    # Caso C: Filtrar por otra flota permitida (FLOTA BETA)
-    res_beta = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers={"Authorization": f"Bearer {token_multi}"})
-    assert res_beta.status_code == 200
-    data_beta = res_beta.json()
-    placas_beta = [f['placa'] for f in data_beta.get('filas', [])]
-    assert 'BET202' in placas_beta
-    assert 'ALP101' not in placas_beta
-
-    # Caso D: Intentar consultar flota no asignada (FLOTA GAMMA) -> 403 Forbidden
-    res_gamma = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA GAMMA", headers={"Authorization": f"Bearer {token_multi}"})
+    res_gamma = client.get(url + "?cliente=FLOTA GAMMA", headers=tres_flotas)
     assert res_gamma.status_code == 403
     assert "No tiene permisos" in res_gamma.json().get("detail", "")
 
-def test_matriz_semaforos_inspector_flota_unica():
-    """Verifica que un inspector con una sola flota asignada solo acceda a su flota"""
-    import server
 
+def test_matriz_semaforos_inspector_flota_unica(tres_flotas):
+    """Un inspector con una sola flota asignada solo ve esa flota."""
     database.crear_usuario(
         username="inspector_uniflota",
         password="password123",
@@ -305,32 +249,19 @@ def test_matriz_semaforos_inspector_flota_unica():
         cliente_asignado="FLOTA ALPHA",
         vistas_permitidas="patio,diagnostico"
     )
-    token_single = server.crear_token_acceso("inspector_uniflota", "inspector")
+    headers = {"Authorization": f"Bearer {server.crear_token_acceso('inspector_uniflota', 'inspector')}"}
 
-    # Consulta general solo debe ver FLOTA ALPHA
-    res = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {token_single}"})
-    assert res.status_code == 200
-    placas = [f['placa'] for f in res.json().get('filas', [])]
-    assert 'ALP101' in placas
-    assert 'BET202' not in placas
-    assert 'GAM303' not in placas
+    assert _placas(client.get("/api/diagnostico/matriz-semaforos", headers=headers)) == ['ALP101']
+    assert client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers=headers).status_code == 403
 
-    # Consulta a FLOTA BETA debe retornar 403
-    res_beta = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers={"Authorization": f"Bearer {token_single}"})
-    assert res_beta.status_code == 403
 
-def test_pdf_consolidado_inspector_permisos():
-    """Verifica que el informe PDF consolidado respete las flotas asignadas del inspector"""
-    import server
-
-    token_multi = server.crear_token_acceso("inspector_multiflotas", "inspector")
-
-    # Flota permitida -> 200 OK
-    res_ok = client.get("/api/informe-pdf-consolidado?cliente=FLOTA ALPHA", headers={"Authorization": f"Bearer {token_multi}"})
+def test_pdf_consolidado_inspector_permisos(tres_flotas):
+    """El informe PDF consolidado respeta las flotas asignadas del inspector."""
+    res_ok = client.get("/api/informe-pdf-consolidado?cliente=FLOTA ALPHA", headers=tres_flotas)
     assert res_ok.status_code == 200
     assert res_ok.headers.get("content-type") == "application/pdf"
+    texto = "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(res_ok.content)).pages)
+    assert "ALP101" in texto and "GAM303" not in texto and "BET202" not in texto
 
-    # Flota no permitida -> 403 Forbidden
-    res_denied = client.get("/api/informe-pdf-consolidado?cliente=FLOTA GAMMA", headers={"Authorization": f"Bearer {token_multi}"})
+    res_denied = client.get("/api/informe-pdf-consolidado?cliente=FLOTA GAMMA", headers=tres_flotas)
     assert res_denied.status_code == 403
-
