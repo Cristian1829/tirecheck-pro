@@ -333,3 +333,29 @@ def test_exportar_excel_incluye_el_movimiento(pro):
     assert r.status_code == 200
     df = pd.read_excel(io.BytesIO(r.content))
     assert "Retirada" in df.loc[df["numero_interno"] == "XLS-OLD", "movimiento"].iloc[0]
+
+
+# ================= NUEVA DIRECTA: LISTAS DE MARCA, DISEÑO Y DIMENSIÓN =================
+def test_nueva_directa_usa_listas_desplegables():
+    html = _leer("templates/index.html")
+    for campo in ("mont_nueva_marca", "mont_nueva_diseno", "mont_nueva_dimension"):
+        assert f'<select id="{campo}"' in html, campo
+        assert f'<input type="text" id="{campo}"' not in html, campo
+    prof = re.search(r'<input[^>]*id="mont_nueva_prof"[^>]*>', html).group(0)
+    assert 'value="16.0"' not in prof  # la profundidad sale del catálogo, no de un valor fijo
+
+
+def test_precio_lista_del_cliente_para_la_llanta(pro):
+    database.guardar_precio_cliente(CLI_PRO, "MICHELIN", "XZE", "295/80R22.5", "NUEVA", 1287631, "2020-01-01")
+    q = "marca=MICHELIN&diseno=XZE&dimension=295/80R22.5"
+    assert pro.get(f"/api/precio-lista?cliente={CLI_PRO}&{q}").json()["precio"] == 1287631
+    # Sin precio del cliente no se inventa ni se toma de otro cliente
+    assert pro.get(f"/api/precio-lista?cliente={CLI_LIGHT}&{q}").json()["precio"] is None
+    assert pro.get(f"/api/precio-lista?{q}").json()["precio"] is None
+    assert pro.get(f"/api/precio-lista?cliente={CLI_PRO}&marca=MICHELIN&diseno=XZE&dimension=11R22.5").json()["precio"] is None
+
+
+def test_precio_lista_exige_sesion():
+    from fastapi.testclient import TestClient
+    import server
+    assert TestClient(server.app).get("/api/precio-lista?cliente=X").status_code == 401

@@ -1824,6 +1824,15 @@ def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "
     prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida, banda=banda)
     return {"prof_inicial": prof}
 
+@app.get("/api/precio-lista")
+def api_precio_lista(cliente: str = "", marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original",
+                     usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Precio vigente en la lista del cliente para esa llanta; sin precio del cliente responde null (no se inventa)."""
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    if not cliente or str(cliente).strip().upper() == "TODOS":
+        return {"precio": None}
+    return {"precio": database.precio_lista_cliente(cliente, marca, diseno, dimension, vida)}
+
 @app.get("/api/dimensiones-modelo")
 def api_dimensiones_modelo(marca: str = "", diseno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     """Medidas de un modelo de la marca, para completar la dimensión al elegir el diseño."""

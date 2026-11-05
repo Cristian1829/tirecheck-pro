@@ -1658,6 +1658,7 @@
       }
 
       cambiarTabMontar('stock');
+      prepararNuevaDirectaMontar();
 
       // Cargar lista de stock disponible (B1, B2 y reencauchadas en B4)
       const selStock = document.getElementById('mont_sel_stock');
@@ -1716,6 +1717,155 @@
       }
     }
 
+    // --- PESTAÑA «NUEVA DIRECTA»: marca, diseño y dimensión se eligen de las listas; el resto se trae de ahí ---
+    let consultaLlantaMontar = 0;
+
+    function llenarSelectMontar(id, items, placeholder, extras = '', valor = '') {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const unicos = [...new Set((items || []).map(x => String(x || '').trim().toUpperCase()).filter(Boolean))];
+      sel.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`
+        + unicos.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('')
+        + extras;
+      const elegido = String(valor || '').trim().toUpperCase();
+      if (elegido && unicos.includes(elegido)) sel.value = elegido;
+    }
+
+    async function listaMontar(url) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn('No se pudo consultar', url, e);
+      }
+      return null;
+    }
+
+    function limpiarDatosLlantaMontar() {
+      document.getElementById('mont_nueva_prof').value = '';
+      document.getElementById('mont_nueva_precio').value = '';
+      document.getElementById('mont_nueva_precio_origen').classList.add('hidden');
+    }
+
+    function prepararNuevaDirectaMontar() {
+      document.getElementById('mont_nueva_serial').value = '';
+      limpiarDatosLlantaMontar();
+      llenarSelectMontar('mont_nueva_diseno', [], 'Primero selecciona una marca...');
+      llenarSelectMontar('mont_nueva_dimension', [], 'Primero selecciona un diseño...');
+      cargarMarcasMontar(false);
+    }
+
+    async function cargarMarcasMontar(todas) {
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
+      const url = (cliente && !todas)
+        ? `/api/valores-campo?campo=marca&cliente=${encodeURIComponent(cliente)}`
+        : '/api/valores-campo?campo=marca&todas=true';
+      const marcas = await listaMontar(url);
+      const extras = (todas
+        ? (cliente ? '<option value="__solo_cliente__">Volver a las marcas del cliente...</option>' : '')
+        : '<option value="__ver_todas__">Ver todas las marcas del catálogo...</option>')
+        + '<option value="__nuevo__">+ Agregar nueva marca...</option>';
+      llenarSelectMontar('mont_nueva_marca', marcas || [], marcas ? 'Selecciona la marca' : 'No se pudieron cargar las marcas', extras);
+    }
+
+    // «+ Agregar nuevo...»: mismo comportamiento del formulario de inspección
+    function pedirValorNuevoMontar(sel, nombre) {
+      const nuevo = (prompt(`Ingresa ${nombre}:`) || '').trim().toUpperCase();
+      if (!nuevo) {
+        sel.value = '';
+        return '';
+      }
+      let opt = [...sel.options].find(o => o.value === nuevo);
+      if (!opt) {
+        opt = new Option(nuevo, nuevo);
+        sel.add(opt, 1);
+      }
+      sel.value = nuevo;
+      return nuevo;
+    }
+
+    async function onCambioMarcaMontar(sel) {
+      if (sel.value === '__ver_todas__') return cargarMarcasMontar(true);
+      if (sel.value === '__solo_cliente__') return cargarMarcasMontar(false);
+      if (sel.value === '__nuevo__' && pedirValorNuevoMontar(sel, 'la nueva marca')) {
+        const cliente = (document.getElementById('cliente')?.value || '').trim();
+        if (cliente) {
+          fetch('/api/configuracion-marcas-cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cliente: cliente.toUpperCase(), marca: sel.value })
+          }).catch(e => console.warn('No se pudo asociar la marca al cliente:', e));
+        }
+      }
+      limpiarDatosLlantaMontar();
+      llenarSelectMontar('mont_nueva_dimension', [], 'Primero selecciona un diseño...');
+      const marca = sel.value;
+      if (!marca) {
+        llenarSelectMontar('mont_nueva_diseno', [], 'Primero selecciona una marca...');
+        return;
+      }
+      const consulta = ++consultaLlantaMontar;
+      llenarSelectMontar('mont_nueva_diseno', [], 'Cargando diseños...');
+      const disenos = await listaMontar(`/api/valores-campo?campo=diseno&marca=${encodeURIComponent(marca)}`);
+      if (consulta !== consultaLlantaMontar) return;
+      llenarSelectMontar('mont_nueva_diseno', disenos || [], (disenos && disenos.length) ? `Diseños de ${marca}` : `Sin diseños de ${marca}: agrega uno`,
+        '<option value="__nuevo__">+ Agregar nuevo diseño...</option>');
+    }
+
+    async function onCambioDisenoMontar(sel) {
+      if (sel.value === '__nuevo__') pedirValorNuevoMontar(sel, 'el nuevo diseño');
+      limpiarDatosLlantaMontar();
+      const marca = document.getElementById('mont_nueva_marca').value;
+      const diseno = sel.value;
+      if (!diseno) {
+        llenarSelectMontar('mont_nueva_dimension', [], 'Primero selecciona un diseño...');
+        return;
+      }
+      const consulta = ++consultaLlantaMontar;
+      llenarSelectMontar('mont_nueva_dimension', [], 'Cargando medidas...');
+      const modelo = await listaMontar(`/api/dimensiones-modelo?marca=${encodeURIComponent(marca)}&diseno=${encodeURIComponent(diseno)}`);
+      if (consulta !== consultaLlantaMontar) return;
+      let medidas = (modelo && modelo.dimensiones) || [];
+      if (!medidas.length) {
+        // Modelo sin medidas conocidas: se ofrecen todas las de la flota
+        medidas = (await listaMontar('/api/valores-campo?campo=dimension')) || [];
+        if (consulta !== consultaLlantaMontar) return;
+      }
+      // Si el modelo viene en la medida del vehículo se respeta; si tiene una sola, se toma esa
+      const delVehiculo = (document.getElementById('dimension')?.value || '').trim().toUpperCase();
+      const normalizadas = medidas.map(x => String(x).trim().toUpperCase());
+      const elegida = normalizadas.includes(delVehiculo) ? delVehiculo : (normalizadas.length === 1 ? normalizadas[0] : '');
+      llenarSelectMontar('mont_nueva_dimension', normalizadas, 'Selecciona la dimensión', '<option value="__nuevo__">+ Agregar otra dimensión...</option>', elegida);
+      await traerDatosLlantaMontar();
+    }
+
+    async function onCambioDimensionMontar(sel) {
+      if (sel.value === '__nuevo__') pedirValorNuevoMontar(sel, 'la dimensión');
+      await traerDatosLlantaMontar();
+    }
+
+    // Profundidad inicial del catálogo y precio de la lista del cliente, según la llanta elegida
+    async function traerDatosLlantaMontar() {
+      const marca = document.getElementById('mont_nueva_marca').value;
+      const diseno = document.getElementById('mont_nueva_diseno').value;
+      const dimension = document.getElementById('mont_nueva_dimension').value;
+      limpiarDatosLlantaMontar();
+      if (!marca || !diseno) return;
+      const consulta = ++consultaLlantaMontar;
+      const q = `marca=${encodeURIComponent(marca)}&diseno=${encodeURIComponent(diseno)}&dimension=${encodeURIComponent(dimension)}&vida=Original`;
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
+      const [prof, precio] = await Promise.all([
+        listaMontar(`/api/profundidad-inicial?${q}`),
+        dimension ? listaMontar(`/api/precio-lista?cliente=${encodeURIComponent(cliente)}&${q}`) : null
+      ]);
+      if (consulta !== consultaLlantaMontar) return;
+      if (prof && prof.prof_inicial > 0) document.getElementById('mont_nueva_prof').value = prof.prof_inicial;
+      if (precio && precio.precio > 0) {
+        document.getElementById('mont_nueva_precio').value = precio.precio;
+        document.getElementById('mont_nueva_precio_origen').classList.remove('hidden');
+      }
+    }
+
     async function ejecutarMontajeTaller(e) {
       e.preventDefault();
       const modo = document.getElementById('mont_modo').value;
@@ -1750,6 +1900,11 @@
         payload.marca = document.getElementById('mont_nueva_marca').value;
         payload.diseno = document.getElementById('mont_nueva_diseno').value;
         payload.dimension = document.getElementById('mont_nueva_dimension').value;
+        const faltan = [['marca', payload.marca], ['diseño', payload.diseno], ['dimensión', payload.dimension]].filter(x => !x[1] || x[1].startsWith('__')).map(x => x[0]);
+        if (faltan.length) {
+          alert(`Selecciona ${faltan.join(', ')} de la llanta.`);
+          return;
+        }
         payload.prof_inicial = parseFloat(document.getElementById('mont_nueva_prof').value) || null;  // sin dato: el servidor usa el catálogo del modelo
         payload.precio_compra = parseFloat(document.getElementById('mont_nueva_precio').value) || null;
       }
