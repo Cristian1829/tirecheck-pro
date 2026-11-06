@@ -12,7 +12,7 @@ import hashlib
 import secrets
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from typing import Optional
+from typing import List, Optional
 
 try:
     BOGOTA_TZ = ZoneInfo("America/Bogota")
@@ -1351,6 +1351,34 @@ def api_exportar_diagnostico_excel(
 # ==========================================
 # RUTAS DE TRAZABILIDAD Y KPIS DE LLANTAS (SUITE 20 KPIS)
 # ==========================================
+
+class KpisVisiblesItem(BaseModel):
+    ocultos: List[str] = []
+
+
+def catalogo_kpis_personalizables() -> list:
+    """Los indicadores de la pestaña KPIs por sección, con la misma lista y nombres que el PDF de KPIs."""
+    return [{"numero": num, "titulo": titulo, "solo_full": solo_full,
+             "kpis": [{"clave": clave, "titulo": nombre} for clave, nombre, _, _ in kpis]}
+            for num, titulo, solo_full, kpis in pdf_kpis.SECCIONES]
+
+
+@app.get("/api/kpis/visibles")
+def api_kpis_visibles(usuario_actual: dict = Depends(requerir_vista("kpis"))):
+    """Catálogo de KPI y los que este usuario desmarcó (cada usuario tiene su propia selección)."""
+    claves = {k["clave"] for s in catalogo_kpis_personalizables() for k in s["kpis"]}
+    ocultos = [k for k in database.obtener_kpis_ocultos_usuario(usuario_actual["username"]) if k in claves]
+    return {"secciones": catalogo_kpis_personalizables(), "ocultos": ocultos}
+
+
+@app.put("/api/kpis/visibles")
+def api_guardar_kpis_visibles(item: KpisVisiblesItem, usuario_actual: dict = Depends(requerir_vista("kpis"))):
+    claves = {k["clave"] for s in catalogo_kpis_personalizables() for k in s["kpis"]}
+    desconocidos = sorted(set(item.ocultos) - claves)
+    if desconocidos:
+        raise HTTPException(status_code=400, detail=f"KPI desconocido: {', '.join(desconocidos)}")
+    return {"ocultos": database.guardar_kpis_ocultos_usuario(usuario_actual["username"], item.ocultos)}
+
 
 @app.get("/api/kpis/suite-20", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_suite_20(

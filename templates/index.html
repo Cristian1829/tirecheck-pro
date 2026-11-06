@@ -255,6 +255,11 @@
     }
 
     @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+    /* KPI que el usuario desmarcó en «Elegir KPI» */
+    .kpi-oculto-usuario { display: none !important; }
+    /* Si en una fila de dos tarjetas queda una sola, ocupa todo el ancho */
+    .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
@@ -1897,6 +1902,11 @@
             <i class="fa-solid fa-file-pdf"></i>
             <span>Exportar PDF</span>
           </button>
+          <button type="button" id="btnElegirKpis" onclick="abrirModalElegirKpis()" class="px-3 py-2 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 shadow-sm flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-sliders text-indigo-600"></i>
+            <span>Elegir KPI</span>
+            <span id="badgeKpisOcultos" class="hidden px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black"></span>
+          </button>
           <button type="button" onclick="limpiarFiltrosKpis()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-all active:scale-95">
             <i class="fa-solid fa-rotate-left text-slate-400 mr-1"></i>
             <span>Limpiar</span>
@@ -2051,99 +2061,13 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- BANNER EJECUTIVO: INTELIGENCIA DE AHORRO FINANCIERO & ROI      -->
-    <!-- ============================================================== -->
-    <div id="banner-ahorro-roi-kpis" class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-indigo-500/30 relative overflow-hidden">
-      <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-900/50">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <i class="fa-solid fa-chart-line"></i> Auditoría Financiera
-            </span>
-            <span class="text-[10px] font-bold text-slate-400">Algoritmo Predictivo de Recuperación</span>
-          </div>
-          <h3 class="text-base sm:text-lg font-black tracking-tight mt-1 flex items-center gap-2">
-            <span>💰 Potencial de Ahorro Identificado por TireAnalyze Pro</span>
-          </h3>
-          <p class="text-xs text-slate-300">Recuperación estimada de capital mediante salvamento de cascos, corrección geométrica oportuna y calibración de presiones</p>
-        </div>
-        <div class="bg-emerald-500/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-emerald-500/30 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-sack-dollar"></i>
-          </div>
-          <div>
-            <span class="text-[10px] uppercase font-bold text-emerald-300 block">Ahorro Potencial Total Recuperable</span>
-            <span id="banner_kpi_ahorro_total" class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">$0 COP</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4 Pilares de Inteligencia Financiera -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-        <!-- Pilar 1: Salvamento de Carcasas -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-indigo-400"></i> Salvamento de Carcasas</span>
-              <span id="badge_cascos_salvamento" class="text-[10px] px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">0 Cascos</span>
-            </div>
-            <span id="banner_kpi_ahorro_cascos" class="text-lg font-black text-white font-mono block">$0 COP</span>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Llantas originales en ventana crítica (3.0–4.2 mm) salvadas de fin de vida para reencauche</p>
-        </div>
-
-        <!-- Pilar 2: Geometría y Duales -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrows-split-up-and-left text-amber-400"></i> Geometría & Duales</span>
-              <span class="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold">Preventivo</span>
-            </div>
-            <span id="banner_kpi_ahorro_alineacion" class="text-lg font-black text-amber-300 font-mono block">$0 COP</span>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Caucho útil remanente protegido al corregir desalineación y diferencias de apareo</p>
-        </div>
-
-        <!-- Pilar 3: Combustible ACPM Anual -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-gas-pump text-sky-400"></i> Ahorro Combustible (Anual)</span>
-              <span class="text-[10px] px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-bold">12 Meses</span>
-            </div>
-            <span id="banner_kpi_ahorro_combustible" class="text-lg font-black text-sky-300 font-mono block">$0 COP</span>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Combustible ACPM ahorrado al calibrar neumáticos subinflados a su PSI objetivo</p>
-        </div>
-
-        <!-- Pilar 4: Detector de Cambiazos / Discrepancias -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Alerta Discrepancias / Cambiazos</span>
-              <span id="badge_cambiazos_total" class="text-[10px] px-2 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">0 Casos</span>
-            </div>
-            <div class="flex items-center justify-between mt-1">
-              <span id="banner_kpi_cambiazos_num" class="text-lg font-black text-rose-400 font-mono">0 Casos</span>
-              <button type="button" onclick="abrirModalAlertasCambiazo()" class="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 flex items-center gap-1">
-                <i class="fa-solid fa-eye"></i> Ver Auditoría
-              </button>
-            </div>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Seriales modificados en patio/ruta sin registro de Desmonte/Montaje en Kardex</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================== -->
     <!-- 2. CONTENEDORES DE LAS 5 SUB-PESTAÑAS HOMOLOGADAS DE KPIS        -->
     <!-- ============================================================== -->
 
     <!-- SUB-PESTAÑA 1: INSPECCIÓN GENERAL & PARQUE VEHICULAR (KPI 01 AL 04) -->
     <div id="subvista-kpi-1" class="space-y-4">
       <!-- KPI 01: Banner de Cumplimiento de Inspección vs Parque Vehicular -->
-      <article class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-lg border border-indigo-900/40 relative overflow-hidden">
+      <article data-kpi="kpi_01" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-lg border border-indigo-900/40 relative overflow-hidden">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div class="flex items-center space-x-2">
@@ -2195,7 +2119,7 @@
       <!-- Fila 1: KPI 02 y KPI 03 -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 02: Volumen Auditado Mes a Mes -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_02" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2219,7 +2143,7 @@
         </article>
 
         <!-- KPI 03: % de Reencauche y Unidades por Ciclo -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_03" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2249,7 +2173,7 @@
       </div>
 
       <!-- Fila 2: KPI 04: Composición de Flota (Tipología, Marca y Dimensión) -->
-      <article class="col-span-12 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <article data-kpi="kpi_04" class="col-span-12 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2305,7 +2229,7 @@
     <!-- SUB-PESTAÑA 2: MANTENIMIENTO, ALINEACIÓN & PÉRDIDA (KPI 05 AL 11) -->
     <div id="subvista-kpi-2" class="hidden space-y-4">
       <!-- KPI 05: Cuadro de Cambios + Matriz Placa vs Posición + Regla Par Direccional -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <article data-kpi="kpi_05" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2344,7 +2268,7 @@
       </article>
 
       <!-- Fila 2: KPI 06 - Seguimiento de Alineación y Pérdida -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_06" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2384,7 +2308,7 @@
       <!-- Fila 3: KPI 07 (Rotaciones Tándem) y KPI 08 (Duales Desapareados + Bodega 2) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 07: Plan de Rotaciones Tándem y Tráiler -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_07" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2414,7 +2338,7 @@
         </article>
 
         <!-- KPI 08: Duales Mal Apareados + Bodega 2 Recambio -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_08" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2443,7 +2367,7 @@
       <!-- Fila 4: KPI 09 (Presiones PSI) y KPI 10 (Pareto Novedades) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 09: Estado de Presiones y Combustible -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_09" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2475,7 +2399,7 @@
         </article>
 
         <!-- KPI 10: Pareto de Novedades y Taller -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_10" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2500,7 +2424,7 @@
       </div>
 
       <!-- Fila 5: KPI 11 - Impacto Económico Interanual (mm vs $) -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_11" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2544,7 +2468,7 @@
       </div>
 
       <!-- KPI 12: Las 4 Tarjetas Maestras de Desempeño de Flota -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div data-kpi="kpi_12" class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Milímetros gastados por la llanta más desgastada de la flota">mm Gastados (Máx.)</span>
           <span id="kpi12_mm_gastados" class="text-2xl font-black text-indigo-600 block mt-1 font-mono">0,0 mm</span>
@@ -2569,7 +2493,7 @@
       </div>
 
       <!-- KPI 13: Km Rodados Reales vs Proyección Final al Retiro -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_13" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2588,7 +2512,7 @@
       </article>
 
       <!-- KPI 14: Tríada Multidimensional Sincronizada con Selector Dinámico -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_14" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2634,7 +2558,7 @@
       </article>
 
       <!-- KPI CPK: los 4 costos por kilómetro -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_cpk" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="pb-2 border-b border-slate-100">
           <h4 class="text-sm font-black text-slate-900">Costo por kilómetro (CPK): operativo, proyectado, total y administrativo</h4>
           <p class="text-[11px] text-slate-500">Flota = Σ costos ÷ Σ km. Las llantas sin precio (ni propio ni en la lista del cliente) quedan fuera.</p>
@@ -2665,7 +2589,7 @@
       <!-- Fila 4: KPI 15 (Potencial Máx/Prom/Mín) y KPI 16 (Curva Rango Desgaste) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 15: Potencial de Llanta -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_15" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2689,7 +2613,7 @@
         </article>
 
         <!-- KPI 16: Curva de Proyección por Rango de Desgaste -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_16" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -2726,7 +2650,7 @@
       </div>
 
       <!-- KPI 17: Indicadores Globales FVU -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_17" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2760,7 +2684,7 @@
       </article>
 
       <!-- KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_18" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2800,7 +2724,7 @@
       </article>
 
       <!-- KPI 19: Profundidad de Retiro y Dispersión por mm -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_19" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2839,7 +2763,7 @@
       </div>
 
       <!-- KPI 20: Matriz de Evaluación de Necesidades vs Las 7 Bodegas (MRP) -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <article data-kpi="kpi_20" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -2995,7 +2919,7 @@
 
     <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
     <div id="subvista-kpi-6" class="hidden space-y-4">
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_tendencias" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center gap-2">
@@ -3099,6 +3023,92 @@
         </div>
         <div class="flex items-center space-x-1" id="controlesPaginacionKpis">
           <!-- Botones de páginas inyectados dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- BANNER EJECUTIVO: INTELIGENCIA DE AHORRO FINANCIERO & ROI      -->
+    <!-- ============================================================== -->
+    <div id="banner-ahorro-roi-kpis" class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-indigo-500/30 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-900/50">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <i class="fa-solid fa-chart-line"></i> Auditoría Financiera
+            </span>
+            <span class="text-[10px] font-bold text-slate-400">Algoritmo Predictivo de Recuperación</span>
+          </div>
+          <h3 class="text-base sm:text-lg font-black tracking-tight mt-1 flex items-center gap-2">
+            <span>💰 Potencial de Ahorro Identificado por TireAnalyze Pro</span>
+          </h3>
+          <p class="text-xs text-slate-300">Recuperación estimada de capital mediante salvamento de cascos, corrección geométrica oportuna y calibración de presiones</p>
+        </div>
+        <div class="bg-emerald-500/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-emerald-500/30 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-sack-dollar"></i>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-300 block">Ahorro Potencial Total Recuperable</span>
+            <span id="banner_kpi_ahorro_total" class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">$0 COP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Pilares de Inteligencia Financiera -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <!-- Pilar 1: Salvamento de Carcasas -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-indigo-400"></i> Salvamento de Carcasas</span>
+              <span id="badge_cascos_salvamento" class="text-[10px] px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">0 Cascos</span>
+            </div>
+            <span id="banner_kpi_ahorro_cascos" class="text-lg font-black text-white font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Llantas originales en ventana crítica (3.0–4.2 mm) salvadas de fin de vida para reencauche</p>
+        </div>
+
+        <!-- Pilar 2: Geometría y Duales -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrows-split-up-and-left text-amber-400"></i> Geometría & Duales</span>
+              <span class="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold">Preventivo</span>
+            </div>
+            <span id="banner_kpi_ahorro_alineacion" class="text-lg font-black text-amber-300 font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Caucho útil remanente protegido al corregir desalineación y diferencias de apareo</p>
+        </div>
+
+        <!-- Pilar 3: Combustible ACPM Anual -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-gas-pump text-sky-400"></i> Ahorro Combustible (Anual)</span>
+              <span class="text-[10px] px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-bold">12 Meses</span>
+            </div>
+            <span id="banner_kpi_ahorro_combustible" class="text-lg font-black text-sky-300 font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Combustible ACPM ahorrado al calibrar neumáticos subinflados a su PSI objetivo</p>
+        </div>
+
+        <!-- Pilar 4: Detector de Cambiazos / Discrepancias -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Alerta Discrepancias / Cambiazos</span>
+              <span id="badge_cambiazos_total" class="text-[10px] px-2 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">0 Casos</span>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <span id="banner_kpi_cambiazos_num" class="text-lg font-black text-rose-400 font-mono">0 Casos</span>
+              <button type="button" onclick="abrirModalAlertasCambiazo()" class="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 flex items-center gap-1">
+                <i class="fa-solid fa-eye"></i> Ver Auditoría
+              </button>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Seriales modificados en patio/ruta sin registro de Desmonte/Montaje en Kardex</p>
         </div>
       </div>
     </div>
@@ -6793,6 +6803,29 @@
             <i class="fa-solid fa-file-excel mr-1"></i>Exportar a Excel
           </button>
           <button type="button" onclick="cerrarModalReglaOro1()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elegir qué KPI ve el usuario en la pestaña KPIs (se guarda por usuario; el PDF sale completo) -->
+    <div id="modalElegirKpis" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if (event.target === this) cerrarModalElegirKpis()">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-black">Elegir los KPI que quiero ver</h3>
+            <p class="text-[11px] text-indigo-200">Marque o desmarque cada indicador. Se guarda para su usuario; el PDF de KPIs sale completo.</p>
+          </div>
+          <button type="button" onclick="cerrarModalElegirKpis()" class="w-8 h-8 shrink-0 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="listaElegirKpis" class="p-4 overflow-y-auto custom-scroll flex-1 space-y-3"></div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <span id="lblResumenElegirKpis" class="text-xs font-bold text-slate-600"></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="mostrarTodosLosKpis()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-all">Mostrar todos</button>
+            <button type="button" onclick="cerrarModalElegirKpis()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">Listo</button>
+          </div>
         </div>
       </div>
     </div>

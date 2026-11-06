@@ -507,6 +507,10 @@ def test_no_inflado_km_montaje_cero_y_ahorro_roi(test_db, auth_client):
     assert 'id="canvasKpi04_marca"' in html, "Falta canvasKpi04_marca en index.html"
     assert 'id="canvasKpi04_dimension"' in html, "Falta canvasKpi04_dimension en index.html"
     assert 'id="banner-ahorro-roi-kpis"' in html, "Falta banner-ahorro-roi-kpis en index.html"
+    # El potencial de ahorro va al final de la pestaña KPIs, después del detalle de llantas y dentro de la vista
+    vista = html[html.index('<section id="vista-kpis"'):]
+    vista = vista[:vista.index("</section>")]
+    assert vista.index("<!-- 4. Tabla Detallada de Trazabilidad y KPIs -->") < vista.index('id="banner-ahorro-roi-kpis"')
     assert 'id="banner-ahorro-roi-diag"' in html, "Falta banner-ahorro-roi-diag en index.html"
     assert 'id="modalAlertasCambiazo"' in html, "Falta modalAlertasCambiazo en index.html"
 

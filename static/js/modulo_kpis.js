@@ -168,6 +168,9 @@
       const capturaAncha = new Set(['canvasKpi13_comparativo', 'canvasKpi14_proy', 'canvasKpi14_kmmm', 'canvasKpi14_cpk',
                                     'canvasKpi15_potencial']);
       mostrarToast('Generando PDF de indicadores...');
+      // El PDF sale completo: los KPI que el usuario desmarcó se muestran mientras se capturan sus gráficos
+      exportandoPdfKpis = true;
+      aplicarVisibilidadKpis();
       try {
         for (const num of pestanas) {
           cambiarSubpestanaKpis(num);
@@ -210,6 +213,8 @@
           }
         }
       } finally {
+        exportandoPdfKpis = false;
+        aplicarVisibilidadKpis();
         cambiarSubpestanaKpis(pestanaOriginal);
       }
 
@@ -247,6 +252,183 @@
         mostrarToast(`No se pudo generar el PDF: ${e.message}`, true);
       } finally {
         if (btn) btn.disabled = false;
+      }
+    }
+
+    // =========================================================================
+    // ELEGIR QUÉ KPI VE EL USUARIO
+    // El servidor guarda, por usuario, los KPI desmarcados: un indicador nuevo aparece marcado sin hacer nada.
+    // =========================================================================
+    let catalogoKpisVisibles = null;   // secciones con sus KPI (la misma lista del PDF de KPIs)
+    let kpisOcultosUsuario = new Set();
+    let exportandoPdfKpis = false;     // mientras se arma el PDF se muestran todos para capturar sus gráficos
+    let temporizadorGuardarKpis = null;
+    let promesaPreferenciasKpis = null;
+
+    function cabecerasSeleccionKpis() {
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      return tok ? { 'Authorization': `Bearer ${tok}` } : {};
+    }
+
+    // Se pide una sola vez por página (cada carga de la suite la llama); si falla, el siguiente intento la vuelve a pedir
+    function cargarPreferenciasKpis() {
+      if (catalogoKpisVisibles) return Promise.resolve();
+      promesaPreferenciasKpis = promesaPreferenciasKpis || (async () => {
+        try {
+          const res = await fetch('/api/kpis/visibles', { headers: cabecerasSeleccionKpis() });
+          if (!res.ok) return;
+          const data = await res.json();
+          catalogoKpisVisibles = data.secciones || [];
+          kpisOcultosUsuario = new Set(data.ocultos || []);
+          aplicarVisibilidadKpis();
+        } catch (e) {
+          console.warn('No se pudo cargar la selección de KPI:', e);
+        } finally {
+          promesaPreferenciasKpis = null;
+        }
+      })();
+      return promesaPreferenciasKpis;
+    }
+
+    function aplicarVisibilidadKpis() {
+      const ocultos = exportandoPdfKpis ? new Set() : kpisOcultosUsuario;
+      const tarjetas = [...document.querySelectorAll('#vista-kpis [data-kpi]')];
+      tarjetas.forEach(el => el.classList.toggle('kpi-oculto-usuario', ocultos.has(el.dataset.kpi)));
+
+      // Filas de dos tarjetas: si queda una sola ocupa todo el ancho; si no queda ninguna, la fila no deja hueco
+      new Set(tarjetas.map(el => el.parentElement)).forEach(fila => {
+        if (!fila || !fila.classList.contains('grid')) return;
+        const enFila = [...fila.children].filter(h => h.dataset.kpi);
+        const visibles = enFila.filter(h => !h.classList.contains('kpi-oculto-usuario'));
+        enFila.forEach(h => h.classList.toggle('kpi-ancho-completo', visibles.length === 1));
+        fila.classList.toggle('kpi-oculto-usuario', visibles.length === 0);
+      });
+
+      // Pestaña sin ningún KPI marcado: aviso con acceso directo para elegir
+      for (let n = 1; n <= 6; n++) {
+        const sub = document.getElementById(`subvista-kpi-${n}`);
+        if (!sub) continue;
+        const propias = [...sub.querySelectorAll('[data-kpi]')];
+        const todasOcultas = propias.length > 0 && propias.every(t => t.classList.contains('kpi-oculto-usuario'));
+        let aviso = sub.querySelector(':scope > .kpi-pestana-vacia');
+        if (todasOcultas && !aviso) {
+          aviso = document.createElement('div');
+          aviso.className = 'kpi-pestana-vacia p-6 rounded-3xl bg-white border border-dashed border-slate-300 text-center space-y-3';
+          aviso.innerHTML = '<p class="text-sm font-bold text-slate-700">Desmarcó todos los KPI de esta pestaña.</p>'
+            + '<button type="button" onclick="abrirModalElegirKpis()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl">'
+            + '<i class="fa-solid fa-sliders mr-1"></i>Elegir KPI</button>';
+          sub.appendChild(aviso);
+        }
+        if (aviso) aviso.classList.toggle('hidden', !todasOcultas);
+      }
+
+      const badge = document.getElementById('badgeKpisOcultos');
+      if (badge) {
+        const n = kpisOcultosUsuario.size;
+        badge.textContent = `${n} oculto${n === 1 ? '' : 's'}`;
+        badge.classList.toggle('hidden', n === 0);
+      }
+    }
+
+    function renderizarListaElegirKpis() {
+      const cont = document.getElementById('listaElegirKpis');
+      if (!cont) return;
+      if (!catalogoKpisVisibles) {
+        cont.innerHTML = '<p class="text-xs text-slate-500">No se pudo cargar la lista de KPI. Intente de nuevo.</p>';
+        return;
+      }
+      const bloqueaFull = modoLicenciaSuite === 'LIGHT';
+      cont.innerHTML = catalogoKpisVisibles.map(sec => {
+        const bloqueada = sec.solo_full && bloqueaFull;
+        const dis = bloqueada ? 'disabled' : '';
+        return `<section class="border border-slate-200 rounded-2xl p-3 ${bloqueada ? 'opacity-50' : ''}">
+          <label class="flex items-center gap-2 text-xs font-black text-slate-900 ${bloqueada ? '' : 'cursor-pointer'}">
+            <input type="checkbox" class="w-4 h-4 shrink-0 accent-indigo-600" data-seccion-kpi="${sec.numero}" ${dis}
+                   onchange="marcarSeccionKpis(${sec.numero}, this.checked)">
+            <span>${escapeHtml(sec.titulo)}${bloqueada ? ' <span class="text-[10px] font-bold text-amber-700">· Solo licencia FULL / PRO</span>' : ''}</span>
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">
+            ${sec.kpis.map(k => `<label class="flex items-start gap-2 p-1.5 rounded-lg ${bloqueada ? '' : 'hover:bg-slate-50 cursor-pointer'} text-xs text-slate-700">
+                <input type="checkbox" class="mt-0.5 w-4 h-4 shrink-0 accent-indigo-600" data-clave-kpi="${escapeHtml(k.clave)}" ${dis}
+                       onchange="marcarKpi(this.dataset.claveKpi, this.checked)">
+                <span>${escapeHtml(k.titulo)}</span></label>`).join('')}
+          </div></section>`;
+      }).join('');
+      actualizarCasillasElegirKpis();
+    }
+
+    // Estado de las casillas sin redibujar la lista (no se pierde el foco ni el desplazamiento)
+    function actualizarCasillasElegirKpis() {
+      const cont = document.getElementById('listaElegirKpis');
+      if (!cont || !catalogoKpisVisibles) return;
+      cont.querySelectorAll('[data-clave-kpi]').forEach(cb => { cb.checked = !kpisOcultosUsuario.has(cb.dataset.claveKpi); });
+      catalogoKpisVisibles.forEach(sec => {
+        const cb = cont.querySelector(`[data-seccion-kpi="${sec.numero}"]`);
+        if (!cb) return;
+        const marcados = sec.kpis.filter(k => !kpisOcultosUsuario.has(k.clave)).length;
+        cb.checked = marcados === sec.kpis.length;
+        cb.indeterminate = marcados > 0 && marcados < sec.kpis.length;
+      });
+      const total = catalogoKpisVisibles.reduce((a, s) => a + s.kpis.length, 0);
+      const lbl = document.getElementById('lblResumenElegirKpis');
+      if (lbl) lbl.textContent = `${total - kpisOcultosUsuario.size} de ${total} KPI marcados`;
+    }
+
+    function marcarKpi(clave, visible) {
+      if (visible) kpisOcultosUsuario.delete(clave);
+      else kpisOcultosUsuario.add(clave);
+      cambioSeleccionKpis();
+    }
+
+    function marcarSeccionKpis(numero, visible) {
+      const sec = (catalogoKpisVisibles || []).find(s => s.numero === numero);
+      if (!sec) return;
+      sec.kpis.forEach(k => visible ? kpisOcultosUsuario.delete(k.clave) : kpisOcultosUsuario.add(k.clave));
+      cambioSeleccionKpis();
+    }
+
+    function mostrarTodosLosKpis() {
+      kpisOcultosUsuario.clear();
+      cambioSeleccionKpis();
+    }
+
+    // Cada cambio se ve al instante y se guarda medio segundo después (varios clics seguidos = un solo guardado)
+    function cambioSeleccionKpis() {
+      aplicarVisibilidadKpis();
+      actualizarCasillasElegirKpis();
+      clearTimeout(temporizadorGuardarKpis);
+      temporizadorGuardarKpis = setTimeout(guardarSeleccionKpis, 500);
+    }
+
+    async function guardarSeleccionKpis() {
+      temporizadorGuardarKpis = null;
+      try {
+        const res = await fetch('/api/kpis/visibles', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...cabecerasSeleccionKpis() },
+          body: JSON.stringify({ ocultos: [...kpisOcultosUsuario] })
+        });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+      } catch (e) {
+        console.error('No se pudo guardar la selección de KPI:', e);
+        mostrarToast('No se pudo guardar la selección de KPI', true);
+      }
+    }
+
+    async function abrirModalElegirKpis() {
+      if (!catalogoKpisVisibles) await cargarPreferenciasKpis();
+      renderizarListaElegirKpis();
+      const m = document.getElementById('modalElegirKpis');
+      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function cerrarModalElegirKpis() {
+      const m = document.getElementById('modalElegirKpis');
+      if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+      // Si quedó un guardado pendiente, se hace ya
+      if (temporizadorGuardarKpis) {
+        clearTimeout(temporizadorGuardarKpis);
+        guardarSeleccionKpis();
       }
     }
 
@@ -302,8 +484,11 @@
       PESTANAS_SOLO_FULL.forEach(n => {
         const sub = document.getElementById(`subvista-kpi-${n}`);
         if (sub) {
+          // El aviso de «pestaña sin KPI marcados» lo maneja aplicarVisibilidadKpis
           [...sub.children].forEach(hijo => {
-            if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
+            if (hijo.id !== `bloqueAvisoLicenciaKpi${n}` && !hijo.classList.contains('kpi-pestana-vacia')) {
+              hijo.classList.toggle('hidden', esLight);
+            }
           });
         }
         // Botón de la pestaña bloqueado en LIGHT
@@ -378,6 +563,8 @@
 
     async function cargarSuite20Kpis() {
       const consulta = ++consultaSuiteVigente;
+      // La selección de KPI del usuario se pide en paralelo: así los desmarcados no se ven mientras carga la suite
+      cargarPreferenciasKpis();
       try {
         const cliVal = document.getElementById('filtroKpiCliente')?.value || '';
         const sedeVal = document.getElementById('filtroKpiSubcliente')?.value || '';
@@ -429,6 +616,7 @@
         }
 
         renderizarTodaLaSuite20(data);
+        aplicarVisibilidadKpis();
 
       } catch (err) {
         console.error('Error al cargar la Suite de 20 KPIs:', err);

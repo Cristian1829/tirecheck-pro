@@ -294,8 +294,37 @@ def asegurar_columna_vistas_permitidas(conn):
         if cols_usr and 'sesion_version' not in cols_usr:
             cursor.execute("ALTER TABLE usuarios ADD COLUMN sesion_version INTEGER DEFAULT 0")
             conn.commit()
+        # KPI que el usuario desmarcó en la pestaña KPIs (lista JSON de claves). Se guardan los ocultos y no los
+        # visibles para que un indicador nuevo aparezca marcado sin que nadie tenga que activarlo.
+        if cols_usr and 'kpis_ocultos' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN kpis_ocultos TEXT DEFAULT ''")
+            conn.commit()
     except Exception:
         pass
+
+
+def obtener_kpis_ocultos_usuario(username):
+    """Claves de los KPI que el usuario desmarcó (vacía = ve todos)."""
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        fila = conn.execute("SELECT kpis_ocultos FROM usuarios WHERE LOWER(username) = LOWER(?)",
+                            (str(username or '').strip(),)).fetchone()
+    try:
+        lista = json.loads(fila[0]) if fila and fila[0] else []
+    except (TypeError, ValueError):
+        return []
+    return sorted({str(k) for k in lista if isinstance(k, str)}) if isinstance(lista, list) else []
+
+
+def guardar_kpis_ocultos_usuario(username, claves):
+    """Guarda los KPI desmarcados por el usuario. Devuelve la lista guardada."""
+    ocultos = sorted({str(k).strip() for k in (claves or []) if str(k).strip()})
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        conn.execute("UPDATE usuarios SET kpis_ocultos = ? WHERE LOWER(username) = LOWER(?)",
+                     (json.dumps(ocultos), str(username or '').strip()))
+        conn.commit()
+    return ocultos
 
 def normalizar_vida_y_banda(vida_input, banda_input=''):
     """
