@@ -121,5 +121,4 @@ python -c "import database; print('Total inspecciones:', len(database.obtener_to
 ---
 
 ## 7. Credenciales por Defecto
-- **Administrador:** `admin` / `admin123` (Acceso total, configuración y usuarios)
-- **Inspector:** `inspector1` / `1234` (Acceso operativo para captura en patio)
+- **Usuario inicial:** `admin`. En una base nueva su clave sale de la variable `TIREANALYZE_CLAVE_INICIAL_ADMIN` o se genera al azar y se muestra una sola vez en el registro del servidor; hay que cambiarla al ingresar. Los demás usuarios los crea el administrador en Catálogos → Usuarios.

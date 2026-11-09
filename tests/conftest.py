@@ -8,6 +8,9 @@ from fastapi.testclient import TestClient
 # Asegurar que el directorio de la aplicación esté en sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Clave inicial conocida del administrador en la base de pruebas (en una base real nueva es al azar)
+os.environ.setdefault("TIREANALYZE_CLAVE_INICIAL_ADMIN", "admin123")
+
 import database
 import server
 

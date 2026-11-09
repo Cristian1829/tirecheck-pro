@@ -51,6 +51,10 @@
           if (lTotal) lTotal.textContent = cacheTodasInspecciones.length;
           poblarSelectoresFiltroBD(cacheTodasInspecciones);
           filtrarTablaBD();
+        } else if (res.status === 403) {
+          // Perfil sin la vista Base de datos (se pide también al ingresar): nada que mostrar
+          cacheTodasInspecciones = [];
+          if (tbody) tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-slate-500">Su usuario no tiene habilitada la Base de inspecciones.</td></tr>';
         } else if (res.status === 401) {
           if (tbody) {
             tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';

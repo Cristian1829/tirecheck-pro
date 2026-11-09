@@ -110,7 +110,7 @@ def test_4_no_se_crea_usuario_sin_cliente(test_db):
 # --- #5: los datos se ven por cliente asignado, y editar no cambia quién registró -----------
 def test_5_jefe_ve_inspecciones_de_otros_usuarios_de_su_cliente(test_db):
     _inspeccion("CLI JEFE", "JEF001")  # registrada por "otro"
-    _crear_usuario("jefe_cli", "jefatura", "CLI JEFE")
+    _crear_usuario("jefe_cli", "jefatura", "CLI JEFE", "patio,basedatos")
     c = _cliente_http("jefe_cli", "jefatura")
     placas = {r["placa"] for r in c.get("/api/inspecciones").json()}
     assert "JEF001" in placas
@@ -120,7 +120,7 @@ def test_5_editar_conserva_el_autor(test_db):
     _inspeccion("CLI JEFE", "JEF002")
     with database.get_connection() as conn:
         insp_id = conn.execute("SELECT id FROM inspecciones WHERE placa = 'JEF002'").fetchone()[0]
-    _crear_usuario("jefe_cli", "jefatura", "CLI JEFE")
+    _crear_usuario("jefe_cli", "jefatura", "CLI JEFE", "patio,basedatos")
     c = _cliente_http("jefe_cli", "jefatura")
     r = c.put(f"/api/inspecciones/{insp_id}", json={
         "fecha": "2026-10-10", "cliente": "CLI JEFE", "subcliente": "SEDE", "placa": "JEF002", "posicion": 1,

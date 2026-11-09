@@ -517,15 +517,12 @@ def _cliente_de_registro(tabla: str, registro_id: int) -> str:
 def resolver_filtro_usuario_inspecciones(usuario_actual: dict, usuario_param: str = "") -> Optional[str]:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     user = str(usuario_actual.get("username", "")).strip().lower()
+    # Solo el administrador puede pedir los datos con el alcance de otro usuario (?usuario=). Antes una jefatura o
+    # gerencia con ?usuario=admin quedaba sin filtro de clientes y veía todas las flotas (auditoría H-01).
     if es_rol_admin(rol, user):
         return usuario_param if usuario_param else None
-    if es_rol_jefatura(rol) or es_rol_gerencia(rol):
-        if usuario_param:
-            return usuario_param
-        elif usuario_actual.get("cliente_asignado"):
-            return usuario_actual["username"]
-        else:
-            return None
+    if (es_rol_jefatura(rol) or es_rol_gerencia(rol)) and not usuario_actual.get("cliente_asignado"):
+        return None  # jefatura o gerencia sin clientes asignados: acceso a todas las flotas
     return usuario_actual["username"]
  
 def _resolver_cliente_usuario(usuario_actual: dict, cliente_solicitado: str = "") -> str:
@@ -737,7 +734,7 @@ def sanitizar_nativos(obj):
 # RUTAS DE INSPECCIONES (CRUD & EXCEL)
 # ==========================================
 
-@app.get("/api/inspecciones")
+@app.get("/api/inspecciones", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     # La lista va sin fotos (solo su cantidad): la galería y la edición las piden por inspección
@@ -914,10 +911,12 @@ async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict 
 
 @app.get("/api/inspecciones/ultima-marca-diseno")
 def api_inspecciones_ultima_marca_diseno(placa: str, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    # La placa debe ser de un cliente y una sede del usuario (antes devolvía datos de otras flotas; auditoría H-04)
+    verificar_acceso_placa(usuario_actual, placa)
     res = database.obtener_ultima_marca_diseno_vehiculo(placa)
     return sanitizar_nativos(res)
 
-@app.get("/api/inspecciones/{inspeccion_id}")
+@app.get("/api/inspecciones/{inspeccion_id}", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     with database.get_connection() as conn:
         cursor = conn.cursor()
@@ -937,7 +936,10 @@ def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Dep
             clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
             if clis and row[2] and not any(c.lower() == str(row[2]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de este cliente")
-        
+            # También la sede (antes se podía leer otra sede del mismo cliente cambiando el id; auditoría H-15)
+            if not database.usuario_puede_ver_sede(usuario_actual, row[2], row[3]):
+                raise HTTPException(status_code=403, detail="No tiene permisos para ver inspecciones de esta sede")
+
         cols = ['id', 'fecha', 'cliente', 'subcliente', 'tipo_operacion', 'placa', 'posicion', 'kilometraje',
                 'tipologia', 'marca', 'diseno', 'dimension', 'vida', 'banda_reen', 'prof_ext', 'prof_cent', 'prof_int',
                 'psi', 'novedades', 'precio', 'prof_inicial', 'km_montaje', 'numero_interno', 'usuario_registro', 'foto_novedad']
@@ -1001,7 +1003,7 @@ def api_edicion_multiple_inspecciones(req: EdicionMultipleInspeccionesRequest, u
         "message": f"Se actualizaron exitosamente {cant} registros en la base de datos."
     }
 
-@app.put("/api/inspecciones/{inspeccion_id}")
+@app.put("/api/inspecciones/{inspeccion_id}", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     if es_rol_gerencia(rol):
@@ -1045,7 +1047,7 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
         raise HTTPException(status_code=404, detail="No se encontró el registro para actualizar")
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección actualizada correctamente"}
 
-@app.delete("/api/inspecciones/{inspeccion_id}")
+@app.delete("/api/inspecciones/{inspeccion_id}", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     if es_rol_gerencia(rol):
@@ -1788,16 +1790,7 @@ def api_kpis_llantas(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    es_admin = es_rol_admin(rol, user)
-    es_privilegiado = es_admin or es_rol_jefatura(rol) or es_rol_gerencia(rol)
-    if not es_privilegiado:
-        filtros['usuario'] = usuario_actual["username"]
-    elif usuario:
-        filtros['usuario'] = usuario
-    elif usuario_actual.get("cliente_asignado"):
-        filtros['usuario'] = usuario_actual["username"]
+    filtros['usuario'] = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
 
     raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros, foto_actual=(foto.strip().lower() == "actual"))
     return sanitizar_nativos(raw)
@@ -1829,16 +1822,7 @@ def api_exportar_kpis_excel(
         'banda_reen': banda_reen,
         'usuario': usuario
     }
-    rol = str(usuario_actual.get("rol", "")).strip().lower()
-    user = str(usuario_actual.get("username", "")).strip().lower()
-    es_admin = es_rol_admin(rol, user)
-    es_privilegiado = es_admin or es_rol_jefatura(rol) or es_rol_gerencia(rol)
-    if not es_privilegiado:
-        filtros['usuario'] = usuario_actual["username"]
-    elif usuario:
-        filtros['usuario'] = usuario
-    elif usuario_actual.get("cliente_asignado"):
-        filtros['usuario'] = usuario_actual["username"]
+    filtros['usuario'] = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
 
     data = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
     df = pd.DataFrame(data)
@@ -2160,6 +2144,14 @@ def api_obtener_configuraciones_clientes(admin: dict = Depends(requerir_admin_o_
 
 @app.get("/api/limite-cliente")
 def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje: str = "TODOS", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    # Solo clientes y sedes del usuario (antes devolvía límite y licencia de cualquier flota; auditoría H-04)
+    if cliente and cliente.strip().upper() != "TODOS":
+        sede = "" if str(subcliente or "").strip().upper() in ("", "TODOS") else subcliente
+        clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+        if not es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")) and (
+                (clis and cliente.strip().upper() not in clis) or
+                (sede and not database.usuario_puede_ver_sede(usuario_actual, cliente, sede))):
+            raise HTTPException(status_code=403, detail="No tiene permisos para consultar este cliente")
     lim = database.obtener_limite_retiro_cliente(cliente, subcliente, eje)
     lic = database.obtener_licencia_cliente(cliente)
     return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim, "tipo_licencia": lic}
@@ -2959,8 +2951,22 @@ def api_eliminar_datos_cliente(item: EliminarDatosClienteItem, admin: dict = Dep
     return sanitizar_nativos(res)
 
 
+FRASE_RESTAURAR_SEMILLA = "RESTAURAR BASE"
+
+
+class RestaurarSemillaItem(BaseModel):
+    confirmacion: str = ""   # debe ser exactamente FRASE_RESTAURAR_SEMILLA
+    clave: str = ""          # clave actual del administrador (re-autenticación)
+
+
 @app.post("/api/admin/restaurar-seed")
-def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
+def api_admin_restaurar_seed(item: RestaurarSemillaItem, admin: dict = Depends(requerir_admin)):
+    """Reemplaza toda la base por la semilla. Exige la frase escrita y la clave del administrador (auditoría H-44):
+    antes bastaba una petición con un token de administrador para borrar los datos de producción."""
+    if item.confirmacion.strip() != FRASE_RESTAURAR_SEMILLA:
+        raise HTTPException(status_code=400, detail=f"Escriba «{FRASE_RESTAURAR_SEMILLA}» para confirmar que reemplaza toda la base.")
+    if not database.autenticar_usuario(admin.get("username"), item.clave):
+        raise HTTPException(status_code=403, detail="La clave del administrador no es correcta.")
     import shutil
     candidates = [database._DB_SEED, database._DB_ROOT]
     seed_found = None

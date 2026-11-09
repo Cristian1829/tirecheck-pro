@@ -12,7 +12,7 @@ Autentica un usuario contra la tabla `usuarios` de SQLite.
   ```json
   {
     "username": "admin",
-    "password": "admin123"
+    "password": "<su clave>"
   }
   ```
 - **Response (200 OK):**

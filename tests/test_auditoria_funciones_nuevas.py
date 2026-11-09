@@ -25,9 +25,9 @@ def _insp(cliente, sede, placa, sn, fecha="2026-10-10", **extra):
 def test_3_usuario_de_una_sede_solo_ve_su_sede(test_db):
     _insp("CLI SEDES", "NORTE", "NOR001", "S-N1")
     _insp("CLI SEDES", "SUR", "SUR001", "S-S1")
-    assert database.crear_usuario("insp_norte", "12345", "Insp Norte", "inspector", "CLI SEDES", "patio,diagnostico",
+    assert database.crear_usuario("jefe_norte", "12345", "Jefe Norte", "jefatura", "CLI SEDES", "patio,basedatos,diagnostico",
                                   sedes_asignadas="CLI SEDES|NORTE")
-    c = _http("insp_norte", "inspector")
+    c = _http("jefe_norte", "jefatura")
     placas = {r["placa"] for r in c.get("/api/inspecciones").json()}
     assert placas == {"NOR001"}
     assert c.get("/api/informe-resumen/SUR001").status_code == 403
@@ -40,7 +40,7 @@ def test_3_usuario_de_una_sede_solo_ve_su_sede(test_db):
 def test_3_sin_sedes_ve_todas_las_de_su_cliente(test_db):
     _insp("CLI SEDES", "NORTE", "NOR001", "S-N1")
     _insp("CLI SEDES", "SUR", "SUR001", "S-S1")
-    database.crear_usuario("jefe_cli", "12345", "Jefe", "jefatura", "CLI SEDES", "patio,diagnostico")
+    database.crear_usuario("jefe_cli", "12345", "Jefe", "jefatura", "CLI SEDES", "patio,basedatos,diagnostico")
     placas = {r["placa"] for r in _http("jefe_cli", "jefatura").get("/api/inspecciones").json()}
     assert placas == {"NOR001", "SUR001"}
 

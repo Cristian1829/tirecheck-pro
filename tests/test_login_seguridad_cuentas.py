@@ -212,7 +212,7 @@ def test_cambio_de_clave_propio(test_db):
     assert "sesion_version" not in r.json()["usuario"]
     # La sesión vieja quedó cerrada; la nueva entra a los datos
     assert TestClient(server.app).get("/api/usuario-actual", headers=_auth(token)).status_code == 401
-    assert TestClient(server.app).get("/api/inspecciones", headers=_auth(nuevo)).status_code == 200
+    assert TestClient(server.app).get("/api/informe-resumen/SINPLACA", headers=_auth(nuevo)).status_code not in (401, 403)
     assert _login(TestClient(server.app), "cambiador", "12345", ip="10.4.0.1").status_code == 401
     assert _login(TestClient(server.app), "cambiador", CLAVE, ip="10.4.0.2").status_code == 200
 

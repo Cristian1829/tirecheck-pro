@@ -60,6 +60,4 @@ El proyecto completo ya se encuentra subido y sincronizado en tu repositorio:
 - **Comportamiento en inactividad (*Spin down*):**
   - Si la aplicación no recibe visitas durante 15 minutos, Render pone el contenedor en reposo para ahorrar energía.
   - Cuando alguien vuelve a entrar a la URL, la aplicación se reactiva automáticamente en unos 30-45 segundos. Las siguientes solicitudes responden de forma instantánea.
-- **Usuarios de prueba listos:**
-  - `admin` (clave: `admin123`)
-  - `inspector1` (clave: `1234`)
+- **Usuario inicial:** `admin`, con la clave de `TIREANALYZE_CLAVE_INICIAL_ADMIN` o la que muestra el registro del servidor al crear la base.

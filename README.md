@@ -29,8 +29,7 @@ python server.py
 Abre en tu navegador: [http://localhost:8000](http://localhost:8000)
 
 ### 🔑 Credenciales del Sistema:
-- **Administrador:** Usuario `admin` | Contraseña `admin123` (Acceso total, configuración y usuarios)
-- **Inspector de Patio:** Usuario `inspector1` | Contraseña `1234` (Captura operativa en patio)
+- **Usuario inicial:** `admin`. En una base nueva su clave sale de la variable `TIREANALYZE_CLAVE_INICIAL_ADMIN` o se genera al azar y se muestra una sola vez en el registro del servidor; hay que cambiarla al ingresar. Los demás usuarios los crea el administrador en Catálogos → Usuarios.
 
 ---
 

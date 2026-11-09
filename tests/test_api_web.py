@@ -119,9 +119,9 @@ def test_seguridad_control_roles_inspector_vs_admin(test_db, inspector_token):
     client_insp = TestClient(app)
     client_insp.headers.update({"Authorization": f"Bearer {inspector_token}"})
 
-    # Un inspector tiene acceso a lectura de inspecciones
+    # Un inspector no tiene la Base de inspecciones: listar por API se rechaza (auditoría H-15)
     res_insp = client_insp.get("/api/inspecciones")
-    assert res_insp.status_code == 200
+    assert res_insp.status_code == 403
 
     # Pero un inspector NO tiene permisos de administrador (debe dar 403 Forbidden)
     res_admin_usr = client_insp.get("/api/usuarios")
@@ -522,9 +522,8 @@ def test_api_inspector_cliente_predeterminado_y_restricciones(test_db):
     insp_id = res_insp.json()["id"]
 
     # Verificar que quedó registrado como TRANSCARGA (estandarizado en mayúsculas)
-    res_get = client.get(f"/api/inspecciones/{insp_id}")
-    assert res_get.status_code == 200
-    assert res_get.json()["cliente"] == "TRANSCARGA"
+    with database.get_connection() as conn:
+        assert conn.execute("SELECT cliente FROM inspecciones WHERE id = ?", (insp_id,)).fetchone()[0] == "TRANSCARGA"
 
     # Intento de registrar para un cliente no autorizado -> 403 Forbidden
     insp_payload_ajeno = dict(insp_payload)
@@ -779,18 +778,19 @@ def test_api_usuario_actual_sincroniza_flotas_actualizadas(test_db, auth_client)
 
 def test_roles_jefatura_y_gerencia(test_db):
     # Sin cliente asignado no pueden entrar: se les asigna el cliente de la prueba
+    # Los usuarios de ejemplo nacen con una clave al azar: el administrador les asigna una (aquí, débil a propósito)
     with database.get_connection() as conn:
-        conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username IN ('jefe1', 'gerencia1')")
+        conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST', password = ? WHERE username IN ('jefe1', 'gerencia1')",
+                     (database.hash_password("clave123"),))
         conn.commit()
-    # 1. Login con jefe1 y gerencia1 creados automáticamente
-    # Con la clave de ejemplo «1234» entran, pero deben cambiarla antes de usar la app
+    # 1. Con una clave que no cumple las reglas entran, pero deben cambiarla antes de usar la app
     def cambiar_clave(token, nueva):
-        r = client.post("/api/mi-cuenta/cambiar-clave", json={"clave_actual": "1234", "clave_nueva": nueva},
+        r = client.post("/api/mi-cuenta/cambiar-clave", json={"clave_actual": "clave123", "clave_nueva": nueva},
                         headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 200, r.text
         return r.json()["token"]
 
-    res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "1234"})
+    res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "clave123"})
     assert res_login_jefe.status_code == 200
     u_jefe = res_login_jefe.json()["usuario"]
     assert u_jefe["rol"] == "jefatura"
@@ -799,7 +799,7 @@ def test_roles_jefatura_y_gerencia(test_db):
     assert u_jefe["debe_cambiar_clave"] is True
     token_jefe = cambiar_clave(res_login_jefe.json()["token"], "Jefatura-Llantas-26")
 
-    res_login_gere = client.post("/api/login", json={"username": "gerencia1", "password": "1234"})
+    res_login_gere = client.post("/api/login", json={"username": "gerencia1", "password": "clave123"})
     assert res_login_gere.status_code == 200
     u_gere = res_login_gere.json()["usuario"]
     assert u_gere["rol"] == "gerencia"

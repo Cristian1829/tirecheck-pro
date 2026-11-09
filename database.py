@@ -167,6 +167,10 @@ cambiar123 temporal temporal123 bienvenido bienvenido1 bienvenido123
 """.split())
 
 
+# Claves que la documentación del repositorio publicó para los usuarios de ejemplo
+CLAVES_EJEMPLO_PUBLICADAS = frozenset({'1234', 'admin123'})
+
+
 def validar_clave_nueva(clave, username: str = '') -> Optional[str]:
     """Mensaje de error si la clave no cumple las reglas, o None si sirve."""
     c = (clave or '').strip()
@@ -436,22 +440,26 @@ def inicializar_bd():
         # Insertar usuarios por defecto si no existen
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         if cursor.fetchone()[0] == 0:
+            # Base vacía: nada de claves conocidas (antes admin123 y 1234, publicadas en el repositorio; auditoría H-03).
+            # La clave inicial del administrador sale de TIREANALYZE_CLAVE_INICIAL_ADMIN o se genera al azar y se
+            # muestra una sola vez en el registro del servidor. Los usuarios de ejemplo quedan con claves al azar que
+            # nadie conoce: el administrador les asigna una desde Usuarios si los necesita.
+            clave_admin = os.environ.get("TIREANALYZE_CLAVE_INICIAL_ADMIN", "").strip()
+            if not clave_admin:
+                clave_admin = secrets.token_urlsafe(12)
+                print(f"[USUARIOS] Base nueva: clave inicial del usuario admin = {clave_admin} (cámbiela al ingresar)")
             cursor.execute("""
                 INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
                 VALUES ('admin', ?, 'Administrador General', 'admin', '', 'patio,basedatos,diagnostico,kpis,composicion,catalogos')
-            """, (hash_password('admin123'),))
-            cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('jefe1', ?, 'Jefe de Llantas', 'jefatura', '', 'patio,basedatos,diagnostico,kpis,composicion,catalogos')
-            """, (hash_password('1234'),))
-            cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('gerencia1', ?, 'Dirección / Gerencia', 'gerencia', '', 'basedatos,diagnostico,kpis,composicion')
-            """, (hash_password('1234'),))
-            cursor.execute("""
-                INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
-                VALUES ('inspector1', ?, 'Juan Pérez (Inspector)', 'inspector', '', 'patio,diagnostico,kpis,composicion')
-            """, (hash_password('1234'),))
+            """, (hash_password(clave_admin),))
+            for usr, nombre, rol_u, vistas_u in (
+                    ('jefe1', 'Jefe de Llantas', 'jefatura', 'patio,basedatos,diagnostico,kpis,composicion,catalogos'),
+                    ('gerencia1', 'Dirección / Gerencia', 'gerencia', 'basedatos,diagnostico,kpis,composicion'),
+                    ('inspector1', 'Juan Pérez (Inspector)', 'inspector', 'patio,diagnostico,kpis,composicion')):
+                cursor.execute("""
+                    INSERT INTO usuarios (username, password, nombre_completo, rol, cliente_asignado, vistas_permitidas)
+                    VALUES (?, ?, ?, ?, '', ?)
+                """, (usr, hash_password(secrets.token_urlsafe(16)), nombre, rol_u, vistas_u))
         else:
             # Auto-migración: convertir contraseñas en texto plano existentes a PBKDF2
             cursor.execute("SELECT id, password FROM usuarios")
@@ -6782,6 +6790,12 @@ def autenticar_usuario(username, password):
             return None
         uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas, debe_cambiar, version = row
         if verify_password(p, stored_pwd):
+            # Las claves de ejemplo publicadas en el repositorio ya no dan acceso (auditoría H-03): quien las conoce no
+            # puede entrar y fijar su propia clave. El administrador conserva el acceso (con cambio obligatorio) para
+            # no quedar sin forma de entrar; a los demás se les asigna una clave nueva desde Usuarios.
+            es_admin_u = str(rol or '').lower() in ('admin', 'administrador') or str(db_username).lower() == 'admin'
+            if p in CLAVES_EJEMPLO_PUBLICADAS and not es_admin_u:
+                return None
             # Auto-migración: texto plano o hash con menos iteraciones de las actuales se vuelve a cifrar
             if hash_desactualizado(stored_pwd):
                 nuevo_hash = hash_password(p)

@@ -152,7 +152,7 @@ tests\test_pdf.py::test_generar_pdf_consolidado PASSED                   [100%]
 ## 5. Validación End-to-End en Navegador Real
 
 Se ejecutó un subagente de navegación automatizada para validar el flujo visual completo sobre `http://127.0.0.1:8000`:
-1. **Autenticación:** Login exitoso con credenciales de administrador (`admin` / `admin123`).
+1. **Autenticación:** Login exitoso con credenciales del administrador.
 2. **Vista 1 (Inspección de Patio):** Renderizado de chasis dinámico, selección de ruedas, validación de inputs y autocompletado de catálogo.
 3. **Vista 2 (Base de Inspecciones):** Carga correcta de los 60 registros existentes, búsqueda en vivo por término `ABC`, modales de edición/eliminación y componentes de importación/exportación Excel.
 4. **Vista 3 (Diagnóstico & Planes de Acción):** 5 tarjetas de métricas calculadas (12 vehículos, 1 cambio, 3 alineación, 6 duales, 5 OK) y tabla de planes.

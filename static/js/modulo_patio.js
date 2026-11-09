@@ -2438,7 +2438,7 @@
             const bHist = document.getElementById('badgeHistorialPrevia');
             if (bHist) {
               bHist.classList.remove('hidden');
-              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${lt.cliente || 'Flota'} (Pos ${lt.ult_posicion || 'ant'}${lt.ult_prof_min ? ' • ' + fmtDec(lt.ult_prof_min, 1) + ' mm' : ''})`;
+              bHist.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>Llanta de ${escapeHtml(lt.cliente || 'Flota')} (Pos ${escapeHtml(lt.ult_posicion || 'ant')}${lt.ult_prof_min ? ' • ' + fmtDec(lt.ult_prof_min, 1) + ' mm' : ''})`;
             }
 
             // Precargar especificaciones técnicas de la llanta

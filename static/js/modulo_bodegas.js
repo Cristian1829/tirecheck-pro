@@ -2094,7 +2094,7 @@
                   <div class="text-[11px] text-slate-500 mt-0.5">
                     ${m.odometro_vehiculo > 0 ? `Odómetro: ${Number(m.odometro_vehiculo).toLocaleString()} km | ` : ''}
                     ${m.profundidad_momento > 0 ? `Prof: ${fmtDec(Number(m.profundidad_momento), 1)} mm | ` : ''}
-                    ${m.motivo ? `Motivo: ${m.motivo}` : ''}
+                    ${m.motivo ? `Motivo: ${escapeHtml(m.motivo)}` : ''}
                   </div>
                 </div>
               </div>
