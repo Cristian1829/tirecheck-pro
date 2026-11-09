@@ -199,6 +199,12 @@ def test_kpi01_por_mes_y_por_anio_contra_la_flota(test_db):
     assert (anios["2026"]["inspeccionados"], anios["2026"]["pct"]) == (1, 25.0)
     # Datos para la lista de pendientes de cualquier periodo
     assert k["parque"]["PER003"]["ultima_inspeccion"] == "2026-10-12" and k["parque"]["PER004"]["ultima_inspeccion"] == ""
+    # Última inspección de una pendiente = la anterior al periodo, nunca una posterior:
+    # PER002 solo se inspeccionó en diciembre, así que en noviembre figura sin inspección previa
+    assert "PER002" in meses["2027-11"]["pendientes"] and "PER002" not in meses["2027-11"]["ultima_previa"]
+    assert k["parque"]["PER002"]["ultima_inspeccion"] == "2027-12-12"
+    assert meses["2027-12"]["ultima_previa"] == {"PER003": "2026-10-12"}
+    assert anios["2027"]["pendientes"] == ["PER003", "PER004"] and anios["2027"]["ultima_previa"] == {"PER003": "2026-10-12"}
     # El total del historial sigue igual que antes
     assert (k["vehiculos_inspeccionados"], k["total_padron_activo"]) == (3, 4)
 

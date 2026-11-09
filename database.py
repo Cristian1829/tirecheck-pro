@@ -9497,11 +9497,16 @@ def _kpi01_por_periodo(df_vehiculos, padron_rows, placas_padron, total_padron, p
     def resumen(clave, etiqueta, tipo, placas):
         aud = len(placas & placas_padron) if parque_cargado else len(placas)
         pend = [p for p in orden_parque if p not in placas]
+        # Última inspección ANTES del periodo (no la más reciente del historial): al mirar octubre, una placa
+        # pendiente inspeccionada en noviembre debe mostrar su última fecha anterior a octubre.
+        inicio = f"{clave}-01" if tipo == 'mes' else f"{clave}-01-01"
+        previas = pl_fecha[pl_fecha['dia'] < inicio].groupby('placa')['dia'].max().to_dict() if not pl_fecha.empty else {}
         return {
             "clave": clave, "etiqueta": etiqueta, "tipo": tipo,
             "inspeccionados": aud, "total": total_padron,
             "pct": round(min(100.0, aud / total_padron * 100.0), 1) if total_padron else None,
             "pendientes": pend,
+            "ultima_previa": {p: previas[p] for p in pend if p in previas},
         }
 
     meses = sorted(set(pl_fecha['dia'].str[:7]) | {mes_hoy})[-24:]

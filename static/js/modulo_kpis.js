@@ -817,7 +817,9 @@
       const p = lista.find(x => x.clave === clave);
       if (!p) return null;
       // Los pendientes del periodo llegan como placas: se completan con los datos del parque
-      const pendientes = (p.pendientes || []).map(placa => ({ placa, ...((d.parque || {})[placa] || {}) }));
+      // y la última inspección es la anterior al periodo (no una posterior, p. ej. de noviembre al mirar octubre)
+      const previas = p.ultima_previa || {};
+      const pendientes = (p.pendientes || []).map(placa => ({ placa, ...((d.parque || {})[placa] || {}), ultima_inspeccion: previas[placa] || '' }));
       return { etiqueta: tipo === 'anio' ? `el año ${clave}` : p.etiqueta, inspeccionados: p.inspeccionados, total: p.total, pct: p.pct, pendientes };
     }
 
