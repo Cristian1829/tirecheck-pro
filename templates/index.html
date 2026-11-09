@@ -4171,9 +4171,9 @@
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-          <input type="search" id="buscarParque" oninput="renderizarParqueCat()" placeholder="Buscar placa, tipología, fabricante…" class="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white">
+          <input type="search" id="buscarParque" oninput="filtrarParqueCat()" placeholder="Buscar placa, tipología, fabricante…" class="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white">
           <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 whitespace-nowrap">
-            <input type="checkbox" id="chkParqueSoloFaltantes" onchange="renderizarParqueCat()"> Solo los que faltan este mes
+            <input type="checkbox" id="chkParqueSoloFaltantes" onchange="filtrarParqueCat()"> Solo los que faltan este mes
           </label>
         </div>
         <div class="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -4195,6 +4195,14 @@
               <tr><td colspan="9" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>
             </tbody>
           </table>
+        </div>
+        <div id="paginacionParque" class="hidden flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-200 rounded-2xl">
+          <div class="text-xs text-slate-500 font-medium">
+            Mostrando <span id="pagParqueRango" class="font-bold text-slate-800">0</span>
+            de <span id="pagParqueTotal" class="font-bold text-blue-600">0</span> vehículos
+            <span class="text-slate-400 font-normal hidden sm:inline">(25 por página)</span>
+          </div>
+          <div id="controlesPaginacionParque" class="flex flex-wrap items-center gap-1"></div>
         </div>
       </div>
 

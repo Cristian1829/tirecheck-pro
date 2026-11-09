@@ -100,6 +100,7 @@
       document.getElementById('resultadoParque')?.classList.add('hidden');
       cerrarFormVehiculoParque();
       cacheParque = [];
+      paginaParque = 1;
       if (cliente) {
         const tbody = document.getElementById('tbodyParqueCat');
         if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Cargando…</td></tr>';
@@ -112,9 +113,46 @@
       renderizarParqueCat();
     }
 
+    // Tabla de a 25 vehículos. Buscar o filtrar vuelve a la página 1; editar o eliminar conserva la página.
+    const ITEMS_POR_PAGINA_PARQUE = 25;
+    let paginaParque = 1;
+
+    function filtrarParqueCat() {
+      paginaParque = 1;
+      renderizarParqueCat();
+    }
+
+    function cambiarPaginaParque(n) {
+      paginaParque = n;
+      renderizarParqueCat();
+    }
+
+    function pintarPaginacionParque(total, inicio, fin, totalPaginas) {
+      const cont = document.getElementById('paginacionParque');
+      if (!cont) return;
+      cont.classList.toggle('hidden', total === 0);
+      if (!total) return;
+      document.getElementById('pagParqueRango').textContent = `${inicio + 1}-${fin}`;
+      document.getElementById('pagParqueTotal').textContent = total;
+      const btn = (n, txt, activo, deshabilitado, etiqueta) =>
+        `<button type="button" ${deshabilitado ? 'disabled' : `onclick="cambiarPaginaParque(${n})"`} aria-label="${etiqueta}"
+           class="min-w-[30px] h-[30px] px-2 rounded-lg text-xs font-bold border ${activo ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'} disabled:opacity-40">${txt}</button>`;
+      // Primera, última y las dos vecinas de la actual; el resto con «…»
+      const paginas = [];
+      for (let n = 1; n <= totalPaginas; n++) {
+        if (n === 1 || n === totalPaginas || Math.abs(n - paginaParque) <= 2) paginas.push(n);
+        else if (paginas[paginas.length - 1] !== '…') paginas.push('…');
+      }
+      document.getElementById('controlesPaginacionParque').innerHTML =
+        btn(paginaParque - 1, '<i class="fa-solid fa-chevron-left"></i>', false, paginaParque <= 1, 'Página anterior') +
+        paginas.map(n => n === '…' ? '<span class="px-1 text-slate-400">…</span>' : btn(n, n, n === paginaParque, false, `Página ${n}`)).join('') +
+        btn(paginaParque + 1, '<i class="fa-solid fa-chevron-right"></i>', false, paginaParque >= totalPaginas, 'Página siguiente');
+    }
+
     function renderizarParqueCat() {
       const tbody = document.getElementById('tbodyParqueCat');
       if (!tbody) return;
+      pintarPaginacionParque(0);
       const cliente = document.getElementById('selParqueCliente')?.value || '';
       const mes = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).slice(0, 7);
       const activos = cacheParque.filter(v => v.activo);
@@ -142,7 +180,12 @@
         tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400 italic">${cacheParque.length ? 'Ningún vehículo coincide con la búsqueda.' : 'Este cliente no tiene vehículos en el parque.'}</td></tr>`;
         return;
       }
-      tbody.innerHTML = lista.map(v => {
+      const totalPaginas = Math.ceil(lista.length / ITEMS_POR_PAGINA_PARQUE) || 1;
+      paginaParque = Math.min(Math.max(1, paginaParque), totalPaginas);
+      const inicio = (paginaParque - 1) * ITEMS_POR_PAGINA_PARQUE;
+      const fin = Math.min(inicio + ITEMS_POR_PAGINA_PARQUE, lista.length);
+      pintarPaginacionParque(lista.length, inicio, fin, totalPaginas);
+      tbody.innerHTML = lista.slice(inicio, fin).map(v => {
         const inspMes = (v.ultima_inspeccion || '').slice(0, 7) === mes;
         const estado = !v.activo
           ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Inactivo</span>'

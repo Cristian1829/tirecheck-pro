@@ -241,3 +241,16 @@ def test_eliminar_en_cliente_sin_parque_cargado(test_db):
     # Una placa que no es del cliente no cambia nada
     assert not database.eliminar_vehiculo_padron("OTRO CLIENTE", "JJJ002")
     assert not database.cliente_tiene_parque_cargado("OTRO CLIENTE")
+
+
+def test_tabla_del_parque_se_pagina_de_a_25():
+    """La tabla del parque muestra 25 vehículos por página y buscar o filtrar vuelve a la primera."""
+    import os
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    js = open(os.path.join(raiz, "static", "js", "modulo_catalogos.js"), encoding="utf-8").read()
+    html = open(os.path.join(raiz, "templates", "index.html"), encoding="utf-8").read()
+    assert "const ITEMS_POR_PAGINA_PARQUE = 25;" in js
+    render = js[js.index("function renderizarParqueCat"):js.index("// Agregar o editar un vehículo a mano")]
+    assert "lista.slice(inicio, fin)" in render and "pintarPaginacionParque(lista.length" in render
+    assert 'id="paginacionParque"' in html and 'id="controlesPaginacionParque"' in html
+    assert 'oninput="filtrarParqueCat()"' in html and 'id="chkParqueSoloFaltantes" onchange="filtrarParqueCat()"' in html
