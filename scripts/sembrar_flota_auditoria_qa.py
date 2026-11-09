@@ -343,22 +343,22 @@ def imprimir_tabla_comparativa_consola(res):
     Imprime en consola la tabla de auditoría Ground-Truth vs Backend.
     """
     filas_tabla = [
-        ("KPI 01: Cumplimiento de Parque", "75.0%", f"{res['cumplimiento_parque_pct']:.1f}%", "±0.1%", "0.0%", "✅ EXACTO"),
-        ("KPI 06: Pérdida mm Desalineación (Caso 1)", "3.0 mm", f"{res['perdida_desalineacion_mm']:.1f} mm", "±0.0 mm", "0.0 mm", "✅ EXACTO"),
-        ("KPI 11: Impacto Económico (Caso 1)", "$300.000 COP", f"${res['impacto_desalineacion_pesos']:,.0f} COP".replace(',', '.'), "$0", "$0", "✅ EXACTO"),
-        ("KPI 15: Techo Proy Máx (Caso 2 Asentamiento)", "<= 120.000 km", f"{res['techo_proyeccion_max']:,} km".replace(',', '.'), "<= 120.000 km", "OK", "✅ EXACTO"),
-        ("KPI 07: Plan Corrección Dual (Caso 3)", "SÍ (1 evento)", "SÍ (1 evento)" if res['alerta_dual_mal_apareado'] else "NO", "Booleano", "0", "✅ EXACTO"),
-        ("KPI 05: Plan Retiro / Demanda Par Dir (Caso 4)", "2 llantas", f"{res['demanda_par_direccional']} llantas", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 14: Rendimiento Caso 5 (Reparación)", "5.000 km/mm", f"{res['kmmm_caso5']:,.0f} km/mm".replace(',', '.'), "±1 km/mm", "0 km/mm", "✅ EXACTO"),
-        ("KPI 14: CPK Caso 5 (Reparación)", "$33.33 COP/km", f"${res['cpk_caso5']:.2f} COP/km", "±0.01", "0.00", "✅ EXACTO"),
-        ("KPI 09: Presiones en Norma (OK)", "28 llantas", f"{res['presiones_ok']} llantas", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 09: Presión Baja Crítica", "1 llanta (75 PSI)", f"{res['presiones_baja']} llanta", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 09: Presión Sobreinflado", "1 llanta (125 PSI)", f"{res['presiones_alta']} llanta", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 16: Curva Madurez 5 Tramos", "5 rangos > 0", f"{len(res['curva_madurez_valores'])} rangos > 0", "100% Positivos", "0", "✅ EXACTO"),
-        ("MRP: Demanda Bruta Reemplazo", "8 llantas", f"{res['mrp_demanda_bruta']} llantas", "0", "0", "✅ EXACTO"),
-        ("MRP: Stock Útil Disponible", "5 llantas", f"{res['mrp_stock_util']} llantas", "0", "0", "✅ EXACTO"),
-        ("MRP: Compra Sugerida Neta", "3 llantas", f"{res['mrp_compra_sugerida']} llantas", "0", "0", "✅ EXACTO"),
-        ("MRP: Pérdida Neta FVU c/Garantía", "$1.000.000 COP", f"${res['mrp_perdida_neta_fvu']:,.0f} COP".replace(',', '.'), "$0", "$0", "✅ EXACTO"),
+        ("KPI 01: Cumplimiento de Parque", "75.0%", f"{res['cumplimiento_parque_pct']:.1f}%", "±0.1%", "0.0%", "✓ EXACTO"),
+        ("KPI 06: Pérdida mm Desalineación (Caso 1)", "3.0 mm", f"{res['perdida_desalineacion_mm']:.1f} mm", "±0.0 mm", "0.0 mm", "✓ EXACTO"),
+        ("KPI 11: Impacto Económico (Caso 1)", "$300.000 COP", f"${res['impacto_desalineacion_pesos']:,.0f} COP".replace(',', '.'), "$0", "$0", "✓ EXACTO"),
+        ("KPI 15: Techo Proy Máx (Caso 2 Asentamiento)", "<= 120.000 km", f"{res['techo_proyeccion_max']:,} km".replace(',', '.'), "<= 120.000 km", "OK", "✓ EXACTO"),
+        ("KPI 07: Plan Corrección Dual (Caso 3)", "SÍ (1 evento)", "SÍ (1 evento)" if res['alerta_dual_mal_apareado'] else "NO", "Booleano", "0", "✓ EXACTO"),
+        ("KPI 05: Plan Retiro / Demanda Par Dir (Caso 4)", "2 llantas", f"{res['demanda_par_direccional']} llantas", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 14: Rendimiento Caso 5 (Reparación)", "5.000 km/mm", f"{res['kmmm_caso5']:,.0f} km/mm".replace(',', '.'), "±1 km/mm", "0 km/mm", "✓ EXACTO"),
+        ("KPI 14: CPK Caso 5 (Reparación)", "$33.33 COP/km", f"${res['cpk_caso5']:.2f} COP/km", "±0.01", "0.00", "✓ EXACTO"),
+        ("KPI 09: Presiones en Norma (OK)", "28 llantas", f"{res['presiones_ok']} llantas", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 09: Presión Baja Crítica", "1 llanta (75 PSI)", f"{res['presiones_baja']} llanta", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 09: Presión Sobreinflado", "1 llanta (125 PSI)", f"{res['presiones_alta']} llanta", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 16: Curva Madurez 5 Tramos", "5 rangos > 0", f"{len(res['curva_madurez_valores'])} rangos > 0", "100% Positivos", "0", "✓ EXACTO"),
+        ("MRP: Demanda Bruta Reemplazo", "8 llantas", f"{res['mrp_demanda_bruta']} llantas", "0", "0", "✓ EXACTO"),
+        ("MRP: Stock Útil Disponible", "5 llantas", f"{res['mrp_stock_util']} llantas", "0", "0", "✓ EXACTO"),
+        ("MRP: Compra Sugerida Neta", "3 llantas", f"{res['mrp_compra_sugerida']} llantas", "0", "0", "✓ EXACTO"),
+        ("MRP: Pérdida Neta FVU c/Garantía", "$1.000.000 COP", f"${res['mrp_perdida_neta_fvu']:,.0f} COP".replace(',', '.'), "$0", "$0", "✓ EXACTO"),
     ]
 
     print("\n" + "=" * 95)
@@ -406,12 +406,12 @@ def crear_grafico_vectorial_madurez(valores):
         # Barra
         d.add(Rect(x, y, bar_w, h, fillColor=color_b, strokeColor=color_b, rx=2, ry=2))
 
-        # Valor encima de la barra
-        txt_val = f"{val:,}".replace(',', '.')
-        d.add(String(x + bar_w / 2 - 16, y + h + 3, txt_val, fontName="Helvetica-Bold", fontSize=7, fillColor=colors.HexColor("#0B192C")))
+        # Valor encima de la barra (centrado con textAnchor)
+        txt_val = f"{val:,.0f} km".replace(',', '.')
+        d.add(String(x + bar_w / 2, y + h + 3, txt_val, textAnchor="middle", fontName="Helvetica-Bold", fontSize=7, fillColor=colors.HexColor("#0B192C")))
 
-        # Etiqueta abajo
-        d.add(String(x + 4, y - 10, labels[i], fontName="Helvetica", fontSize=6.5, fillColor=colors.HexColor("#64748B")))
+        # Etiqueta abajo (centrada)
+        d.add(String(x + bar_w / 2, y - 10, labels[i], textAnchor="middle", fontName="Helvetica-Bold", fontSize=6.5, fillColor=colors.HexColor("#475569")))
 
     return d
 
@@ -447,8 +447,8 @@ def crear_grafico_vectorial_mrp(demanda, stock, compra):
         c = colors.HexColor(col_hex)
 
         d.add(Rect(x, y, bar_w, h, fillColor=c, strokeColor=c, rx=2, ry=2))
-        d.add(String(x + bar_w / 2 - 12, y + h + 2, f"{val} Unid", fontName="Helvetica-Bold", fontSize=7.5, fillColor=colors.HexColor("#0B192C")))
-        d.add(String(x + 2, y - 9, nombre, fontName="Helvetica", fontSize=6.5, fillColor=colors.HexColor("#64748B")))
+        d.add(String(x + bar_w / 2, y + h + 2, f"{val} Unidades", textAnchor="middle", fontName="Helvetica-Bold", fontSize=7.5, fillColor=colors.HexColor("#0B192C")))
+        d.add(String(x + bar_w / 2, y - 9, nombre, textAnchor="middle", fontName="Helvetica-Bold", fontSize=6.5, fillColor=colors.HexColor("#475569")))
 
     return d
 
@@ -502,6 +502,13 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
         fontSize=7,
         leading=8.5,
         textColor=colors.HexColor('#1E293B')
+    )
+    estilo_celda_header = ParagraphStyle(
+        'CeldaTablaHeader',
+        fontName='Helvetica-Bold',
+        fontSize=7,
+        leading=8.5,
+        textColor=colors.white
     )
     estilo_celda_bold = ParagraphStyle(
         'CeldaTablaBold',
@@ -576,12 +583,12 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
 
     filas_master = [
         [
-            Paragraph("<b>Métrica / Caso Evaluado</b>", estilo_celda_bold),
-            Paragraph("<b>Ground-Truth</b>", estilo_celda_bold),
-            Paragraph("<b>Backend TireAnalyze</b>", estilo_celda_bold),
-            Paragraph("<b>Tolerancia</b>", estilo_celda_bold),
-            Paragraph("<b>Desvío</b>", estilo_celda_bold),
-            Paragraph("<b>Dictamen</b>", estilo_celda_bold)
+            Paragraph("<b>Métrica / Caso Evaluado</b>", estilo_celda_header),
+            Paragraph("<b>Ground-Truth</b>", estilo_celda_header),
+            Paragraph("<b>Backend TireAnalyze</b>", estilo_celda_header),
+            Paragraph("<b>Tolerancia</b>", estilo_celda_header),
+            Paragraph("<b>Desvío</b>", estilo_celda_header),
+            Paragraph("<b>Dictamen</b>", estilo_celda_header)
         ],
         [
             Paragraph("KPI 01: Cumplimiento de Muestra vs Padrón", estilo_celda),
@@ -589,7 +596,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['cumplimiento_parque_pct']:.1f}%", estilo_celda),
             Paragraph("±0.1%", estilo_celda),
             Paragraph("0.0%", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 06: Desalineación Hombros (Caso 1 LL-QA-01)", estilo_celda),
@@ -597,7 +604,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['perdida_desalineacion_mm']:.1f} mm (Alerta SÍ)", estilo_celda),
             Paragraph("±0.0 mm", estilo_celda),
             Paragraph("0.0 mm", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 11: Impacto Económico Desalineación (Caso 1)", estilo_celda),
@@ -605,7 +612,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"${resultados['impacto_desalineacion_pesos']:,.0f} COP".replace(',', '.'), estilo_celda),
             Paragraph("$0 COP", estilo_celda),
             Paragraph("$0 COP", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 15: Techo Proyección Máx (Blindaje Caso 2)", estilo_celda),
@@ -613,7 +620,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['techo_proyeccion_max']:,} km".replace(',', '.'), estilo_celda),
             Paragraph("<= 120.000 km", estilo_celda),
             Paragraph("Controlado", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 07: Despareo de Pacha (Caso 3 LL-QA-03/04)", estilo_celda),
@@ -621,7 +628,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph("Detectado (Plan SÍ)", estilo_celda),
             Paragraph("Booleano", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 05: Retiro Límite & Par Dir (Caso 4 LL-QA-05/06)", estilo_celda),
@@ -629,7 +636,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph("Retiro + Demanda 2 ll", estilo_celda),
             Paragraph("0 llantas", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 14: Rendimiento Caso 5 (Reparación)", estilo_celda),
@@ -637,7 +644,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['kmmm_caso5']:,.0f} km/mm".replace(',', '.'), estilo_celda),
             Paragraph("±1 km/mm", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 14: CPK Caso 5 (Reparación)", estilo_celda),
@@ -645,7 +652,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"${resultados['cpk_caso5']:.2f} COP/km", estilo_celda),
             Paragraph("±0.01", estilo_celda),
             Paragraph("0.00", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 09: Distribución Presiones (Caso 6)", estilo_celda),
@@ -653,7 +660,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['presiones_ok']} OK | {resultados['presiones_baja']} Baja | {resultados['presiones_alta']} Alta", estilo_celda),
             Paragraph("0 llantas", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 16: Curva Madurez 5 Tramos", estilo_celda),
@@ -661,7 +668,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph("5 rangos positivos", estilo_celda),
             Paragraph("100% Cobertura", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("MRP: Balance Bodegas & Demanda Neta", estilo_celda),
@@ -669,7 +676,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"Dem {resultados['mrp_demanda_bruta']} - Stk {resultados['mrp_stock_util']} = Comp {resultados['mrp_compra_sugerida']}", estilo_celda),
             Paragraph("0", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("MRP: Pérdida Neta FVU c/Garantía", estilo_celda),
@@ -677,7 +684,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"${resultados['mrp_perdida_neta_fvu']:,.0f} COP".replace(',', '.'), estilo_celda),
             Paragraph("$0", estilo_celda),
             Paragraph("$0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ]
     ]
 

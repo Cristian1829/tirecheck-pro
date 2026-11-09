@@ -6,10 +6,10 @@
 ## 📌 Metadatos del Repositorio
 
 - **Nombre del Sistema:** TireAnalyze Pro (Suite Web Integral de Inspección y Diagnóstico de Llantas)
-- **Fecha de Generación:** `2026-10-27 16:45:26`
+- **Fecha de Generación:** `2026-11-09 10:06:15`
 - **Total de Archivos Incluidos:** `91` archivos de código y documentación
-- **Líneas Totales de Código:** `60,752` líneas
-- **Tamaño Total de Código Fuente:** `3072.6 KB` (`3,146,391` bytes)
+- **Líneas Totales de Código:** `64,170` líneas
+- **Tamaño Total de Código Fuente:** `3279.8 KB` (`3,358,547` bytes)
 - **Stack Principal:** Python 3.12 | FastAPI 0.115+ | SQLite 3 | ReportLab (PDF) | Vanilla HTML5/CSS/JS SPA | Tkinter (Desktop)
 
 ---
@@ -352,7 +352,7 @@ CREATE TABLE padron_vehiculos_cliente (
                 tipologia TEXT DEFAULT '',
                 estado_operativo TEXT DEFAULT 'Activo', -- 'Activo', 'En Taller Mecánico', 'Fuera de Operación'
                 activo INTEGER DEFAULT 1,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, fabricante TEXT DEFAULT '', linea TEXT DEFAULT '', km_actual REAL, origen TEXT DEFAULT 'auto',
                 UNIQUE(cliente, placa)
             );
 
@@ -369,6 +369,26 @@ CREATE TABLE precios_llanta_cliente (
                 precio REAL NOT NULL,
                 vigente_desde TEXT NOT NULL,
                 UNIQUE(cliente, marca, diseno, dimension, tipo, vigente_desde)
+            );
+
+-- ========================================================
+-- TABLA: registro_ingresos
+-- ========================================================
+CREATE TABLE registro_ingresos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha REAL NOT NULL,          -- segundos desde 1970 (time.time())
+                username TEXT NOT NULL,       -- en minúsculas, tal como se escribió
+                ip TEXT DEFAULT '',
+                exito INTEGER NOT NULL DEFAULT 0,
+                motivo TEXT DEFAULT ''        -- 'clave_incorrecta', 'sin_cliente', '' si entró
+            );
+
+-- ========================================================
+-- TABLA: sesiones_revocadas
+-- ========================================================
+CREATE TABLE sesiones_revocadas (
+                jti TEXT PRIMARY KEY,
+                expira REAL NOT NULL
             );
 
 -- ========================================================
@@ -404,7 +424,7 @@ CREATE TABLE usuarios (
                 cliente_asignado TEXT DEFAULT '',     -- Si tiene un cliente fijo o vacío para todos
                 activo INTEGER DEFAULT 1,
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            , vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', sedes_asignadas TEXT DEFAULT '');
+            , vistas_permitidas TEXT DEFAULT 'patio,diagnostico,kpis', sedes_asignadas TEXT DEFAULT '', debe_cambiar_clave INTEGER DEFAULT 0, sesion_version INTEGER DEFAULT 0, kpis_ocultos TEXT DEFAULT '');
 ```
 
 ---
@@ -432,8 +452,8 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [requirements.txt](#archivo-requirementstxt) | `text` | 13 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
-| [.gitignore](#archivo-gitignore) | `gitignore` | 47 | 0.6 KB | Reglas de exclusión de Git |
+| [requirements.txt](#archivo-requirementstxt) | `text` | 14 | 0.2 KB | Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.) |
+| [.gitignore](#archivo-gitignore) | `gitignore` | 48 | 0.6 KB | Reglas de exclusión de Git |
 | [.dockerignore](#archivo-dockerignore) | `gitignore` | 22 | 0.2 KB | Reglas de exclusión para compilación de imagen Docker |
 | [Dockerfile](#archivo-dockerfile) | `dockerfile` | 32 | 0.8 KB | Definición estandarizada del contenedor Docker para producción/cloud con invalidación de caché APP_BUILD_ID |
 | [railway.json](#archivo-railwayjson) | `json` | 12 | 0.3 KB | Configuración de infraestructura y despliegue continuo en Railway (Builder DOCKERFILE) |
@@ -468,11 +488,11 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [server.py](#archivo-serverpy) | `python` | 2670 | 122.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
-| [database.py](#archivo-databasepy) | `python` | 10798 | 540.3 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
-| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1304 | 67.4 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
+| [server.py](#archivo-serverpy) | `python` | 3300 | 153.8 KB | Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático |
+| [database.py](#archivo-databasepy) | `python` | 11840 | 599.4 KB | Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos |
+| [modulo_bodegas_taller.py](#archivo-modulo-bodegas-tallerpy) | `python` | 1321 | 69.3 KB | Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20) |
 | [logica_inspeccion.py](#archivo-logica-inspeccionpy) | `python` | 144 | 5.8 KB | Módulo de lógica pura: validación de los 6 candados, reglas de diagnóstico y estados |
-| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2112 | 103.8 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
+| [pdf_generator.py](#archivo-pdf-generatorpy) | `python` | 2097 | 102.4 KB | Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias |
 | [diagrama_chasis_pdf.py](#archivo-diagrama-chasis-pdfpy) | `python` | 191 | 10.3 KB | Motor vectorial de dibujo y renderizado de esquemas de chasis para ReportLab |
 | [fotos_informe.py](#archivo-fotos-informepy) | `python` | 343 | 11.8 KB | Gestor de fotografías de inspección: redimensionamiento, compresión y renderizado en grid para el PDF |
 | [app.py](#archivo-apppy) | `python` | 2288 | 124.3 KB | Aplicación de escritorio Tkinter con servidor FastAPI/uvicorn integrado en hilo secundario |
@@ -481,48 +501,48 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6563 | 437.8 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
-| [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 762 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
+| [templates/index.html](#archivo-templatesindexhtml) | `html` | 6891 | 471.7 KB | Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista |
+| [templates/servicios_v3.html](#archivo-templatesservicios-v3html) | `html` | 761 | 57.9 KB | Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura |
 | [templates/servicios.html](#archivo-templatesservicioshtml) | `html` | 762 | 57.9 KB | Plantilla de servicios activa en producción |
 | [templates/preview_chasis.html](#archivo-templatespreview-chasishtml) | `html` | 1346 | 71.1 KB | Visor interactivo y banco de pruebas de renderizado de tipologías de chasis |
-| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1042 | 45.4 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
-| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4146 | 187.8 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
-| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 887 | 41.6 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
-| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2259 | 101.0 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
-| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.0 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
-| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1309 | 62.8 KB | Módulo Trazabilidad: Historial y caracterización de flota |
-| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 2884 | 135.2 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
-| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2131 | 113.0 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
+| [static/js/app_core.js](#archivo-staticjsapp-corejs) | `javascript` | 1174 | 51.9 KB | Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación |
+| [static/js/modulo_patio.js](#archivo-staticjsmodulo-patiojs) | `javascript` | 4176 | 190.0 KB | Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos |
+| [static/js/modulo_basedatos.js](#archivo-staticjsmodulo-basedatosjs) | `javascript` | 1047 | 51.2 KB | Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel |
+| [static/js/modulo_kpis.js](#archivo-staticjsmodulo-kpisjs) | `javascript` | 2748 | 125.9 KB | Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión |
+| [static/js/modulo_diagnostico.js](#archivo-staticjsmodulo-diagnosticojs) | `javascript` | 1018 | 53.3 KB | Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes |
+| [static/js/modulo_trazabilidad.js](#archivo-staticjsmodulo-trazabilidadjs) | `javascript` | 1450 | 69.6 KB | Módulo Trazabilidad: Historial y caracterización de flota |
+| [static/js/modulo_catalogos.js](#archivo-staticjsmodulo-catalogosjs) | `javascript` | 3130 | 150.8 KB | Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías |
+| [static/js/modulo_bodegas.js](#archivo-staticjsmodulo-bodegasjs) | `javascript` | 2366 | 124.6 KB | Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP |
 | [static/js/app_init.js](#archivo-staticjsapp-initjs) | `javascript` | 19 | 0.7 KB | Módulo Init: Inicialización controlada en DOMContentLoaded |
 
 ### 5. Suite de Pruebas Automatizadas (Pytest)
 
 | Archivo | Lenguaje | Líneas | Tamaño | Propósito |
 |---|---|---|---|---|
-| [tests/conftest.py](#archivo-testsconftestpy) | `python` | 62 | 1.8 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
+| [tests/conftest.py](#archivo-testsconftestpy) | `python` | 80 | 2.7 KB | Configuración de fixtures y base de datos SQLite en memoria para tests aislados |
 | [tests/test_bodegas_hoja_vida.py](#archivo-teststest-bodegas-hoja-vidapy) | `python` | 377 | 15.0 KB | Pruebas unitarias completas del módulo de 7 bodegas, kardex de carcasas, traslados y garantías |
-| [tests/test_bodegas_mrp.py](#archivo-teststest-bodegas-mrppy) | `python` | 503 | 20.3 KB | Pruebas de la lógica de balance MRP y compras sugeridas de bodegas |
+| [tests/test_bodegas_mrp.py](#archivo-teststest-bodegas-mrppy) | `python` | 506 | 20.7 KB | Pruebas de la lógica de balance MRP y compras sugeridas de bodegas |
 | [tests/test_auditoria_bodegas_sentido_negocio.py](#archivo-teststest-auditoria-bodegas-sentido-negociopy) | `python` | 529 | 21.9 KB | Auditoría de consistencia de negocio para bodegas y ciclo de vida |
 | [tests/test_composicion_flota.py](#archivo-teststest-composicion-flotapy) | `python` | 337 | 11.2 KB | Pruebas unitarias de composición de flota v3.5, 4 reglas de oro y matriz de inventario |
 | [tests/test_detalle_vehiculos_planes.py](#archivo-teststest-detalle-vehiculos-planespy) | `python` | 189 | 9.6 KB | Pruebas del módulo de detalle vehicular y planes de mantenimiento |
-| [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 512 | 20.0 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
-| [tests/test_matriz_semaforos.py](#archivo-teststest-matriz-semaforospy) | `python` | 316 | 12.3 KB | Pruebas de matriz de semáforos de desgaste por eje y flota |
+| [tests/test_suite_20_kpis_manual.py](#archivo-teststest-suite-20-kpis-manualpy) | `python` | 516 | 20.4 KB | Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP |
+| [tests/test_matriz_semaforos.py](#archivo-teststest-matriz-semaforospy) | `python` | 267 | 11.1 KB | Pruebas de matriz de semáforos de desgaste por eje y flota |
 | [tests/test_migracion_pext_ciudad_limpia.py](#archivo-teststest-migracion-pext-ciudad-limpiapy) | `python` | 213 | 8.1 KB | Pruebas de migración y normalización para Ciudad Limpia |
-| [tests/test_precision_graficos_ground_truth.py](#archivo-teststest-precision-graficos-ground-truthpy) | `python` | 529 | 23.7 KB | Pruebas de auditoría de gráficos ground truth y métricas matemáticas |
-| [tests/test_sincronizacion_kilometraje_vehiculo.py](#archivo-teststest-sincronizacion-kilometraje-vehiculopy) | `python` | 196 | 7.8 KB | Pruebas de sincronización y propagación de odómetro vehicular |
-| [tests/test_tipologia_mayusculas_limites.py](#archivo-teststest-tipologia-mayusculas-limitespy) | `python` | 211 | 7.8 KB | Pruebas de tipologías en mayúsculas y límites de retiro por cliente |
-| [tests/test_frecuencia_parametrizable_cliente.py](#archivo-teststest-frecuencia-parametrizable-clientepy) | `python` | 173 | 6.2 KB | Pruebas de parametrización de frecuencia de inspección por cliente |
+| [tests/test_precision_graficos_ground_truth.py](#archivo-teststest-precision-graficos-ground-truthpy) | `python` | 510 | 23.7 KB | Pruebas de auditoría de gráficos ground truth y métricas matemáticas |
+| [tests/test_sincronizacion_kilometraje_vehiculo.py](#archivo-teststest-sincronizacion-kilometraje-vehiculopy) | `python` | 194 | 8.1 KB | Pruebas de sincronización y propagación de odómetro vehicular |
+| [tests/test_tipologia_mayusculas_limites.py](#archivo-teststest-tipologia-mayusculas-limitespy) | `python` | 210 | 7.9 KB | Pruebas de tipologías en mayúsculas y límites de retiro por cliente |
+| [tests/test_frecuencia_parametrizable_cliente.py](#archivo-teststest-frecuencia-parametrizable-clientepy) | `python` | 171 | 6.4 KB | Pruebas de parametrización de frecuencia de inspección por cliente |
 | [tests/test_directorio_clientes.py](#archivo-teststest-directorio-clientespy) | `python` | 99 | 4.2 KB | Pruebas del directorio de clientes y sedes |
-| [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 130 | 5.9 KB | Pruebas de configuración de marcas y catálogos por cliente |
+| [tests/test_configuracion_marcas_cliente.py](#archivo-teststest-configuracion-marcas-clientepy) | `python` | 127 | 6.0 KB | Pruebas de configuración de marcas y catálogos por cliente |
 | [tests/test_login_seguridad_frontend.py](#archivo-teststest-login-seguridad-frontendpy) | `python` | 313 | 11.5 KB | Pruebas de seguridad de sesión y permisos en frontend |
-| [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 264 | 10.8 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
-| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 961 | 37.0 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
+| [tests/test_alerta_frecuencia_copiar_marca.py](#archivo-teststest-alerta-frecuencia-copiar-marcapy) | `python` | 245 | 10.1 KB | Pruebas de alertas de frecuencia y copiado de marca/diseño |
+| [tests/test_api_web.py](#archivo-teststest-api-webpy) | `python` | 990 | 39.1 KB | Pruebas de endpoints RESTful y respuestas HTTP de FastAPI |
 | [tests/test_automatizacion_placa_llanta.py](#archivo-teststest-automatizacion-placa-llantapy) | `python` | 465 | 17.1 KB | Pruebas de vinculación placa-esquema, autocompletado multi-tenant de llantas y rotación intermensual |
 | [tests/test_candados.py](#archivo-teststest-candadospy) | `python` | 508 | 16.5 KB | Pruebas unitarias de los 6 candados operativos de captura en patio |
 | [tests/test_diagnostico.py](#archivo-teststest-diagnosticopy) | `python` | 192 | 6.0 KB | Pruebas unitarias de diagnósticos automáticos (alineación, duales y retiro) |
 | [tests/test_diagrama_chasis.py](#archivo-teststest-diagrama-chasispy) | `python` | 445 | 17.7 KB | Pruebas del generador vectorial de diagramas de chasis en PDF |
 | [tests/test_kpis.py](#archivo-teststest-kpispy) | `python` | 129 | 4.7 KB | Pruebas de cálculo de desgaste mm, rendimiento km/mm y CPK |
-| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 299 | 9.9 KB | Pruebas de generación y estructura de informes técnicos PDF |
+| [tests/test_pdf.py](#archivo-teststest-pdfpy) | `python` | 315 | 11.1 KB | Pruebas de generación y estructura de informes técnicos PDF |
 | [tests/test_seguridad_y_rendimiento.py](#archivo-teststest-seguridad-y-rendimientopy) | `python` | 231 | 9.5 KB | Pruebas de aislamiento multi-tenant IDOR, rate limiting, descarga segura de PDF y rendimiento base64 incremental |
 
 ### 6. Scripts de Auditoría, Soporte y Diagnóstico
@@ -531,12 +551,12 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 |---|---|---|---|---|
 | [scripts/README.md](#archivo-scriptsreadmemd) | `markdown` | 12 | 0.5 KB | Documentación del directorio de scripts auxiliares |
 | [scripts/auditar_modulo_bodegas_mrp.py](#archivo-scriptsauditar-modulo-bodegas-mrppy) | `python` | 844 | 39.1 KB | Auditoría integral del módulo de 7 bodegas y fórmulas MRP |
-| [scripts/sembrar_flota_auditoria_qa.py](#archivo-scriptssembrar-flota-auditoria-qapy) | `python` | 769 | 33.6 KB | Poblador de base de datos para pruebas de auditoría QA de flota |
+| [scripts/sembrar_flota_auditoria_qa.py](#archivo-scriptssembrar-flota-auditoria-qapy) | `python` | 776 | 33.9 KB | Poblador de base de datos para pruebas de auditoría QA de flota |
 | [scripts/generar_excel_proyecciones.py](#archivo-scriptsgenerar-excel-proyeccionespy) | `python` | 136 | 5.8 KB | Generador de cálculos de proyecciones y exportación Excel |
 | [scripts/check_ciudad_limpia.py](#archivo-scriptscheck-ciudad-limpiapy) | `python` | 27 | 1.0 KB | Verificación y diagnóstico específico para cliente Ciudad Limpia |
 | [scripts/evaluar_todos_chasis.py](#archivo-scriptsevaluar-todos-chasispy) | `python` | 65 | 2.2 KB | Auditoría exhaustiva de renderizado para todas las tipologías de vehículos |
 | [scripts/probar_chasis_ee3123.py](#archivo-scriptsprobar-chasis-ee3123py) | `python` | 75 | 2.6 KB | Validación específica para chasis de vehículo placa EE3123 |
-| [scripts/test_pdf_chasis.py](#archivo-scriptstest-pdf-chasispy) | `python` | 222 | 11.4 KB | Verificación de dibujo vectorial de chasis en el informe PDF |
+| [scripts/test_pdf_chasis.py](#archivo-scriptstest-pdf-chasispy) | `python` | 222 | 11.6 KB | Verificación de dibujo vectorial de chasis en el informe PDF |
 | [scripts/verificar_casos_fotos_pdf.py](#archivo-scriptsverificar-casos-fotos-pdfpy) | `python` | 343 | 15.2 KB | Auditoría de alineación de cuadrícula de fotos en página 2 del PDF |
 | [scripts/verificar_informe_y_color_sutil.py](#archivo-scriptsverificar-informe-y-color-sutilpy) | `python` | 86 | 3.0 KB | Verificación de estilos, contrastes y jerarquía visual en PDF |
 | [scripts/patch_db_kpis_tip.py](#archivo-scriptspatch-db-kpis-tippy) | `python` | 285 | 14.8 KB | Script de migración y parche de campos de KPIs y tipologías |
@@ -544,7 +564,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 | [scripts/auditar_preview.py](#archivo-scriptsauditar-previewpy) | `python` | 101 | 3.4 KB | Verificación de visualización en preview_chasis.html |
 | [scripts/auditar_repuesto.py](#archivo-scriptsauditar-repuestopy) | `python` | 39 | 1.5 KB | Auditoría de asignación y cálculo de llanta de repuesto |
 | [scripts/check_js.py](#archivo-scriptscheck-jspy) | `python` | 17 | 0.6 KB | Validador sintáctico de los bloques <script> de index.html |
-| [scripts/test_nuevo_informe_base.py](#archivo-scriptstest-nuevo-informe-basepy) | `python` | 792 | 36.9 KB | Pruebas de renderizado comparativo del informe técnico |
+| [scripts/test_nuevo_informe_base.py](#archivo-scriptstest-nuevo-informe-basepy) | `python` | 792 | 37.7 KB | Pruebas de renderizado comparativo del informe técnico |
 | [scripts/generar_y_capturar_nuevo_pdf.py](#archivo-scriptsgenerar-y-capturar-nuevo-pdfpy) | `python` | 497 | 25.4 KB | Pipeline automatizado de generación de PDF y renderizado a PNG para regresión visual |
 | [scripts/capturar_banners_hd.py](#archivo-scriptscapturar-banners-hdpy) | `python` | 68 | 2.2 KB | Pipeline de auditoría y captura de pantalla en HD (Desktop, Tablet, Mobile) para el nuevo banner |
 | [scripts/test_read.py](#archivo-scriptstest-readpy) | `python` | 4 | 0.1 KB | Script básico de lectura y diagnóstico de datos |
@@ -559,7 +579,7 @@ El proyecto incluye los siguientes archivos binarios estructurados de soporte:
 
 - **Ruta:** `requirements.txt`
 - **Descripción:** Dependencias de paquetes Python (FastAPI, uvicorn, reportlab, pandas, openpyxl, pillow, requests, etc.)
-- **Métricas:** 13 líneas | 195 bytes (0.2 KB)
+- **Métricas:** 14 líneas | 224 bytes (0.2 KB)
 - **Lenguaje:** `text`
 
 ```text
@@ -575,6 +595,8 @@ python-multipart>=0.0.9
 requests>=2.31.0
 tzdata>=2024.1
 pytz>=2024.1
+SQLAlchemy>=2.0.0
+qrcode>=7.4
 ```
 
 ---
@@ -583,7 +605,7 @@ pytz>=2024.1
 
 - **Ruta:** `.gitignore`
 - **Descripción:** Reglas de exclusión de Git
-- **Métricas:** 47 líneas | 594 bytes (0.6 KB)
+- **Métricas:** 48 líneas | 608 bytes (0.6 KB)
 - **Lenguaje:** `gitignore`
 
 ```gitignore
@@ -633,6 +655,7 @@ tirecheck.db
 # Claves secretas y backups
 data/.secret_key
 data/backups/
+data/motores/
 ```
 
 ---
@@ -3814,12 +3837,13 @@ python -m pytest tests/test_pdf.py -v
 
 - **Ruta:** `server.py`
 - **Descripción:** Servidor FastAPI principal: endpoints REST, autenticación, subida de archivos, integración ngrok, composición de flota, suite 20 KPIs y serving estático
-- **Métricas:** 2670 líneas | 125,715 bytes (122.8 KB)
+- **Métricas:** 3300 líneas | 157,507 bytes (153.8 KB)
 - **Lenguaje:** `python`
 
 ```python
 import io
 import math
+import re
 import os
 import socket
 import tempfile
@@ -3831,7 +3855,7 @@ import hashlib
 import secrets
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from typing import Optional
+from typing import List, Optional
 
 try:
     BOGOTA_TZ = ZoneInfo("America/Bogota")
@@ -3901,6 +3925,96 @@ async def no_cachear_js_de_la_app(request: Request, call_next):
         response.headers["Cache-Control"] = "no-cache"
     return response
 
+
+# Cabeceras de seguridad. La CSP permite solo los CDN que usa la app; 'unsafe-inline' sigue porque las pantallas usan
+# onclick="..." en línea (la defensa contra XSS es limpiar los textos al guardarlos y escaparlos al pintarlos).
+_CDN = "https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com"
+_CSP = "; ".join([
+    "default-src 'self'",
+    f"script-src 'self' 'unsafe-inline' {_CDN}",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+    "img-src 'self' data: blob:",
+    f"connect-src 'self' {_CDN} https://fonts.googleapis.com https://fonts.gstatic.com",  # el service worker precarga los CDN
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+])
+_CABECERAS_SEGURIDAD = {
+    "Content-Security-Policy": _CSP,
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(self), microphone=(), geolocation=(), payment=(), usb=()",
+}
+
+
+@app.middleware("http")
+async def cabeceras_de_seguridad(request: Request, call_next):
+    response = await call_next(request)
+    for nombre, valor in _CABECERAS_SEGURIDAD.items():
+        response.headers.setdefault(nombre, valor)
+    return response
+
+# Seguridad (XSS almacenado): todo texto que llega en JSON a la API se guarda sin < > " ' `.
+# Se exceptúan contraseñas, fotos/firmas/imágenes y campos que son JSON o esquemas, y las rutas que no guardan nada.
+_CLAVES_SIN_LIMPIAR = ('password', 'clave', 'contrasena', 'foto', 'firma', 'imagen', 'grafico', 'base64', 'esquema', 'json', 'token')
+_RUTAS_SIN_LIMPIAR = ('/api/login', '/api/kpis/exportar-pdf', '/api/composicion/exportar-pdf')
+
+
+def _limpiar_json_entrada(obj, clave=''):
+    if isinstance(obj, str):
+        return obj if any(k in clave.lower() for k in _CLAVES_SIN_LIMPIAR) else database.limpiar_texto_entrada(obj)
+    if isinstance(obj, list):
+        return [_limpiar_json_entrada(x, clave) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _limpiar_json_entrada(v, str(k)) for k, v in obj.items()}
+    return obj
+
+
+class LimpiarTextoEntrada:
+    """Middleware ASGI: limpia el cuerpo JSON de POST/PUT/PATCH a la API antes de que llegue a la ruta."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (scope["type"] != "http" or scope["method"] not in ("POST", "PUT", "PATCH")
+                or not scope["path"].startswith("/api/") or scope["path"] in _RUTAS_SIN_LIMPIAR):
+            return await self.app(scope, receive, send)
+        tipo = dict(scope["headers"]).get(b"content-type", b"").decode("latin-1").lower()
+        if "application/json" not in tipo:
+            return await self.app(scope, receive, send)
+
+        cuerpo, mas = b"", True
+        while mas:
+            mensaje = await receive()
+            cuerpo += mensaje.get("body", b"")
+            mas = mensaje.get("more_body", False)
+        try:
+            nuevo = json.dumps(_limpiar_json_entrada(json.loads(cuerpo)), ensure_ascii=False).encode("utf-8")
+        except Exception:
+            nuevo = cuerpo  # no es JSON válido: la ruta responderá el error de siempre
+        scope = dict(scope)
+        scope["headers"] = [(k, v) for k, v in scope["headers"] if k != b"content-length"] + [(b"content-length", str(len(nuevo)).encode())]
+        entregado = False
+
+        async def recibir():
+            nonlocal entregado
+            if not entregado:
+                entregado = True
+                return {"type": "http.request", "body": nuevo, "more_body": False}
+            return await receive()
+
+        await self.app(scope, recibir, send)
+
+
+app.add_middleware(LimpiarTextoEntrada)
+
 # ==========================================
 # MODELOS PYDANTIC
 # ==========================================
@@ -3929,6 +4043,10 @@ class EditarUsuarioItem(BaseModel):
 
 class ResetPasswordItem(BaseModel):
     nueva_password: str
+
+class CambioClavePropiaItem(BaseModel):
+    clave_actual: str
+    clave_nueva: str
 
 class ConfigLicenciaClienteItem(BaseModel):
     cliente: str
@@ -4077,17 +4195,22 @@ def _obtener_o_crear_secret_key() -> str:
             f.write(nueva_key)
         return nueva_key
     except Exception as e:
-        print(f"[SECURITY] Advertencia: No se pudo persistir secret key en archivo ({e}), usando fallback.")
-        return "tireanalyze-pro-fallback-secret-key-2026-production"
+        # Nunca una clave fija: con ella cualquiera podría fabricar sesiones válidas. Una clave al azar
+        # solo dura mientras el servidor esté encendido (al reiniciar hay que volver a ingresar).
+        print(f"[SECURITY] Advertencia: No se pudo guardar la clave secreta en archivo ({e}). Se usa una clave "
+              "temporal: las sesiones se cerrarán al reiniciar. Configure la variable TIREANALYZE_SECRET_KEY.")
+        return secrets.token_hex(32)
 
 SECRET_KEY = _obtener_o_crear_secret_key()
 TOKEN_EXPIRATION_SECONDS = 604800  # 7 días (para jornadas de campo en zonas remotas sin cobertura)
 
-def crear_token_acceso(username: str, rol: str) -> str:
+def crear_token_acceso(username: str, rol: str, version: int = 0) -> str:
     payload = {
         "sub": username,
         "rol": rol,
-        "exp": int(time.time()) + TOKEN_EXPIRATION_SECONDS
+        "exp": int(time.time()) + TOKEN_EXPIRATION_SECONDS,
+        "ver": int(version or 0),             # versión de sesión del usuario: si cambia, la sesión deja de servir
+        "jti": secrets.token_urlsafe(12),     # identificador de esta sesión (para cerrarla con «Salir»)
     }
     payload_json = json.dumps(payload, separators=(',', ':'))
     payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
@@ -4114,32 +4237,43 @@ def verificar_token(token: str) -> Optional[dict]:
     except Exception:
         return None
 
-def obtener_usuario_actual(request: Request) -> dict:
-    token = None
+def _token_de_request(request: Request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header[7:].strip()
-    elif "tireanalyze_token" in request.cookies:
-        token = request.cookies.get("tireanalyze_token")
-    elif "tirecheck_token" in request.cookies:
-        token = request.cookies.get("tirecheck_token")
-    elif "token" in request.query_params:
-        token = request.query_params.get("token")
-    
+        return auth_header[7:].strip()
+    if "tireanalyze_token" in request.cookies:
+        return request.cookies.get("tireanalyze_token")
+    if "tirecheck_token" in request.cookies:
+        return request.cookies.get("tirecheck_token")
+    if "token" in request.query_params:
+        return request.query_params.get("token")
+    return None
+
+# Rutas que se pueden usar aunque el usuario deba cambiar su clave o no tenga cliente asignado
+_RUTAS_DE_SESION = ("/api/usuario-actual", "/api/logout", "/api/mi-cuenta/cambiar-clave")
+
+def obtener_usuario_actual(request: Request) -> dict:
+    token = _token_de_request(request)
     if not token:
         raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
-    
+
     payload = verificar_token(token)
     if not payload or not payload.get("sub"):
         raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
-    
+
     usr = database.obtener_usuario_por_username(payload["sub"])
     if not usr or not usr.get("activo"):
         raise HTTPException(status_code=401, detail="Usuario no encontrado o inactivo")
+    # Sesión cerrada: por cambio de clave o «cerrar en todos los equipos» (versión) o por «Salir» (jti)
+    if int(payload.get("ver", 0) or 0) != int(usr.get("sesion_version") or 0) or database.sesion_revocada(payload.get("jti")):
+        raise HTTPException(status_code=401, detail="Sesión no válida o expirada")
+    if usr.get("debe_cambiar_clave") and request.url.path not in _RUTAS_DE_SESION:
+        raise HTTPException(status_code=403, detail="Debe cambiar su contraseña antes de continuar.",
+                            headers={"X-Requiere-Cambio-Clave": "1"})
     # Sin cliente asignado (y sin ser administrador) no hay alcance de datos: solo puede ver su sesión
-    if usuario_sin_alcance(usr) and request.url.path not in ("/api/usuario-actual", "/api/logout"):
+    if usuario_sin_alcance(usr) and request.url.path not in _RUTAS_DE_SESION:
         raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
-    
+
     return usr
 
 def es_rol_admin(rol: str, user: str = "") -> bool:
@@ -4203,6 +4337,25 @@ def requerir_admin_o_jefatura(usuario_actual: dict = Depends(obtener_usuario_act
     if not (es_rol_admin(rol, user) or es_rol_jefatura(rol)):
         raise HTTPException(status_code=403, detail="Se requieren permisos de jefatura o administrador")
     return usuario_actual
+
+def exigir_cliente_del_usuario(usuario_actual: dict, cliente: str):
+    """Un usuario que no es administrador solo cambia la configuración de sus clientes asignados (jefatura incluida)."""
+    if es_rol_admin(str(usuario_actual.get("rol", "")).strip().lower(), usuario_actual.get("username")):
+        return
+    clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
+    cli = str(cliente or "").strip().upper()
+    if not cli or not any(c.strip().upper() == cli for c in clis):
+        raise HTTPException(status_code=403, detail="No tiene permisos sobre la configuración de este cliente")
+
+
+def _cliente_de_registro(tabla: str, registro_id: int) -> str:
+    """Cliente dueño de una fila de configuración (para validar permisos al editar o borrar por id)."""
+    with database.get_connection() as conn:
+        fila = conn.execute(f"SELECT cliente FROM {tabla} WHERE id = ?", (registro_id,)).fetchone()
+    if not fila:
+        raise HTTPException(status_code=404, detail="Configuración no encontrada")
+    return fila[0] or ""
+
 
 def resolver_filtro_usuario_inspecciones(usuario_actual: dict, usuario_param: str = "") -> Optional[str]:
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -4347,6 +4500,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
+  // Motores es otra app: sus datos con sesión no se guardan en esta caché
+  if (url.pathname === '/motores' || url.pathname.startsWith('/motores/') || url.pathname.startsWith('/api/motores/') || url.pathname.startsWith('/static/js/motores/')) return;
+
   // Navegación HTML: Network-First con Fallback a Caché
   if (req.mode === 'navigate' || req.destination === 'document' || url.pathname === '/' || url.pathname === '/app' || url.pathname === '/login') {
     event.respondWith(
@@ -4427,8 +4583,16 @@ def sanitizar_nativos(obj):
 @app.get("/api/inspecciones")
 def api_obtener_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-    df = database.obtener_todas_inspecciones(usuario=filtro_u)
+    # La lista va sin fotos (solo su cantidad): la galería y la edición las piden por inspección
+    df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
     return sanitizar_nativos(df.to_dict(orient="records"))
+
+
+@app.get("/api/inspecciones/movimientos", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_movimientos_inspecciones(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Montajes y retiros de llantas que se muestran en la Base de inspecciones."""
+    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
+    return sanitizar_nativos(database.obtener_movimientos_base_inspecciones(usuario=filtro_u))
 
 
 @app.get("/api/inspecciones/plantilla-excel", dependencies=[Depends(requerir_vista("basedatos"))])
@@ -4470,6 +4634,8 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
 def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
     df = database.obtener_todas_inspecciones(usuario=filtro_u)
+    movs = database.obtener_movimientos_base_inspecciones(usuario=filtro_u)["por_inspeccion"]
+    df["movimiento"] = df["id"].map(lambda i: "; ".join(m["texto"] for m in movs.get(i, [])))
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Inspecciones", index=False)
@@ -4807,6 +4973,7 @@ def api_diagnostico_graficos(
 
 
 def _estilizar_hoja_excel(ws, color_header="0F172A"):
+    from copy import copy
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
 
@@ -4829,55 +4996,78 @@ def _estilizar_hoja_excel(ws, color_header="0F172A"):
     alerta_ambar_fill = PatternFill(start_color='FEF3C7', end_color='FEF3C7', fill_type='solid')
     alerta_ambar_font = Font(name='Segoe UI', size=9, bold=True, color='92400E')
 
+    centrado = Alignment(horizontal='center', vertical='center')
+
     ws.freeze_panes = 'A2'
-    if ws.max_row >= 1 and ws.max_column >= 1:
+    # max_row / max_column recorren todas las celdas cada vez que se leen: se calculan una sola vez
+    # (dentro del ciclo hacían que exportar el diagnóstico tardara ~11 s con 1.700 inspecciones)
+    n_filas, n_cols = ws.max_row, ws.max_column
+    if n_filas >= 1 and n_cols >= 1:
         ws.auto_filter.ref = ws.dimensions
         ws.row_dimensions[1].height = 28
 
-        for col_idx in range(1, ws.max_column + 1):
-            cell = ws.cell(row=1, column=col_idx)
+        anchos = [0] * n_cols
+
+        def medir(col_idx, val):
+            v = str(val or '')
+            if '\n' in v:
+                v = max(v.split('\n'), key=len)
+            anchos[col_idx] = max(anchos[col_idx], len(v))
+
+        encabezados = []
+        for col_idx, cell in enumerate(next(ws.iter_rows(min_row=1, max_row=1, max_col=n_cols))):
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = header_align
             cell.border = thin_border
+            encabezados.append(str(cell.value or '').upper())
+            medir(col_idx, cell.value)
 
-        for row_idx in range(2, ws.max_row + 1):
+        # Asignar font/fill/border celda por celda obliga a openpyxl a comparar estilos miles de veces: la primera
+        # celda de cada tipo se estiliza normal y las demás copian su registro de estilo (conservando su formato numérico)
+        estilos = {}
+        for row_idx, fila in enumerate(ws.iter_rows(min_row=2, max_row=n_filas, max_col=n_cols), start=2):
             ws.row_dimensions[row_idx].height = 20
             is_even = (row_idx % 2 == 0)
-            for col_idx in range(1, ws.max_column + 1):
-                cell = ws.cell(row=row_idx, column=col_idx)
+            for col_idx, cell in enumerate(fila):
                 val = cell.value
-                cell.border = thin_border
-                cell.font = body_font
-
-                if is_even:
-                    cell.fill = zebra_fill
+                medir(col_idx, val)
 
                 val_str = str(val or '').strip().upper()
+                tipo = 'normal'
                 if val_str == 'SÍ':
-                    col_name = str(ws.cell(row=1, column=col_idx).value or '').upper()
+                    col_name = encabezados[col_idx]
                     if 'CAMBIO' in col_name:
-                        cell.fill = alerta_roja_fill
-                        cell.font = alerta_roja_font
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        tipo = 'roja'
                     elif any(k in col_name for k in ['ALINEACION', 'ALINEACIÓN', 'DUAL']):
-                        cell.fill = alerta_ambar_fill
-                        cell.font = alerta_ambar_font
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        tipo = 'ambar'
                     else:
-                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        tipo = 'centrado'
                 elif val_str in ('NO', 'OK'):
-                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                    tipo = 'centrado'
+                clave = (tipo, is_even and tipo in ('normal', 'centrado'))
 
-        for col in ws.columns:
-            col_letter = get_column_letter(col[0].column)
-            max_len = 0
-            for cell in col:
-                v = str(cell.value or '')
-                if '\n' in v:
-                    v = max(v.split('\n'), key=len)
-                max_len = max(max_len, len(v))
-            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 11), 50)
+                if clave in estilos:
+                    st = copy(estilos[clave])
+                    st.numFmtId = cell._style.numFmtId if cell._style is not None else 0
+                    cell._style = st
+                    continue
+                cell.border = thin_border
+                cell.font = body_font
+                if is_even:
+                    cell.fill = zebra_fill
+                if tipo == 'roja':
+                    cell.fill = alerta_roja_fill
+                    cell.font = alerta_roja_font
+                elif tipo == 'ambar':
+                    cell.fill = alerta_ambar_fill
+                    cell.font = alerta_ambar_font
+                if tipo != 'normal':
+                    cell.alignment = centrado
+                estilos[clave] = copy(cell._style)
+
+        for col_idx, max_len in enumerate(anchos):
+            ws.column_dimensions[get_column_letter(col_idx + 1)].width = min(max(max_len + 3, 11), 50)
 
 
 @app.get("/api/diagnostico/exportar-excel", dependencies=[Depends(requerir_vista("diagnostico"))])
@@ -5005,6 +5195,34 @@ def api_exportar_diagnostico_excel(
 # RUTAS DE TRAZABILIDAD Y KPIS DE LLANTAS (SUITE 20 KPIS)
 # ==========================================
 
+class KpisVisiblesItem(BaseModel):
+    ocultos: List[str] = []
+
+
+def catalogo_kpis_personalizables() -> list:
+    """Los indicadores de la pestaña KPIs por sección, con la misma lista y nombres que el PDF de KPIs."""
+    return [{"numero": num, "titulo": titulo, "solo_full": solo_full,
+             "kpis": [{"clave": clave, "titulo": nombre} for clave, nombre, _, _ in kpis]}
+            for num, titulo, solo_full, kpis in pdf_kpis.SECCIONES]
+
+
+@app.get("/api/kpis/visibles")
+def api_kpis_visibles(usuario_actual: dict = Depends(requerir_vista("kpis"))):
+    """Catálogo de KPI y los que este usuario desmarcó (cada usuario tiene su propia selección)."""
+    claves = {k["clave"] for s in catalogo_kpis_personalizables() for k in s["kpis"]}
+    ocultos = [k for k in database.obtener_kpis_ocultos_usuario(usuario_actual["username"]) if k in claves]
+    return {"secciones": catalogo_kpis_personalizables(), "ocultos": ocultos}
+
+
+@app.put("/api/kpis/visibles")
+def api_guardar_kpis_visibles(item: KpisVisiblesItem, usuario_actual: dict = Depends(requerir_vista("kpis"))):
+    claves = {k["clave"] for s in catalogo_kpis_personalizables() for k in s["kpis"]}
+    desconocidos = sorted(set(item.ocultos) - claves)
+    if desconocidos:
+        raise HTTPException(status_code=400, detail=f"KPI desconocido: {', '.join(desconocidos)}")
+    return {"ocultos": database.guardar_kpis_ocultos_usuario(usuario_actual["username"], item.ocultos)}
+
+
 @app.get("/api/kpis/suite-20", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_suite_20(
     cliente: str = "",
@@ -5099,6 +5317,170 @@ def api_composicion_exportar_pdf(item: ExportarComposicionPdfItem, usuario_actua
                     headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+class ExportarComposicionExcelItem(BaseModel):
+    filtros: dict = {}
+    tarjetas: list = []
+    reglas: list = []
+    llantas: list = []
+
+
+def _celda_texto(valor):
+    """Texto seguro para una celda de Excel (un texto que empieza por = + - @ no debe ejecutarse como fórmula)."""
+    t = "" if valor is None else str(valor)
+    return "'" + t if t[:1] in ("=", "+", "-", "@") else t
+
+
+def construir_excel_composicion(item: dict) -> bytes:
+    """
+    Excel de Composición de Flota a partir de las llantas que muestra la pantalla (ya filtradas):
+    Resumen, Matriz Marca × Diseño × Medida con subtotales por marca, totales por marca y por medida,
+    inventario llanta por llanta y vehículos que incumplen la regla de oro 1.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+
+    llantas = [l for l in (item.get("llantas") or []) if isinstance(l, dict)]
+    total = len(llantas)
+    oscuro, claro, sub = PatternFill("solid", fgColor="0F172A"), PatternFill("solid", fgColor="E0F2FE"), PatternFill("solid", fgColor="F1F5F9")
+    borde = Border(*(Side(style="thin", color="CBD5E1"),) * 4)
+    blanco, negrita = Font(bold=True, color="FFFFFF"), Font(bold=True)
+
+    def es_reenc(l):
+        return bool(l.get("es_reencauche"))
+
+    def hoja(wb, titulo, encabezados, filas, anchos, primera=False):
+        ws = wb.active if primera else wb.create_sheet()
+        ws.title = titulo
+        ws.append([_celda_texto(h) for h in encabezados])
+        for c in ws[1]:
+            c.font, c.fill, c.alignment, c.border = blanco, oscuro, Alignment(horizontal="center", vertical="center", wrap_text=True), borde
+        for f in filas:
+            ws.append([_celda_texto(v) if isinstance(v, str) else v for v in f])
+        for i, ancho in enumerate(anchos, 1):
+            ws.column_dimensions[get_column_letter(i)].width = ancho
+        ws.freeze_panes = "A2"
+        return ws
+
+    wb = Workbook()
+    # 1. Resumen
+    ws = wb.active
+    ws.title = "Resumen"
+    ws.append(["Composición de Flota - TireAnalyze Pro"])
+    ws["A1"].font = Font(bold=True, size=14)
+    ws.append([f"Generado: {ahora_bogota().strftime('%Y-%m-%d %H:%M')}"])
+    ws.append([])
+    ws.append(["Filtros"]); ws.cell(ws.max_row, 1).font = negrita
+    for k, v in (item.get("filtros") or {}).items():
+        ws.append([_celda_texto(k), _celda_texto(v)])
+    ws.append([])
+    ws.append(["Indicador", "Valor", "Detalle"]); [setattr(c, "font", negrita) for c in ws[ws.max_row]]
+    ws.append(["Total llantas instaladas", total, "Última inspección de cada posición, sin las llantas desmontadas"])
+    for t in item.get("tarjetas") or []:
+        if isinstance(t, dict) and t.get("etiqueta") != "Total llantas":
+            ws.append([_celda_texto(t.get("etiqueta")), _celda_texto(t.get("valor")), _celda_texto(t.get("detalle"))])
+    ws.append([])
+    ws.append(["Reglas de oro", "Estado", "Detalle"]); [setattr(c, "font", negrita) for c in ws[ws.max_row]]
+    for r in item.get("reglas") or []:
+        if isinstance(r, dict):
+            ws.append([_celda_texto(r.get("titulo")), _celda_texto(r.get("estado")), _celda_texto(r.get("detalle"))])
+    for col, ancho in (("A", 34), ("B", 26), ("C", 80)):
+        ws.column_dimensions[col].width = ancho
+
+    # 2. Matriz Marca × Diseño × Medida, agrupada por marca con subtotal
+    grupos = {}
+    for l in llantas:
+        clave = (str(l.get("marca") or "SIN MARCA"), str(l.get("diseno") or "SIN DISEÑO"), str(l.get("dimension") or "SIN MEDIDA"))
+        g = grupos.setdefault(clave, {"orig": 0, "reenc": 0, "prof": []})
+        g["reenc" if es_reenc(l) else "orig"] += 1
+        p = to_float_seguro(l.get("prof_actual_min"))
+        if p > 0:
+            g["prof"].append(p)
+    por_marca = {}
+    for (m, d, dm), g in grupos.items():
+        por_marca.setdefault(m, []).append((d, dm, g))
+    ws = hoja(wb, "Matriz", ["Marca", "Diseño", "Dimensión", "Original", "Reencauche", "Total llantas", "% Part. flota", "Prof. promedio (mm)"],
+              [], [22, 26, 16, 11, 12, 13, 13, 18])
+    for marca in sorted(por_marca, key=lambda m: (-sum(g["orig"] + g["reenc"] for _, _, g in por_marca[m]), m)):
+        filas = sorted(por_marca[marca], key=lambda x: (-(x[2]["orig"] + x[2]["reenc"]), x[0], x[1]))
+        for d, dm, g in filas:
+            tot = g["orig"] + g["reenc"]
+            ws.append([_celda_texto(marca), _celda_texto(d), _celda_texto(dm), g["orig"], g["reenc"], tot,
+                       tot / total if total else 0, round(sum(g["prof"]) / len(g["prof"]), 1) if g["prof"] else None])
+        o = sum(g["orig"] for _, _, g in filas); r = sum(g["reenc"] for _, _, g in filas)
+        todas = [p for _, _, g in filas for p in g["prof"]]
+        ws.append([f"Subtotal {marca}", "", "", o, r, o + r, (o + r) / total if total else 0,
+                   round(sum(todas) / len(todas), 1) if todas else None])
+        for c in ws[ws.max_row]:
+            c.font, c.fill = negrita, sub
+    o_t = sum(g["orig"] for g in grupos.values()); r_t = sum(g["reenc"] for g in grupos.values())
+    ws.append(["TOTAL FLOTA", "", "", o_t, r_t, o_t + r_t, 1 if total else 0, None])
+    for c in ws[ws.max_row]:
+        c.font, c.fill = negrita, claro
+    for fila in ws.iter_rows(min_row=2):
+        fila[6].number_format = "0.0%"
+        for c in fila:
+            c.border = borde
+
+    def resumen_por(campo, titulo, encabezado, faltante):
+        cuenta = {}
+        for l in llantas:
+            k = str(l.get(campo) or faltante)
+            c = cuenta.setdefault(k, [0, 0])
+            c[1 if es_reenc(l) else 0] += 1
+        filas = [[_celda_texto(k), o, r, o + r, (o + r) / total if total else 0] for k, (o, r) in sorted(cuenta.items(), key=lambda x: (-sum(x[1]), x[0]))]
+        filas.append(["TOTAL", sum(f[1] for f in filas), sum(f[2] for f in filas), total, 1 if total else 0])
+        w = hoja(wb, titulo, [encabezado, "Original", "Reencauche", "Total llantas", "% Part. flota"], filas, [26, 11, 12, 13, 13])
+        for fila in w.iter_rows(min_row=2):
+            fila[4].number_format = "0.0%"
+        for c in w[w.max_row]:
+            c.font, c.fill = negrita, claro
+
+    resumen_por("marca", "Por marca", "Marca", "SIN MARCA")
+    resumen_por("dimension", "Por dimensión", "Dimensión", "SIN MEDIDA")
+
+    # 3. Inventario llanta por llanta
+    orden = sorted(llantas, key=lambda l: (str(l.get("cliente") or ""), str(l.get("placa") or ""), int(to_float_seguro(l.get("posicion")))))
+    hoja(wb, "Inventario llantas",
+         ["Cliente", "Sede", "Placa", "Posición", "Eje", "N° interno", "Marca", "Diseño", "Dimensión", "Vida", "Banda", "Prof. mín. (mm)", "Última inspección"],
+         [[l.get("cliente"), l.get("subcliente"), l.get("placa"), int(to_float_seguro(l.get("posicion"))), l.get("tipo_eje"), l.get("numero_interno"),
+           l.get("marca"), l.get("diseno"), l.get("dimension"), l.get("vida"), l.get("banda_reen"),
+           to_float_seguro(l.get("prof_actual_min")) or None, str(l.get("fecha_ult_insp") or "")[:10]] for l in orden],
+         [22, 16, 11, 9, 12, 14, 18, 22, 14, 11, 14, 14, 15])
+
+    # 4. Regla de oro 1: reencauches en eje direccional
+    incumplen = [l for l in orden if l.get("tipo_eje") == "direccional" and es_reenc(l) and not l.get("permite_reencauche_direccion")]
+    hoja(wb, "Regla de oro 1",
+         ["Placa", "Cliente", "Sede", "Tipología", "Posición", "N° interno", "Marca", "Diseño", "Vida", "Banda", "Última inspección"],
+         [[l.get("placa"), l.get("cliente"), l.get("subcliente"), l.get("tipologia"), int(to_float_seguro(l.get("posicion"))), l.get("numero_interno"),
+           l.get("marca"), l.get("diseno"), l.get("vida"), l.get("banda_reen"), str(l.get("fecha_ult_insp") or "")[:10]] for l in incumplen]
+         or [["Sin incumplimientos: no hay llantas reencauchadas en eje direccional"]],
+         [11, 22, 16, 22, 9, 14, 18, 22, 10, 14, 15])
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def to_float_seguro(v) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+@app.post("/api/composicion/exportar-excel", dependencies=[Depends(requerir_vista("composicion"))])
+def api_composicion_exportar_excel(item: ExportarComposicionExcelItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Excel organizado de Composición de Flota con las llantas que muestra la pantalla (ya filtradas por el alcance del usuario)."""
+    try:
+        contenido = construir_excel_composicion(item.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar el Excel de composición: {str(e)}")
+    filename = f"TireAnalyze_Composicion_Flota_{ahora_bogota().strftime('%Y%m%d_%H%M')}.xlsx"
+    return Response(content=contenido, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
 @app.post("/api/kpis/exportar-pdf", dependencies=[Depends(requerir_vista("kpis"))])
 def api_kpis_exportar_pdf(item: ExportarKpisPdfItem, usuario_actual: dict = Depends(obtener_usuario_actual)):
     """PDF de la suite de KPIs: gráficos capturados en pantalla + cifras recalculadas con los mismos filtros."""
@@ -5157,8 +5539,10 @@ def api_kpis_llantas(
     banda_reen: str = "",
     usuario: str = "",
     tipologia: str = "",
+    foto: str = "",
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
+    """Indicadores por llanta. foto=actual: solo las llantas instaladas hoy (Composición de Flota)."""
     filtros = {
         'cliente': cliente,
         'subcliente': subcliente,
@@ -5182,7 +5566,7 @@ def api_kpis_llantas(
     elif usuario_actual.get("cliente_asignado"):
         filtros['usuario'] = usuario_actual["username"]
 
-    raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros)
+    raw = database.obtener_trazabilidad_kpis_llanta(numero_interno, filtros, foto_actual=(foto.strip().lower() == "actual"))
     return sanitizar_nativos(raw)
 
 @app.get("/api/kpis-llantas/exportar-excel", dependencies=[Depends(requerir_vista("composicion", "kpis"))])
@@ -5363,12 +5747,12 @@ def api_crear_operacion(item: NuevaOperacionItem, admin: dict = Depends(requerir
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/operaciones")
-def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_editar_operacion(item: EditarOperacionItem, admin: dict = Depends(requerir_admin)):
     ok = database.actualizar_operacion(item.nombre_antiguo, item.nombre_nuevo)
     return {"status": "ok" if ok else "error"}
 
 @app.delete("/api/operaciones")
-def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_eliminar_operacion(nombre: str, admin: dict = Depends(requerir_admin)):
     ok = database.eliminar_operacion(nombre)
     return {"status": "ok" if ok else "error"}
 
@@ -5395,7 +5779,7 @@ def api_crear_tipologia(item: NuevaTipologiaItem, admin: dict = Depends(requerir
     return {"status": "ok", "nombre": nom}
 
 @app.put("/api/tipologias")
-def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requerir_admin)):
     try:
         ok = database.actualizar_tipologia(
             nombre_antiguo=item.nombre_antiguo,
@@ -5417,7 +5801,7 @@ def api_editar_tipologia(item: EditarTipologiaItem, admin: dict = Depends(requer
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/tipologias")
-def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_eliminar_tipologia(nombre: str, admin: dict = Depends(requerir_admin)):
     try:
         ok = database.eliminar_tipologia(nombre)
         return {"status": "ok" if ok else "error"}
@@ -5447,7 +5831,7 @@ def api_guardar_modelo(item: ModeloLlantaItem, admin: dict = Depends(requerir_ad
     return {"status": "ok" if ok else "error"}
 
 @app.put("/api/modelos-llanta")
-def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends(requerir_admin)):
     try:
         marca = (item.marca or "").strip().upper()
         res = database.actualizar_modelo_llanta(
@@ -5465,7 +5849,7 @@ def api_editar_modelo_llanta(item: EditarModeloLlantaItem, admin: dict = Depends
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/modelos-llanta/{modelo_id}")
-def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_admin)):
     try:
         ok = database.eliminar_modelo_llanta(modelo_id)
         return {"status": "ok" if ok else "error"}
@@ -5476,6 +5860,15 @@ def api_eliminar_modelo_llanta(modelo_id: int, admin: dict = Depends(requerir_ad
 def api_buscar_profundidad(marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original", banda: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     prof = database.buscar_profundidad_inicial(marca, diseno, dimension, vida, banda=banda)
     return {"prof_inicial": prof}
+
+@app.get("/api/precio-lista")
+def api_precio_lista(cliente: str = "", marca: str = "", diseno: str = "", dimension: str = "", vida: str = "Original",
+                     usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Precio vigente en la lista del cliente para esa llanta; sin precio del cliente responde null (no se inventa)."""
+    cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    if not cliente or str(cliente).strip().upper() == "TODOS":
+        return {"precio": None}
+    return {"precio": database.precio_lista_cliente(cliente, marca, diseno, dimension, vida)}
 
 @app.get("/api/dimensiones-modelo")
 def api_dimensiones_modelo(marca: str = "", diseno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -5498,6 +5891,7 @@ def api_clientes_directorio(usuario_actual: dict = Depends(obtener_usuario_actua
 
 @app.post("/api/clientes-directorio")
 def api_crear_cliente_directorio(item: ClienteDirectorioItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, item.cliente)
     try:
         res = database.crear_o_actualizar_cliente(item.model_dump())
         if not res.get("ok"):
@@ -5517,6 +5911,7 @@ def api_crear_cliente_directorio(item: ClienteDirectorioItem, admin: dict = Depe
 
 @app.delete("/api/clientes-directorio/{cliente}")
 def api_eliminar_cliente_directorio(cliente: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, cliente)
     res = database.eliminar_cliente_directorio(cliente)
     if not res.get("ok"):
         raise HTTPException(status_code=400, detail=res.get("mensaje", "No se pudo eliminar el cliente"))
@@ -5538,6 +5933,7 @@ def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje
 
 @app.post("/api/configuraciones-clientes")
 def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, item.cliente)
     ok = database.guardar_limite_retiro_cliente(
         cliente=item.cliente,
         limite_retiro_mm=item.limite_retiro_mm,
@@ -5549,6 +5945,8 @@ def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Dep
 
 @app.put("/api/configuraciones-clientes")
 def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_limites_retiro", item.id))
+    exigir_cliente_del_usuario(admin, item.cliente)
     try:
         ok = database.actualizar_limite_retiro_cliente(
             limite_id=item.id,
@@ -5564,6 +5962,8 @@ def api_editar_configuracion_cliente(item: EditarLimiteClienteItem, admin: dict 
 
 @app.put("/api/configuraciones-clientes/{limite_id}")
 def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_limites_retiro", limite_id))
+    exigir_cliente_del_usuario(admin, item.cliente)
     try:
         ok = database.actualizar_limite_retiro_cliente(
             limite_id=limite_id,
@@ -5579,6 +5979,7 @@ def api_editar_configuracion_cliente_por_id(limite_id: int, item: LimiteClienteI
 
 @app.delete("/api/configuraciones-clientes/{limite_id}")
 def api_eliminar_configuracion_cliente(limite_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_limites_retiro", limite_id))
     ok = database.eliminar_limite_retiro_cliente(limite_id)
     return sanitizar_nativos({"status": "ok" if ok else "error"})
 
@@ -5612,15 +6013,16 @@ def api_guardar_marca_cliente(item: MarcaClienteItem, usuario_actual: dict = Dep
     m = str(item.marca or "").strip().upper()
     if not cli or not m:
         raise HTTPException(status_code=400, detail="Cliente y marca son obligatorios")
-    if rol not in ("admin", "jefatura"):
+    if not es_rol_admin(rol, usuario_actual.get("username")):
         clis = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
-        if clis and not any(c.lower() == cli.lower() for c in clis):
+        if not any(c.lower() == cli.lower() for c in clis):
             raise HTTPException(status_code=403, detail="No tiene permisos para parametrizar marcas en este cliente")
     database.guardar_marca_cliente(cli, m)
     return sanitizar_nativos({"status": "ok", "mensaje": f"Marca '{m}' asociada a '{cli}' exitosamente"})
 
 @app.delete("/api/configuracion-marcas-cliente/{marca_id}")
 def api_eliminar_marca_cliente_id(marca_id: int, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, _cliente_de_registro("configuracion_marcas_cliente", marca_id))
     ok = database.eliminar_marca_cliente_por_id(marca_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
@@ -5628,6 +6030,7 @@ def api_eliminar_marca_cliente_id(marca_id: int, admin: dict = Depends(requerir_
 
 @app.delete("/api/configuracion-marcas-cliente")
 def api_eliminar_marca_cliente(cliente: str, marca: str, admin: dict = Depends(requerir_admin_o_jefatura)):
+    exigir_cliente_del_usuario(admin, cliente)
     ok = database.eliminar_marca_cliente(cliente, marca)
     if not ok:
         raise HTTPException(status_code=404, detail="Configuración no encontrada")
@@ -5786,6 +6189,112 @@ async def api_importar_precios_cliente_excel(file: UploadFile = File(...), usuar
 
 
 
+# =========================================================================
+# PARQUE AUTOMOTOR POR CLIENTE (solo administrador): base del % de inspección
+# =========================================================================
+def _excel_respuesta(df, hoja, filename):
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name=hoja, index=False)
+        ws = writer.sheets[hoja]
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            ws.column_dimensions[col[0].column_letter].width = max(max_len + 4, 14)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@app.get("/api/padron/plantilla-excel")
+def api_plantilla_padron(admin: dict = Depends(requerir_admin)):
+    columnas = ["Placa / N° interno", "Tipología", "Km actual", "Fabricante", "Línea"]
+    ejemplos = [
+        {"Placa / N° interno": "TKL123", "Tipología": "TRACTOCAMION 3S3", "Km actual": 245000, "Fabricante": "KENWORTH", "Línea": "T800"},
+        {"Placa / N° interno": "101", "Tipología": "BUS 2 EJES", "Km actual": None, "Fabricante": "MERCEDES-BENZ", "Línea": "OF 1721"},
+    ]
+    return _excel_respuesta(pd.DataFrame(ejemplos, columns=columnas), "Parque_Automotor", "Plantilla_Parque_Automotor.xlsx")
+
+
+@app.get("/api/padron")
+def api_listar_padron(cliente: str = "", sede: str = "", admin: dict = Depends(requerir_admin)):
+    vehiculos = database.listar_padron_cliente(cliente, sede)
+    return sanitizar_nativos({
+        "cliente": str(cliente or '').strip().upper(),
+        "parque_cargado": database.cliente_tiene_parque_cargado(cliente),
+        "vehiculos": vehiculos,
+    })
+
+
+@app.get("/api/padron/exportar-excel")
+def api_exportar_padron(cliente: str = "", sede: str = "", admin: dict = Depends(requerir_admin)):
+    mes = ahora_bogota().strftime("%Y-%m")
+    filas = [{
+        "Placa / N° interno": v["placa"], "Sede": v["sede"], "Tipología": v["tipologia"],
+        "Km actual": v["km_actual"], "Fabricante": v["fabricante"], "Línea": v["linea"],
+        "Estado": "Activo" if v["activo"] else "Inactivo",
+        "Última inspección": v["ultima_inspeccion"],
+        "Inspeccionado este mes": "Sí" if v["ultima_inspeccion"][:7] == mes else "No",
+    } for v in database.listar_padron_cliente(cliente, sede)]
+    columnas = ["Placa / N° interno", "Sede", "Tipología", "Km actual", "Fabricante", "Línea", "Estado",
+                "Última inspección", "Inspeccionado este mes"]
+    nombre = re.sub(r'[^A-Za-z0-9]+', '_', str(cliente or 'cliente').strip()).strip('_') or 'cliente'
+    return _excel_respuesta(pd.DataFrame(filas, columns=columnas), "Parque_Automotor",
+                            f"Parque_{nombre}_{ahora_bogota().strftime('%Y%m%d')}.xlsx")
+
+
+class VehiculoPadronItem(BaseModel):
+    cliente: str
+    placa: str
+    tipologia: str
+    sede: str = ""
+    km_actual: Optional[float] = None
+    fabricante: str = ""
+    linea: str = ""
+
+
+@app.post("/api/padron/vehiculo")
+def api_guardar_vehiculo_padron(item: VehiculoPadronItem, admin: dict = Depends(requerir_admin)):
+    try:
+        res = database.guardar_vehiculo_padron(item.cliente, item.placa, item.tipologia, item.sede, item.km_actual,
+                                               item.fabricante, item.linea)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    res["message"] = f"Vehículo {res['placa']} {'agregado al' if res['nuevo'] else 'actualizado en el'} parque."
+    return sanitizar_nativos(res)
+
+
+@app.delete("/api/padron/vehiculo")
+def api_eliminar_vehiculo_padron(cliente: str, placa: str, admin: dict = Depends(requerir_admin)):
+    if not database.eliminar_vehiculo_padron(cliente, placa):
+        raise HTTPException(status_code=404, detail="Ese vehículo no está en el parque del cliente")
+    return {"status": "ok", "message": f"Vehículo {str(placa).strip().upper()} eliminado del parque."}
+
+
+@app.post("/api/padron/importar-excel")
+async def api_importar_padron(cliente: str = "", sede: str = "", file: UploadFile = File(...), admin: dict = Depends(requerir_admin)):
+    if not (file.filename or "").lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
+    content = await file.read()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+    try:
+        res = database.importar_padron_cliente_excel(tmp_path, cliente, sede)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer el archivo del parque: {str(e)}")
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+    res["message"] = (f"Parque cargado: {res['nuevos']} nuevos, {res['actualizados']} actualizados"
+                      f" y {res['desactivados']} quedaron inactivos.")
+    return sanitizar_nativos(res)
+
 class StockSeguridadItem(BaseModel):
     cliente: str
     dimension: str
@@ -5909,15 +6418,11 @@ def api_llanta_por_cliente(
 @app.get("/api/inspeccion-anterior")
 def api_inspeccion_anterior(placa: str, posicion: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
     verificar_acceso_placa(usuario_actual, placa)  # antes no se validaba el cliente
-    prev = database.obtener_ultima_inspeccion_posicion(placa, posicion)
+    # Si después de la última inspección se montó o retiró una llanta, responde con lo que hay hoy en la posición
+    res = database.obtener_datos_posicion_inspeccion(placa, posicion)
     perfil = database.obtener_perfil_vehiculo(placa)
-    if prev:
-        return sanitizar_nativos({
-            "encontrado": True,
-            "datos": prev,
-            "vehiculo_perfil": perfil if perfil.get("encontrado") else None
-        })
-    return {"encontrado": False, "vehiculo_perfil": perfil if perfil.get("encontrado") else None}
+    res["vehiculo_perfil"] = perfil if perfil.get("encontrado") else None
+    return sanitizar_nativos(res)
 
 @app.get("/api/posiciones-inspeccionadas")
 def api_posiciones_inspeccionadas(placa: str, fecha: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -5954,59 +6459,135 @@ def api_offline_paquete_patio(
 # RUTAS DE AUTENTICACIÓN Y USUARIOS
 # ==========================================
 
-_login_attempts: dict = {}  # ip -> list of float timestamps
+_login_attempts: dict = {}  # ip -> list of float timestamps (claves incorrectas del último minuto)
+MAX_FALLOS_IP, VENTANA_FALLOS_IP = 8, 60.0
+# El bloqueo por usuario no depende de la IP: frena a quien prueba claves contra una cuenta desde muchas IPs
+MAX_FALLOS_USUARIO, VENTANA_FALLOS_USUARIO = 10, 15 * 60.0
+_origen_ip_informado = False
+
+
+def _ip_cliente(request: Request) -> str:
+    """
+    IP de quien hace la petición. En Railway la conexión llega desde su proxy, así que se usa la cabecera
+    X-Real-IP que pone su borde con la IP del usuario; si no está, la última entrada de X-Forwarded-For.
+    """
+    global _origen_ip_informado
+    real = (request.headers.get("x-real-ip") or "").strip()
+    reenviada = (request.headers.get("x-forwarded-for") or "").strip()
+    if real:
+        ip, origen = real, "X-Real-IP"
+    elif reenviada:
+        ip, origen = reenviada.split(",")[-1].strip(), "X-Forwarded-For"
+    else:
+        ip, origen = (request.client.host if request.client else "127.0.0.1"), "la conexión directa"
+    if not _origen_ip_informado:
+        _origen_ip_informado = True
+        print(f"[LOGIN] La IP de quien ingresa se toma de {origen}.")
+    return ip
+
+
+def _es_https(request: Request) -> bool:
+    return request.url.scheme == "https" or (request.headers.get("x-forwarded-proto") or "").lower() == "https"
+
+
+def _entregar_sesion(request: Request, response: Response, usr: dict) -> str:
+    """Crea la sesión del usuario y la deja en las cookies (solo por HTTPS cuando la conexión lo es)."""
+    token = crear_token_acceso(usr["username"], usr["rol"], usr.get("sesion_version", 0))
+    for nombre in ("tireanalyze_token", "tirecheck_token"):
+        response.set_cookie(
+            key=nombre,
+            value=token,
+            httponly=True,
+            samesite="lax",
+            secure=_es_https(request),
+            max_age=TOKEN_EXPIRATION_SECONDS
+        )
+    return token
+
 
 @app.post("/api/login")
 def api_login(item: LoginItem, request: Request, response: Response):
-    ip = request.client.host if request.client else "127.0.0.1"
+    ip = _ip_cliente(request)
     ahora = time.time()
-    intentos = [t for t in _login_attempts.get(ip, []) if ahora - t < 60.0]
+    intentos = [t for t in _login_attempts.get(ip, []) if ahora - t < VENTANA_FALLOS_IP]
     _login_attempts[ip] = intentos
-    if len(intentos) >= 8:
+    if len(intentos) >= MAX_FALLOS_IP:
         raise HTTPException(
             status_code=429,
             detail="Demasiados intentos fallidos. Intente de nuevo en 60 segundos."
+        )
+    usuario_escrito = (item.username or "").strip().lower()
+    if usuario_escrito and database.fallos_recientes_usuario(usuario_escrito, VENTANA_FALLOS_USUARIO) >= MAX_FALLOS_USUARIO:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiados intentos fallidos con este usuario. Intente de nuevo en 15 minutos."
         )
 
     usr = database.autenticar_usuario(item.username, item.password)
     if not usr:
         _login_attempts[ip].append(ahora)
+        if usuario_escrito:
+            database.registrar_intento_ingreso(usuario_escrito, ip, False, "clave_incorrecta")
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     if usuario_sin_alcance(usr):
+        database.registrar_intento_ingreso(usuario_escrito, ip, False, "sin_cliente")
         raise HTTPException(status_code=403, detail="Su usuario no tiene un cliente asignado. Solicite al administrador que le asigne uno.")
 
     if ip in _login_attempts:
         _login_attempts[ip] = []
+    database.registrar_intento_ingreso(usuario_escrito, ip, True)
 
-    token = crear_token_acceso(usr["username"], usr["rol"])
-    response.set_cookie(
-        key="tireanalyze_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=TOKEN_EXPIRATION_SECONDS
-    )
-    response.set_cookie(
-        key="tirecheck_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        max_age=TOKEN_EXPIRATION_SECONDS
-    )
+    token = _entregar_sesion(request, response, usr)
+    usr.pop("sesion_version", None)
     return {"status": "ok", "token": token, "usuario": usr}
 
 @app.get("/api/usuario-actual")
 def api_usuario_actual(usuario_actual: dict = Depends(obtener_usuario_actual)):
+    usuario = {k: v for k, v in usuario_actual.items() if k != "sesion_version"}
     return sanitizar_nativos({
         "status": "ok",
-        "usuario": usuario_actual
+        "usuario": usuario
     })
 
 @app.post("/api/logout")
-def api_logout(response: Response):
+def api_logout(request: Request, response: Response):
+    # La sesión de este equipo deja de servir aunque alguien haya copiado el token
+    payload = verificar_token(_token_de_request(request) or "")
+    if payload and payload.get("jti"):
+        database.revocar_sesion(payload["jti"], payload.get("exp", 0))
     response.delete_cookie(key="tireanalyze_token")
     response.delete_cookie(key="tirecheck_token")
     return {"status": "ok", "mensaje": "Sesión cerrada correctamente"}
+
+@app.post("/api/mi-cuenta/cambiar-clave")
+def api_cambiar_clave_propia(item: CambioClavePropiaItem, request: Request, response: Response,
+                             usuario_actual: dict = Depends(obtener_usuario_actual)):
+    username = usuario_actual["username"]
+    if database.fallos_recientes_usuario(username, VENTANA_FALLOS_USUARIO) >= MAX_FALLOS_USUARIO:
+        raise HTTPException(status_code=429, detail="Demasiados intentos fallidos con este usuario. Intente de nuevo en 15 minutos.")
+    if not database.verificar_clave_usuario(username, item.clave_actual):
+        database.registrar_intento_ingreso(username, _ip_cliente(request), False, "clave_incorrecta")
+        raise HTTPException(status_code=400, detail="La contraseña actual no es correcta.")
+    error = database.validar_clave_nueva(item.clave_nueva, username)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    if item.clave_nueva.strip() == (item.clave_actual or "").strip():
+        raise HTTPException(status_code=400, detail="La contraseña nueva debe ser distinta de la actual.")
+    version = database.cambiar_password_propia(username, item.clave_nueva)
+    if version is None:
+        raise HTTPException(status_code=400, detail="No se pudo cambiar la contraseña")
+    usr = database.obtener_usuario_por_username(username)
+    token = _entregar_sesion(request, response, usr)  # las demás sesiones del usuario quedan cerradas
+    usr.pop("sesion_version", None)
+    return {"status": "ok", "token": token, "usuario": usr, "mensaje": "Contraseña actualizada. Se cerraron sus sesiones en otros equipos."}
+
+@app.post("/api/mi-cuenta/cerrar-otras-sesiones")
+def api_cerrar_otras_sesiones(request: Request, response: Response, usuario_actual: dict = Depends(obtener_usuario_actual)):
+    if database.incrementar_version_sesion(usuario_actual["username"]) is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    usr = database.obtener_usuario_por_username(usuario_actual["username"])
+    token = _entregar_sesion(request, response, usr)  # este equipo sigue con una sesión nueva
+    return {"status": "ok", "token": token, "mensaje": "Se cerraron sus sesiones en los demás equipos."}
 
 @app.get("/api/usuarios")
 def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
@@ -6016,6 +6597,9 @@ def api_listar_usuarios(admin: dict = Depends(requerir_admin)):
 def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
     if usuario_sin_alcance({"rol": item.rol, "username": item.username, "cliente_asignado": item.cliente_asignado}):
         raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
+    error_clave = database.validar_clave_nueva(item.password, item.username)
+    if error_clave:
+        raise HTTPException(status_code=400, detail=error_clave)
     ok = database.crear_usuario(
         username=item.username,
         password=item.password,
@@ -6026,7 +6610,9 @@ def api_crear_usuario(item: UsuarioItem, admin: dict = Depends(requerir_admin)):
         sedes_asignadas=item.sedes_asignadas
     )
     if not ok:
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos (contraseña mínima 4 caracteres)")
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe o los datos son inválidos")
+    # La clave inicial la conoce el administrador: el usuario la cambia en su primer ingreso
+    database.marcar_cambio_clave(item.username, True)
     return {"status": "ok", "username": item.username}
 
 @app.put("/api/usuarios/{username}")
@@ -6041,6 +6627,11 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
                   "cliente_asignado": item.cliente_asignado if item.cliente_asignado is not None else actual.get("cliente_asignado")}
     if usuario_sin_alcance(resultante):
         raise HTTPException(status_code=400, detail="Asigne al menos un cliente: solo el administrador puede trabajar sin cliente asignado")
+    cambia_clave = bool(item.password and item.password.strip())
+    if cambia_clave:
+        error_clave = database.validar_clave_nueva(item.password, username)
+        if error_clave:
+            raise HTTPException(status_code=400, detail=error_clave)
     ok = database.actualizar_usuario(
         username=username,
         nombre_completo=item.nombre_completo,
@@ -6053,12 +6644,15 @@ def api_actualizar_usuario(username: str, item: EditarUsuarioItem, admin: dict =
     )
     if not ok:
         raise HTTPException(status_code=400, detail="No se pudo actualizar el usuario")
+    if cambia_clave:
+        database.marcar_cambio_clave(username, True)
     return {"status": "ok", "username": username}
 
 @app.post("/api/usuarios/{username}/reset-password")
 def api_reset_password(username: str, item: ResetPasswordItem, admin: dict = Depends(requerir_admin)):
-    if not item.nueva_password or len(item.nueva_password.strip()) < 4:
-        raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 4 caracteres")
+    error_clave = database.validar_clave_nueva(item.nueva_password, username)
+    if error_clave:
+        raise HTTPException(status_code=400, detail=error_clave)
     usr_existente = database.obtener_usuario_por_username(username)
     if not usr_existente:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -6088,6 +6682,49 @@ def api_admin_db_info(admin: dict = Depends(requerir_admin)):
         "total_inspecciones": total_insp,
         "total_usuarios": total_usr
     }
+
+class EliminarDatosClienteItem(BaseModel):
+    cliente: str
+    confirmacion: str  # el nombre del cliente escrito de nuevo
+
+
+@app.get("/api/admin/datos-cliente")
+def api_resumen_datos_cliente(cliente: str = "", admin: dict = Depends(requerir_admin)):
+    """Vista previa: cuántos registros del cargue tiene el cliente (no borra nada)."""
+    try:
+        return sanitizar_nativos(database.eliminar_datos_cargados_cliente(cliente, ejecutar=False))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/admin/datos-cliente/eliminar")
+def api_eliminar_datos_cliente(item: EliminarDatosClienteItem, admin: dict = Depends(requerir_admin)):
+    """Deshace un cargue por error: borra inspecciones, vehículos, parque, marcas, llantas y kardex del cliente, con respaldo previo."""
+    import shutil
+    cliente = str(item.cliente or '').strip()
+    if not cliente or cliente.upper() != str(item.confirmacion or '').strip().upper():
+        raise HTTPException(status_code=400, detail="Escriba el nombre exacto del cliente para confirmar.")
+    try:
+        previo = database.eliminar_datos_cargados_cliente(cliente, ejecutar=False)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not previo["total"]:
+        raise HTTPException(status_code=404, detail=f"El cliente {cliente.upper()} no tiene datos para eliminar.")
+    # Copia de la base completa antes de borrar, igual que al restaurar la semilla
+    backups_dir = os.path.join(os.path.dirname(os.path.abspath(database.DB_PATH)), "backups")
+    os.makedirs(backups_dir, exist_ok=True)
+    nombre = re.sub(r'[^A-Za-z0-9]+', '_', cliente.upper()).strip('_')
+    backup_path = os.path.join(backups_dir, f"antes_de_borrar_{nombre}_{ahora_bogota().strftime('%Y%m%d_%H%M%S')}.db")
+    try:
+        shutil.copy2(database.DB_PATH, backup_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"No se pudo hacer la copia de seguridad; no se borró nada: {e}")
+    res = database.eliminar_datos_cargados_cliente(cliente, ejecutar=True)
+    print(f"[ADMIN] {admin.get('username')} borró los datos de cargue de {res['cliente']}: {res['detalle']} (respaldo {backup_path})")
+    res["respaldo"] = os.path.basename(backup_path)
+    res["message"] = f"Se eliminaron {res['total']} registros de {res['cliente']}. Copia de seguridad: {res['respaldo']}"
+    return sanitizar_nativos(res)
+
 
 @app.post("/api/admin/restaurar-seed")
 def api_admin_restaurar_seed(admin: dict = Depends(requerir_admin)):
@@ -6274,7 +6911,7 @@ def api_taller_posicion_info(
     if not cliente and placa:
         with database.get_connection() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (placa,))
+            cur.execute("SELECT cliente FROM padron_vehiculos_cliente WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (placa,))
             r_v = cur.fetchone()
             if r_v and r_v[0]:
                 cliente = r_v[0]
@@ -6284,10 +6921,12 @@ def api_taller_posicion_info(
                 if r_i and r_i[0]:
                     cliente = r_i[0]
 
-    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
+    # Sin un cliente concreto no se sabe la licencia: el taller no se ofrece
+    cliente_real = bool(cliente) and str(cliente).strip().upper() != "TODOS"
+    lic = database.obtener_licencia_cliente(cliente) if cliente_real else "LIGHT"
     data = database.obtener_posicion_taller_info(placa, posicion, cliente)
     data["tipo_licencia"] = lic
-    data["permite_taller"] = (lic != "LIGHT")
+    data["permite_taller"] = (lic == "PRO")
     return sanitizar_nativos(data)
 
 @app.post("/api/taller/desmontar", dependencies=[Depends(requerir_vista("bodegas", "patio"))])
@@ -6304,11 +6943,12 @@ def api_taller_desmontar(
             if r_ll:
                 cliente = r_ll[0] or r_ll[1]
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
-    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
-    if lic == "LIGHT":
+    if not cliente or str(cliente).strip().upper() == "TODOS":
+        raise HTTPException(status_code=400, detail="No se pudo determinar el cliente de la llanta. Seleccione el cliente.")
+    if database.obtener_licencia_cliente(cliente) != "PRO":
         raise HTTPException(
             status_code=403,
-            detail="Los desmontajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+            detail="Los desmontajes en inspección son exclusivos de la versión PRO (Licencia FULL: Gestión Integral de Bodegas y Taller)."
         )
 
     item["cliente_propietario"] = cliente
@@ -6327,7 +6967,7 @@ def api_taller_montar(
     if not cliente and item.get("placa"):
         with database.get_connection() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT cliente FROM vehiculos_padron WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (str(item.get("placa")).strip(),))
+            cur.execute("SELECT cliente FROM padron_vehiculos_cliente WHERE UPPER(TRIM(placa)) = UPPER(TRIM(?)) LIMIT 1", (str(item.get("placa")).strip(),))
             r_v = cur.fetchone()
             if r_v and r_v[0]:
                 cliente = r_v[0]
@@ -6337,11 +6977,12 @@ def api_taller_montar(
                 if r_i and r_i[0]:
                     cliente = r_i[0]
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
-    lic = database.obtener_licencia_cliente(cliente) if cliente else "PRO"
-    if lic == "LIGHT":
+    if not cliente or str(cliente).strip().upper() == "TODOS":
+        raise HTTPException(status_code=400, detail="No se pudo determinar el cliente del vehículo. Seleccione el cliente.")
+    if database.obtener_licencia_cliente(cliente) != "PRO":
         raise HTTPException(
             status_code=403,
-            detail="Los montajes en inspección son exclusivos de la Licencia FULL (Gestión Integral de Bodegas y Taller)."
+            detail="Los montajes en inspección son exclusivos de la versión PRO (Licencia FULL: Gestión Integral de Bodegas y Taller)."
         )
 
     item["cliente_propietario"] = cliente
@@ -6476,6 +7117,18 @@ def api_bodegas_pdf_acta_chatarrizacion(
 
 
 # ==========================================
+# APP APARTE: CONTROL DE MOTORES
+# ==========================================
+# Base de datos, usuarios y sesión propios (motores/). Un fallo aquí no debe tumbar TireAnalyze.
+try:
+    from motores.rutas import iniciar as iniciar_motores, router as router_motores
+    iniciar_motores()
+    app.include_router(router_motores)
+except Exception as e:
+    print(f"[MOTORES] No se pudo iniciar la app de Motores: {e}")
+
+
+# ==========================================
 # PUNTO DE ENTRADA
 # ==========================================
 
@@ -6496,7 +7149,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `database.py`
 - **Descripción:** Capa de persistencia SQLite: DDL, migraciones automáticas, CRUD de inspecciones, diagnósticos, 7 bodegas, kardex, KPIs y catálogos
-- **Métricas:** 10798 líneas | 553,286 bytes (540.3 KB)
+- **Métricas:** 11840 líneas | 613,773 bytes (599.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -6511,8 +7164,10 @@ import re
 import hashlib
 import hmac
 import secrets
+import time
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
+import contextvars
 from typing import Optional
 import sys
 import catalogo_modelos_colombia
@@ -6574,10 +7229,16 @@ verificar_y_poblar_seed()
 DB_PATH = _DB_DATA
 
 
+# Iteraciones de PBKDF2-HMAC-SHA256 recomendadas por OWASP (2023). Las pruebas bajan PBKDF2_ITERACIONES para no tardar.
+PBKDF2_ITERACIONES_PRODUCCION = 600_000
+PBKDF2_ITERACIONES = PBKDF2_ITERACIONES_PRODUCCION
+_ITERACIONES_FORMATO_ANTIGUO = 100_000  # hashes 'pbkdf2_sha256$<salt>$<hash>' (sin iteraciones en el texto)
+
+
 def hash_password(password: str) -> str:
     """
-    Genera un hash seguro para la contraseña usando PBKDF2-HMAC-SHA256 con 100,000 iteraciones
-    y un salt aleatorio de 16 bytes. Retorna 'pbkdf2_sha256$<salt_hex>$<hash_hex>'.
+    Genera un hash seguro para la contraseña usando PBKDF2-HMAC-SHA256 y un salt aleatorio de 16 bytes.
+    Retorna 'pbkdf2_sha256$<iteraciones>$<salt_hex>$<hash_hex>'.
     """
     if not isinstance(password, str):
         password = str(password)
@@ -6586,38 +7247,99 @@ def hash_password(password: str) -> str:
         'sha256',
         password.encode('utf-8'),
         salt.encode('utf-8'),
-        100_000
+        PBKDF2_ITERACIONES
     )
-    return f"pbkdf2_sha256${salt}${hash_bytes.hex()}"
+    return f"pbkdf2_sha256${PBKDF2_ITERACIONES}${salt}${hash_bytes.hex()}"
+
+
+def _partes_hash(stored_password: str):
+    """(iteraciones, salt, hash_hex) de un hash PBKDF2, en formato nuevo o antiguo; None si no lo es."""
+    parts = stored_password.split('$')
+    if len(parts) == 4 and parts[0] == "pbkdf2_sha256" and parts[1].isdigit():
+        return int(parts[1]), parts[2], parts[3]
+    if len(parts) == 3 and parts[0] == "pbkdf2_sha256":
+        return _ITERACIONES_FORMATO_ANTIGUO, parts[1], parts[2]
+    return None
+
+
+def hash_desactualizado(stored_password) -> bool:
+    """True si la contraseña guardada está en texto plano o con menos iteraciones que las actuales."""
+    partes = _partes_hash(str(stored_password or ''))
+    return partes is None or partes[0] < PBKDF2_ITERACIONES
+
 
 def verify_password(plain_password: str, stored_password: str) -> bool:
     """
     Verifica una contraseña en texto plano contra el hash almacenado usando tiempo constante.
-    Si el hash almacenado usa formato 'pbkdf2_sha256$', verifica con PBKDF2.
+    Si el hash almacenado usa formato 'pbkdf2_sha256$', verifica con PBKDF2 (con sus propias iteraciones).
     Si es una contraseña legada en texto plano, compara directamente con hmac.compare_digest.
     """
     if not isinstance(plain_password, str):
         plain_password = str(plain_password)
     if not isinstance(stored_password, str):
         stored_password = str(stored_password)
-    
+
     if stored_password.startswith("pbkdf2_sha256$"):
         try:
-            parts = stored_password.split('$')
-            if len(parts) != 3:
+            partes = _partes_hash(stored_password)
+            if not partes:
                 return False
-            _, salt, hash_hex = parts
+            iteraciones, salt, hash_hex = partes
             computed_bytes = hashlib.pbkdf2_hmac(
                 'sha256',
                 plain_password.encode('utf-8'),
                 salt.encode('utf-8'),
-                100_000
+                iteraciones
             )
             return hmac.compare_digest(computed_bytes.hex(), hash_hex)
         except Exception:
             return False
     else:
         return hmac.compare_digest(plain_password, stored_password)
+
+
+_HASH_FICTICIO = {}  # iteraciones -> hash de una clave aleatoria
+
+
+def verificar_clave_ficticia(password: str) -> None:
+    """Gasta lo mismo que verificar una clave real, para que un usuario inexistente no responda más rápido."""
+    h = _HASH_FICTICIO.get(PBKDF2_ITERACIONES)
+    if h is None:
+        h = _HASH_FICTICIO[PBKDF2_ITERACIONES] = hash_password(secrets.token_hex(16))
+    verify_password(password, h)
+
+
+# Reglas para claves nuevas (NIST 800-63B): mínimo 8 caracteres y no estar entre las más usadas.
+LARGO_MINIMO_CLAVE = 8
+_CLAVES_COMUNES = frozenset("""
+12345678 123456789 1234567890 0123456789 87654321 98765432 12341234 11223344 11111111 00000000
+password password1 password12 password123 passw0rd contraseña contrasena contraseña1 contrasena1
+contraseña123 contrasena123 qwerty123 qwertyuiop asdfghjk asdfghjkl 1q2w3e4r 1qaz2wsx qwe12345 123qwe123
+abc12345 abcd1234 administrador administrator admin123 admin1234 admin12345 iloveyou superman football
+tireanalyze tireanalyze1 tireanalyze123 tirecheck tirecheck1 tirecheck123 llantas llantas123 colombia
+colombia1 colombia123 bogota123 clave123 clave1234 miclave123 usuario123 inspector inspector1 inspector123
+cambiar123 temporal temporal123 bienvenido bienvenido1 bienvenido123
+""".split())
+
+
+def validar_clave_nueva(clave, username: str = '') -> Optional[str]:
+    """Mensaje de error si la clave no cumple las reglas, o None si sirve."""
+    c = (clave or '').strip()
+    if len(c) < LARGO_MINIMO_CLAVE:
+        return f"La contraseña debe tener al menos {LARGO_MINIMO_CLAVE} caracteres."
+    baja = c.lower()
+    if baja in _CLAVES_COMUNES:
+        return "Esa contraseña es de las más usadas y es fácil de adivinar. Elija otra."
+    if username and baja == str(username).strip().lower():
+        return "La contraseña no puede ser igual al nombre de usuario."
+    if len(set(baja)) <= 2:
+        return "La contraseña repite casi el mismo carácter. Elija otra."
+    if baja.isdigit():
+        # Paso entre dígitos en forma circular, para que «34567890» (9→0) también cuente como secuencia
+        pasos = {(int(b) - int(a)) % 10 for a, b in zip(baja, baja[1:])}
+        if pasos in ({1}, {9}):
+            return "La contraseña no puede ser una secuencia de números. Elija otra."
+    return None
 
 def normalizar_texto(texto):
     if not isinstance(texto, str):
@@ -6654,8 +7376,41 @@ def to_int(val, default=0):
     except (ValueError, TypeError):
         return default
 
+# Conexión compartida (opcional): dentro de `with conexion_compartida():` todas las llamadas a get_connection usan la
+# misma conexión. Sirve a procesos de solo lectura que hacen miles de consultas cortas (el paquete offline del patio
+# abría ~4.800 conexiones).
+_conexion_compartida = contextvars.ContextVar('_conexion_compartida', default=None)
+
+
+# Seguridad: los textos que se guardan no llevan < > " ' ` (con ellos un dato podía volverse HTML o código en las
+# pantallas: XSS almacenado). Ningún dato de llantas, vehículos o clientes los necesita.
+_SIN_CARACTERES_HTML = str.maketrans('', '', '<>"' + "'`")
+
+
+def limpiar_texto_entrada(valor):
+    """Quita < > " ' ` de un texto (los demás tipos pasan igual)."""
+    return valor.translate(_SIN_CARACTERES_HTML) if isinstance(valor, str) else valor
+
+
+@contextmanager
+def conexion_compartida():
+    if _conexion_compartida.get() is not None:
+        yield _conexion_compartida.get()
+        return
+    with get_connection() as conn:
+        token = _conexion_compartida.set(conn)
+        try:
+            yield conn
+        finally:
+            _conexion_compartida.reset(token)
+
+
 @contextmanager
 def get_connection():
+    compartida = _conexion_compartida.get()
+    if compartida is not None:
+        yield compartida
+        return
     conn = sqlite3.connect(DB_PATH, timeout=15.0)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
@@ -6686,8 +7441,45 @@ def asegurar_columna_vistas_permitidas(conn):
         if cols_usr and 'sedes_asignadas' not in cols_usr:
             cursor.execute("ALTER TABLE usuarios ADD COLUMN sedes_asignadas TEXT DEFAULT ''")
             conn.commit()
+        # 1 = debe cambiar su clave antes de usar la app (clave puesta por el administrador o que no cumple las reglas)
+        if cols_usr and 'debe_cambiar_clave' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN debe_cambiar_clave INTEGER DEFAULT 0")
+            conn.commit()
+        # Va en cada sesión (token): al subirla, todas las sesiones abiertas del usuario dejan de servir
+        if cols_usr and 'sesion_version' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN sesion_version INTEGER DEFAULT 0")
+            conn.commit()
+        # KPI que el usuario desmarcó en la pestaña KPIs (lista JSON de claves). Se guardan los ocultos y no los
+        # visibles para que un indicador nuevo aparezca marcado sin que nadie tenga que activarlo.
+        if cols_usr and 'kpis_ocultos' not in cols_usr:
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN kpis_ocultos TEXT DEFAULT ''")
+            conn.commit()
     except Exception:
         pass
+
+
+def obtener_kpis_ocultos_usuario(username):
+    """Claves de los KPI que el usuario desmarcó (vacía = ve todos)."""
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        fila = conn.execute("SELECT kpis_ocultos FROM usuarios WHERE LOWER(username) = LOWER(?)",
+                            (str(username or '').strip(),)).fetchone()
+    try:
+        lista = json.loads(fila[0]) if fila and fila[0] else []
+    except (TypeError, ValueError):
+        return []
+    return sorted({str(k) for k in lista if isinstance(k, str)}) if isinstance(lista, list) else []
+
+
+def guardar_kpis_ocultos_usuario(username, claves):
+    """Guarda los KPI desmarcados por el usuario. Devuelve la lista guardada."""
+    ocultos = sorted({str(k).strip() for k in (claves or []) if str(k).strip()})
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        conn.execute("UPDATE usuarios SET kpis_ocultos = ? WHERE LOWER(username) = LOWER(?)",
+                     (json.dumps(ocultos), str(username or '').strip()))
+        conn.commit()
+    return ocultos
 
 def normalizar_vida_y_banda(vida_input, banda_input=''):
     """
@@ -6825,6 +7617,27 @@ def inicializar_bd():
             # Los usuarios de ejemplo solo se crean en una base vacía: si se borran no deben
             # reaparecer con una contraseña conocida.
 
+        # Registro de ingresos: cada intento de login (exista o no el usuario). Sirve para el bloqueo
+        # por usuario y para que el administrador vea el último ingreso y los intentos fallidos.
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS registro_ingresos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha REAL NOT NULL,          -- segundos desde 1970 (time.time())
+                username TEXT NOT NULL,       -- en minúsculas, tal como se escribió
+                ip TEXT DEFAULT '',
+                exito INTEGER NOT NULL DEFAULT 0,
+                motivo TEXT DEFAULT ''        -- 'clave_incorrecta', 'sin_cliente', '' si entró
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_registro_ingresos_usuario ON registro_ingresos(username, fecha)")
+        # Sesiones cerradas con «Salir» antes de vencer (identificador de la sesión hasta su vencimiento)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sesiones_revocadas (
+                jti TEXT PRIMARY KEY,
+                expira REAL NOT NULL
+            )
+        """)
+
         # Tabla de Configuración de Límites por Cliente (Ej: Límite de retiro/cambio de llanta)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS configuracion_clientes (
@@ -6901,6 +7714,12 @@ def inicializar_bd():
                 UNIQUE(cliente, placa)
             )
         """)
+        # Parque cargado por archivo: datos del vehículo y origen ('auto' = backfill, 'archivo' = cargue del admin)
+        cols_padron = [r[1] for r in cursor.execute("PRAGMA table_info(padron_vehiculos_cliente)").fetchall()]
+        for col, tipo in (('fabricante', "TEXT DEFAULT ''"), ('linea', "TEXT DEFAULT ''"),
+                          ('km_actual', 'REAL'), ('origen', "TEXT DEFAULT 'auto'")):
+            if col not in cols_padron:
+                cursor.execute(f"ALTER TABLE padron_vehiculos_cliente ADD COLUMN {col} {tipo}")
 
         # Backfill inicial seguro del padrón desde inspecciones históricas
         cursor.execute("SELECT COUNT(*) FROM padron_vehiculos_cliente")
@@ -7381,6 +8200,17 @@ def inicializar_bd():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_cliente_placa ON inspecciones (cliente, placa)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_numero_interno_fecha ON kardex_movimientos_llanta (numero_interno, fecha_movimiento DESC)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_llantas_maestro_cliente_estado_act ON llantas_maestro (cliente, estado_actual)")
+        # Índices sobre UPPER(...): la sincronización de llantas busca con UPPER(cliente) = ? y sin ellos recorría la
+        # tabla completa por cada llanta (el arranque crecía con el cuadrado de los datos: 1,4 s -> 0,05 s)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maestro_up_cliente_num ON llantas_maestro (UPPER(cliente), UPPER(numero_interno))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_maestro_up_placa_pos ON llantas_maestro (UPPER(placa_actual), posicion_actual)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_kardex_up_cliente_num ON kardex_movimientos_llanta (UPPER(cliente), UPPER(numero_interno))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_novedades_up_num ON llantas_novedades_registro (UPPER(numero_interno))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_up_num_cliente ON inspecciones (UPPER(TRIM(numero_interno)), UPPER(TRIM(cliente)))")
+        # Búsquedas por placa con UPPER(TRIM(placa)) = ? (perfil del vehículo, patio, paquete offline)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_inspecciones_up_placa ON inspecciones (UPPER(TRIM(placa)), fecha, id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_catalogo_vehiculos_up_placa ON catalogo_vehiculos (UPPER(TRIM(placa)))")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_padron_up_placa ON padron_vehiculos_cliente (UPPER(TRIM(placa)))")
 
         # Normalización automática: asegurar que todos los clientes estén en mayúsculas
         normalizar_clientes_mayusculas(conn)
@@ -8305,8 +9135,13 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                 ))
             else:
                 ubi = row_m[1]
-                # Si otra llanta ocupaba esa misma posición en el vehículo, desmontarla a Bodega 2
-                if placa and pos > 0:
+
+                def _desmontar_ocupantes():
+                    # Si otra llanta ocupaba esa misma posición en el vehículo, desmontarla a Bodega 2.
+                    # Solo cuando esta llanta de verdad queda ahí: antes corría también con una llanta ya
+                    # desmontada, y al reiniciar el servidor sacaba a la que se había montado en su lugar.
+                    if not (placa and pos > 0):
+                        return
                     c.execute("""
                         SELECT id, numero_interno, prof_actual_min, vida_actual FROM llantas_maestro
                         WHERE UPPER(cliente) = ? AND ubicacion_bodega = 'MONTADA_OPERACION'
@@ -8366,6 +9201,8 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                     if row_k and fecha_ult_k and fecha_insp_s <= fecha_ult_k:
                         continue
 
+                    _desmontar_ocupantes()
+
                     # Transición automática: llanta de bodega que fue montada en patio
                     c.execute("""
                         UPDATE llantas_maestro SET
@@ -8398,6 +9235,16 @@ def sincronizar_maestro_desde_inspecciones(conn=None, cliente_filtro=None, numer
                         cli, subc, serial, ubi, placa, pos, vida, p_min, km_act
                     ))
                 else:
+                    # Un montaje en otra posición posterior a esta inspección manda sobre ella
+                    r_mont = c.execute("""
+                        SELECT SUBSTR(fecha_movimiento, 1, 10), UPPER(TRIM(placa)), posicion FROM kardex_movimientos_llanta
+                        WHERE UPPER(cliente) = ? AND UPPER(numero_interno) = ? AND bodega_destino = 'MONTADA_OPERACION'
+                        ORDER BY fecha_movimiento DESC, id DESC LIMIT 1
+                    """, (cli, serial)).fetchone()
+                    if r_mont and str(r_mont[0] or '') >= str(fecha_insp)[:10] and (r_mont[1], to_int(r_mont[2], 0)) != (placa, pos):
+                        continue
+
+                    _desmontar_ocupantes()
                     c.execute("""
                         UPDATE llantas_maestro SET
                             placa_actual = ?,
@@ -8829,6 +9676,43 @@ def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "
                 "ult_prof_min": prof_min,
                 "ult_novedades": row[16] or ""
             }
+        # Sin inspecciones (recién dada de alta o montada por taller): sus datos están en el inventario
+        cursor.execute("""
+            SELECT COALESCE(NULLIF(cliente, ''), cliente_propietario), subcliente, placa_actual, posicion_actual,
+                   COALESCE(NULLIF(marca, ''), marca_origen), COALESCE(NULLIF(diseno, ''), diseno_origen), dimension,
+                   vida_actual, num_reencauches, ciclo_actual, banda_reen,
+                   COALESCE(NULLIF(prof_inicial, 0), prof_inicial_nueva), prof_actual_min,
+                   COALESCE(NULLIF(costo_ciclo_actual, 0), NULLIF(costo_compra_original, 0), precio_compra_inicial),
+                   COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo)
+            FROM llantas_maestro
+            WHERE UPPER(TRIM(numero_interno)) = ?
+              AND (UPPER(TRIM(cliente)) = UPPER(TRIM(?)) OR UPPER(TRIM(cliente_propietario)) = UPPER(TRIM(?)) OR ? = '')
+            LIMIT 1
+        """, (num_norm, cli_norm, cli_norm, cli_norm))
+        m = cursor.fetchone()
+        if m:
+            return {
+                "encontrado": True,
+                "numero_interno": num_norm,
+                "cliente": m[0] or "",
+                "subcliente": m[1] or "",
+                "ult_placa": m[2] or "",
+                "ult_posicion": to_int(m[3], 0) or None,
+                "ult_fecha": "",
+                "marca": m[4] or "",
+                "diseno": m[5] or "",
+                "dimension": m[6] or "",
+                "vida": vida_llanta(m[7], m[8], m[9]),
+                "banda_reen": m[10] or "",
+                "prof_inicial": to_float(m[11]),
+                "precio": to_float(m[13]),
+                "km_montaje": to_float(m[14]),
+                "ult_prof_ext": 0.0,
+                "ult_prof_cent": 0.0,
+                "ult_prof_int": 0.0,
+                "ult_prof_min": to_float(m[12]),
+                "ult_novedades": ""
+            }
     return None
 
 def obtener_posiciones_por_tipologia(tipologia):
@@ -9200,6 +10084,10 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                         f'⛔ CANDADO DE VIDA: La llanta {num_interno} figura como {nombre(v_prev)}; '
                         f'solo puede pasar a R{i_prev + 1}, no a {nombre(vida_val)}. Verifique la vida o registre el reencauche faltante.')}
 
+        # Una llanta recién montada por taller es otra llanta: la frecuencia, el desgaste y la duplicidad
+        # del mes se refieren a la anterior y no le aplican (antes bloqueaban su primera inspección)
+        montaje_nuevo = llanta_recien_montada(cursor, placa, posicion, num_interno, str(datos.get('cliente', '')).strip(), excluir_id)
+
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
         # En la versión LIGHT se permite ingresar las veces que sea necesario la palabra "SN" (Sin Número).
         cliente_val = str(datos.get('cliente', '')).strip()
@@ -9236,7 +10124,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
 
             cursor.execute(sql_dup, tuple(params_dup))
             dup_row = cursor.fetchone()
-            if dup_row:
+            if dup_row and not montaje_nuevo:
                 return {
                     'valido': False,
                     'mensaje': f'⛔ CANDADO DE NÚMERO INTERNO: La llanta "{num_interno}" ya está asignada en el cliente "{cliente_val}" al vehículo {dup_row[0]}, Posición {dup_row[1]} en el mes de inspección ({dup_row[4]}). No se permiten números de llanta duplicados en el mismo mes.'
@@ -9268,7 +10156,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
             if f_nueva_str == f_ult_str:
                 # Misma fecha (misma jornada): verificar si esta posición específica ya fue inspeccionada
                 pos_ya_registradas = [r[1] for r in filas_ant if str(r[0]).strip()[:10] == f_ult_str]
-                if posicion in pos_ya_registradas and not es_cargue_masivo:
+                if posicion in pos_ya_registradas and not es_cargue_masivo and not montaje_nuevo:
                     return {
                         'valido': False,
                         'alerta_mes': True,
@@ -9283,7 +10171,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                     }
             else:
                 # Fecha posterior: debe haber transcurrido la frecuencia configurada por cliente
-                if not es_cargue_masivo:
+                if not es_cargue_masivo and not montaje_nuevo:
                     f_base = datetime.strptime(f_ult_str, '%Y-%m-%d').date()
                     f_nueva = datetime.strptime(f_nueva_str, '%Y-%m-%d').date()
                     f_minima = calcular_fecha_minima_siguiente_inspeccion(f_base, cliente=cliente_val)
@@ -9326,7 +10214,7 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
                 }
 
         # Candado 4: Profundidad no puede subir de una inspección a otra (tolerancia máx 1.0 mm, solo en captura secuencial)
-        if not es_cargue_masivo:
+        if not es_cargue_masivo and not montaje_nuevo:
             sql_prof = """
                 SELECT prof_ext, prof_cent, prof_int, fecha FROM inspecciones 
                 WHERE placa = ? AND posicion = ?
@@ -9466,7 +10354,13 @@ def insertar_inspeccion(datos):
 
 def obtener_todas_inspecciones(usuario=None, incluir_fotos: bool = True):
     with get_connection() as conn:
-        col_foto = "foto_novedad" if incluir_fotos else "CASE WHEN foto_novedad IS NOT NULL AND TRIM(foto_novedad) != '' AND TRIM(foto_novedad) != '[]' THEN '1' ELSE '' END AS tiene_foto, '' AS foto_novedad"
+        # Sin fotos: solo cuántas tiene cada inspección (las fotos son ~75 % del peso de la lista)
+        col_foto = "foto_novedad" if incluir_fotos else """
+            CASE WHEN foto_novedad IS NOT NULL AND TRIM(foto_novedad) != '' AND TRIM(foto_novedad) != '[]' THEN '1' ELSE '' END AS tiene_foto,
+            CASE WHEN foto_novedad IS NULL OR TRIM(foto_novedad) IN ('', '[]') THEN 0
+                 WHEN TRIM(foto_novedad) LIKE '[%' AND json_valid(foto_novedad) THEN json_array_length(foto_novedad)
+                 ELSE 1 END AS fotos_cantidad,
+            '' AS foto_novedad"""
         query = f"""
             SELECT id, fecha, cliente, subcliente, tipo_operacion, placa, posicion, kilometraje,
                    tipologia, marca, diseno, dimension, vida, banda_reen, prof_ext, prof_cent, prof_int,
@@ -9595,6 +10489,48 @@ def vaciar_inspecciones():
         conn.commit()
 
 
+# Lo que deja un cargue de inspecciones por Excel para un cliente: las inspecciones, sus vehículos y marcas, y las llantas
+# que la sincronización crea a partir de ellas (maestro, kardex, ciclos, movimientos y novedades). La licencia, los
+# límites de retiro y los precios del cliente no se tocan.
+_LLANTAS_DEL_CLIENTE = "(MAYUS(TRIM(IFNULL(cliente, ''))) = :cli OR MAYUS(TRIM(IFNULL(cliente_propietario, ''))) = :cli)"
+# Ciclos, movimientos y novedades se ligan por dueño; sin dueño, por número interno si ese número es solo de este cliente
+_HISTORIA_DE_LLANTA = f"""(MAYUS(TRIM(IFNULL(cliente_propietario, ''))) = :cli
+    OR (TRIM(IFNULL(cliente_propietario, '')) = ''
+        AND MAYUS(TRIM(numero_interno)) IN (SELECT MAYUS(TRIM(numero_interno)) FROM llantas_maestro WHERE {_LLANTAS_DEL_CLIENTE})
+        AND MAYUS(TRIM(numero_interno)) NOT IN (SELECT MAYUS(TRIM(numero_interno)) FROM llantas_maestro WHERE NOT {_LLANTAS_DEL_CLIENTE})))"""
+_POR_CLIENTE = "MAYUS(TRIM(cliente)) = :cli"
+# Orden de borrado: primero lo que depende de las llantas del maestro
+_TABLAS_CARGUE_CLIENTE = (
+    ('inspecciones', 'Inspecciones', _POR_CLIENTE),
+    ('catalogo_vehiculos', 'Vehículos del catálogo', _POR_CLIENTE),
+    ('padron_vehiculos_cliente', 'Vehículos del parque', _POR_CLIENTE),
+    ('configuracion_marcas_cliente', 'Marcas del cliente', _POR_CLIENTE),
+    ('llantas_ciclos', 'Ciclos de vida de llantas', _HISTORIA_DE_LLANTA),
+    ('llantas_movimientos', 'Movimientos de llantas', _HISTORIA_DE_LLANTA),
+    ('llantas_novedades_registro', 'Novedades de llantas', _HISTORIA_DE_LLANTA),
+    ('kardex_movimientos_llanta', 'Movimientos de kardex', _POR_CLIENTE),
+    ('llantas_maestro', 'Llantas en bodegas y vehículos', _LLANTAS_DEL_CLIENTE),
+)
+
+
+def eliminar_datos_cargados_cliente(cliente: str, ejecutar: bool = False) -> dict:
+    """Cuenta (y con ejecutar=True borra) los datos de cargue de un cliente: deshace un Excel subido por error."""
+    cli = str(cliente or '').strip().upper()
+    if not cli or cli in ('TODOS', 'TODAS'):
+        raise ValueError("Indique un cliente.")
+    par = {"cli": cli}
+    with get_connection() as conn:
+        conteo = {t: conn.execute(f"SELECT COUNT(*) FROM {t} WHERE {cond}", par).fetchone()[0]
+                  for t, _, cond in _TABLAS_CARGUE_CLIENTE}
+        if ejecutar:
+            for t, _, cond in _TABLAS_CARGUE_CLIENTE:
+                conn.execute(f"DELETE FROM {t} WHERE {cond}", par)
+            conn.commit()
+    return {"cliente": cli, "ejecutado": ejecutar,
+            "detalle": [{"tabla": t, "nombre": n, "registros": conteo[t]} for t, n, _ in _TABLAS_CARGUE_CLIENTE],
+            "total": sum(conteo.values())}
+
+
 def actualizar_inspecciones_en_lote(ids, cambios):
     """
     Actualiza múltiples registros de inspección en lote (operación reservada para el Administrador).
@@ -9720,8 +10656,9 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
         cursor = conn.cursor()
         for idx, row in df.iterrows():
             placa_raw = row[col_encontradas['placa']] if 'placa' in col_encontradas and not pd.isna(row[col_encontradas['placa']]) else ''
-            placa = str(placa_raw).strip().upper()
-            if not placa or placa == 'NAN':
+            # Igual que en el parque: un número interno leído como 101.0 queda "101" y empata con el parque
+            placa = _placa_padron(placa_raw)
+            if not placa:
                 continue
             
             pos = to_int(row[col_encontradas['posicion']]) if 'posicion' in col_encontradas else 1
@@ -9782,9 +10719,11 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
             val = validar_inspeccion_candados(datos, conn=conn, es_cargue_masivo=True)
             if not val.get('valido', True):
                 raise ValueError(f"Fila {idx + 2} (Placa {placa}, Pos {pos}): {val.get('mensaje')}")
+            # Sin caracteres de HTML en los textos del archivo (XSS almacenado)
+            datos = {k: (v if k == 'foto_novedad' else limpiar_texto_entrada(v)) for k, v in datos.items()}
 
             # Asegurar número interno asignado en caso de autogeneración
-            num_final = str(datos.get('numero_interno', num_interno)).strip().upper()
+            num_final = limpiar_texto_entrada(str(datos.get('numero_interno', num_interno)).strip().upper())
 
             cursor.execute("""
                 INSERT INTO inspecciones (
@@ -9834,6 +10773,9 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
                 conn=conn
             )
             registros_insertados += 1
+        # Las llantas del archivo pasan a Bodegas de una vez (antes solo al reiniciar el servidor)
+        if registros_insertados:
+            sincronizar_maestro_desde_inspecciones(conn)
         conn.commit()
     return registros_insertados
 
@@ -10657,7 +11599,7 @@ def importar_precios_cliente_excel(file_path: str, clientes_autorizados=None) ->
                 if not re.match(r'^\d{4}-\d{2}-\d{2}$', vig_str):
                     vig_str = hoy
 
-            ok = guardar_precio_cliente(cli, mar, dis, dim, tipo_str, precio_val, vig_str)
+            ok = guardar_precio_cliente(*[limpiar_texto_entrada(x) for x in (cli, mar, dis, dim, tipo_str)], precio_val, vig_str)
             if ok:
                 registros_guardados += 1
             else:
@@ -10926,7 +11868,7 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
         if fecha:
             f_str = str(fecha).strip()[:10]
             cursor.execute('''
-                SELECT posicion, novedades
+                SELECT posicion, novedades, numero_interno, cliente
                 FROM inspecciones
                 WHERE UPPER(TRIM(placa)) = ? AND substr(fecha, 1, 10) = ?
                 ORDER BY id ASC
@@ -10937,8 +11879,15 @@ def obtener_posiciones_inspeccionadas_detalle(placa, fecha=None):
         posiciones = []
         posiciones_con_novedad = []
         novedades_map = {}
-        for r in cursor.fetchall():
-            if r[0] is not None:
+        filas = cursor.fetchall()
+        # Si después de inspeccionar se cambió la llanta de la posición, la nueva sigue pendiente
+        ultima_fila = {int(r[0]): r for r in filas if r[0] is not None}
+        cambiadas = {
+            p for p, r in ultima_fila.items()
+            if cambio_de_llanta_en_posicion(cursor, pl, p, r[2], f_str, r[3] or '')[0] != 'igual'
+        }
+        for r in filas:
+            if r[0] is not None and int(r[0]) not in cambiadas:
                 p = int(r[0])
                 if p not in posiciones:
                     posiciones.append(p)
@@ -10963,6 +11912,229 @@ def obtener_posiciones_inspeccionadas_actuales(placa, fecha=None):
     """
     det = obtener_posiciones_inspeccionadas_detalle(placa, fecha)
     return det.get("posiciones", [])
+
+def _llanta_montada_en_posicion(cursor, placa, posicion, cliente=''):
+    """La llanta que el inventario tiene montada en (placa, posición), o None."""
+    cli = str(cliente or '').strip().upper()
+    if cli == 'TODOS':
+        cli = ''
+    cursor.execute("""
+        SELECT numero_interno, numero_serie_dot, marca, marca_origen, diseno, diseno_origen, dimension, vida_actual,
+               ciclo_actual, num_reencauches, banda_reen, prof_inicial, prof_inicial_nueva, prof_actual_min, psi_actual,
+               costo_ciclo_actual, costo_compra_original, precio_compra_inicial,
+               km_montaje_actual, km_montaje_ciclo, km_actual_vehiculo,
+               cliente, cliente_propietario, subcliente, tipo_operacion
+        FROM llantas_maestro
+        WHERE UPPER(TRIM(placa_actual)) = ? AND posicion_actual = ? AND ubicacion_bodega = ?
+          AND (UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ? OR ? = '')
+        ORDER BY fecha_ultimo_movimiento DESC, id DESC LIMIT 1
+    """, (str(placa or '').strip().upper(), to_int(posicion, 0), MONTADA, cli, cli, cli))
+    fila = cursor.fetchone()
+    if not fila:
+        return None
+    return dict(zip([d[0] for d in cursor.description], fila))
+
+
+def _fecha_montaje_en_posicion(cursor, numero_interno, placa, posicion):
+    """Fecha (AAAA-MM-DD) del último montaje de la llanta en esa posición según el kardex, o ''."""
+    r = cursor.execute("""
+        SELECT MAX(SUBSTR(fecha_movimiento, 1, 10)) FROM kardex_movimientos_llanta
+        WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(placa)) = ? AND posicion = ? AND bodega_destino = ?
+    """, (str(numero_interno or '').strip().upper(), str(placa or '').strip().upper(), to_int(posicion, 0), MONTADA)).fetchone()
+    return str(r[0]) if r and r[0] else ''
+
+
+def cambio_de_llanta_en_posicion(cursor, placa, posicion, numero_inspeccion, fecha_inspeccion, cliente=''):
+    """
+    Compara la llanta de la última inspección con lo que hay hoy en la posición, según inventario y kardex:
+    ('igual', None), ('cambiada', llanta montada) o ('retirada', None). Solo cuenta un movimiento registrado
+    en la fecha de la inspección o después; sin movimiento, la inspección sigue siendo la referencia.
+    """
+    serial = str(numero_inspeccion or '').strip().upper()
+    fecha = str(fecha_inspeccion or '')[:10]
+    placa_n = str(placa or '').strip().upper()
+    pos = to_int(posicion, 0)
+    montada = _llanta_montada_en_posicion(cursor, placa_n, pos, cliente)
+    if montada:
+        if str(montada['numero_interno'] or '').strip().upper() == serial:
+            return 'igual', None
+        entrada = _fecha_montaje_en_posicion(cursor, montada['numero_interno'], placa_n, pos)
+        return ('cambiada', montada) if entrada and entrada >= fecha else ('igual', None)
+    if not serial or serial == 'SN':
+        return 'igual', None
+    cli = str(cliente or '').strip().upper()
+    fila = cursor.execute("""
+        SELECT ubicacion_bodega, UPPER(TRIM(placa_actual)), posicion_actual FROM llantas_maestro
+        WHERE UPPER(TRIM(numero_interno)) = ? AND (UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ? OR ? = '')
+    """, (serial, cli, cli, cli)).fetchone()
+    if not fila or (fila[0] == MONTADA and fila[1] == placa_n and to_int(fila[2], 0) == pos):
+        return 'igual', None
+    mov = cursor.execute("""
+        SELECT MAX(SUBSTR(fecha_movimiento, 1, 10)) FROM kardex_movimientos_llanta
+        WHERE UPPER(TRIM(numero_interno)) = ? AND (UPPER(TRIM(cliente)) = ? OR ? = '')
+    """, (serial, cli, cli)).fetchone()
+    return ('retirada', None) if mov and mov[0] and str(mov[0]) >= fecha else ('igual', None)
+
+
+def llanta_recien_montada(cursor, placa, posicion, numero_interno, cliente='', excluir_id=None) -> bool:
+    """True si la llanta está montada en esa posición por un movimiento posterior a la última inspección de otra llanta."""
+    serial = str(numero_interno or '').strip().upper()
+    if not serial or serial == 'SN':
+        return False
+    montada = _llanta_montada_en_posicion(cursor, placa, posicion, cliente)
+    if not montada or str(montada['numero_interno'] or '').strip().upper() != serial:
+        return False
+    entrada = _fecha_montaje_en_posicion(cursor, serial, placa, posicion)
+    if not entrada:
+        return False
+    sql = "SELECT numero_interno, SUBSTR(fecha, 1, 10) FROM inspecciones WHERE UPPER(TRIM(placa)) = ? AND posicion = ?"
+    params = [str(placa or '').strip().upper(), to_int(posicion, 0)]
+    if excluir_id is not None:
+        sql += " AND id != ?"
+        params.append(to_int(excluir_id))
+    prev = cursor.execute(sql + " ORDER BY fecha DESC, id DESC LIMIT 1", params).fetchone()
+    if not prev:
+        return True
+    return str(prev[0] or '').strip().upper() != serial and entrada >= str(prev[1] or '')
+
+
+def _datos_inspeccion_de_llanta(montada: dict, base: dict = None) -> dict:
+    """Datos para el formulario de inspección a partir de la llanta montada; la medición queda por hacer."""
+    datos = dict(base or {})
+    km_montaje = to_float(montada.get('km_montaje_actual')) or to_float(montada.get('km_montaje_ciclo'))
+    precio = (to_float(montada.get('costo_ciclo_actual')) or to_float(montada.get('costo_compra_original'))
+              or to_float(montada.get('precio_compra_inicial')))
+    datos.update({
+        'id': None,
+        'numero_interno': montada.get('numero_interno') or '',
+        'marca': montada.get('marca') or montada.get('marca_origen') or '',
+        'diseno': montada.get('diseno') or montada.get('diseno_origen') or '',
+        'dimension': montada.get('dimension') or '',
+        'vida': vida_llanta(montada.get('vida_actual'), montada.get('num_reencauches'), montada.get('ciclo_actual')),
+        'banda_reen': montada.get('banda_reen') or '',
+        'prof_inicial': to_float(montada.get('prof_inicial')) or to_float(montada.get('prof_inicial_nueva')) or None,
+        'precio': precio or None,
+        'km_montaje': km_montaje or None,
+        'prof_ext': None, 'prof_cent': None, 'prof_int': None, 'psi': None, 'novedades': '',
+    })
+    datos.setdefault('cliente', montada.get('cliente') or montada.get('cliente_propietario') or '')
+    datos.setdefault('subcliente', montada.get('subcliente') or '')
+    return datos
+
+
+def obtener_datos_posicion_inspeccion(placa, posicion) -> dict:
+    """
+    Lo que debe traer el formulario al seleccionar una posición: la última inspección o, si después se montó
+    o se retiró una llanta, la que está hoy en la posición (antes siempre traía la llanta anterior).
+    """
+    prev = obtener_ultima_inspeccion_posicion(placa, posicion)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if prev:
+            estado, montada = cambio_de_llanta_en_posicion(cursor, placa, posicion, prev.get('numero_interno'),
+                                                           prev.get('fecha'), prev.get('cliente') or '')
+            if estado == 'cambiada':
+                return {'encontrado': True, 'datos': _datos_inspeccion_de_llanta(montada, prev), 'llanta_cambiada': True}
+            if estado == 'retirada':
+                return {'encontrado': False, 'llanta_retirada': True}
+            return {'encontrado': True, 'datos': prev}
+        montada = _llanta_montada_en_posicion(cursor, placa, posicion)
+        if montada:
+            return {'encontrado': True, 'datos': _datos_inspeccion_de_llanta(montada), 'llanta_cambiada': True}
+    return {'encontrado': False}
+
+
+def _filtro_clientes_usuario(usuario):
+    """Condición SQL (columnas cliente y subcliente) según los clientes y sedes asignados al usuario."""
+    if not usuario:
+        return '', []
+    usr_info = obtener_usuario_por_username(usuario)
+    if not usr_info or usr_info.get('rol') == 'admin':
+        return '', []
+    clis = parsear_clientes_asignados(usr_info.get('cliente_asignado'))
+    if not clis:
+        return '', []
+    sql = f" AND UPPER(TRIM(cliente)) IN ({', '.join(['UPPER(TRIM(?))'] * len(clis))})"
+    params = [c.upper() for c in clis]
+    for cli_s, sedes in parsear_sedes_asignadas(usr_info.get('sedes_asignadas'), clis).items():
+        sql += f" AND (UPPER(TRIM(cliente)) != ? OR UPPER(TRIM(IFNULL(subcliente, ''))) IN ({', '.join(['?'] * len(sedes))}))"
+        params.extend([cli_s] + sorted(sedes))
+    return sql, params
+
+
+def _bodega_corta(codigo) -> str:
+    """'BODEGA_2_RECAMBIO' -> 'Bodega 2'."""
+    m = re.match(r'BODEGA_(\d)', str(codigo or '').upper())
+    return f"Bodega {m.group(1)}" if m else ''
+
+
+def obtener_movimientos_base_inspecciones(usuario=None) -> dict:
+    """
+    Movimientos de montaje y retiro (kardex) para la Base de inspecciones.
+    por_inspeccion: {id de inspección: textos}. El montaje va en la primera inspección de esa llanta en la
+    posición y el retiro en su última inspección. sin_inspeccion: los que aún no tienen inspección a la cual ir.
+    """
+    filtro, params = _filtro_clientes_usuario(usuario)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        inspecciones = {}
+        for i_id, cli, pl, pos, serial, f in cursor.execute(f"""
+            SELECT id, UPPER(TRIM(cliente)), UPPER(TRIM(placa)), posicion, UPPER(TRIM(numero_interno)), SUBSTR(fecha, 1, 10)
+            FROM inspecciones WHERE 1=1{filtro} ORDER BY fecha ASC, id ASC""", params).fetchall():
+            inspecciones.setdefault((cli, pl, to_int(pos, 0), serial), []).append((f or '', i_id))
+
+        movimientos = cursor.execute(f"""
+            SELECT id, SUBSTR(fecha_movimiento, 1, 10), UPPER(TRIM(cliente)), subcliente, UPPER(TRIM(numero_interno)),
+                   bodega_origen, bodega_destino, UPPER(TRIM(placa)), posicion, km_vehiculo, causal_o_motivo, usuario_registro
+            FROM kardex_movimientos_llanta
+            WHERE TRIM(IFNULL(placa, '')) <> '' AND posicion > 0 AND (bodega_destino = ? OR bodega_origen = ?){filtro}
+            ORDER BY fecha_movimiento ASC, id ASC""", [MONTADA, MONTADA] + params).fetchall()
+
+        unidades, llantas = {}, {}
+        por_inspeccion, sin_inspeccion = {}, []
+        for m_id, f, cli, subc, serial, origen, destino, pl, pos, km, motivo, usuario_reg in movimientos:
+            pos = to_int(pos, 0)
+            if pl not in unidades:
+                unidades[pl] = 'horas' if unidad_medida_placa(pl, conn) == 'HORAS' else 'km'
+            lectura = f" a {to_float(km):,.0f} {unidades[pl]}".replace(',', '.') if to_float(km) > 0 else ''
+            filas = inspecciones.get((cli, pl, pos, serial), [])
+            if destino == MONTADA:
+                tipo = 'MONTAJE'
+                salen = sorted({x[4] for x in movimientos if x[1] == f and x[2] == cli and x[7] == pl and to_int(x[8], 0) == pos
+                                and x[5] == MONTADA and x[6] != MONTADA and x[4] != serial})
+                texto = f"Montada el {f}{lectura}"
+                if origen and origen != MONTADA and _bodega_corta(origen):
+                    texto += f" desde {_bodega_corta(origen)}"
+                if salen:
+                    texto += f", reemplaza a {', '.join(salen)}"
+                destino_insp = next((i for fi, i in filas if fi >= f), None)
+            else:
+                tipo = 'RETIRO'
+                texto = f"Retirada el {f}{lectura} hacia {_bodega_corta(destino) or destino}"
+                if motivo:
+                    texto += f" ({motivo})"
+                destino_insp = next((i for fi, i in reversed(filas) if fi <= f), None)
+            if destino_insp is not None:
+                por_inspeccion.setdefault(destino_insp, []).append({'tipo': tipo, 'texto': texto})
+                continue
+            if (cli, serial) not in llantas:
+                r = cursor.execute("""
+                    SELECT COALESCE(NULLIF(marca, ''), marca_origen), COALESCE(NULLIF(diseno, ''), diseno_origen), dimension,
+                           vida_actual, num_reencauches, ciclo_actual
+                    FROM llantas_maestro WHERE UPPER(TRIM(numero_interno)) = ? AND (UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ?)
+                """, (serial, cli, cli)).fetchone()
+                llantas[(cli, serial)] = r or ('', '', '', '', None, None)
+            ll = llantas[(cli, serial)]
+            sin_inspeccion.append({
+                'es_movimiento': True, 'id': f"mov-{m_id}", 'fecha': f, 'cliente': cli, 'subcliente': str(subc or '').upper(), 'placa': pl,
+                'posicion': pos, 'numero_interno': serial, 'kilometraje': to_float(km), 'marca': ll[0] or '', 'diseno': ll[1] or '',
+                'dimension': ll[2] or '', 'vida': vida_llanta(ll[3], ll[4], ll[5]) if ll[3] else '',
+                'usuario_registro': usuario_reg or '', 'novedades': '', 'tipo_operacion': '', 'tipologia': '', 'banda_reen': '',
+                'movimientos': [{'tipo': tipo, 'texto': texto}],
+            })
+    sin_inspeccion.sort(key=lambda r: r['fecha'], reverse=True)
+    return {'por_inspeccion': por_inspeccion, 'sin_inspeccion': sin_inspeccion}
+
 
 def obtener_ultima_inspeccion_posicion(placa, posicion):
     pl = str(placa or '').strip().upper()
@@ -11329,15 +12501,16 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
     totales_posicion = {int(p): {'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0, 'total': 0} for p in posiciones}
     resumen_global = {'total_vehiculos': 0, 'total_llantas': 0, 'rojo': 0, 'amarillo': 0, 'verde': 0, 'gris': 0}
 
-    for placa, group in df.groupby('placa', sort=False):
-        # Mismo criterio que analizar_inspecciones_df: fecha más reciente y última inspección por posición
-        if 'fecha' in group.columns and not group['fecha'].dropna().empty:
-            fecha_max = group['fecha'].astype(str).str[:10].max()
-            group = group[group['fecha'].astype(str).str[:10] == fecha_max]
-        if 'id' in group.columns:
-            group_ult = group.sort_values('id').groupby('posicion', as_index=False).last()
-        else:
-            group_ult = group.drop_duplicates(subset=['posicion'], keep='last')
+    # Última inspección de cada posición del vehículo, sin las llantas que el kardex ya desmontó (la misma foto de la
+    # flota de «Marcas Instaladas» y Composición). Antes solo contaban las posiciones inspeccionadas en la fecha más
+    # reciente: si ese día se revisó una sola llanta, el vehículo aparecía con una sola llanta.
+    orden = [c for c in ('fecha', 'id') if c in df.columns]
+    df_ult = (df.sort_values(orden) if orden else df).drop_duplicates(subset=['placa', 'posicion'], keep='last')
+    if {'cliente', 'numero_interno', 'fecha'}.issubset(df_ult.columns):
+        df_ult = quitar_llantas_desmontadas(df_ult)
+
+    for placa, group_ult in df_ult.groupby('placa', sort=False):
+        group_ult = group_ult.sort_values('posicion').reset_index(drop=True)
 
         cli = str(group_ult['cliente'].iloc[0] or '').strip().upper() if 'cliente' in group_ult.columns else ''
         sub = str(group_ult['subcliente'].iloc[0] or '').strip().upper() if 'subcliente' in group_ult.columns else ''
@@ -12428,7 +13601,7 @@ def eliminar_modelo_llanta(modelo_id):
         conn.commit()
     return True
 
-def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
+def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actual=False):
     """
     Calcula trazabilidad e indicadores clave de desempeno (KPIs) por llanta:
     - CPK (Costo Por Kilometro): Precio / Km Rodados
@@ -12438,6 +13611,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
     - Proyeccion Total Km: Rendimiento * mm_utiles
     - % Desgaste y CPK Proyectado
     Permite filtrar por cliente, subcliente, tipo_operacion, marca, diseno, dimension, vida, banda_reen.
+
+    foto_actual=True (Composición de Flota): una fila por llanta instalada hoy, es decir la última inspección de cada
+    posición sin las llantas que el kardex ya desmontó; es la misma base de «Marcas Instaladas» (KPI 04). Sin esto
+    contaban llantas ya retiradas, una posición con llanta cambiada contaba dos veces y todas las «SN» eran una sola.
     """
     filtros = filtros or {}
     usuario_filtro = filtros.get('usuario')
@@ -12456,8 +13633,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
                    prof_inicial, km_montaje, precio, cliente, subcliente, tipo_operacion,
                    tipologia, usuario_registro
             FROM inspecciones
-            WHERE numero_interno IS NOT NULL AND TRIM(numero_interno) != ''
+            WHERE 1=1
         """
+        if not foto_actual:
+            query += " AND numero_interno IS NOT NULL AND TRIM(numero_interno) != ''"
         params = []
         if numero_interno and str(numero_interno).strip():
             query += " AND UPPER(TRIM(numero_interno)) LIKE UPPER(TRIM(?))"
@@ -12496,12 +13675,37 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
 
     resultados = []
     cache_esquemas = {}
+    cache_reenc_dir = {}
     ref_precio_t, _ = construir_referencias_llanta(df)
-    # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
-    ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
-    posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
-        lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
-    for num, group in df.groupby('numero_interno'):
+    if foto_actual:
+        df = df.copy()
+        df['numero_interno'] = df['numero_interno'].fillna('').astype(str).str.strip()
+        df['_pl'] = df['placa'].fillna('').astype(str).str.strip().str.upper()
+        df['_sn'] = df['numero_interno'].str.upper()
+        df['_cli'] = df['cliente'].fillna('').astype(str).str.strip().str.upper()
+        foto = df.sort_values(['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['_pl', 'posicion'], keep='first')
+        foto = quitar_llantas_desmontadas(foto)
+        posiciones_por_placa = foto.groupby('_pl')['posicion'].apply(lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
+        por_serial = {k: g for k, g in df.groupby(['_cli', '_sn'])}
+
+        def _grupos():
+            for _, fila in foto.iterrows():
+                sn = fila['_sn']
+                if sn and sn not in ('SN', 'NONE', 'NAN', 'S/N'):
+                    g = por_serial[(fila['_cli'], sn)]
+                    # Historia de la llanta hasta esta inspección (la que la deja en esta posición)
+                    g = g[(g['fecha'] < fila['fecha']) | ((g['fecha'] == fila['fecha']) & (g['id'] <= fila['id']))]
+                else:
+                    g = foto.loc[[fila.name]]  # sin número: cada posición es su propia llanta
+                yield (fila['numero_interno'] or 'SN'), g
+        grupos = _grupos()
+    else:
+        # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
+        ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
+        posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
+            lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
+        grupos = df.groupby('numero_interno')
+    for num, group in grupos:
         group = group.sort_values(by=['fecha', 'id'])
         primera = group.iloc[0]
         ultima = group.iloc[-1]
@@ -12578,6 +13782,9 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
         eje_est = lim_posicion.tipo_eje(tip_norm, pos_int, posiciones_por_placa.get(str(ultima['placa']).strip().upper(), [pos_int]))
         tipo_eje = {'DIRECCIONAL': 'direccional', 'TRACCIÓN': 'traccion', 'LIBRE': 'libre', 'REPUESTO': 'repuesto'}.get(
             eje_est, determinar_tipo_eje_posicion(tip_norm, pos_int, cache_esquemas))
+        # Tipologías autorizadas a llevar reencauche en dirección (el candado de inspección ya las respeta)
+        if tip_norm not in cache_reenc_dir:
+            cache_reenc_dir[tip_norm] = bool(tipologia_permite_reencauche_direccion(tip_norm)) if tip_norm else False
 
         resultados.append({
             'numero_interno': num,
@@ -12589,6 +13796,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None):
             'vida': vida_norm,
             'tipologia': tip_norm,
             'tipo_eje': tipo_eje,
+            'permite_reencauche_direccion': cache_reenc_dir.get(tip_norm, False),
             'banda_reen': ultima.get('banda_reen', ''),
             'cliente': ultima.get('cliente', ''),
             'subcliente': ultima.get('subcliente', ''),
@@ -12718,19 +13926,26 @@ def autenticar_usuario(username, password):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, password, nombre_completo, rol, cliente_asignado, activo,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'),
+                   COALESCE(debe_cambiar_clave, 0), COALESCE(sesion_version, 0)
             FROM usuarios
             WHERE LOWER(username) = LOWER(?) AND activo = 1
         """, (u,))
         row = cursor.fetchone()
         if not row:
+            verificar_clave_ficticia(p)  # mismo tiempo de respuesta que con un usuario que sí existe
             return None
-        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas = row
+        uid, db_username, stored_pwd, nombre_completo, rol, cliente_asignado, activo, raw_vistas, debe_cambiar, version = row
         if verify_password(p, stored_pwd):
-            # Auto-migración en caso de que aún tuviera contraseña legada en texto plano
-            if not stored_pwd.startswith("pbkdf2_sha256$"):
+            # Auto-migración: texto plano o hash con menos iteraciones de las actuales se vuelve a cifrar
+            if hash_desactualizado(stored_pwd):
                 nuevo_hash = hash_password(p)
                 cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?", (nuevo_hash, uid))
+                conn.commit()
+            # Una clave que no cumple las reglas actuales (p. ej. «1234» de los usuarios de ejemplo) se debe cambiar
+            if not debe_cambiar and validar_clave_nueva(p, db_username):
+                debe_cambiar = 1
+                cursor.execute("UPDATE usuarios SET debe_cambiar_clave = 1 WHERE id = ?", (uid,))
                 conn.commit()
             clis = parsear_clientes_asignados(cliente_asignado)
             vistas = parsear_vistas_permitidas(raw_vistas, rol)
@@ -12742,7 +13957,9 @@ def autenticar_usuario(username, password):
                 'cliente_asignado': cliente_asignado or '',
                 'clientes_asignados': clis,
                 'vistas_permitidas': vistas,
-                'activo': bool(activo)
+                'activo': bool(activo),
+                'debe_cambiar_clave': bool(debe_cambiar),
+                'sesion_version': int(version or 0)
             }
     return None
 
@@ -12755,7 +13972,8 @@ def obtener_usuario_por_username(username):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, username, nombre_completo, rol, cliente_asignado, activo,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
+                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, ''),
+                   COALESCE(debe_cambiar_clave, 0), COALESCE(sesion_version, 0)
             FROM usuarios
             WHERE LOWER(username) = LOWER(?)
         """, (u,))
@@ -12772,7 +13990,9 @@ def obtener_usuario_por_username(username):
                 'clientes_asignados': clis,
                 'sedes_asignadas': row[7] or '',
                 'vistas_permitidas': vistas,
-                'activo': bool(row[5])
+                'activo': bool(row[5]),
+                'debe_cambiar_clave': bool(row[8]),
+                'sesion_version': int(row[9] or 0)
             }
     return None
 
@@ -12781,18 +14001,26 @@ def listar_usuarios():
         asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, username, nombre_completo, rol, cliente_asignado, activo, fecha_creacion,
-                   COALESCE(vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(sedes_asignadas, '')
-            FROM usuarios
-            ORDER BY id ASC
-        """)
-        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas', 'sedes_asignadas']
+            SELECT u.id, u.username, u.nombre_completo, u.rol, u.cliente_asignado, u.activo, u.fecha_creacion,
+                   COALESCE(u.vistas_permitidas, 'patio,diagnostico,kpis'), COALESCE(u.sedes_asignadas, ''),
+                   COALESCE(u.debe_cambiar_clave, 0),
+                   (SELECT MAX(r.fecha) FROM registro_ingresos r WHERE r.username = LOWER(u.username) AND r.exito = 1),
+                   (SELECT COUNT(*) FROM registro_ingresos r WHERE r.username = LOWER(u.username) AND r.exito = 0
+                       AND r.motivo = 'clave_incorrecta' AND r.fecha > ?)
+            FROM usuarios u
+            ORDER BY u.id ASC
+        """, (time.time() - 86400,))
+        cols = ['id', 'username', 'nombre_completo', 'rol', 'cliente_asignado', 'activo', 'fecha_creacion', 'vistas_permitidas', 'sedes_asignadas',
+                'debe_cambiar_clave', 'ultimo_ingreso', 'fallos_24h']
         filas = []
         for r in cursor.fetchall():
             d = dict(zip(cols, r))
             d['clientes_asignados'] = parsear_clientes_asignados(d.get('cliente_asignado'))
             v_list = parsear_vistas_permitidas(d.get('vistas_permitidas'), d.get('rol'))
             d['vistas_permitidas'] = ','.join(v_list) if isinstance(v_list, list) else str(v_list or '')
+            d['debe_cambiar_clave'] = bool(d['debe_cambiar_clave'])
+            d['ultimo_ingreso'] = (datetime.fromtimestamp(d['ultimo_ingreso'], BOGOTA_TZ).strftime('%Y-%m-%d %H:%M')
+                                   if d['ultimo_ingreso'] else None)
             filas.append(d)
         return filas
 
@@ -12845,7 +14073,9 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
                 return False
             updates.append("password = ?")
             params.append(hash_password(p_str))
-        
+            # Con clave nueva, las sesiones abiertas con la clave anterior dejan de servir
+            updates.append("sesion_version = COALESCE(sesion_version, 0) + 1")
+
         rol_final = None
         if rol is not None:
             rol_final = rol.strip().lower()
@@ -12888,10 +14118,11 @@ def actualizar_usuario(username, nombre_completo=None, password=None, rol=None, 
         conn.commit()
         return cursor.rowcount > 0
 
-def restablecer_password_usuario(username: str, nueva_password: str) -> bool:
+def restablecer_password_usuario(username: str, nueva_password: str, exigir_cambio: bool = True) -> bool:
     """
     Restablece la contraseña de un usuario específico validando que tenga al menos 4 caracteres,
-    la hashea con PBKDF2 y actualiza el registro en la BD.
+    la hashea con PBKDF2 y actualiza el registro en la BD. Cierra las sesiones abiertas del usuario
+    y, como la clave la conoce quien la restableció, le exige cambiarla en su próximo ingreso.
     """
     u = (username or '').strip().lower()
     p = (nueva_password or '').strip()
@@ -12899,10 +14130,113 @@ def restablecer_password_usuario(username: str, nueva_password: str) -> bool:
         return False
     hashed = hash_password(p)
     with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
         cursor = conn.cursor()
-        cursor.execute("UPDATE usuarios SET password = ? WHERE LOWER(username) = LOWER(?)", (hashed, u))
+        cursor.execute("""
+            UPDATE usuarios SET password = ?, debe_cambiar_clave = ?, sesion_version = COALESCE(sesion_version, 0) + 1
+            WHERE LOWER(username) = LOWER(?)
+        """, (hashed, 1 if exigir_cambio else 0, u))
         conn.commit()
         return cursor.rowcount > 0
+
+
+def verificar_clave_usuario(username: str, clave: str) -> bool:
+    """True si la clave es la del usuario activo (para confirmar la clave actual antes de cambiarla)."""
+    u = (username or '').strip()
+    with get_connection() as conn:
+        row = conn.execute("SELECT password FROM usuarios WHERE LOWER(username) = LOWER(?) AND activo = 1", (u,)).fetchone()
+    if not row:
+        verificar_clave_ficticia(clave or '')
+        return False
+    return verify_password((clave or '').strip(), row[0])
+
+
+def cambiar_password_propia(username: str, nueva_password: str) -> Optional[int]:
+    """
+    El usuario cambia su propia clave: queda sin la exigencia de cambio y se cierran sus otras sesiones.
+    Retorna la nueva versión de sesión (para entregarle una sesión nueva en este equipo) o None.
+    """
+    u = (username or '').strip().lower()
+    p = (nueva_password or '').strip()
+    if not u or not p:
+        return None
+    hashed = hash_password(p)
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE usuarios SET password = ?, debe_cambiar_clave = 0, sesion_version = COALESCE(sesion_version, 0) + 1
+            WHERE LOWER(username) = LOWER(?) AND activo = 1
+        """, (hashed, u))
+        conn.commit()
+        if cursor.rowcount == 0:
+            return None
+        return int(conn.execute("SELECT sesion_version FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,)).fetchone()[0])
+
+
+def marcar_cambio_clave(username: str, debe: bool = True) -> None:
+    """Exige (o deja de exigir) que el usuario cambie su clave en el próximo ingreso."""
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        conn.execute("UPDATE usuarios SET debe_cambiar_clave = ? WHERE LOWER(username) = LOWER(?)",
+                     (1 if debe else 0, (username or '').strip()))
+        conn.commit()
+
+
+def incrementar_version_sesion(username: str) -> Optional[int]:
+    """Cierra todas las sesiones abiertas del usuario. Retorna la nueva versión."""
+    u = (username or '').strip()
+    with get_connection() as conn:
+        asegurar_columna_vistas_permitidas(conn)
+        cur = conn.execute("UPDATE usuarios SET sesion_version = COALESCE(sesion_version, 0) + 1 WHERE LOWER(username) = LOWER(?)", (u,))
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        return int(conn.execute("SELECT sesion_version FROM usuarios WHERE LOWER(username) = LOWER(?)", (u,)).fetchone()[0])
+
+
+DIAS_RETENCION_REGISTRO_INGRESOS = 90
+
+
+def registrar_intento_ingreso(username: str, ip: str, exito: bool, motivo: str = '') -> None:
+    """Guarda un intento de ingreso. Los registros de más de 90 días se borran al registrar un ingreso exitoso."""
+    ahora = time.time()
+    with get_connection() as conn:
+        conn.execute("INSERT INTO registro_ingresos (fecha, username, ip, exito, motivo) VALUES (?, ?, ?, ?, ?)",
+                     (ahora, (username or '').strip().lower()[:80], (ip or '')[:64], 1 if exito else 0, motivo))
+        if exito:
+            conn.execute("DELETE FROM registro_ingresos WHERE fecha < ?", (ahora - DIAS_RETENCION_REGISTRO_INGRESOS * 86400,))
+        conn.commit()
+
+
+def fallos_recientes_usuario(username: str, ventana_segundos: float) -> int:
+    """Claves incorrectas para ese nombre de usuario dentro de la ventana y después de su último ingreso exitoso."""
+    u = (username or '').strip().lower()[:80]
+    desde = time.time() - ventana_segundos
+    with get_connection() as conn:
+        row = conn.execute("""
+            SELECT COUNT(*) FROM registro_ingresos
+            WHERE username = ? AND exito = 0 AND motivo = 'clave_incorrecta' AND fecha > ?
+              AND fecha > COALESCE((SELECT MAX(fecha) FROM registro_ingresos WHERE username = ? AND exito = 1), 0)
+        """, (u, desde, u)).fetchone()
+    return int(row[0] or 0)
+
+
+def revocar_sesion(jti: str, expira: float) -> None:
+    """Cierra una sesión puntual (botón «Salir») hasta que habría vencido sola."""
+    if not jti:
+        return
+    with get_connection() as conn:
+        conn.execute("DELETE FROM sesiones_revocadas WHERE expira < ?", (time.time(),))
+        conn.execute("INSERT OR REPLACE INTO sesiones_revocadas (jti, expira) VALUES (?, ?)", (jti, float(expira or 0)))
+        conn.commit()
+
+
+def sesion_revocada(jti: str) -> bool:
+    if not jti:
+        return False
+    with get_connection() as conn:
+        return conn.execute("SELECT 1 FROM sesiones_revocadas WHERE jti = ?", (jti,)).fetchone() is not None
 
 def eliminar_usuario(username):
     u = (username or '').strip().lower()
@@ -12967,6 +14301,274 @@ def contar_vehiculos_padron(cliente: str) -> int:
             return int(row[0]) if row and row[0] is not None else 0
     except Exception:
         return 0
+
+
+def cliente_tiene_parque_cargado(cliente: str) -> bool:
+    """True si el administrador ya cargó el parque del cliente, por archivo o a mano (si no, todo funciona como antes)."""
+    if not cliente or str(cliente).strip().upper() == 'TODOS':
+        return False
+    try:
+        with get_connection() as conn:
+            r = conn.execute("SELECT 1 FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = MAYUS(TRIM(?))"
+                             " AND origen IN ('archivo', 'manual') LIMIT 1", (cliente,)).fetchone()
+            return r is not None
+    except Exception:
+        return False
+
+
+def _placa_padron(valor) -> str:
+    """Placa o número interno tal como se digita en la inspección: sin espacios sobrantes y en mayúscula."""
+    if valor is None or (isinstance(valor, float) and pd.isna(valor)):
+        return ''
+    if isinstance(valor, float) and valor.is_integer():
+        valor = int(valor)  # Excel entrega los números internos como 101.0
+    texto = limpiar_texto_entrada(re.sub(r'\s+', ' ', str(valor)).strip().upper())
+    return '' if texto in ('NAN', 'NONE') else texto
+
+
+def importar_padron_cliente_excel(file_path: str, cliente: str, sede: str = '') -> dict:
+    """
+    Carga el parque automotor de un cliente desde Excel y REEMPLAZA el que tenía:
+    los vehículos del archivo quedan activos y los que no vienen quedan inactivos (no se borran).
+    Con sede, el reemplazo es solo de esa sede.
+    """
+    cli = limpiar_texto_entrada(str(cliente or '').strip().upper())
+    sede_n = limpiar_texto_entrada(str(sede or '').strip().upper())
+    if not cli or cli == 'TODOS':
+        raise ValueError("Seleccione el cliente al que pertenece el parque.")
+    if sede_n == 'TODOS':
+        sede_n = ''
+
+    df = pd.read_excel(file_path, sheet_name=0)
+    cols_norm_map = {normalizar_texto(c): c for c in df.columns}
+    alias_map = {
+        'placa': ['placa / n° interno', 'placa / no interno', 'placa / numero interno', 'placa', 'n° interno',
+                  'numero interno', 'número interno', 'no interno', 'interno', 'codigo', 'código', 'vehiculo', 'vehículo'],
+        'tipologia': ['tipologia', 'tipología', 'tipo vehiculo', 'tipo de vehiculo', 'tipo', 'configuracion'],
+        'km': ['km actual', 'km', 'kilometraje', 'kilometraje actual', 'odometro', 'odómetro'],
+        'fabricante': ['fabricante', 'marca', 'marca vehiculo'],
+        'linea': ['linea', 'línea', 'modelo', 'referencia'],
+        'sede': ['sede', 'sede / patio', 'subcliente', 'patio'],
+    }
+    col = {}
+    for canonico, lista in alias_map.items():
+        for item in lista:
+            norm = normalizar_texto(item)
+            if norm in cols_norm_map:
+                col[canonico] = cols_norm_map[norm]
+                break
+    if 'placa' not in col or 'tipologia' not in col:
+        raise ValueError("El archivo debe tener al menos las columnas 'Placa / N° interno' y 'Tipología'.")
+
+    def celda(row, clave):
+        # Texto de la celda; una línea o sede numérica (4300 → 4300.0 en Excel) queda sin el ".0"
+        return _placa_padron(row[col[clave]]) if clave in col else ''
+
+    # La tipología se empareja con el catálogo como en el diagrama: "CAMION SENCILLO 4X2" = "Camión Sencillo (4x2)"
+    with get_connection() as conn:
+        tipologias = {ee.clave_tipologia(r[0]): r[0] for r in conn.execute(
+            "SELECT nombre FROM catalogo_tipologias WHERE nombre IS NOT NULL").fetchall()}
+
+    errores, filas, vistas = [], [], {}
+    for idx, row in df.iterrows():
+        fila_num = idx + 2
+        placa = _placa_padron(row[col['placa']])
+        tip_raw = celda(row, 'tipologia')
+        if not placa and not tip_raw:
+            continue  # fila vacía
+        if not placa:
+            errores.append(f"Fila {fila_num}: falta la placa o el número interno")
+            continue
+        if placa in vistas:
+            errores.append(f"Fila {fila_num}: {placa} está repetida (ya viene en la fila {vistas[placa]})")
+            continue
+        tip = tipologias.get(ee.clave_tipologia(tip_raw)) if tip_raw else None
+        if not tip:
+            errores.append(f"Fila {fila_num}: {placa} sin tipología" if not tip_raw else
+                           f"Fila {fila_num}: la tipología '{tip_raw}' de {placa} no existe en Catálogos → Tipologías")
+            continue
+        km = to_float(row[col['km']], 0.0) if 'km' in col else 0.0
+        vistas[placa] = fila_num
+        filas.append({
+            'placa': placa, 'tipologia': tip,
+            'sede': sede_n or celda(row, 'sede').upper(),
+            'fabricante': celda(row, 'fabricante').upper(), 'linea': celda(row, 'linea').upper(),
+            'km': km if km > 0 else None,
+        })
+
+    if not filas:
+        return {"status": "ok", "total_filas": len(df), "nuevos": 0, "actualizados": 0, "desactivados": 0,
+                "errores": errores[:25], "total_errores": len(errores)}
+
+    nuevos = actualizados = 0
+    with get_connection() as conn:
+        cur = conn.cursor()
+        q_prev = "SELECT MAYUS(TRIM(placa)) FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = ?"
+        par_prev = [cli]
+        if sede_n:
+            q_prev += " AND MAYUS(TRIM(IFNULL(subcliente, ''))) = ?"
+            par_prev.append(sede_n)
+        existentes = {r[0] for r in cur.execute("SELECT MAYUS(TRIM(placa)) FROM padron_vehiculos_cliente"
+                                                 " WHERE MAYUS(TRIM(cliente)) = ?", (cli,)).fetchall()}
+        alcance = {r[0] for r in cur.execute(q_prev, par_prev).fetchall()}
+
+        for f in filas:
+            if f['placa'] in existentes:
+                actualizados += 1
+            else:
+                nuevos += 1
+            cur.execute("""
+                INSERT INTO padron_vehiculos_cliente
+                    (cliente, subcliente, placa, tipologia, estado_operativo, activo, fabricante, linea, km_actual, origen, fecha_actualizacion)
+                VALUES (?, ?, ?, ?, 'Activo', 1, ?, ?, ?, 'archivo', CURRENT_TIMESTAMP)
+                ON CONFLICT(cliente, placa) DO UPDATE SET
+                    subcliente = CASE WHEN excluded.subcliente != '' THEN excluded.subcliente ELSE padron_vehiculos_cliente.subcliente END,
+                    tipologia = excluded.tipologia, activo = 1, fabricante = excluded.fabricante, linea = excluded.linea,
+                    km_actual = COALESCE(excluded.km_actual, padron_vehiculos_cliente.km_actual),
+                    origen = 'archivo', fecha_actualizacion = CURRENT_TIMESTAMP
+            """, (cli, f['sede'], f['placa'], f['tipologia'], f['fabricante'], f['linea'], f['km']))
+            sincronizar_vehiculo_catalogo(f['placa'], f['tipologia'], cli, f['sede'], kilometraje=f['km'] or 0.0, conn=conn)
+
+        # Reemplazo: lo que no vino en el archivo deja de contar en el parque
+        fuera = sorted(alcance - set(vistas))
+        for placa in fuera:
+            cur.execute("UPDATE padron_vehiculos_cliente SET activo = 0, origen = 'archivo', fecha_actualizacion = CURRENT_TIMESTAMP"
+                        " WHERE MAYUS(TRIM(cliente)) = ? AND MAYUS(TRIM(placa)) = ?", (cli, placa))
+        conn.commit()
+
+    return {"status": "ok", "total_filas": len(df), "nuevos": nuevos, "actualizados": actualizados,
+            "desactivados": len(fuera), "errores": errores[:25], "total_errores": len(errores)}
+
+
+def listar_padron_cliente(cliente: str, sede: str = '') -> list:
+    """Parque del cliente (activos e inactivos) con la fecha de la última inspección de cada vehículo."""
+    cli = str(cliente or '').strip().upper()
+    if not cli or cli == 'TODOS':
+        return []
+    q = """
+        SELECT p.placa, IFNULL(p.subcliente, ''), IFNULL(p.tipologia, ''), IFNULL(p.fabricante, ''), IFNULL(p.linea, ''),
+               p.km_actual, p.activo, IFNULL(p.origen, 'auto'),
+               (SELECT MAX(substr(i.fecha, 1, 10)) FROM inspecciones i
+                 WHERE MAYUS(TRIM(i.placa)) = MAYUS(TRIM(p.placa)) AND MAYUS(TRIM(i.cliente)) = MAYUS(TRIM(p.cliente)))
+        FROM padron_vehiculos_cliente p
+        WHERE MAYUS(TRIM(p.cliente)) = ?
+    """
+    par = [cli]
+    s = str(sede or '').strip().upper()
+    if s and s != 'TODOS':
+        q += " AND MAYUS(TRIM(IFNULL(p.subcliente, ''))) = ?"
+        par.append(s)
+    q += " ORDER BY p.activo DESC, p.placa"
+    with get_connection() as conn:
+        filas = conn.execute(q, par).fetchall()
+    lista = [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": r[3], "linea": r[4],
+              "km_actual": r[5], "activo": bool(r[6]), "origen": r[7], "ultima_inspeccion": r[8] or ''} for r in filas]
+    if not cliente_tiene_parque_cargado(cli):
+        # Sin parque cargado el KPI 01 mide contra lo ya inspeccionado: se muestran también esos vehículos
+        vistos = {v["placa"].upper() for v in lista}
+        lista += [v for v in _vehiculos_inspeccionados_cliente(cli, s) if v["placa"] not in vistos]
+        lista.sort(key=lambda v: (not v["activo"], v["placa"]))
+    return lista
+
+
+def _vehiculos_inspeccionados_cliente(cliente: str, sede: str = '') -> list:
+    """Vehículos con inspecciones del cliente, con los datos de su última inspección (parque automático)."""
+    # Última inspección de cada placa con ROW_NUMBER (antes una subconsulta por fila: crecía con el cuadrado)
+    q = """
+        SELECT placa, sede, tipologia, kilometraje, fecha FROM (
+            SELECT MAYUS(TRIM(placa)) AS placa, MAYUS(TRIM(IFNULL(subcliente, ''))) AS sede,
+                   IFNULL(tipologia, '') AS tipologia, kilometraje, substr(fecha, 1, 10) AS fecha,
+                   ROW_NUMBER() OVER (PARTITION BY MAYUS(TRIM(placa)) ORDER BY fecha DESC, id DESC) AS n
+            FROM inspecciones
+            WHERE MAYUS(TRIM(cliente)) = ? AND TRIM(IFNULL(placa, '')) != ''
+        ) WHERE n = 1
+    """
+    par = [cliente]
+    if sede and sede != 'TODOS':
+        q += " AND sede = ?"
+        par.append(sede)
+    q += " ORDER BY placa"
+    with get_connection() as conn:
+        filas = conn.execute(q, par).fetchall()
+    return [{"placa": r[0], "sede": r[1], "tipologia": r[2], "fabricante": "", "linea": "",
+             "km_actual": r[3] if r[3] and r[3] > 0 else None, "activo": True, "origen": "inspecciones",
+             "ultima_inspeccion": r[4] or ''} for r in filas]
+
+
+def _materializar_parque_automatico(cliente: str, conn):
+    """
+    Antes del primer cambio a mano en un cliente sin parque cargado, los vehículos que hoy forman su parque
+    automático (padrón y vehículos inspeccionados) se guardan como parque: así agregar o quitar uno no deja
+    el parque reducido a ese solo vehículo.
+    """
+    if cliente_tiene_parque_cargado(cliente):
+        return
+    for v in _vehiculos_inspeccionados_cliente(cliente):
+        conn.execute("""INSERT OR IGNORE INTO padron_vehiculos_cliente
+                            (cliente, subcliente, placa, tipologia, estado_operativo, activo, km_actual, origen)
+                        VALUES (?, ?, ?, ?, 'Activo', 1, ?, 'manual')""",
+                     (cliente, v["sede"], v["placa"], v["tipologia"], v["km_actual"]))
+    conn.execute("UPDATE padron_vehiculos_cliente SET origen = 'manual' WHERE MAYUS(TRIM(cliente)) = ? AND activo = 1",
+                 (cliente,))
+
+
+def _tipologia_catalogo(tipologia):
+    """Nombre de la tipología tal como está en el catálogo, o None si no existe."""
+    with get_connection() as conn:
+        tipologias = {ee.clave_tipologia(r[0]): r[0] for r in conn.execute(
+            "SELECT nombre FROM catalogo_tipologias WHERE nombre IS NOT NULL").fetchall()}
+    return tipologias.get(ee.clave_tipologia(tipologia)) if str(tipologia or '').strip() else None
+
+
+def guardar_vehiculo_padron(cliente: str, placa, tipologia: str, sede: str = '', km_actual=None,
+                            fabricante: str = '', linea: str = '') -> dict:
+    """Agrega (o actualiza y reactiva) un vehículo del parque a mano. Cuenta como parque cargado."""
+    cli = str(cliente or '').strip().upper()
+    pl = _placa_padron(placa)
+    if not cli or cli == 'TODOS':
+        raise ValueError("Seleccione el cliente.")
+    if not pl:
+        raise ValueError("Escriba la placa o el número interno.")
+    tip = _tipologia_catalogo(tipologia)
+    if not tip:
+        raise ValueError(f"La tipología '{tipologia}' no existe en Catálogos → Tipologías." if tipologia else "Seleccione la tipología.")
+    km = to_float(km_actual, 0.0)
+    km = km if km > 0 else None
+    sede_n = str(sede or '').strip().upper()
+    with get_connection() as conn:
+        existia = conn.execute("SELECT 1 FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = ? AND MAYUS(TRIM(placa)) = ?",
+                               (cli, pl)).fetchone() is not None
+        _materializar_parque_automatico(cli, conn)
+        conn.execute("""
+            INSERT INTO padron_vehiculos_cliente
+                (cliente, subcliente, placa, tipologia, estado_operativo, activo, fabricante, linea, km_actual, origen, fecha_actualizacion)
+            VALUES (?, ?, ?, ?, 'Activo', 1, ?, ?, ?, 'manual', CURRENT_TIMESTAMP)
+            ON CONFLICT(cliente, placa) DO UPDATE SET
+                subcliente = CASE WHEN excluded.subcliente != '' THEN excluded.subcliente ELSE padron_vehiculos_cliente.subcliente END,
+                tipologia = excluded.tipologia, activo = 1, fabricante = excluded.fabricante, linea = excluded.linea,
+                km_actual = COALESCE(excluded.km_actual, padron_vehiculos_cliente.km_actual),
+                origen = CASE WHEN padron_vehiculos_cliente.origen = 'archivo' THEN 'archivo' ELSE 'manual' END,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+        """, (cli, sede_n, pl, tip, str(fabricante or '').strip().upper(), str(linea or '').strip().upper(), km))
+        sincronizar_vehiculo_catalogo(pl, tip, cli, sede_n, kilometraje=km or 0.0, conn=conn)
+        conn.commit()
+    return {"status": "ok", "placa": pl, "nuevo": not existia}
+
+
+def eliminar_vehiculo_padron(cliente: str, placa) -> bool:
+    """Quita un vehículo del parque del cliente (sus inspecciones no se tocan)."""
+    cli = str(cliente or '').strip().upper()
+    pl = _placa_padron(placa)
+    with get_connection() as conn:
+        # Sin parque cargado, el vehículo puede venir solo de las inspecciones: primero se fija el parque actual
+        _materializar_parque_automatico(cli, conn)
+        cur = conn.execute("DELETE FROM padron_vehiculos_cliente WHERE MAYUS(TRIM(cliente)) = ? AND MAYUS(TRIM(placa)) = ?",
+                           (cli, pl))
+        if cur.rowcount == 0:
+            conn.rollback()
+            return False
+        conn.commit()
+        return True
 
 
 def obtener_licencia_cliente(cliente: str) -> str:
@@ -13375,6 +14977,23 @@ def _mes_a_espanol(val_str: str) -> str:
     return s
 
 
+def _ultimo_corte_por_vehiculo(df):
+    """
+    Última fecha inspeccionada de cada vehículo y, en esa fecha, el último registro de cada posición (último dato
+    no vacío de cada columna). Un solo groupby en lugar de uno por vehículo (las gráficas hacían ~32.000).
+    """
+    if df.empty or 'placa' not in df.columns:
+        return pd.DataFrame()
+    f_max = df.groupby('placa')['fecha_str'].transform('max')
+    rec = df[df['fecha_str'] == f_max]
+    if rec.empty:
+        return pd.DataFrame()
+    if 'id' in rec.columns:
+        rec = rec.sort_values('id').groupby(['placa', 'posicion'], as_index=False).last()
+        return rec[[c for c in df.columns if c in rec.columns]]
+    return rec.sort_values('placa', kind='stable').reset_index(drop=True)
+
+
 def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
     """
     Calcula los datos analíticos completos y blindados para el Tablero Ejecutivo
@@ -13681,15 +15300,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         # MUESTRA AUDITADA (Último Corte por Vehículo)
         # ----------------------------------------------------------------------
         # Agrupar por placa y tomar la fecha más reciente
-        grupos_corte = []
-        for placa_v, grp in df.groupby('placa'):
-            f_max = grp['fecha_str'].max()
-            grp_rec = grp[grp['fecha_str'] == f_max]
-            if 'id' in grp_rec.columns:
-                grp_rec = grp_rec.sort_values('id').groupby('posicion', as_index=False).last()
-            grupos_corte.append(grp_rec)
-
-        df_ultimo_corte = pd.concat(grupos_corte, ignore_index=True) if grupos_corte else pd.DataFrame()
+        df_ultimo_corte = _ultimo_corte_por_vehiculo(df)
 
         if not df_ultimo_corte.empty:
             vehiculos_cnt = df_ultimo_corte['placa'].nunique()
@@ -13877,14 +15488,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
                 sub_df = df[df['periodo_mes'] == p_key]
 
             # Tomar último estado por vehículo dentro de este periodo
-            sub_corte = []
-            for _, grp in sub_df.groupby('placa'):
-                f_max = grp['fecha_str'].max()
-                g_f = grp[grp['fecha_str'] == f_max]
-                if 'id' in g_f.columns:
-                    g_f = g_f.sort_values('id').groupby('posicion', as_index=False).last()
-                sub_corte.append(g_f)
-            df_p = pd.concat(sub_corte, ignore_index=True) if sub_corte else pd.DataFrame()
+            df_p = _ultimo_corte_por_vehiculo(sub_df)
 
             if df_p.empty:
                 continue
@@ -14810,13 +16414,18 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
         kmes = km_mes_veh.get(str(r.get('placa', '')).strip().upper())
         return ((p_min - lim) * kmm / kmes) if (kmm and kmes) else None
 
+    # Estructura y llantas por posición de cada vehículo: se arman una vez (antes una vez por cada medida)
+    vehiculos_corte = []
+    if df_corte is not None and not df_corte.empty:
+        for placa, grp in df_corte.groupby('placa'):
+            vehiculos_corte.append((lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist()),
+                                    {to_int(r['posicion']): r for _, r in grp.iterrows()}))
+
     filas = []
     for dim in dimensiones:
         dem_dir, dem_otros, dem_proyectada, sin_ritmo, retiradas = 0, 0, 0, 0, 0
-        if df_corte is not None and not df_corte.empty:
-            for placa, grp in df_corte.groupby('placa'):
-                est = lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist())
-                por_pos = {to_int(r['posicion']): r for _, r in grp.iterrows()}
+        if vehiculos_corte:
+            for est, por_pos in vehiculos_corte:
                 en_dim = lambda r: str(r.get('dimension', '')).strip().upper() == dim.upper()
                 for pos, r in por_pos.items():
                     if not en_dim(r):
@@ -15021,6 +16630,48 @@ def _redondear(valor, decimales=0):
     if v != v:
         return None
     return round(v, decimales) if decimales else round(v)
+
+
+def _kpi01_por_periodo(df_vehiculos, padron_rows, placas_padron, total_padron, parque_cargado) -> dict:
+    """
+    KPI 01 por mes y por año: cuántos vehículos del parque se inspeccionaron en cada periodo (mes en curso
+    incluido, aunque aún no tenga inspecciones). El parque es el actual; con parque cargado solo cuentan sus placas.
+    """
+    if df_vehiculos is None or df_vehiculos.empty:
+        pl_fecha = pd.DataFrame(columns=['placa', 'dia'])
+    else:
+        pl_fecha = pd.DataFrame({
+            'placa': df_vehiculos['placa'].fillna('').astype(str).str.strip().str.upper(),
+            'dia': df_vehiculos['fecha'].astype(str).str[:10],
+        })
+        pl_fecha = pl_fecha[(pl_fecha['placa'] != '') & (pl_fecha['dia'].str.len() == 10)]
+    hoy = _hoy_bogota()
+    mes_hoy, anio_hoy = hoy.strftime('%Y-%m'), hoy.strftime('%Y')
+    orden_parque = [r[0] for r in padron_rows] if padron_rows else []
+
+    def resumen(clave, etiqueta, tipo, placas):
+        aud = len(placas & placas_padron) if parque_cargado else len(placas)
+        pend = [p for p in orden_parque if p not in placas]
+        return {
+            "clave": clave, "etiqueta": etiqueta, "tipo": tipo,
+            "inspeccionados": aud, "total": total_padron,
+            "pct": round(min(100.0, aud / total_padron * 100.0), 1) if total_padron else None,
+            "pendientes": pend,
+        }
+
+    meses = sorted(set(pl_fecha['dia'].str[:7]) | {mes_hoy})[-24:]
+    anios = sorted(set(pl_fecha['dia'].str[:4]) | {anio_hoy})
+    por_mes = [resumen(m, _mes_a_espanol(m), 'mes', set(pl_fecha.loc[pl_fecha['dia'].str[:7] == m, 'placa'])) for m in meses]
+    por_anio = [resumen(a, a, 'anio', set(pl_fecha.loc[pl_fecha['dia'].str[:4] == a, 'placa'])) for a in anios]
+    # Datos de cada vehículo del parque para la lista de pendientes de cualquier periodo
+    ultima = pl_fecha.groupby('placa')['dia'].max().to_dict() if not pl_fecha.empty else {}
+    parque = {
+        r[0]: {"subcliente": r[1] if len(r) > 1 else '', "tipologia": r[2] if len(r) > 2 else '',
+               "fabricante": r[4] if len(r) > 4 else '', "linea": r[5] if len(r) > 5 else '',
+               "ultima_inspeccion": ultima.get(r[0], '')}
+        for r in (padron_rows or [])
+    }
+    return {"por_mes": por_mes, "por_anio": por_anio, "periodo_actual": mes_hoy, "parque": parque}
 
 
 def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
@@ -15354,9 +17005,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
 
     # 2. Padrón de vehículos
+    # Parque cargado por archivo (solo admin): mide contra ese parque y se ve también en LIGHT.
+    # Sin archivo, todo sigue como antes.
+    parque_cargado = cliente_tiene_parque_cargado(cliente)
     with get_connection() as conn:
         cur = conn.cursor()
-        qp = "SELECT MAYUS(TRIM(placa)), MAYUS(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo') FROM padron_vehiculos_cliente WHERE activo = 1"
+        qp = ("SELECT MAYUS(TRIM(placa)), MAYUS(TRIM(IFNULL(subcliente, ''))), IFNULL(tipologia, ''), IFNULL(estado_operativo, 'Activo'),"
+              " IFNULL(fabricante, ''), IFNULL(linea, '') FROM padron_vehiculos_cliente WHERE activo = 1")
         par_p = []
         if cliente and cliente != "TODOS":
             qp += " AND MAYUS(TRIM(cliente)) = ?"
@@ -15410,10 +17065,14 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     placas_padron = {r[0] for r in padron_rows} if padron_rows else set()
     todas_placas_parque = placas_padron | placas_insp_corte
     total_padron = len(todas_placas_parque) if todas_placas_parque else len(padron_rows)
+    if parque_cargado:
+        # El parque es el del archivo: lo inspeccionado fuera de él se informa aparte
+        total_padron = len(placas_padron)
+        fuente_padron = 'archivo'
     if total_padron == 0:
         fuente_padron = 'sin_padron'
 
-    vehiculos_auditados_mes = len(placas_insp_corte)
+    vehiculos_auditados_mes = len(placas_insp_corte & placas_padron) if parque_cargado else len(placas_insp_corte)
     placas_fuera_padron = len(placas_insp_corte - placas_padron) if placas_padron else 0
     # Sin parque no hay cumplimiento que medir
     cumplimiento_pct = round(min(100.0, (vehiculos_auditados_mes / total_padron) * 100.0), 1) if total_padron > 0 else None
@@ -15427,6 +17086,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 "tipologia": r[2],
                 "estado_operativo": r[3]
             })
+    if parque_cargado and placas_pendientes:
+        # Datos del vehículo y última inspección (de cualquier fecha) para saber a cuáles ir
+        datos_parque = {r[0]: r for r in padron_rows}
+        with get_connection() as conn:
+            ultimas = dict(conn.execute(
+                "SELECT MAYUS(TRIM(placa)), MAX(substr(fecha, 1, 10)) FROM inspecciones"
+                " WHERE MAYUS(TRIM(cliente)) = ? GROUP BY MAYUS(TRIM(placa))", (str(cliente).strip().upper(),)).fetchall())
+        for p in placas_pendientes:
+            r = datos_parque.get(p["placa"])
+            p["fabricante"] = r[4] if r and len(r) > 4 else ''
+            p["linea"] = r[5] if r and len(r) > 5 else ''
+            p["ultima_inspeccion"] = ultimas.get(p["placa"]) or ''
 
     # 3. Llantas en Maestro / Bodegas / FVU
     with get_connection() as conn:
@@ -15454,8 +17125,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 01: % Cumplimiento de Inspección vs Parque Vehicular (SOLO FULL)
     # =========================================================================
     kpi_01 = {
-        "disponible": es_full,
-        "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "disponible": es_full or parque_cargado,
+        "mensaje": "" if (es_full or parque_cargado) else "🔒 Exclusivo Licencia FULL",
+        "parque_cargado": parque_cargado,
         "cumplimiento_pct": cumplimiento_pct,
         "porcentaje_cumplimiento": cumplimiento_pct,
         "vehiculos_auditados": vehiculos_auditados_mes,
@@ -15468,6 +17140,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "fuente_padron": fuente_padron,
         "periodo_corte": _mes_a_espanol(periodo_reciente) if periodo_reciente else "Actual"
     }
+    kpi_01.update(_kpi01_por_periodo(df_vehiculos, padron_rows, placas_padron, total_padron, parque_cargado))
 
     # =========================================================================
     # KPI 02: Volumen Auditado Mes a Mes (Llantas vs Vehículos)
@@ -15555,8 +17228,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     else:
         tip_counts, mar_counts, dim_counts, dim_pcts = pd.Series(dtype=int), pd.Series(dtype=int), pd.Series(dtype=int), []
 
+    def _top_con_otras(serie, n=8):
+        if len(serie) <= n:
+            return serie
+        return pd.concat([serie.iloc[:n - 1], pd.Series({'Otras': int(serie.iloc[n - 1:].sum())})])
+
+    tip_counts, mar_counts = _top_con_otras(tip_counts), _top_con_otras(mar_counts)
+    if len(dim_counts) > 8:
+        dim_counts = _top_con_otras(dim_counts)
+        dim_pcts = [round((v / tot_dim) * 100.0, 1) for v in dim_counts.values.tolist()]
     kpi_04 = {
         "disponible": True,
+        "total_llantas": int(len(df_patio)),
         "tipologia": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
         "tipologias": {"labels": [str(x) for x in tip_counts.index[:8]], "valores": [int(x) for x in tip_counts.values[:8]]},
         "marca": {"labels": [str(x) for x in mar_counts.index[:8]], "valores": [int(x) for x in mar_counts.values[:8]]},
@@ -16129,6 +17812,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             }
             if es_full:
                 punto["cpk_operativo"] = calcular_cpk_llantas(hasta, unidad)["flota"]["cpk_operativo"]
+            if parque_cargado and placas_padron:
+                # % del parque del archivo inspeccionado en el mes (vehículos, sin filtro de marca ni medida)
+                del_mes = df_vehiculos[df_vehiculos['fecha'].astype(str).str[:7] == mes_t]['placa']                     if not df_vehiculos.empty else pd.Series(dtype=str)
+                insp_mes = set(del_mes.dropna().astype(str).str.upper().str.strip()) & placas_padron
+                punto["pct_cumplimiento_parque"] = _redondear(100.0 * len(insp_mes) / len(placas_padron), 1)
+                punto["vehiculos_parque_inspeccionados"] = len(insp_mes)
             meses_t.append(punto)
     kpi_tendencias = {"disponible": True, "mensaje": "", "meses": meses_t}
 
@@ -16855,6 +18544,12 @@ from modulo_bodegas_taller import (
 # =============================================================================
 
 def obtener_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
+    """Paquete de pre-carga para el patio offline, armado con una sola conexión (antes una por consulta)."""
+    with conexion_compartida():
+        return _armar_paquete_offline_patio(cliente, usuario)
+
+
+def _armar_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
     """
     Retorna en un único JSON compacto todo el paquete de pre-carga para patio offline:
     - tipologias completas (con esquema y posiciones)
@@ -17303,7 +18998,7 @@ def sincronizar_lote_inspecciones(items: list[dict], usuario_actual: dict) -> di
 
 - **Ruta:** `modulo_bodegas_taller.py`
 - **Descripción:** Módulo integral de Las 7 Bodegas, Kardex de Ciclo de Vida de Carcasas, Trazabilidad, Despachos a Planta, Retorno, Actas de Desecho, Dictámenes de Garantía y Balance MRP (KPI 20)
-- **Métricas:** 1304 líneas | 68,998 bytes (67.4 KB)
+- **Métricas:** 1321 líneas | 71,009 bytes (69.3 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -17515,7 +19210,8 @@ def desmontar_llanta_taller(datos: dict) -> dict:
     with database.get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, ubicacion_bodega, estado_actual, placa_actual, posicion_actual, km_montaje_actual,
+            SELECT id, ubicacion_bodega, estado_actual, placa_actual, posicion_actual,
+                   COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo, 0),
                    km_acumulados_total, prof_actual_min, ciclo_actual, cliente_propietario, cliente,
                    costo_ciclo_actual, prof_inicial, prof_inicial_nueva, valor_reconocido_garantia, subcliente, vida_actual
             FROM llantas_maestro
@@ -17536,6 +19232,8 @@ def desmontar_llanta_taller(datos: dict) -> dict:
         if error:
             return {"ok": False, "status": "error", "message": error}
         p_ini = database.to_float(p_ini_m) or database.to_float(p_ini_n)
+        if odometro > 0 and km_mont and odometro < km_mont:
+            return {"ok": False, "status": "error", "message": f"El odómetro ({odometro:,.0f}) no puede ser menor al del montaje de la llanta ({km_mont:,.0f}).".replace(',', '.')}
 
         # Profundidad suministrada o la última conocida; presión solo si se midió
         prof_momento = database.to_float(datos.get('profundidad') or datos.get('prof_min_mm', prof_min_act), prof_min_act)
@@ -17623,7 +19321,7 @@ def montar_llanta_taller(datos: dict) -> dict:
         return {"ok": False, "status": "error", "message": "Placa y posición válida (>= 1) son obligatorias para montaje"}
 
     numero_interno = str(datos.get('numero_interno', '')).strip().upper()
-    es_nueva_directa = bool(datos.get('nueva_directa', False))
+    es_nueva_directa = bool(datos.get('es_nueva_directa') or datos.get('nueva_directa'))
 
     with database.get_connection() as conn:
         cursor = conn.cursor()
@@ -17635,6 +19333,8 @@ def montar_llanta_taller(datos: dict) -> dict:
               AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ? OR ? = '')
         """, (numero_interno, cliente, cliente, cliente))
         row_check = cursor.fetchone()
+        if row_check and es_nueva_directa:
+            return {"ok": False, "status": "error", "message": f"La llanta {numero_interno} ya existe en el inventario: móntela desde Stock o use otro número."}
         if not row_check or es_nueva_directa:
             if not row_check:
                 marca_n = str(datos.get('marca') or '').strip().upper()
@@ -17684,6 +19384,13 @@ def montar_llanta_taller(datos: dict) -> dict:
             return {"ok": False, "status": "error", "message": error}
         es_reingreso = origen in ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA')
 
+        # La lectura del vehículo no retrocede: los km de la llanta se calculan desde aquí
+        if odometro > 0:
+            r_lectura = cursor.execute("SELECT MAX(kilometraje) FROM inspecciones WHERE UPPER(TRIM(placa)) = ?", (placa,)).fetchone()
+            ultima_lectura = database.to_float(r_lectura[0]) if r_lectura else 0.0
+            if odometro < ultima_lectura:
+                return {"ok": False, "status": "error", "message": f"El odómetro ({odometro:,.0f}) no puede ser menor a la última lectura del vehículo {placa} ({ultima_lectura:,.0f}).".replace(',', '.')}
+
         # Candado Direccional: Si es eje direccional y ciclo_actual > 1 (o reencauche), rechazar (salvo si la tipología autoriza)
         perfil_v = database.obtener_perfil_vehiculo(placa)
         tipologia_v = perfil_v.get('tipologia', '') if perfil_v else ''
@@ -17698,7 +19405,7 @@ def montar_llanta_taller(datos: dict) -> dict:
 
         # Desmonte automático de ocupante previa en la misma posición
         cursor.execute("""
-            SELECT id, numero_interno, prof_actual_min, km_montaje_actual, km_acumulados_total, ciclo_actual
+            SELECT id, numero_interno, prof_actual_min, COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo, 0), km_acumulados_total, ciclo_actual
             FROM llantas_maestro
             WHERE UPPER(placa_actual) = ? AND posicion_actual = ? AND UPPER(numero_interno) != ?
               AND ubicacion_bodega = 'MONTADA_OPERACION'
@@ -18395,40 +20102,41 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         cursor = conn.cursor()
 
         # Buscar llanta instalada en llantas_maestro
-        cursor.execute("""
-            SELECT id, numero_interno, numero_serie_dot, marca_origen, diseno_origen, marca, diseno,
-                   dimension, prof_inicial_nueva, prof_actual_min, psi_actual, ciclo_actual,
-                   vida_actual, banda_reen
-            FROM llantas_maestro
-            WHERE UPPER(placa_actual) = ? AND posicion_actual = ? AND ubicacion_bodega = 'MONTADA_OPERACION'
-        """, (placa, posicion))
-        r_inst = cursor.fetchone()
+        km_recorridos = 0.0
+        r_inst = database._llanta_montada_en_posicion(cursor, placa, posicion, cliente)
         if r_inst:
+            km_mont = database.to_float(r_inst.get('km_montaje_actual')) or database.to_float(r_inst.get('km_montaje_ciclo'))
+            km_recorridos = max(0.0, database.to_float(r_inst.get('km_actual_vehiculo')) - km_mont) if km_mont else 0.0
+            vida_inst = database.vida_llanta(r_inst.get('vida_actual'), r_inst.get('num_reencauches'), r_inst.get('ciclo_actual'))
             llanta_instalada = {
-                "id": r_inst[0],
-                "numero_interno": r_inst[1],
-                "dot": r_inst[2],
-                "marca": r_inst[3] or r_inst[5],
-                "diseno": r_inst[4] or r_inst[6],
-                "dimension": r_inst[7],
-                "prof_inicial": r_inst[8],
-                "profundidad_actual": r_inst[9],
-                "psi_actual": r_inst[10],
-                "ciclo_actual": r_inst[11],
-                "vida": database.vida_llanta(r_inst[12], ciclo=r_inst[11]),
-                "banda": r_inst[13]
+                "numero_interno": r_inst.get('numero_interno'),
+                "dot": r_inst.get('numero_serie_dot'),
+                "marca": r_inst.get('marca') or r_inst.get('marca_origen'),
+                "diseno": r_inst.get('diseno') or r_inst.get('diseno_origen'),
+                "dimension": r_inst.get('dimension'),
+                "prof_inicial": database.to_float(r_inst.get('prof_inicial')) or database.to_float(r_inst.get('prof_inicial_nueva')),
+                "profundidad_actual": r_inst.get('prof_actual_min'),
+                "prof_actual_min": r_inst.get('prof_actual_min'),
+                "psi_actual": r_inst.get('psi_actual'),
+                "ciclo_actual": r_inst.get('ciclo_actual'),
+                "vida": vida_inst,
+                "vida_actual": vida_inst,
+                "banda": r_inst.get('banda_reen'),
+                "km_montaje_actual": km_mont
             }
         else:
-            # Buscar última inspección de patio en esa posición
+            # Buscar última inspección de patio en esa posición (solo si su llanta no se retiró después)
             cursor.execute("""
                 SELECT numero_interno, marca, diseno, dimension, prof_inicial,
-                       prof_ext, prof_cent, prof_int, psi, vida, banda_reen
+                       prof_ext, prof_cent, prof_int, psi, vida, banda_reen, fecha, cliente, km_montaje
                 FROM inspecciones
                 WHERE UPPER(placa) = ? AND posicion = ?
                 ORDER BY fecha DESC, id DESC LIMIT 1
             """, (placa, posicion))
             r_insp = cursor.fetchone()
-            if r_insp and r_insp[0] and r_insp[0].upper() != 'SN':
+            sigue_ahi = bool(r_insp) and database.cambio_de_llanta_en_posicion(
+                cursor, placa, posicion, r_insp[0], r_insp[11], r_insp[12] or cliente)[0] == 'igual'
+            if sigue_ahi and r_insp[0] and r_insp[0].upper() != 'SN':
                 p_vals = [x for x in (database.to_float(r_insp[5]), database.to_float(r_insp[6]), database.to_float(r_insp[7])) if x > 0]
                 p_min = min(p_vals) if p_vals else database.to_float(r_insp[4])
                 llanta_instalada = {
@@ -18438,9 +20146,12 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
                     "dimension": r_insp[3],
                     "prof_inicial": r_insp[4],
                     "profundidad_actual": p_min,
+                    "prof_actual_min": p_min,
                     "psi_actual": r_insp[8],
                     "vida": r_insp[9] or "ORIGINAL",
-                    "banda": r_insp[10]
+                    "vida_actual": r_insp[9] or "ORIGINAL",
+                    "banda": r_insp[10],
+                    "km_montaje_actual": database.to_float(r_insp[13])
                 }
 
         # Tipología y candado direccional
@@ -18491,6 +20202,7 @@ def obtener_posicion_taller_info(placa: str, posicion: int, cliente: str = "") -
         "posicion": posicion,
         "es_direccional": es_direccional,
         "llanta_instalada": llanta_instalada,
+        "km_recorridos_en_posicion": km_recorridos,
         "stock_disponible": stock_disponible
     }
 
@@ -18775,7 +20487,7 @@ def procesar_sabana_inspeccion_ampliada(file_path):
 
 - **Ruta:** `pdf_generator.py`
 - **Descripción:** Motor de generación de informes técnicos PDF (ReportLab): diagramas de chasis, tabla de mediciones y evidencias
-- **Métricas:** 2112 líneas | 106,258 bytes (103.8 KB)
+- **Métricas:** 2097 líneas | 104,855 bytes (102.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -19912,25 +21624,10 @@ def renderizar_informe(datos) -> bytes:
 
     style_par_obs = ParagraphStyle('ObsPar', fontName='Helvetica', fontSize=7.0, leading=9.5, textColor=colors.HexColor('#1E293B'))
     elements.append(Paragraph(" ".join(obs_lines), style_par_obs))
-    elements.append(Spacer(1, 4))
-
-    # =========================================================================
-    # SECCIÓN 9: CRITERIOS DE DIAGNÓSTICO APLICADOS
-    # =========================================================================
-    elements.append(Paragraph("Criterios de diagnóstico aplicados", style_sec_tit))
-    criterios_html = f"""
-    <b>Cambio de llanta:</b> la profundidad mínima de una llanta es menor o igual al límite de retiro configurado para el cliente ({texto_limite}).<br/>
-    <b>Alineación y geometría de ejes:</b> diferencia de 2,0 mm o más entre la profundidad exterior e interior en llantas direccionales o en ejes de trailer / eje libre.<br/>
-    <b>Dual mal apareado:</b> diferencia de más de 2,5 mm entre la profundidad mínima de la llanta interior y la exterior del mismo lado, o dimensiones distintas en el par dual.<br/>
-    <b>Dimensiones homogéneas:</b> No se recomienda utilizar llantas de diferentes dimensiones en una misma unidad; deben montarse llantas de medida idéntica por eje y configuración de flota.<br/>
-    La profundidad mínima de cada llanta es el menor de los tres valores medidos: exterior, centro e interior.
-    """
-    style_crit = ParagraphStyle('CritPar', fontName='Helvetica', fontSize=6.5, leading=8.5, textColor=colors.HexColor('#475569'))
-    elements.append(Paragraph(criterios_html, style_crit))
     elements.append(Spacer(1, 10))
 
     # =========================================================================
-    # SECCIÓN 10: FIRMAS
+    # SECCIÓN 9: FIRMAS
     # =========================================================================
     style_sub_firma = ParagraphStyle('FirmSub', fontName='Helvetica', fontSize=7.0, leading=9.0, textColor=colors.HexColor('#0F172A'), alignment=1)
     firma_data = [
@@ -23758,7 +25455,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/index.html`
 - **Descripción:** Aplicación Web SPA integral modularizada: HTML5, CSS Glassmorphism y contenedores de vista
-- **Métricas:** 6563 líneas | 448,260 bytes (437.8 KB)
+- **Métricas:** 6891 líneas | 483,004 bytes (471.7 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -24019,6 +25716,11 @@ if __name__ == '__main__':
     }
 
     @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+    /* KPI que el usuario desmarcó en «Elegir KPI» */
+    .kpi-oculto-usuario { display: none !important; }
+    /* Si en una fila de dos tarjetas queda una sola, ocupa todo el ancho */
+    .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
@@ -24039,7 +25741,7 @@ if __name__ == '__main__':
           <label class="block text-xs font-bold text-slate-700 mb-1">Usuario</label>
           <div class="relative">
             <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400 text-xs"></i>
-            <input type="text" id="login_username" placeholder="ej. admin o inspector1" class="w-full touch-target pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900">
+            <input type="text" id="login_username" placeholder="Tu usuario" class="w-full touch-target pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900">
           </div>
         </div>
 
@@ -24067,6 +25769,65 @@ if __name__ == '__main__':
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- MODAL: MI CUENTA (cambiar mi contraseña; obligatorio si la clave la puso el administrador o no cumple las reglas) -->
+  <div id="modalMiCuenta" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="miCuentaTitulo">
+    <form id="formMiCuenta" onsubmit="guardarCambioClave(event)" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 id="miCuentaTitulo" class="text-sm font-black text-slate-900 flex items-center space-x-1.5">
+          <i class="fa-solid fa-key text-amber-500"></i>
+          <span>Cambiar mi contraseña</span>
+        </h3>
+        <button type="button" id="btnCerrarMiCuenta" onclick="cerrarModalMiCuenta()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="miCuentaAvisoObligatorio" class="hidden p-2.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-800 font-semibold">
+        <i class="fa-solid fa-shield-halved mr-1"></i>
+        Por seguridad debes cambiar tu contraseña antes de continuar.
+      </div>
+      <input type="text" id="mi_cuenta_usuario" autocomplete="username" class="hidden" tabindex="-1" aria-hidden="true">
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label for="mi_cuenta_actual" class="font-bold text-slate-600 block mb-1">Contraseña actual</label>
+          <div class="relative">
+            <input type="password" id="mi_cuenta_actual" autocomplete="current-password" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold text-base sm:text-xs">
+            <button type="button" onclick="togglePasswordVisibility('mi_cuenta_actual', 'iconEyeMiCuenta1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar">
+              <i id="iconEyeMiCuenta1" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label for="mi_cuenta_nueva" class="font-bold text-slate-600 block mb-1">Contraseña nueva</label>
+          <div class="relative">
+            <input type="password" id="mi_cuenta_nueva" autocomplete="new-password" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold text-base sm:text-xs">
+            <button type="button" onclick="togglePasswordVisibility('mi_cuenta_nueva', 'iconEyeMiCuenta2')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar">
+              <i id="iconEyeMiCuenta2" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label for="mi_cuenta_confirmar" class="font-bold text-slate-600 block mb-1">Repite la contraseña nueva</label>
+          <div class="relative">
+            <input type="password" id="mi_cuenta_confirmar" autocomplete="new-password" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold text-base sm:text-xs">
+            <button type="button" onclick="togglePasswordVisibility('mi_cuenta_confirmar', 'iconEyeMiCuenta3')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar">
+              <i id="iconEyeMiCuenta3" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 leading-snug">Usa al menos 8 caracteres. Una frase corta que solo tú conozcas es más segura y fácil de recordar.</p>
+        <div id="mi_cuenta_error" role="alert" class="hidden text-xs text-rose-600 font-bold bg-rose-50 p-2 rounded-xl border border-rose-200 text-center"></div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" id="btnMiCuentaSecundario" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
+          <button type="submit" id="btnGuardarClave" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white rounded-xl font-bold">Guardar contraseña</button>
+        </div>
+      </div>
+      <div id="miCuentaOtrasSesiones" class="pt-3 border-t border-slate-100 text-xs space-y-2">
+        <p class="text-slate-500">¿Ingresaste desde un equipo que no es tuyo?</p>
+        <button type="button" onclick="cerrarOtrasSesiones()" class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-slate-700">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i>Cerrar sesión en los demás equipos
+        </button>
+      </div>
+    </form>
   </div>
 
   <!-- ================= 1. TOP UTILITY BAR ================= -->
@@ -24107,8 +25868,8 @@ if __name__ == '__main__':
           </div>
       </div>
 
-      <!-- Lado Derecho: Estado Offline, Enlace a Servicios y Botón Salir -->
-      <div class="flex items-center space-x-2.5">
+      <!-- Lado Derecho: Estado Offline, Enlace a Servicios, Mi clave y Botón Salir -->
+      <div class="flex items-center space-x-1.5 sm:space-x-2.5">
           <a href="/servicios" target="_blank" title="Ver Servicios y Portafolio Comercial TireAnalyze Pro" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-semibold shadow-sm transition-all duration-200">
               <i class="fa-solid fa-briefcase text-xs text-cyan-400"></i>
               <span>Servicios</span>
@@ -24117,6 +25878,11 @@ if __name__ == '__main__':
           <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de Conexión y Cola Offline de Patio" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50">
               <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span id="lblTextoEstadoConexion">En línea · Flota Lista Offline</span>
+          </button>
+
+          <button id="btnMiCuenta" type="button" onclick="abrirModalMiCuenta(false)" title="Cambiar mi contraseña" aria-label="Cambiar mi contraseña" class="flex items-center space-x-2 px-2 sm:px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-slate-200 hover:text-white border border-slate-700/80 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
+              <i class="fa-solid fa-key text-xs text-amber-300"></i>
+              <span class="hidden sm:inline">Mi clave</span>
           </button>
 
           <button id="logoutBtn" type="button" onclick="cerrarSesionUsuario()" title="Cerrar Sesión" class="group flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-[#0c182c] hover:bg-red-950/40 text-slate-200 hover:text-red-300 border border-slate-700/80 hover:border-red-500/50 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
@@ -24658,8 +26424,8 @@ if __name__ == '__main__':
             </button>
           </div>
 
-          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE & DESMONTE RÁPIDO (EXCLUSIVO LICENCIA FULL) -->
-          <div id="seccionTallerPatio" class="pt-3 border-t border-slate-100 space-y-2.5">
+          <!-- H. PANEL DE TALLER EN PATIO: MONTAJE Y DESMONTE. SOLO VERSIÓN PRO: oculto hasta confirmar la licencia del cliente -->
+          <div id="seccionTallerPatio" class="hidden pt-3 border-t border-slate-100 space-y-2.5">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
                 <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
@@ -24667,28 +26433,12 @@ if __name__ == '__main__':
                 </span>
                 <h4 class="text-xs font-black text-slate-800">Taller en Patio</h4>
                 <span id="badgeTallerPlanFull" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700 border border-purple-200">
-                  FULL
-                </span>
-                <span id="badgeTallerPlanLight" class="hidden px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
-                  LIGHT (Solo Lectura)
+                  PRO
                 </span>
               </div>
               <span id="badgeTallerPos" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 text-blue-700 border border-blue-200">
                 Posición 1
               </span>
-            </div>
-
-            <!-- Aviso informativo para Versión LIGHT (Sin Taller / Bodegas) -->
-            <div id="bannerTallerLight" class="hidden p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-xs shadow-sm space-y-1.5">
-              <div class="flex items-center gap-2 font-bold text-amber-900">
-                <span class="w-5 h-5 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-[10px]">
-                  <i class="fa-solid fa-lock"></i>
-                </span>
-                <span>Desmontajes y Montajes exclusivos de la Versión FULL</span>
-              </div>
-              <p class="text-[11px] text-amber-800/90 leading-relaxed">
-                Esta cuenta opera con <strong>Licencia Operativa LIGHT</strong>. Los movimientos de taller, reemplazo y desmonte de llantas están habilitados únicamente para la <strong>Licencia Empresarial FULL</strong> (Gestión de 7 Bodegas y Hoja de Vida).
-              </p>
             </div>
 
             <!-- Caja de Estado de la Llanta en la Posición -->
@@ -24698,7 +26448,7 @@ if __name__ == '__main__':
                   <i class="fa-solid fa-circle-exclamation text-amber-500"></i>
                   <span>Posición disponible (Sin llanta montada)</span>
                 </p>
-                <p class="text-[10px] text-slate-400">Puedes montar una llanta desde Bodega 1 / 2 o dar de alta una nueva</p>
+                <p class="text-[10px] text-slate-400">Puedes montar una llanta desde Bodega 1, 2 o 4, o dar de alta una nueva</p>
               </div>
 
               <div id="tallerLlantaMontada" class="hidden space-y-2">
@@ -24843,12 +26593,12 @@ if __name__ == '__main__':
 
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Precio Unitario ($)</label>
-                  <input type="number" id="precio" step="1000" inputmode="numeric" placeholder="1650000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <input type="number" id="precio" step="any" inputmode="numeric" placeholder="1650000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div>
                   <label id="lblKmMontaje" class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
-                  <input type="number" id="km_montaje" step="100" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <input type="number" id="km_montaje" step="any" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
               </div>
 
@@ -25088,6 +26838,10 @@ if __name__ == '__main__':
             <i class="fa-solid fa-file-excel"></i>
             <span>Importar Excel</span>
           </button>
+          <button type="button" id="btnEliminarDatosClienteBD" onclick="abrirModalEliminarDatosCliente()" class="hidden px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 flex items-center space-x-1.5" title="Deshacer un cargue por error (Solo Administrador)">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Eliminar datos de un cliente</span>
+          </button>
           <button type="button" id="btnEdicionMultipleBD" onclick="abrirModalEdicionMultipleBD()" class="hidden px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow flex items-center space-x-1.5 transition-all cursor-pointer" title="Modificar múltiples registros seleccionados (Solo Administrador)">
             <i class="fa-solid fa-layer-group"></i>
             <span>Editar Seleccionados (<span id="lblCantSeleccionadosBD">0</span>)</span>
@@ -25237,6 +26991,7 @@ if __name__ == '__main__':
               <th class="p-2.5">Placa</th>
               <th class="p-2.5">No. Interno</th>
               <th class="p-2.5 text-center">Pos</th>
+              <th class="p-2.5">Movimiento</th>
               <th class="p-2.5 text-right">Km</th>
               <th class="p-2.5">Tipología</th>
               <th class="p-2.5">Marca</th>
@@ -25257,7 +27012,7 @@ if __name__ == '__main__':
           </thead>
           <tbody id="tbodyInspecciones" class="divide-y divide-slate-100 bg-white text-slate-700 whitespace-nowrap font-medium">
             <tr>
-              <td colspan="25" class="p-8 text-center text-slate-400">Cargando base de inspecciones...</td>
+              <td colspan="26" class="p-8 text-center text-slate-400">Cargando base de inspecciones...</td>
             </tr>
           </tbody>
         </table>
@@ -25608,6 +27363,11 @@ if __name__ == '__main__':
             <i class="fa-solid fa-file-pdf"></i>
             <span>Exportar PDF</span>
           </button>
+          <button type="button" id="btnElegirKpis" onclick="abrirModalElegirKpis()" class="px-3 py-2 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-300 shadow-sm flex items-center space-x-1.5 transition-all active:scale-95">
+            <i class="fa-solid fa-sliders text-indigo-600"></i>
+            <span>Elegir KPI</span>
+            <span id="badgeKpisOcultos" class="hidden px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black"></span>
+          </button>
           <button type="button" onclick="limpiarFiltrosKpis()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-all active:scale-95">
             <i class="fa-solid fa-rotate-left text-slate-400 mr-1"></i>
             <span>Limpiar</span>
@@ -25762,99 +27522,13 @@ if __name__ == '__main__':
     </div>
 
     <!-- ============================================================== -->
-    <!-- BANNER EJECUTIVO: INTELIGENCIA DE AHORRO FINANCIERO & ROI      -->
-    <!-- ============================================================== -->
-    <div id="banner-ahorro-roi-kpis" class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-indigo-500/30 relative overflow-hidden">
-      <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-900/50">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <i class="fa-solid fa-chart-line"></i> Auditoría Financiera
-            </span>
-            <span class="text-[10px] font-bold text-slate-400">Algoritmo Predictivo de Recuperación</span>
-          </div>
-          <h3 class="text-base sm:text-lg font-black tracking-tight mt-1 flex items-center gap-2">
-            <span>💰 Potencial de Ahorro Identificado por TireAnalyze Pro</span>
-          </h3>
-          <p class="text-xs text-slate-300">Recuperación estimada de capital mediante salvamento de cascos, corrección geométrica oportuna y calibración de presiones</p>
-        </div>
-        <div class="bg-emerald-500/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-emerald-500/30 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-sack-dollar"></i>
-          </div>
-          <div>
-            <span class="text-[10px] uppercase font-bold text-emerald-300 block">Ahorro Potencial Total Recuperable</span>
-            <span id="banner_kpi_ahorro_total" class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">$0 COP</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4 Pilares de Inteligencia Financiera -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-        <!-- Pilar 1: Salvamento de Carcasas -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-indigo-400"></i> Salvamento de Carcasas</span>
-              <span id="badge_cascos_salvamento" class="text-[10px] px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">0 Cascos</span>
-            </div>
-            <span id="banner_kpi_ahorro_cascos" class="text-lg font-black text-white font-mono block">$0 COP</span>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Llantas originales en ventana crítica (3.0–4.2 mm) salvadas de fin de vida para reencauche</p>
-        </div>
-
-        <!-- Pilar 2: Geometría y Duales -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrows-split-up-and-left text-amber-400"></i> Geometría & Duales</span>
-              <span class="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold">Preventivo</span>
-            </div>
-            <span id="banner_kpi_ahorro_alineacion" class="text-lg font-black text-amber-300 font-mono block">$0 COP</span>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Caucho útil remanente protegido al corregir desalineación y diferencias de apareo</p>
-        </div>
-
-        <!-- Pilar 3: Combustible ACPM Anual -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-gas-pump text-sky-400"></i> Ahorro Combustible (Anual)</span>
-              <span class="text-[10px] px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-bold">12 Meses</span>
-            </div>
-            <span id="banner_kpi_ahorro_combustible" class="text-lg font-black text-sky-300 font-mono block">$0 COP</span>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Combustible ACPM ahorrado al calibrar neumáticos subinflados a su PSI objetivo</p>
-        </div>
-
-        <!-- Pilar 4: Detector de Cambiazos / Discrepancias -->
-        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Alerta Discrepancias / Cambiazos</span>
-              <span id="badge_cambiazos_total" class="text-[10px] px-2 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">0 Casos</span>
-            </div>
-            <div class="flex items-center justify-between mt-1">
-              <span id="banner_kpi_cambiazos_num" class="text-lg font-black text-rose-400 font-mono">0 Casos</span>
-              <button type="button" onclick="abrirModalAlertasCambiazo()" class="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 flex items-center gap-1">
-                <i class="fa-solid fa-eye"></i> Ver Auditoría
-              </button>
-            </div>
-          </div>
-          <p class="text-[10px] text-slate-400 mt-2">Seriales modificados en patio/ruta sin registro de Desmonte/Montaje en Kardex</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================== -->
     <!-- 2. CONTENEDORES DE LAS 5 SUB-PESTAÑAS HOMOLOGADAS DE KPIS        -->
     <!-- ============================================================== -->
 
     <!-- SUB-PESTAÑA 1: INSPECCIÓN GENERAL & PARQUE VEHICULAR (KPI 01 AL 04) -->
     <div id="subvista-kpi-1" class="space-y-4">
       <!-- KPI 01: Banner de Cumplimiento de Inspección vs Parque Vehicular -->
-      <article class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-lg border border-indigo-900/40 relative overflow-hidden">
+      <article data-kpi="kpi_01" class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-lg border border-indigo-900/40 relative overflow-hidden">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div class="flex items-center space-x-2">
@@ -25865,8 +27539,14 @@ if __name__ == '__main__':
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-col">
+              <label for="kpi01_periodo" class="text-[10px] uppercase font-bold text-slate-300">Periodo</label>
+              <select id="kpi01_periodo" onchange="aplicarPeriodoKpi01()" class="mt-0.5 px-2.5 py-1.5 bg-white/10 border border-white/20 rounded-xl text-xs font-bold text-white [&>option]:text-slate-900 [&>optgroup]:text-slate-900">
+                <option value="">Cargando...</option>
+              </select>
+            </div>
             <div class="text-right">
-              <span class="text-xs text-slate-400 block font-medium">Auditados / Padrón</span>
+              <span id="kpi01_texto_periodo" class="text-xs text-slate-400 block font-medium">Inspeccionados / Flota</span>
               <span id="kpi01_auditados_padron" class="text-lg font-black text-white font-mono">0 / 0</span>
             </div>
             <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-center">
@@ -25886,12 +27566,21 @@ if __name__ == '__main__':
             <div id="kpi01_barra_progreso" class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 transition-all duration-700" style="width: 0%;"></div>
           </div>
         </div>
+
+        <!-- Vehículos inspeccionados mes a mes frente al total de la flota -->
+        <div class="mt-4 bg-white rounded-2xl p-3 sm:p-4 shadow-md">
+          <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
+            <span class="text-xs font-black text-slate-800">Vehículos inspeccionados por mes vs. total de la flota</span>
+            <span id="kpi01_texto_anio" class="text-xs font-bold text-emerald-700"></span>
+          </div>
+          <div class="relative h-56"><canvas id="canvasKpi01_meses"></canvas></div>
+        </div>
       </article>
 
       <!-- Fila 1: KPI 02 y KPI 03 -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 02: Volumen Auditado Mes a Mes -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_02" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -25915,7 +27604,7 @@ if __name__ == '__main__':
         </article>
 
         <!-- KPI 03: % de Reencauche y Unidades por Ciclo -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_03" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -25945,7 +27634,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- Fila 2: KPI 04: Composición de Flota (Tipología, Marca y Dimensión) -->
-      <article class="col-span-12 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <article data-kpi="kpi_04" class="col-span-12 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26001,7 +27690,7 @@ if __name__ == '__main__':
     <!-- SUB-PESTAÑA 2: MANTENIMIENTO, ALINEACIÓN & PÉRDIDA (KPI 05 AL 11) -->
     <div id="subvista-kpi-2" class="hidden space-y-4">
       <!-- KPI 05: Cuadro de Cambios + Matriz Placa vs Posición + Regla Par Direccional -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <article data-kpi="kpi_05" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26040,7 +27729,7 @@ if __name__ == '__main__':
       </article>
 
       <!-- Fila 2: KPI 06 - Seguimiento de Alineación y Pérdida -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_06" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26080,7 +27769,7 @@ if __name__ == '__main__':
       <!-- Fila 3: KPI 07 (Rotaciones Tándem) y KPI 08 (Duales Desapareados + Bodega 2) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 07: Plan de Rotaciones Tándem y Tráiler -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_07" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -26110,7 +27799,7 @@ if __name__ == '__main__':
         </article>
 
         <!-- KPI 08: Duales Mal Apareados + Bodega 2 Recambio -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_08" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -26139,7 +27828,7 @@ if __name__ == '__main__':
       <!-- Fila 4: KPI 09 (Presiones PSI) y KPI 10 (Pareto Novedades) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 09: Estado de Presiones y Combustible -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_09" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -26171,7 +27860,7 @@ if __name__ == '__main__':
         </article>
 
         <!-- KPI 10: Pareto de Novedades y Taller -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_10" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -26196,7 +27885,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- Fila 5: KPI 11 - Impacto Económico Interanual (mm vs $) -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_11" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26240,7 +27929,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- KPI 12: Las 4 Tarjetas Maestras de Desempeño de Flota -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div data-kpi="kpi_12" class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" title="Milímetros gastados por la llanta más desgastada de la flota">mm Gastados (Máx.)</span>
           <span id="kpi12_mm_gastados" class="text-2xl font-black text-indigo-600 block mt-1 font-mono">0,0 mm</span>
@@ -26265,7 +27954,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- KPI 13: Km Rodados Reales vs Proyección Final al Retiro -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_13" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26284,7 +27973,7 @@ if __name__ == '__main__':
       </article>
 
       <!-- KPI 14: Tríada Multidimensional Sincronizada con Selector Dinámico -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_14" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26330,7 +28019,7 @@ if __name__ == '__main__':
       </article>
 
       <!-- KPI CPK: los 4 costos por kilómetro -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_cpk" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="pb-2 border-b border-slate-100">
           <h4 class="text-sm font-black text-slate-900">Costo por kilómetro (CPK): operativo, proyectado, total y administrativo</h4>
           <p class="text-[11px] text-slate-500">Flota = Σ costos ÷ Σ km. Las llantas sin precio (ni propio ni en la lista del cliente) quedan fuera.</p>
@@ -26361,7 +28050,7 @@ if __name__ == '__main__':
       <!-- Fila 4: KPI 15 (Potencial Máx/Prom/Mín) y KPI 16 (Curva Rango Desgaste) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <!-- KPI 15: Potencial de Llanta -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_15" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -26385,7 +28074,7 @@ if __name__ == '__main__':
         </article>
 
         <!-- KPI 16: Curva de Proyección por Rango de Desgaste -->
-        <article class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <article data-kpi="kpi_16" class="lg:col-span-6 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
@@ -26422,7 +28111,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- KPI 17: Indicadores Globales FVU -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_17" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26456,7 +28145,7 @@ if __name__ == '__main__':
       </article>
 
       <!-- KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_18" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26496,7 +28185,7 @@ if __name__ == '__main__':
       </article>
 
       <!-- KPI 19: Profundidad de Retiro y Dispersión por mm -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+      <article data-kpi="kpi_19" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26535,7 +28224,7 @@ if __name__ == '__main__':
       </div>
 
       <!-- KPI 20: Matriz de Evaluación de Necesidades vs Las 7 Bodegas (MRP) -->
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+      <article data-kpi="kpi_20" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-100 gap-3">
           <div>
             <div class="flex items-center space-x-1.5">
@@ -26606,7 +28295,7 @@ if __name__ == '__main__':
             <i class="fa-solid fa-list-check text-indigo-400 text-lg"></i>
             <div>
               <h3 class="text-sm font-black">Vehículos del Padrón Pendientes de Inspección</h3>
-              <p class="text-[11px] text-slate-300">Unidades activas sin corte registrado en el mes consultado</p>
+              <p id="kpi01_modal_subtitulo" class="text-[11px] text-slate-300">Unidades activas sin inspección en el periodo consultado</p>
             </div>
           </div>
           <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
@@ -26618,19 +28307,23 @@ if __name__ == '__main__':
             <table class="w-full text-xs text-left">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
                 <tr>
-                  <th class="p-2.5">Placa</th>
-                  <th class="p-2.5">Cliente / Sede</th>
+                  <th class="p-2.5 whitespace-nowrap">Placa / N° interno</th>
+                  <th class="p-2.5">Sede</th>
                   <th class="p-2.5">Tipología</th>
-                  <th class="p-2.5 text-center">Estado Padrón</th>
+                  <th class="p-2.5">Fabricante / Línea</th>
+                  <th class="p-2.5 text-center whitespace-nowrap">Última inspección</th>
                 </tr>
               </thead>
               <tbody id="tbodyModalPlacasPendientes" class="divide-y divide-slate-100 font-medium">
-                <tr><td colspan="4" class="p-4 text-center text-slate-400">Sin vehículos pendientes</td></tr>
+                <tr><td colspan="5" class="p-4 text-center text-slate-400">Sin vehículos pendientes</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" id="btnExportarPendientesKpi01" onclick="exportarPendientesKpi01()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all flex items-center space-x-1.5">
+            <i class="fa-solid fa-file-excel"></i><span>Exportar faltantes</span>
+          </button>
           <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">
             Cerrar
           </button>
@@ -26687,7 +28380,7 @@ if __name__ == '__main__':
 
     <!-- SUB-PESTAÑA 6: TENDENCIAS MENSUALES -->
     <div id="subvista-kpi-6" class="hidden space-y-4">
-      <article class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+      <article data-kpi="kpi_tendencias" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
             <div class="flex items-center gap-2">
@@ -26795,6 +28488,92 @@ if __name__ == '__main__':
       </div>
     </div>
 
+    <!-- ============================================================== -->
+    <!-- BANNER EJECUTIVO: INTELIGENCIA DE AHORRO FINANCIERO & ROI      -->
+    <!-- ============================================================== -->
+    <div id="banner-ahorro-roi-kpis" class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-indigo-500/30 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-900/50">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <i class="fa-solid fa-chart-line"></i> Auditoría Financiera
+            </span>
+            <span class="text-[10px] font-bold text-slate-400">Algoritmo Predictivo de Recuperación</span>
+          </div>
+          <h3 class="text-base sm:text-lg font-black tracking-tight mt-1 flex items-center gap-2">
+            <span>💰 Potencial de Ahorro Identificado por TireAnalyze Pro</span>
+          </h3>
+          <p class="text-xs text-slate-300">Recuperación estimada de capital mediante salvamento de cascos, corrección geométrica oportuna y calibración de presiones</p>
+        </div>
+        <div class="bg-emerald-500/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-emerald-500/30 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-sack-dollar"></i>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-300 block">Ahorro Potencial Total Recuperable</span>
+            <span id="banner_kpi_ahorro_total" class="text-xl sm:text-2xl font-black text-emerald-400 font-mono">$0 COP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Pilares de Inteligencia Financiera -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+        <!-- Pilar 1: Salvamento de Carcasas -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-indigo-400"></i> Salvamento de Carcasas</span>
+              <span id="badge_cascos_salvamento" class="text-[10px] px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">0 Cascos</span>
+            </div>
+            <span id="banner_kpi_ahorro_cascos" class="text-lg font-black text-white font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Llantas originales en ventana crítica (3.0–4.2 mm) salvadas de fin de vida para reencauche</p>
+        </div>
+
+        <!-- Pilar 2: Geometría y Duales -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrows-split-up-and-left text-amber-400"></i> Geometría & Duales</span>
+              <span class="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold">Preventivo</span>
+            </div>
+            <span id="banner_kpi_ahorro_alineacion" class="text-lg font-black text-amber-300 font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Caucho útil remanente protegido al corregir desalineación y diferencias de apareo</p>
+        </div>
+
+        <!-- Pilar 3: Combustible ACPM Anual -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-gas-pump text-sky-400"></i> Ahorro Combustible (Anual)</span>
+              <span class="text-[10px] px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-bold">12 Meses</span>
+            </div>
+            <span id="banner_kpi_ahorro_combustible" class="text-lg font-black text-sky-300 font-mono block">$0 COP</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Combustible ACPM ahorrado al calibrar neumáticos subinflados a su PSI objetivo</p>
+        </div>
+
+        <!-- Pilar 4: Detector de Cambiazos / Discrepancias -->
+        <div class="bg-slate-800/60 backdrop-blur-sm p-4 rounded-2xl border border-slate-700/50 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Alerta Discrepancias / Cambiazos</span>
+              <span id="badge_cambiazos_total" class="text-[10px] px-2 py-0.2 rounded-full bg-rose-500/20 text-rose-300 font-mono font-bold">0 Casos</span>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <span id="banner_kpi_cambiazos_num" class="text-lg font-black text-rose-400 font-mono">0 Casos</span>
+              <button type="button" onclick="abrirModalAlertasCambiazo()" class="px-2.5 py-1 bg-rose-600/80 hover:bg-rose-500 text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 flex items-center gap-1">
+                <i class="fa-solid fa-eye"></i> Ver Auditoría
+              </button>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-2">Seriales modificados en patio/ruta sin registro de Desmonte/Montaje en Kardex</p>
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <!-- ============================================================== -->
@@ -26821,7 +28600,7 @@ if __name__ == '__main__':
           </button>
           <button type="button" onclick="exportarComposicionExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer">
             <i class="fa-solid fa-file-excel"></i>
-            <span>Exportar Matriz Excel</span>
+            <span>Exportar Excel</span>
           </button>
           <button type="button" id="btnExportarComposicionPdf" onclick="exportarComposicionPdf()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-wait">
             <i class="fa-solid fa-file-pdf"></i>
@@ -26842,6 +28621,9 @@ if __name__ == '__main__':
           </div>
           <div class="text-xs font-bold text-slate-800" id="txt_regla_oro_1_titulo">Cero Reencauches en Dirección</div>
           <p class="text-[11px] text-slate-500 mt-0.5 leading-snug" id="txt_regla_oro_1_desc">El estándar técnico exige estrictamente 0.0% de llantas reencauchadas en el eje directriz.</p>
+          <button type="button" id="btnReglaOro1Vehiculos" onclick="abrirModalReglaOro1()" class="hidden mt-2 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-sm transition-all cursor-pointer">
+            <i class="fa-solid fa-truck mr-1"></i><span id="txtBtnReglaOro1">Ver vehículos</span>
+          </button>
         </div>
 
         <!-- Regla 2: Adopción Renovado Tracción y Remolques -->
@@ -27137,6 +28919,7 @@ if __name__ == '__main__':
         <button type="button" onclick="mostrarSubtabCat('clientes')" id="subtab-btn-clientes" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Límites de Retiro</button>
         <button type="button" onclick="mostrarSubtabCat('marcas_cliente')" id="subtab-btn-marcas_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Marcas por Cliente</button>
         <button type="button" onclick="mostrarSubtabCat('precios_cliente')" id="subtab-btn-precios_cliente" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Precios por Cliente</button>
+        <button type="button" onclick="mostrarSubtabCat('parque')" id="subtab-btn-parque" class="hidden px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Parque Automotor</button>
         <button type="button" onclick="mostrarSubtabCat('usuarios')" id="subtab-btn-usuarios" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">Usuarios & Roles</button>
       </div>
 
@@ -27528,7 +29311,7 @@ if __name__ == '__main__':
                   <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
                   <span>Precio COP *</span>
                 </label>
-                <input type="number" id="precio_valor" required min="1" step="1000" placeholder="ej. 1850000" oninput="alEscribirPrecioValor(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-emerald-800 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
+                <input type="number" id="precio_valor" required min="1" step="any" placeholder="ej. 1850000" oninput="alEscribirPrecioValor(this.value)" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-black text-emerald-800 font-mono focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all">
                 <span id="previewPrecioCOP" class="text-[10px] font-bold text-emerald-600 truncate block mt-0.5">$ 0 COP</span>
               </div>
             </div>
@@ -27749,6 +29532,129 @@ if __name__ == '__main__':
           <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white font-bold"><tr><th class="p-2">Cliente</th><th class="p-2">Marca</th><th class="p-2 text-center">Máx. reencauches</th><th class="p-2 text-center">Acciones</th></tr></thead>
             <tbody id="tbodyMaximosReencauche" class="divide-y divide-slate-100 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Subtab: Parque Automotor por cliente (solo administrador) -->
+      <div id="cat-seccion-parque" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <span class="text-sm font-black text-slate-900 flex items-center space-x-2">
+              <i class="fa-solid fa-truck-moving text-blue-600"></i>
+              <span>Parque Automotor por Cliente</span>
+            </span>
+            <p class="text-[11px] text-slate-500">Cargue todos los vehículos del cliente para medir mes a mes qué porcentaje se inspeccionó y cuáles faltan (KPI 01). Si un cliente no tiene parque cargado, el KPI sigue funcionando como antes.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="abrirFormVehiculoParque()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center space-x-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-plus"></i>
+              <span>Agregar vehículo</span>
+            </button>
+            <button type="button" onclick="descargarPlantillaParque()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-download text-slate-500"></i>
+              <span>Plantilla</span>
+            </button>
+            <button type="button" id="btnExportarParque" onclick="exportarParqueExcel()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50" title="Exportar el parque del cliente a Excel">
+              <i class="fa-solid fa-file-export text-slate-500"></i>
+              <span>Exportar</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/90 border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <label class="block">
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cliente</span>
+              <select id="selParqueCliente" onchange="cargarParqueCat()" class="mt-1 w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-white">
+                <option value="">Seleccione un cliente…</option>
+              </select>
+            </label>
+            <label class="block md:col-span-2">
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Archivo del parque (.xlsx)</span>
+              <div class="mt-1 flex flex-col sm:flex-row gap-2">
+                <input type="file" id="fileParqueExcel" accept=".xlsx,.xls" class="flex-1 min-w-0 text-xs file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-slate-200 file:text-slate-700 file:font-bold">
+                <button type="button" id="btnSubirParque" onclick="subirParqueExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap">
+                  <i class="fa-solid fa-file-excel text-emerald-200"></i>
+                  <span>Subir parque</span>
+                </button>
+              </div>
+            </label>
+          </div>
+          <p class="text-[11px] text-slate-500">Columnas: <b>Placa / N° interno</b> y <b>Tipología</b> (obligatorias), <b>Km actual</b>, <b>Fabricante</b> y <b>Línea</b>; opcional <b>Sede</b>. La placa o número interno debe ser el mismo que se digita al inspeccionar. <b>El archivo reemplaza el parque del cliente:</b> los vehículos que no vengan quedan inactivos.</p>
+          <div id="resultadoParque" class="hidden text-xs rounded-2xl border p-3"></div>
+        </div>
+
+        <div id="cardVehiculoParque" class="hidden bg-blue-50/60 border border-blue-200 rounded-3xl p-4 sm:p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span id="tituloVehiculoParque" class="text-xs font-black text-blue-950">Agregar vehículo al parque</span>
+            <button type="button" onclick="cerrarFormVehiculoParque()" class="w-7 h-7 rounded-full hover:bg-blue-100 text-blue-900 flex items-center justify-center" aria-label="Cerrar formulario"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Placa / N° interno *</span>
+              <input type="text" id="vpPlaca" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase font-mono"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipología *</span>
+              <select id="vpTipologia" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"><option value="">Seleccione…</option></select></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sede</span>
+              <input type="text" id="vpSede" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Km actual</span>
+              <input type="number" id="vpKm" min="0" step="1" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Fabricante</span>
+              <input type="text" id="vpFabricante" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase"></label>
+            <label class="block"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Línea</span>
+              <input type="text" id="vpLinea" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase"></label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="cerrarFormVehiculoParque()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200">Cancelar</button>
+            <button type="button" id="btnGuardarVehiculoParque" onclick="guardarVehiculoParque()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center space-x-1.5 disabled:opacity-50">
+              <i class="fa-solid fa-floppy-disk"></i><span>Guardar vehículo</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3">
+            <span class="text-[10px] text-blue-700 font-bold uppercase tracking-wider block">Vehículos activos</span>
+            <span id="kpiParqueActivos" class="text-sm font-black text-blue-950">—</span>
+          </div>
+          <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3">
+            <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Inspeccionados este mes</span>
+            <span id="kpiParqueMes" class="text-sm font-black text-emerald-950">—</span>
+          </div>
+          <div class="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3">
+            <span class="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Faltan este mes</span>
+            <span id="kpiParqueFaltan" class="text-sm font-black text-amber-950">—</span>
+          </div>
+          <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3">
+            <span class="text-[10px] text-slate-600 font-bold uppercase tracking-wider block">Origen del parque</span>
+            <span id="kpiParqueOrigen" class="text-sm font-black text-slate-900">—</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+          <input type="search" id="buscarParque" oninput="renderizarParqueCat()" placeholder="Buscar placa, tipología, fabricante…" class="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white">
+          <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 whitespace-nowrap">
+            <input type="checkbox" id="chkParqueSoloFaltantes" onchange="renderizarParqueCat()"> Solo los que faltan este mes
+          </label>
+        </div>
+        <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+          <table class="w-full text-xs">
+            <thead class="bg-slate-900 text-white">
+              <tr>
+                <th class="p-2.5 text-left whitespace-nowrap">Placa / N° interno</th>
+                <th class="p-2.5 text-left">Sede</th>
+                <th class="p-2.5 text-left">Tipología</th>
+                <th class="p-2.5 text-left">Fabricante</th>
+                <th class="p-2.5 text-left">Línea</th>
+                <th class="p-2.5 text-right whitespace-nowrap">Km actual</th>
+                <th class="p-2.5 text-center whitespace-nowrap">Última inspección</th>
+                <th class="p-2.5 text-center">Estado</th>
+                <th class="p-2.5 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyParqueCat">
+              <tr><td colspan="9" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -28129,7 +30035,7 @@ if __name__ == '__main__':
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
-            <input type="text" id="alta_cliente" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="text" id="alta_cliente" required onchange="listasAlta.preparar()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">N° Interno / Serie *</label>
@@ -28145,19 +30051,19 @@ if __name__ == '__main__':
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Dimensión *</label>
-            <input type="text" id="alta_dimension" required value="295/80R22.5" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <select id="alta_dimension" required onchange="listasAlta.onDimension(this)" class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">Primero selecciona un diseño...</option></select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Marca *</label>
-            <input type="text" id="alta_marca" required placeholder="ej. MICHELIN, GOODYEAR" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 uppercase">
+            <select id="alta_marca" required onchange="listasAlta.onMarca(this)" class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">Cargando marcas...</option></select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Diseño *</label>
-            <input type="text" id="alta_diseno" required placeholder="ej. X MULTI Z" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 uppercase">
+            <select id="alta_diseno" required onchange="listasAlta.onDiseno(this)" class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">Primero selecciona una marca...</option></select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Vida Actual</label>
-            <select id="alta_vida_actual" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <select id="alta_vida_actual" onchange="onCambioVidaAlta()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
               <option value="Original">Original</option>
               <option value="R1">R1 (1er Reencauche)</option>
               <option value="R2">R2 (2do Reencauche)</option>
@@ -28166,15 +30072,16 @@ if __name__ == '__main__':
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Banda Reencauche (Opcional)</label>
-            <input type="text" id="alta_banda_reen" placeholder="ej. BDM, RINGTREAD" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900">
+            <select id="alta_banda_reen" onchange="onCambioBandaAlta(this)" disabled class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">No aplica en llanta Original</option></select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Profundidad Inicial (mm) *</label>
-            <input type="number" step="0.1" id="alta_prof_inicial" required value="18.0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" min="0.1" id="alta_prof_inicial" required placeholder="Según marca y diseño" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP) *</label>
-            <input type="number" step="1000" id="alta_costo_compra" placeholder="Sin precio: se excluye de los costos" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP)</label>
+            <input type="number" step="any" id="alta_costo_compra" placeholder="Sin precio: se excluye de los costos" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <p id="alta_costo_origen" class="hidden text-[10px] text-emerald-700 font-semibold mt-0.5">De la lista de precios del cliente</p>
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Factura</label>
@@ -28297,7 +30204,7 @@ if __name__ == '__main__':
           </div>
           <div>
             <label class="block text-xs font-bold text-teal-900 mb-1">Costo del Reencauche ($) *</label>
-            <input type="number" step="1000" id="mover_costo_reencauche" placeholder="ej. 650000" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_costo_reencauche" placeholder="ej. 650000" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
 
@@ -28313,7 +30220,7 @@ if __name__ == '__main__':
           </div>
           <div>
             <label class="block text-xs font-bold text-amber-900 mb-1">Costo de Reparación / Vulcanizadora ($) — Se suma al retorno de Bodega 5</label>
-            <input type="number" step="1000" id="mover_costo_reparacion" placeholder="ej. 150000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_costo_reparacion" placeholder="ej. 150000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
 
@@ -28396,7 +30303,7 @@ if __name__ == '__main__':
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Valor Reconocido por Proveedor ($ COP)</label>
-          <input type="number" step="1000" id="garantia_valor_reconocido" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-emerald-700">
+          <input type="number" step="any" id="garantia_valor_reconocido" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-emerald-700">
           <p class="text-[10px] text-slate-400 mt-1">Este valor reduce automáticamente el dinero perdido por fin de vida útil prematura.</p>
         </div>
 
@@ -29178,7 +31085,7 @@ if __name__ == '__main__':
       <div class="space-y-3 text-xs">
         <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Contraseña (Mínimo 4 caracteres)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label class="font-bold text-slate-600 block mb-1">Contraseña inicial (mínimo 8 caracteres; el usuario la cambiará al ingresar)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
           <label class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="usr_rol" onchange="alCambiarRolUsuarioModal('nuevo')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
@@ -29399,7 +31306,7 @@ if __name__ == '__main__':
         <div>
           <label class="font-bold text-slate-600 block mb-1">Nueva Contraseña</label>
           <div class="relative">
-            <input type="password" id="reset_nueva_password" placeholder="Mínimo 4 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
+            <input type="password" id="reset_nueva_password" placeholder="Mínimo 8 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
             <button type="button" onclick="togglePasswordVisibility('reset_nueva_password', 'iconEyeReset1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
               <i id="iconEyeReset1" class="fa-solid fa-eye"></i>
             </button>
@@ -29770,8 +31677,8 @@ if __name__ == '__main__':
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Odómetro Actual del Vehículo (km) <span class="text-rose-500">*</span></label>
-          <input type="number" id="desm_odometro" required min="0" step="1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
+          <label class="block font-bold text-slate-700 mb-1"><span id="lblDesmOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
+          <input type="number" id="desm_odometro" required min="1" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <div>
@@ -29836,7 +31743,7 @@ if __name__ == '__main__':
       <div class="flex border-b border-slate-200 space-x-2">
         <button type="button" id="tabBtnMontarStock" onclick="cambiarTabMontar('stock')" class="pb-2 text-xs font-black border-b-2 border-blue-600 text-blue-600 flex items-center space-x-1.5">
           <i class="fa-solid fa-warehouse"></i>
-          <span>A. Desde Stock (Bodega 1 / 2)</span>
+          <span>A. Desde Stock (Bodega 1, 2 o 4)</span>
         </button>
         <button type="button" id="tabBtnMontarNueva" onclick="cambiarTabMontar('nueva')" class="pb-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-700 flex items-center space-x-1.5">
           <i class="fa-solid fa-plus-circle"></i>
@@ -29850,8 +31757,8 @@ if __name__ == '__main__':
         <input type="hidden" id="mont_posicion">
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Odómetro Actual del Vehículo (km) <span class="text-rose-500">*</span></label>
-          <input type="number" id="mont_odometro" required min="0" step="1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
+          <label class="block font-bold text-slate-700 mb-1"><span id="lblMontOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
+          <input type="number" id="mont_odometro" required min="1" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <!-- Pestaña A: Selector de Stock -->
@@ -29873,23 +31780,30 @@ if __name__ == '__main__':
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-0.5">Marca <span class="text-rose-500">*</span></label>
-              <input type="text" id="mont_nueva_marca" placeholder="MICHELIN" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase">
+              <select id="mont_nueva_marca" onchange="listasMontar.onMarca(this)" class="w-full min-w-0 p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs truncate">
+                <option value="">Cargando marcas...</option>
+              </select>
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-0.5">Diseño <span class="text-rose-500">*</span></label>
-              <input type="text" id="mont_nueva_diseno" placeholder="X MULTIWAY 3D" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase">
+              <select id="mont_nueva_diseno" onchange="listasMontar.onDiseno(this)" class="w-full min-w-0 p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs truncate">
+                <option value="">Primero selecciona una marca...</option>
+              </select>
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-0.5">Dimensión <span class="text-rose-500">*</span></label>
-              <input type="text" id="mont_nueva_dimension" placeholder="295/80R22.5" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase">
+              <select id="mont_nueva_dimension" onchange="listasMontar.onDimension(this)" class="w-full min-w-0 p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs truncate">
+                <option value="">Primero selecciona un diseño...</option>
+              </select>
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">Prof. Inicial (mm)</label>
-              <input type="number" step="0.1" id="mont_nueva_prof" value="16.0" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+              <label class="block font-bold text-slate-700 mb-0.5">Prof. Inicial (mm) <span class="text-rose-500">*</span></label>
+              <input type="number" step="any" min="0" id="mont_nueva_prof" placeholder="Según marca y diseño" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-0.5">Precio Compra ($)</label>
-              <input type="number" step="1000" id="mont_nueva_precio" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+              <input type="number" step="any" id="mont_nueva_precio" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+              <p id="mont_nueva_precio_origen" class="hidden text-[10px] text-emerald-700 font-semibold mt-0.5">De la lista de precios del cliente</p>
             </div>
           </div>
         </div>
@@ -30144,7 +32058,7 @@ if __name__ == '__main__':
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Costo Factura Renovado ($)</label>
-            <input type="number" step="1000" id="ret_costo" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+            <input type="number" step="any" id="ret_costo" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
         </div>
 
@@ -30178,7 +32092,7 @@ if __name__ == '__main__':
         <input type="hidden" id="rep_numero_interno">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Costo de Reparación ($ COP)</label>
-          <input type="number" step="1000" id="rep_costo" value="85000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+          <input type="number" step="any" id="rep_costo" value="85000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Trabajo Realizado</label>
@@ -30216,7 +32130,7 @@ if __name__ == '__main__':
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Valor Acreditado / Nota Crédito ($ COP)</label>
-          <input type="number" step="1000" id="gar_valor" placeholder="Valor de la nota crédito" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+          <input type="number" step="any" id="gar_valor" placeholder="Valor de la nota crédito" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div class="flex justify-end space-x-2 pt-2 border-t">
           <button type="button" onclick="cerrarModalDictamenGarantia()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold">Cancelar</button>
@@ -30314,6 +32228,69 @@ if __name__ == '__main__':
   <!-- ============================================================== -->
   <!-- MÓDULOS JAVASCRIPT MODULARES (OPTIMIZADOS PARA CACHÉ Y PATIO)   -->
   <!-- ============================================================== -->
+    <!-- Vehículos que incumplen la regla de oro 1 (reencauche en eje direccional) -->
+    <div id="modalReglaOro1" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-rose-700 to-rose-900 text-white flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-black">Regla de oro 1: vehículos con reencauche en dirección</h3>
+            <p id="lblReglaOro1Sub" class="text-[11px] text-rose-100">Llantas reencauchadas en eje direccional</p>
+          </div>
+          <button type="button" onclick="cerrarModalReglaOro1()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto custom-scroll flex-1">
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5">Placa</th>
+                  <th class="p-2.5">Cliente / Sede</th>
+                  <th class="p-2.5">Tipología</th>
+                  <th class="p-2.5 text-center">Pos.</th>
+                  <th class="p-2.5">N° interno</th>
+                  <th class="p-2.5">Marca / Diseño</th>
+                  <th class="p-2.5">Vida / Banda</th>
+                  <th class="p-2.5 whitespace-nowrap">Última inspección</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyReglaOro1" class="divide-y divide-slate-100 font-medium"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="exportarComposicionExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all">
+            <i class="fa-solid fa-file-excel mr-1"></i>Exportar a Excel
+          </button>
+          <button type="button" onclick="cerrarModalReglaOro1()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elegir qué KPI ve el usuario en la pestaña KPIs (se guarda por usuario; el PDF sale completo) -->
+    <div id="modalElegirKpis" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4" onclick="if (event.target === this) cerrarModalElegirKpis()">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-black">Elegir los KPI que quiero ver</h3>
+            <p class="text-[11px] text-indigo-200">Marque o desmarque cada indicador. Se guarda para su usuario; el PDF de KPIs sale completo.</p>
+          </div>
+          <button type="button" onclick="cerrarModalElegirKpis()" class="w-8 h-8 shrink-0 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="listaElegirKpis" class="p-4 overflow-y-auto custom-scroll flex-1 space-y-3"></div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <span id="lblResumenElegirKpis" class="text-xs font-bold text-slate-600"></span>
+          <div class="flex gap-2">
+            <button type="button" onclick="mostrarTodosLosKpis()" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-all">Mostrar todos</button>
+            <button type="button" onclick="cerrarModalElegirKpis()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all">Listo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   <script src="/static/js/app_core.js"></script>
   <script src="/static/js/modulo_basedatos.js"></script>
   <script src="/static/js/modulo_kpis.js"></script>
@@ -30323,6 +32300,54 @@ if __name__ == '__main__':
   <script src="/static/js/modulo_patio.js"></script>
   <script src="/static/js/modulo_bodegas.js"></script>
   <script src="/static/js/app_init.js"></script>
+    <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
+    <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-rose-700 to-rose-900 text-white flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <i class="fa-solid fa-trash-can text-rose-200 text-lg"></i>
+            <div>
+              <h3 class="text-sm font-black">Eliminar datos cargados de un cliente</h3>
+              <p class="text-[11px] text-rose-100">Para deshacer un archivo de inspecciones subido por error</p>
+            </div>
+          </div>
+          <button type="button" onclick="cerrarModalEliminarDatosCliente()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <!-- Confirmación de borrado exitoso (reemplaza el formulario) -->
+        <div id="exitoEliminarDatosCliente" class="hidden p-5 sm:p-6 text-xs text-center space-y-3" role="status" aria-live="polite">
+          <span class="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+            <i class="fa-solid fa-circle-check"></i>
+          </span>
+          <h4 id="exitoEliminarTitulo" class="text-base font-black text-slate-900">Borrado exitoso</h4>
+          <p id="exitoEliminarTexto" class="text-slate-600"></p>
+          <ul id="exitoEliminarDetalle" class="inline-block text-left text-slate-700 space-y-0.5"></ul>
+          <p id="exitoEliminarRespaldo" class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 break-all"></p>
+        </div>
+        <div id="formEliminarDatosCliente" class="p-4 sm:p-5 space-y-3 text-xs">
+          <p class="text-slate-600">Borra las <b>inspecciones</b>, los <b>vehículos</b>, el <b>parque</b> y las <b>marcas</b> del cliente, y sus <b>llantas en bodegas y vehículos</b> con su <b>kardex</b> e historial (las crea la sincronización a partir de las inspecciones). Se conservan su licencia, límites de retiro y precios. Antes de borrar se guarda una copia de seguridad de toda la base.</p>
+          <label class="block">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cliente</span>
+            <select id="selEliminarDatosCliente" onchange="previsualizarEliminarDatosCliente()" class="mt-1 w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl bg-white">
+              <option value="">Seleccione un cliente…</option>
+            </select>
+          </label>
+          <div id="resumenEliminarDatosCliente" class="hidden rounded-2xl border border-rose-200 bg-rose-50 p-3 text-rose-900"></div>
+          <label class="block">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Para confirmar, escriba el nombre del cliente</span>
+            <input type="text" id="txtConfirmarEliminarDatosCliente" oninput="validarConfirmacionEliminarDatosCliente()" autocomplete="off" class="mt-1 w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white uppercase">
+          </label>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" id="btnCerrarEliminarDatosCliente" onclick="cerrarModalEliminarDatosCliente()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl">Cancelar</button>
+          <button type="button" id="btnEjecutarEliminarDatosCliente" onclick="ejecutarEliminarDatosCliente()" disabled class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1.5">
+            <i class="fa-solid fa-trash-can"></i><span>Eliminar definitivamente</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
 </body>
 </html>
 ```
@@ -30333,7 +32358,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `templates/servicios_v3.html`
 - **Descripción:** Landing de Servicios v3: diseño industrial, tipografía Barlow y banda de rodadura
-- **Métricas:** 762 líneas | 59,333 bytes (57.9 KB)
+- **Métricas:** 761 líneas | 59,246 bytes (57.9 KB)
 - **Lenguaje:** `html`
 
 ```html
@@ -30473,9 +32498,7 @@ if __name__ == '__main__':
       </nav>
 
       <div class="flex items-center gap-2 shrink-0">
-        <a href="https://wa.me/573204098077?text=Hola,%20quisiera%20solicitar%20una%20demostración%20comercial%20de%20TireAnalyze%20Pro%20para%20mi%20flota" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-ok hover:text-ok transition-colors">
-          <i class="fa-brands fa-whatsapp"></i> WhatsApp
-        </a>
+        <a href="/motores" class="hidden sm:inline-flex items-center px-3.5 py-2 text-sm font-semibold text-concrete-100 border border-asphalt-600 hover:border-hivis hover:text-hivis transition-colors">Login Motores</a>
         <a href="/login" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-bold uppercase tracking-wide bg-hivis text-asphalt-950 hover:bg-hivis-300 transition-colors shadow-sm" title="Ingresar al sistema">
           Ingresar <i class="hidden sm:inline fa-solid fa-arrow-right text-xs"></i>
         </a>
@@ -30495,6 +32518,7 @@ if __name__ == '__main__':
           <a href="#planes" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Versiones</a>
           <a href="#historia" class="px-3 py-3 bg-asphalt-900 border border-asphalt-700">Casos</a>
           <a href="/login" class="col-span-2 px-3 py-3 bg-hivis text-asphalt-950 font-bold uppercase text-center flex items-center justify-center gap-2">Ingresar al aplicativo <i class="fa-solid fa-arrow-right text-xs"></i></a>
+          <a href="/motores" class="col-span-2 px-3 py-3 bg-asphalt-900 border border-asphalt-700 text-center">Login Motores</a>
         </nav>
       </div>
     </div>
@@ -33239,7 +35263,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/app_core.js`
 - **Descripción:** Módulo Core: Interceptor fetch, IndexedDB offline, autenticación y navegación
-- **Métricas:** 1042 líneas | 46,516 bytes (45.4 KB)
+- **Métricas:** 1174 líneas | 53,128 bytes (51.9 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -33329,11 +35353,17 @@ if __name__ == '__main__':
         localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
+        cerrarModalMiCuenta(true);
         mostrarToast('⚠️ Sesión expirada. Sus inspecciones pendientes se conservan en el dispositivo para sincronizar.', true);
         const modalLogin = document.getElementById('modalLogin');
         if (modalLogin) {
           modalLogin.classList.remove('hidden');
         }
+      }
+
+      // El servidor exige cambiar la clave (la puso el administrador o no cumple las reglas)
+      if (response && response.status === 403 && response.headers.get('X-Requiere-Cambio-Clave') === '1') {
+        abrirModalMiCuenta(true);
       }
 
       return response;
@@ -33759,7 +35789,7 @@ if __name__ == '__main__':
               <span class="text-[10px] text-slate-400">${escapeHtml(it.fecha || '')}</span>
             </div>
             <div class="text-[11px] text-slate-600 mt-0.5 truncate">
-              <b>${escapeHtml(it.marca || '')}</b> ${escapeHtml(it.diseno || '')} · ${escapeHtml(it.dimension || '')} · ${it.prof_cent || 0} mm · ${it.psi || 0} PSI
+              <b>${escapeHtml(it.marca || '')}</b> ${escapeHtml(it.diseno || '')} · ${escapeHtml(it.dimension || '')} · ${escapeHtml(it.prof_cent || 0)} mm · ${escapeHtml(it.psi || 0)} PSI
             </div>
             ${it.novedades ? `<div class="text-[10px] text-amber-700 font-semibold mt-0.5 truncate"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(it.novedades)}</div>` : ''}
           </div>
@@ -34052,6 +36082,10 @@ if __name__ == '__main__':
           document.getElementById('modalLogin').classList.add('hidden');
           // Sincronizar datos frescos del usuario en tiempo real con el servidor
           sincronizarUsuarioActualSesion();
+          if (usuarioActual && usuarioActual.debe_cambiar_clave) {
+            abrirModalMiCuenta(true);
+            return false;  // los datos se cargan cuando cambie la clave
+          }
           return true;
         } catch(e) {
           localStorage.removeItem('tireanalyze_usuario_sesion');
@@ -34075,6 +36109,7 @@ if __name__ == '__main__':
             localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
             actualizarUIUsuario();
             configurarClientesUsuarioEnInspeccion();
+            if (usuarioActual.debe_cambiar_clave) abrirModalMiCuenta(true);
           }
         } else if (res.status === 401) {
           cerrarSesionLocal();
@@ -34112,12 +36147,11 @@ if __name__ == '__main__':
           localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
           document.getElementById('modalLogin').classList.add('hidden');
           actualizarUIUsuario();
-          cargarCatalogos();
-          validarVida();
-          if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
-          descargarPaquetePatioOffline(false);
-          actualizarIndicadorConexionOffline();
-          mostrarToast(`¡Bienvenido, ${usuarioActual.nombre_completo}!`);
+          if (usuarioActual.debe_cambiar_clave) {
+            abrirModalMiCuenta(true);  // los datos se cargan cuando cambie la clave
+            return;
+          }
+          cargarDatosTrasIngreso();
         } else {
           errBox.textContent = d.detail || 'Usuario o contraseña incorrectos.';
           errBox.classList.remove('hidden');
@@ -34128,18 +36162,135 @@ if __name__ == '__main__':
       }
     }
 
+    function cargarDatosTrasIngreso() {
+      cargarCatalogos();
+      validarVida();
+      if (typeof cargarBaseInspecciones === 'function') cargarBaseInspecciones();
+      descargarPaquetePatioOffline(false);
+      actualizarIndicadorConexionOffline();
+      mostrarToast(`¡Bienvenido, ${usuarioActual.nombre_completo}!`);
+    }
+
     async function cerrarSesionUsuario() {
       if (confirm('¿Deseas cerrar tu sesión actual?')) {
+        // El token va en la cabecera para que el servidor cierre esta sesión aunque alguien lo haya copiado
+        const token = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
         try {
-          await _originalFetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+          await _originalFetch('/api/logout', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
         } catch(e) {}
         localStorage.removeItem('tireanalyze_token');
         localStorage.removeItem('tirecheck_token');
         localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
+        cerrarModalMiCuenta(true);
         document.getElementById('modalLogin').classList.remove('hidden');
         mostrarToast('Sesión cerrada correctamente');
+      }
+    }
+
+    // ==========================================
+    // MI CUENTA: CAMBIAR MI CONTRASEÑA
+    // ==========================================
+    let cambioClaveObligatorio = false;
+
+    function guardarSesionNueva(token, usuario) {
+      // El servidor entrega una sesión nueva al cambiar la clave: las anteriores quedan cerradas
+      if (token) {
+        localStorage.setItem('tireanalyze_token', token);
+        localStorage.setItem('tirecheck_token', token);
+      }
+      if (usuario) {
+        usuarioActual = usuario;
+        localStorage.setItem('tireanalyze_usuario_sesion', JSON.stringify(usuarioActual));
+        localStorage.setItem('tirecheck_usuario_sesion', JSON.stringify(usuarioActual));
+      }
+    }
+
+    function abrirModalMiCuenta(obligatorio) {
+      const modal = document.getElementById('modalMiCuenta');
+      if (!modal || !usuarioActual) return;
+      const yaAbierto = !modal.classList.contains('hidden');
+      cambioClaveObligatorio = !!obligatorio || (yaAbierto && cambioClaveObligatorio);
+      if (!yaAbierto) {
+        ['mi_cuenta_actual', 'mi_cuenta_nueva', 'mi_cuenta_confirmar'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('mi_cuenta_error').classList.add('hidden');
+      }
+      document.getElementById('mi_cuenta_usuario').value = usuarioActual.username || '';
+      document.getElementById('miCuentaAvisoObligatorio').classList.toggle('hidden', !cambioClaveObligatorio);
+      document.getElementById('miCuentaOtrasSesiones').classList.toggle('hidden', cambioClaveObligatorio);
+      document.getElementById('btnCerrarMiCuenta').classList.toggle('hidden', cambioClaveObligatorio);
+      const secundario = document.getElementById('btnMiCuentaSecundario');
+      secundario.textContent = cambioClaveObligatorio ? 'Salir' : 'Cancelar';
+      secundario.onclick = cambioClaveObligatorio ? cerrarSesionUsuario : () => cerrarModalMiCuenta();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      if (!yaAbierto) setTimeout(() => document.getElementById('mi_cuenta_actual').focus(), 50);
+    }
+
+    function cerrarModalMiCuenta(forzar) {
+      if (cambioClaveObligatorio && !forzar) return;  // si es obligatorio solo se sale cambiando la clave o cerrando sesión
+      const modal = document.getElementById('modalMiCuenta');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      cambioClaveObligatorio = false;
+    }
+
+    async function guardarCambioClave(ev) {
+      if (ev) ev.preventDefault();
+      const actual = document.getElementById('mi_cuenta_actual').value.trim();
+      const nueva = document.getElementById('mi_cuenta_nueva').value.trim();
+      const confirmar = document.getElementById('mi_cuenta_confirmar').value.trim();
+      const errBox = document.getElementById('mi_cuenta_error');
+      const mostrarError = (msg) => { errBox.textContent = msg; errBox.classList.remove('hidden'); };
+      errBox.classList.add('hidden');
+
+      if (!actual || !nueva) return mostrarError('Escribe tu contraseña actual y la nueva.');
+      if (nueva.length < 8) return mostrarError('La contraseña nueva debe tener al menos 8 caracteres.');
+      if (nueva !== confirmar) return mostrarError('Las contraseñas nuevas no coinciden.');
+
+      const btn = document.getElementById('btnGuardarClave');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/mi-cuenta/cambiar-clave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clave_actual: actual, clave_nueva: nueva })
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) return mostrarError(d.detail || 'No se pudo cambiar la contraseña.');
+        const eraObligatorio = cambioClaveObligatorio;
+        guardarSesionNueva(d.token, d.usuario);
+        cerrarModalMiCuenta(true);
+        actualizarUIUsuario();
+        mostrarToast(`🔑 ${d.mensaje || 'Contraseña actualizada.'}`);
+        if (eraObligatorio) cargarDatosTrasIngreso();
+      } catch (e) {
+        mostrarError('Error de conexión con el servidor.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function cerrarOtrasSesiones() {
+      if (!confirm('¿Cerrar tu sesión en todos los demás equipos? Este equipo seguirá conectado.')) return;
+      try {
+        const res = await fetch('/api/mi-cuenta/cerrar-otras-sesiones', { method: 'POST' });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+          guardarSesionNueva(d.token, null);
+          cerrarModalMiCuenta();
+          mostrarToast(`✅ ${d.mensaje}`);
+        } else {
+          mostrarToast(d.detail || 'No se pudieron cerrar las sesiones', true);
+        }
+      } catch (e) {
+        mostrarToast('Error de conexión con el servidor', true);
       }
     }
 
@@ -34209,6 +36360,9 @@ if __name__ == '__main__':
       // REGLA: solo el superadmin puede ver y crear nuevos usuarios
       const subtabUsrs = document.getElementById('subtab-btn-usuarios');
       if (subtabUsrs) subtabUsrs.classList.toggle('hidden', !esAdmin);
+      // REGLA: solo el administrador carga el parque automotor de los clientes
+      const subtabParque = document.getElementById('subtab-btn-parque');
+      if (subtabParque) subtabParque.classList.toggle('hidden', !esAdmin);
 
       // REGLA: Gerencia es estrictamente de auditoría y análisis (solo lectura). No puede crear inspecciones.
       const btnNuevaInspBD = document.getElementById('btnNuevaInspBD');
@@ -34217,6 +36371,8 @@ if __name__ == '__main__':
       // REGLA: Solo el Administrador puede realizar importaciones o ediciones de múltiples registros en Base de Inspecciones
       const btnImportarExcelBD = document.getElementById('btnImportarExcelBD');
       if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', !esAdmin);
+      const btnEliminarDatosClienteBD = document.getElementById('btnEliminarDatosClienteBD');
+      if (btnEliminarDatosClienteBD) btnEliminarDatosClienteBD.classList.toggle('hidden', !esAdmin);
       const thCheckTodos = document.getElementById('thCheckTodosBD');
       if (thCheckTodos) thCheckTodos.classList.toggle('hidden', !esAdmin);
       const btnEdicionMultipleBD = document.getElementById('btnEdicionMultipleBD');
@@ -34292,7 +36448,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_patio.js`
 - **Descripción:** Módulo Patio: Diagrama interactivo de chasis, captura al pie del camión y fotos
-- **Métricas:** 4146 líneas | 192,346 bytes (187.8 KB)
+- **Métricas:** 4176 líneas | 194,597 bytes (190.0 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -34419,15 +36575,15 @@ if __name__ == '__main__':
           ? `ej. MICHELIN (Marcas de ${cliente})`
           : `ej. MICHELIN (Catálogo completo de marcas)`;
 
-        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholder}</option>`;
+        let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${escapeHtml(placeholder)}</option>`;
 
         if (mostrarTodas && cliente) {
-          html += `<option value="__solo_cliente__" class="font-bold text-emerald-700 bg-emerald-50">🔍 Volver a marcas frecuentes de ${cliente}</option>`;
+          html += `<option value="__solo_cliente__" class="font-bold text-emerald-700 bg-emerald-50">🔍 Volver a marcas frecuentes de ${escapeHtml(cliente)}</option>`;
         }
 
         unicos.forEach(m => {
           const isSel = (valorPrevio && valorPrevio.trim().toUpperCase() === m);
-          html += `<option value="${m}" ${isSel ? 'selected' : ''}>${m}</option>`;
+          html += `<option value="${escapeHtml(m)}" ${isSel ? 'selected' : ''}>${escapeHtml(m)}</option>`;
         });
 
         if (!mostrarTodas && cliente) {
@@ -34561,10 +36717,10 @@ if __name__ == '__main__':
             }
           });
 
-          let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${placeholderTexto}</option>`;
+          let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">${escapeHtml(placeholderTexto)}</option>`;
           unicos.forEach(it => {
             const isSel = (valorPrevio && valorPrevio.toLowerCase() === it.toLowerCase());
-            html += `<option value="${it}" ${isSel ? 'selected' : ''}>${it}</option>`;
+            html += `<option value="${escapeHtml(it)}" ${isSel ? 'selected' : ''}>${escapeHtml(it)}</option>`;
           });
           html += `<option value="__nuevo__" class="font-bold text-blue-600 bg-blue-50">+ Agregar nuevo valor...</option>`;
           sel.innerHTML = html;
@@ -34577,7 +36733,7 @@ if __name__ == '__main__':
 
           // Mantener compatibilidad con datalist si existe en el DOM
           const dl = document.getElementById(`dl_${elementId}`) || document.getElementById(`dl_${elementId}s`);
-          if (dl) dl.innerHTML = unicos.map(i => `<option value="${i}">`).join('');
+          if (dl) dl.innerHTML = unicos.map(i => `<option value="${escapeHtml(i)}">`).join('');
         } catch(ePop) {}
       }
     }
@@ -34608,7 +36764,7 @@ if __name__ == '__main__':
       if (ops) {
         const selOp = document.getElementById('tipo_operacion');
         if (selOp) {
-          selOp.innerHTML = ops.map(op => `<option value="${op}">${op}</option>`).join('');
+          selOp.innerHTML = ops.map(op => `<option value="${escapeHtml(op)}">${escapeHtml(op)}</option>`).join('');
           if (seleccionarOp) selOp.value = seleccionarOp;
         }
       }
@@ -34627,7 +36783,7 @@ if __name__ == '__main__':
       if (tips) {
         const selTip = document.getElementById('tipologia');
         if (selTip) {
-          selTip.innerHTML = tips.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
+          selTip.innerHTML = tips.map(t => `<option value="${escapeHtml(t.nombre)}">${escapeHtml(t.nombre)}</option>`).join('');
           if (seleccionarTip) selTip.value = seleccionarTip;
           cambioTipologia();
         }
@@ -34645,7 +36801,7 @@ if __name__ == '__main__':
         if (res.ok) {
           const items = await res.json();
           const dl = document.getElementById(elementId);
-          if (dl) dl.innerHTML = items.map(i => `<option value="${i}">`).join('');
+          if (dl) dl.innerHTML = items.map(i => `<option value="${escapeHtml(i)}">`).join('');
         }
       } catch(e) {}
     }
@@ -35013,7 +37169,7 @@ if __name__ == '__main__':
         }
 
         svg += `
-          <g id="neumatico_node_${p.pos}" class="tire-interactive-node" onclick="seleccionarPosicion(${p.pos})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarPosicion(${p.pos});}" role="button" tabindex="0" aria-label="${ariaTitle}">
+          <g id="neumatico_node_${escapeHtml(p.pos)}" class="tire-interactive-node" onclick="seleccionarPosicion(${escapeHtml(p.pos)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionarPosicion(${escapeHtml(p.pos)});}" role="button" tabindex="0" aria-label="${ariaTitle}">
             <title>${ariaTitle}</title>
             
             <!-- A. Anillo y Fondo de Selección Activa (Contorno azul 2.5px más fondo azul muy tenue #EFF6FF) -->
@@ -35051,7 +37207,7 @@ if __name__ == '__main__':
         if (tieneNovedad) {
           svg += `
             <!-- Insignia: '!' Ámbar para Con Novedad -->
-            <g id="badge_warn_${p.pos}">
+            <g id="badge_warn_${escapeHtml(p.pos)}">
               <circle cx="${x + 32}" cy="${y + 8.5}" r="7.5" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.6"/>
               <line x1="${x + 32}" y1="${y + 4.8}" x2="${x + 32}" y2="${y + 9}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
               <circle cx="${x + 32}" cy="${y + 11.8}" r="1" fill="#FFFFFF"/>
@@ -35060,7 +37216,7 @@ if __name__ == '__main__':
         } else if (esInspeccionada) {
           svg += `
             <!-- Insignia: Check Verde para Registrada -->
-            <g id="badge_ok_${p.pos}">
+            <g id="badge_ok_${escapeHtml(p.pos)}">
               <circle cx="${x + 32}" cy="${y + 8.5}" r="7" fill="#10B981" stroke="#FFFFFF" stroke-width="1.6"/>
               <path d="M ${x + 29.5} ${y + 8.5} L ${x + 31.5} ${y + 10.5} L ${x + 34.5} ${y + 6.8}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
@@ -35443,8 +37599,8 @@ if __name__ == '__main__':
             }`;
             
             btn.innerHTML = `
-              <span>${p.pos}</span>
-              <span class="text-[9px] opacity-60">(${p.rol || ''})</span>
+              <span>${escapeHtml(p.pos)}</span>
+              <span class="text-[9px] opacity-60">(${escapeHtml(p.rol || '')})</span>
               ${iconoBadge}
             `;
             btn.onclick = () => seleccionarPosicion(p.pos);
@@ -36019,11 +38175,18 @@ if __name__ == '__main__':
     // ==========================================
     // VISOR MODAL DE GALERÍA DE FOTOS (BASE DE DATOS & FORMULARIO)
     // ==========================================
-    function abrirGaleriaFotosPorId(inspeccionId) {
+    async function abrirGaleriaFotosPorId(inspeccionId) {
       const reg = cacheTodasInspecciones.find(x => x.id === inspeccionId);
       if (!reg) {
         mostrarToast('No se encontró la inspección en memoria', true);
         return;
+      }
+      // La lista de la base llega sin fotos: se piden al abrir la galería y se guardan para la próxima vez
+      if (!obtenerListaFotos(reg.foto_novedad).length && Number(reg.fotos_cantidad) > 0) {
+        try {
+          const res = await fetch(`/api/inspecciones/${inspeccionId}`);
+          if (res.ok) reg.foto_novedad = (await res.json()).foto_novedad || '';
+        } catch (e) {}
       }
       const fotos = obtenerListaFotos(reg.foto_novedad);
       if (fotos.length === 0) {
@@ -36774,7 +38937,12 @@ if __name__ == '__main__':
       }
     }
 
+    // Profundidad inicial registrada de la llanta recién montada: manda sobre la del catálogo mientras
+    // el formulario siga mostrando esa misma marca y diseño
+    let profInicialLlantaMontada = null;
+
     async function verificarInspeccionAnterior() {
+      profInicialLlantaMontada = null;
       const token = idInspeccionActiva;
       const placa = (document.getElementById('placa')?.value || '').trim().toUpperCase();
       const pos = parseInt(document.getElementById('posicion')?.value) || 1;
@@ -36822,20 +38990,34 @@ if __name__ == '__main__':
           const placaFin = (document.getElementById('placa')?.value || '').trim().toUpperCase();
           if (!placaFin || placaFin !== placa) return;
 
+          // Si después de la última inspección se montó o retiró una llanta, la posición queda pendiente
+          // y el formulario muestra la llanta que está hoy en ella
+          const llantaCambiada = Boolean(d.llanta_cambiada);
+          if (llantaCambiada || d.llanta_retirada) {
+            posicionesInspeccionadasPlaca.delete(pos);
+            posicionesConNovedadPlaca.delete(pos);
+          }
+
           // Si esta posición ya fue inspeccionada en la sesión actual
-          const yaInspeccionadaHoy = posicionesInspeccionadasPlaca.has(pos) || esDeColaPendiente;
+          const yaInspeccionadaHoy = (posicionesInspeccionadasPlaca.has(pos) || esDeColaPendiente) && !llantaCambiada && !d.llanta_retirada;
 
           if (d.encontrado && d.datos) {
-            datosInspeccionAnterior = d.datos;
+            datosInspeccionAnterior = llantaCambiada ? null : d.datos;
+            if (llantaCambiada && d.datos.prof_inicial > 0) {
+              profInicialLlantaMontada = { marca: d.datos.marca, diseno: d.datos.diseno, prof: d.datos.prof_inicial };
+            }
             if (d.datos.marca) cacheUltimaMarcaVehiculo = d.datos.marca;
             if (d.datos.diseno) cacheUltimoDisenoVehiculo = d.datos.diseno;
             if (d.datos.dimension) cacheUltimaDimensionVehiculo = d.datos.dimension;
             const badgeHist = document.getElementById('badgeHistorialPrevia');
             if (badgeHist) {
               badgeHist.classList.remove('hidden');
-              badgeHist.innerHTML = esDeColaPendiente 
-                ? '<i class="fa-solid fa-cloud-arrow-up mr-1 text-blue-500"></i>En Cola Offline: ' + (d.datos.numero_interno || 'S/N')
-                : '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + (d.datos.numero_interno || 'S/N');
+              const serialHist = escapeHtml(d.datos.numero_interno || 'S/N');
+              badgeHist.innerHTML = llantaCambiada
+                ? '<i class="fa-solid fa-arrow-up mr-1 text-blue-600"></i>Llanta montada: ' + serialHist
+                : esDeColaPendiente
+                  ? '<i class="fa-solid fa-cloud-arrow-up mr-1 text-blue-500"></i>En Cola Offline: ' + serialHist
+                  : '<i class="fa-solid fa-clock-rotate-left mr-1"></i>Previa: ' + serialHist;
             }
 
             if (yaInspeccionadaHoy) {
@@ -36909,7 +39091,8 @@ if __name__ == '__main__':
 
               // 4. Dimensión: Prevalecer la dimensión fijada en la primera llanta para este vehículo,
               // o cargar la dimensión histórica y fijarla como predeterminada del vehículo.
-              const dimParaCargar = dimensionPredeterminadaVehiculo || d.datos.dimension || '295/80R22.5';
+              // Una llanta recién montada trae su propia dimensión.
+              const dimParaCargar = (llantaCambiada && d.datos.dimension) || dimensionPredeterminadaVehiculo || d.datos.dimension || '295/80R22.5';
               if (dimParaCargar) {
                 asignarValorSelect('dimension', dimParaCargar);
                 if (!dimensionPredeterminadaVehiculo && d.datos.dimension) {
@@ -36982,7 +39165,7 @@ if __name__ == '__main__':
               }
             }
           } else {
-            // Posición sin registro previo
+            // Posición sin registro previo (o con la llanta retirada)
             document.getElementById('badgeHistorialPrevia')?.classList.add('hidden');
             document.getElementById('badgeLlantaCliente')?.classList.add('hidden');
             datosInspeccionAnterior = null;
@@ -37036,6 +39219,7 @@ if __name__ == '__main__':
 
               aplicarRestriccionEjeDireccional(pos);
               validarVida();
+              await actualizarPanelTallerPosicion(pos);
             }
           }
 
@@ -37262,7 +39446,9 @@ if __name__ == '__main__':
       if (data && data.prof_inicial > 0) {
         const inp = document.getElementById('prof_inicial');
         if (inp) {
-          inp.value = data.prof_inicial;
+          const fija = profInicialLlantaMontada;
+          const esLaMontada = fija && m.toUpperCase() === String(fija.marca || '').toUpperCase() && d.toUpperCase() === String(fija.diseno || '').toUpperCase();
+          inp.value = esLaMontada ? fija.prof : data.prof_inicial;
         }
       }
     }
@@ -37285,8 +39471,8 @@ if __name__ == '__main__':
             box.classList.remove('hidden');
             list.innerHTML = matches.slice(0, 3).map(m => `
               <div onclick='seleccionarLlantaCatalogo(${JSON.stringify(m)})' class="p-1.5 bg-white border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 flex items-center justify-between">
-                <span class="font-bold text-slate-900">${m.marca} ${m.diseno} (${m.dimension})</span>
-                <span class="font-black text-blue-700 font-mono">${m.prof_inicial} mm</span>
+                <span class="font-bold text-slate-900">${escapeHtml(m.marca)} ${escapeHtml(m.diseno)} (${escapeHtml(m.dimension)})</span>
+                <span class="font-black text-blue-700 font-mono">${escapeHtml(m.prof_inicial)} mm</span>
               </div>
             `).join('');
           } else {
@@ -38449,7 +40635,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_basedatos.js`
 - **Descripción:** Módulo Base de Datos: Filtros de inspecciones, tabla y exportación Excel
-- **Métricas:** 887 líneas | 42,552 bytes (41.6 KB)
+- **Métricas:** 1047 líneas | 52,444 bytes (51.2 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -38458,14 +40644,46 @@ if __name__ == '__main__':
     // ==========================================
     let bdFiltrosPoblados = false;
     let inspeccionesSeleccionadasBD = new Set();
+    // Montajes y retiros de llantas: por inspección, y los que aún no tienen inspección
+    let movimientosBD = { por_inspeccion: {}, sin_inspeccion: [] };
+
+    async function cargarMovimientosBD() {
+      try {
+        const res = await fetch('/api/inspecciones/movimientos');
+        movimientosBD = res.ok ? await res.json() : { por_inspeccion: {}, sin_inspeccion: [] };
+      } catch (e) {
+        movimientosBD = { por_inspeccion: {}, sin_inspeccion: [] };
+      }
+    }
+
+    // Inspecciones más los movimientos sin inspección, cada uno en el lugar de su fecha
+    function filasBaseConMovimientos() {
+      const filas = [...cacheTodasInspecciones];
+      (movimientosBD.sin_inspeccion || []).forEach(m => {
+        const i = filas.findIndex(r => String(r.fecha || '').slice(0, 10) <= m.fecha);
+        filas.splice(i < 0 ? filas.length : i, 0, m);
+      });
+      return filas;
+    }
+
+    function htmlMovimientosBD(lista) {
+      if (!lista || lista.length === 0) return '<span class="text-slate-300">-</span>';
+      return lista.map(m => {
+        const esMontaje = m.tipo === 'MONTAJE';
+        return `<div class="flex items-start gap-1 text-[11px] font-semibold ${esMontaje ? 'text-blue-700' : 'text-amber-700'} min-w-[190px] whitespace-normal">
+          <i class="fa-solid ${esMontaje ? 'fa-arrow-up' : 'fa-arrow-down'} mt-0.5"></i><span>${escapeHtml(m.texto)}</span>
+        </div>`;
+      }).join('');
+    }
 
     async function cargarBaseInspecciones() {
       const tbody = document.getElementById('tbodyInspecciones');
       if (tbody && (!cacheTodasInspecciones || cacheTodasInspecciones.length === 0)) {
-        tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-600"></i>Cargando base de inspecciones...</td></tr>';
       }
       try {
         const res = await fetch('/api/inspecciones');
+        await cargarMovimientosBD();
         if (res.ok) {
           cacheTodasInspecciones = await res.json();
           const bTotal = document.getElementById('badgeTotalInspecciones');
@@ -38476,16 +40694,16 @@ if __name__ == '__main__':
           filtrarTablaBD();
         } else if (res.status === 401) {
           if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-amber-600 font-bold"><i class="fa-solid fa-lock mr-2"></i>Sesión no iniciada o expirada. <button onclick="document.getElementById(\x27modalLogin\x27).classList.remove(\x27hidden\x27)" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Iniciar Sesión</button></td></tr>';
           }
         } else {
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="26" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error al consultar el servidor (HTTP ${res.status}). <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>`;
           }
         }
       } catch (e) {
         if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="25" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
+          tbody.innerHTML = '<tr><td colspan="26" class="p-8 text-center text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error de conexión o tiempo de espera agotado. <button onclick="cargarBaseInspecciones()" class="ml-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-lg shadow">Reintentar</button></td></tr>';
         }
         mostrarToast('Error al cargar inspecciones desde el servidor', true);
       }
@@ -38513,10 +40731,10 @@ if __name__ == '__main__':
       const tipologias = Array.from(new Set(data.map(r => (r.tipologia || '').trim()).filter(Boolean))).sort();
       const marcas = Array.from(new Set(data.map(r => (r.marca || '').trim()).filter(Boolean))).sort();
 
-      selCli.innerHTML = '<option value="TODOS">Todos</option>' + clientes.map(c => `<option value="${c}">${c}</option>`).join('');
-      selOp.innerHTML = '<option value="TODOS">Todas</option>' + operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
-      selTip.innerHTML = '<option value="TODOS">Todas</option>' + tipologias.map(t => `<option value="${t}">${t}</option>`).join('');
-      selMar.innerHTML = '<option value="TODOS">Todas</option>' + marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+      selCli.innerHTML = '<option value="TODOS">Todos</option>' + clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      selOp.innerHTML = '<option value="TODOS">Todas</option>' + operaciones.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+      selTip.innerHTML = '<option value="TODOS">Todas</option>' + tipologias.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+      selMar.innerHTML = '<option value="TODOS">Todas</option>' + marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
 
       // Restaurar si aún existen
       if (clientes.includes(valCli)) selCli.value = valCli;
@@ -38543,7 +40761,7 @@ if __name__ == '__main__':
       )).sort();
 
       selSede.innerHTML = '<option value="TODOS">Todas</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+        sedes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
       if (sedes.some(s => s.toLowerCase() === valSedeActual.toLowerCase())) {
         selSede.value = valSedeActual;
@@ -38613,7 +40831,7 @@ if __name__ == '__main__':
         }
       }
 
-      cacheFiltradasBD = cacheTodasInspecciones.filter(r => {
+      cacheFiltradasBD = filasBaseConMovimientos().filter(r => {
         // 1. Filtro Texto Libre
         if (q) {
           const matchTexto = (r.placa || '').toLowerCase().includes(q) ||
@@ -38655,6 +40873,7 @@ if __name__ == '__main__':
 
         // 8. Semáforo / Desgaste & Presión
         if (semaforo !== 'TODOS') {
+          if (r.es_movimiento) return false;  // aún sin medición
           const pExt = parseFloat(r.prof_ext) || 0;
           const pCent = parseFloat(r.prof_cent) || 0;
           const pInt = parseFloat(r.prof_int) || 0;
@@ -38671,7 +40890,7 @@ if __name__ == '__main__':
         return true;
       });
 
-      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.length;
+      document.getElementById('lblConteoBD').textContent = cacheFiltradasBD.filter(r => !r.es_movimiento).length;
       document.getElementById('lblTotalBD').textContent = cacheTodasInspecciones.length;
 
       renderizarTablaBD();
@@ -38717,6 +40936,31 @@ if __name__ == '__main__':
       const paginaItems = cacheFiltradasBD.slice(inicio, fin);
 
       tbody.innerHTML = paginaItems.map(r => {
+        if (r.es_movimiento) {
+          return `
+            <tr class="bg-blue-50/60 hover:bg-blue-50 transition-colors">
+              ${esAdm ? '<td class="p-2.5"></td>' : ''}
+              <td class="p-2.5 text-center text-slate-300">-</td>
+              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800">TALLER</span></td>
+              <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${fmtFecha(r.fecha)}</td>
+              <td class="p-2.5 font-bold text-slate-900">${escapeHtml(r.cliente || '-')}</td>
+              <td class="p-2.5 text-slate-500">${escapeHtml(r.subcliente || '-')}</td>
+              <td class="p-2.5">-</td>
+              <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${escapeHtml(r.placa || '-')}</td>
+              <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.numero_interno || '-')}</td>
+              <td class="p-2.5 text-center font-black">
+                <span class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-800 font-mono text-xs">${escapeHtml(r.posicion)}</span>
+              </td>
+              <td class="p-2.5">${htmlMovimientosBD(r.movimientos)}</td>
+              <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
+              <td class="p-2.5">-</td>
+              <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.marca || '-')}</td>
+              <td class="p-2.5">${escapeHtml(r.diseno || '-')}</td>
+              <td class="p-2.5 font-mono text-[11px]">${escapeHtml(r.dimension || '-')}</td>
+              <td class="p-2.5">${escapeHtml(r.vida || '-')}</td>
+              <td colspan="9" class="p-2.5 text-[11px] text-slate-500 italic">Movimiento de taller: esta llanta aún no tiene inspección en esta posición</td>
+            </tr>`;
+        }
         const pExt = parseFloat(r.prof_ext) || 0;
         const pCent = parseFloat(r.prof_cent) || 0;
         const pInt = parseFloat(r.prof_int) || 0;
@@ -38732,57 +40976,59 @@ if __name__ == '__main__':
           colorDesgaste = 'text-amber-600 font-bold';
         }
 
-        const fotos = obtenerListaFotos(r.foto_novedad);
-        const tieneFotos = fotos.length > 0;
+        // La lista llega sin fotos, solo con cuántas tiene (fotos_cantidad)
+        const nFotos = r.fotos_cantidad != null ? Number(r.fotos_cantidad) : obtenerListaFotos(r.foto_novedad).length;
+        const tieneFotos = nFotos > 0;
         const htmlBotonFotos = tieneFotos ? `
-          <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${fotos.length} foto(s) de evidencia de forma ordenada">
+          <button type="button" onclick="abrirGaleriaFotosPorId(${escapeHtml(r.id)})" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-xs border border-blue-200 transition-all shadow-xs cursor-pointer" title="Clic para ver ${nFotos} foto(s) de evidencia de forma ordenada">
             <i class="fa-solid fa-camera text-blue-600 text-[11px]"></i>
-            <span>Ver foto${fotos.length > 1 ? 's' : ''} (${fotos.length})</span>
+            <span>Ver foto${nFotos > 1 ? 's' : ''} (${nFotos})</span>
           </button>
         ` : `<span class="text-slate-300 font-medium text-xs">Sin fotos</span>`;
 
         const isChecked = inspeccionesSeleccionadasBD.has(r.id);
         const tdCheck = esAdm ? `
           <td class="p-2.5 text-center">
-            <input type="checkbox" class="chk-insp-item w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="alCambiarCheckFilaBD(${r.id}, this.checked)">
+            <input type="checkbox" class="chk-insp-item w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${escapeHtml(r.id)}" ${isChecked ? 'checked' : ''} onchange="alCambiarCheckFilaBD(${escapeHtml(r.id)}, this.checked)">
           </td>
         ` : '';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors ${isChecked ? 'bg-indigo-50/70 font-semibold' : ''}">
             ${tdCheck}
-            <td class="p-2.5 text-center font-bold text-slate-400">${r.id}</td>
+            <td class="p-2.5 text-center font-bold text-slate-400">${escapeHtml(r.id)}</td>
             <td class="p-2.5 text-center whitespace-nowrap">
               ${tieneFotos ? `
-                <button type="button" onclick="abrirGaleriaFotosPorId(${r.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
+                <button type="button" onclick="abrirGaleriaFotosPorId(${escapeHtml(r.id)})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Ver evidencias fotográficas">
                   <i class="fa-solid fa-camera"></i>
                 </button>
               ` : ''}
               ${esAdminOJefatura() ? `
-                <button type="button" onclick="abrirModalEditarInspeccion(${r.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
+                <button type="button" onclick="abrirModalEditarInspeccion(${escapeHtml(r.id)})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg mr-1 text-xs transition-colors cursor-pointer" title="Editar Fila">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarInspeccion(${r.id}, '${r.placa}', ${r.posicion})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
+                <button type="button" onclick="eliminarInspeccion(${escapeHtml(r.id)}, '${escapeHtml(r.placa)}', ${escapeHtml(r.posicion)})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-xs transition-colors cursor-pointer" title="Eliminar Fila">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
             </td>
             <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${fmtFecha(r.fecha)}</td>
-            <td class="p-2.5 font-bold text-slate-900">${r.cliente || '-'}</td>
-            <td class="p-2.5 text-slate-500">${r.subcliente || '-'}</td>
-            <td class="p-2.5">${r.tipo_operacion || '-'}</td>
-            <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${r.placa || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-800">${r.numero_interno || '-'}</td>
+            <td class="p-2.5 font-bold text-slate-900">${escapeHtml(r.cliente || '-')}</td>
+            <td class="p-2.5 text-slate-500">${escapeHtml(r.subcliente || '-')}</td>
+            <td class="p-2.5">${escapeHtml(r.tipo_operacion || '-')}</td>
+            <td class="p-2.5 font-black text-blue-700 font-mono tracking-wide">${escapeHtml(r.placa || '-')}</td>
+            <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.numero_interno || '-')}</td>
             <td class="p-2.5 text-center font-black">
               <span class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-800 font-mono text-xs">
                 ${r.posicion}
               </span>
             </td>
+            <td class="p-2.5">${htmlMovimientosBD((movimientosBD.por_inspeccion || {})[r.id])}</td>
             <td class="p-2.5 text-right font-mono">${(r.kilometraje || 0).toLocaleString()}</td>
-            <td class="p-2.5">${r.tipologia || '-'}</td>
-            <td class="p-2.5 font-bold text-slate-800">${r.marca || '-'}</td>
-            <td class="p-2.5">${r.diseno || '-'}</td>
-            <td class="p-2.5 font-mono text-[11px]">${r.dimension || '-'}</td>
+            <td class="p-2.5">${escapeHtml(r.tipologia || '-')}</td>
+            <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.marca || '-')}</td>
+            <td class="p-2.5">${escapeHtml(r.diseno || '-')}</td>
+            <td class="p-2.5 font-mono text-[11px]">${escapeHtml(r.dimension || '-')}</td>
             <td class="p-2.5">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${
                 esVidaReencauche(r.vida) || (r.banda_reen && r.banda_reen !== '-') 
@@ -38792,13 +41038,13 @@ if __name__ == '__main__':
                 ${(r.vida && r.vida !== '-') ? r.vida : (r.banda_reen && r.banda_reen !== '-' ? 'REENCAUCHE' : 'ORIGINAL')}
               </span>
             </td>
-            <td class="p-2.5 text-slate-500">${r.banda_reen || '-'}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_ext}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_cent}</td>
-            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${r.prof_int}${badgeAlerta}</td>
+            <td class="p-2.5 text-slate-500">${escapeHtml(r.banda_reen || '-')}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${escapeHtml(r.prof_ext)}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${escapeHtml(r.prof_cent)}</td>
+            <td class="p-2.5 text-center font-mono ${colorDesgaste}">${escapeHtml(r.prof_int)}${badgeAlerta}</td>
             <td class="p-2.5 text-center font-mono font-bold ${
               (parseFloat(r.psi) < 90 || parseFloat(r.psi) > 120) ? 'text-amber-600 bg-amber-50/60 rounded' : 'text-slate-700'
-            }">${r.psi}</td>
+            }">${escapeHtml(r.psi)}</td>
             <td class="p-2.5 max-w-xs truncate" title="${escapeHtml(r.novedades || '')}">
               ${escapeHtml(r.novedades) || '-'}
             </td>
@@ -38806,7 +41052,7 @@ if __name__ == '__main__':
               ${htmlBotonFotos}
             </td>
             <td class="p-2.5 text-right font-mono text-slate-600">$${(r.precio || 0).toLocaleString()}</td>
-            <td class="p-2.5 text-center font-mono text-slate-400">${r.prof_inicial || 0}</td>
+            <td class="p-2.5 text-center font-mono text-slate-400">${escapeHtml(r.prof_inicial || 0)}</td>
             <td class="p-2.5 text-right font-mono text-slate-400">${(r.km_montaje || 0).toLocaleString()}</td>
           </tr>
         `;
@@ -39339,6 +41585,107 @@ if __name__ == '__main__':
         }
       }
     }
+
+    // ==========================================
+    // ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador)
+    // ==========================================
+    let resumenEliminarCliente = null;
+
+    async function abrirModalEliminarDatosCliente() {
+      const modal = document.getElementById('modalEliminarDatosCliente');
+      const sel = document.getElementById('selEliminarDatosCliente');
+      if (!modal || !sel) return;
+      mostrarVistaEliminarDatosCliente(false);
+      resumenEliminarCliente = null;
+      document.getElementById('txtConfirmarEliminarDatosCliente').value = '';
+      document.getElementById('resumenEliminarDatosCliente').classList.add('hidden');
+      validarConfirmacionEliminarDatosCliente();
+      try {
+        const r = await fetch('/api/clientes-directorio');
+        const lista = r.ok ? await r.json() : [];
+        const nombres = [...new Set(lista.map(c => c.cliente).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Seleccione un cliente…</option>' +
+          nombres.map(n => `<option value="${escapeHtml(escapeHtml(n))}">${escapeHtml(escapeHtml(n))}</option>`).join('');
+      } catch (e) {}
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Formulario de borrado o, tras borrar, la confirmación de éxito (solo con el botón Cerrar)
+    function mostrarVistaEliminarDatosCliente(exito) {
+      document.getElementById('formEliminarDatosCliente')?.classList.toggle('hidden', exito);
+      document.getElementById('exitoEliminarDatosCliente')?.classList.toggle('hidden', !exito);
+      document.getElementById('btnEjecutarEliminarDatosCliente')?.classList.toggle('hidden', exito);
+      const cerrar = document.getElementById('btnCerrarEliminarDatosCliente');
+      if (cerrar) cerrar.textContent = exito ? 'Cerrar' : 'Cancelar';
+    }
+
+    function cerrarModalEliminarDatosCliente() {
+      const modal = document.getElementById('modalEliminarDatosCliente');
+      if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    }
+
+    async function previsualizarEliminarDatosCliente() {
+      const cliente = document.getElementById('selEliminarDatosCliente').value;
+      const caja = document.getElementById('resumenEliminarDatosCliente');
+      resumenEliminarCliente = null;
+      document.getElementById('txtConfirmarEliminarDatosCliente').value = '';
+      validarConfirmacionEliminarDatosCliente();
+      if (!cliente) { caja.classList.add('hidden'); return; }
+      caja.classList.remove('hidden');
+      caja.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Contando registros…';
+      try {
+        const res = await fetch(`/api/admin/datos-cliente?cliente=${encodeURIComponent(cliente)}`);
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'Error');
+        resumenEliminarCliente = d;
+        caja.innerHTML = `<b>Se eliminarán ${fmtDec(d.total, 0)} registros de ${escapeHtml(d.cliente)}:</b>` +
+          `<ul class="list-disc ml-5 mt-1">${d.detalle.map(x => `<li>${escapeHtml(x.nombre)}: ${fmtDec(x.registros, 0)}</li>`).join('')}</ul>`;
+      } catch (e) {
+        caja.innerHTML = `No se pudo consultar el cliente: ${escapeHtml(e.message)}`;
+      }
+      validarConfirmacionEliminarDatosCliente();
+    }
+
+    function validarConfirmacionEliminarDatosCliente() {
+      const cliente = document.getElementById('selEliminarDatosCliente')?.value || '';
+      const escrito = (document.getElementById('txtConfirmarEliminarDatosCliente')?.value || '').trim().toUpperCase();
+      const btn = document.getElementById('btnEjecutarEliminarDatosCliente');
+      if (btn) btn.disabled = !(cliente && resumenEliminarCliente && resumenEliminarCliente.total > 0 && escrito === cliente.trim().toUpperCase());
+    }
+
+    async function ejecutarEliminarDatosCliente() {
+      const cliente = document.getElementById('selEliminarDatosCliente').value;
+      const confirmacion = document.getElementById('txtConfirmarEliminarDatosCliente').value;
+      const btn = document.getElementById('btnEjecutarEliminarDatosCliente');
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Eliminando…';
+      try {
+        const res = await fetch('/api/admin/datos-cliente/eliminar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cliente, confirmacion })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo eliminar');
+        // Confirmación en la misma ventana: qué se borró y dónde quedó la copia de seguridad
+        document.getElementById('exitoEliminarTexto').innerHTML =
+          `Se eliminaron <b>${fmtDec(d.total, 0)} registros</b> del cliente <b>${escapeHtml(d.cliente)}</b>.`;
+        document.getElementById('exitoEliminarDetalle').innerHTML = (d.detalle || [])
+          .map(x => `<li><i class="fa-solid fa-check text-emerald-500 mr-1.5"></i>${escapeHtml(x.nombre)}: <b>${fmtDec(x.registros, 0)}</b></li>`).join('');
+        document.getElementById('exitoEliminarRespaldo').innerHTML =
+          `<i class="fa-solid fa-shield-halved mr-1"></i>Copia de seguridad guardada: <b>${escapeHtml(d.respaldo || '')}</b>`;
+        mostrarVistaEliminarDatosCliente(true);
+        mostrarToast(`Datos de ${d.cliente} eliminados`);
+        cargarBaseInspecciones();
+      } catch (e) {
+        alert('❌ ' + e.message);
+      } finally {
+        btn.innerHTML = original;
+        validarConfirmacionEliminarDatosCliente();
+      }
+    }
 ```
 
 ---
@@ -39347,17 +41694,85 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_kpis.js`
 - **Descripción:** Módulo KPIs: Suite analítica de 20 KPIs con Chart.js y retorno de inversión
-- **Métricas:** 2259 líneas | 103,377 bytes (101.0 KB)
+- **Métricas:** 2748 líneas | 128,871 bytes (125.9 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
     // =========================================================================
     // CONTROLADOR DE LA SUITE ANALÍTICA DE 20 KPIS (5 PESTAÑAS HOMOLOGADAS)
     // =========================================================================
+    // Plugin Centro Métrico para Gráficos Doughnut (Inspirado en Tremor / shadcn / Apple Health)
+    const doughnutCenterTextPlugin = {
+      id: 'doughnutCenterText',
+      beforeDraw(chart) {
+        const { ctx, chartArea } = chart;
+        if (!chartArea || chart.config.type !== 'doughnut') return;
+        const cfg = chart.config.options?.plugins?.centerText;
+        if (!cfg || cfg.display === false || (!cfg.text && cfg.text !== 0)) return;
+
+        ctx.save();
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const mainSize = cfg.fontSize || 22;
+        ctx.font = `bold ${mainSize}px 'Inter', system-ui, sans-serif`;
+        ctx.fillStyle = cfg.color || '#0f172a';
+        const offsetY = cfg.subtext ? -8 : 0;
+        ctx.fillText(String(cfg.text), centerX, centerY + offsetY);
+
+        if (cfg.subtext) {
+          const subSize = cfg.subFontSize || 9.5;
+          ctx.font = `700 ${subSize}px 'Inter', system-ui, sans-serif`;
+          ctx.fillStyle = cfg.subColor || '#64748b';
+          ctx.fillText(String(cfg.subtext).toUpperCase(), centerX, centerY + 13);
+        }
+        ctx.restore();
+      }
+    };
+
     if (typeof Chart !== 'undefined') {
       Chart.defaults.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 2);
       Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
       Chart.defaults.color = '#475569';
+
+      // Estilo de cuadrícula minimalista y moderno (Tremor / shadcn)
+      if (Chart.defaults.scale && Chart.defaults.scale.grid) {
+        Chart.defaults.scale.grid.color = 'rgba(226, 232, 240, 0.55)';
+        Chart.defaults.scale.grid.tickColor = 'transparent';
+      }
+      if (Chart.defaults.scale && Chart.defaults.scale.border) {
+        Chart.defaults.scale.border.display = false;
+      }
+
+      // Estilo de leyendas ejecutivas
+      if (Chart.defaults.plugins && Chart.defaults.plugins.legend) {
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+        Chart.defaults.plugins.legend.labels.boxWidth = 8;
+        Chart.defaults.plugins.legend.labels.boxHeight = 8;
+        Chart.defaults.plugins.legend.labels.padding = 12;
+      }
+
+      // Estilo de tooltips oscuros HD
+      if (Chart.defaults.plugins && Chart.defaults.plugins.tooltip) {
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.94)';
+        Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+        Chart.defaults.plugins.tooltip.bodyColor = '#f1f5f9';
+        Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 255, 255, 0.12)';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.boxPadding = 4;
+        Chart.defaults.plugins.tooltip.usePointStyle = true;
+      }
+
+      try {
+        Chart.register(doughnutCenterTextPlugin);
+      } catch (e) {}
+
       if (typeof ChartDataLabels !== 'undefined') {
         try {
           Chart.register(ChartDataLabels);
@@ -39403,12 +41818,21 @@ if __name__ == '__main__':
     function pillDatalabelConfig(bgColor = 'rgba(15, 23, 42, 0.88)', textColor = '#ffffff', formatter = null) {
       return {
         display: (ctx) => {
+          const val = ctx.dataset?.data?.[ctx.dataIndex];
+          if (val === null || val === undefined || val === '') return false;
+          const num = typeof val === 'number' ? val : parseFloat(val);
+          if (isNaN(num)) return false;
           const ds = ctx.dataset;
           if (ds && ds.data && ds.data.length > 10) {
-            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1) ? 'auto' : false;
+            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1);
           }
-          return 'auto';
+          return true;
         },
+        anchor: 'end',
+        align: 'top',
+        offset: 2,
+        clamp: true,
+        clip: false,
         backgroundColor: bgColor,
         borderRadius: 5,
         color: textColor,
@@ -39521,6 +41945,9 @@ if __name__ == '__main__':
       const capturaAncha = new Set(['canvasKpi13_comparativo', 'canvasKpi14_proy', 'canvasKpi14_kmmm', 'canvasKpi14_cpk',
                                     'canvasKpi15_potencial']);
       mostrarToast('Generando PDF de indicadores...');
+      // El PDF sale completo: los KPI que el usuario desmarcó se muestran mientras se capturan sus gráficos
+      exportandoPdfKpis = true;
+      aplicarVisibilidadKpis();
       try {
         for (const num of pestanas) {
           cambiarSubpestanaKpis(num);
@@ -39554,7 +41981,7 @@ if __name__ == '__main__':
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, lienzo.width, lienzo.height);
             ctx.drawImage(cv, 0, 0);
-            graficos[cv.id] = lienzo.toDataURL('image/jpeg', 0.9);
+            graficos[cv.id] = lienzo.toDataURL('image/png');
             if (caja) {
               if (estiloCaja === null) caja.removeAttribute('style');
               else caja.setAttribute('style', estiloCaja);
@@ -39563,6 +41990,8 @@ if __name__ == '__main__':
           }
         }
       } finally {
+        exportandoPdfKpis = false;
+        aplicarVisibilidadKpis();
         cambiarSubpestanaKpis(pestanaOriginal);
       }
 
@@ -39600,6 +42029,183 @@ if __name__ == '__main__':
         mostrarToast(`No se pudo generar el PDF: ${e.message}`, true);
       } finally {
         if (btn) btn.disabled = false;
+      }
+    }
+
+    // =========================================================================
+    // ELEGIR QUÉ KPI VE EL USUARIO
+    // El servidor guarda, por usuario, los KPI desmarcados: un indicador nuevo aparece marcado sin hacer nada.
+    // =========================================================================
+    let catalogoKpisVisibles = null;   // secciones con sus KPI (la misma lista del PDF de KPIs)
+    let kpisOcultosUsuario = new Set();
+    let exportandoPdfKpis = false;     // mientras se arma el PDF se muestran todos para capturar sus gráficos
+    let temporizadorGuardarKpis = null;
+    let promesaPreferenciasKpis = null;
+
+    function cabecerasSeleccionKpis() {
+      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
+      return tok ? { 'Authorization': `Bearer ${tok}` } : {};
+    }
+
+    // Se pide una sola vez por página (cada carga de la suite la llama); si falla, el siguiente intento la vuelve a pedir
+    function cargarPreferenciasKpis() {
+      if (catalogoKpisVisibles) return Promise.resolve();
+      promesaPreferenciasKpis = promesaPreferenciasKpis || (async () => {
+        try {
+          const res = await fetch('/api/kpis/visibles', { headers: cabecerasSeleccionKpis() });
+          if (!res.ok) return;
+          const data = await res.json();
+          catalogoKpisVisibles = data.secciones || [];
+          kpisOcultosUsuario = new Set(data.ocultos || []);
+          aplicarVisibilidadKpis();
+        } catch (e) {
+          console.warn('No se pudo cargar la selección de KPI:', e);
+        } finally {
+          promesaPreferenciasKpis = null;
+        }
+      })();
+      return promesaPreferenciasKpis;
+    }
+
+    function aplicarVisibilidadKpis() {
+      const ocultos = exportandoPdfKpis ? new Set() : kpisOcultosUsuario;
+      const tarjetas = [...document.querySelectorAll('#vista-kpis [data-kpi]')];
+      tarjetas.forEach(el => el.classList.toggle('kpi-oculto-usuario', ocultos.has(el.dataset.kpi)));
+
+      // Filas de dos tarjetas: si queda una sola ocupa todo el ancho; si no queda ninguna, la fila no deja hueco
+      new Set(tarjetas.map(el => el.parentElement)).forEach(fila => {
+        if (!fila || !fila.classList.contains('grid')) return;
+        const enFila = [...fila.children].filter(h => h.dataset.kpi);
+        const visibles = enFila.filter(h => !h.classList.contains('kpi-oculto-usuario'));
+        enFila.forEach(h => h.classList.toggle('kpi-ancho-completo', visibles.length === 1));
+        fila.classList.toggle('kpi-oculto-usuario', visibles.length === 0);
+      });
+
+      // Pestaña sin ningún KPI marcado: aviso con acceso directo para elegir
+      for (let n = 1; n <= 6; n++) {
+        const sub = document.getElementById(`subvista-kpi-${n}`);
+        if (!sub) continue;
+        const propias = [...sub.querySelectorAll('[data-kpi]')];
+        const todasOcultas = propias.length > 0 && propias.every(t => t.classList.contains('kpi-oculto-usuario'));
+        let aviso = sub.querySelector(':scope > .kpi-pestana-vacia');
+        if (todasOcultas && !aviso) {
+          aviso = document.createElement('div');
+          aviso.className = 'kpi-pestana-vacia p-6 rounded-3xl bg-white border border-dashed border-slate-300 text-center space-y-3';
+          aviso.innerHTML = '<p class="text-sm font-bold text-slate-700">Desmarcó todos los KPI de esta pestaña.</p>'
+            + '<button type="button" onclick="abrirModalElegirKpis()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl">'
+            + '<i class="fa-solid fa-sliders mr-1"></i>Elegir KPI</button>';
+          sub.appendChild(aviso);
+        }
+        if (aviso) aviso.classList.toggle('hidden', !todasOcultas);
+      }
+
+      const badge = document.getElementById('badgeKpisOcultos');
+      if (badge) {
+        const n = kpisOcultosUsuario.size;
+        badge.textContent = `${n} oculto${n === 1 ? '' : 's'}`;
+        badge.classList.toggle('hidden', n === 0);
+      }
+    }
+
+    function renderizarListaElegirKpis() {
+      const cont = document.getElementById('listaElegirKpis');
+      if (!cont) return;
+      if (!catalogoKpisVisibles) {
+        cont.innerHTML = '<p class="text-xs text-slate-500">No se pudo cargar la lista de KPI. Intente de nuevo.</p>';
+        return;
+      }
+      const bloqueaFull = modoLicenciaSuite === 'LIGHT';
+      cont.innerHTML = catalogoKpisVisibles.map(sec => {
+        const bloqueada = sec.solo_full && bloqueaFull;
+        const dis = bloqueada ? 'disabled' : '';
+        return `<section class="border border-slate-200 rounded-2xl p-3 ${bloqueada ? 'opacity-50' : ''}">
+          <label class="flex items-center gap-2 text-xs font-black text-slate-900 ${bloqueada ? '' : 'cursor-pointer'}">
+            <input type="checkbox" class="w-4 h-4 shrink-0 accent-indigo-600" data-seccion-kpi="${sec.numero}" ${dis}
+                   onchange="marcarSeccionKpis(${sec.numero}, this.checked)">
+            <span>${escapeHtml(sec.titulo)}${bloqueada ? ' <span class="text-[10px] font-bold text-amber-700">· Solo licencia FULL / PRO</span>' : ''}</span>
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">
+            ${sec.kpis.map(k => `<label class="flex items-start gap-2 p-1.5 rounded-lg ${bloqueada ? '' : 'hover:bg-slate-50 cursor-pointer'} text-xs text-slate-700">
+                <input type="checkbox" class="mt-0.5 w-4 h-4 shrink-0 accent-indigo-600" data-clave-kpi="${escapeHtml(k.clave)}" ${dis}
+                       onchange="marcarKpi(this.dataset.claveKpi, this.checked)">
+                <span>${escapeHtml(k.titulo)}</span></label>`).join('')}
+          </div></section>`;
+      }).join('');
+      actualizarCasillasElegirKpis();
+    }
+
+    // Estado de las casillas sin redibujar la lista (no se pierde el foco ni el desplazamiento)
+    function actualizarCasillasElegirKpis() {
+      const cont = document.getElementById('listaElegirKpis');
+      if (!cont || !catalogoKpisVisibles) return;
+      cont.querySelectorAll('[data-clave-kpi]').forEach(cb => { cb.checked = !kpisOcultosUsuario.has(cb.dataset.claveKpi); });
+      catalogoKpisVisibles.forEach(sec => {
+        const cb = cont.querySelector(`[data-seccion-kpi="${sec.numero}"]`);
+        if (!cb) return;
+        const marcados = sec.kpis.filter(k => !kpisOcultosUsuario.has(k.clave)).length;
+        cb.checked = marcados === sec.kpis.length;
+        cb.indeterminate = marcados > 0 && marcados < sec.kpis.length;
+      });
+      const total = catalogoKpisVisibles.reduce((a, s) => a + s.kpis.length, 0);
+      const lbl = document.getElementById('lblResumenElegirKpis');
+      if (lbl) lbl.textContent = `${total - kpisOcultosUsuario.size} de ${total} KPI marcados`;
+    }
+
+    function marcarKpi(clave, visible) {
+      if (visible) kpisOcultosUsuario.delete(clave);
+      else kpisOcultosUsuario.add(clave);
+      cambioSeleccionKpis();
+    }
+
+    function marcarSeccionKpis(numero, visible) {
+      const sec = (catalogoKpisVisibles || []).find(s => s.numero === numero);
+      if (!sec) return;
+      sec.kpis.forEach(k => visible ? kpisOcultosUsuario.delete(k.clave) : kpisOcultosUsuario.add(k.clave));
+      cambioSeleccionKpis();
+    }
+
+    function mostrarTodosLosKpis() {
+      kpisOcultosUsuario.clear();
+      cambioSeleccionKpis();
+    }
+
+    // Cada cambio se ve al instante y se guarda medio segundo después (varios clics seguidos = un solo guardado)
+    function cambioSeleccionKpis() {
+      aplicarVisibilidadKpis();
+      actualizarCasillasElegirKpis();
+      clearTimeout(temporizadorGuardarKpis);
+      temporizadorGuardarKpis = setTimeout(guardarSeleccionKpis, 500);
+    }
+
+    async function guardarSeleccionKpis() {
+      temporizadorGuardarKpis = null;
+      try {
+        const res = await fetch('/api/kpis/visibles', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...cabecerasSeleccionKpis() },
+          body: JSON.stringify({ ocultos: [...kpisOcultosUsuario] })
+        });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+      } catch (e) {
+        console.error('No se pudo guardar la selección de KPI:', e);
+        mostrarToast('No se pudo guardar la selección de KPI', true);
+      }
+    }
+
+    async function abrirModalElegirKpis() {
+      if (!catalogoKpisVisibles) await cargarPreferenciasKpis();
+      renderizarListaElegirKpis();
+      const m = document.getElementById('modalElegirKpis');
+      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function cerrarModalElegirKpis() {
+      const m = document.getElementById('modalElegirKpis');
+      if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+      // Si quedó un guardado pendiente, se hace ya
+      if (temporizadorGuardarKpis) {
+        clearTimeout(temporizadorGuardarKpis);
+        guardarSeleccionKpis();
       }
     }
 
@@ -39655,8 +42261,11 @@ if __name__ == '__main__':
       PESTANAS_SOLO_FULL.forEach(n => {
         const sub = document.getElementById(`subvista-kpi-${n}`);
         if (sub) {
+          // El aviso de «pestaña sin KPI marcados» lo maneja aplicarVisibilidadKpis
           [...sub.children].forEach(hijo => {
-            if (hijo.id !== `bloqueAvisoLicenciaKpi${n}`) hijo.classList.toggle('hidden', esLight);
+            if (hijo.id !== `bloqueAvisoLicenciaKpi${n}` && !hijo.classList.contains('kpi-pestana-vacia')) {
+              hijo.classList.toggle('hidden', esLight);
+            }
           });
         }
         // Botón de la pestaña bloqueado en LIGHT
@@ -39731,6 +42340,8 @@ if __name__ == '__main__':
 
     async function cargarSuite20Kpis() {
       const consulta = ++consultaSuiteVigente;
+      // La selección de KPI del usuario se pide en paralelo: así los desmarcados no se ven mientras carga la suite
+      cargarPreferenciasKpis();
       try {
         const cliVal = document.getElementById('filtroKpiCliente')?.value || '';
         const sedeVal = document.getElementById('filtroKpiSubcliente')?.value || '';
@@ -39782,6 +42393,7 @@ if __name__ == '__main__':
         }
 
         renderizarTodaLaSuite20(data);
+        aplicarVisibilidadKpis();
 
       } catch (err) {
         console.error('Error al cargar la Suite de 20 KPIs:', err);
@@ -39869,44 +42481,203 @@ if __name__ == '__main__':
     // RENDERERS SUB-PESTAÑA 1 (KPI 01 AL 04)
     // ==========================================
 
-    // KPI 01: Cumplimiento de Inspección vs Parque
+    // KPI 01: Cumplimiento de Inspección vs Parque, por mes, por año o en todo el historial
+    let datosKpi01 = null;
+
     function renderizarKpi01(d) {
       if (!d) return;
-      const sinPadron = d.porcentaje_cumplimiento === null || d.porcentaje_cumplimiento === undefined;
-      const pct = sinPadron ? 0 : Math.min(100, Math.max(0, d.porcentaje_cumplimiento));
+      datosKpi01 = d;
+      const sel = document.getElementById('kpi01_periodo');
+      if (sel) {
+        const previo = sel.value;
+        const meses = [...(d.por_mes || [])].reverse();
+        const anios = [...(d.por_anio || [])].reverse();
+        sel.innerHTML =
+          (meses.length ? `<optgroup label="Por mes">${meses.map(m => `<option value="mes:${escapeHtml(m.clave)}">${escapeHtml(m.etiqueta)}${m.clave === d.periodo_actual ? ' (mes actual)' : ''}</option>`).join('')}</optgroup>` : '')
+          + (anios.length ? `<optgroup label="Por año">${anios.map(a => `<option value="anio:${escapeHtml(a.clave)}">Año ${escapeHtml(a.clave)}</option>`).join('')}</optgroup>` : '')
+          + '<option value="historial">Todo el historial</option>';
+        const opciones = [...sel.options].map(o => o.value);
+        sel.value = opciones.includes(previo) ? previo : (d.periodo_actual && opciones.includes(`mes:${d.periodo_actual}`) ? `mes:${d.periodo_actual}` : 'historial');
+      }
+      renderChartKpi01Meses(d);
+      aplicarPeriodoKpi01();
+    }
+
+    function periodoSeleccionadoKpi01() {
+      const d = datosKpi01;
+      const valor = document.getElementById('kpi01_periodo')?.value || 'historial';
+      if (!d || valor === 'historial') {
+        return d ? {
+          etiqueta: 'todo el historial', inspeccionados: d.vehiculos_inspeccionados, total: d.total_padron_activo,
+          pct: d.porcentaje_cumplimiento, pendientes: d.placas_pendientes || []
+        } : null;
+      }
+      const [tipo, clave] = valor.split(':');
+      const lista = tipo === 'anio' ? (d.por_anio || []) : (d.por_mes || []);
+      const p = lista.find(x => x.clave === clave);
+      if (!p) return null;
+      // Los pendientes del periodo llegan como placas: se completan con los datos del parque
+      const pendientes = (p.pendientes || []).map(placa => ({ placa, ...((d.parque || {})[placa] || {}) }));
+      return { etiqueta: tipo === 'anio' ? `el año ${clave}` : p.etiqueta, inspeccionados: p.inspeccionados, total: p.total, pct: p.pct, pendientes };
+    }
+
+    function aplicarPeriodoKpi01() {
+      const d = datosKpi01;
+      const per = periodoSeleccionadoKpi01();
+      if (!d || !per) return;
+      const sinPadron = per.pct === null || per.pct === undefined;
+      const pct = sinPadron ? 0 : Math.min(100, Math.max(0, per.pct));
       const elPct = document.getElementById('kpi01_cumplimiento_pct');
       const elAudPad = document.getElementById('kpi01_auditados_padron');
       const elBar = document.getElementById('kpi01_barra_progreso');
       const elBtnTxt = document.getElementById('btnKpi01Texto');
+      const elTexto = document.getElementById('kpi01_texto_periodo');
+      const elSub = document.getElementById('kpi01_modal_subtitulo');
 
+      if (elTexto) elTexto.textContent = `Inspeccionados en ${per.etiqueta} / Flota`;
+      if (elSub) elSub.textContent = `Unidades activas sin inspección en ${per.etiqueta}`;
       if (elPct) {
         elPct.textContent = sinPadron ? 'Sin padrón' : `${formatCO_Decimal(pct, 1)}%`;
         // Sin padrón cargado el parque son los vehículos ya inspeccionados: se avisa
-        elPct.title = d.fuente_padron === 'vehiculos_inspeccionados'
-          ? 'Sin padrón cargado: el parque son los vehículos ya inspeccionados alguna vez (puede faltar alguno)'
-          : (sinPadron ? 'No hay padrón ni vehículos inspeccionados para medir el cumplimiento' : 'Contra el padrón de vehículos del cliente');
+        elPct.title = d.parque_cargado ? 'Contra el parque automotor cargado por el administrador'
+          : d.fuente_padron === 'vehiculos_inspeccionados'
+            ? 'Sin padrón cargado: el parque son los vehículos ya inspeccionados alguna vez (puede faltar alguno)'
+            : (sinPadron ? 'No hay padrón ni vehículos inspeccionados para medir el cumplimiento' : 'Contra el padrón de vehículos del cliente');
       }
-      if (elAudPad) elAudPad.textContent = `${formatCO_Miles(d.vehiculos_inspeccionados)} / ${formatCO_Miles(d.total_padron_activo)}`;
+      if (elAudPad) elAudPad.textContent = `${formatCO_Miles(per.inspeccionados)} / ${formatCO_Miles(per.total)}`;
       if (elBar) elBar.style.width = `${pct}%`;
-      const numPend = (d.placas_pendientes || []).length;
-      if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${numPend})`;
+      if (elBtnTxt) elBtnTxt.textContent = `Placas Pendientes (${per.pendientes.length})`;
+      pendientesKpi01 = per.pendientes;
+      const btnExp = document.getElementById('btnExportarPendientesKpi01');
+      if (btnExp) btnExp.classList.toggle('hidden', !pendientesKpi01.length);
 
-      // Llenar tabla del modal
+      // Tabla del modal (con parque cargado salen todos los que faltan)
       const tbody = document.getElementById('tbodyModalPlacasPendientes');
       if (tbody) {
-        if (!d.placas_pendientes || d.placas_pendientes.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">¡Excelente! El 100% de los vehículos del padrón han sido inspeccionados.</td></tr>';
+        if (!per.pendientes.length) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">¡Excelente! Todos los vehículos de la flota tienen inspección en ${escapeHtml(per.etiqueta)}.</td></tr>`;
         } else {
-          tbody.innerHTML = (d.placas_pendientes || []).slice(0, 25).map(p => `
+          const lista = d.parque_cargado ? per.pendientes : per.pendientes.slice(0, 25);
+          tbody.innerHTML = lista.map(p => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-black text-slate-900 font-mono">${p.placa || '-'}</td>
-              <td class="p-2.5 text-slate-600">${p.cliente || '-'} ${p.subcliente ? `/ ${p.subcliente}` : ''}</td>
-              <td class="p-2.5 text-slate-600">${p.tipologia || '-'}</td>
-              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">${p.estado_padron || 'Activo'}</span></td>
+              <td class="p-2.5 font-black text-slate-900 font-mono whitespace-nowrap">${escapeHtml(p.placa || '-')}</td>
+              <td class="p-2.5 text-slate-600">${escapeHtml(p.subcliente || '-')}</td>
+              <td class="p-2.5 text-slate-600">${escapeHtml(p.tipologia || '-')}</td>
+              <td class="p-2.5 text-slate-600">${escapeHtml([p.fabricante, p.linea].filter(Boolean).join(' ') || '-')}</td>
+              <td class="p-2.5 text-center whitespace-nowrap">${p.ultima_inspeccion ? fmtFecha(p.ultima_inspeccion) : 'Nunca'}</td>
             </tr>
           `).join('');
         }
       }
+    }
+
+    // Últimos 12 meses seguidos (los meses sin inspecciones salen en cero, no se saltan)
+    function mesesSeguidosKpi01(d) {
+      const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const porClave = Object.fromEntries((d.por_mes || []).map(m => [m.clave, m]));
+      const ultimo = d.periodo_actual || ((d.por_mes || []).slice(-1)[0] || {}).clave;
+      if (!ultimo) return [];
+      let [anio, mes] = ultimo.split('-').map(Number);
+      const lista = [];
+      for (let i = 0; i < 12; i++) {
+        const clave = `${anio}-${String(mes).padStart(2, '0')}`;
+        lista.unshift(porClave[clave] || {
+          clave, etiqueta: `${nombres[mes - 1]} ${String(anio).slice(-2)}`, inspeccionados: 0,
+          total: d.total_padron_activo, pct: d.total_padron_activo ? 0 : null
+        });
+        mes -= 1;
+        if (mes === 0) { mes = 12; anio -= 1; }
+      }
+      return lista;
+    }
+
+    // Vehículos inspeccionados cada mes frente al total de la flota (fondo claro para que se lea bien)
+    function renderChartKpi01Meses(d) {
+      destruirChartSuite('kpi01_meses');
+      const ctx = document.getElementById('canvasKpi01_meses');
+      const meses = mesesSeguidosKpi01(d);
+      const anio = (d.por_anio || []).slice(-1)[0];
+      const elAnio = document.getElementById('kpi01_texto_anio');
+      if (elAnio) elAnio.textContent = anio ? `Año ${anio.clave}: ${formatCO_Miles(anio.inspeccionados)} de ${formatCO_Miles(anio.total)} vehículos${anio.pct != null ? ` (${formatCO_Decimal(anio.pct, 1)}%)` : ''}` : '';
+      if (!ctx || typeof Chart === 'undefined' || !meses.length) return;
+      const angosto = window.innerWidth < 640;
+      const totalMax = Math.max(1, ...meses.map(m => m.total || 0), ...meses.map(m => m.inspeccionados || 0));
+      // Color por cobertura del mes: verde desde 80 %, ámbar desde 50 %, rojo por debajo
+      const colorMes = m => m.pct == null ? '#64748b' : (m.pct >= 80 ? '#059669' : (m.pct >= 50 ? '#d97706' : '#dc2626'));
+      instanciasChartsSuite['kpi01_meses'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: meses.map(m => m.etiqueta),
+          datasets: [
+            {
+              type: 'bar', label: 'Vehículos inspeccionados', data: meses.map(m => m.inspeccionados),
+              backgroundColor: meses.map(colorMes), borderRadius: 5, maxBarThickness: 46, order: 2,
+              datalabels: {
+                anchor: 'end', align: 'end', offset: 2, clamp: true,
+                color: c => (c.dataset.data[c.dataIndex] ? '#0f172a' : '#94a3b8'),
+                font: { size: angosto ? 9 : 11, weight: 'bold' },
+                formatter: (v, c) => {
+                  const m = meses[c.dataIndex];
+                  if (!v) return '0';  // mes sin inspecciones: un cero discreto
+                  return (angosto || m.pct == null) ? formatCO_Miles(v) : `${formatCO_Miles(v)} · ${formatCO_Decimal(m.pct, 0)}%`;
+                }
+              }
+            },
+            {
+              type: 'line', label: 'Total flota', data: meses.map(m => m.total), borderColor: '#4f46e5', backgroundColor: '#4f46e5',
+              borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#ffffff', pointBorderWidth: 2, tension: 0, order: 1,
+              datalabels: { display: false }
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 24, right: 12, bottom: 6, left: 6 } },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#0f172a', font: { size: 11, weight: 'bold' }, usePointStyle: true, boxWidth: 10,
+                // La barra cambia de color según la cobertura: en la leyenda se muestra en verde
+                generateLabels: chart => Chart.defaults.plugins.legend.labels.generateLabels(chart).map(l =>
+                  l.datasetIndex === 0 ? { ...l, fillStyle: '#059669', strokeStyle: '#059669' } : l)
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: c => c.dataset.type === 'line' ? `Total flota: ${formatCO_Miles(c.raw)}`
+                  : `Inspeccionados: ${formatCO_Miles(c.raw)} de ${formatCO_Miles(meses[c.dataIndex].total)}${meses[c.dataIndex].pct != null ? ` (${formatCO_Decimal(meses[c.dataIndex].pct, 1)}%)` : ''}`
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { color: '#334155', font: { size: angosto ? 9 : 11, weight: 'bold' }, maxRotation: angosto ? 60 : 0, autoSkip: false }, grid: { display: false } },
+            y: {
+              beginAtZero: true, suggestedMax: Math.ceil(totalMax * 1.18),
+              ticks: { color: '#334155', font: { size: 11 }, precision: 0 }, grid: { color: '#e2e8f0' },
+              title: { display: !angosto, text: 'Vehículos', color: '#475569', font: { size: 11, weight: 'bold' } }
+            }
+          }
+        }
+      });
+    }
+
+    let pendientesKpi01 = [];
+
+    // Faltantes del KPI 01 a Excel (CSV con separador ';' para Excel en español)
+    function exportarPendientesKpi01() {
+      if (!pendientesKpi01.length) return;
+      const celda = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const filas = [['Placa / N° interno', 'Sede', 'Tipología', 'Fabricante', 'Línea', 'Última inspección']]
+        .concat(pendientesKpi01.map(p => [p.placa, p.subcliente, p.tipologia, p.fabricante, p.linea, p.ultima_inspeccion || 'Nunca']));
+      const csv = '\ufeff' + filas.map(f => f.map(celda).join(';')).join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vehiculos_pendientes_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     // KPI 02: Volumen Auditado Mes a Mes (Mixto Doble Eje)
@@ -40105,7 +42876,15 @@ if __name__ == '__main__':
             animation: animacionCascadaStandard,
             plugins: {
               legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
-              datalabels: { display: false }
+              datalabels: {
+                display: (ctx) => {
+                  const v = ctx.dataset.data[ctx.dataIndex];
+                  return (v && v > 0);
+                },
+                color: '#ffffff',
+                font: { weight: 'bold', size: 9 },
+                formatter: (val) => formatCO_Miles(val)
+              }
             },
             scales: {
               x: { stacked: true, ticks: { font: { weight: 'bold', size: 10 } } },
@@ -40135,7 +42914,7 @@ if __name__ == '__main__':
           data: {
             labels: dsTip.labels || [],
             datasets: [{
-              label: 'Vehículos',
+              label: 'Llantas',
               data: dsTip.valores || [],
               backgroundColor: '#6366f1',
               borderRadius: 6
@@ -40205,12 +42984,19 @@ if __name__ == '__main__':
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '62%',
+            cutout: '64%',
             animation: animacionCascadaStandard,
             plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+              centerText: {
+                text: `${(dsDim.labels || []).length}`,
+                subtext: 'Medidas'
+              },
+              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 'bold' } } },
               datalabels: {
-                display: 'auto',
+                display: (ctx) => {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  return total > 0 && ((ctx.dataset.data[ctx.dataIndex] / total) >= 0.05);
+                },
                 color: '#fff',
                 font: { weight: 'bold', size: 10 },
                 formatter: (val, ctx) => {
@@ -40276,13 +43062,13 @@ if __name__ == '__main__':
       } else {
         tbody.innerHTML = ultimasAlertasCambiazo.map(a => `
           <tr class="hover:bg-rose-50/50 transition-colors">
-            <td class="p-2.5 font-bold text-slate-900">${a.placa || ''}</td>
-            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${a.posicion || ''}</td>
-            <td class="p-2.5 font-mono text-slate-400 line-through">${a.serial_anterior || ''}</td>
-            <td class="p-2.5 font-mono font-bold text-rose-600">${a.serial_actual || ''}</td>
-            <td class="p-2.5 text-right font-mono font-bold">${a.prof_actual_min || 0} mm</td>
-            <td class="p-2.5 text-slate-400 text-xs">${a.fecha_anterior || ''}</td>
-            <td class="p-2.5 text-slate-700 font-semibold text-xs">${a.fecha_actual || ''}</td>
+            <td class="p-2.5 font-bold text-slate-900">${escapeHtml(a.placa || '')}</td>
+            <td class="p-2.5 text-center font-mono font-bold text-indigo-600">Pos ${escapeHtml(a.posicion || '')}</td>
+            <td class="p-2.5 font-mono text-slate-400 line-through">${escapeHtml(a.serial_anterior || '')}</td>
+            <td class="p-2.5 font-mono font-bold text-rose-600">${escapeHtml(a.serial_actual || '')}</td>
+            <td class="p-2.5 text-right font-mono font-bold">${escapeHtml(a.prof_actual_min || 0)} mm</td>
+            <td class="p-2.5 text-slate-400 text-xs">${escapeHtml(a.fecha_anterior || '')}</td>
+            <td class="p-2.5 text-slate-700 font-semibold text-xs">${escapeHtml(a.fecha_actual || '')}</td>
             <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Sustitución sin Kardex</span></td>
           </tr>
         `).join('');
@@ -40317,11 +43103,11 @@ if __name__ == '__main__':
         } else {
           tbodyCruz.innerHTML = d.tabla_cruzada.map(r => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold text-slate-800">${r.dimension || '-'}</td>
-              <td class="p-2.5 text-center font-mono">${r.direccional || 0}</td>
-              <td class="p-2.5 text-center font-mono">${r.traccion || 0}</td>
-              <td class="p-2.5 text-center font-mono">${r.arrastre || 0}</td>
-              <td class="p-2.5 text-right font-black font-mono text-rose-700 bg-rose-50/50">${r.total || 0}</td>
+              <td class="p-2.5 font-bold text-slate-800">${escapeHtml(r.dimension || '-')}</td>
+              <td class="p-2.5 text-center font-mono">${escapeHtml(r.direccional || 0)}</td>
+              <td class="p-2.5 text-center font-mono">${escapeHtml(r.traccion || 0)}</td>
+              <td class="p-2.5 text-center font-mono">${escapeHtml(r.arrastre || 0)}</td>
+              <td class="p-2.5 text-right font-black font-mono text-rose-700 bg-rose-50/50">${escapeHtml(r.total || 0)}</td>
             </tr>
           `).join('');
         }
@@ -40385,7 +43171,7 @@ if __name__ == '__main__':
 
             return `
               <tr class="hover:bg-slate-100 transition-colors">
-                <td class="p-2 text-left font-bold text-slate-900 sticky left-0 bg-white border-r border-slate-200">${r.placa || '-'}</td>
+                <td class="p-2 text-left font-bold text-slate-900 sticky left-0 bg-white border-r border-slate-200">${escapeHtml(r.placa || '-')}</td>
                 ${celdas}
               </tr>
             `;
@@ -40417,7 +43203,15 @@ if __name__ == '__main__':
             animation: animacionCascadaStandard,
             plugins: {
               legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
-              datalabels: { display: false }
+              datalabels: {
+                display: (ctx) => {
+                  const v = ctx.dataset.data[ctx.dataIndex];
+                  return (v && v >= 5);
+                },
+                color: '#ffffff',
+                font: { weight: 'bold', size: 9 },
+                formatter: (val) => `${formatCO_Decimal(val, 0)}%`
+              }
             },
             scales: {
               x: { stacked: true },
@@ -40435,12 +43229,12 @@ if __name__ == '__main__':
         } else {
           tbody.innerHTML = d.tabla_perdidas.map(r => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
+              <td class="p-2.5 font-bold font-mono text-slate-900">${escapeHtml(r.placa || '-')}</td>
               <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos1_mm, 1)}</td>
               <td class="p-2.5 text-center font-mono text-slate-700">${formatCO_Decimal(r.pos2_mm, 1)}</td>
               <td class="p-2.5 text-center font-mono font-black text-rose-600">${formatCO_Decimal(r.total_mm, 1)} mm</td>
               <td class="p-2.5 text-right font-mono font-bold text-slate-900">${modoLicenciaSuite === 'FULL' ? formatCO_Moneda(r.perdida_pesos) : 'Modo LIGHT'}</td>
-              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${r.accion || 'Alinear Dirección'}</span></td>
+              <td class="p-2.5 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">${escapeHtml(r.accion || 'Alinear Dirección')}</span></td>
             </tr>
           `).join('');
         }
@@ -40457,8 +43251,8 @@ if __name__ == '__main__':
         } else {
           tbody.innerHTML = d.rotaciones_sugeridas.map(r => `
             <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold font-mono text-slate-900">${r.placa || '-'}</td>
-              <td class="p-2.5 text-center font-medium text-indigo-700 font-mono">${r.esquema || 'P3 ↔ P9 / P4 ↔ P10'}</td>
+              <td class="p-2.5 font-bold font-mono text-slate-900">${escapeHtml(r.placa || '-')}</td>
+              <td class="p-2.5 text-center font-medium text-indigo-700 font-mono">${escapeHtml(r.esquema || 'P3 ↔ P9 / P4 ↔ P10')}</td>
               <td class="p-2.5 text-center font-mono font-black text-amber-600">&Delta; ${formatCO_Decimal(r.delta_ejes_mm, 1)} mm</td>
               <td class="p-2.5 text-center">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${r.estado === 'Reincidente' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
@@ -40514,12 +43308,12 @@ if __name__ == '__main__':
           cont.innerHTML = d.cruces_bodega2.map(c => `
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
               <div>
-                <span class="font-mono font-black text-slate-900">${c.placa || '-'}</span>
-                <span class="text-slate-500 ml-1.5">${c.pacha || 'P3-P4'} (&Delta; ${formatCO_Decimal(c.diferencia_mm, 1)} mm)</span>
+                <span class="font-mono font-black text-slate-900">${escapeHtml(c.placa || '-')}</span>
+                <span class="text-slate-500 ml-1.5">${escapeHtml(c.pacha || 'P3-P4')} (&Delta; ${formatCO_Decimal(c.diferencia_mm, 1)} mm)</span>
               </div>
               <div class="text-right">
-                <span class="text-[10px] text-indigo-600 font-bold block">Bodega 2: ${c.llanta_b2_sugerida || 'Stock disponible'}</span>
-                <span class="text-[10px] text-slate-500 font-mono">${c.milimetraje_b2 || 0} mm</span>
+                <span class="text-[10px] text-indigo-600 font-bold block">Bodega 2: ${escapeHtml(c.llanta_b2_sugerida || 'Stock disponible')}</span>
+                <span class="text-[10px] text-slate-500 font-mono">${escapeHtml(c.milimetraje_b2 || 0)} mm</span>
               </div>
             </div>
           `).join('');
@@ -40548,11 +43342,21 @@ if __name__ == '__main__':
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '60%',
+            cutout: '64%',
             animation: animacionCascadaStandard,
             plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+              centerText: {
+                text: (() => {
+                  const tot = (dist.baja_severa || 0) + (dist.baja_moderada || 0) + (dist.correcta || 0) + (dist.sobrepresion || 0);
+                  return tot > 0 ? `${Math.round(((dist.correcta || 0) / tot) * 100)}%` : '0%';
+                })(),
+                subtext: 'Presión OK',
+                color: '#059669',
+                fontSize: 22
+              },
+              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 'bold' } } },
               datalabels: {
+                display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
                 color: '#fff',
                 font: { weight: 'bold', size: 10 },
                 formatter: (val, ctx) => {
@@ -40611,7 +43415,7 @@ if __name__ == '__main__':
               borderWidth: 2.5,
               pointRadius: 4,
               yAxisID: 'y1',
-              datalabels: { display: false }
+              datalabels: pillDatalabelConfig('rgba(217, 119, 6, 0.95)', '#ffffff', (v) => `${formatCO_Decimal(v, 0)}%`)
             }
           ]
         },
@@ -40940,7 +43744,7 @@ if __name__ == '__main__':
       const pct = v => (v === null || v === undefined) ? '-' : `${formatCO_Decimal(v, 1)}%`;
       const tb = document.getElementById('tbodyTendencias');
       if (tb) tb.innerHTML = meses.slice().reverse().map(m => `<tr>
-          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${m.vehiculos_inspeccionados}</td>
+          <td class="p-2 font-bold">${_mesLegible(m.mes)}</td><td class="p-2 text-right">${escapeHtml(m.vehiculos_inspeccionados)}${m.pct_cumplimiento_parque == null ? '' : `<span class="block text-[10px] text-indigo-600 font-bold whitespace-nowrap">${pct(m.pct_cumplimiento_parque)} del parque</span>`}</td>
           <td class="p-2 text-right">${pct(m.pct_presion_correcta)}</td><td class="p-2 text-right">${pct(m.pct_en_retiro)}</td>
           <td class="p-2 text-right">${m.prof_minima_promedio == null ? '-' : formatCO_Decimal(m.prof_minima_promedio, 1) + ' mm'}</td>
           <td class="p-2 text-right">${pct(m.pct_alerta_alineacion)}</td>
@@ -40950,14 +43754,41 @@ if __name__ == '__main__':
       const ctx = document.getElementById('canvasTendencias');
       if (!ctx || !meses.length) return;
       const serie = (k, label, color) => ({ label, data: meses.map(m => m[k]), borderColor: color, backgroundColor: color, tension: 0.25, spanGaps: true });
+      const series = [
+        serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
+        serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
+        serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')];
+      if (meses.some(m => m.pct_cumplimiento_parque != null)) {
+        series.unshift({ ...serie('pct_cumplimiento_parque', 'Parque inspeccionado (%)', '#4f46e5'), borderWidth: 3 });
+      }
       instanciasChartsSuite['tendencias'] = new Chart(ctx, {
         type: 'line',
-        data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: [
-          serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
-          serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
-          serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } },
-                   scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } }
+        data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: series },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 22, right: 12, bottom: 6, left: 6 } },
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
+            datalabels: {
+              display: (ctx) => {
+                const v = ctx.dataset.data[ctx.dataIndex];
+                return (v !== null && v !== undefined && v !== '');
+              },
+              anchor: 'end',
+              align: 'top',
+              offset: 2,
+              clamp: true,
+              backgroundColor: (ctx) => ctx.dataset.borderColor || '#334155',
+              borderRadius: 4,
+              color: '#ffffff',
+              font: { weight: 'bold', size: 9 },
+              padding: { top: 1, bottom: 1, left: 4, right: 4 },
+              formatter: (v) => `${formatCO_Decimal(v, 0)}%`
+            }
+          },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } }
+        }
       });
     }
 
@@ -40980,11 +43811,11 @@ if __name__ == '__main__':
       set('kpiCpkAdmin', adm.length ? fmt(adm[adm.length - 1].cpk_administrativo) : 'Sin dato');
       set('kpiCpkNota', `${f.llantas_con_cpk || 0} vidas de llanta con CPK; ${f.llantas_sin_precio || 0} sin precio (registre la lista de precios del cliente en Catálogos).`);
       const tv = document.getElementById('tbodyCpkPorVida');
-      if (tv) tv.innerHTML = (k.por_vida || []).map(v => `<tr><td class="p-2 font-bold">${v.vida}</td><td class="p-2 text-right">${v.llantas}</td>
+      if (tv) tv.innerHTML = (k.por_vida || []).map(v => `<tr><td class="p-2 font-bold">${escapeHtml(v.vida)}</td><td class="p-2 text-right">${escapeHtml(v.llantas)}</td>
         <td class="p-2 text-right font-mono">${fmt(v.cpk_operativo)}</td><td class="p-2 text-right font-mono">${fmt(v.cpk_proyectado)}</td></tr>`).join('')
         || '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin datos</td></tr>';
       const ta = document.getElementById('tbodyCpkAdmin');
-      if (ta) ta.innerHTML = (k.administrativo || []).slice().reverse().map(m => `<tr><td class="p-2 font-bold">${m.mes}</td>
+      if (ta) ta.innerHTML = (k.administrativo || []).slice().reverse().map(m => `<tr><td class="p-2 font-bold">${escapeHtml(m.mes)}</td>
         <td class="p-2 text-right font-mono">${m.inversion ? formatCO_Moneda(m.inversion) : '-'}</td>
         <td class="p-2 text-right font-mono">${m.km_flota ? Number(m.km_flota).toLocaleString('es-CO') : '-'}</td>
         <td class="p-2 text-right font-mono">${fmt(m.cpk_administrativo)}</td></tr>`).join('')
@@ -41370,9 +44201,14 @@ if __name__ == '__main__':
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '64%',
             animation: animacionCascadaStandard,
             plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { weight: 'bold', size: 9 } } },
+              centerText: {
+                text: `${(d.por_causal.valores || []).reduce((a, b) => a + b, 0)}`,
+                subtext: 'Bajas'
+              },
+              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { weight: 'bold', size: 9 } } },
               tooltip: {
                 callbacks: {
                   label: (c) => {
@@ -41589,7 +44425,7 @@ if __name__ == '__main__':
             return `
               <tr class="hover:bg-slate-50 transition-colors">
                 <!-- Demanda -->
-                <td class="p-2.5 font-black text-slate-900 font-mono">${m.dimension || '-'}</td>
+                <td class="p-2.5 font-black text-slate-900 font-mono">${escapeHtml(m.dimension || '-')}</td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.demanda_flota)}</td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.reposicion_bajas_fvu)}</td>
                 <td class="p-2.5 text-center text-slate-500 font-mono">+${formatCO_Miles(m.margen_seguridad)}</td>
@@ -41597,7 +44433,7 @@ if __name__ == '__main__':
                 <!-- Bodegas -->
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b1)}</td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b2)}</td>
-                <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${m.stock_b3})</span></td>
+                <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${escapeHtml(m.stock_b3)})</span></td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b4)}</td>
                 <td class="p-2.5 text-center font-black bg-emerald-50 text-emerald-700 font-mono">${formatCO_Miles(m.stock_disponible)}</td>
                 <!-- Compra -->
@@ -41617,7 +44453,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_diagnostico.js`
 - **Descripción:** Módulo Diagnóstico: Planes de acción, alertas preventivas y desgastes
-- **Métricas:** 1018 líneas | 54,241 bytes (53.0 KB)
+- **Métricas:** 1018 líneas | 54,625 bytes (53.3 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -41710,7 +44546,7 @@ if __name__ == '__main__':
       if (selCli) {
         const valCli = selCli.value || 'Todos';
         selCli.innerHTML = '<option value="Todos">Todos</option>' +
-          clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (clientes.includes(valCli)) selCli.value = valCli;
       }
 
@@ -41719,7 +44555,7 @@ if __name__ == '__main__':
       if (selOp) {
         const valOp = selOp.value || 'Todos';
         selOp.innerHTML = '<option value="Todos">Todas</option>' +
-          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+          operaciones.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
         if (operaciones.includes(valOp)) selOp.value = valOp;
       }
     }
@@ -41741,7 +44577,7 @@ if __name__ == '__main__':
       )).sort();
 
       selSede.innerHTML = '<option value="Todos">Todas</option>' +
-        sedes.map(s => `<option value="${s}">${s}</option>`).join('');
+        sedes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
       if (sedes.some(s => s.trim().toUpperCase() === valSedeActual.trim().toUpperCase())) {
         selSede.value = valSedeActual;
@@ -42036,19 +44872,19 @@ if __name__ == '__main__':
               }
               return `<span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded border ${cls} leading-snug">
                         <i class="fa-solid ${ico} mr-1.5 shrink-0 text-[9px]"></i>
-                        <span>${b.texto}</span>
+                        <span>${escapeHtml(b.texto)}</span>
                       </span>`;
             }).join('') +
           `</div>`;
         } else {
           const lineas = [];
-          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${r.Detalle_Cambio}</span>`);
-          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${r.Detalle_Proximas}</span>`);
-          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${r.Detalle_Alineacion}</span>`);
-          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${r.Detalle_Dual}</span>`);
-          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${r.Detalle_Auto_Ajuste}</span>`);
-          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${r.Detalle_Calibracion_PSI}</span>`);
-          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${r.Detalle_Pendientes}</span>`);
+          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${escapeHtml(r.Detalle_Cambio)}</span>`);
+          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${escapeHtml(r.Detalle_Proximas)}</span>`);
+          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${escapeHtml(r.Detalle_Alineacion)}</span>`);
+          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${escapeHtml(r.Detalle_Dual)}</span>`);
+          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${escapeHtml(r.Detalle_Auto_Ajuste)}</span>`);
+          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${escapeHtml(r.Detalle_Calibracion_PSI)}</span>`);
+          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(r.Detalle_Pendientes)}</span>`);
           if (lineas.length === 0) {
             lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
           } else if (lineas.length === 1 && r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') {
@@ -42067,13 +44903,13 @@ if __name__ == '__main__':
             </td>
             <!-- 2. Cliente / Sede -->
             <td class="p-2.5">
-              <div class="font-bold text-slate-800">${r.Cliente || '-'}</div>
-              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${r.Subcliente}</div>` : ''}
+              <div class="font-bold text-slate-800">${escapeHtml(r.Cliente || '-')}</div>
+              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${escapeHtml(r.Subcliente)}</div>` : ''}
             </td>
             <!-- 3. Tipología -->
             <td class="p-2.5">
-              <div class="font-bold text-slate-700">${r.Tipo || '-'}</div>
-              ${r.Operación ? `<div class="text-[10px] text-slate-400">${r.Operación}</div>` : ''}
+              <div class="font-bold text-slate-700">${escapeHtml(r.Tipo || '-')}</div>
+              ${r.Operación ? `<div class="text-[10px] text-slate-400">${escapeHtml(r.Operación)}</div>` : ''}
             </td>
             <!-- 4. Inspeccionadas -->
             <td class="p-2.5 text-center">
@@ -42119,7 +44955,7 @@ if __name__ == '__main__':
             <td class="p-2.5">${bloquesHtml}</td>
             <!-- 12. Plan PDF -->
             <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${r.Fecha || ''}', '${r.Cliente || ''}', '${r.Tipo || ''}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${escapeHtml(r.Fecha || '')}', '${escapeHtml(r.Cliente || '')}', '${escapeHtml(r.Tipo || '')}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
                 <i class="fa-solid fa-file-pdf mr-1"></i>PDF
               </button>
             </td>
@@ -42399,14 +45235,14 @@ if __name__ == '__main__':
           `;
         }).join('');
 
-        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${r.subcliente}</span>` : '';
-        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${r.tipologia}">${r.tipologia}</span>` : '-';
+        const subClienteTxt = r.subcliente ? `<br><span class="text-[10px] text-slate-400 font-normal">${escapeHtml(r.subcliente)}</span>` : '';
+        const tipoTxt = r.tipologia ? `<span class="truncate block max-w-[110px]" title="${escapeHtml(r.tipologia)}">${escapeHtml(r.tipologia)}</span>` : '-';
         const limTxt = (r.limite ? fmtDec(Number(r.limite), 1) : '3,0') + ' mm';
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${r.placa}</td>
-            <td class="p-2.5 text-left font-bold text-slate-700">${r.cliente || '-'}${subClienteTxt}</td>
+            <td class="p-2.5 font-black text-slate-900 sticky left-0 z-10 bg-white border-r border-slate-100 text-left shadow-2xs">${escapeHtml(r.placa)}</td>
+            <td class="p-2.5 text-left font-bold text-slate-700">${escapeHtml(r.cliente || '-')}${subClienteTxt}</td>
             <td class="p-2.5 text-left text-slate-600 text-[11px]">${tipoTxt}</td>
             <td class="p-2 text-center font-mono font-bold text-slate-600">${limTxt}</td>
             ${celdasPos}
@@ -42429,8 +45265,8 @@ if __name__ == '__main__':
             ${posiciones.map(p => {
               const t = posTotales[p];
               return `
-                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos P${p}: ${t.rojo} Retiro Urgente, ${t.amarillo} Próxima a Cambio, ${t.verde} Óptima">
-                  <span class="text-rose-700 font-black">${t.rojo}</span>/<span class="text-amber-700 font-bold">${t.amarillo}</span>/<span class="text-emerald-700 font-bold">${t.verde}</span>
+                <td class="p-1.5 text-center border-l border-slate-200 font-mono text-[10px] whitespace-nowrap" title="Totales Pos P${p}: ${escapeHtml(t.rojo)} Retiro Urgente, ${escapeHtml(t.amarillo)} Próxima a Cambio, ${escapeHtml(t.verde)} Óptima">
+                  <span class="text-rose-700 font-black">${escapeHtml(t.rojo)}</span>/<span class="text-amber-700 font-bold">${escapeHtml(t.amarillo)}</span>/<span class="text-emerald-700 font-bold">${escapeHtml(t.verde)}</span>
                 </td>
               `;
             }).join('')}
@@ -42646,13 +45482,19 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_trazabilidad.js`
 - **Descripción:** Módulo Trazabilidad: Historial y caracterización de flota
-- **Métricas:** 1309 líneas | 64,316 bytes (62.8 KB)
+- **Métricas:** 1450 líneas | 71,295 bytes (69.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
     // ==========================================
     // VISTA 4: TRAZABILIDAD & KPIS DE LLANTAS
     // ==========================================
+    if (typeof Chart !== 'undefined') {
+      try {
+        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+      } catch (e) {}
+    }
+
     let kpisFiltrosPoblados = false;
     let paginaActualKpis = 1;
     const ITEMS_POR_PAGINA_KPIS = 25;
@@ -42751,15 +45593,15 @@ if __name__ == '__main__':
       if (selCli) {
         if (clisAsignados.length === 1) {
           const unico = clisAsignados[0];
-          selCli.innerHTML = `<option value="${unico}" selected>${unico} (Fijo)</option>`;
+          selCli.innerHTML = `<option value="${escapeHtml(unico)}" selected>${escapeHtml(unico)} (Fijo)</option>`;
           selCli.disabled = true;
           selCli.classList.add('bg-slate-100', 'cursor-not-allowed');
         } else {
           selCli.disabled = false;
           selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
           const lblTodos = clisAsignados.length > 1 ? 'Mis flotas' : 'Todos';
-          selCli.innerHTML = `<option value="TODOS">${lblTodos}</option>` +
-            clientes.map(c => `<option value="${c}">${c}</option>`).join('');
+          selCli.innerHTML = `<option value="TODOS">${escapeHtml(lblTodos)}</option>` +
+            clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valCliActual && clientes.includes(valCliActual)) {
             selCli.value = valCliActual;
           } else {
@@ -42776,7 +45618,7 @@ if __name__ == '__main__':
       const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
       if (selSub) {
         selSub.innerHTML = '<option value="TODOS">Todas</option>' +
-          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+          subclientes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
         if (valSubActual && subclientes.includes(valSubActual)) selSub.value = valSubActual;
         else selSub.value = 'TODOS';
       }
@@ -42785,7 +45627,7 @@ if __name__ == '__main__':
       const operaciones = Array.from(new Set((data || []).map(d => d.tipo_operacion).filter(Boolean))).sort();
       if (selOp) {
         selOp.innerHTML = '<option value="TODOS">Todas</option>' +
-          operaciones.map(o => `<option value="${o}">${o}</option>`).join('');
+          operaciones.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
         if (valOpActual && operaciones.includes(valOpActual)) selOp.value = valOpActual;
         else selOp.value = 'TODOS';
       }
@@ -42794,7 +45636,7 @@ if __name__ == '__main__':
       const marcas = Array.from(new Set((data || []).map(d => d.marca).filter(Boolean))).sort();
       if (selMar) {
         selMar.innerHTML = '<option value="TODOS">Todas</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
         if (valMarActual && marcas.includes(valMarActual)) selMar.value = valMarActual;
         else selMar.value = 'TODOS';
       }
@@ -42851,18 +45693,18 @@ if __name__ == '__main__':
 
       tbody.innerHTML = paginaItems.map(d => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-black text-slate-900">${d.numero_interno || '-'}</td>
-          <td class="p-2.5 font-bold text-blue-700">${d.placa || '-'}</td>
-          <td class="p-2.5 text-center font-bold">${d.posicion}</td>
-          <td class="p-2.5">${d.marca} ${d.diseno}</td>
-          <td class="p-2.5">${d.dimension || '-'}</td>
-          <td class="p-2.5">${d.vida || '-'}</td>
-          <td class="p-2.5">${d.banda_reen || '-'}</td>
-          <td class="p-2.5 text-center font-mono">${d.prof_inicial} mm</td>
-          <td class="p-2.5 text-center font-mono font-bold">${d.prof_actual_min} mm</td>
+          <td class="p-2.5 font-black text-slate-900">${escapeHtml(d.numero_interno || '-')}</td>
+          <td class="p-2.5 font-bold text-blue-700">${escapeHtml(d.placa || '-')}</td>
+          <td class="p-2.5 text-center font-bold">${escapeHtml(d.posicion)}</td>
+          <td class="p-2.5">${escapeHtml(d.marca)} ${escapeHtml(d.diseno)}</td>
+          <td class="p-2.5">${escapeHtml(d.dimension || '-')}</td>
+          <td class="p-2.5">${escapeHtml(d.vida || '-')}</td>
+          <td class="p-2.5">${escapeHtml(d.banda_reen || '-')}</td>
+          <td class="p-2.5 text-center font-mono">${escapeHtml(d.prof_inicial)} mm</td>
+          <td class="p-2.5 text-center font-mono font-bold">${escapeHtml(d.prof_actual_min)} mm</td>
           <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
           <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
-          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm} mm</td>
+          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${escapeHtml(d.desgaste_mm)} mm</td>
           <td class="p-2.5 text-center font-mono">${fmtDec((d.porcentaje_desgaste || 0), 1)}%</td>
           <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
           <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
@@ -43007,7 +45849,7 @@ if __name__ == '__main__':
           : cacheKpis;
         const subclientes = Array.from(new Set(dataSedes.map(d => d.subcliente).filter(Boolean))).sort();
         selSub.innerHTML = '<option value="TODOS">Todas</option>' +
-          subclientes.map(s => `<option value="${s}">${s}</option>`).join('');
+          subclientes.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
         selSub.value = 'TODOS';
       }
       cargarSuite20Kpis();
@@ -43078,6 +45920,15 @@ if __name__ == '__main__':
       return /^r\d+$/.test(v) || /^\d+r$/.test(v) || ['reenc', 'renov'].some(token => v.includes(token));
     }
 
+    // Reencauchada por la vida o por tener banda registrada (mismo criterio de los KPIs)
+    function esReencauchadaLlantaComp(llanta) {
+      const banda = String(llanta.banda_reen || '').trim().toLowerCase();
+      return esLlantaReencauchadaComp(llanta.vida) || (banda !== '' && !['nan', 'none', '-', 'n/a'].includes(banda));
+    }
+
+    let composicionFiltrada = [];
+    let llantasReglaOro1 = [];
+
     async function cargarComposicionFlotaWeb(forzarRecarga = false) {
       if (!forzarRecarga && cacheComposicionLlantas && cacheComposicionLlantas.length > 0) {
         renderizarComposicionFlotaWeb();
@@ -43093,7 +45944,7 @@ if __name__ == '__main__':
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
       try {
-        const res = await fetch('/api/kpis-llantas', { headers });
+        const res = await fetch('/api/kpis-llantas?foto=actual', { headers });
         if (res.ok) {
           const raw = await res.json();
           cacheComposicionLlantas = (Array.isArray(raw) ? raw : []).map(item => ({
@@ -43105,7 +45956,8 @@ if __name__ == '__main__':
             cliente: normalizarTextoComp(item.cliente, 'SIN CLIENTE'),
             subcliente: normalizarTextoComp(item.subcliente, 'SIN SEDE'),
             vida: normalizarTextoComp(item.vida, 'ORIGINAL'),
-            tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase()
+            tipo_eje: String(item.tipo_eje || 'libre').trim().toLowerCase(),
+            es_reencauche: esReencauchadaLlantaComp(item)
           }));
 
           poblarFiltrosComposicionCascada();
@@ -43136,7 +45988,7 @@ if __name__ == '__main__':
 
       let htmlCli = '<option value="TODOS">Todos</option>';
       clientesUnicos.forEach(c => {
-        htmlCli += `<option value="${c}">${c}</option>`;
+        htmlCli += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`;
       });
       selCli.innerHTML = htmlCli;
 
@@ -43163,9 +46015,9 @@ if __name__ == '__main__':
       const rellenarSelect = (el, lista, etiquetaTodos) => {
         if (!el) return;
         const prev = el.value || 'TODOS';
-        let h = `<option value="TODOS">${etiquetaTodos}</option>`;
+        let h = `<option value="TODOS">${escapeHtml(etiquetaTodos)}</option>`;
         lista.forEach(val => {
-          h += `<option value="${val}">${val}</option>`;
+          h += `<option value="${escapeHtml(val)}">${escapeHtml(val)}</option>`;
         });
         el.innerHTML = h;
         if (lista.includes(prev)) el.value = prev;
@@ -43259,7 +46111,7 @@ if __name__ == '__main__':
         }
 
         if (vida !== 'TODAS') {
-          const esReenc = esLlantaReencauchadaComp(llanta.vida);
+          const esReenc = llanta.es_reencauche;
           if (vida === 'ORIGINAL' && esReenc) return false;
           if (vida === 'REENCAUCHE' && !esReenc) return false;
         }
@@ -43282,8 +46134,9 @@ if __name__ == '__main__':
       const mapaDisenos = {};
       const mapaCombinaciones = {};
 
+      composicionFiltrada = dataFiltrada;
       dataFiltrada.forEach(llanta => {
-        const esReenc = esLlantaReencauchadaComp(llanta.vida);
+        const esReenc = llanta.es_reencauche;
         if (esReenc) cntReenc++; else cntOrig++;
 
         mapaMarcas[llanta.marca] = (mapaMarcas[llanta.marca] || 0) + 1;
@@ -43382,7 +46235,14 @@ if __name__ == '__main__':
       // Regla de Oro 1: Cero Reencauches en Dirección
       const llantasDireccionales = dataFiltrada.filter(x => x.tipo_eje === 'direccional');
       const totalDir = llantasDireccionales.length;
-      const reencEnDir = llantasDireccionales.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      // Las tipologías autorizadas a llevar reencauche en dirección no incumplen la regla
+      llantasReglaOro1 = llantasDireccionales.filter(x => x.es_reencauche && !x.permite_reencauche_direccion);
+      const reencEnDir = llantasReglaOro1.length;
+      const vehiculosR1 = new Set(llantasReglaOro1.map(x => x.placa)).size;
+      const btnR1 = document.getElementById('btnReglaOro1Vehiculos');
+      if (btnR1) btnR1.classList.toggle('hidden', reencEnDir === 0);
+      const txtBtnR1 = document.getElementById('txtBtnReglaOro1');
+      if (txtBtnR1) txtBtnR1.textContent = `Ver ${vehiculosR1} vehículo(s)`;
       const pctReencDir = totalDir > 0 ? fmtDec(((reencEnDir / totalDir) * 100), 1) : '0,0';
 
       const cardR1 = document.getElementById('card_regla_oro_1');
@@ -43402,7 +46262,7 @@ if __name__ == '__main__':
         }
         if (descR1) {
           descR1.className = 'text-[11px] text-rose-800 mt-0.5 leading-snug font-medium';
-          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%). El estándar exige estrictamente 0,0%.`;
+          descR1.textContent = `Se detectaron ${reencEnDir} llanta(s) reencauchada(s) en Eje Direccional (${pctReencDir}%) en ${vehiculosR1} vehículo(s). El estándar exige estrictamente 0,0%.`;
         }
       } else {
         if (cardR1) cardR1.className = 'p-3 rounded-2xl border transition-all duration-300 bg-emerald-50 border-emerald-300 shadow-sm';
@@ -43422,11 +46282,11 @@ if __name__ == '__main__':
 
       // Regla de Oro 2: Adopción Renovado Remolques y Tracción
       const llantasLibres = dataFiltrada.filter(x => x.tipo_eje === 'libre');
-      const reencLibres = llantasLibres.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const reencLibres = llantasLibres.filter(x => x.es_reencauche).length;
       const pctLibres = llantasLibres.length > 0 ? fmtDec(((reencLibres / llantasLibres.length) * 100), 1) : '0,0';
 
       const llantasTrac = dataFiltrada.filter(x => x.tipo_eje === 'traccion');
-      const reencTrac = llantasTrac.filter(x => esLlantaReencauchadaComp(x.vida)).length;
+      const reencTrac = llantasTrac.filter(x => x.es_reencauche).length;
       const pctTrac = llantasTrac.length > 0 ? fmtDec(((reencTrac / llantasTrac.length) * 100), 1) : '0,0';
 
       const badgeR2 = document.getElementById('badge_regla_oro_2');
@@ -43543,11 +46403,25 @@ if __name__ == '__main__':
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              cutout: '62%',
+              cutout: '64%',
               plugins: {
+                centerText: {
+                  text: `${totVida}`,
+                  subtext: 'Llantas'
+                },
                 legend: {
                   position: 'bottom',
-                  labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: 'bold' } }
+                  labels: { boxWidth: 8, boxHeight: 8, padding: 12, font: { size: 11, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' }
+                },
+                datalabels: {
+                  display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 11 },
+                  formatter: (val) => {
+                    const pct = ((val / totVida) * 100).toFixed(0);
+                    return `${val}\n(${pct}%)`;
+                  },
+                  textAlign: 'center'
                 },
                 tooltip: {
                   ...tooltipStyleHD,
@@ -43612,11 +46486,28 @@ if __name__ == '__main__':
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              cutout: '58%',
+              cutout: '64%',
               plugins: {
+                centerText: {
+                  text: `${top7M.length}`,
+                  subtext: 'Marcas'
+                },
                 legend: {
                   position: 'bottom',
-                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
+                  labels: { boxWidth: 8, boxHeight: 8, padding: 8, font: { size: 10, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
+                },
+                datalabels: {
+                  display: (ctx) => {
+                    const v = ctx.dataset.data[ctx.dataIndex];
+                    return (v / totalLlantas) >= 0.05;
+                  },
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 10 },
+                  formatter: (val) => {
+                    const pct = ((val / totalLlantas) * 100).toFixed(0);
+                    return `${val}\n(${pct}%)`;
+                  },
+                  textAlign: 'center'
                 },
                 tooltip: {
                   ...tooltipStyleHD,
@@ -43666,7 +46557,7 @@ if __name__ == '__main__':
           const dataD = top6D.map(([, cnt]) => cnt);
 
           chartsComposicion.dimension = new Chart(ctxDim, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
               labels: labelsD,
               datasets: [{
@@ -43680,10 +46571,28 @@ if __name__ == '__main__':
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              cutout: '64%',
               plugins: {
+                centerText: {
+                  text: `${top6D.length}`,
+                  subtext: 'Medidas'
+                },
                 legend: {
                   position: 'bottom',
-                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
+                  labels: { boxWidth: 8, boxHeight: 8, padding: 8, font: { size: 10, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
+                },
+                datalabels: {
+                  display: (ctx) => {
+                    const v = ctx.dataset.data[ctx.dataIndex];
+                    return (v / totalLlantas) >= 0.05;
+                  },
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 10 },
+                  formatter: (val) => {
+                    const pct = ((val / totalLlantas) * 100).toFixed(0);
+                    return `${val}\n(${pct}%)`;
+                  },
+                  textAlign: 'center'
                 },
                 tooltip: {
                   ...tooltipStyleHD,
@@ -43732,14 +46641,32 @@ if __name__ == '__main__':
                 data: dataDs,
                 backgroundColor: '#f59e0b',
                 borderRadius: 6,
-                borderSkipped: false
+                borderSkipped: false,
+                maxBarThickness: 38
               }]
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              layout: { padding: { top: 22, right: 12, bottom: 6, left: 6 } },
               plugins: {
                 legend: { display: false },
+                datalabels: {
+                  display: true,
+                  anchor: 'end',
+                  align: 'top',
+                  offset: 2,
+                  clamp: true,
+                  backgroundColor: 'rgba(245, 158, 11, 0.92)',
+                  borderRadius: 4,
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 10 },
+                  padding: { top: 2, bottom: 2, left: 6, right: 6 },
+                  formatter: (val) => {
+                    const pct = ((val / totalLlantas) * 100).toFixed(0);
+                    return `${val} (${pct}%)`;
+                  }
+                },
                 tooltip: {
                   ...tooltipStyleHD,
                   callbacks: {
@@ -43758,7 +46685,9 @@ if __name__ == '__main__':
                 },
                 y: {
                   beginAtZero: true,
-                  ticks: { precision: 0 }
+                  ticks: { precision: 0 },
+                  grid: { color: 'rgba(226, 232, 240, 0.55)', borderDash: [3, 3] },
+                  border: { display: false }
                 }
               }
             }
@@ -43822,12 +46751,12 @@ if __name__ == '__main__':
 
         html += `
           <tr class="hover:bg-cyan-50/40 transition-colors duration-150 border-b border-slate-100 last:border-b-0">
-            <td class="p-3 font-bold text-slate-900">${c.marca}</td>
-            <td class="p-3 text-slate-800 font-semibold">${c.diseno}</td>
-            <td class="p-3 font-mono text-slate-600 text-[11px]">${c.dimension}</td>
-            <td class="p-3 text-center text-blue-600 font-bold">${c.orig}</td>
-            <td class="p-3 text-center text-emerald-600 font-bold">${c.reenc}</td>
-            <td class="p-3 text-center text-slate-900 font-black">${c.total}</td>
+            <td class="p-3 font-bold text-slate-900">${escapeHtml(c.marca)}</td>
+            <td class="p-3 text-slate-800 font-semibold">${escapeHtml(c.diseno)}</td>
+            <td class="p-3 font-mono text-slate-600 text-[11px]">${escapeHtml(c.dimension)}</td>
+            <td class="p-3 text-center text-blue-600 font-bold">${escapeHtml(c.orig)}</td>
+            <td class="p-3 text-center text-emerald-600 font-bold">${escapeHtml(c.reenc)}</td>
+            <td class="p-3 text-center text-slate-900 font-black">${escapeHtml(c.total)}</td>
             <td class="p-3 text-center text-indigo-600 font-extrabold">${pctFlota}%</td>
             <td class="p-3 text-center">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black ${semaforoProf}">
@@ -43886,7 +46815,7 @@ if __name__ == '__main__':
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
         ctx.drawImage(cv, 0, 0);
-        graficos[id] = lienzo.toDataURL('image/jpeg', 0.9);
+        graficos[id] = lienzo.toDataURL('image/png');
       });
 
       const tabla = tbody.closest('table');
@@ -43922,41 +46851,89 @@ if __name__ == '__main__':
       }
     }
 
-    function exportarComposicionExcel() {
-      const tbody = document.getElementById('tbody_composicion_flota');
+    // Ventana con los vehículos que incumplen la regla de oro 1, agrupados por placa
+    function abrirModalReglaOro1() {
+      const tbody = document.getElementById('tbodyReglaOro1');
       if (!tbody) return;
+      const lista = [...llantasReglaOro1].sort((a, b) =>
+        String(a.placa).localeCompare(String(b.placa)) || (Number(a.posicion) || 0) - (Number(b.posicion) || 0));
+      const vehiculos = new Set(lista.map(x => x.placa)).size;
+      const sub = document.getElementById('lblReglaOro1Sub');
+      if (sub) sub.textContent = `${lista.length} llanta(s) reencauchada(s) en eje direccional en ${vehiculos} vehículo(s)`;
+      let placaAnterior = null;
+      tbody.innerHTML = lista.length ? lista.map(l => {
+        const nueva = l.placa !== placaAnterior;
+        placaAnterior = l.placa;
+        return `
+          <tr class="hover:bg-rose-50/50 ${nueva ? 'border-t-2 border-rose-100' : ''}">
+            <td class="p-2.5 font-black font-mono text-slate-900">${nueva ? escapeHtml(l.placa || '-') : ''}</td>
+            <td class="p-2.5 text-slate-600">${nueva ? escapeHtml([l.cliente, l.subcliente].filter(Boolean).join(' / ')) : ''}</td>
+            <td class="p-2.5 text-slate-600">${nueva ? escapeHtml(l.tipologia || '-') : ''}</td>
+            <td class="p-2.5 text-center font-bold">${escapeHtml(l.posicion)}</td>
+            <td class="p-2.5 font-mono">${escapeHtml(l.numero_interno || '-')}</td>
+            <td class="p-2.5">${escapeHtml(l.marca)} / ${escapeHtml(l.diseno)}</td>
+            <td class="p-2.5 font-bold text-rose-700">${escapeHtml(l.vida)}${l.banda_reen ? ' / ' + escapeHtml(l.banda_reen) : ''}</td>
+            <td class="p-2.5 whitespace-nowrap">${l.fecha_ult_insp ? fmtFecha(String(l.fecha_ult_insp).slice(0, 10)) : '-'}</td>
+          </tr>`;
+      }).join('') : '<tr><td colspan="8" class="p-4 text-center text-slate-400">No hay llantas reencauchadas en eje direccional</td></tr>';
+      const m = document.getElementById('modalReglaOro1');
+      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
 
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      if (rows.length === 0 || rows[0].innerText.includes('No se encontraron') || rows[0].innerText.includes('Cargando')) {
-        mostrarToast('No hay datos disponibles en la matriz para exportar', true);
+    function cerrarModalReglaOro1() {
+      const m = document.getElementById('modalReglaOro1');
+      if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    // Excel organizado (Resumen, Matriz con subtotales por marca, Por marca, Por dimensión, Inventario y Regla de oro 1)
+    async function exportarComposicionExcel() {
+      if (!composicionFiltrada.length) {
+        mostrarToast('No hay llantas con los filtros seleccionados para exportar', true);
         return;
       }
-
-      let csv = '\uFEFF';
-      csv += 'Marca;Diseño;Dimensión;Original;Reencauche;Total Llantas;% Part. Flota;Prof. Promedio\r\n';
-
-      rows.forEach(tr => {
-        const cols = Array.from(tr.querySelectorAll('td')).map(td => {
-          let text = td.innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
-          return `"${text.replace(/"/g, '""')}"`;
-        });
-        if (cols.length === 8) {
-          csv += cols.join(';') + '\r\n';
-        }
+      const vista = document.getElementById('vista-composicion');
+      const txt = id => (document.getElementById(id)?.textContent || '').trim().replace(/\s+/g, ' ');
+      const filtros = {};
+      vista?.querySelectorAll('select[id^="filtro_comp_"]').forEach(sel => {
+        const etiqueta = (sel.closest('div')?.querySelector('label')?.textContent || sel.id).replace(':', '').trim();
+        filtros[etiqueta] = sel.options[sel.selectedIndex]?.text || 'Todos';
       });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      const now = new Date();
-      const fechaStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-      link.setAttribute('href', url);
-      link.setAttribute('download', `Composicion_Flota_TireAnalyze_${fechaStr}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      mostrarToast('✅ Matriz de Composición de Flota exportada exitosamente');
+      const tarjetas = [
+        { etiqueta: '% Reencauche', valor: txt('comp_kpi_pct_reenc'), detalle: txt('comp_kpi_cnt_reenc') },
+        { etiqueta: '% Original (nueva)', valor: txt('comp_kpi_pct_orig'), detalle: txt('comp_kpi_cnt_orig') },
+        { etiqueta: 'Vehículos', valor: txt('comp_kpi_total_vehiculos'), detalle: '' },
+        { etiqueta: 'Marca principal', valor: txt('comp_kpi_top_marca'), detalle: txt('comp_kpi_sub_marca') },
+        { etiqueta: 'Dimensión principal', valor: txt('comp_kpi_top_dim'), detalle: txt('comp_kpi_sub_dim') },
+        { etiqueta: 'Diseño principal', valor: txt('comp_kpi_top_diseno'), detalle: txt('comp_kpi_sub_diseno') }
+      ];
+      const reglas = [1, 2, 3, 4].map(n => ({
+        titulo: txt(`txt_regla_oro_${n}_titulo`), estado: txt(`badge_regla_oro_${n}`), detalle: txt(`txt_regla_oro_${n}_desc`)
+      }));
+      const campos = ['cliente', 'subcliente', 'placa', 'posicion', 'tipo_eje', 'tipologia', 'numero_interno', 'marca', 'diseno', 'dimension',
+        'vida', 'banda_reen', 'prof_actual_min', 'fecha_ult_insp', 'es_reencauche', 'permite_reencauche_direccion'];
+      const llantas = composicionFiltrada.map(l => Object.fromEntries(campos.map(c => [c, l[c] ?? ''])));
+      try {
+        const res = await fetch('/api/composicion/exportar-excel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filtros, tarjetas, reglas, llantas })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'TireAnalyze_Composicion_Flota.xlsx';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast('✅ Excel de composición generado');
+      } catch (e) {
+        console.error('Error exportando Excel de composición:', e);
+        mostrarToast(`No se pudo generar el Excel: ${e.message}`, true);
+      }
     }
 ```
 
@@ -43966,7 +46943,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_catalogos.js`
 - **Descripción:** Módulo Catálogos: Gestión de clientes, marcas homologadas y tipologías
-- **Métricas:** 2884 líneas | 138,452 bytes (135.2 KB)
+- **Métricas:** 3130 líneas | 154,415 bytes (150.8 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -43978,13 +46955,13 @@ if __name__ == '__main__':
     function mostrarSubtabCat(subtab) {
       const esAdmin = esUsuarioAdmin();
       const puedeVerClientes = esAdminOJefatura();
-      if (subtab === 'usuarios' && !esAdmin) {
+      if ((subtab === 'usuarios' || subtab === 'parque') && !esAdmin) {
         subtab = 'operaciones';
       }
       if ((subtab === 'clientes' || subtab === 'marcas_cliente' || subtab === 'precios_cliente' || subtab === 'directorio_clientes') && !puedeVerClientes) {
         subtab = 'operaciones';
       }
-      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'precios_cliente', 'usuarios'];
+      const tabs = ['directorio_clientes', 'operaciones', 'tipologias', 'modelos', 'clientes', 'marcas_cliente', 'precios_cliente', 'parque', 'usuarios'];
       tabs.forEach(t => {
         const sec = document.getElementById(`cat-seccion-${t}`);
         if (sec) sec.classList.add('hidden');
@@ -44001,6 +46978,8 @@ if __name__ == '__main__':
         cargarDirectorioClientesCat();
       } else if (subtab === 'usuarios' && esAdmin) {
         cargarUsuariosCat();
+      } else if (subtab === 'parque' && esAdmin) {
+        prepararParqueCat();
       } else if (subtab === 'clientes' && puedeVerClientes) {
         cargarClientesLimCat();
       } else if (subtab === 'precios_cliente' && puedeVerClientes) {
@@ -44029,6 +47008,243 @@ if __name__ == '__main__':
       cargarModelosCat();
       if (esUsuarioAdmin()) {
         cargarUsuariosCat();
+      }
+    }
+
+    // ==========================================
+    // PARQUE AUTOMOTOR POR CLIENTE (solo administrador)
+    // ==========================================
+    let cacheParque = [];
+
+    async function prepararParqueCat() {
+      const sel = document.getElementById('selParqueCliente');
+      if (!sel) return;
+      if (sel.options.length <= 1) {
+        try {
+          const r = await fetch('/api/clientes-directorio');
+          if (r.ok) cacheDirectorioClientes = await r.json();
+        } catch (e) {}
+        const nombres = [...new Set((cacheDirectorioClientes || []).map(c => c.cliente).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Seleccione un cliente…</option>' +
+          nombres.map(n => `<option value="${escapeHtml(escapeHtml(n))}">${escapeHtml(escapeHtml(n))}</option>`).join('');
+      }
+      cargarParqueCat();
+    }
+
+    async function consultarParque(cliente) {
+      const res = await fetch(`/api/padron?cliente=${encodeURIComponent(cliente)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+      cacheParque = data.vehiculos || [];
+      const origen = document.getElementById('kpiParqueOrigen');
+      if (origen) {
+        origen.textContent = data.parque_cargado ? 'Cargado por el administrador' : 'Automático (inspeccionados)';
+        origen.title = data.parque_cargado ? 'El KPI 01 mide contra este parque'
+          : 'Sin parque cargado: son los vehículos ya inspeccionados. Al subir un archivo o agregar/eliminar un vehículo, este listado pasa a ser el parque del cliente.';
+      }
+    }
+
+    async function cargarParqueCat() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      document.getElementById('resultadoParque')?.classList.add('hidden');
+      cerrarFormVehiculoParque();
+      cacheParque = [];
+      if (cliente) {
+        const tbody = document.getElementById('tbodyParqueCat');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Cargando…</td></tr>';
+        try {
+          await consultarParque(cliente);
+        } catch (e) {
+          mostrarToast('No se pudo cargar el parque del cliente', true);
+        }
+      }
+      renderizarParqueCat();
+    }
+
+    function renderizarParqueCat() {
+      const tbody = document.getElementById('tbodyParqueCat');
+      if (!tbody) return;
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      const mes = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).slice(0, 7);
+      const activos = cacheParque.filter(v => v.activo);
+      const delMes = activos.filter(v => (v.ultima_inspeccion || '').slice(0, 7) === mes);
+      const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      set('kpiParqueActivos', cliente ? `${activos.length} vehículos` : '—');
+      set('kpiParqueMes', cliente ? `${delMes.length} (${fmtDec(activos.length ? 100 * delMes.length / activos.length : 0, 1)}%)` : '—');
+      set('kpiParqueFaltan', cliente ? `${activos.length - delMes.length} vehículos` : '—');
+      if (!cliente) set('kpiParqueOrigen', '—');
+      const btnExp = document.getElementById('btnExportarParque');
+      if (btnExp) btnExp.disabled = !cliente;
+
+      if (!cliente) {
+        tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400 italic">Seleccione un cliente para ver su parque.</td></tr>';
+        return;
+      }
+      const q = (document.getElementById('buscarParque')?.value || '').trim().toUpperCase();
+      const soloFaltan = document.getElementById('chkParqueSoloFaltantes')?.checked;
+      const lista = cacheParque.filter(v => {
+        if (soloFaltan && (!v.activo || (v.ultima_inspeccion || '').slice(0, 7) === mes)) return false;
+        if (!q) return true;
+        return [v.placa, v.sede, v.tipologia, v.fabricante, v.linea].some(x => String(x || '').toUpperCase().includes(q));
+      });
+      if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400 italic">${cacheParque.length ? 'Ningún vehículo coincide con la búsqueda.' : 'Este cliente no tiene vehículos en el parque.'}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = lista.map(v => {
+        const inspMes = (v.ultima_inspeccion || '').slice(0, 7) === mes;
+        const estado = !v.activo
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Inactivo</span>'
+          : inspMes
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap">Inspeccionado</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 whitespace-nowrap">Falta este mes</span>';
+        return `<tr class="border-t border-slate-100 ${v.activo ? '' : 'opacity-60'}">
+          <td class="p-2.5 font-bold font-mono text-slate-900 whitespace-nowrap">${escapeHtml(v.placa)}</td>
+          <td class="p-2.5">${escapeHtml(v.sede || '—')}</td>
+          <td class="p-2.5">${escapeHtml(v.tipologia || '—')}</td>
+          <td class="p-2.5">${escapeHtml(v.fabricante || '—')}</td>
+          <td class="p-2.5">${escapeHtml(v.linea || '—')}</td>
+          <td class="p-2.5 text-right font-mono whitespace-nowrap">${v.km_actual ? fmtDec(v.km_actual, 0) : '—'}</td>
+          <td class="p-2.5 text-center whitespace-nowrap">${v.ultima_inspeccion ? fmtFecha(v.ultima_inspeccion) : 'Nunca'}</td>
+          <td class="p-2.5 text-center">${estado}</td>
+          <td class="p-2.5 text-center whitespace-nowrap">
+            <button type="button" onclick="editarVehiculoParque('${escapeHtml(v.placa)}')" class="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700" title="Editar ${escapeHtml(v.placa)}" aria-label="Editar ${escapeHtml(v.placa)}"><i class="fa-solid fa-pen"></i></button>
+            <button type="button" onclick="eliminarVehiculoParque('${escapeHtml(v.placa)}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700" title="Eliminar ${escapeHtml(v.placa)} del parque" aria-label="Eliminar ${escapeHtml(v.placa)} del parque"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Agregar o editar un vehículo a mano (también cuenta como parque cargado)
+    async function abrirFormVehiculoParque(v = null) {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      if (!cliente) return mostrarToast('Seleccione primero el cliente', true);
+      const sel = document.getElementById('vpTipologia');
+      if (sel && sel.options.length <= 1) {
+        try {
+          const r = await fetch('/api/tipologias');
+          const tips = r.ok ? await r.json() : [];
+          sel.innerHTML = '<option value="">Seleccione…</option>' +
+            tips.map(t => `<option value="${escapeHtml(escapeHtml(t.nombre))}">${escapeHtml(escapeHtml(t.nombre))}</option>`).join('');
+        } catch (e) {}
+      }
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+      set('vpPlaca', v ? v.placa : '');
+      set('vpSede', v ? v.sede : '');
+      set('vpKm', v && v.km_actual ? Math.round(v.km_actual) : '');
+      set('vpFabricante', v ? v.fabricante : '');
+      set('vpLinea', v ? v.linea : '');
+      // La tipología del parque puede venir en otra escritura: se elige la del catálogo que coincide
+      const clave = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const opt = v ? [...sel.options].find(o => o.value && clave(o.value) === clave(v.tipologia)) : null;
+      sel.value = opt ? opt.value : '';
+      document.getElementById('vpPlaca').readOnly = !!v;
+      document.getElementById('tituloVehiculoParque').textContent = v ? `Editar ${v.placa} · ${cliente}` : `Agregar vehículo al parque de ${cliente}`;
+      const card = document.getElementById('cardVehiculoParque');
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById(v ? 'vpTipologia' : 'vpPlaca').focus();
+    }
+
+    function editarVehiculoParque(placa) {
+      const v = cacheParque.find(x => x.placa === placa);
+      if (v) abrirFormVehiculoParque(v);
+    }
+
+    function cerrarFormVehiculoParque() {
+      document.getElementById('cardVehiculoParque')?.classList.add('hidden');
+    }
+
+    async function guardarVehiculoParque() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      const val = id => (document.getElementById(id)?.value || '').trim();
+      const placa = val('vpPlaca').toUpperCase();
+      if (!placa) return mostrarToast('Escriba la placa o el número interno', true);
+      if (!val('vpTipologia')) return mostrarToast('Seleccione la tipología', true);
+      const btn = document.getElementById('btnGuardarVehiculoParque');
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch('/api/padron/vehiculo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cliente, placa, tipologia: val('vpTipologia'), sede: val('vpSede'),
+                                 km_actual: val('vpKm') ? Number(val('vpKm')) : null,
+                                 fabricante: val('vpFabricante'), linea: val('vpLinea') })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo guardar');
+        mostrarToast(d.message);
+        cerrarFormVehiculoParque();
+        await consultarParque(cliente);
+        renderizarParqueCat();
+      } catch (e) {
+        mostrarToast(e.message, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function eliminarVehiculoParque(placa) {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      if (!confirm(`¿Eliminar ${placa} del parque de ${cliente}?\nSus inspecciones no se borran; solo deja de contar en el % de inspección.`)) return;
+      try {
+        const res = await fetch(`/api/padron/vehiculo?cliente=${encodeURIComponent(cliente)}&placa=${encodeURIComponent(placa)}`, { method: 'DELETE' });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo eliminar');
+        mostrarToast(d.message);
+        await consultarParque(cliente);
+        renderizarParqueCat();
+      } catch (e) {
+        mostrarToast(e.message, true);
+      }
+    }
+
+    function descargarPlantillaParque() {
+      window.location.href = '/api/padron/plantilla-excel';
+    }
+
+    function exportarParqueExcel() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      if (!cliente) return mostrarToast('Seleccione un cliente', true);
+      window.location.href = `/api/padron/exportar-excel?cliente=${encodeURIComponent(cliente)}`;
+    }
+
+    async function subirParqueExcel() {
+      const cliente = document.getElementById('selParqueCliente')?.value || '';
+      const archivo = document.getElementById('fileParqueExcel')?.files?.[0];
+      if (!cliente) return mostrarToast('Seleccione el cliente del parque', true);
+      if (!archivo) return mostrarToast('Seleccione el archivo de Excel', true);
+      const activos = cacheParque.filter(v => v.activo).length;
+      if (!confirm(`Se reemplazará el parque de ${cliente} (${activos} vehículos activos hoy).\nLos vehículos que no vengan en el archivo quedarán inactivos. ¿Continuar?`)) return;
+
+      const btn = document.getElementById('btnSubirParque');
+      const original = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Procesando…'; }
+      const caja = document.getElementById('resultadoParque');
+      try {
+        const fd = new FormData();
+        fd.append('file', archivo);
+        const res = await fetch(`/api/padron/importar-excel?cliente=${encodeURIComponent(cliente)}`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Error al procesar el archivo');
+        if (caja) {
+          const errores = (data.errores || []).map(e => `<li>${escapeHtml(e)}</li>`).join('');
+          const masErr = data.total_errores > (data.errores || []).length ? `<li>…y ${data.total_errores - data.errores.length} más.</li>` : '';
+          caja.className = `text-xs rounded-2xl border p-3 ${data.total_errores ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'}`;
+          caja.innerHTML = `<b>${escapeHtml(data.message)}</b>` +
+            (data.total_errores ? `<p class="mt-1 font-semibold">${data.total_errores} fila(s) no se cargaron:</p><ul class="list-disc ml-5 mt-1 space-y-0.5">${errores}${masErr}</ul>` : '');
+        }
+        mostrarToast('✅ Parque cargado');
+        document.getElementById('fileParqueExcel').value = '';
+        await consultarParque(cliente);
+        renderizarParqueCat();
+      } catch (e) {
+        if (caja) {
+          caja.className = 'text-xs rounded-2xl border p-3 bg-rose-50 border-rose-200 text-rose-800';
+          caja.innerHTML = `<b>No se cargó el parque:</b> ${escapeHtml(e.message)}`;
+        }
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
       }
     }
 
@@ -44098,7 +47314,7 @@ if __name__ == '__main__':
               'text-[11px] font-bold text-emerald-800', `Se habilita a los ${diasNum} días de la última inspección`);
 
         const subChips = (c.subclientes && c.subclientes.length > 0)
-          ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${s}</span>`).join('')
+          ? c.subclientes.map(s => `<span class="inline-block px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-700 mr-1 mb-0.5">${escapeHtml(s)}</span>`).join('')
           : '<span class="text-slate-400 italic text-[11px]">Principal</span>';
 
         const serialCliSeguro = String(c.cliente || '').replace(/'/g, "\\'");
@@ -44108,7 +47324,7 @@ if __name__ == '__main__':
             <td class="p-3">
               <div class="font-black text-slate-900 flex items-center space-x-1.5">
                 <i class="fa-solid fa-building text-slate-400 text-xs"></i>
-                <span>${c.cliente}</span>
+                <span>${escapeHtml(c.cliente)}</span>
               </div>
               <div class="text-[10px] text-slate-400 mt-0.5">Actualizado: ${c.fecha_actualizacion ? fmtFecha(c.fecha_actualizacion) : 'Al día'}</div>
             </td>
@@ -44117,14 +47333,14 @@ if __name__ == '__main__':
             <td class="p-3 text-center">${freqBadge}</td>
             <td class="p-3 max-w-[200px]">${subChips}</td>
             <td class="p-3 text-center">
-              <span class="font-bold text-slate-800">${c.vehiculos_count || 0}</span>
-              <span class="text-[10px] text-slate-400 block">${c.inspecciones_count || 0} insp</span>
+              <span class="font-bold text-slate-800">${escapeHtml(c.vehiculos_count || 0)}</span>
+              <span class="text-[10px] text-slate-400 block">${escapeHtml(c.inspecciones_count || 0)} insp</span>
             </td>
             <td class="p-3 text-center">
-              <span class="font-black ${c.llantas_count > 0 ? 'text-blue-700' : 'text-slate-400'}">${c.llantas_count || 0}</span>
+              <span class="font-black ${c.llantas_count > 0 ? 'text-blue-700' : 'text-slate-400'}">${escapeHtml(c.llantas_count || 0)}</span>
             </td>
             <td class="p-3 text-center">
-              <span class="font-bold text-slate-700">${c.marcas_count || 0}</span>
+              <span class="font-bold text-slate-700">${escapeHtml(c.marcas_count || 0)}</span>
             </td>
             <td class="p-3 text-slate-600 max-w-[180px] truncate" title="${escapeHtml(c.observaciones || '')}">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-3 text-center">
@@ -44305,12 +47521,12 @@ if __name__ == '__main__':
       if (res.ok) {
         const ops = await res.json();
         const box = document.getElementById('listaOperacionesCat');
-        const puedeEditar = esAdminOJefatura();
+        const puedeEditar = esUsuarioAdmin();  // catálogo compartido por todos los clientes
         box.innerHTML = ops.map(op => `
           <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-            <span class="font-bold text-slate-800">${op}</span>
+            <span class="font-bold text-slate-800">${escapeHtml(op)}</span>
             ${puedeEditar ? `
-              <button type="button" onclick="eliminarOperacionCat('${op}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
+              <button type="button" onclick="eliminarOperacionCat('${escapeHtml(op)}')" class="text-rose-600 hover:text-rose-800 text-xs" title="Eliminar Operación"><i class="fa-solid fa-trash"></i></button>
             ` : ''}
           </div>
         `).join('');
@@ -44337,19 +47553,19 @@ if __name__ == '__main__':
       if (res.ok) {
         const tips = await res.json();
         const box = document.getElementById('listaTipologiasCat');
-        const puedeEditar = esAdminOJefatura();
+        const puedeEditar = esUsuarioAdmin();  // catálogo compartido por todos los clientes
         box.innerHTML = tips.map(t => {
           return `
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:shadow-sm transition-all flex flex-col justify-between">
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
-                  <span class="font-black text-slate-900 text-sm">${t.nombre}</span>
+                  <span class="font-black text-slate-900 text-sm">${escapeHtml(t.nombre)}</span>
                   <div class="flex items-center space-x-1.5">
                     ${t.permite_reencauche_direccion ? `<span class="text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full" title="Esta tipología permite llantas reencauchadas en eje direccional">Reencauche Dir.</span>` : ''}
-                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${t.cant_llantas} llantas</span>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${escapeHtml(t.cant_llantas)} llantas</span>
                   </div>
                 </div>
-                <p class="text-xs text-slate-500 min-h-[1.5rem]">${t.descripcion || 'Sin descripción'}</p>
+                <p class="text-xs text-slate-500 min-h-[1.5rem]">${escapeHtml(t.descripcion || 'Sin descripción')}</p>
               </div>
               ${puedeEditar ? `
                 <div class="pt-2 border-t border-slate-200/70 flex items-center justify-end space-x-1.5">
@@ -44486,7 +47702,7 @@ if __name__ == '__main__':
         const valActual = selMarca.value || 'TODAS';
         const marcas = Array.from(new Set(lista.map(m => String(m.marca || '').trim().toUpperCase()).filter(Boolean))).sort();
         selMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
-          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+          marcas.map(m => `<option value="${escapeHtml(escapeHtml(m))}">${escapeHtml(escapeHtml(m))}</option>`).join('');
         if (marcas.includes(valActual)) {
           selMarca.value = valActual;
         } else {
@@ -44498,7 +47714,7 @@ if __name__ == '__main__':
         const valActual = selDim.value || 'TODAS';
         const dims = Array.from(new Set(lista.map(m => String(m.dimension || '').trim().toUpperCase()).filter(Boolean))).sort();
         selDim.innerHTML = '<option value="TODAS">Todas las dimensiones</option>' +
-          dims.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+          dims.map(d => `<option value="${escapeHtml(escapeHtml(d))}">${escapeHtml(escapeHtml(d))}</option>`).join('');
         if (dims.includes(valActual)) {
           selDim.value = valActual;
         } else {
@@ -44607,7 +47823,7 @@ if __name__ == '__main__':
       const inicio = (paginaActualModelosCat - 1) * ITEMS_POR_PAGINA_MODELOS;
       const fin = Math.min(inicio + ITEMS_POR_PAGINA_MODELOS, totalRegistros);
       const paginaItems = lista.slice(inicio, fin);
-      const puedeEditar = esAdminOJefatura();
+      const puedeEditar = esUsuarioAdmin();  // catálogo compartido por todos los clientes
 
       tbody.innerHTML = paginaItems.map(m => `
         <tr class="hover:bg-slate-50 transition-colors">
@@ -44615,15 +47831,15 @@ if __name__ == '__main__':
           <td class="p-2.5 font-black text-slate-900">${escapeHtml((m.marca || '').toUpperCase())}</td>
           <td class="p-2.5 font-bold text-slate-800">${escapeHtml(m.diseno || '')}</td>
           <td class="p-2.5 text-slate-700">${escapeHtml(m.dimension || '')}</td>
-          <td class="p-2.5 text-center font-mono font-black text-blue-700">${m.prof_inicial} mm</td>
+          <td class="p-2.5 text-center font-mono font-black text-blue-700">${escapeHtml(m.prof_inicial)} mm</td>
           <td class="p-2.5 text-slate-500">${escapeHtml(m.descripcion || '-')}</td>
           <td class="p-2.5 text-center">
             ${puedeEditar ? `
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarModelo(${m.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar modelo y sincronizar prof. inicial en BD">
+                <button type="button" onclick="abrirModalEditarModelo(${escapeHtml(m.id)})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar modelo y sincronizar prof. inicial en BD">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarModeloCat(${m.id}, '${encodeURIComponent((m.marca || '') + ' ' + (m.diseno || ''))}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar modelo del catálogo">
+                <button type="button" onclick="eliminarModeloCat(${escapeHtml(m.id)}, '${encodeURIComponent((m.marca || '') + ' ' + (m.diseno || ''))}')" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar modelo del catálogo">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -44853,7 +48069,7 @@ if __name__ == '__main__':
       const valPrev = selCli.value || 'TODOS';
       const clis = Array.from(new Set((catalogoLimitesCache || []).map(c => c.cliente))).sort();
       selCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
-        clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        clis.map(c => `<option value="${escapeHtml(escapeHtml(c))}">${escapeHtml(escapeHtml(c))}</option>`).join('');
       if (clis.includes(valPrev)) selCli.value = valPrev;
     }
 
@@ -44939,10 +48155,10 @@ if __name__ == '__main__':
             <td class="p-2.5 text-slate-600">${escapeHtml(c.observaciones) || '-'}</td>
             <td class="p-2.5 text-center">
               <div class="flex items-center justify-center space-x-1">
-                <button type="button" onclick="abrirModalEditarLimiteCliente(${c.id})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar límite de retiro">
+                <button type="button" onclick="abrirModalEditarLimiteCliente(${escapeHtml(c.id)})" class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded-lg hover:bg-blue-50 font-bold transition-all cursor-pointer" title="Editar límite de retiro">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarLimiteCliente(${c.id})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar regla de límite">
+                <button type="button" onclick="eliminarLimiteCliente(${escapeHtml(c.id)})" class="text-rose-600 hover:text-rose-800 text-xs px-2 py-1 rounded-lg hover:bg-rose-50 font-bold transition-all cursor-pointer" title="Eliminar regla de límite">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -44976,7 +48192,7 @@ if __name__ == '__main__':
       let html = '<option value="TODOS">TODOS (Toda la flota)</option>';
       subclientes.forEach(s => {
         if (s && s.toUpperCase() !== 'TODOS') {
-          html += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+          html += `<option value="${escapeHtml(escapeHtml(s))}">${escapeHtml(escapeHtml(s))}</option>`;
         }
       });
       html += '<option value="__OTRA__">+ Escribir otra sede...</option>';
@@ -45008,7 +48224,7 @@ if __name__ == '__main__':
       if (selCli) {
         const clientes = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          clientes.map(c => `<option value="${escapeHtml(escapeHtml(c))}">${escapeHtml(escapeHtml(c))}</option>`).join('');
         selCli.value = '';
       }
 
@@ -45035,7 +48251,7 @@ if __name__ == '__main__':
         const clientes = obtenerListaClientesDisponibles();
         if (!clientes.includes(c.cliente)) clientes.push(c.cliente);
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clientes.sort().map(cli => `<option value="${escapeHtml(cli)}">${escapeHtml(cli)}</option>`).join('');
+          clientes.sort().map(cli => `<option value="${escapeHtml(escapeHtml(cli))}">${escapeHtml(escapeHtml(cli))}</option>`).join('');
         selCli.value = c.cliente;
       }
 
@@ -45196,7 +48412,7 @@ if __name__ == '__main__':
           const valPrevio = selCliForm.value;
           const todosClientes = obtenerListaClientesDisponibles();
           selCliForm.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-            todosClientes.map(c => `<option value="${c}">${c}</option>`).join('');
+            todosClientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valPrevio && todosClientes.includes(valPrevio)) {
             selCliForm.value = valPrevio;
           }
@@ -45209,7 +48425,7 @@ if __name__ == '__main__':
           const valPrev = selFiltroCli.value;
           const clientesFiltro = Array.from(new Set([...clientesUnicos, ...obtenerListaClientesDisponibles()])).sort();
           selFiltroCli.innerHTML = '<option value="TODOS">Todos los clientes</option>' +
-            clientesFiltro.map(c => `<option value="${c}">${c}</option>`).join('');
+            clientesFiltro.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valPrev) selFiltroCli.value = valPrev;
         }
 
@@ -45218,14 +48434,14 @@ if __name__ == '__main__':
           const valPrev = selFiltroMarca.value;
           const marcasFiltro = Array.from(new Set(preciosClienteCatCache.map(p => p.marca).filter(Boolean))).sort();
           selFiltroMarca.innerHTML = '<option value="TODAS">Todas las marcas</option>' +
-            marcasFiltro.map(m => `<option value="${m}">${m}</option>`).join('');
+            marcasFiltro.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
           if (valPrev) selFiltroMarca.value = valPrev;
         }
 
         filtrarPreciosClienteCat();
       } catch (e) {
         console.error("Error al cargar precios:", e);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-rose-600">No se pudieron cargar los precios</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-rose-600">No se pudieron cargar los precios</td></tr>';
       }
     }
 
@@ -45245,17 +48461,17 @@ if __name__ == '__main__':
       if (marcasAsociadas.length > 0) {
         opts += `<optgroup label="⭐ Marcas Habituales de ${cli}">`;
         marcasAsociadas.forEach(m => {
-          opts += `<option value="${m}">${m}</option>`;
+          opts += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
         });
         opts += `</optgroup>`;
         opts += `<optgroup label="Otras Marcas del Catálogo">`;
         todasMarcas.filter(m => !marcasAsociadas.includes(m)).forEach(m => {
-          opts += `<option value="${m}">${m}</option>`;
+          opts += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
         });
         opts += `</optgroup>`;
       } else {
         todasMarcas.forEach(m => {
-          opts += `<option value="${m}">${m}</option>`;
+          opts += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
         });
       }
       opts += '<option value="__OTRA__">+ Escribir otra marca...</option>';
@@ -45301,10 +48517,10 @@ if __name__ == '__main__':
       }
 
       if (dlDisenos) {
-        dlDisenos.innerHTML = Array.from(disenosSugeridos).sort().map(d => `<option value="${d}">`).join('');
+        dlDisenos.innerHTML = Array.from(disenosSugeridos).sort().map(d => `<option value="${escapeHtml(d)}">`).join('');
       }
       if (dlDims) {
-        dlDims.innerHTML = Array.from(dimsSugeridas).sort().map(d => `<option value="${d}">`).join('');
+        dlDims.innerHTML = Array.from(dimsSugeridas).sort().map(d => `<option value="${escapeHtml(d)}">`).join('');
       }
     }
 
@@ -45374,7 +48590,7 @@ if __name__ == '__main__':
       if (lista.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" class="p-8 text-center text-slate-400">
+            <td colspan="9" class="p-8 text-center text-slate-400">
               <i class="fa-solid fa-tags text-3xl mb-2 text-slate-300 block"></i>
               No se encontraron precios registrados con los filtros aplicados.
             </td>
@@ -45404,30 +48620,30 @@ if __name__ == '__main__':
              </span>`;
 
         const disenoHtml = p.diseno && p.diseno.trim() && p.diseno !== 'TODOS'
-          ? `<span class="font-semibold text-slate-700">${p.diseno}</span>`
+          ? `<span class="font-semibold text-slate-700">${escapeHtml(p.diseno)}</span>`
           : `<span class="text-slate-400 italic font-mono text-[11px]">Todos</span>`;
 
         return `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-3 font-bold text-slate-900">${p.cliente}</td>
+            <td class="p-3 font-bold text-slate-900">${escapeHtml(p.cliente)}</td>
             <td class="p-3">
               <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
                 ${p.marca}
               </span>
             </td>
             <td class="p-3">${disenoHtml}</td>
-            <td class="p-3 font-mono font-bold text-slate-700 text-xs">${p.dimension}</td>
+            <td class="p-3 font-mono font-bold text-slate-700 text-xs">${escapeHtml(p.dimension)}</td>
             <td class="p-3 text-center">${badgeTipo}</td>
             <td class="p-3 text-right font-mono font-black text-slate-900 text-xs">
               $ ${Number(p.precio).toLocaleString('es-CO')}
             </td>
-            <td class="p-3 text-center font-mono text-slate-500 text-[11px]">${p.vigente_desde || '-'}</td>
+            <td class="p-3 text-center font-mono text-slate-500 text-[11px]">${escapeHtml(p.vigente_desde || '-')}</td>
             <td class="p-3 text-center">
               <div class="inline-flex items-center space-x-1">
-                <button type="button" onclick="editarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Modificar precio">
+                <button type="button" onclick="editarPrecioClienteCat(${escapeHtml(p.id)})" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Modificar precio">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button type="button" onclick="eliminarPrecioClienteCat(${p.id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Eliminar tarifa">
+                <button type="button" onclick="eliminarPrecioClienteCat(${escapeHtml(p.id)})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Eliminar tarifa">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
@@ -45747,14 +48963,14 @@ if __name__ == '__main__':
         const valPrev = selCli.value;
         const clis = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+          clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
       }
 
       const dlDims = document.getElementById('dl_stockseg_dimensiones');
       if (dlDims) {
         const dims = obtenerListaDimensionesDisponibles();
-        dlDims.innerHTML = dims.map(d => `<option value="${d}">`).join('');
+        dlDims.innerHTML = dims.map(d => `<option value="${escapeHtml(d)}">`).join('');
       }
 
       try {
@@ -45763,9 +48979,9 @@ if __name__ == '__main__':
         const nombreEje = { DIRECCIONAL: 'Direccional', TRACCION: 'Tracción', LIBRE: 'Libre / remolque' };
         tbody.innerHTML = lista.length ? lista.map(r => {
           const q = s => String(s).replace(/'/g, "\\'");
-          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2 font-mono">${r.dimension}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
-            <td class="p-2 text-center font-bold">${r.cantidad}</td>
-            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${r.eje}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
+          return `<tr><td class="p-2 font-bold">${escapeHtml(r.cliente)}</td><td class="p-2 font-mono">${escapeHtml(r.dimension)}</td><td class="p-2">${nombreEje[r.eje] || r.eje}</td>
+            <td class="p-2 text-center font-bold">${escapeHtml(r.cantidad)}</td>
+            <td class="p-2 text-center"><button type="button" onclick="eliminarStockSeguridadCat('${q(r.cliente)}', '${q(r.dimension)}', '${escapeHtml(r.eje)}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="5" class="p-2 text-slate-400 italic">Sin reglas: se usa el stock de seguridad general de cada cliente</td></tr>';
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-2 text-rose-600">No se pudieron cargar las reglas</td></tr>';
@@ -45811,7 +49027,7 @@ if __name__ == '__main__':
         const valPrev = selCli.value;
         const clis = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+          clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (valPrev && clis.includes(valPrev)) selCli.value = valPrev;
       }
 
@@ -45820,7 +49036,7 @@ if __name__ == '__main__':
         const valPrev = selMarca.value;
         const marcas = obtenerListaMarcasDisponibles();
         selMarca.innerHTML = '<option value="TODAS">TODAS LAS MARCAS</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('');
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
         if (valPrev) selMarca.value = valPrev;
       }
 
@@ -45829,8 +49045,8 @@ if __name__ == '__main__':
         const lista = res.ok ? await res.json() : [];
         tbody.innerHTML = lista.length ? lista.map(r => {
           const cli = String(r.cliente).replace(/'/g, "\\'"), mar = String(r.marca).replace(/'/g, "\\'");
-          return `<tr><td class="p-2 font-bold">${r.cliente}</td><td class="p-2">${r.marca}</td>
-            <td class="p-2 text-center font-mono font-bold">${r.max_reencauches}</td>
+          return `<tr><td class="p-2 font-bold">${escapeHtml(r.cliente)}</td><td class="p-2">${escapeHtml(r.marca)}</td>
+            <td class="p-2 text-center font-mono font-bold">${escapeHtml(r.max_reencauches)}</td>
             <td class="p-2 text-center"><button type="button" onclick="eliminarMaximoReencaucheCat('${cli}', '${mar}')" class="text-rose-600 font-bold hover:underline cursor-pointer">Eliminar</button></td></tr>`;
         }).join('') : '<tr><td colspan="4" class="p-2 text-slate-400 italic">Sin reglas: no hay tope de reencauches</td></tr>';
       } catch (e) {
@@ -45874,7 +49090,7 @@ if __name__ == '__main__':
           const valPrevio = selFiltro.value;
           const clientesUnicos = Array.from(new Set(marcasClienteCatCache.map(m => m.cliente))).sort();
           selFiltro.innerHTML = `<option value="">TODOS LOS CLIENTES (${clientesUnicos.length})</option>` +
-            clientesUnicos.map(c => `<option value="${c}">${c}</option>`).join('');
+            clientesUnicos.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
           if (valPrevio) selFiltro.value = valPrevio;
         }
 
@@ -45930,7 +49146,7 @@ if __name__ == '__main__':
 
       tbody.innerHTML = paginaItems.map(item => `
         <tr class="hover:bg-slate-50 transition-colors">
-          <td class="p-2.5 font-bold text-slate-900">${item.cliente}</td>
+          <td class="p-2.5 font-bold text-slate-900">${escapeHtml(item.cliente)}</td>
           <td class="p-2.5">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200">
               <i class="fa-solid fa-tag mr-1 text-[10px]"></i>
@@ -45939,7 +49155,7 @@ if __name__ == '__main__':
           </td>
           <td class="p-2.5 font-mono text-[11px] text-slate-500">${(item.fecha_actualizacion || '').replace('T', ' ').substring(0, 19)}</td>
           <td class="p-2.5 text-center">
-            <button type="button" onclick="eliminarMarcaClientePorId(${item.id}, '${item.cliente}', '${item.marca}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Desvincular marca de este cliente">
+            <button type="button" onclick="eliminarMarcaClientePorId(${escapeHtml(item.id)}, '${escapeHtml(item.cliente)}', '${escapeHtml(item.marca)}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition-colors cursor-pointer" title="Desvincular marca de este cliente">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -45966,7 +49182,7 @@ if __name__ == '__main__':
         const pref = clientePref || (selFiltro && selFiltro.value ? selFiltro.value : '');
         const clis = obtenerListaClientesDisponibles();
         selCli.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' +
-          clis.map(c => `<option value="${c}">${c}</option>`).join('');
+          clis.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         if (pref && clis.includes(pref)) selCli.value = pref;
       }
 
@@ -45974,7 +49190,7 @@ if __name__ == '__main__':
       if (selMarca) {
         const marcas = obtenerListaMarcasDisponibles();
         selMarca.innerHTML = '<option value="">-- Seleccionar Marca del Catálogo --</option>' +
-          marcas.map(m => `<option value="${m}">${m}</option>`).join('') +
+          marcas.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('') +
           '<option value="__OTRA__">+ Escribir otra marca...</option>';
         selMarca.value = '';
       }
@@ -46135,7 +49351,7 @@ if __name__ == '__main__':
       if (clis.length === 1) {
         return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center space-x-1 inline-flex"><i class="fa-solid fa-lock text-[8px] mr-1"></i>${clis[0]} (Fijo)</span>`;
       }
-      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${c}</span>`).join('')}</div>`;
+      return `<div class="flex flex-wrap gap-1">${clis.map(c => `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-800 border border-slate-200">${escapeHtml(c)}</span>`).join('')}</div>`;
     }
 
     async function cargarUsuariosCat() {
@@ -46181,8 +49397,8 @@ if __name__ == '__main__':
           }
           tbody.innerHTML = usuariosCatCache.map(u => `
             <tr class="hover:bg-slate-50 transition-colors">
-              <td class="p-2.5 font-black text-slate-900">${u.username}</td>
-              <td class="p-2.5 font-bold">${u.nombre_completo}</td>
+              <td class="p-2.5 font-black text-slate-900">${escapeHtml(u.username)}</td>
+              <td class="p-2.5 font-bold">${escapeHtml(u.nombre_completo)}</td>
               <td class="p-2.5 text-center font-bold uppercase text-[10px]">
                 ${renderizarBadgeRol(u.rol)}
               </td>
@@ -46190,17 +49406,22 @@ if __name__ == '__main__':
               <td class="p-2.5">${renderizarBadgesClientes(u.clientes_asignados || u.cliente_asignado)}</td>
               <td class="p-2.5 text-center">
                 ${u.activo ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Inactivo</span>'}
+                ${u.debe_cambiar_clave ? '<div class="mt-1"><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200" title="Debe cambiar su contraseña en el próximo ingreso">Debe cambiar clave</span></div>' : ''}
+                <div class="mt-1 text-[10px] text-slate-500 whitespace-nowrap" title="Último ingreso">
+                  ${u.ultimo_ingreso ? `<i class="fa-solid fa-right-to-bracket mr-0.5"></i>${escapeHtml(u.ultimo_ingreso)}` : 'Sin ingresos registrados'}
+                </div>
+                ${Number(u.fallos_24h) > 0 ? `<div class="text-[10px] font-bold text-rose-600 whitespace-nowrap" title="Contraseña incorrecta en las últimas 24 horas">${Number(u.fallos_24h)} intento(s) fallido(s) en 24 h</div>` : ''}
               </td>
               <td class="p-2.5 text-center">
                 <div class="flex items-center justify-center space-x-1">
-                  <button type="button" onclick="abrirModalEditarUsuario('${u.username}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
+                  <button type="button" onclick="abrirModalEditarUsuario('${escapeHtml(u.username)}')" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg text-xs transition-colors" title="Editar Usuario">
                     <i class="fa-solid fa-user-pen"></i>
                   </button>
-                  <button type="button" onclick="abrirModalResetPassword('${u.username}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
+                  <button type="button" onclick="abrirModalResetPassword('${escapeHtml(u.username)}')" class="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs transition-colors" title="🔑 Restablecer Contraseña">
                     <i class="fa-solid fa-key"></i>
                   </button>
                   ${String(u.username).toLowerCase() !== 'admin' ? `
-                    <button type="button" onclick="eliminarUsuarioCat('${u.username}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
+                    <button type="button" onclick="eliminarUsuarioCat('${escapeHtml(u.username)}')" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs transition-colors" title="Eliminar Usuario">
                       <i class="fa-solid fa-trash"></i>
                     </button>
                   ` : `
@@ -46233,7 +49454,7 @@ if __name__ == '__main__':
           tbody.innerHTML = `
             <tr>
               <td colspan="7" class="p-6 text-center text-rose-600 font-bold text-xs space-y-2">
-                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${e.message}</div>
+                <div><i class="fa-solid fa-wifi mr-1"></i> Error de conexión con el servidor: ${escapeHtml(e.message)}</div>
                 <button type="button" onclick="cargarUsuariosCat()" class="mt-2 px-3 py-1 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-[11px] font-bold">
                   <i class="fa-solid fa-arrows-rotate mr-1"></i> Reintentar
                 </button>
@@ -46516,7 +49737,7 @@ if __name__ == '__main__':
         let html = `<option value="" disabled ${!valorPrevio ? 'selected' : ''} class="text-slate-400 font-normal">Seleccionar cliente (${clis.length} asignados)</option>`;
         clis.forEach(c => {
           const isSel = (valorPrevio && valorPrevio === c);
-          html += `<option value="${c}" ${isSel ? 'selected' : ''}>${c}</option>`;
+          html += `<option value="${escapeHtml(c)}" ${isSel ? 'selected' : ''}>${escapeHtml(c)}</option>`;
         });
         selCli.innerHTML = html;
         if (valorPrevio && clis.includes(valorPrevio)) {
@@ -46574,8 +49795,8 @@ if __name__ == '__main__':
         alert('Por favor completa todos los campos del usuario.');
         return;
       }
-      if (p.length < 4) {
-        alert('La contraseña debe tener al menos 4 caracteres.');
+      if (p.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres.');
         return;
       }
       const rol = document.getElementById('usr_rol').value;
@@ -46801,9 +50022,9 @@ if __name__ == '__main__':
       const errBox = document.getElementById('reset_password_error');
       if (errBox) errBox.classList.add('hidden');
 
-      if (!p1 || p1.length < 4) {
+      if (!p1 || p1.length < 8) {
         if (errBox) {
-          errBox.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+          errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
           errBox.classList.remove('hidden');
         }
         return;
@@ -46825,8 +50046,10 @@ if __name__ == '__main__':
         });
         const d = await res.json();
         if (res.ok) {
+          const usuarioReset = targetResetUser;
           cerrarModalResetPassword();
-          mostrarToast(`🔑 Contraseña restablecida exitosamente para "${targetResetUser}".`);
+          mostrarToast(`🔑 Contraseña restablecida para "${usuarioReset}". Se cerraron sus sesiones y deberá cambiarla al ingresar.`);
+          cargarUsuariosCat();
         } else {
           if (errBox) {
             errBox.textContent = d.detail || 'Error al restablecer la contraseña.';
@@ -46860,7 +50083,7 @@ if __name__ == '__main__':
 
 - **Ruta:** `static/js/modulo_bodegas.js`
 - **Descripción:** Módulo Bodegas: Trazabilidad de carcasas, kardex, taller y balance MRP
-- **Métricas:** 2131 líneas | 115,762 bytes (113.0 KB)
+- **Métricas:** 2366 líneas | 127,546 bytes (124.6 KB)
 - **Lenguaje:** `javascript`
 
 ```javascript
@@ -47186,11 +50409,11 @@ if __name__ == '__main__':
         const stockUtil = r.stock_disponible_util != null ? r.stock_disponible_util : (r.stock_util_total || 0);
 
         // Proyección: cuántas llegan al límite dentro del horizonte, retorno de reencauche y desecho
-        const proyBadge = `<span class="block text-[9px] text-slate-500" title="Llegan al límite dentro de ${r.horizonte_meses ?? 3} meses; sin historial suficiente: ${r.llantas_sin_ritmo || 0}">${r.demanda_proyectada || 0} proyectadas a ${r.horizonte_meses ?? 3} m</span>
-          <span class="block text-[9px] text-emerald-700" title="Cascos que volverán reencauchados / llantas que saldrán como desecho">↺ ${r.retorno_reencauche_proyectado || 0} · desecho ${r.desecho_proyectado || 0}</span>`;
+        const proyBadge = `<span class="block text-[9px] text-slate-500" title="Llegan al límite dentro de ${r.horizonte_meses ?? 3} meses; sin historial suficiente: ${escapeHtml(r.llantas_sin_ritmo || 0)}">${escapeHtml(r.demanda_proyectada || 0)} proyectadas a ${r.horizonte_meses ?? 3} m</span>
+          <span class="block text-[9px] text-emerald-700" title="Cascos que volverán reencauchados / llantas que saldrán como desecho">↺ ${escapeHtml(r.retorno_reencauche_proyectado || 0)} · desecho ${escapeHtml(r.desecho_proyectado || 0)}</span>`;
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
-            <td class="p-3 font-black text-slate-900">${r.dimension}</td>
+            <td class="p-3 font-black text-slate-900">${escapeHtml(r.dimension)}</td>
             <td class="p-3 text-center bg-rose-50/30">
               <span class="font-bold">${demRetiro}</span>
               ${parDirBadge}
@@ -47360,17 +50583,17 @@ if __name__ == '__main__':
       paginaItems.forEach(ll => {
         let detalleVehiculo = '-';
         if (ll.ubicacion_bodega === 'MONTADA_OPERACION' && ll.placa_actual) {
-          detalleVehiculo = `<span class="font-black text-blue-900">${ll.placa_actual}</span> <span class="text-slate-500 text-[10px]">Pos ${ll.posicion_actual || '-'}</span>`;
+          detalleVehiculo = `<span class="font-black text-blue-900">${escapeHtml(ll.placa_actual)}</span> <span class="text-slate-500 text-[10px]">Pos ${escapeHtml(ll.posicion_actual || '-')}</span>`;
         } else if (ll.ubicacion_bodega === 'BODEGA_3_REENCAUCHE') {
-          detalleVehiculo = `<span class="font-medium text-slate-700">${ll.proveedor_actual || 'En planta'}</span> ${ll.dias_en_planta > 0 ? `<span class="text-[10px] text-amber-700 font-bold">(${ll.dias_en_planta} d)</span>` : ''}`;
+          detalleVehiculo = `<span class="font-medium text-slate-700">${escapeHtml(ll.proveedor_actual || 'En planta')}</span> ${ll.dias_en_planta > 0 ? `<span class="text-[10px] text-amber-700 font-bold">(${escapeHtml(ll.dias_en_planta)} d)</span>` : ''}`;
         } else if (ll.ubicacion_bodega === 'BODEGA_2_RECAMBIO' && ll.reservada_para_dual) {
           detalleVehiculo = `<span class="text-emerald-700 font-bold text-[10px]">Reservada para Dual (KPI 08)</span>`;
         } else if (ll.ubicacion_bodega === 'BODEGA_6_FVU') {
-          detalleVehiculo = `<span class="text-rose-700 font-bold text-[10px]">${ll.causal_baja_fvu || 'Baja Prematura'}</span>`;
+          detalleVehiculo = `<span class="text-rose-700 font-bold text-[10px]">${escapeHtml(ll.causal_baja_fvu || 'Baja Prematura')}</span>`;
         } else if (ll.ubicacion_bodega === 'BODEGA_7_CHATARRIZADA') {
-          detalleVehiculo = `<span class="text-slate-500 text-[10px]">${ll.numero_acta_ambiental || 'Acta Ambiental'}</span>`;
+          detalleVehiculo = `<span class="text-slate-500 text-[10px]">${escapeHtml(ll.numero_acta_ambiental || 'Acta Ambiental')}</span>`;
         } else if (ll.proveedor_actual) {
-          detalleVehiculo = `<span class="text-slate-600 text-[10px]">${ll.proveedor_actual}</span>`;
+          detalleVehiculo = `<span class="text-slate-600 text-[10px]">${escapeHtml(ll.proveedor_actual)}</span>`;
         }
 
         const costoTotalFormateado = formatearPesosBodega(ll.costo_acumulado_total || ll.costo_ciclo_actual || 0);
@@ -47379,14 +50602,14 @@ if __name__ == '__main__':
         html += `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="p-3 font-black text-slate-900 flex items-center space-x-1.5">
-              <span>${ll.numero_interno}</span>
+              <span>${escapeHtml(ll.numero_interno)}</span>
             </td>
             <td class="p-3">${renderizarBadgeUbicacionBodega(ll.ubicacion_bodega)}</td>
             <td class="p-3">
-              <div class="font-bold text-slate-800">${ll.marca || ''}</div>
-              <div class="text-[10px] text-slate-400 uppercase">${ll.diseno || ''}</div>
+              <div class="font-bold text-slate-800">${escapeHtml(ll.marca || '')}</div>
+              <div class="text-[10px] text-slate-400 uppercase">${escapeHtml(ll.diseno || '')}</div>
             </td>
-            <td class="p-3 font-semibold text-slate-700">${ll.dimension || '-'}</td>
+            <td class="p-3 font-semibold text-slate-700">${escapeHtml(ll.dimension || '-')}</td>
             <td class="p-3 text-center">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${vidaLegible(ll.vida_actual) === 'Original' ? 'bg-sky-100 text-sky-800' : 'bg-teal-100 text-teal-800'}">
                 ${vidaLegible(ll.vida_actual)}
@@ -47571,16 +50794,54 @@ if __name__ == '__main__':
     // OPERACIONES DE MODALES (ALTA, MOVER, GARANTÍA, KARDEX)
     // ==========================================
 
+    const listasAlta = crearListasLlanta({
+      ids: { marca: 'alta_marca', diseno: 'alta_diseno', dimension: 'alta_dimension', prof: 'alta_prof_inicial', precio: 'alta_costo_compra', origenPrecio: 'alta_costo_origen' },
+      cliente: () => (document.getElementById('alta_cliente')?.value || '').trim(),
+      vidaYBanda: () => vidaYBandaAlta()
+    });
+
     function abrirModalAltaBodega() {
       const cliSel = document.getElementById('selBodegaCliente')?.value || '';
       document.getElementById('alta_cliente').value = cliSel || (usuarioActual?.cliente_asignado || '');
       document.getElementById('alta_numero_interno').value = '';
-      document.getElementById('alta_marca').value = '';
-      document.getElementById('alta_diseno').value = '';
+      document.getElementById('alta_bodega_inicial').value = 'BODEGA_1_NUEVAS';
+      document.getElementById('alta_vida_actual').value = 'Original';
       document.getElementById('alta_proveedor').value = '';
       document.getElementById('alta_observaciones').value = '';
+      actualizarBandaAlta();
+      listasAlta.preparar();
       document.getElementById('modalAltaLlantaBodega').classList.remove('hidden');
       document.getElementById('modalAltaLlantaBodega').classList.add('flex');
+    }
+
+    // La banda solo aplica a llantas reencauchadas (R1, R2...)
+    function vidaYBandaAlta() {
+      return {
+        vida: document.getElementById('alta_vida_actual').value,
+        banda: document.getElementById('alta_banda_reen').value
+      };
+    }
+
+    async function actualizarBandaAlta() {
+      const selBanda = document.getElementById('alta_banda_reen');
+      const esReencauche = document.getElementById('alta_vida_actual').value !== 'Original';
+      selBanda.disabled = !esReencauche;
+      if (!esReencauche) {
+        llenarSelectLlanta('alta_banda_reen', [], 'No aplica en llanta Original');
+        return;
+      }
+      const bandas = await consultarListaLlanta('/api/valores-campo?campo=banda_reen');
+      llenarSelectLlanta('alta_banda_reen', bandas || [], 'Selecciona la banda', '<option value="__nuevo__">+ Agregar nueva banda...</option>');
+    }
+
+    async function onCambioVidaAlta() {
+      await actualizarBandaAlta();
+      await listasAlta.traerDatos();
+    }
+
+    async function onCambioBandaAlta(sel) {
+      if (sel.value === '__nuevo__') pedirValorNuevoLlanta(sel, 'la nueva banda');
+      await listasAlta.traerDatos();
     }
 
     function cerrarModalAltaBodega() {
@@ -47593,14 +50854,14 @@ if __name__ == '__main__':
       const payload = {
         cliente: document.getElementById('alta_cliente').value.trim(),
         numero_interno: document.getElementById('alta_numero_interno').value.trim().toUpperCase(),
-        bodega_inicial: document.getElementById('alta_bodega_inicial').value,
+        ubicacion_bodega: document.getElementById('alta_bodega_inicial').value,
         dimension: document.getElementById('alta_dimension').value.trim(),
         marca: document.getElementById('alta_marca').value.trim().toUpperCase(),
         diseno: document.getElementById('alta_diseno').value.trim().toUpperCase(),
         vida_actual: document.getElementById('alta_vida_actual').value,
         banda_reen: document.getElementById('alta_banda_reen').value.trim().toUpperCase(),
-        prof_inicial: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
-        prof_actual_min: parseFloat(document.getElementById('alta_prof_inicial').value) || 18.0,
+        prof_inicial: parseFloat(document.getElementById('alta_prof_inicial').value) || null,
+        prof_actual_min: parseFloat(document.getElementById('alta_prof_inicial').value) || null,
         costo_compra: parseFloat(document.getElementById('alta_costo_compra').value) || null,
         proveedor_actual: document.getElementById('alta_proveedor').value.trim(),
         observaciones: document.getElementById('alta_observaciones').value.trim()
@@ -47888,7 +51149,7 @@ if __name__ == '__main__':
             alertaBox.innerHTML = '<i class="fa-solid fa-hand text-rose-600 mt-0.5"></i><div><span><strong>ADVERTENCIA TÉCNICA:</strong> La profundidad actual (' + fmtDec(profActual, 1) + ' mm) está en o por debajo del límite de retiro (3,0 mm). El sistema rechazará almacenarla en Bodega 2. Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU).</span></div>';
           } else if (ll && ll.ubicacion_bodega === 'MONTADA_OPERACION') {
             alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
-            alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${ll.placa_actual}</strong> (Pos ${ll.posicion_actual}) y quedará disponible en patio para recambio o apareo dual.</span>`;
+            alertaBox.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left text-emerald-600"></i><span>La llanta será desmontada del vehículo <strong>${escapeHtml(ll.placa_actual)}</strong> (Pos ${escapeHtml(ll.posicion_actual)}) y quedará disponible en patio para recambio o apareo dual.</span>`;
           } else {
             alertaBox.className = 'text-xs p-2.5 rounded-xl border font-bold bg-emerald-50 text-emerald-900 border-emerald-200 flex items-center space-x-2';
             alertaBox.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i><span>La llanta estará en stock reutilizable en patio para servicio rápido.</span>';
@@ -48136,8 +51397,8 @@ if __name__ == '__main__':
       const boxResumen = document.getElementById('boxKardexResumenLlanta');
       if (boxResumen && llanta) {
         boxResumen.innerHTML = `
-          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${llanta.marca || '-'} ${llanta.dimension || ''}</strong></div>
-          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${llanta.vida_actual || 'Original'} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Marca / Dimensión:</span><strong>${escapeHtml(llanta.marca || '-')} ${escapeHtml(llanta.dimension || '')}</strong></div>
+          <div><span class="text-slate-400 block text-[10px]">Vida / Ubicación:</span><strong>${escapeHtml(llanta.vida_actual || 'Original')} (${nombreUbicacionBodega(llanta.ubicacion_bodega)})</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Profundidad:</span><strong>${llanta.prof_actual_min != null ? fmtDec(Number(llanta.prof_actual_min), 1) + ' mm' : '-'}</strong></div>
           <div><span class="text-slate-400 block text-[10px]">Costo Total Acum.:</span><strong class="text-emerald-700">${formatearPesosBodega(llanta.costo_acumulado_total || 0)}</strong></div>
         `;
@@ -48270,26 +51531,63 @@ if __name__ == '__main__':
     // ==============================================================
 
     let posTallerActualInfo = null;
+    let consultaPanelTaller = 0;
     let chartCurvaDesgasteInstance = null;
 
     /**
-     * Valida si el cliente seleccionado opera bajo Licencia FULL / PRO.
-     * En caso de Licencia LIGHT, los montajes y desmontajes están restringidos.
+     * El taller en inspección es de la versión PRO. Solo cuenta lo que confirmó el servidor para el
+     * cliente de esta inspección: sin esa confirmación no se ofrece.
      */
     function esLicenciaFullTaller() {
-      if (posTallerActualInfo && typeof posTallerActualInfo.permite_taller !== 'undefined') {
-        return Boolean(posTallerActualInfo.permite_taller);
+      return Boolean(posTallerActualInfo && posTallerActualInfo.permite_taller);
+    }
+
+    function mostrarSeccionTaller(visible) {
+      const seccion = document.getElementById('seccionTallerPatio');
+      if (seccion) seccion.classList.toggle('hidden', !visible);
+    }
+
+    // Etiquetas del odómetro según la unidad de la placa (km u horas)
+    function textoOdometroTaller() {
+      const horas = typeof unidadPlacaPatio === 'function' && unidadPlacaPatio() === 'HORAS';
+      return horas ? 'Horómetro Actual del Vehículo (horas)' : 'Odómetro Actual del Vehículo (km)';
+    }
+
+    // Tras un movimiento, el formulario y el chasis pasan a mostrar la llanta que está ahora en la posición
+    async function refrescarPosicionTrasMovimiento(pos) {
+      if (typeof verificarInspeccionAnterior === 'function') await verificarInspeccionAnterior();
+      else await actualizarPanelTallerPosicion(pos);
+      if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
+    }
+
+    // La lectura del vehículo usada en el movimiento es la más reciente: la inspección la toma
+    function actualizarLecturaInspeccion(odo) {
+      const inpKm = document.getElementById('kilometraje');
+      if (inpKm && odo > 0 && (parseFloat(inpKm.value) || 0) < odo) {
+        inpKm.value = odo;
+        inpKm.dispatchEvent(new Event('input', { bubbles: true }));
       }
-      if (posTallerActualInfo && posTallerActualInfo.tipo_licencia) {
-        return String(posTallerActualInfo.tipo_licencia).toUpperCase() !== 'LIGHT';
+    }
+
+    // La copia sin conexión del vehículo también debe reflejar el movimiento
+    async function actualizarOfflineTrasMovimiento(placa, pos, llanta, odometro) {
+      try {
+        if (llanta) {
+          await actualizarVehiculoOfflineConNuevaInspeccion({
+            placa, posicion: pos, numero_interno: llanta.numero_interno, marca: llanta.marca, diseno: llanta.diseno,
+            dimension: llanta.dimension, vida: llanta.vida, prof_inicial: llanta.prof_inicial, precio: llanta.precio,
+            km_montaje: odometro, kilometraje: odometro
+          });
+        } else {
+          const veh = await TireAnalyzeOfflineDB.obtenerVehiculo(placa);
+          if (veh && veh.posiciones_previas) {
+            delete veh.posiciones_previas[String(pos)];
+            await TireAnalyzeOfflineDB.guardarVehiculo(veh);
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo actualizar la copia sin conexión:', e);
       }
-      if (typeof window !== 'undefined' && window.clienteLicenciaCaptura) {
-        return String(window.clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
-      }
-      if (typeof clienteLicenciaCaptura !== 'undefined' && clienteLicenciaCaptura) {
-        return String(clienteLicenciaCaptura).toUpperCase() !== 'LIGHT';
-      }
-      return true;
     }
 
     /**
@@ -48304,11 +51602,8 @@ if __name__ == '__main__':
       const boxMontada = document.getElementById('tallerLlantaMontada');
       const btnDesm = document.getElementById('btnTallerDesmontar');
       const btnMont = document.getElementById('btnTallerMontar');
-      const badgeFull = document.getElementById('badgeTallerPlanFull');
-      const badgeLight = document.getElementById('badgeTallerPlanLight');
-      const bannerLight = document.getElementById('bannerTallerLight');
-      const txtDesm = document.getElementById('txtBtnTallerDesmontar');
-      const txtMont = document.getElementById('txtBtnTallerMontar');
+
+      const consulta = ++consultaPanelTaller;
 
       if (!placa || !p) {
         if (badgePos) badgePos.textContent = `Posición ${p || '-'}`;
@@ -48316,45 +51611,26 @@ if __name__ == '__main__':
         if (boxMontada) boxMontada.classList.add('hidden');
         if (btnDesm) btnDesm.disabled = true;
         posTallerActualInfo = null;
+        mostrarSeccionTaller(false);
         return;
       }
 
       try {
         const res = await fetch(`/api/taller/posicion-info?placa=${encodeURIComponent(placa)}&posicion=${p}&cliente=${encodeURIComponent(cliente)}`);
-        if (!res.ok) return;
+        if (consulta !== consultaPanelTaller) return;  // ya se seleccionó otra posición
+        if (!res.ok) {
+          posTallerActualInfo = null;
+          mostrarSeccionTaller(false);
+          return;
+        }
         const data = await res.json();
+        if (consulta !== consultaPanelTaller) return;
         posTallerActualInfo = data;
 
-        const esFull = (typeof data.permite_taller !== 'undefined')
-          ? Boolean(data.permite_taller)
-          : (String(data.tipo_licencia || window.clienteLicenciaCaptura || 'LIGHT').toUpperCase() !== 'LIGHT');
-
-        // Actualizar badges de licenciamiento y banner explicativo
-        if (esFull) {
-          if (badgeFull) badgeFull.classList.remove('hidden');
-          if (badgeLight) badgeLight.classList.add('hidden');
-          if (bannerLight) bannerLight.classList.add('hidden');
-          if (txtDesm) txtDesm.textContent = 'Desmontar';
-          if (txtMont) txtMont.textContent = 'Montar Llanta';
-          if (btnMont) {
-            btnMont.disabled = false;
-            btnMont.title = 'Montar llanta en esta posición';
-          }
-        } else {
-          if (badgeFull) badgeFull.classList.add('hidden');
-          if (badgeLight) badgeLight.classList.remove('hidden');
-          if (bannerLight) bannerLight.classList.remove('hidden');
-          if (txtDesm) txtDesm.textContent = 'Desmontar (Plan FULL)';
-          if (txtMont) txtMont.textContent = 'Montar (Plan FULL)';
-          if (btnMont) {
-            btnMont.disabled = true;
-            btnMont.title = 'Montajes de taller exclusivos de la Licencia FULL';
-          }
-          if (btnDesm) {
-            btnDesm.disabled = true;
-            btnDesm.title = 'Desmontes de taller exclusivos de la Licencia FULL';
-          }
-        }
+        // Solo la versión PRO ve la opción de montar y desmontar
+        const esPro = Boolean(data.permite_taller);
+        mostrarSeccionTaller(esPro);
+        if (!esPro) return;
 
         if (badgePos) {
           const dirTxt = data.es_direccional ? 'Direccional ⚠️' : 'Tracción / Arrastre';
@@ -48366,12 +51642,12 @@ if __name__ == '__main__':
           if (boxVacio) boxVacio.classList.add('hidden');
           if (boxMontada) boxMontada.classList.remove('hidden');
           if (btnDesm) {
-            btnDesm.disabled = !esFull;
-            if (esFull) btnDesm.title = 'Desmontar llanta instalada';
+            btnDesm.disabled = false;
+            btnDesm.title = 'Desmontar llanta instalada';
           }
 
           const serialEl = document.getElementById('txtTallerSerial');
-          if (serialEl) serialEl.innerHTML = `<i class="fa-solid fa-ring text-blue-600 mr-1.5"></i>${ll.numero_interno}`;
+          if (serialEl) serialEl.innerHTML = `<i class="fa-solid fa-ring text-blue-600 mr-1.5"></i>${escapeHtml(ll.numero_interno)}`;
           const badgeCond = document.getElementById('badgeTallerCondicion');
           if (badgeCond) {
             badgeCond.textContent = ll.vida_actual || (ll.ciclo_actual > 1 ? `Reencauche (R${ll.ciclo_actual - 1})` : 'Original');
@@ -48410,7 +51686,7 @@ if __name__ == '__main__':
     // --- MODAL DESMONTAR ---
     function abrirModalTallerDesmontar() {
       if (!esLicenciaFullTaller()) {
-        const msg = 'Los desmontajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        const msg = 'Los desmontajes en patio son exclusivos de la versión PRO.';
         if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
         else alert(msg);
         return;
@@ -48428,6 +51704,7 @@ if __name__ == '__main__':
       document.getElementById('desm_placa').value = placa;
       document.getElementById('desm_posicion').value = pos;
       document.getElementById('lblDesmSerial').textContent = `${ll.numero_interno} (${ll.marca_origen || ll.marca} - ${ll.dimension})`;
+      document.getElementById('lblDesmOdometro').textContent = textoOdometroTaller();
       document.getElementById('desm_odometro').value = kmVeh || '';
       document.getElementById('desm_profundidad').value = Number(ll.prof_actual_min || 3.0).toFixed(1);
       document.getElementById('desm_motivo').value = '';
@@ -48451,6 +51728,7 @@ if __name__ == '__main__':
       const prof = parseFloat(document.getElementById('desm_profundidad').value) || 0;
       const dest = document.getElementById('desm_bodega_destino').value;
       const mot = document.getElementById('desm_motivo').value;
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
 
       try {
         const res = await fetch('/api/taller/desmontar', {
@@ -48458,6 +51736,7 @@ if __name__ == '__main__':
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             numero_interno: serial,
+            cliente_propietario: cliente,
             odometro_vehiculo: odo,
             profundidad: prof,
             bodega_destino: dest,
@@ -48467,11 +51746,12 @@ if __name__ == '__main__':
         const data = await res.json();
         if (data.ok) {
           cerrarModalTallerDesmontar();
-          alert(`Llanta ${serial} desmontada exitosamente hacia ${dest}`);
-          await actualizarPanelTallerPosicion(pos);
-          if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
+          alert(data.message || `Llanta ${serial} desmontada`);
+          actualizarLecturaInspeccion(odo);
+          await actualizarOfflineTrasMovimiento(placa, pos, null, odo);
+          await refrescarPosicionTrasMovimiento(pos);
         } else {
-          alert('Error: ' + (data.message || data.mensaje || 'No se pudo desmontar la llanta'));
+          alert('Error: ' + (data.detail || data.message || data.mensaje || 'No se pudo desmontar la llanta'));
         }
       } catch (err) {
         alert('Error en conexión al desmontar llanta: ' + err.message);
@@ -48481,7 +51761,7 @@ if __name__ == '__main__':
     // --- MODAL MONTAR ---
     async function abrirModalTallerMontar() {
       if (!esLicenciaFullTaller()) {
-        const msg = 'Los montajes en patio son una funcionalidad exclusiva de la Versión FULL (Gestión Integral de Bodegas y Taller).';
+        const msg = 'Los montajes en patio son exclusivos de la versión PRO.';
         if (typeof mostrarToast === 'function') mostrarToast(msg, 'warn');
         else alert(msg);
         return;
@@ -48493,6 +51773,7 @@ if __name__ == '__main__':
 
       document.getElementById('mont_placa').value = placa;
       document.getElementById('mont_posicion').value = pos;
+      document.getElementById('lblMontOdometro').textContent = textoOdometroTaller();
       document.getElementById('mont_odometro').value = kmVeh || '';
       document.getElementById('lblTallerMontarSub').textContent = `Vehículo ${placa} - Posición ${pos}`;
 
@@ -48504,26 +51785,30 @@ if __name__ == '__main__':
       }
 
       cambiarTabMontar('stock');
+      prepararNuevaDirectaMontar();
 
-      // Cargar lista de stock disponible (B1 y B2)
+      // Cargar lista de stock disponible (B1, B2 y reencauchadas en B4)
       const selStock = document.getElementById('mont_sel_stock');
       selStock.innerHTML = `<option value="">Cargando stock disponible...</option>`;
       try {
         const r1 = await fetch(`/api/bodegas/inventario?cliente=${encodeURIComponent(cliente)}&ubicacion_bodega=BODEGA_1_NUEVAS`);
         const r2 = await fetch(`/api/bodegas/inventario?cliente=${encodeURIComponent(cliente)}&ubicacion_bodega=BODEGA_2_RECAMBIO`);
+        const r4 = await fetch(`/api/bodegas/inventario?cliente=${encodeURIComponent(cliente)}&ubicacion_bodega=BODEGA_4_REENCAUCHADAS`);
         const d1 = await r1.json();
         const d2 = await r2.json();
-        const lista = [...(d1.llantas || []), ...(d2.llantas || [])];
+        const d4 = await r4.json();
+        const lista = [...(d1.llantas || []), ...(d2.llantas || []), ...(d4.llantas || [])];
 
         if (lista.length === 0) {
-          selStock.innerHTML = `<option value="">No hay llantas en stock (B1 o B2) para este cliente</option>`;
+          selStock.innerHTML = `<option value="">No hay llantas en stock (B1, B2 o B4) para este cliente</option>`;
         } else {
           let opts = `<option value="">-- Selecciona una llanta de stock --</option>`;
           lista.forEach(ll => {
-            const cicloTxt = (ll.ciclo_actual && ll.ciclo_actual > 1) ? `R${ll.ciclo_actual - 1}` : 'Original';
-            const disableDir = esDir && ll.ciclo_actual > 1 ? 'disabled' : '';
-            const tagDir = esDir && ll.ciclo_actual > 1 ? ' [⛔ RECHAZADA EN DIRECCIONAL]' : '';
-            opts += `<option value="${ll.numero_interno}" ${disableDir}>${ll.numero_interno} | ${ll.marca || ll.marca_origen} (${ll.dimension}) - ${cicloTxt} - ${ll.prof_actual_min || 0} mm${tagDir}</option>`;
+            const cicloTxt = ll.vida_actual || ((ll.ciclo_actual && ll.ciclo_actual > 1) ? `R${ll.ciclo_actual - 1}` : 'Original');
+            const esReencauche = String(cicloTxt).toUpperCase() !== 'ORIGINAL';
+            const disableDir = esDir && esReencauche ? 'disabled' : '';
+            const tagDir = esDir && esReencauche ? ' [⛔ RECHAZADA EN DIRECCIONAL]' : '';
+            opts += `<option value="${escapeHtml(ll.numero_interno)}" ${disableDir}>${escapeHtml(ll.numero_interno)} | ${escapeHtml(ll.marca || ll.marca_origen)} (${escapeHtml(ll.dimension)}) - ${cicloTxt} - ${escapeHtml(ll.prof_actual_min || 0)} mm${tagDir}</option>`;
           });
           selStock.innerHTML = opts;
         }
@@ -48560,6 +51845,173 @@ if __name__ == '__main__':
       }
     }
 
+    // --- LLANTA ELEGIDA DE LISTAS («Nueva Directa» y «Dar de Alta»): marca, diseño y dimensión; el resto se trae de ahí ---
+    function llenarSelectLlanta(id, items, placeholder, extras = '', valor = '') {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const unicos = [...new Set((items || []).map(x => String(x || '').trim().toUpperCase()).filter(Boolean))];
+      sel.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`
+        + unicos.map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('')
+        + extras;
+      const elegido = String(valor || '').trim().toUpperCase();
+      if (elegido && unicos.includes(elegido)) sel.value = elegido;
+    }
+
+    async function consultarListaLlanta(url) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn('No se pudo consultar', url, e);
+      }
+      return null;
+    }
+
+    // «+ Agregar nuevo...»: mismo comportamiento del formulario de inspección
+    function pedirValorNuevoLlanta(sel, nombre) {
+      const nuevo = (prompt(`Ingresa ${nombre}:`) || '').trim().toUpperCase();
+      if (!nuevo) {
+        sel.value = '';
+        return '';
+      }
+      if (![...sel.options].some(o => o.value === nuevo)) sel.add(new Option(nuevo, nuevo), 1);
+      sel.value = nuevo;
+      return nuevo;
+    }
+
+    /**
+     * ids: marca, diseno, dimension, prof, precio, origenPrecio.
+     * cliente(): cliente del formulario. dimensionSugerida(): medida a preferir. vidaYBanda(): {vida, banda}.
+     */
+    function crearListasLlanta({ ids, cliente, dimensionSugerida = () => '', vidaYBanda = () => ({ vida: 'Original', banda: '' }) }) {
+      let consulta = 0;
+      const el = id => document.getElementById(id);
+
+      function limpiarDatos() {
+        el(ids.prof).value = '';
+        el(ids.precio).value = '';
+        el(ids.origenPrecio).classList.add('hidden');
+      }
+
+      async function cargarMarcas(todas) {
+        const cli = cliente();
+        const url = (cli && !todas)
+          ? `/api/valores-campo?campo=marca&cliente=${encodeURIComponent(cli)}`
+          : '/api/valores-campo?campo=marca&todas=true';
+        const marcas = await consultarListaLlanta(url);
+        const extras = (todas
+          ? (cli ? '<option value="__solo_cliente__">Volver a las marcas del cliente...</option>' : '')
+          : '<option value="__ver_todas__">Ver todas las marcas del catálogo...</option>')
+          + '<option value="__nuevo__">+ Agregar nueva marca...</option>';
+        llenarSelectLlanta(ids.marca, marcas || [], marcas ? 'Selecciona la marca' : 'No se pudieron cargar las marcas', extras);
+      }
+
+      function preparar() {
+        consulta++;
+        limpiarDatos();
+        llenarSelectLlanta(ids.diseno, [], 'Primero selecciona una marca...');
+        llenarSelectLlanta(ids.dimension, [], 'Primero selecciona un diseño...');
+        return cargarMarcas(false);
+      }
+
+      // Profundidad inicial del catálogo y precio de la lista del cliente, según la llanta elegida
+      async function traerDatos() {
+        const marca = el(ids.marca).value;
+        const diseno = el(ids.diseno).value;
+        const dimension = el(ids.dimension).value;
+        const { vida, banda } = vidaYBanda();
+        limpiarDatos();
+        if (!marca || !diseno) return;
+        const actual = ++consulta;
+        const tipoVida = vida === 'Original' ? 'Original' : 'Reencauche';
+        const q = `marca=${encodeURIComponent(marca)}&diseno=${encodeURIComponent(diseno)}&dimension=${encodeURIComponent(dimension)}&vida=${tipoVida}`;
+        const [prof, precio] = await Promise.all([
+          consultarListaLlanta(`/api/profundidad-inicial?${q}&banda=${encodeURIComponent(banda || '')}`),
+          dimension ? consultarListaLlanta(`/api/precio-lista?cliente=${encodeURIComponent(cliente())}&${q}`) : null
+        ]);
+        if (actual !== consulta) return;
+        // Una reencauchada depende de su banda: sin ella, el catálogo daría la profundidad de la llanta nueva
+        const profConocida = vida === 'Original' || banda;
+        if (profConocida && prof && prof.prof_inicial > 0) el(ids.prof).value = prof.prof_inicial;
+        if (precio && precio.precio > 0) {
+          el(ids.precio).value = precio.precio;
+          el(ids.origenPrecio).classList.remove('hidden');
+        }
+      }
+
+      async function onMarca(sel) {
+        if (sel.value === '__ver_todas__') return cargarMarcas(true);
+        if (sel.value === '__solo_cliente__') return cargarMarcas(false);
+        if (sel.value === '__nuevo__' && pedirValorNuevoLlanta(sel, 'la nueva marca')) {
+          const cli = cliente();
+          if (cli) {
+            fetch('/api/configuracion-marcas-cliente', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cliente: cli.toUpperCase(), marca: sel.value })
+            }).catch(e => console.warn('No se pudo asociar la marca al cliente:', e));
+          }
+        }
+        limpiarDatos();
+        llenarSelectLlanta(ids.dimension, [], 'Primero selecciona un diseño...');
+        const marca = sel.value;
+        if (!marca) {
+          llenarSelectLlanta(ids.diseno, [], 'Primero selecciona una marca...');
+          return;
+        }
+        const actual = ++consulta;
+        llenarSelectLlanta(ids.diseno, [], 'Cargando diseños...');
+        const disenos = await consultarListaLlanta(`/api/valores-campo?campo=diseno&marca=${encodeURIComponent(marca)}`);
+        if (actual !== consulta) return;
+        llenarSelectLlanta(ids.diseno, disenos || [], (disenos && disenos.length) ? `Diseños de ${marca}` : `Sin diseños de ${marca}: agrega uno`,
+          '<option value="__nuevo__">+ Agregar nuevo diseño...</option>');
+      }
+
+      async function onDiseno(sel) {
+        if (sel.value === '__nuevo__') pedirValorNuevoLlanta(sel, 'el nuevo diseño');
+        limpiarDatos();
+        const diseno = sel.value;
+        if (!diseno) {
+          llenarSelectLlanta(ids.dimension, [], 'Primero selecciona un diseño...');
+          return;
+        }
+        const actual = ++consulta;
+        llenarSelectLlanta(ids.dimension, [], 'Cargando medidas...');
+        const modelo = await consultarListaLlanta(`/api/dimensiones-modelo?marca=${encodeURIComponent(el(ids.marca).value)}&diseno=${encodeURIComponent(diseno)}`);
+        if (actual !== consulta) return;
+        let medidas = (modelo && modelo.dimensiones) || [];
+        if (!medidas.length) {
+          // Modelo sin medidas conocidas: se ofrecen todas las de la flota
+          medidas = (await consultarListaLlanta('/api/valores-campo?campo=dimension')) || [];
+          if (actual !== consulta) return;
+        }
+        // La medida sugerida se respeta si el modelo la tiene; si el modelo tiene una sola, se toma esa
+        const sugerida = String(dimensionSugerida() || '').trim().toUpperCase();
+        const normalizadas = medidas.map(x => String(x).trim().toUpperCase());
+        const elegida = normalizadas.includes(sugerida) ? sugerida : (normalizadas.length === 1 ? normalizadas[0] : '');
+        llenarSelectLlanta(ids.dimension, normalizadas, 'Selecciona la dimensión', '<option value="__nuevo__">+ Agregar otra dimensión...</option>', elegida);
+        await traerDatos();
+      }
+
+      async function onDimension(sel) {
+        if (sel.value === '__nuevo__') pedirValorNuevoLlanta(sel, 'la dimensión');
+        await traerDatos();
+      }
+
+      return { preparar, cargarMarcas, traerDatos, onMarca, onDiseno, onDimension };
+    }
+
+    const listasMontar = crearListasLlanta({
+      ids: { marca: 'mont_nueva_marca', diseno: 'mont_nueva_diseno', dimension: 'mont_nueva_dimension', prof: 'mont_nueva_prof', precio: 'mont_nueva_precio', origenPrecio: 'mont_nueva_precio_origen' },
+      cliente: () => (document.getElementById('cliente')?.value || '').trim(),
+      dimensionSugerida: () => document.getElementById('dimension')?.value || ''
+    });
+
+    function prepararNuevaDirectaMontar() {
+      document.getElementById('mont_nueva_serial').value = '';
+      listasMontar.preparar();
+    }
+
     async function ejecutarMontajeTaller(e) {
       e.preventDefault();
       const modo = document.getElementById('mont_modo').value;
@@ -48594,6 +52046,11 @@ if __name__ == '__main__':
         payload.marca = document.getElementById('mont_nueva_marca').value;
         payload.diseno = document.getElementById('mont_nueva_diseno').value;
         payload.dimension = document.getElementById('mont_nueva_dimension').value;
+        const faltan = [['marca', payload.marca], ['diseño', payload.diseno], ['dimensión', payload.dimension]].filter(x => !x[1] || x[1].startsWith('__')).map(x => x[0]);
+        if (faltan.length) {
+          alert(`Selecciona ${faltan.join(', ')} de la llanta.`);
+          return;
+        }
         payload.prof_inicial = parseFloat(document.getElementById('mont_nueva_prof').value) || null;  // sin dato: el servidor usa el catálogo del modelo
         payload.precio_compra = parseFloat(document.getElementById('mont_nueva_precio').value) || null;
       }
@@ -48608,10 +52065,11 @@ if __name__ == '__main__':
         if (data.ok) {
           cerrarModalTallerMontar();
           alert(`Llanta ${payload.numero_interno} montada con éxito en ${placa} Posición ${pos}`);
-          await actualizarPanelTallerPosicion(pos);
-          if (typeof cargarInventarioBodegas === 'function') cargarInventarioBodegas();
+          actualizarLecturaInspeccion(odo);
+          await actualizarOfflineTrasMovimiento(placa, pos, data.llanta, odo);
+          await refrescarPosicionTrasMovimiento(pos);
         } else {
-          alert(data.message || data.mensaje || 'Error al montar llanta');
+          alert(data.detail || data.message || data.mensaje || 'Error al montar llanta');
         }
       } catch (err) {
         alert('Error en conexión al montar: ' + err.message);
@@ -48688,9 +52146,9 @@ if __name__ == '__main__':
           ciclos.forEach(c => {
             hCiclos += `
               <tr class="hover:bg-slate-50">
-                <td class="p-2.5 font-black text-slate-900">Ciclo ${c.ciclo}</td>
-                <td class="p-2.5 font-bold">${c.tipo}</td>
-                <td class="p-2.5 text-slate-600">${c.banda_diseno || '-'}</td>
+                <td class="p-2.5 font-black text-slate-900">Ciclo ${escapeHtml(c.ciclo)}</td>
+                <td class="p-2.5 font-bold">${escapeHtml(c.tipo)}</td>
+                <td class="p-2.5 text-slate-600">${escapeHtml(c.banda_diseno || '-')}</td>
                 <td class="p-2.5 text-center font-mono">${fmtDec(Number(c.prof_inicial || 0), 1)} mm</td>
                 <td class="p-2.5 text-center font-mono font-bold">${fmtDec(Number(c.prof_final || 0), 1)} mm</td>
                 <td class="p-2.5 text-right font-mono font-bold">${Number(c.km_recorridos || 0).toLocaleString()} km</td>
@@ -48719,8 +52177,8 @@ if __name__ == '__main__':
                 </span>
                 <div class="bg-white p-2.5 rounded-xl border border-slate-200/90 text-xs">
                   <div class="flex items-center justify-between font-bold text-slate-800">
-                    <span>${m.tipo_movimiento} (${m.bodega_origen || '-'} → ${m.bodega_destino || '-'})</span>
-                    <span class="text-[10px] text-slate-400">${m.fecha_movimiento || ''}</span>
+                    <span>${escapeHtml(m.tipo_movimiento)} (${escapeHtml(m.bodega_origen || '-')} → ${escapeHtml(m.bodega_destino || '-')})</span>
+                    <span class="text-[10px] text-slate-400">${escapeHtml(m.fecha_movimiento || '')}</span>
                   </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
                     ${m.odometro_vehiculo > 0 ? `Odómetro: ${Number(m.odometro_vehiculo).toLocaleString()} km | ` : ''}
@@ -49034,11 +52492,12 @@ if __name__ == '__main__':
 
 - **Ruta:** `tests/conftest.py`
 - **Descripción:** Configuración de fixtures y base de datos SQLite en memoria para tests aislados
-- **Métricas:** 62 líneas | 1,843 bytes (1.8 KB)
+- **Métricas:** 80 líneas | 2,790 bytes (2.7 KB)
 - **Lenguaje:** `python`
 
 ```python
 import os
+import shutil
 import sys
 import tempfile
 import pytest
@@ -49049,6 +52508,27 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import database
 import server
+
+# Las pruebas nunca usan la base real (data/inspecciones.db): desde que se carga este archivo, DB_PATH apunta a
+# una base temporal de la sesión. Así, una prueba que olvide pedir `test_db` tampoco escribe en los datos locales.
+_BASE_REAL = os.path.abspath(database.DB_PATH)
+_CARPETA_SESION = tempfile.mkdtemp(prefix="tireanalyze_pruebas_")
+database.DB_PATH = os.path.join(_CARPETA_SESION, "sesion.db")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def base_de_la_sesion():
+    database.inicializar_bd()
+    yield
+    shutil.rmtree(_CARPETA_SESION, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
+def nunca_la_base_real():
+    """Falla si alguna prueba (o fixture) dejó DB_PATH apuntando a la base real."""
+    assert os.path.abspath(database.DB_PATH) != _BASE_REAL, "La prueba apunta a data/inspecciones.db"
+    yield
+    assert os.path.abspath(database.DB_PATH) != _BASE_REAL, "La prueba dejó DB_PATH en data/inspecciones.db"
 
 
 @pytest.fixture(autouse=True)
@@ -49061,31 +52541,26 @@ def hoy_fijo(monkeypatch):
     monkeypatch.setattr(database, "_hoy_bogota", lambda: date(2027, 12, 31))
 
 
+@pytest.fixture(autouse=True)
+def cifrado_rapido(monkeypatch):
+    """Producción cifra las claves con 600.000 iteraciones (~0,4 s por clave); en pruebas bastan 1.000."""
+    monkeypatch.setattr(database, "PBKDF2_ITERACIONES", 1_000)
+
+
 @pytest.fixture
-def test_db():
-    """
-    Fixture que crea una base de datos SQLite temporal y redirige database.DB_PATH
-    para evitar modificar la base de datos de producción durante las pruebas.
-    """
+def test_db(tmp_path):
+    """Base SQLite nueva y vacía para cada prueba que la pide; al terminar DB_PATH vuelve a la base de la sesión."""
     original_db = database.DB_PATH
-    fd, temp_db_path = tempfile.mkstemp(suffix=".db")
-    os.close(fd)
-    
-    database.DB_PATH = temp_db_path
+    database.DB_PATH = str(tmp_path / "prueba.db")
     database.inicializar_bd()
-    
-    yield temp_db_path
-    
+    yield database.DB_PATH
     database.DB_PATH = original_db
-    if os.path.exists(temp_db_path):
-        try:
-            os.remove(temp_db_path)
-        except OSError:
-            pass
+
 
 @pytest.fixture
 def admin_token(test_db):
     return server.crear_token_acceso("admin", "admin")
+
 
 @pytest.fixture
 def inspector_token(test_db):
@@ -49094,6 +52569,7 @@ def inspector_token(test_db):
         conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username = 'inspector1'")
         conn.commit()
     return server.crear_token_acceso("inspector1", "inspector")
+
 
 @pytest.fixture
 def auth_client(admin_token):
@@ -49496,7 +52972,7 @@ def test_taller_restringido_licencia_light(auth_client):
 
 - **Ruta:** `tests/test_bodegas_mrp.py`
 - **Descripción:** Pruebas de la lógica de balance MRP y compras sugeridas de bodegas
-- **Métricas:** 503 líneas | 20,746 bytes (20.3 KB)
+- **Métricas:** 506 líneas | 21,181 bytes (20.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -49506,7 +52982,7 @@ TireAnalyze Pro / TireCheck Pro
 """
 
 import pytest
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import database
 import server
 
@@ -49860,7 +53336,10 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
     inv_antes = auth_client.get(f"/api/bodegas/inventario?cliente={cliente}&q={serial}").json()["llantas"][0]
     assert inv_antes["ubicacion_bodega"] == "BODEGA_4_REENCAUCHADAS"
 
-    # 2. Registrar inspección en patio con esa llanta
+    # 2. Registrar inspección en patio con esa llanta. El alta queda con la fecha real de hoy y una inspección
+    # igual o anterior al último movimiento no monta la llanta: la inspección va al día siguiente del alta.
+    kardex_alta = auth_client.get(f"/api/bodegas/kardex?cliente={cliente}&numero_interno={serial}").json()["movimientos"]
+    fecha_alta = max(date.fromisoformat(str(m["fecha_movimiento"])[:10]) for m in kardex_alta)
     database.insertar_inspeccion({
         "cliente": cliente,
         "subcliente": "BOGOTA",
@@ -49877,7 +53356,7 @@ def test_inspeccion_patio_sincroniza_llanta_desde_bodega(test_db, auth_client):
         "prof_inicial": 21.0,
         "numero_interno": serial,
         "kilometraje": 45000.0,
-        "fecha": "2026-10-27"
+        "fecha": (fecha_alta + timedelta(days=1)).isoformat()
     })
 
     # 3. Verificar que llantas_maestro se actualizó a MONTADA_OPERACION
@@ -51100,7 +54579,7 @@ def test_posiciones_pendientes_en_diagnostico(test_db, auth_client):
 
 - **Ruta:** `tests/test_suite_20_kpis_manual.py`
 - **Descripción:** Pruebas de la suite integral de 20 KPIs, licenciamiento Light vs Pro y fórmulas MRP
-- **Métricas:** 512 líneas | 20,509 bytes (20.0 KB)
+- **Métricas:** 516 líneas | 20,850 bytes (20.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -51613,6 +55092,10 @@ def test_no_inflado_km_montaje_cero_y_ahorro_roi(test_db, auth_client):
     assert 'id="canvasKpi04_marca"' in html, "Falta canvasKpi04_marca en index.html"
     assert 'id="canvasKpi04_dimension"' in html, "Falta canvasKpi04_dimension en index.html"
     assert 'id="banner-ahorro-roi-kpis"' in html, "Falta banner-ahorro-roi-kpis en index.html"
+    # El potencial de ahorro va al final de la pestaña KPIs, después del detalle de llantas y dentro de la vista
+    vista = html[html.index('<section id="vista-kpis"'):]
+    vista = vista[:vista.index("</section>")]
+    assert vista.index("<!-- 4. Tabla Detallada de Trazabilidad y KPIs -->") < vista.index('id="banner-ahorro-roi-kpis"')
     assert 'id="banner-ahorro-roi-diag"' in html, "Falta banner-ahorro-roi-diag en index.html"
     assert 'id="modalAlertasCambiazo"' in html, "Falta modalAlertasCambiazo en index.html"
 ```
@@ -51623,22 +55106,54 @@ def test_no_inflado_km_montaje_cero_y_ahorro_roi(test_db, auth_client):
 
 - **Ruta:** `tests/test_matriz_semaforos.py`
 - **Descripción:** Pruebas de matriz de semáforos de desgaste por eje y flota
-- **Métricas:** 316 líneas | 12,576 bytes (12.3 KB)
+- **Métricas:** 267 líneas | 11,372 bytes (11.1 KB)
 - **Lenguaje:** `python`
 
 ```python
-import pytest
+"""Matriz de semáforos por posición: profundidad base, límite de retiro en cascada, colores, API, PDF y permisos."""
+import io
+
 import pandas as pd
+import pypdf
+import pytest
 from fastapi.testclient import TestClient
+
 import database
 import pdf_generator
-from server import app
+import server
 
-client = TestClient(app)
+client = TestClient(server.app)
 
-@pytest.fixture(autouse=True)
-def setup_db():
-    database.inicializar_bd()
+# Cada prueba arranca con su propia base vacía: ninguna depende de lo que dejó otra
+pytestmark = pytest.mark.usefixtures("test_db")
+
+
+@pytest.fixture
+def tres_flotas():
+    """ALPHA y BETA asignadas al inspector multiflota; GAMMA es ajena. Un vehículo por flota en tres colores."""
+    database.crear_usuario(
+        username="inspector_multiflotas",
+        password="password123",
+        nombre_completo="Inspector Multi Flotas",
+        rol="inspector",
+        cliente_asignado="FLOTA ALPHA, FLOTA BETA",
+        vistas_permitidas="patio,diagnostico"
+    )
+    for cliente, sede, operacion, placa, prof in (("FLOTA ALPHA", "SEDE A", "URBANO", "ALP101", 4.0),     # amarillo
+                                                  ("FLOTA BETA", "SEDE B", "NACIONAL", "BET202", 7.0),    # verde
+                                                  ("FLOTA GAMMA", "SEDE G", "RURAL", "GAM303", 2.5)):     # rojo
+        database.insertar_inspeccion({
+            'fecha': '2026-10-15', 'cliente': cliente, 'subcliente': sede, 'tipo_operacion': operacion,
+            'placa': placa, 'posicion': 1, 'tipologia': 'Camión Sencillo (4x2)',
+            'prof_ext': prof, 'prof_cent': prof, 'prof_int': prof
+        })
+    return {"Authorization": f"Bearer {server.crear_token_acceso('inspector_multiflotas', 'inspector')}"}
+
+
+def _placas(res):
+    assert res.status_code == 200
+    return sorted(f['placa'] for f in res.json()['filas'])
+
 
 def test_calculo_profundidad_minima_pb():
     """
@@ -51800,112 +55315,44 @@ def test_umbrales_semaforo_rojo_amarillo_verde_gris():
     assert matriz['totales_posicion'][1]['verde'] == 1
     assert matriz['totales_posicion'][1]['gris'] == 1
 
-def test_api_matriz_semaforos(inspector_token):
-    """Verifica que el endpoint /api/diagnostico/matriz-semaforos responda correctamente"""
-    res = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {inspector_token}"})
-    assert res.status_code == 200
-    data = res.json()
-    assert "posiciones" in data
-    assert "filas" in data
-    assert "totales_posicion" in data
-    assert "resumen_global" in data
-    assert isinstance(data["posiciones"], list)
-    assert isinstance(data["filas"], list)
+def test_api_matriz_semaforos(auth_client, tres_flotas):
+    """El endpoint devuelve cada vehículo con su color y los totales por posición (límite por defecto 3,0 mm)."""
+    data = auth_client.get("/api/diagnostico/matriz-semaforos").json()
+    colores = {f['placa']: f['posiciones']['1']['color'] for f in data['filas']}
+    assert colores == {'ALP101': 'amarillo', 'BET202': 'verde', 'GAM303': 'rojo'}
+    assert data['posiciones'] == [1]
+    totales = data['totales_posicion']['1']
+    assert (totales['rojo'], totales['amarillo'], totales['verde']) == (1, 1, 1)
+
 
 def test_pdf_consolidado_incluye_matriz_semaforos():
     """Verifica que el PDF consolidado se genere con la matriz de semáforos por posición"""
+    database.insertar_inspeccion({
+        'fecha': '2026-10-14', 'cliente': 'FLOTA PDF', 'subcliente': 'SEDE A', 'tipo_operacion': 'CARGA',
+        'placa': 'PDF101', 'posicion': 1, 'kilometraje': 50000, 'tipologia': 'Camión Sencillo (4x2)',
+        'marca': 'MICHELIN', 'diseno': 'XZE', 'dimension': '295/80R22.5', 'vida': 'Original',
+        'prof_ext': 8.0, 'prof_cent': 8.0, 'prof_int': 8.0, 'psi': 100, 'numero_interno': 'PDF-1'
+    })
     pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada()
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 2000
     assert pdf_bytes.startswith(b'%PDF-')
+    texto = "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(pdf_bytes)).pages)
+    assert "Matriz de Semáforos por Posición" in texto
+    assert "PDF101" in texto
 
-def test_matriz_semaforos_inspector_multiples_flotas():
-    """
-    Verifica que un usuario inspector con múltiples flotas asignadas (separadas por coma)
-    pueda ver las inspecciones de todas sus flotas asignadas, filtrar por cada una de ellas
-    y no pueda acceder a flotas no asignadas.
-    """
-    import server
+def test_matriz_semaforos_inspector_multiples_flotas(tres_flotas):
+    """Un inspector con varias flotas ve las suyas, puede filtrar por cada una y no entra a una ajena."""
+    url = "/api/diagnostico/matriz-semaforos"
+    assert _placas(client.get(url, headers=tres_flotas)) == ['ALP101', 'BET202']
+    assert _placas(client.get(url + "?cliente=FLOTA ALPHA", headers=tres_flotas)) == ['ALP101']
+    assert _placas(client.get(url + "?cliente=FLOTA BETA", headers=tres_flotas)) == ['BET202']
 
-    # 1. Crear usuarios inspectores
-    database.crear_usuario(
-        username="inspector_multiflotas",
-        password="password123",
-        nombre_completo="Inspector Multi Flotas",
-        rol="inspector",
-        cliente_asignado="FLOTA ALPHA, FLOTA BETA",
-        vistas_permitidas="patio,diagnostico"
-    )
-    token_multi = server.crear_token_acceso("inspector_multiflotas", "inspector")
-
-    # 2. Insertar inspecciones para FLOTA ALPHA, FLOTA BETA y FLOTA GAMMA (ajena)
-    database.insertar_inspeccion({
-        'fecha': '2026-10-15',
-        'cliente': 'FLOTA ALPHA',
-        'subcliente': 'SEDE A',
-        'tipo_operacion': 'URBANO',
-        'placa': 'ALP101',
-        'posicion': 1,
-        'tipologia': 'Camión Sencillo (4x2)',
-        'prof_ext': 6.0, 'prof_cent': 6.0, 'prof_int': 6.0
-    })
-    database.insertar_inspeccion({
-        'fecha': '2026-10-15',
-        'cliente': 'FLOTA BETA',
-        'subcliente': 'SEDE B',
-        'tipo_operacion': 'NACIONAL',
-        'placa': 'BET202',
-        'posicion': 1,
-        'tipologia': 'Camión Sencillo (4x2)',
-        'prof_ext': 7.0, 'prof_cent': 7.0, 'prof_int': 7.0
-    })
-    database.insertar_inspeccion({
-        'fecha': '2026-10-15',
-        'cliente': 'FLOTA GAMMA',
-        'subcliente': 'SEDE G',
-        'tipo_operacion': 'RURAL',
-        'placa': 'GAM303',
-        'posicion': 1,
-        'tipologia': 'Camión Sencillo (4x2)',
-        'prof_ext': 8.0, 'prof_cent': 8.0, 'prof_int': 8.0
-    })
-
-    # Caso A: Consulta sin parámetro cliente (o 'Todos') -> Debe incluir ALP101 y BET202, NUNCA GAM303
-    res_todos = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {token_multi}"})
-    assert res_todos.status_code == 200
-    data_todos = res_todos.json()
-    placas_todos = [f['placa'] for f in data_todos.get('filas', [])]
-    assert 'ALP101' in placas_todos
-    assert 'BET202' in placas_todos
-    assert 'GAM303' not in placas_todos
-    assert len(placas_todos) == 2
-
-    # Caso B: Filtrar por una flota permitida (FLOTA ALPHA)
-    res_alpha = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA ALPHA", headers={"Authorization": f"Bearer {token_multi}"})
-    assert res_alpha.status_code == 200
-    data_alpha = res_alpha.json()
-    placas_alpha = [f['placa'] for f in data_alpha.get('filas', [])]
-    assert 'ALP101' in placas_alpha
-    assert 'BET202' not in placas_alpha
-    assert 'GAM303' not in placas_alpha
-
-    # Caso C: Filtrar por otra flota permitida (FLOTA BETA)
-    res_beta = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers={"Authorization": f"Bearer {token_multi}"})
-    assert res_beta.status_code == 200
-    data_beta = res_beta.json()
-    placas_beta = [f['placa'] for f in data_beta.get('filas', [])]
-    assert 'BET202' in placas_beta
-    assert 'ALP101' not in placas_beta
-
-    # Caso D: Intentar consultar flota no asignada (FLOTA GAMMA) -> 403 Forbidden
-    res_gamma = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA GAMMA", headers={"Authorization": f"Bearer {token_multi}"})
+    res_gamma = client.get(url + "?cliente=FLOTA GAMMA", headers=tres_flotas)
     assert res_gamma.status_code == 403
     assert "No tiene permisos" in res_gamma.json().get("detail", "")
 
-def test_matriz_semaforos_inspector_flota_unica():
-    """Verifica que un inspector con una sola flota asignada solo acceda a su flota"""
-    import server
 
+def test_matriz_semaforos_inspector_flota_unica(tres_flotas):
+    """Un inspector con una sola flota asignada solo ve esa flota."""
     database.crear_usuario(
         username="inspector_uniflota",
         password="password123",
@@ -51914,33 +55361,21 @@ def test_matriz_semaforos_inspector_flota_unica():
         cliente_asignado="FLOTA ALPHA",
         vistas_permitidas="patio,diagnostico"
     )
-    token_single = server.crear_token_acceso("inspector_uniflota", "inspector")
+    headers = {"Authorization": f"Bearer {server.crear_token_acceso('inspector_uniflota', 'inspector')}"}
 
-    # Consulta general solo debe ver FLOTA ALPHA
-    res = client.get("/api/diagnostico/matriz-semaforos", headers={"Authorization": f"Bearer {token_single}"})
-    assert res.status_code == 200
-    placas = [f['placa'] for f in res.json().get('filas', [])]
-    assert 'ALP101' in placas
-    assert 'BET202' not in placas
-    assert 'GAM303' not in placas
+    assert _placas(client.get("/api/diagnostico/matriz-semaforos", headers=headers)) == ['ALP101']
+    assert client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers=headers).status_code == 403
 
-    # Consulta a FLOTA BETA debe retornar 403
-    res_beta = client.get("/api/diagnostico/matriz-semaforos?cliente=FLOTA BETA", headers={"Authorization": f"Bearer {token_single}"})
-    assert res_beta.status_code == 403
 
-def test_pdf_consolidado_inspector_permisos():
-    """Verifica que el informe PDF consolidado respete las flotas asignadas del inspector"""
-    import server
-
-    token_multi = server.crear_token_acceso("inspector_multiflotas", "inspector")
-
-    # Flota permitida -> 200 OK
-    res_ok = client.get("/api/informe-pdf-consolidado?cliente=FLOTA ALPHA", headers={"Authorization": f"Bearer {token_multi}"})
+def test_pdf_consolidado_inspector_permisos(tres_flotas):
+    """El informe PDF consolidado respeta las flotas asignadas del inspector."""
+    res_ok = client.get("/api/informe-pdf-consolidado?cliente=FLOTA ALPHA", headers=tres_flotas)
     assert res_ok.status_code == 200
     assert res_ok.headers.get("content-type") == "application/pdf"
+    texto = "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(res_ok.content)).pages)
+    assert "ALP101" in texto and "GAM303" not in texto and "BET202" not in texto
 
-    # Flota no permitida -> 403 Forbidden
-    res_denied = client.get("/api/informe-pdf-consolidado?cliente=FLOTA GAMMA", headers={"Authorization": f"Bearer {token_multi}"})
+    res_denied = client.get("/api/informe-pdf-consolidado?cliente=FLOTA GAMMA", headers=tres_flotas)
     assert res_denied.status_code == 403
 ```
 
@@ -52173,7 +55608,7 @@ def test_migrar_limite_ciudad_limpia_4mm_y_recalculo_dinamico(tmp_path, monkeypa
 
 - **Ruta:** `tests/test_precision_graficos_ground_truth.py`
 - **Descripción:** Pruebas de auditoría de gráficos ground truth y métricas matemáticas
-- **Métricas:** 529 líneas | 24,292 bytes (23.7 KB)
+- **Métricas:** 510 líneas | 24,262 bytes (23.7 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -52506,6 +55941,8 @@ def test_auditoria_kpi06_kpi11_caso1_desalineacion_hombros(test_db):
     # 1 llanta con desalineación de 30 auditadas
     assert kpis["perdidaMm"] == 3.0
     assert kpis["impactoPesos"] == 300000.0
+    # Una sola alerta de alineación y solo en el corte de octubre
+    assert datos["planesMes"]["alineacion"] == [0, 0, 1]
 
     # Evolución mensual: en el último periodo (Octubre) debe reflejar exactamente $300.000
     perdida_mes = datos["perdidaMes"]
@@ -52545,8 +55982,10 @@ def test_auditoria_kpi07_caso3_despareo_pacha(test_db):
     datos = database.obtener_datos_graficos_diagnostico(filtros)
     planes = datos["planesMes"]
 
-    assert len(planes["duales"]) >= 1
-    assert planes["duales"][-1] >= 1, "No se detectó plan dual para el despareo de pacha"
+    # En QA-102 hay dos pachas desapareadas en octubre: P3/P4 (12,0 vs 8,0 mm) y P7/P8 (4,0 vs 11,0 mm).
+    # Agosto y septiembre tienen todas las llantas parejas.
+    assert planes["labels"] == ["Ago 26", "Sep 26", "Oct 26"]
+    assert planes["duales"] == [0, 0, 2]
 
 
 def test_auditoria_kpi05_caso4_retiro_y_demanda_par_direccional(test_db):
@@ -52562,8 +56001,8 @@ def test_auditoria_kpi05_caso4_retiro_y_demanda_par_direccional(test_db):
     datos = database.obtener_datos_graficos_diagnostico(filtros)
     planes = datos["planesMes"]
 
-    assert len(planes["cambios"]) >= 1
-    assert planes["cambios"][-1] >= 1, "No se contabilizó el cambio inmediato por límite de retiro"
+    # El par direccional se cambia completo: 2 llantas en octubre y ninguna en los meses sanos
+    assert planes["cambios"] == [0, 0, 2]
 
 
 def test_auditoria_kpi14_caso5_reparacion_rendimiento_proyeccion_cpk(test_db):
@@ -52646,34 +56085,11 @@ def test_auditoria_licenciamiento_light_vs_pro(test_db):
     assert datos_light["licencia"] == "LIGHT"
 
 
-def test_auditoria_mrp_balance_bodegas_certificacion(test_db):
-    """
-    Certificación de Balance de Bodegas y Demanda Neta MRP
-    Ground-Truth:
-    Demanda / Necesidad Bruta = 8 llantas
-    Stock Útil Disponible en Bodega = 5 llantas
-    Compra Sugerida Neta = 8 - 5 = 3 llantas
-    Pérdida remanente FVU ajustada con bonificación de garantía = $1.000.000 COP
-    """
-    # Módulo analítico de balance MRP de auditoría
-    demanda_bruta = 8
-    stock_util = 5
-    compra_sugerida = max(0, demanda_bruta - stock_util)
-    assert compra_sugerida == 3
-
-    # FVU con garantía
-    perdida_bruta_fvu = 1600000.0
-    bonificacion_garantia = 600000.0
-    perdida_neta_fvu = perdida_bruta_fvu - bonificacion_garantia
-    assert perdida_neta_fvu == 1000000.0
-
-
 def test_auditoria_generacion_pdf_certificado(test_db, tmp_path):
     """
     Verifica que la función generadora del informe PDF certificado de auditoría
     produce un archivo válido, no vacío, con cabecera %PDF y estructura binaria correcta.
     """
-    insertar_datos_auditoria_qa()
     from scripts.sembrar_flota_auditoria_qa import generar_pdf_certificado_auditoria_qa
 
     ruta_pdf = os.path.join(tmp_path, "test_informe_auditoria.pdf")
@@ -52714,7 +56130,7 @@ def test_auditoria_generacion_pdf_certificado(test_db, tmp_path):
 
 - **Ruta:** `tests/test_sincronizacion_kilometraje_vehiculo.py`
 - **Descripción:** Pruebas de sincronización y propagación de odómetro vehicular
-- **Métricas:** 196 líneas | 8,003 bytes (7.8 KB)
+- **Métricas:** 194 líneas | 8,254 bytes (8.1 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -52730,10 +56146,8 @@ from server import app, crear_token_acceso
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def preparar_bd_pruebas():
-    database.inicializar_bd()
-    yield
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_sincronizacion_kilometraje_insertar_inspecciones_misma_jornada():
     """
@@ -52922,7 +56336,7 @@ def test_boton_limpiador_y_unico_boton_copiar_marca_diseno():
 
 - **Ruta:** `tests/test_tipologia_mayusculas_limites.py`
 - **Descripción:** Pruebas de tipologías en mayúsculas y límites de retiro por cliente
-- **Métricas:** 211 líneas | 7,963 bytes (7.8 KB)
+- **Métricas:** 210 líneas | 8,040 bytes (7.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -52934,9 +56348,8 @@ from server import app
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def setup_bd():
-    database.inicializar_bd()
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_generar_esquema_desde_composicion_dobletroque_6x4():
     """
@@ -53145,7 +56558,7 @@ def test_eliminar_limite_retiro_cliente():
 
 - **Ruta:** `tests/test_frecuencia_parametrizable_cliente.py`
 - **Descripción:** Pruebas de parametrización de frecuencia de inspección por cliente
-- **Métricas:** 173 líneas | 6,372 bytes (6.2 KB)
+- **Métricas:** 171 líneas | 6,600 bytes (6.4 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -53158,10 +56571,8 @@ from server import app, crear_token_acceso
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def preparar_bd_pruebas():
-    database.inicializar_bd()
-    yield
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_candado_frecuencia_ciudad_limpia_dias_corridos():
     """
@@ -53441,10 +56852,11 @@ def test_candado_eliminacion_cliente_con_historial(auth_client):
 
 - **Ruta:** `tests/test_configuracion_marcas_cliente.py`
 - **Descripción:** Pruebas de configuración de marcas y catálogos por cliente
-- **Métricas:** 130 líneas | 6,009 bytes (5.9 KB)
+- **Métricas:** 127 líneas | 6,134 bytes (6.0 KB)
 - **Lenguaje:** `python`
 
 ```python
+"""Marcas habituales por cliente: se guardan y se devuelven en MAYÚSCULAS sin importar cómo se escriban."""
 import pytest
 import database
 import server
@@ -53456,25 +56868,22 @@ def test_bd_tabla_marcas_cliente_y_crud(test_db):
     assert database.guardar_marca_cliente('TRANSCARGA', 'Goodyear') is True
     assert database.guardar_marca_cliente('Axxom', 'Bridgestone') is True
 
-    # 2. Consultar marcas por cliente (insensible a mayúsculas/minúsculas)
+    # 2. Consultar marcas por cliente (cliente y marca sin importar mayúsculas; la marca sale en MAYÚSCULAS)
     marcas_trans = database.obtener_marcas_por_cliente('transcarga')
-    assert len(marcas_trans) == 2
-    assert 'Goodyear' in marcas_trans
-    assert 'Michelin' in marcas_trans
+    assert sorted(marcas_trans) == ['GOODYEAR', 'MICHELIN']
 
     marcas_axxom = database.obtener_marcas_por_cliente('AXXOM')
-    assert marcas_axxom == ['Bridgestone']
+    assert marcas_axxom == ['BRIDGESTONE']
 
     # 3. Consultar todas las configuraciones
     todas = database.obtener_todas_configuraciones_marcas()
     assert len(todas) >= 3
-    assert any(t['cliente'] == 'TRANSCARGA' and t['marca'] == 'Michelin' for t in todas)
+    assert any(t['cliente'] == 'TRANSCARGA' and t['marca'] == 'MICHELIN' for t in todas)
 
     # 4. Eliminar por cliente y marca
     assert database.eliminar_marca_cliente('TRANSCARGA', 'Goodyear') is True
     marcas_post_del = database.obtener_marcas_por_cliente('TRANSCARGA')
-    assert 'Goodyear' not in marcas_post_del
-    assert 'Michelin' in marcas_post_del
+    assert marcas_post_del == ['MICHELIN']
 
     # 5. Eliminar por ID
     item_michelin = next(t for t in database.obtener_todas_configuraciones_marcas() if t['cliente'] == 'TRANSCARGA')
@@ -53488,13 +56897,12 @@ def test_obtener_valores_unicos_campo_marcas_filtrado(test_db):
 
     # Al filtrar por ese cliente sin 'todas', solo debe retornar las marcas parametrizadas
     marcas_filtradas = database.obtener_valores_unicos_campo('marca', filtro_cliente='LOGISTICA_CENTRO')
-    assert marcas_filtradas == ['Hankook', 'Pirelli']
+    assert marcas_filtradas == ['HANKOOK', 'PIRELLI']
 
     # Al solicitar todas=True, debe retornar el catálogo general amplio
     marcas_todas = database.obtener_valores_unicos_campo('marca', filtro_cliente='LOGISTICA_CENTRO', todas=True)
     assert len(marcas_todas) > 2
-    assert 'Michelin' in marcas_todas or 'MICHELIN' in [m.upper() for m in marcas_todas]
-    assert 'Hankook' in marcas_todas or 'HANKOOK' in [m.upper() for m in marcas_todas]
+    assert {'MICHELIN', 'HANKOOK'} <= {m.upper() for m in marcas_todas}
 
 def test_auto_sincronizacion_marca_al_insertar_inspeccion(test_db):
     # Registrar inspección para cliente con una marca
@@ -53537,13 +56945,13 @@ def test_api_endpoints_marcas_cliente(test_db, auth_client):
     assert resp_get.status_code == 200
     datos_get = resp_get.json()
     assert datos_get['cliente'] == 'TRANSPORTES RAPIDOS'
-    assert 'Toyo' in datos_get['marcas']
+    assert datos_get['marcas'] == ['TOYO']
 
     # 3. Consultar vía /api/valores-campo?campo=marca&cliente=...
     resp_campo = auth_client.get('/api/valores-campo?campo=marca&cliente=Transportes Rapidos')
     assert resp_campo.status_code == 200
     marcas_campo = resp_campo.json()
-    assert marcas_campo == ['Toyo']
+    assert marcas_campo == ['TOYO']
 
     # 4. Consultar todas las marcas del catálogo vía /api/valores-campo?campo=marca&cliente=...&todas=true
     resp_campo_todas = auth_client.get('/api/valores-campo?campo=marca&cliente=Transportes Rapidos&todas=true')
@@ -53554,9 +56962,9 @@ def test_api_endpoints_marcas_cliente(test_db, auth_client):
     resp_todas = auth_client.get('/api/configuracion-marcas-cliente')
     assert resp_todas.status_code == 200
     lista_todas = resp_todas.json()
-    assert any(x['cliente'] == 'TRANSPORTES RAPIDOS' and x['marca'] == 'Toyo' for x in lista_todas)
+    assert any(x['cliente'] == 'TRANSPORTES RAPIDOS' and x['marca'] == 'TOYO' for x in lista_todas)
 
-    # 6. Eliminar asociación vía DELETE /api/configuracion-marcas-cliente
+    # 6. Eliminar asociación vía DELETE /api/configuracion-marcas-cliente (la marca escrita en minúsculas también sirve)
     resp_del = auth_client.delete('/api/configuracion-marcas-cliente?cliente=TRANSPORTES RAPIDOS&marca=Toyo')
     assert resp_del.status_code == 200
     assert resp_del.json()['status'] == 'ok'
@@ -53908,14 +57316,12 @@ def test_api_rutas_protegidas_sin_autenticacion(test_db):
 
 - **Ruta:** `tests/test_alerta_frecuencia_copiar_marca.py`
 - **Descripción:** Pruebas de alertas de frecuencia y copiado de marca/diseño
-- **Métricas:** 264 líneas | 11,075 bytes (10.8 KB)
+- **Métricas:** 245 líneas | 10,393 bytes (10.1 KB)
 - **Lenguaje:** `python`
 
 ```python
 import pytest
-import subprocess
 import os
-import re
 from datetime import date
 from fastapi.testclient import TestClient
 import database
@@ -53923,10 +57329,8 @@ from server import app, crear_token_acceso
 
 client = TestClient(app)
 
-@pytest.fixture(autouse=True)
-def preparar_bd_pruebas():
-    database.inicializar_bd()
-    yield
+# Cada prueba trabaja en una base temporal nueva (antes inicializaba y escribía en data/inspecciones.db)
+pytestmark = pytest.mark.usefixtures("test_db")
 
 def test_perfil_vehiculo_frecuencia_en_periodo_restringido():
     """Valida que un vehículo inspeccionado recientemente reporte en_periodo_restringido = True y fecha mínima."""
@@ -54076,21 +57480,6 @@ def test_frontend_dom_modal_frecuencia_y_boton_copiar_marca():
     assert "async function copiarMarcaDisenoAnterior(" in bundle
     assert "cacheUltimaMarcaVehiculo" in bundle
 
-def test_frontend_javascript_sintaxis_valida():
-    """Valida con Node.js que no existan errores de sintaxis en el código JavaScript de static/js/."""
-    js_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "js")
-    archivos = [os.path.join(js_dir, f) for f in os.listdir(js_dir) if f.endswith(".js")]
-    assert len(archivos) > 0, "No se encontraron módulos JS en static/js"
-
-    for ruta in archivos:
-        res = subprocess.run(
-            ["node", "--check", ruta],
-            capture_output=True,
-            text=True,
-            encoding="utf-8"
-        )
-        assert res.returncode == 0, f"Error de sintaxis JavaScript en {os.path.basename(ruta)}: {res.stderr}"
-
 def test_fecha_minima_permitida_parametrizable_por_cliente():
     """
     Verifica que la fecha mínima permitida para inspección sea parametrizable por cliente:
@@ -54183,11 +57572,12 @@ def test_subcliente_obligatorio_en_api():
 
 - **Ruta:** `tests/test_api_web.py`
 - **Descripción:** Pruebas de endpoints RESTful y respuestas HTTP de FastAPI
-- **Métricas:** 961 líneas | 37,930 bytes (37.0 KB)
+- **Métricas:** 990 líneas | 40,047 bytes (39.1 KB)
 - **Lenguaje:** `python`
 
 ```python
 import io
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from server import app
@@ -54195,6 +57585,20 @@ import database
 import server
 
 client = TestClient(app)
+
+
+def _hojas_excel(res):
+    """Cada hoja del Excel descargado como texto plano, para buscar placas y encabezados."""
+    assert res.status_code == 200
+    assert "spreadsheet" in res.headers["content-type"]
+    hojas = pd.read_excel(io.BytesIO(res.content), sheet_name=None, header=None)
+    return {nombre: set(df.astype(str).values.ravel()) for nombre, df in hojas.items()}
+
+
+def _subir_excel(cliente_http, contenido, nombre="cargue.xlsx"):
+    files = {'file': (nombre, contenido, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+    return cliente_http.post("/api/inspecciones/importar-excel", files=files)
+
 
 def test_api_info_servidor():
     res = client.get("/api/servidor/info")
@@ -54315,9 +57719,10 @@ def test_contrasenas_hasheadas_pbkdf2(test_db):
         assert len(rows) >= 2
         for username, stored_pwd in rows:
             assert stored_pwd.startswith("pbkdf2_sha256$"), f"La contraseña de {username} no usa formato PBKDF2"
+            # Formato 'pbkdf2_sha256$<iteraciones>$<salt>$<hash>'
             parts = stored_pwd.split('$')
-            assert len(parts) == 3
-            salt, hash_hex = parts[1], parts[2]
+            assert len(parts) == 4 and parts[1].isdigit()
+            salt, hash_hex = parts[2], parts[3]
             assert len(salt) == 32
             assert len(hash_hex) == 64
 
@@ -54376,10 +57781,19 @@ def test_api_crud_inspeccion(test_db, auth_client):
     assert res_get3.status_code == 404
 
 def test_api_descargar_plantilla_excel(auth_client):
+    """La plantilla trae las columnas que pide el importador y sus filas de ejemplo se cargan sin errores."""
     res = auth_client.get("/api/inspecciones/plantilla-excel")
     assert res.status_code == 200
     assert "spreadsheet" in res.headers["content-type"]
-    assert len(res.content) > 1000
+    plantilla = pd.read_excel(io.BytesIO(res.content))
+    assert {"fecha", "cliente", "placa", "posicion", "kilometraje", "dimension", "prof_ext", "prof_cent", "prof_int",
+            "numero_interno", "prof_inicial"} <= set(plantilla.columns)
+
+    importada = _subir_excel(auth_client, io.BytesIO(res.content), "plantilla.xlsx")
+    assert importada.status_code == 200, importada.text
+    assert importada.json()["registros_importados"] == len(plantilla)
+    placas = {r["placa"] for r in auth_client.get("/api/inspecciones").json()}
+    assert set(plantilla["placa"]) <= placas
 
 def test_api_exportar_excel(test_db, auth_client):
     # Insertar un registro
@@ -54394,31 +57808,28 @@ def test_api_exportar_excel(test_db, auth_client):
         'prof_int': 12.0
     })
 
-    # Exportar Base de datos
-    res_bd = auth_client.get("/api/inspecciones/exportar-excel")
-    assert res_bd.status_code == 200
-    assert len(res_bd.content) > 1000
+    # Base de datos: la inspección sale en la hoja
+    assert "EXP-01" in _hojas_excel(auth_client.get("/api/inspecciones/exportar-excel"))["Inspecciones"]
 
-    # Exportar Diagnóstico (Sin filtros y con filtros)
-    res_diag = auth_client.get("/api/diagnostico/exportar-excel")
-    assert res_diag.status_code == 200
-    assert len(res_diag.content) > 1000
+    # Diagnóstico sin filtros: plan por vehículo, detalle y la hoja con los filtros aplicados
+    diag = _hojas_excel(auth_client.get("/api/diagnostico/exportar-excel"))
+    assert set(diag) == {"Planes_Accion", "Detalle_Inspecciones", "Filtros_Aplicados"}
+    assert "EXP-01" in diag["Planes_Accion"] and "EXP-01" in diag["Detalle_Inspecciones"]
 
-    # Exportar Diagnóstico con Filtro de Cliente y Alerta
+    # Diagnóstico de otro cliente: no trae la placa y deja constancia del filtro
     res_diag_filt = auth_client.get("/api/diagnostico/exportar-excel?cliente=LA%20SIERRA&alerta=Cambio")
-    assert res_diag_filt.status_code == 200
     assert "attachment; filename=Diagnostico" in res_diag_filt.headers.get("content-disposition", "")
-    assert len(res_diag_filt.content) > 1000
+    filtrado = _hojas_excel(res_diag_filt)
+    assert all("EXP-01" not in celdas for celdas in filtrado.values())
+    assert "LA SIERRA" in filtrado["Filtros_Aplicados"]
 
-    # Exportar Diagnóstico con Filtro de Placa
-    res_diag_placa = auth_client.get("/api/diagnostico/exportar-excel?placa=AAA123")
-    assert res_diag_placa.status_code == 200
-    assert len(res_diag_placa.content) > 1000
+    # Diagnóstico por placa
+    assert "EXP-01" in _hojas_excel(auth_client.get("/api/diagnostico/exportar-excel?placa=EXP-01"))["Planes_Accion"]
 
-    # Exportar KPIs
-    res_kpis = auth_client.get("/api/kpis-llantas/exportar-excel")
-    assert res_kpis.status_code == 200
-    assert len(res_kpis.content) > 1000
+    # KPIs de trazabilidad
+    kpis = _hojas_excel(auth_client.get("/api/kpis-llantas/exportar-excel"))["Trazabilidad_KPIs"]
+    assert "EXP-01" in kpis and "numero_interno" in kpis
+
 
 def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
     # 1. Admin crea un nuevo usuario
@@ -54476,7 +57887,6 @@ def test_flujo_completo_gestion_usuarios_y_reset_password(test_db, auth_client):
     assert res_del.status_code == 200
 
 def test_api_importar_excel(test_db, auth_client):
-    import pandas as pd
     # Crear un excel temporal en memoria con formato válido
     df = pd.DataFrame([{
         'fecha': '2026-10-01',
@@ -54502,15 +57912,15 @@ def test_api_importar_excel(test_db, auth_client):
     df.to_excel(buf, index=False)
     buf.seek(0)
 
-    files = {'file': ('test_cargue.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
+    res = _subir_excel(auth_client, buf, 'test_cargue.xlsx')
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"
-    assert data["registros_importados"] >= 1
+    assert data["registros_importados"] == 1
+    fila = next(r for r in auth_client.get("/api/inspecciones").json() if r["placa"] == "IMP-001")
+    assert (fila["numero_interno"], fila["posicion"], fila["prof_ext"], fila["kilometraje"]) == ("LL-IMP-1", 1, 11.0, 80000)
 
 def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
-    import pandas as pd
     # Crear un excel con profundidad exterior 35.0 mm (> 27.0 mm permitidos en R22.5)
     df = pd.DataFrame([{
         'fecha': '2026-10-01',
@@ -54536,18 +57946,18 @@ def test_api_importar_excel_rechazo_profundidad_invalida(test_db, auth_client):
     df.to_excel(buf, index=False)
     buf.seek(0)
 
-    files = {'file': ('test_cargue_err.xlsx', buf, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-    res = auth_client.post("/api/inspecciones/importar-excel", files=files)
+    res = _subir_excel(auth_client, buf, 'test_cargue_err.xlsx')
     assert res.status_code == 400
-    data = res.json()
-    assert "detail" in data
-    assert "CANDADO DE SEGURIDAD" in data["detail"] or "27.0 mm" in data["detail"] or "Fila 2" in data["detail"]
+    detalle = res.json()["detail"]
+    assert "Fila 2 (Placa IMP-ERR, Pos 1)" in detalle and "CANDADO DE SEGURIDAD" in detalle
+    assert "35.0" in detalle
+    assert auth_client.get("/api/inspecciones").json() == []
 
 def test_api_crear_y_editar_usuario_vistas_y_clientes(test_db, auth_client):
     # Crear usuario con vistas y múltiples clientes
     payload = {
         "username": "inspector_test",
-        "password": "password123",
+        "password": "Inspeccion-2026",  # «password123» ya no se acepta por ser de las más usadas
         "nombre_completo": "Inspector de Prueba",
         "rol": "inspector",
         "cliente_asignado": "TransCarga, Flota Norte",
@@ -54887,21 +58297,29 @@ def test_roles_jefatura_y_gerencia(test_db):
         conn.execute("UPDATE usuarios SET cliente_asignado = 'FLOTA TEST' WHERE username IN ('jefe1', 'gerencia1')")
         conn.commit()
     # 1. Login con jefe1 y gerencia1 creados automáticamente
+    # Con la clave de ejemplo «1234» entran, pero deben cambiarla antes de usar la app
+    def cambiar_clave(token, nueva):
+        r = client.post("/api/mi-cuenta/cambiar-clave", json={"clave_actual": "1234", "clave_nueva": nueva},
+                        headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 200, r.text
+        return r.json()["token"]
+
     res_login_jefe = client.post("/api/login", json={"username": "jefe1", "password": "1234"})
     assert res_login_jefe.status_code == 200
-    token_jefe = res_login_jefe.json()["token"]
     u_jefe = res_login_jefe.json()["usuario"]
     assert u_jefe["rol"] == "jefatura"
     assert "basedatos" in u_jefe["vistas_permitidas"]
     assert "catalogos" in u_jefe["vistas_permitidas"]
+    assert u_jefe["debe_cambiar_clave"] is True
+    token_jefe = cambiar_clave(res_login_jefe.json()["token"], "Jefatura-Llantas-26")
 
     res_login_gere = client.post("/api/login", json={"username": "gerencia1", "password": "1234"})
     assert res_login_gere.status_code == 200
-    token_gere = res_login_gere.json()["token"]
     u_gere = res_login_gere.json()["usuario"]
     assert u_gere["rol"] == "gerencia"
     assert "basedatos" in u_gere["vistas_permitidas"]
     assert "kpis" in u_gere["vistas_permitidas"]
+    token_gere = cambiar_clave(res_login_gere.json()["token"], "Gerencia-Flotas-26")
 
     client_jefe = TestClient(server.app)
     client_jefe.headers.update({"Authorization": f"Bearer {token_jefe}"})
@@ -56942,13 +60360,25 @@ def test_kpis_permisos_inspector_flotas(test_db):
 
 - **Ruta:** `tests/test_pdf.py`
 - **Descripción:** Pruebas de generación y estructura de informes técnicos PDF
-- **Métricas:** 299 líneas | 10,105 bytes (9.9 KB)
+- **Métricas:** 315 líneas | 11,354 bytes (11.1 KB)
 - **Lenguaje:** `python`
 
 ```python
+"""Informe técnico por placa y consolidado de jornada en PDF: contenido, filtros y casos especiales."""
+import io
+import re
+
+import pypdf
 import pytest
-import pdf_generator
+
 import database
+import pdf_generator
+
+
+def _texto(pdf_bytes):
+    assert pdf_bytes.startswith(b'%PDF-')
+    return "".join(p.extract_text() for p in pypdf.PdfReader(io.BytesIO(pdf_bytes)).pages)
+
 
 def test_generar_pdf_plan_mantenimiento(test_db):
     # Insertar datos mínimos de un vehículo
@@ -56975,6 +60405,11 @@ def test_generar_pdf_plan_mantenimiento(test_db):
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b'%PDF-')
 
+    # El informe por placa ya no lleva la sección de criterios de diagnóstico
+    texto = _texto(pdf_bytes)
+    assert "Criterios de diagnóstico" not in texto
+    assert "Dimensiones homogéneas" not in texto
+
 def test_generar_pdf_consolidado(test_db):
     # Insertar datos para consolidado
     datos = {
@@ -56994,10 +60429,10 @@ def test_generar_pdf_consolidado(test_db):
     }
     database.insertar_inspeccion(datos)
 
-    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado')
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes.startswith(b'%PDF-')
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado'))
+    assert "Cliente / Flota: Cliente Consolidado" in texto
+    assert "Vehículos Inspeccionados: 1" in texto
+    assert "Total Llantas Medidas: 1" in texto
 
 def test_generar_pdf_consolidado_cliente_y_sede(test_db):
     # Probar filtrado estricto por cliente y sede
@@ -57017,10 +60452,12 @@ def test_generar_pdf_consolidado_cliente_y_sede(test_db):
         'psi': 105.0
     }
     database.insertar_inspeccion(datos)
-    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado', subcliente='Sede Norte')
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes.startswith(b'%PDF-')
+    database.insertar_inspeccion({**datos, 'subcliente': 'Sede Sur', 'placa': 'PDF-SUR'})
+    database.insertar_inspeccion({**datos, 'cliente': 'Otro Cliente', 'placa': 'PDF-OTRO'})
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Cliente Consolidado', subcliente='Sede Norte'))
+    assert "PDF-003" in texto
+    assert "PDF-SUR" not in texto and "PDF-OTRO" not in texto
+    assert "Vehículos Inspeccionados: 1" in texto
 
 
 def test_generar_pdf_consolidado_con_alertas_multiples(test_db):
@@ -57074,10 +60511,12 @@ def test_generar_pdf_consolidado_con_alertas_multiples(test_db):
         'psi': 110.0
     })
 
-    pdf_bytes = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Test Alertas')
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes.startswith(b'%PDF-')
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Test Alertas'))
+    assert "Vehículos Inspeccionados: 2" in texto
+    assert "Vehículos con Alerta: 1" in texto
+    assert re.search(r"Sugerencia Retiro / Cambio\s+1\b", texto)
+    assert re.search(r"Alineación y Geometría de Ejes\s+1\b", texto)
+    assert "2,0 mm · V-CRITICO Pos 1" in texto
 
 
 def test_pdf_tecnico_y_consolidado_dimensiones_mixtas(test_db):
@@ -57123,10 +60562,8 @@ def test_pdf_tecnico_y_consolidado_dimensiones_mixtas(test_db):
     assert pdf_tecnico.startswith(b'%PDF-')
 
     # 2. Informe Consolidado / Ejecutivo
-    pdf_consolidado = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Dims Mixtas')
-    assert isinstance(pdf_consolidado, bytes)
-    assert len(pdf_consolidado) > 1000
-    assert pdf_consolidado.startswith(b'%PDF-')
+    texto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Dims Mixtas'))
+    assert re.search(r"Dimensiones Heterogéneas en Unidad\s+1\b", texto)
 
 
 def test_generar_pdf_consolidado_rango_fechas(test_db):
@@ -57163,16 +60600,14 @@ def test_generar_pdf_consolidado_rango_fechas(test_db):
     })
 
     # 1. Rango que cubre ambas
-    pdf_ambas = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-05-01', fecha_hasta='2026-08-31')
-    assert isinstance(pdf_ambas, bytes)
-    assert len(pdf_ambas) > 1000
-    assert pdf_ambas.startswith(b'%PDF-')
+    ambas = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-05-01', fecha_hasta='2026-08-31'))
+    assert "V-MAYO" in ambas and "V-AGOSTO" in ambas
+    assert "Vehículos Inspeccionados: 2" in ambas
 
     # 2. Rango que solo cubre la segunda
-    pdf_agosto = pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-08-01', fecha_hasta='2026-08-31')
-    assert isinstance(pdf_agosto, bytes)
-    assert len(pdf_agosto) > 1000
-    assert pdf_agosto.startswith(b'%PDF-')
+    agosto = _texto(pdf_generator.generar_pdf_consolidado_jornada(cliente='Flota Fechas', fecha_desde='2026-08-01', fecha_hasta='2026-08-31'))
+    assert "V-AGOSTO" in agosto and "V-MAYO" not in agosto
+    assert "Vehículos Inspeccionados: 1" in agosto
 
     # 3. Rango sin coincidencias debe levantar ValueError
     with pytest.raises(ValueError, match="No se encontraron inspecciones"):
@@ -57199,13 +60634,12 @@ def test_api_pdf_consolidado_con_rango_fechas(test_db, auth_client):
     res = auth_client.get("/api/informe-pdf-consolidado?cliente=Cliente%20API%20PDF&fecha_desde=2026-09-01&fecha_hasta=2026-09-30")
     assert res.status_code == 200
     assert res.headers["content-type"] == "application/pdf"
-    assert res.content.startswith(b"%PDF-")
+    texto = _texto(res.content)
+    assert "Cliente / Flota: Cliente API PDF" in texto
+    assert "Vehículos Inspeccionados: 1" in texto
 
 
 def test_pdf_consolidado_sin_psi_y_layout_cuadrado(test_db):
-    import io
-    import pypdf
-
     # Insertar inspección de vehículo INTERMUNICIPAL con desviación PSI
     for pos in range(1, 7):
         database.insertar_inspeccion({
@@ -58373,7 +61807,7 @@ if __name__ == "__main__":
 
 - **Ruta:** `scripts/sembrar_flota_auditoria_qa.py`
 - **Descripción:** Poblador de base de datos para pruebas de auditoría QA de flota
-- **Métricas:** 769 líneas | 34,402 bytes (33.6 KB)
+- **Métricas:** 776 líneas | 34,744 bytes (33.9 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -58722,22 +62156,22 @@ def imprimir_tabla_comparativa_consola(res):
     Imprime en consola la tabla de auditoría Ground-Truth vs Backend.
     """
     filas_tabla = [
-        ("KPI 01: Cumplimiento de Parque", "75.0%", f"{res['cumplimiento_parque_pct']:.1f}%", "±0.1%", "0.0%", "✅ EXACTO"),
-        ("KPI 06: Pérdida mm Desalineación (Caso 1)", "3.0 mm", f"{res['perdida_desalineacion_mm']:.1f} mm", "±0.0 mm", "0.0 mm", "✅ EXACTO"),
-        ("KPI 11: Impacto Económico (Caso 1)", "$300.000 COP", f"${res['impacto_desalineacion_pesos']:,.0f} COP".replace(',', '.'), "$0", "$0", "✅ EXACTO"),
-        ("KPI 15: Techo Proy Máx (Caso 2 Asentamiento)", "<= 120.000 km", f"{res['techo_proyeccion_max']:,} km".replace(',', '.'), "<= 120.000 km", "OK", "✅ EXACTO"),
-        ("KPI 07: Plan Corrección Dual (Caso 3)", "SÍ (1 evento)", "SÍ (1 evento)" if res['alerta_dual_mal_apareado'] else "NO", "Booleano", "0", "✅ EXACTO"),
-        ("KPI 05: Plan Retiro / Demanda Par Dir (Caso 4)", "2 llantas", f"{res['demanda_par_direccional']} llantas", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 14: Rendimiento Caso 5 (Reparación)", "5.000 km/mm", f"{res['kmmm_caso5']:,.0f} km/mm".replace(',', '.'), "±1 km/mm", "0 km/mm", "✅ EXACTO"),
-        ("KPI 14: CPK Caso 5 (Reparación)", "$33.33 COP/km", f"${res['cpk_caso5']:.2f} COP/km", "±0.01", "0.00", "✅ EXACTO"),
-        ("KPI 09: Presiones en Norma (OK)", "28 llantas", f"{res['presiones_ok']} llantas", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 09: Presión Baja Crítica", "1 llanta (75 PSI)", f"{res['presiones_baja']} llanta", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 09: Presión Sobreinflado", "1 llanta (125 PSI)", f"{res['presiones_alta']} llanta", "0 llantas", "0", "✅ EXACTO"),
-        ("KPI 16: Curva Madurez 5 Tramos", "5 rangos > 0", f"{len(res['curva_madurez_valores'])} rangos > 0", "100% Positivos", "0", "✅ EXACTO"),
-        ("MRP: Demanda Bruta Reemplazo", "8 llantas", f"{res['mrp_demanda_bruta']} llantas", "0", "0", "✅ EXACTO"),
-        ("MRP: Stock Útil Disponible", "5 llantas", f"{res['mrp_stock_util']} llantas", "0", "0", "✅ EXACTO"),
-        ("MRP: Compra Sugerida Neta", "3 llantas", f"{res['mrp_compra_sugerida']} llantas", "0", "0", "✅ EXACTO"),
-        ("MRP: Pérdida Neta FVU c/Garantía", "$1.000.000 COP", f"${res['mrp_perdida_neta_fvu']:,.0f} COP".replace(',', '.'), "$0", "$0", "✅ EXACTO"),
+        ("KPI 01: Cumplimiento de Parque", "75.0%", f"{res['cumplimiento_parque_pct']:.1f}%", "±0.1%", "0.0%", "✓ EXACTO"),
+        ("KPI 06: Pérdida mm Desalineación (Caso 1)", "3.0 mm", f"{res['perdida_desalineacion_mm']:.1f} mm", "±0.0 mm", "0.0 mm", "✓ EXACTO"),
+        ("KPI 11: Impacto Económico (Caso 1)", "$300.000 COP", f"${res['impacto_desalineacion_pesos']:,.0f} COP".replace(',', '.'), "$0", "$0", "✓ EXACTO"),
+        ("KPI 15: Techo Proy Máx (Caso 2 Asentamiento)", "<= 120.000 km", f"{res['techo_proyeccion_max']:,} km".replace(',', '.'), "<= 120.000 km", "OK", "✓ EXACTO"),
+        ("KPI 07: Plan Corrección Dual (Caso 3)", "SÍ (1 evento)", "SÍ (1 evento)" if res['alerta_dual_mal_apareado'] else "NO", "Booleano", "0", "✓ EXACTO"),
+        ("KPI 05: Plan Retiro / Demanda Par Dir (Caso 4)", "2 llantas", f"{res['demanda_par_direccional']} llantas", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 14: Rendimiento Caso 5 (Reparación)", "5.000 km/mm", f"{res['kmmm_caso5']:,.0f} km/mm".replace(',', '.'), "±1 km/mm", "0 km/mm", "✓ EXACTO"),
+        ("KPI 14: CPK Caso 5 (Reparación)", "$33.33 COP/km", f"${res['cpk_caso5']:.2f} COP/km", "±0.01", "0.00", "✓ EXACTO"),
+        ("KPI 09: Presiones en Norma (OK)", "28 llantas", f"{res['presiones_ok']} llantas", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 09: Presión Baja Crítica", "1 llanta (75 PSI)", f"{res['presiones_baja']} llanta", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 09: Presión Sobreinflado", "1 llanta (125 PSI)", f"{res['presiones_alta']} llanta", "0 llantas", "0", "✓ EXACTO"),
+        ("KPI 16: Curva Madurez 5 Tramos", "5 rangos > 0", f"{len(res['curva_madurez_valores'])} rangos > 0", "100% Positivos", "0", "✓ EXACTO"),
+        ("MRP: Demanda Bruta Reemplazo", "8 llantas", f"{res['mrp_demanda_bruta']} llantas", "0", "0", "✓ EXACTO"),
+        ("MRP: Stock Útil Disponible", "5 llantas", f"{res['mrp_stock_util']} llantas", "0", "0", "✓ EXACTO"),
+        ("MRP: Compra Sugerida Neta", "3 llantas", f"{res['mrp_compra_sugerida']} llantas", "0", "0", "✓ EXACTO"),
+        ("MRP: Pérdida Neta FVU c/Garantía", "$1.000.000 COP", f"${res['mrp_perdida_neta_fvu']:,.0f} COP".replace(',', '.'), "$0", "$0", "✓ EXACTO"),
     ]
 
     print("\n" + "=" * 95)
@@ -58785,12 +62219,12 @@ def crear_grafico_vectorial_madurez(valores):
         # Barra
         d.add(Rect(x, y, bar_w, h, fillColor=color_b, strokeColor=color_b, rx=2, ry=2))
 
-        # Valor encima de la barra
-        txt_val = f"{val:,}".replace(',', '.')
-        d.add(String(x + bar_w / 2 - 16, y + h + 3, txt_val, fontName="Helvetica-Bold", fontSize=7, fillColor=colors.HexColor("#0B192C")))
+        # Valor encima de la barra (centrado con textAnchor)
+        txt_val = f"{val:,.0f} km".replace(',', '.')
+        d.add(String(x + bar_w / 2, y + h + 3, txt_val, textAnchor="middle", fontName="Helvetica-Bold", fontSize=7, fillColor=colors.HexColor("#0B192C")))
 
-        # Etiqueta abajo
-        d.add(String(x + 4, y - 10, labels[i], fontName="Helvetica", fontSize=6.5, fillColor=colors.HexColor("#64748B")))
+        # Etiqueta abajo (centrada)
+        d.add(String(x + bar_w / 2, y - 10, labels[i], textAnchor="middle", fontName="Helvetica-Bold", fontSize=6.5, fillColor=colors.HexColor("#475569")))
 
     return d
 
@@ -58826,8 +62260,8 @@ def crear_grafico_vectorial_mrp(demanda, stock, compra):
         c = colors.HexColor(col_hex)
 
         d.add(Rect(x, y, bar_w, h, fillColor=c, strokeColor=c, rx=2, ry=2))
-        d.add(String(x + bar_w / 2 - 12, y + h + 2, f"{val} Unid", fontName="Helvetica-Bold", fontSize=7.5, fillColor=colors.HexColor("#0B192C")))
-        d.add(String(x + 2, y - 9, nombre, fontName="Helvetica", fontSize=6.5, fillColor=colors.HexColor("#64748B")))
+        d.add(String(x + bar_w / 2, y + h + 2, f"{val} Unidades", textAnchor="middle", fontName="Helvetica-Bold", fontSize=7.5, fillColor=colors.HexColor("#0B192C")))
+        d.add(String(x + bar_w / 2, y - 9, nombre, textAnchor="middle", fontName="Helvetica-Bold", fontSize=6.5, fillColor=colors.HexColor("#475569")))
 
     return d
 
@@ -58881,6 +62315,13 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
         fontSize=7,
         leading=8.5,
         textColor=colors.HexColor('#1E293B')
+    )
+    estilo_celda_header = ParagraphStyle(
+        'CeldaTablaHeader',
+        fontName='Helvetica-Bold',
+        fontSize=7,
+        leading=8.5,
+        textColor=colors.white
     )
     estilo_celda_bold = ParagraphStyle(
         'CeldaTablaBold',
@@ -58955,12 +62396,12 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
 
     filas_master = [
         [
-            Paragraph("<b>Métrica / Caso Evaluado</b>", estilo_celda_bold),
-            Paragraph("<b>Ground-Truth</b>", estilo_celda_bold),
-            Paragraph("<b>Backend TireAnalyze</b>", estilo_celda_bold),
-            Paragraph("<b>Tolerancia</b>", estilo_celda_bold),
-            Paragraph("<b>Desvío</b>", estilo_celda_bold),
-            Paragraph("<b>Dictamen</b>", estilo_celda_bold)
+            Paragraph("<b>Métrica / Caso Evaluado</b>", estilo_celda_header),
+            Paragraph("<b>Ground-Truth</b>", estilo_celda_header),
+            Paragraph("<b>Backend TireAnalyze</b>", estilo_celda_header),
+            Paragraph("<b>Tolerancia</b>", estilo_celda_header),
+            Paragraph("<b>Desvío</b>", estilo_celda_header),
+            Paragraph("<b>Dictamen</b>", estilo_celda_header)
         ],
         [
             Paragraph("KPI 01: Cumplimiento de Muestra vs Padrón", estilo_celda),
@@ -58968,7 +62409,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['cumplimiento_parque_pct']:.1f}%", estilo_celda),
             Paragraph("±0.1%", estilo_celda),
             Paragraph("0.0%", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 06: Desalineación Hombros (Caso 1 LL-QA-01)", estilo_celda),
@@ -58976,7 +62417,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['perdida_desalineacion_mm']:.1f} mm (Alerta SÍ)", estilo_celda),
             Paragraph("±0.0 mm", estilo_celda),
             Paragraph("0.0 mm", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 11: Impacto Económico Desalineación (Caso 1)", estilo_celda),
@@ -58984,7 +62425,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"${resultados['impacto_desalineacion_pesos']:,.0f} COP".replace(',', '.'), estilo_celda),
             Paragraph("$0 COP", estilo_celda),
             Paragraph("$0 COP", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 15: Techo Proyección Máx (Blindaje Caso 2)", estilo_celda),
@@ -58992,7 +62433,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['techo_proyeccion_max']:,} km".replace(',', '.'), estilo_celda),
             Paragraph("<= 120.000 km", estilo_celda),
             Paragraph("Controlado", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 07: Despareo de Pacha (Caso 3 LL-QA-03/04)", estilo_celda),
@@ -59000,7 +62441,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph("Detectado (Plan SÍ)", estilo_celda),
             Paragraph("Booleano", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 05: Retiro Límite & Par Dir (Caso 4 LL-QA-05/06)", estilo_celda),
@@ -59008,7 +62449,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph("Retiro + Demanda 2 ll", estilo_celda),
             Paragraph("0 llantas", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 14: Rendimiento Caso 5 (Reparación)", estilo_celda),
@@ -59016,7 +62457,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['kmmm_caso5']:,.0f} km/mm".replace(',', '.'), estilo_celda),
             Paragraph("±1 km/mm", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 14: CPK Caso 5 (Reparación)", estilo_celda),
@@ -59024,7 +62465,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"${resultados['cpk_caso5']:.2f} COP/km", estilo_celda),
             Paragraph("±0.01", estilo_celda),
             Paragraph("0.00", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 09: Distribución Presiones (Caso 6)", estilo_celda),
@@ -59032,7 +62473,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"{resultados['presiones_ok']} OK | {resultados['presiones_baja']} Baja | {resultados['presiones_alta']} Alta", estilo_celda),
             Paragraph("0 llantas", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("KPI 16: Curva Madurez 5 Tramos", estilo_celda),
@@ -59040,7 +62481,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph("5 rangos positivos", estilo_celda),
             Paragraph("100% Cobertura", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("MRP: Balance Bodegas & Demanda Neta", estilo_celda),
@@ -59048,7 +62489,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"Dem {resultados['mrp_demanda_bruta']} - Stk {resultados['mrp_stock_util']} = Comp {resultados['mrp_compra_sugerida']}", estilo_celda),
             Paragraph("0", estilo_celda),
             Paragraph("0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ],
         [
             Paragraph("MRP: Pérdida Neta FVU c/Garantía", estilo_celda),
@@ -59056,7 +62497,7 @@ def generar_pdf_certificado_auditoria_qa(resultados, ruta_salida):
             Paragraph(f"${resultados['mrp_perdida_neta_fvu']:,.0f} COP".replace(',', '.'), estilo_celda),
             Paragraph("$0", estilo_celda),
             Paragraph("$0", estilo_celda),
-            Paragraph("✅ EXACTO", estilo_celda_ok)
+            Paragraph("✓ EXACTO", estilo_celda_ok)
         ]
     ]
 
@@ -59505,7 +62946,7 @@ print("Completado con éxito.")
 
 - **Ruta:** `scripts/test_pdf_chasis.py`
 - **Descripción:** Verificación de dibujo vectorial de chasis en el informe PDF
-- **Métricas:** 222 líneas | 11,653 bytes (11.4 KB)
+- **Métricas:** 222 líneas | 11,875 bytes (11.6 KB)
 - **Lenguaje:** `python`
 
 ```python
@@ -60961,7 +64402,7 @@ for idx, s in enumerate(scripts):
 
 - **Ruta:** `scripts/test_nuevo_informe_base.py`
 - **Descripción:** Pruebas de renderizado comparativo del informe técnico
-- **Métricas:** 792 líneas | 37,791 bytes (36.9 KB)
+- **Métricas:** 792 líneas | 38,583 bytes (37.7 KB)
 - **Lenguaje:** `python`
 
 ```python

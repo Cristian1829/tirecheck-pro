@@ -1,6 +1,12 @@
     // ==========================================
     // VISTA 4: TRAZABILIDAD & KPIS DE LLANTAS
     // ==========================================
+    if (typeof Chart !== 'undefined') {
+      try {
+        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+      } catch (e) {}
+    }
+
     let kpisFiltrosPoblados = false;
     let paginaActualKpis = 1;
     const ITEMS_POR_PAGINA_KPIS = 25;
@@ -909,11 +915,25 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              cutout: '62%',
+              cutout: '64%',
               plugins: {
+                centerText: {
+                  text: `${totVida}`,
+                  subtext: 'Llantas'
+                },
                 legend: {
                   position: 'bottom',
-                  labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: 'bold' } }
+                  labels: { boxWidth: 8, boxHeight: 8, padding: 12, font: { size: 11, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' }
+                },
+                datalabels: {
+                  display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 11 },
+                  formatter: (val) => {
+                    const pct = ((val / totVida) * 100).toFixed(0);
+                    return `${val}\n(${pct}%)`;
+                  },
+                  textAlign: 'center'
                 },
                 tooltip: {
                   ...tooltipStyleHD,
@@ -978,11 +998,28 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              cutout: '58%',
+              cutout: '64%',
               plugins: {
+                centerText: {
+                  text: `${top7M.length}`,
+                  subtext: 'Marcas'
+                },
                 legend: {
                   position: 'bottom',
-                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
+                  labels: { boxWidth: 8, boxHeight: 8, padding: 8, font: { size: 10, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
+                },
+                datalabels: {
+                  display: (ctx) => {
+                    const v = ctx.dataset.data[ctx.dataIndex];
+                    return (v / totalLlantas) >= 0.05;
+                  },
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 10 },
+                  formatter: (val) => {
+                    const pct = ((val / totalLlantas) * 100).toFixed(0);
+                    return `${val}\n(${pct}%)`;
+                  },
+                  textAlign: 'center'
                 },
                 tooltip: {
                   ...tooltipStyleHD,
@@ -1032,7 +1069,7 @@
           const dataD = top6D.map(([, cnt]) => cnt);
 
           chartsComposicion.dimension = new Chart(ctxDim, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
               labels: labelsD,
               datasets: [{
@@ -1046,10 +1083,28 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              cutout: '64%',
               plugins: {
+                centerText: {
+                  text: `${top6D.length}`,
+                  subtext: 'Medidas'
+                },
                 legend: {
                   position: 'bottom',
-                  labels: { boxWidth: 10, padding: 8, font: { size: 10, weight: '600' } }
+                  labels: { boxWidth: 8, boxHeight: 8, padding: 8, font: { size: 10, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
+                },
+                datalabels: {
+                  display: (ctx) => {
+                    const v = ctx.dataset.data[ctx.dataIndex];
+                    return (v / totalLlantas) >= 0.05;
+                  },
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 10 },
+                  formatter: (val) => {
+                    const pct = ((val / totalLlantas) * 100).toFixed(0);
+                    return `${val}\n(${pct}%)`;
+                  },
+                  textAlign: 'center'
                 },
                 tooltip: {
                   ...tooltipStyleHD,
@@ -1098,14 +1153,32 @@
                 data: dataDs,
                 backgroundColor: '#f59e0b',
                 borderRadius: 6,
-                borderSkipped: false
+                borderSkipped: false,
+                maxBarThickness: 38
               }]
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              layout: { padding: { top: 22, right: 12, bottom: 6, left: 6 } },
               plugins: {
                 legend: { display: false },
+                datalabels: {
+                  display: true,
+                  anchor: 'end',
+                  align: 'top',
+                  offset: 2,
+                  clamp: true,
+                  backgroundColor: 'rgba(245, 158, 11, 0.92)',
+                  borderRadius: 4,
+                  color: '#ffffff',
+                  font: { weight: 'bold', size: 10 },
+                  padding: { top: 2, bottom: 2, left: 6, right: 6 },
+                  formatter: (val) => {
+                    const pct = ((val / totalLlantas) * 100).toFixed(0);
+                    return `${val} (${pct}%)`;
+                  }
+                },
                 tooltip: {
                   ...tooltipStyleHD,
                   callbacks: {
@@ -1124,7 +1197,9 @@
                 },
                 y: {
                   beginAtZero: true,
-                  ticks: { precision: 0 }
+                  ticks: { precision: 0 },
+                  grid: { color: 'rgba(226, 232, 240, 0.55)', borderDash: [3, 3] },
+                  border: { display: false }
                 }
               }
             }
@@ -1252,7 +1327,7 @@
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, lienzo.width, lienzo.height);
         ctx.drawImage(cv, 0, 0);
-        graficos[id] = lienzo.toDataURL('image/jpeg', 0.9);
+        graficos[id] = lienzo.toDataURL('image/png');
       });
 
       const tabla = tbody.closest('table');

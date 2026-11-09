@@ -1,10 +1,78 @@
     // =========================================================================
     // CONTROLADOR DE LA SUITE ANALÍTICA DE 20 KPIS (5 PESTAÑAS HOMOLOGADAS)
     // =========================================================================
+    // Plugin Centro Métrico para Gráficos Doughnut (Inspirado en Tremor / shadcn / Apple Health)
+    const doughnutCenterTextPlugin = {
+      id: 'doughnutCenterText',
+      beforeDraw(chart) {
+        const { ctx, chartArea } = chart;
+        if (!chartArea || chart.config.type !== 'doughnut') return;
+        const cfg = chart.config.options?.plugins?.centerText;
+        if (!cfg || cfg.display === false || (!cfg.text && cfg.text !== 0)) return;
+
+        ctx.save();
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const mainSize = cfg.fontSize || 22;
+        ctx.font = `bold ${mainSize}px 'Inter', system-ui, sans-serif`;
+        ctx.fillStyle = cfg.color || '#0f172a';
+        const offsetY = cfg.subtext ? -8 : 0;
+        ctx.fillText(String(cfg.text), centerX, centerY + offsetY);
+
+        if (cfg.subtext) {
+          const subSize = cfg.subFontSize || 9.5;
+          ctx.font = `700 ${subSize}px 'Inter', system-ui, sans-serif`;
+          ctx.fillStyle = cfg.subColor || '#64748b';
+          ctx.fillText(String(cfg.subtext).toUpperCase(), centerX, centerY + 13);
+        }
+        ctx.restore();
+      }
+    };
+
     if (typeof Chart !== 'undefined') {
       Chart.defaults.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 2);
       Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
       Chart.defaults.color = '#475569';
+
+      // Estilo de cuadrícula minimalista y moderno (Tremor / shadcn)
+      if (Chart.defaults.scale && Chart.defaults.scale.grid) {
+        Chart.defaults.scale.grid.color = 'rgba(226, 232, 240, 0.55)';
+        Chart.defaults.scale.grid.tickColor = 'transparent';
+      }
+      if (Chart.defaults.scale && Chart.defaults.scale.border) {
+        Chart.defaults.scale.border.display = false;
+      }
+
+      // Estilo de leyendas ejecutivas
+      if (Chart.defaults.plugins && Chart.defaults.plugins.legend) {
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+        Chart.defaults.plugins.legend.labels.boxWidth = 8;
+        Chart.defaults.plugins.legend.labels.boxHeight = 8;
+        Chart.defaults.plugins.legend.labels.padding = 12;
+      }
+
+      // Estilo de tooltips oscuros HD
+      if (Chart.defaults.plugins && Chart.defaults.plugins.tooltip) {
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.94)';
+        Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+        Chart.defaults.plugins.tooltip.bodyColor = '#f1f5f9';
+        Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 255, 255, 0.12)';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.boxPadding = 4;
+        Chart.defaults.plugins.tooltip.usePointStyle = true;
+      }
+
+      try {
+        Chart.register(doughnutCenterTextPlugin);
+      } catch (e) {}
+
       if (typeof ChartDataLabels !== 'undefined') {
         try {
           Chart.register(ChartDataLabels);
@@ -50,12 +118,21 @@
     function pillDatalabelConfig(bgColor = 'rgba(15, 23, 42, 0.88)', textColor = '#ffffff', formatter = null) {
       return {
         display: (ctx) => {
+          const val = ctx.dataset?.data?.[ctx.dataIndex];
+          if (val === null || val === undefined || val === '') return false;
+          const num = typeof val === 'number' ? val : parseFloat(val);
+          if (isNaN(num)) return false;
           const ds = ctx.dataset;
           if (ds && ds.data && ds.data.length > 10) {
-            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1) ? 'auto' : false;
+            return (ctx.dataIndex % 2 === 0 || ctx.dataIndex === ds.data.length - 1);
           }
-          return 'auto';
+          return true;
         },
+        anchor: 'end',
+        align: 'top',
+        offset: 2,
+        clamp: true,
+        clip: false,
         backgroundColor: bgColor,
         borderRadius: 5,
         color: textColor,
@@ -204,7 +281,7 @@
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, lienzo.width, lienzo.height);
             ctx.drawImage(cv, 0, 0);
-            graficos[cv.id] = lienzo.toDataURL('image/jpeg', 0.9);
+            graficos[cv.id] = lienzo.toDataURL('image/png');
             if (caja) {
               if (estiloCaja === null) caja.removeAttribute('style');
               else caja.setAttribute('style', estiloCaja);
@@ -855,7 +932,7 @@
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          layout: { padding: { top: 6 } },
+          layout: { padding: { top: 24, right: 12, bottom: 6, left: 6 } },
           plugins: {
             legend: {
               labels: {
@@ -1099,7 +1176,15 @@
             animation: animacionCascadaStandard,
             plugins: {
               legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
-              datalabels: { display: false }
+              datalabels: {
+                display: (ctx) => {
+                  const v = ctx.dataset.data[ctx.dataIndex];
+                  return (v && v > 0);
+                },
+                color: '#ffffff',
+                font: { weight: 'bold', size: 9 },
+                formatter: (val) => formatCO_Miles(val)
+              }
             },
             scales: {
               x: { stacked: true, ticks: { font: { weight: 'bold', size: 10 } } },
@@ -1199,12 +1284,19 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '62%',
+            cutout: '64%',
             animation: animacionCascadaStandard,
             plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+              centerText: {
+                text: `${(dsDim.labels || []).length}`,
+                subtext: 'Medidas'
+              },
+              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 'bold' } } },
               datalabels: {
-                display: 'auto',
+                display: (ctx) => {
+                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                  return total > 0 && ((ctx.dataset.data[ctx.dataIndex] / total) >= 0.05);
+                },
                 color: '#fff',
                 font: { weight: 'bold', size: 10 },
                 formatter: (val, ctx) => {
@@ -1411,7 +1503,15 @@
             animation: animacionCascadaStandard,
             plugins: {
               legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
-              datalabels: { display: false }
+              datalabels: {
+                display: (ctx) => {
+                  const v = ctx.dataset.data[ctx.dataIndex];
+                  return (v && v >= 5);
+                },
+                color: '#ffffff',
+                font: { weight: 'bold', size: 9 },
+                formatter: (val) => `${formatCO_Decimal(val, 0)}%`
+              }
             },
             scales: {
               x: { stacked: true },
@@ -1542,11 +1642,21 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '60%',
+            cutout: '64%',
             animation: animacionCascadaStandard,
             plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+              centerText: {
+                text: (() => {
+                  const tot = (dist.baja_severa || 0) + (dist.baja_moderada || 0) + (dist.correcta || 0) + (dist.sobrepresion || 0);
+                  return tot > 0 ? `${Math.round(((dist.correcta || 0) / tot) * 100)}%` : '0%';
+                })(),
+                subtext: 'Presión OK',
+                color: '#059669',
+                fontSize: 22
+              },
+              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 'bold' } } },
               datalabels: {
+                display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
                 color: '#fff',
                 font: { weight: 'bold', size: 10 },
                 formatter: (val, ctx) => {
@@ -1605,7 +1715,7 @@
               borderWidth: 2.5,
               pointRadius: 4,
               yAxisID: 'y1',
-              datalabels: { display: false }
+              datalabels: pillDatalabelConfig('rgba(217, 119, 6, 0.95)', '#ffffff', (v) => `${formatCO_Decimal(v, 0)}%`)
             }
           ]
         },
@@ -1954,8 +2064,31 @@
       instanciasChartsSuite['tendencias'] = new Chart(ctx, {
         type: 'line',
         data: { labels: meses.map(m => _mesLegible(m.mes)), datasets: series },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { display: false } },
-                   scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 22, right: 12, bottom: 6, left: 6 } },
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
+            datalabels: {
+              display: (ctx) => {
+                const v = ctx.dataset.data[ctx.dataIndex];
+                return (v !== null && v !== undefined && v !== '');
+              },
+              anchor: 'end',
+              align: 'top',
+              offset: 2,
+              clamp: true,
+              backgroundColor: (ctx) => ctx.dataset.borderColor || '#334155',
+              borderRadius: 4,
+              color: '#ffffff',
+              font: { weight: 'bold', size: 9 },
+              padding: { top: 1, bottom: 1, left: 4, right: 4 },
+              formatter: (v) => `${formatCO_Decimal(v, 0)}%`
+            }
+          },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } }
+        }
       });
     }
 
@@ -2368,9 +2501,14 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '64%',
             animation: animacionCascadaStandard,
             plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { weight: 'bold', size: 9 } } },
+              centerText: {
+                text: `${(d.por_causal.valores || []).reduce((a, b) => a + b, 0)}`,
+                subtext: 'Bajas'
+              },
+              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { weight: 'bold', size: 9 } } },
               tooltip: {
                 callbacks: {
                   label: (c) => {
