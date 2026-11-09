@@ -332,7 +332,7 @@ def test_exportar_excel_incluye_el_movimiento(pro):
     r = pro.get("/api/inspecciones/exportar-excel")
     assert r.status_code == 200
     df = pd.read_excel(io.BytesIO(r.content))
-    assert "Retirada" in df.loc[df["numero_interno"] == "XLS-OLD", "movimiento"].iloc[0]
+    assert "Retirada" in df.loc[df["N.º interno"] == "XLS-OLD", "Movimiento"].iloc[0]
 
 
 # ================= NUEVA DIRECTA: LISTAS DE MARCA, DISEÑO Y DIMENSIÓN =================

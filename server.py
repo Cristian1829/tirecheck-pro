@@ -787,22 +787,98 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
         headers={"Content-Disposition": "attachment; filename=Plantilla_Cargue_Masivo_Inspecciones.xlsx"}
     )
 
-@app.get("/api/inspecciones/exportar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
-def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
-    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
-    df = database.obtener_todas_inspecciones(usuario=filtro_u)
-    movs = database.obtener_movimientos_base_inspecciones(usuario=filtro_u)["por_inspeccion"]
-    df["movimiento"] = df["id"].map(lambda i: "; ".join(m["texto"] for m in movs.get(i, [])))
+# Columnas del Excel de la Base de inspecciones, en el orden en que se leen: (campo, encabezado)
+COLUMNAS_EXCEL_INSPECCIONES = [
+    ("fecha", "Fecha"), ("cliente", "Cliente"), ("subcliente", "Sede"), ("tipo_operacion", "Operación"),
+    ("placa", "Placa"), ("tipologia", "Tipología"), ("posicion", "Posición"), ("numero_interno", "N.º interno"),
+    ("marca", "Marca"), ("diseno", "Diseño"), ("dimension", "Dimensión"), ("vida", "Vida"),
+    ("banda_reen", "Banda reencauche"), ("kilometraje", "Kilometraje"), ("unidad_medida", "Unidad"),
+    ("prof_ext", "Prof. exterior (mm)"), ("prof_cent", "Prof. centro (mm)"), ("prof_int", "Prof. interior (mm)"),
+    ("psi", "Presión (PSI)"), ("prof_inicial", "Prof. inicial (mm)"), ("km_montaje", "Km al montaje"),
+    ("precio", "Precio"), ("movimiento", "Movimiento"), ("novedades", "Novedades"),
+    ("usuario_registro", "Registrado por"),
+]
+
+
+def construir_excel_inspecciones(df: pd.DataFrame, filtros: Optional[dict] = None) -> bytes:
+    """
+    Excel de la Base de inspecciones: hoja «Inspecciones» con encabezados legibles, columnas en orden de lectura
+    (más reciente primero) y formato numérico, más la hoja «Filtros_Aplicados» con lo que se pidió exportar.
+    """
+    df = df.copy()
+    if "movimiento" not in df.columns:
+        df["movimiento"] = ""
+    df = df.sort_values(["fecha", "placa", "posicion"], ascending=[False, True, True], kind="stable")
+    campos = [c for c, _ in COLUMNAS_EXCEL_INSPECCIONES]
+    for c in campos:
+        if c not in df.columns:
+            df[c] = ""
+    salida = df[campos].rename(columns=dict(COLUMNAS_EXCEL_INSPECCIONES))
+    # Un texto que parece fórmula no debe ejecutarse al abrir el Excel
+    for c in salida.columns:
+        if salida[c].dtype == object:
+            salida[c] = salida[c].map(lambda v: "'" + v if isinstance(v, str) and v[:1] in ("=", "+", "@") else v)
+
+    resumen = [("Registros exportados", len(salida)), ("Generado", ahora_bogota().strftime("%Y-%m-%d %H:%M"))]
+    aplicados = [(str(k), str(v)) for k, v in (filtros or {}).items() if str(v).strip()]
+    resumen += aplicados if aplicados else [("Filtros", "Sin filtros: toda la base visible para el usuario")]
+
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Inspecciones", index=False)
-    f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
-    filename = f"Base_Inspecciones_{f_str}.xlsx"
+        salida.to_excel(writer, sheet_name="Inspecciones", index=False)
+        pd.DataFrame(resumen, columns=["Dato", "Valor"]).to_excel(writer, sheet_name="Filtros_Aplicados", index=False)
+        wb = writer.book
+        ws = wb["Inspecciones"]
+        formatos = {"Kilometraje": "#,##0", "Km al montaje": "#,##0", "Precio": "$ #,##0",
+                    "Prof. exterior (mm)": "0.0", "Prof. centro (mm)": "0.0", "Prof. interior (mm)": "0.0",
+                    "Prof. inicial (mm)": "0.0", "Presión (PSI)": "0"}
+        for idx, nombre in enumerate(salida.columns, start=1):
+            if nombre in formatos:
+                for fila in ws.iter_rows(min_row=2, min_col=idx, max_col=idx):
+                    fila[0].number_format = formatos[nombre]
+        _estilizar_hoja_excel(ws)
+        _estilizar_hoja_excel(wb["Filtros_Aplicados"], color_header="312E81")
+        wb["Filtros_Aplicados"].auto_filter.ref = None
+        wb["Filtros_Aplicados"].column_dimensions["B"].width = 60
+    return buf.getvalue()
+
+
+def _inspecciones_para_excel(usuario_actual: dict, usuario: str = "") -> pd.DataFrame:
+    filtro_u = resolver_filtro_usuario_inspecciones(usuario_actual, usuario)
+    df = database.obtener_todas_inspecciones(usuario=filtro_u, incluir_fotos=False)
+    movs = database.obtener_movimientos_base_inspecciones(usuario=filtro_u)["por_inspeccion"]
+    df["movimiento"] = df["id"].map(lambda i: "; ".join(m["texto"] for m in movs.get(i, [])))
+    return df
+
+
+def _respuesta_excel_inspecciones(contenido: bytes) -> Response:
+    filename = f"Base_Inspecciones_{ahora_bogota().strftime('%Y%m%d_%H%M')}.xlsx"
     return Response(
-        content=buf.getvalue(),
+        content=contenido,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+class ExportarInspeccionesExcelItem(BaseModel):
+    ids: Optional[List[int]] = None          # inspecciones que muestra la pantalla con sus filtros (None = todas)
+    filtros: Optional[dict] = None           # {nombre del filtro: valor}, solo para dejarlo escrito en el Excel
+
+
+@app.get("/api/inspecciones/exportar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_exportar_inspecciones_excel(usuario: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
+    return _respuesta_excel_inspecciones(construir_excel_inspecciones(_inspecciones_para_excel(usuario_actual, usuario)))
+
+
+@app.post("/api/inspecciones/exportar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_exportar_inspecciones_excel_filtrado(item: ExportarInspeccionesExcelItem, usuario: str = "",
+                                             usuario_actual: dict = Depends(obtener_usuario_actual)):
+    """Excel con solo las inspecciones que la pantalla muestra con los filtros elegidos. Los ids se cruzan con lo que
+    el usuario puede ver, así que enviar ids ajenos no trae nada."""
+    df = _inspecciones_para_excel(usuario_actual, usuario)
+    if item.ids is not None:
+        df = df[df["id"].isin(set(item.ids))]
+    return _respuesta_excel_inspecciones(construir_excel_inspecciones(df, item.filtros))
 
 @app.post("/api/inspecciones/importar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):

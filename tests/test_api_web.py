@@ -217,6 +217,70 @@ def test_api_descargar_plantilla_excel(auth_client):
     placas = {r["placa"] for r in auth_client.get("/api/inspecciones").json()}
     assert set(plantilla["placa"]) <= placas
 
+def _inspeccion_exp(placa, fecha, cliente="CLI EXP", marca="MICHELIN"):
+    database.insertar_inspeccion({
+        'fecha': fecha, 'placa': placa, 'posicion': 1, 'cliente': cliente, 'marca': marca,
+        'dimension': '295/80R22.5', 'prof_inicial': 16.0, 'prof_ext': 12.0, 'prof_cent': 12.0, 'prof_int': 12.0,
+        'kilometraje': 120500, 'precio': 1650000
+    })
+
+
+def test_exportar_excel_base_respeta_los_filtros_y_queda_organizado(test_db, auth_client):
+    """El Excel trae solo lo que la tabla muestra con los filtros, con encabezados legibles y la hoja de filtros."""
+    _inspeccion_exp("FLT-001", "2026-10-01")
+    _inspeccion_exp("FLT-002", "2026-10-05", cliente="OTRO CLI", marca="BRIDGESTONE")
+    _inspeccion_exp("FLT-003", "2026-10-09")
+    todas = {r["placa"]: r["id"] for r in auth_client.get("/api/inspecciones").json() if r["placa"].startswith("FLT")}
+
+    ids = [todas["FLT-001"], todas["FLT-003"]]
+    res = auth_client.post("/api/inspecciones/exportar-excel", json={"ids": ids, "filtros": {"Cliente": "CLI EXP"}})
+    assert res.status_code == 200 and "attachment; filename=Base_Inspecciones_" in res.headers["content-disposition"]
+    hojas = pd.read_excel(io.BytesIO(res.content), sheet_name=None)
+    assert list(hojas) == ["Inspecciones", "Filtros_Aplicados"]
+
+    insp = hojas["Inspecciones"]
+    assert list(insp["Placa"]) == ["FLT-003", "FLT-001"]  # solo las filtradas, la más reciente primero
+    assert list(insp.columns[:5]) == ["Fecha", "Cliente", "Sede", "Operación", "Placa"]
+    assert "Prof. exterior (mm)" in insp.columns and "Movimiento" in insp.columns
+    assert not any(c in insp.columns for c in ("id", "foto_novedad"))
+    resumen = dict(zip(hojas["Filtros_Aplicados"]["Dato"], hojas["Filtros_Aplicados"]["Valor"]))
+    assert resumen["Registros exportados"] == 2 and resumen["Cliente"] == "CLI EXP"
+
+    # Formato: encabezado fijo, filtro automático y números con su formato
+    from openpyxl import load_workbook
+    ws = load_workbook(io.BytesIO(res.content))["Inspecciones"]
+    assert ws.freeze_panes == "A2" and ws.auto_filter.ref
+    col = {c.value: c.column for c in ws[1]}
+    assert ws.cell(2, col["Kilometraje"]).number_format == "#,##0"
+    assert ws.cell(2, col["Prof. exterior (mm)"]).number_format == "0.0"
+
+
+def test_exportar_excel_base_sin_filtros_trae_todo_y_ids_ajenos_no_filtran_datos(test_db, auth_client):
+    _inspeccion_exp("ALL-001", "2026-10-01")
+    _inspeccion_exp("ALL-002", "2026-10-02")
+    sin = pd.read_excel(io.BytesIO(auth_client.post("/api/inspecciones/exportar-excel", json={}).content), sheet_name=None)
+    assert {"ALL-001", "ALL-002"} <= set(sin["Inspecciones"]["Placa"])
+    assert "Sin filtros" in " ".join(sin["Filtros_Aplicados"]["Valor"].astype(str))
+    # Ids que no existen no traen nada; una lista vacía exporta solo los encabezados
+    vacia = pd.read_excel(io.BytesIO(auth_client.post("/api/inspecciones/exportar-excel",
+                                                       json={"ids": [999999], "filtros": {"Marca": "X"}}).content))
+    assert vacia.empty and "Placa" in vacia.columns
+
+
+def test_exportar_excel_base_exige_sesion_y_vista():
+    assert TestClient(server.app).post("/api/inspecciones/exportar-excel", json={}).status_code == 401
+
+
+def test_exportar_excel_base_manda_los_filtros_de_la_pantalla():
+    import os
+    js = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "js", "modulo_basedatos.js"),
+              encoding="utf-8").read()
+    cuerpo = js[js.index("async function exportarInspeccionesExcel"):]
+    assert "cacheFiltradasBD" in cuerpo and "method: 'POST'" in cuerpo and "filtrosActivosBD()" in cuerpo
+    for id_filtro in ("filtroBDCliente", "filtroBDSede", "filtroBDFechaDesde", "filtroBDSemaforo", "filtroTextoBD"):
+        assert id_filtro in js[js.index("function filtrosActivosBD"):js.index("async function exportarInspeccionesExcel")]
+
+
 def test_api_exportar_excel(test_db, auth_client):
     # Insertar un registro
     database.insertar_inspeccion({

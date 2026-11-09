@@ -697,10 +697,50 @@
       const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
       window.location.href = `/api/inspecciones/plantilla-excel${q}`;
     }
-    function exportarInspeccionesExcel() {
-      const tok = (localStorage.getItem('tireanalyze_token') || localStorage.getItem('tirecheck_token'));
-      const q = tok ? `?token=${encodeURIComponent(tok)}` : '';
-      window.location.href = `/api/inspecciones/exportar-excel${q}`;
+    // Filtros de la pantalla con su nombre, para dejarlos escritos en el Excel
+    function filtrosActivosBD() {
+      const val = id => document.getElementById(id)?.value || '';
+      const lista = [
+        ['Búsqueda', val('filtroTextoBD').trim()],
+        ['Fecha desde', val('filtroBDFechaDesde')],
+        ['Fecha hasta', val('filtroBDFechaHasta')],
+        ['Cliente', val('filtroBDCliente')], ['Sede', val('filtroBDSede')],
+        ['Operación', val('filtroBDOperacion')], ['Tipología', val('filtroBDTipologia')],
+        ['Marca', val('filtroBDMarca')], ['Vida', val('filtroBDVida')], ['Semáforo', val('filtroBDSemaforo')]
+      ];
+      return Object.fromEntries(lista.filter(([, v]) => v && v !== 'TODOS'));
+    }
+
+    // Exporta lo que muestra la tabla con los filtros elegidos (todas las páginas, no solo la visible)
+    async function exportarInspeccionesExcel() {
+      const ids = (cacheFiltradasBD || []).filter(r => !r.es_movimiento && r.id != null).map(r => r.id);
+      const filtros = filtrosActivosBD();
+      if (!ids.length && Object.keys(filtros).length) {
+        mostrarToast('No hay inspecciones con los filtros seleccionados para exportar', true);
+        return;
+      }
+      try {
+        const res = await fetch('/api/inspecciones/exportar-excel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: Object.keys(filtros).length ? ids : null, filtros })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Error ${res.status}`);
+        }
+        const blob = await res.blob();
+        const nombre = (res.headers.get('Content-Disposition') || '').match(/filename=([^;]+)/)?.[1] || 'Base_Inspecciones.xlsx';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nombre;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        mostrarToast(`✅ Excel generado con ${Object.keys(filtros).length ? ids.length : 'todas las'} inspecciones`);
+      } catch (e) {
+        console.error('Error exportando la base de inspecciones:', e);
+        mostrarToast(`No se pudo generar el Excel: ${e.message}`, true);
+      }
     }
 
     // Zona Drag and Drop Excel
