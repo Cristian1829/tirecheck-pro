@@ -50,6 +50,34 @@ def _pct(v):
     return '—' if v is None else f"{format_num_es(v, 1)}%"
 
 
+def _nums(lista):
+    """Devuelve solo los valores numéricos válidos (no None) de una lista."""
+    return [x for x in (lista or []) if isinstance(x, (int, float))]
+
+
+def _prom(lista):
+    """Promedio seguro de una lista de números, ignorando None."""
+    val = _nums(lista)
+    return (sum(val) / len(val)) if val else 0
+
+
+def _max(lista, def_val=0):
+    """Máximo seguro de una lista de números, ignorando None."""
+    val = _nums(lista)
+    return max(val) if val else def_val
+
+
+def _min(lista, def_val=0):
+    """Mínimo seguro de una lista de números, ignorando None."""
+    val = _nums(lista)
+    return min(val) if val else def_val
+
+
+def _sum(lista):
+    """Suma segura de una lista de números, ignorando None."""
+    return sum(_nums(lista))
+
+
 # ---------------------------------------------------------------------------
 # Catálogo de indicadores: (clave de datos, título, explicación, canvas capturados)
 # ---------------------------------------------------------------------------
@@ -284,8 +312,8 @@ def _detalle(clave, d, u):
                 out.append(Paragraph(f"Se muestran 25 de {len(pend)} placas pendientes.", _s_vacio))
         return out
     if clave == 'kpi_02':
-        ll = d.get('llantas') or []
-        vh = d.get('vehiculos') or []
+        ll = _nums(d.get('llantas'))
+        vh = _nums(d.get('vehiculos'))
         prom = d.get('promedio_llantas_por_vehiculo') or d.get('razon_promedio')
         if ll or vh or prom is not None:
             ult_ll = ll[-1] if ll else 0
@@ -298,11 +326,11 @@ def _detalle(clave, d, u):
     if clave == 'kpi_03':
         pct_r = d.get('pct_reencauche')
         if pct_r is None and d.get('porcentajes'):
-            pct_r = d['porcentajes'][-1]
+            pct_r = (_nums(d['porcentajes']) or [None])[-1]
         meta = d.get('meta_porcentaje', 70.0)
         c = d.get('ciclos') or {}
-        orig = sum(c.get('original') or [])
-        reen = sum(c.get('r1') or []) + sum(c.get('r2') or []) + sum(c.get('r3_mas') or [])
+        orig = _sum(c.get('original'))
+        reen = _sum(c.get('r1')) + _sum(c.get('r2')) + _sum(c.get('r3_mas'))
         if pct_r is not None or orig or reen:
             return [_cifras([("% Reencauche actual", _pct(pct_r)),
                             ("Meta de reencauche", _pct(meta)),
@@ -322,7 +350,9 @@ def _detalle(clave, d, u):
         return []
     if clave == 'kpi_05':
         cruzada = d.get('tabla_cruzada') or []
-        tot_ret = d.get('total_cambios_requeridos') or (sum(r.get('total', 0) for r in cruzada) if cruzada else 0)
+        tot_ret = d.get('total_cambios_requeridos')
+        if tot_ret is None:
+            tot_ret = sum((r.get('total') or 0) for r in cruzada) if cruzada else 0
         out = [_cifras([("Llantas en límite de retiro", format_miles_es(tot_ret))])]
         if cruzada:
             out.append(Spacer(1, 4))
@@ -334,8 +364,12 @@ def _detalle(clave, d, u):
         return out
     if clave == 'kpi_06':
         tabla_p = d.get('tabla_perdidas') or []
-        mm = d.get('total_mm_perdidos') or (sum(p.get('total_mm', 0) for p in tabla_p) if tabla_p else 0)
-        dinero = d.get('impacto_economico_total') or (sum(p.get('perdida_pesos', 0) for p in tabla_p) if tabla_p else 0)
+        mm = d.get('total_mm_perdidos')
+        if mm is None:
+            mm = sum((p.get('total_mm') or 0) for p in tabla_p) if tabla_p else 0
+        dinero = d.get('impacto_economico_total')
+        if dinero is None:
+            dinero = sum((p.get('perdida_pesos') or 0) for p in tabla_p) if tabla_p else 0
         out = [_cifras([("Vehículos desalineados", format_miles_es(len(tabla_p))),
                         ("Milímetros perdidos", f"{format_num_es(mm, 1)} mm"),
                         ("Pérdida económica estimada", _pesos(dinero))])]
@@ -358,7 +392,8 @@ def _detalle(clave, d, u):
     if clave == 'kpi_08':
         cruces = d.get('cruces_bodega2') or []
         fm = d.get('frecuencia_mensual') or {}
-        n_apar = len(cruces) or ((fm.get('valores') or [0])[-1] if fm.get('valores') else 0)
+        valores_fm = _nums(fm.get('valores'))
+        n_apar = len(cruces) or (valores_fm[-1] if valores_fm else 0)
         out = [_cifras([("Pares duales con desbalance (> 2,5 mm)", format_miles_es(n_apar))])]
         if cruces:
             out.append(Spacer(1, 4))
@@ -382,7 +417,7 @@ def _detalle(clave, d, u):
                         ("Diésel desperdiciado est.", f"{format_miles_es(gal)} gal/mes")])]
     if clave == 'kpi_10':
         efect = d.get('efectividad_taller_pct')
-        frec = d.get('frecuencias') or []
+        frec = _nums(d.get('frecuencias'))
         return [_cifras([("Total novedades mecánicas", format_miles_es(sum(frec))),
                         ("Efectividad del taller", _pct(efect) if efect is not None else "Sin histórico")])]
     if clave == 'kpi_11':
@@ -396,24 +431,24 @@ def _detalle(clave, d, u):
                          ("% desgaste máx.", _pct(d.get('pct_desgaste') or 0)),
                          (f"Recorrido prom. ({u})", format_miles_es(d.get('km_recorridos') or 0))])]
     if clave == 'kpi_13':
-        reales = d.get('km_reales') or []
-        proy = d.get('proyeccion_final') or []
+        reales = _nums(d.get('km_reales'))
+        proy = _nums(d.get('proyeccion_final'))
         if reales or proy:
-            prom_r = sum(reales) / len(reales) if reales else 0
-            prom_p = sum(proy) / len(proy) if proy else 0
+            prom_r = _prom(reales)
+            prom_p = _prom(proy)
             dif = max(0, prom_p - prom_r)
             return [_cifras([(f"Recorrido real promedio ({u})", format_miles_es(prom_r)),
                             (f"Proyección prom. al retiro ({u})", format_miles_es(prom_p)),
                             (f"Vida remanente estimada ({u})", format_miles_es(dif))])]
         return []
     if clave == 'kpi_14':
-        p = d.get('proyeccion_km') or []
-        k = d.get('km_mm') or []
-        c = d.get('cpk') or []
+        p = _nums(d.get('proyeccion_km'))
+        k = _nums(d.get('km_mm'))
+        c = _nums(d.get('cpk'))
         if p or k or c:
-            prom_p = sum(p) / len(p) if p else 0
-            prom_k = sum(k) / len(k) if k else 0
-            prom_c = sum(c) / len(c) if c else 0
+            prom_p = _prom(p)
+            prom_k = _prom(k)
+            prom_c = _prom(c)
             return [_cifras([(f"Proyección promedio ({u})", format_miles_es(prom_p)),
                             (f"Rendimiento prom. ({u}/mm)", f"{format_num_es(prom_k, 1)}"),
                             ("CPK medio proyectado", _cpk(prom_c if prom_c > 0 else None, u))])]
@@ -428,30 +463,30 @@ def _detalle(clave, d, u):
                Paragraph(f"{f.get('llantas_con_cpk') or 0} vidas de llanta con CPK; {f.get('llantas_sin_precio') or 0} sin precio "
                          "(no entran al cálculo).", _s_vacio), Spacer(1, 4),
                _tabla(["Vida", "Llantas", "CPK operativo", "CPK proyectado"],
-                      [[v.get('vida'), v.get('llantas'), _cpk(v.get('cpk_operativo'), u), _cpk(v.get('cpk_proyectado'), u)]
+                      [[v.get('vida') or '-', format_miles_es(v.get('llantas') or 0), _cpk(v.get('cpk_operativo'), u), _cpk(v.get('cpk_proyectado'), u)]
                        for v in d.get('por_vida') or []], [120, 100, 160, 160])]
         if d.get('administrativo'):
             out += [Spacer(1, 4), _tabla(["Mes", "Inversión instalada", f"Recorrido flota ({u})", "CPK administrativo"],
-                                         [[m.get('mes'), _pesos(m.get('inversion')) if m.get('inversion') else '-',
-                                           format_miles_es(m['km_flota']) if m.get('km_flota') else '-',
+                                         [[m.get('mes') or '-', _pesos(m.get('inversion')) if m.get('inversion') else '-',
+                                           format_miles_es(m.get('km_flota') or 0) if m.get('km_flota') else '-',
                                            _cpk(m.get('cpk_administrativo'), u)]
                                           for m in reversed(d['administrativo'])], [100, 150, 140, 150])]
         return out
     if clave == 'kpi_15':
-        prom = d.get('promedio') or []
-        maxi = d.get('maximo') or []
+        prom = _nums(d.get('promedio'))
+        maxi = _nums(d.get('maximo'))
         brecha = d.get('brecha_promedio_total')
         if prom or maxi:
-            v_prom = sum(prom) / len(prom) if prom else 0
-            v_max = max(maxi) if maxi else 0
+            v_prom = _prom(prom)
+            v_max = _max(maxi)
             return [_cifras([(f"Proyección promedio ({u})", format_miles_es(v_prom)),
                             (f"Máximo alcanzado ({u})", format_miles_es(v_max)),
                             ("Brecha de potencial", _pct(brecha) if brecha is not None else "—")])]
         return []
     if clave == 'kpi_16':
         labels = d.get('labels') or []
-        conteo = d.get('conteo_llantas') or []
-        proy = d.get('proyeccion_promedio') or []
+        conteo = [(x or 0) for x in (d.get('conteo_llantas') or [])]
+        proy = [(x or 0) for x in (d.get('proyeccion_promedio') or [])]
         if labels and (conteo or proy):
             return [Spacer(1, 4), _tabla(["Rango de desgaste (% banda)", "Llantas evaluadas", f"Proyección promedio ({u})"],
                                          [[labels[i], format_miles_es(conteo[i] if i < len(conteo) else 0),
@@ -472,9 +507,12 @@ def _detalle(clave, d, u):
         return [_cifras([("Bajas en reclamo de garantía (<30% desgaste)", format_miles_es(len(gar)))])]
     if clave == 'kpi_19':
         gl = d.get('grafico_lineas') or {}
-        max_p = max(gl.get('maximo') or [0]) if gl.get('maximo') else 0
-        prom_p = (sum(gl.get('promedio') or []) / len(gl['promedio'])) if gl.get('promedio') else 0
-        min_p = min(gl.get('minimo') or [0]) if gl.get('minimo') else 0
+        max_vals = _nums(gl.get('maximo'))
+        prom_vals = _nums(gl.get('promedio'))
+        min_vals = _nums(gl.get('minimo'))
+        max_p = _max(max_vals)
+        prom_p = _prom(prom_vals)
+        min_p = _min(min_vals)
         scrap = d.get('dinero_perdido_scrap_cop') or 0
         if max_p or prom_p or min_p or scrap:
             return [_cifras([("Prof. máxima retiro", f"{format_num_es(max_p, 1)} mm"),
@@ -498,14 +536,14 @@ def _detalle(clave, d, u):
             # Con parque cargado: % del parque inspeccionado en cada mes
             return [_tabla(["Mes", "Vehículos insp.", "% del parque", "Presión correcta", "En límite de retiro",
                             "Prof. mín. prom.", "Alerta alineación", "CPK operativo"],
-                           [[x.get('mes'), x.get('vehiculos_inspeccionados'), _pct(x.get('pct_cumplimiento_parque')),
+                           [[x.get('mes') or '-', format_miles_es(x.get('vehiculos_inspeccionados') or 0), _pct(x.get('pct_cumplimiento_parque')),
                              _pct(x.get('pct_presion_correcta')), _pct(x.get('pct_en_retiro')),
                              '—' if x.get('prof_minima_promedio') is None else f"{format_num_es(x['prof_minima_promedio'])} mm",
                              _pct(x.get('pct_alerta_alineacion')), _cpk(x.get('cpk_operativo'), u)] for x in meses],
                            [50, 55, 55, 65, 70, 65, 65, 115], vacio="Sin inspecciones en el periodo.")]
         return [_tabla(["Mes", "Vehículos insp.", "Presión correcta", "En límite de retiro", "Prof. mín. prom.",
                         "Alerta alineación", "CPK operativo"],
-                       [[x.get('mes'), x.get('vehiculos_inspeccionados'), _pct(x.get('pct_presion_correcta')),
+                       [[x.get('mes') or '-', format_miles_es(x.get('vehiculos_inspeccionados') or 0), _pct(x.get('pct_presion_correcta')),
                          _pct(x.get('pct_en_retiro')),
                          '—' if x.get('prof_minima_promedio') is None else f"{format_num_es(x['prof_minima_promedio'])} mm",
                          _pct(x.get('pct_alerta_alineacion')), _cpk(x.get('cpk_operativo'), u)] for x in meses],
