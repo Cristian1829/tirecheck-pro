@@ -4858,6 +4858,18 @@ def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', toda
         elif campo == 'cliente':
             cursor.execute("SELECT cliente FROM configuracion_clientes")
             valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+        elif campo == 'subcliente':
+            # Las sedes creadas o editadas en Catálogos (reglas del cliente) también se ofrecen en la inspección,
+            # aunque todavía no tengan ninguna inspección registrada
+            consulta_sedes = """
+                SELECT DISTINCT subcliente FROM configuracion_limites_retiro
+                WHERE subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) != 'TODOS'"""
+            params_sedes = []
+            if filtro_cliente:
+                consulta_sedes += " AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+                params_sedes.append(str(filtro_cliente).strip())
+            cursor.execute(consulta_sedes, params_sedes)
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
 
         if campo in ('cliente', 'subcliente', 'tipo_operacion'):
             valores_insp = sorted(list(set(str(v).strip().upper() for v in valores_insp if v and str(v).strip())))
@@ -11825,6 +11837,11 @@ def _armar_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
             FROM catalogo_vehiculos 
             WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
               AND subcliente IS NOT NULL AND TRIM(subcliente) != ''
+            UNION
+            SELECT DISTINCT UPPER(TRIM(cliente)), UPPER(TRIM(subcliente)) 
+            FROM configuracion_limites_retiro 
+            WHERE cliente IS NOT NULL AND TRIM(cliente) != '' 
+              AND subcliente IS NOT NULL AND TRIM(subcliente) != '' AND UPPER(TRIM(subcliente)) != 'TODOS'
         """)
         for r in cursor.fetchall():
             c = str(r[0]).strip().upper()

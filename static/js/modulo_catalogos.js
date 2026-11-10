@@ -586,6 +586,12 @@
           if (typeof cargarCatalogos === 'function') {
             await cargarCatalogos();
           }
+          // Si ese cliente está elegido en la inspección de patio, su lista de sedes se actualiza ya
+          // (antes quedaba la lista vieja hasta volver a elegir el cliente o recargar la página)
+          const clienteEnPatio = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
+          if (clienteEnPatio === nom && typeof poblarSelect === 'function') {
+            await poblarSelect('subcliente', `/api/valores-campo?campo=subcliente&cliente=${encodeURIComponent(nom)}`, 'ej. Principal (Seleccionar sede)');
+          }
         } else {
           mostrarToast('❌ Error: ' + (resp.detail || resp.mensaje || 'No se pudo guardar el cliente'), true);
         }
