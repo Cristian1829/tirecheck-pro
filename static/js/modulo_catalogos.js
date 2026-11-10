@@ -533,6 +533,27 @@
         return;
       }
 
+      // Validación propia con mensaje claro: antes el navegador bloqueaba el envío sin avisar cuando un número
+      // guardado quedaba fuera de los límites del campo (por ejemplo, una meta con decimales)
+      const revisarNumero = (id, nombre, min, max) => {
+        const v = document.getElementById(id).value.trim();
+        if (v === '') return null;
+        const n = Number(v);
+        if (!Number.isFinite(n) || n < min || (max !== null && n > max)) {
+          return `${nombre} debe estar entre ${min} y ${max}`.replace(' y null', ' o más');
+        }
+        return null;
+      };
+      const errorNumero = revisarNumero('nuevo_cliente_limite', 'El límite de retiro (mm)', 1, 10)
+        || revisarNumero('nuevo_cliente_dias_inspeccion', 'Los días mínimos entre inspecciones', 1, 180)
+        || revisarNumero('nuevo_cliente_meta_reencauche', 'La meta de reencauche (%)', 0, 100)
+        || revisarNumero('nuevo_cliente_aprob_reencauche', 'La aprobación en planta (%)', 0, 100)
+        || revisarNumero('nuevo_cliente_stock_seguridad', 'El stock de seguridad', 0, null);
+      if (errorNumero) {
+        mostrarToast('⚠️ ' + errorNumero, true);
+        return;
+      }
+
       const payload = {
         cliente: nom,
         tipo_licencia: document.getElementById('nuevo_cliente_licencia').value,
