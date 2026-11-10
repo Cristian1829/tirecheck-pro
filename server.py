@@ -2154,7 +2154,15 @@ def api_obtener_limite_cliente(cliente: str = "", subcliente: str = "TODOS", eje
             raise HTTPException(status_code=403, detail="No tiene permisos para consultar este cliente")
     lim = database.obtener_limite_retiro_cliente(cliente, subcliente, eje)
     lic = database.obtener_licencia_cliente(cliente)
-    return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim, "tipo_licencia": lic}
+    # Presión objetivo del cliente por eje: patio la propone en cada posición (antes un 100 fijo; auditoría H-05)
+    psi = {}
+    if cliente and cliente.strip().upper() != "TODOS":
+        cfg = database.obtener_configuracion_avanzada_cliente(cliente) or {}
+        for eje_k in ("direccional", "traccion", "arrastre"):
+            v = database.to_float(cfg.get(f"psi_objetivo_{eje_k}"), 0.0)
+            psi[eje_k] = v if v > 0 else None
+    return {"cliente": cliente, "subcliente": subcliente, "eje": eje, "limite_retiro_mm": lim, "tipo_licencia": lic,
+            "psi_objetivo": psi}
 
 @app.post("/api/configuraciones-clientes")
 def api_guardar_configuracion_cliente(item: LimiteClienteItem, admin: dict = Depends(requerir_admin_o_jefatura)):

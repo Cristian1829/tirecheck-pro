@@ -369,7 +369,7 @@
           subcliente: payload.subcliente || '',
           tipo_operacion: payload.tipo_operacion || '',
           ultimo_km: payload.kilometraje || 0,
-          dimension: payload.dimension || '295/80R22.5',
+          dimension: payload.dimension || '',
           posiciones_previas: {}
         };
       }
@@ -391,7 +391,7 @@
         prof_ext: payload.prof_ext || 0,
         prof_cent: payload.prof_cent || 0,
         prof_int: payload.prof_int || 0,
-        psi: payload.psi || 100,
+        psi: payload.psi || 0,  // sin lectura = sin dato (antes 100; H-05)
         novedades: payload.novedades || '',
         fecha: (payload.fecha || '').slice(0, 10)
       };
@@ -900,6 +900,10 @@
       descargarPaquetePatioOffline(false);
       actualizarIndicadorConexionOffline();
       mostrarToast(`¡Bienvenido, ${usuarioActual.nombre_completo}!`);
+      // Llantas que quedaron en el teléfono (p. ej. al vencer la sesión en patio) se envían al volver a ingresar
+      TireAnalyzeOfflineDB.obtenerPendientes()
+        .then(p => { if (p && p.length && navigator.onLine) sincronizarColaOffline(); })
+        .catch(() => {});
     }
 
     async function cerrarSesionUsuario() {

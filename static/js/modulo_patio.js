@@ -285,9 +285,14 @@
     }
 
     async function cargarCatalogos(seleccionarOp = null, seleccionarTip = null) {
+      // Al volver a ingresar a mitad de una captura se conservan operación, tipología y sede
+      // (antes se repoblaban desde cero y la siguiente llanta quedaba sin ellas; auditoría H-17)
+      seleccionarOp = seleccionarOp || document.getElementById('tipo_operacion')?.value || null;
+      seleccionarTip = seleccionarTip || document.getElementById('tipologia')?.value || null;
+      const sedePrevia = document.getElementById('subcliente')?.value || '';
       await Promise.all([
         poblarSelect('cliente', '/api/valores-campo?campo=cliente', 'ej. TransCarga (Seleccionar cliente)'),
-        poblarSelect('dimension', '/api/valores-campo?campo=dimension', '295/80R22.5', '295/80R22.5')
+        poblarSelect('dimension', '/api/valores-campo?campo=dimension', 'Seleccione la dimensión…')
       ]);
 
       // Aplicar predeterminación o filtrado de clientes asignados al usuario en sesión
@@ -334,6 +339,10 @@
           cambioTipologia();
         }
       }
+      const selSede = document.getElementById('subcliente');
+      if (sedePrevia && selSede && Array.from(selSede.options).some(o => o.value === sedePrevia)) {
+        selSede.value = sedePrevia;
+      }
     }
 
     async function poblarDatalist(elementId, endpoint) {
@@ -367,7 +376,54 @@
       }
     }
 
+    // La llanta no se pudo guardar ni en el servidor ni en el teléfono: error que no se cierra solo y respaldo en
+    // archivo para no perder la medición (auditoría H-02). El formulario se deja tal cual para reintentar.
+    function avisarCapturaNoGuardada(item) {
+      mostrarToast('❌ La llanta NO quedó guardada: el teléfono no permitió guardarla. No cambie de posición.', true);
+      const descargar = confirm(
+        `La llanta de la posición ${item.posicion} de ${item.placa} NO se guardó.\n\n` +
+        'Sin señal y sin espacio disponible en el teléfono (o en modo privado) no se puede guardar.\n' +
+        '¿Descargar un respaldo de esta medición en un archivo para no perderla?');
+      if (!descargar) return;
+      try {
+        const a = document.createElement('a');
+        a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(item, null, 2));
+        a.download = `llanta_no_guardada_${item.placa}_pos${item.posicion}_${(item.fecha || '').slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (e) {
+        alert('Tampoco se pudo descargar el respaldo. Anote la medición antes de continuar.');
+      }
+    }
+
     let clienteLicenciaCaptura = 'PRO';
+    // Presión objetivo del cliente por eje ({direccional, traccion, arrastre}); null = sin dato (sin conexión)
+    let psiObjetivoClienteCaptura = null;
+
+    // Eje de la posición según la estructura de la tipología: 'direccional', 'traccion', 'arrastre' o 'repuesto'
+    function ejePsiPosicionPatio(pos) {
+      const p = parseInt(pos) || 1;
+      if (esPosicionDireccionalActual(p)) return 'direccional';
+      for (const eje of (Array.isArray(esquemaTipologiaCache) ? esquemaTipologiaCache : [])) {
+        if ((eje.posiciones || []).some(r => parseInt(r.pos) === p)) {
+          const t = String(eje.tipo || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+          if (t.includes('trac')) return 'traccion';
+          if (t.includes('rep')) return 'repuesto';
+          return 'arrastre';  // libre, remolque, arrastre, portante (como en estructura_ejes.py)
+        }
+      }
+      return 'traccion';
+    }
+
+    // Propone la presión objetivo del cliente para el eje de la posición (antes un 100 fijo para todos los
+    // clientes y ejes; auditoría H-05). El inspector la corrige con lo que mida; sin dato la casilla queda vacía.
+    function prellenarPsiPosicion(pos) {
+      const el = document.getElementById('psi');
+      if (!el) return;
+      const obj = psiObjetivoClienteCaptura ? psiObjetivoClienteCaptura[ejePsiPosicionPatio(pos)] : null;
+      el.value = obj ? String(Math.round(Number(obj))) : '';
+    }
 
     async function actualizarLimiteCliente() {
       const cli = document.getElementById('cliente').value.trim();
@@ -391,6 +447,7 @@
         } catch(eDb) {}
       }
 
+      psiObjetivoClienteCaptura = (d && d.psi_objetivo) ? d.psi_objetivo : null;
       if (d) {
         const mm = d.limite_retiro_mm || 3.0;
         document.getElementById('lblMmRetiroCliente').textContent = fmtDec(Number(mm), 1);
@@ -1898,8 +1955,8 @@
           } else if (tipo === 'llanta') {
             const m = document.getElementById('marca').value.trim() || 'Marca';
             const d = document.getElementById('diseno').value.trim() || 'Diseño';
-            const dim = document.getElementById('dimension').value.trim() || '295/80R22.5';
-            const v = document.getElementById('vida').value || 'Original';
+            const dim = document.getElementById('dimension').value.trim() || 'Dimensión';
+            const v = document.getElementById('vida').value || 'Vida';
             txt.textContent = `${m} ${d} · ${dim} · ${v}`;
           }
           resumen.classList.remove('hidden');
@@ -2638,7 +2695,7 @@
               // 4. Dimensión: Prevalecer la dimensión fijada en la primera llanta para este vehículo,
               // o cargar la dimensión histórica y fijarla como predeterminada del vehículo.
               // Una llanta recién montada trae su propia dimensión.
-              const dimParaCargar = (llantaCambiada && d.datos.dimension) || dimensionPredeterminadaVehiculo || d.datos.dimension || '295/80R22.5';
+              const dimParaCargar = (llantaCambiada && d.datos.dimension) || dimensionPredeterminadaVehiculo || d.datos.dimension || '';
               if (dimParaCargar) {
                 asignarValorSelect('dimension', dimParaCargar);
                 if (!dimensionPredeterminadaVehiculo && d.datos.dimension) {
@@ -2741,13 +2798,14 @@
               }
 
               const selDim = document.getElementById('dimension');
-              const dimParaCargar = dimensionPredeterminadaVehiculo || '295/80R22.5';
+              const dimParaCargar = dimensionPredeterminadaVehiculo || '';
               if (selDim) {
-                asignarValorSelect('dimension', dimParaCargar);
+                if (dimParaCargar) asignarValorSelect('dimension', dimParaCargar); else selDim.value = '';
               }
 
+              // Llanta sin historial: la vida la elige el inspector (antes quedaba «Original» sin elegirla; H-05)
               const selVida = document.getElementById('vida');
-              if (selVida) selVida.value = 'Original';
+              if (selVida) selVida.value = '';
 
               const selBanda = document.getElementById('banda_reen');
               if (selBanda) selBanda.value = '';
@@ -2774,7 +2832,7 @@
             document.getElementById('prof_ext').value = '';
             document.getElementById('prof_cent').value = '';
             document.getElementById('prof_int').value = '';
-            document.getElementById('psi').value = '100';
+            prellenarPsiPosicion(pos);
             document.getElementById('novedades').value = '';
             const panelRetiro = document.getElementById('panelAlertaRetiro');
             if (panelRetiro) panelRetiro.classList.add('hidden');
@@ -3054,7 +3112,7 @@
       const pExt = document.getElementById('prof_ext'); if (pExt) pExt.value = '';
       const pCen = document.getElementById('prof_cent'); if (pCen) pCen.value = '';
       const pInt = document.getElementById('prof_int'); if (pInt) pInt.value = '';
-      const psi = document.getElementById('psi'); if (psi) psi.value = '100';
+      prellenarPsiPosicion(document.getElementById('posicion')?.value);
       const nov = document.getElementById('novedades'); if (nov) nov.value = '';
       const panelRetiro = document.getElementById('panelAlertaRetiro');
       if (panelRetiro) panelRetiro.classList.add('hidden');
@@ -3082,14 +3140,14 @@
       }
 
       const selDim = document.getElementById('dimension');
-      const dimDefault = dimensionPredeterminadaVehiculo || '295/80R22.5';
+      const dimDefault = dimensionPredeterminadaVehiculo || '';
       if (selDim) {
-        asignarValorSelect('dimension', dimDefault);
+        if (dimDefault) asignarValorSelect('dimension', dimDefault); else selDim.value = '';
       }
 
       const selVida = document.getElementById('vida');
       if (selVida) {
-        selVida.value = 'Original';
+        selVida.value = '';
         validarVida();
       }
 
@@ -3111,7 +3169,7 @@
       const pExt = document.getElementById('prof_ext'); if (pExt) pExt.value = '';
       const pCen = document.getElementById('prof_cent'); if (pCen) pCen.value = '';
       const pInt = document.getElementById('prof_int'); if (pInt) pInt.value = '';
-      const psi = document.getElementById('psi'); if (psi) psi.value = '100';
+      prellenarPsiPosicion(document.getElementById('posicion')?.value);
       const nov = document.getElementById('novedades'); if (nov) nov.value = '';
 
       // 3. Ocultar badges de reconocimiento, historial y alertas de retiro
@@ -3269,11 +3327,11 @@
       cacheUltimoDisenoVehiculo = '';
       cacheUltimaDimensionVehiculo = '';
       const selDim = document.getElementById('dimension');
-      if (selDim) selDim.value = '295/80R22.5';
+      if (selDim) selDim.value = '';
       const selDis = document.getElementById('diseno');
       if (selDis) selDis.innerHTML = '<option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>';
       const selVida = document.getElementById('vida');
-      if (selVida) selVida.value = 'Original';
+      if (selVida) selVida.value = '';
       validarVida();
 
       const boxSugerencias = document.getElementById('boxSugerenciasCatalogo');
@@ -3964,6 +4022,16 @@
         hayErrores = true;
       }
 
+      // Vida y dimensión se eligen: no se guardan supuestas (auditoría H-05)
+      for (const [campo, err] of [['vida', 'err_vida'], ['dimension', 'err_dimension']]) {
+        const v = (document.getElementById(campo)?.value || '').trim();
+        if (!v || v === '__nuevo__') {
+          marcarErrorCampo(campo, err);
+          if (!hayErrores) document.getElementById(campo)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          hayErrores = true;
+        }
+      }
+
       if (hayErrores) {
         mostrarToast('⚠️ Por favor completa los campos obligatorios resaltados en rojo', true);
         return;
@@ -4091,15 +4159,26 @@
         }
       }
 
-      async function guardarEnColaOffline() {
+      // Guarda la llanta en la cola del teléfono. Si el teléfono no la puede guardar (memoria llena, modo privado,
+      // almacenamiento bloqueado) NO se anuncia como guardada ni se limpia el formulario: antes solo quedaba un
+      // console.warn y la pantalla decía «Guardada en el teléfono» (auditoría H-02).
+      async function guardarEnColaOffline(motivo = '') {
         try {
           await TireAnalyzeOfflineDB.guardarPendiente(payload);
+        } catch (eDb) {
+          console.error('No se pudo guardar la llanta en el teléfono:', eDb);
+          avisarCapturaNoGuardada(payload);
+          return false;
+        }
+        try {
           await actualizarVehiculoOfflineConNuevaInspeccion(payload);
           await actualizarIndicadorConexionOffline();
-        } catch (eDb) {
-          console.warn('Error guardando en cola offline:', eDb);
+        } catch (eAux) {
+          console.warn('La llanta quedó en la cola, pero no se actualizó el perfil del vehículo sin conexión:', eAux);
         }
         await completarGuardadoRueda(true);
+        if (motivo) mostrarToast(motivo);
+        return true;
       }
 
       try {
@@ -4112,11 +4191,18 @@
               headers: {'Content-Type': 'application/json'},
               body: JSON.stringify(payload)
             }, 4500);
-            const result = await res.json();
+            const result = await res.json().catch(() => ({}));
             if (res.ok) {
               actualizarVehiculoOfflineConNuevaInspeccion(payload).catch(() => {});
               await completarGuardadoRueda(false);
+            } else if (res.status === 401 || res.status >= 500) {
+              // Sesión vencida o falla del servidor: la llanta no se pierde, queda en la cola del teléfono y se
+              // envía al volver a ingresar o al sincronizar (antes se descartaba con un aviso; auditoría H-17)
+              await guardarEnColaOffline(res.status === 401
+                ? '🔐 Sesión vencida: la llanta quedó guardada en el teléfono y se enviará al volver a ingresar.'
+                : '⚠️ El servidor no respondió bien: la llanta quedó guardada en el teléfono para enviarla después.');
             } else {
+              // Rechazo de negocio (candados, permisos): el formulario queda tal cual para corregir y reintentar
               mostrarToast(result.detail || result.message || 'Error al guardar', true);
             }
           } catch (errRed) {

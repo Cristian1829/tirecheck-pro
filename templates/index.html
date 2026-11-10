@@ -1095,7 +1095,7 @@
                 <div>
                   <label class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
                   <select id="dimension" onchange="verificarOpcionNuevaSelect(this, 'dimensión'); alCambiarDimensionMobile(); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
-                    <option value="295/80R22.5" selected>295/80R22.5</option>
+                    <option value="" disabled selected>Seleccione la dimensión…</option>
                   </select>
                   <datalist id="dl_dimensiones"></datalist>
                 </div>
@@ -1199,7 +1199,7 @@
               <label class="block text-xs font-bold text-slate-700">Presión Calibrada (PSI) *</label>
               <div class="flex items-center space-x-3">
                 <div class="relative flex-1 sm:max-w-xs flex items-center">
-                  <input type="number" id="psi" step="1" min="0" max="160" value="100" placeholder="100" inputmode="numeric" class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="limpiarErrorCampo('psi');">
+                  <input type="number" id="psi" step="1" min="0" max="160" value="" placeholder="PSI" inputmode="numeric" class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="limpiarErrorCampo('psi');">
                   <span class="absolute right-3 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">PSI</span>
                 </div>
               </div>
@@ -1212,6 +1212,14 @@
               <div id="err_psi" class="hidden text-xs font-bold text-rose-700 bg-rose-50 border border-rose-300 rounded-xl py-2 px-3 flex items-center space-x-2">
                 <i class="fa-solid fa-circle-exclamation text-rose-600 text-xs"></i>
                 <span>La presión del neumático en PSI es obligatoria para guardar.</span>
+              </div>
+              <div id="err_vida" class="hidden text-xs font-bold text-rose-700 bg-rose-50 border border-rose-300 rounded-xl py-2 px-3 flex items-center space-x-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-600 text-xs"></i>
+                <span>Seleccione la vida de la llanta (Original, R1, R2…) para guardar.</span>
+              </div>
+              <div id="err_dimension" class="hidden text-xs font-bold text-rose-700 bg-rose-50 border border-rose-300 rounded-xl py-2 px-3 flex items-center space-x-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-600 text-xs"></i>
+                <span>Seleccione la dimensión de la llanta para guardar.</span>
               </div>
 
               <!-- Presets Táctiles de Presión PSI en Estilo Neutro -->
