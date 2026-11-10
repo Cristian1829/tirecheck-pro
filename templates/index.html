@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#091323">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -74,23 +74,37 @@
     .tire-interactive-node:hover .tire-rubber-body {
       filter: brightness(1.15);
     }
+    /* Foco de teclado visible en cualquier llanta, esté o no seleccionada (auditoría H-13) */
+    .tire-interactive-node:focus-visible {
+      outline: 3px solid #2563EB;
+      outline-offset: 2px;
+      filter: drop-shadow(0 0 2px #2563EB) drop-shadow(0 0 4px #2563EB);
+    }
+    /* En el chasis el doble toque no debe ampliar la página (el zoom con dos dedos sí queda permitido; H-12) */
+    .tire-interactive-node, .tire-repuesto-card { touch-action: manipulation; }
     .tire-interactive-node:focus-visible .tire-selection-ring {
       opacity: 1 !important;
       stroke: #2563EB !important;
       stroke-width: 3px !important;
     }
 
-    /* Textos de ejemplo (placeholders) tenues, sutiles y elegantes */
+    /* Textos de ejemplo (placeholders): slate-500 sin transparencia = contraste 4,76:1 (antes 1,78:1; auditoría H-19) */
     input::placeholder, textarea::placeholder {
-      color: #94A3B8 !important; /* slate-400 suave */
+      color: #64748B !important;
       font-weight: 400 !important;
-      opacity: 0.65 !important;
+      opacity: 1 !important;
     }
 
     select:has(option[value=""]:checked),
     select:has(option[value=""]:disabled:checked) {
-      color: #94A3B8 !important;
+      color: #64748B !important;
       font-weight: 400 !important;
+    }
+
+    /* Modales: en pantallas bajas la tarjeta se desplaza por dentro y el botón de guardar queda alcanzable (H-28) */
+    [role="dialog"].fixed.inset-0:not(.overflow-y-auto) > div {
+      max-height: calc(100dvh - 2rem);
+      overflow-y: auto;
     }
 
     /* Rueda de repuesto interactiva en HTML */
@@ -757,7 +771,7 @@
               </div>
 
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente <span class="text-rose-500 font-black">*</span></label>
+                <label for="subcliente" class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente <span class="text-rose-500 font-black">*</span></label>
                 <select id="subcliente" required onchange="limpiarErrorCampo('subcliente'); verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
                   <option value="" disabled selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
                 </select>
@@ -770,7 +784,7 @@
             </div>
 
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
+              <label for="fecha" class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
               <input type="date" id="fecha" onchange="alCambiarFechaFormulario();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
             </div>
           </div>
@@ -806,7 +820,7 @@
 
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
+                <label for="kilometraje" id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
                 <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
                 <!-- Solo al crear una placa nueva: en qué se mide el vehículo -->
                 <select id="unidad_medida_placa" onchange="aplicarUnidadPlacaPatio()" class="hidden mt-1 w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-slate-800" title="Placa nueva: elija si el vehículo se mide en kilómetros o en horas de motor">
@@ -816,7 +830,7 @@
               </div>
 
               <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Tipo de Operación</label>
+                <label for="tipo_operacion" class="block text-[11px] font-bold text-slate-600 mb-1">Tipo de Operación</label>
                 <select id="tipo_operacion" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
                   <option value="Carga Seca">Carga Seca</option>
                 </select>
@@ -1085,7 +1099,7 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Diseño / Modelo</label>
+                  <label for="diseno" class="block text-xs font-bold text-slate-600 mb-1">Diseño / Modelo</label>
                   <select id="diseno" onchange="verificarOpcionNuevaSelect(this, 'diseño / modelo'); autoCompletarDimensionModelo().then(autoCompletarProfInicial);" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected class="text-slate-400 font-normal">ej. X Multi Z (Seleccionar diseño)</option>
                   </select>
@@ -1093,7 +1107,7 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
+                  <label for="dimension" class="block text-xs font-bold text-slate-600 mb-1">Dimensión</label>
                   <select id="dimension" onchange="verificarOpcionNuevaSelect(this, 'dimensión'); alCambiarDimensionMobile(); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" disabled selected>Seleccione la dimensión…</option>
                   </select>
@@ -1101,7 +1115,7 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Vida / Condición</label>
+                  <label for="vida" class="block text-xs font-bold text-slate-600 mb-1">Vida / Condición</label>
                   <select id="vida" onchange="validarVida(); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                     <option value="">Seleccione la vida…</option>
                     <option value="Original">Original (Nueva)</option>
@@ -1118,12 +1132,12 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Prof. Inicial (mm)</label>
+                  <label for="prof_inicial" class="block text-xs font-bold text-slate-600 mb-1">Prof. Inicial (mm)</label>
                   <input type="number" id="prof_inicial" step="0.1" inputmode="decimal" placeholder="16.5" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-blue-700 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div id="box_banda" class="hidden col-span-2">
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Banda Reencauche</label>
+                  <label for="banda_reen" class="block text-xs font-bold text-slate-600 mb-1">Banda Reencauche</label>
                   <select id="banda_reen" onchange="verificarOpcionNuevaSelect(this, 'banda de reencauche'); autoCompletarProfInicial();" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all">
                     <option value="" selected class="text-slate-400 font-normal">ej. BDM Bandag (Seleccionar banda)</option>
                   </select>
@@ -1131,12 +1145,12 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Precio Unitario ($)</label>
+                  <label for="precio" class="block text-xs font-bold text-slate-600 mb-1">Precio Unitario ($)</label>
                   <input type="number" id="precio" step="any" inputmode="numeric" placeholder="1650000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div>
-                  <label id="lblKmMontaje" class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
+                  <label for="km_montaje" id="lblKmMontaje" class="block text-xs font-bold text-slate-600 mb-1">Km de Montaje</label>
                   <input type="number" id="km_montaje" step="any" inputmode="numeric" placeholder="60000" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
               </div>
@@ -1245,7 +1259,7 @@
 
             <!-- Novedades / Observación con Chips Rápidos Neutros & Limpiar Neutro -->
             <div class="space-y-2 pt-1 border-t border-slate-100">
-              <label class="block text-xs font-semibold text-slate-700">Novedades / Daños / Observaciones</label>
+              <label for="novedades" class="block text-xs font-semibold text-slate-700">Novedades / Daños / Observaciones</label>
               <input type="text" id="novedades" placeholder="ej. Desgaste irregular, corte en banda, baja presión, filtración..." class="w-full touch-target px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarHabilitarFotoNovedad()">
               
               <div class="flex items-center flex-wrap gap-1.5 pt-0.5">
@@ -1385,6 +1399,10 @@
             <i class="fa-solid fa-file-excel"></i>
             <span>Importar Excel</span>
           </button>
+          <button type="button" id="btnPapeleraBD" onclick="abrirPapeleraInspecciones()" class="hidden px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center space-x-1.5" title="Inspecciones borradas: ver y restaurar (Solo Administrador)">
+            <i class="fa-solid fa-trash-can-arrow-up" aria-hidden="true"></i>
+            <span>Papelera</span>
+          </button>
           <button type="button" id="btnEliminarDatosClienteBD" onclick="abrirModalEliminarDatosCliente()" class="hidden px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 flex items-center space-x-1.5" title="Deshacer un cargue por error (Solo Administrador)">
             <i class="fa-solid fa-trash-can"></i>
             <span>Eliminar datos de un cliente</span>
@@ -1457,7 +1475,7 @@
           
           <!-- 1. Cliente / Empresa -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Cliente:</label>
+            <label for="filtroBDCliente" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Cliente:</label>
             <select id="filtroBDCliente" onchange="onCambioFiltroBDCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todos</option>
             </select>
@@ -1465,7 +1483,7 @@
 
           <!-- 2. Sede / Subcliente -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Sede:</label>
+            <label for="filtroBDSede" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Sede:</label>
             <select id="filtroBDSede" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todas</option>
             </select>
@@ -1473,7 +1491,7 @@
 
           <!-- 3. Operación -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Operación:</label>
+            <label for="filtroBDOperacion" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Operación:</label>
             <select id="filtroBDOperacion" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todas</option>
             </select>
@@ -1481,7 +1499,7 @@
 
           <!-- 3. Tipología -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Tipología:</label>
+            <label for="filtroBDTipologia" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Tipología:</label>
             <select id="filtroBDTipologia" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todas</option>
             </select>
@@ -1489,7 +1507,7 @@
 
           <!-- 4. Marca de Llanta -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Marca:</label>
+            <label for="filtroBDMarca" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Marca:</label>
             <select id="filtroBDMarca" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todas</option>
             </select>
@@ -1497,7 +1515,7 @@
 
           <!-- 5. Condición / Vida -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Vida:</label>
+            <label for="filtroBDVida" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Vida:</label>
             <select id="filtroBDVida" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todas</option>
               <option value="Original">Original</option>
@@ -1507,7 +1525,7 @@
 
           <!-- 6. Estado / Semáforo de Desgaste -->
           <div class="space-y-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Desgaste / Estado:</label>
+            <label for="filtroBDSemaforo" class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Desgaste / Estado:</label>
             <select id="filtroBDSemaforo" onchange="filtrarTablaBD()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="TODOS">Todos</option>
               <option value="CRITICO">🔴 Crítico (≤ 3.0 mm)</option>
@@ -1619,37 +1637,37 @@
       <!-- Filtros de Diagnóstico (6 Controles Oficiales del Manual v3.5) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2.5 text-xs items-end bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Buscar Placa:</label>
+          <label for="filtro_diag_busqueda" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Buscar Placa:</label>
           <input type="text" id="filtro_diag_busqueda" name="filtroDiagPlaca" data-alias="filtroDiagPlaca" oninput="filtrarTablaDiagnostico()" placeholder="ej. WMK941..." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
+          <label for="filtro_diag_cliente" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtrar Cliente:</label>
           <select id="filtro_diag_cliente" name="filtroDiagCliente" data-alias="filtroDiagCliente" onchange="onCambioFiltroDiagCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todos</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcliente:</label>
+          <label for="filtro_diag_subcliente" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcliente:</label>
           <select id="filtro_diag_subcliente" name="filtroDiagSede" data-alias="filtroDiagSede" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo Operación:</label>
+          <label for="filtro_diag_operacion" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipo Operación:</label>
           <select id="filtro_diag_operacion" name="filtroDiagOperacion" data-alias="filtroDiagOperacion" onchange="onCambioFiltrosDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Fecha Desde:</label>
+          <label for="filtro_diag_fecha_desde" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Fecha Desde:</label>
           <input type="date" id="filtro_diag_fecha_desde" onchange="onCambioRangoFechasDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Fecha Hasta:</label>
+          <label for="filtro_diag_fecha_hasta" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Fecha Hasta:</label>
           <input type="date" id="filtro_diag_fecha_hasta" onchange="onCambioRangoFechasDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtro por Acción:</label>
+          <label for="filtro_diag_accion" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Filtro por Acción:</label>
           <select id="filtro_diag_accion" name="filtroDiagAlerta" data-alias="filtroDiagAlerta" onchange="filtrarTablaDiagnostico()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs">
             <option value="Todos">Todas</option>
             <option value="Retiro Inmediato">🔴 Retiro Inmediato (≤ Límite)</option>
@@ -1925,61 +1943,61 @@
       <!-- Barra de 8 Controles en Cascada -->
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 text-xs bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">No. Interno:</label>
+          <label for="filtroKpiNumero" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">No. Interno:</label>
           <input type="text" id="filtroKpiNumero" oninput="cargarKpis()" placeholder="ej. LL-01..." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold uppercase text-slate-800 focus:outline-none focus:border-indigo-500">
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Cliente:</label>
+          <label for="filtroKpiCliente" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Cliente:</label>
           <select id="filtroKpiCliente" onchange="alCambiarFiltroKpiCliente()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="TODOS">Todos</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcli:</label>
+          <label for="filtroKpiSubcliente" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Sede / Subcli:</label>
           <select id="filtroKpiSubcliente" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Operación:</label>
+          <label for="filtroKpiOperacion" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Operación:</label>
           <select id="filtroKpiOperacion" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipología:</label>
+          <label for="filtroKpiTipologia" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Tipología:</label>
           <select id="filtroKpiTipologia" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Marca:</label>
+          <label for="filtroKpiMarca" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Marca:</label>
           <select id="filtroKpiMarca" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Dimensión:</label>
+          <label for="filtroKpiDimension" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Dimensión:</label>
           <select id="filtroKpiDimension" onchange="cargarSuite20Kpis(); cargarKpis();" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="TODOS">Todas</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Eje Temporal:</label>
+          <label for="filtroKpiEjeTemporal" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Eje Temporal:</label>
           <select id="filtroKpiEjeTemporal" onchange="cargarSuite20Kpis()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="mes">Por mes</option>
             <option value="insp">Por corte</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Base de cálculo:</label>
+          <label for="filtroKpiBase" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Base de cálculo:</label>
           <select id="filtroKpiBase" onchange="cargarSuite20Kpis()" title="Última inspección: estado actual de cada posición. Historial: todas las inspecciones del periodo." class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="ultima">Última</option>
             <option value="historial">Historial</option>
           </select>
         </div>
         <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Unidad:</label>
+          <label for="filtroKpiUnidad" class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">Unidad:</label>
           <select id="filtroKpiUnidad" onchange="cargarSuite20Kpis()" title="Vehículos medidos en kilómetros o en horas de motor" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
             <option value="km">Kilómetros</option>
             <option value="horas">Horas de motor</option>
@@ -1988,6 +2006,11 @@
       </div>
       <!-- Calidad de datos: qué quedó fuera de los cálculos -->
       <div id="kpiCalidadDatos" class="hidden mt-2 text-[11px] font-semibold text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"></div>
+      <!-- Error al cargar la suite: no se dejan a la vista las cifras del filtro anterior (auditoría H-16) -->
+      <div id="kpiErrorCarga" role="alert" class="hidden mt-2 text-xs font-semibold text-rose-900 bg-rose-50 border border-rose-300 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
+        <span id="kpiErrorCargaTexto"></span>
+        <button type="button" onclick="cargarSuite20Kpis()" class="shrink-0 px-3 py-1 rounded-lg bg-rose-600 text-white font-bold hover:bg-rose-700">Reintentar</button>
+      </div>
 
       <!-- Barra de las 5 Sub-Pestañas Homologadas (Segmented Pill Bar) -->
       <div class="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner flex items-center gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -2120,7 +2143,7 @@
             <span class="text-xs font-black text-slate-800">Vehículos inspeccionados por mes vs. total de la flota</span>
             <span id="kpi01_texto_anio" class="text-xs font-bold text-emerald-700"></span>
           </div>
-          <div class="relative h-56"><canvas id="canvasKpi01_meses"></canvas></div>
+          <div class="relative h-56"><canvas id="canvasKpi01_meses" role="img" aria-label="KPI 01: vehículos inspeccionados por mes frente al total de la flota" data-titulo="KPI 01: vehículos inspeccionados por mes frente al total de la flota"></canvas></div>
         </div>
       </article>
 
@@ -2145,7 +2168,7 @@
               </div>
             </div>
             <div class="relative w-full h-[280px] mt-3">
-              <canvas id="canvasKpi02_volumen"></canvas>
+              <canvas id="canvasKpi02_volumen" role="img" aria-label="KPI 02: llantas inspeccionadas por mes" data-titulo="KPI 02: llantas inspeccionadas por mes"></canvas>
             </div>
           </div>
         </article>
@@ -2170,10 +2193,10 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
               <div class="relative w-full h-[260px]">
-                <canvas id="canvasKpi03_pct"></canvas>
+                <canvas id="canvasKpi03_pct" role="img" aria-label="KPI 03: porcentaje de cumplimiento de inspección" data-titulo="KPI 03: porcentaje de cumplimiento de inspección"></canvas>
               </div>
               <div class="relative w-full h-[260px]">
-                <canvas id="canvasKpi03_ciclos"></canvas>
+                <canvas id="canvasKpi03_ciclos" role="img" aria-label="KPI 03: ciclos de inspección" data-titulo="KPI 03: ciclos de inspección"></canvas>
               </div>
             </div>
           </div>
@@ -2209,7 +2232,7 @@
               <i class="fa-solid fa-truck text-indigo-500"></i> Tipología Vehicular
             </span>
             <div class="relative w-full h-[260px]">
-              <canvas id="canvasKpi04_tipologia"></canvas>
+              <canvas id="canvasKpi04_tipologia" role="img" aria-label="KPI 04: llantas por tipología de vehículo" data-titulo="KPI 04: llantas por tipología de vehículo"></canvas>
             </div>
           </div>
           <!-- Columna B: Marcas de Llanta -->
@@ -2218,7 +2241,7 @@
               <i class="fa-solid fa-tags text-sky-500"></i> Marcas Instaladas
             </span>
             <div class="relative w-full h-[260px]">
-              <canvas id="canvasKpi04_marca"></canvas>
+              <canvas id="canvasKpi04_marca" role="img" aria-label="KPI 04: llantas por marca" data-titulo="KPI 04: llantas por marca"></canvas>
             </div>
           </div>
           <!-- Columna C: Dimensión y Medidas -->
@@ -2227,7 +2250,7 @@
               <i class="fa-solid fa-ruler-combined text-emerald-500"></i> Dimensión de Llanta
             </span>
             <div class="relative w-full h-[260px]">
-              <canvas id="canvasKpi04_dimension"></canvas>
+              <canvas id="canvasKpi04_dimension" role="img" aria-label="KPI 04: llantas por dimensión" data-titulo="KPI 04: llantas por dimensión"></canvas>
             </div>
           </div>
         </div>
@@ -2270,7 +2293,7 @@
             </table>
           </div>
           <div class="lg:col-span-5 relative w-full h-[220px]">
-            <canvas id="canvasKpi05_retiros"></canvas>
+            <canvas id="canvasKpi05_retiros" role="img" aria-label="KPI 05: llantas en límite de retiro" data-titulo="KPI 05: llantas en límite de retiro"></canvas>
           </div>
         </div>
       </article>
@@ -2291,7 +2314,7 @@
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-3">
           <div class="lg:col-span-6 relative w-full h-[260px]">
-            <canvas id="canvasKpi06_alineacion"></canvas>
+            <canvas id="canvasKpi06_alineacion" role="img" aria-label="KPI 06: alertas de alineación en el eje direccional" data-titulo="KPI 06: alertas de alineación en el eje direccional"></canvas>
           </div>
           <div class="lg:col-span-6 overflow-x-auto border border-slate-200 rounded-2xl max-h-[260px] custom-scroll">
             <table class="w-full text-xs text-left">
@@ -2361,7 +2384,7 @@
               </button>
             </div>
             <div class="relative w-full h-[140px] mt-2">
-              <canvas id="canvasKpi08_apareo"></canvas>
+              <canvas id="canvasKpi08_apareo" role="img" aria-label="KPI 08: duales mal apareados por mes" data-titulo="KPI 08: duales mal apareados por mes"></canvas>
             </div>
             <div id="contenedorKpi08_crucesB2" class="mt-3 space-y-2 max-h-[140px] overflow-y-auto custom-scroll pr-1">
               <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-center text-xs">
@@ -2390,7 +2413,7 @@
               </button>
             </div>
             <div class="relative w-full h-[220px] mt-2">
-              <canvas id="canvasKpi09_psi"></canvas>
+              <canvas id="canvasKpi09_psi" role="img" aria-label="KPI 09: rangos de presión" data-titulo="KPI 09: rangos de presión"></canvas>
             </div>
             <!-- Tarjeta de combustible desperdiciado -->
             <div class="mt-3 p-3 bg-amber-50 rounded-2xl border border-amber-200/80 flex items-center justify-between">
@@ -2425,7 +2448,7 @@
               </div>
             </div>
             <div class="relative w-full h-[270px] mt-2">
-              <canvas id="canvasKpi10_pareto"></canvas>
+              <canvas id="canvasKpi10_pareto" role="img" aria-label="KPI 10: pareto de novedades" data-titulo="KPI 10: pareto de novedades"></canvas>
             </div>
           </div>
         </article>
@@ -2456,7 +2479,7 @@
           </div>
         </div>
         <div class="relative w-full h-[280px] mt-3">
-          <canvas id="canvasKpi11_impacto"></canvas>
+          <canvas id="canvasKpi11_impacto" role="img" aria-label="KPI 11: pérdida económica por mes" data-titulo="KPI 11: pérdida económica por mes"></canvas>
         </div>
       </article>
     </div>
@@ -2515,7 +2538,7 @@
           </button>
         </div>
         <div class="relative w-full h-[280px] mt-3">
-          <canvas id="canvasKpi13_comparativo"></canvas>
+          <canvas id="canvasKpi13_comparativo" role="img" aria-label="KPI 13: avance actual frente a la proyección" data-titulo="KPI 13: avance actual frente a la proyección"></canvas>
         </div>
       </article>
 
@@ -2532,7 +2555,7 @@
 
           <!-- Selector de Agrupación Dinámica -->
           <div class="flex items-center space-x-2">
-            <label class="text-[10px] font-black uppercase text-slate-500 whitespace-nowrap">Agrupar por:</label>
+            <label for="selAgrupacionKpi14" class="text-[10px] font-black uppercase text-slate-500 whitespace-nowrap">Agrupar por:</label>
             <select id="selAgrupacionKpi14" onchange="cambiarAgrupacionKpi14(this.value)" class="p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-indigo-500">
               <option value="marca">Marca / Diseño</option>
               <option value="fechas">Fecha / Mes</option>
@@ -2547,19 +2570,19 @@
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <h5 class="text-xs font-black text-indigo-700 mb-2 text-center uppercase tracking-wider">1. Proyección Km Final</h5>
             <div class="relative w-full h-[260px]">
-              <canvas id="canvasKpi14_proy"></canvas>
+              <canvas id="canvasKpi14_proy" role="img" aria-label="KPI 14: proyección de kilómetros finales" data-titulo="KPI 14: proyección de kilómetros finales"></canvas>
             </div>
           </div>
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <h5 class="text-xs font-black text-emerald-700 mb-2 text-center uppercase tracking-wider">2. Rendimiento Km/mm</h5>
             <div class="relative w-full h-[260px]">
-              <canvas id="canvasKpi14_kmmm"></canvas>
+              <canvas id="canvasKpi14_kmmm" role="img" aria-label="KPI 14: rendimiento en kilómetros por milímetro" data-titulo="KPI 14: rendimiento en kilómetros por milímetro"></canvas>
             </div>
           </div>
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <h5 class="text-xs font-black text-purple-700 mb-2 text-center uppercase tracking-wider" title="Precio de la llanta ÷ km proyectados hasta el límite de retiro">3. CPK proyectado ($/km)</h5>
             <div class="relative w-full h-[260px]">
-              <canvas id="canvasKpi14_cpk"></canvas>
+              <canvas id="canvasKpi14_cpk" role="img" aria-label="KPI 14: CPK proyectado" data-titulo="KPI 14: CPK proyectado"></canvas>
             </div>
           </div>
         </div>
@@ -2615,7 +2638,7 @@
               </div>
             </div>
             <div class="relative w-full h-[280px] mt-3">
-              <canvas id="canvasKpi15_potencial"></canvas>
+              <canvas id="canvasKpi15_potencial" role="img" aria-label="KPI 15: potencial de reencauche" data-titulo="KPI 15: potencial de reencauche"></canvas>
             </div>
           </div>
         </article>
@@ -2636,7 +2659,7 @@
               </button>
             </div>
             <div class="relative w-full h-[280px] mt-3">
-              <canvas id="canvasKpi16_rangos"></canvas>
+              <canvas id="canvasKpi16_rangos" role="img" aria-label="KPI 16: llantas por banda de desgaste" data-titulo="KPI 16: llantas por banda de desgaste"></canvas>
             </div>
           </div>
         </article>
@@ -2686,7 +2709,7 @@
           </div>
         </div>
         <div class="relative w-full h-[260px]">
-          <canvas id="canvasKpi17_lineas"></canvas>
+          <canvas id="canvasKpi17_lineas" role="img" aria-label="KPI 17: tendencia de reencauche y bajas" data-titulo="KPI 17: tendencia de reencauche y bajas"></canvas>
         </div>
         <p id="kpi17_nota_sin_fecha" class="hidden mt-2 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5"></p>
       </article>
@@ -2712,19 +2735,19 @@
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <h5 class="text-xs font-black text-slate-700 mb-2 text-center uppercase tracking-wider">A. Bajas por Marca</h5>
             <div class="relative w-full h-[240px]">
-              <canvas id="canvasKpi18_marca"></canvas>
+              <canvas id="canvasKpi18_marca" role="img" aria-label="KPI 18: bajas por marca" data-titulo="KPI 18: bajas por marca"></canvas>
             </div>
           </div>
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <h5 class="text-xs font-black text-slate-700 mb-2 text-center uppercase tracking-wider">B. Por Ciclo de Vida</h5>
             <div class="relative w-full h-[240px]">
-              <canvas id="canvasKpi18_ciclo"></canvas>
+              <canvas id="canvasKpi18_ciclo" role="img" aria-label="KPI 18: bajas por ciclo de vida" data-titulo="KPI 18: bajas por ciclo de vida"></canvas>
             </div>
           </div>
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <h5 class="text-xs font-black text-slate-700 mb-2 text-center uppercase tracking-wider">C. Causales de Daño</h5>
             <div class="relative w-full h-[240px]">
-              <canvas id="canvasKpi18_causal"></canvas>
+              <canvas id="canvasKpi18_causal" role="img" aria-label="KPI 18: causales de daño" data-titulo="KPI 18: causales de daño"></canvas>
             </div>
           </div>
         </div>
@@ -2747,10 +2770,10 @@
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-3">
           <div class="lg:col-span-6 relative w-full h-[260px]">
-            <canvas id="canvasKpi19_lineas"></canvas>
+            <canvas id="canvasKpi19_lineas" role="img" aria-label="KPI 19: milímetros desperdiciados por retiros anticipados" data-titulo="KPI 19: milímetros desperdiciados por retiros anticipados"></canvas>
           </div>
           <div class="lg:col-span-6 relative w-full h-[260px]">
-            <canvas id="canvasKpi19_burbujas"></canvas>
+            <canvas id="canvasKpi19_burbujas" role="img" aria-label="KPI 19: retiros anticipados por llanta" data-titulo="KPI 19: retiros anticipados por llanta"></canvas>
           </div>
         </div>
       </article>
@@ -2793,7 +2816,7 @@
 
         <!-- Gráfico Comparativo MRP -->
         <div class="relative w-full h-[260px]">
-          <canvas id="canvasKpi20_mrp"></canvas>
+          <canvas id="canvasKpi20_mrp" role="img" aria-label="KPI 20: necesidad de compra sugerida (MRP)" data-titulo="KPI 20: necesidad de compra sugerida (MRP)"></canvas>
         </div>
 
         <!-- Gran Tabla Maestra MRP de 12 Columnas -->
@@ -2845,8 +2868,8 @@
               <p id="kpi01_modal_subtitulo" class="text-[11px] text-slate-300">Unidades activas sin inspección en el periodo consultado</p>
             </div>
           </div>
-          <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
-            <i class="fa-solid fa-xmark"></i>
+          <button type="button" onclick="cerrarModalPlacasPendientesKpi01()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
         <div class="p-4 overflow-y-auto custom-scroll flex-1">
@@ -2891,8 +2914,8 @@
               <p class="text-[11px] text-slate-300">Ruedas donde el número de serie cambió entre inspecciones consecutivas sin registro en Kardex</p>
             </div>
           </div>
-          <button type="button" onclick="cerrarModalAlertasCambiazo()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
-            <i class="fa-solid fa-xmark"></i>
+          <button type="button" onclick="cerrarModalAlertasCambiazo()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
         <div class="p-4 overflow-y-auto custom-scroll flex-1">
@@ -2940,7 +2963,7 @@
             <i class="fa-solid fa-camera"></i>
           </button>
         </div>
-        <div class="relative h-64"><canvas id="canvasTendencias"></canvas></div>
+        <div class="relative h-64"><canvas id="canvasTendencias" role="img" aria-label="Tendencias mensuales de la flota" data-titulo="Tendencias mensuales de la flota"></canvas></div>
         <div class="overflow-x-auto">
           <table class="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
             <thead class="bg-slate-900 text-white"><tr>
@@ -3226,7 +3249,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         <!-- 1. Cliente -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente</label>
+          <label for="filtro_comp_cliente" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente</label>
           <select id="filtro_comp_cliente" onchange="alCambiarClienteComposicion()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODOS">Todos</option>
           </select>
@@ -3234,7 +3257,7 @@
 
         <!-- 2. Sede / Subcliente -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sede / Patio</label>
+          <label for="filtro_comp_subcliente" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sede / Patio</label>
           <select id="filtro_comp_subcliente" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODOS">Todas</option>
           </select>
@@ -3242,7 +3265,7 @@
 
         <!-- 3. Tipo de Eje Global -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de Eje</label>
+          <label for="filtro_comp_tipo_eje" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de Eje</label>
           <select id="filtro_comp_tipo_eje" onchange="alCambiarTipoEjeSelectComposicion()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODOS">Todos</option>
             <option value="direccional">Eje Direccional</option>
@@ -3253,7 +3276,7 @@
 
         <!-- 4. Condición / Vida -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Condición / Vida</label>
+          <label for="filtro_comp_vida" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Condición / Vida</label>
           <select id="filtro_comp_vida" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODAS">Todas</option>
             <option value="ORIGINAL">Solo Original (Nueva)</option>
@@ -3263,7 +3286,7 @@
 
         <!-- 5. Marca -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Marca</label>
+          <label for="filtro_comp_marca" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Marca</label>
           <select id="filtro_comp_marca" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODOS">Todas</option>
           </select>
@@ -3271,7 +3294,7 @@
 
         <!-- 6. Dimensión / Medida -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dimensión</label>
+          <label for="filtro_comp_dimension" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dimensión</label>
           <select id="filtro_comp_dimension" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODOS">Todas</option>
           </select>
@@ -3279,7 +3302,7 @@
 
         <!-- 7. Diseño de Banda -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diseño de Banda</label>
+          <label for="filtro_comp_diseno" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diseño de Banda</label>
           <select id="filtro_comp_diseno" onchange="renderizarComposicionFlotaWeb()" class="w-full px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all outline-none cursor-pointer">
             <option value="TODOS">Todos</option>
           </select>
@@ -3352,7 +3375,7 @@
           </div>
         </div>
         <div class="relative h-64 flex items-center justify-center">
-          <canvas id="chartCompVidaEje"></canvas>
+          <canvas id="chartCompVidaEje" role="img" aria-label="Composición: original frente a reencauche por eje" data-titulo="Composición: original frente a reencauche por eje"></canvas>
         </div>
       </div>
 
@@ -3365,7 +3388,7 @@
           <p class="text-[11px] text-slate-500">Fabricantes líderes montados en la flota activa</p>
         </div>
         <div class="relative h-64 flex items-center justify-center">
-          <canvas id="chartCompMarcas"></canvas>
+          <canvas id="chartCompMarcas" role="img" aria-label="Composición: marcas montadas en la flota" data-titulo="Composición: marcas montadas en la flota"></canvas>
         </div>
       </div>
 
@@ -3378,7 +3401,7 @@
           <p class="text-[11px] text-slate-500">Estandarización dimensional de neumáticos</p>
         </div>
         <div class="relative h-64 flex items-center justify-center">
-          <canvas id="chartCompDimensiones"></canvas>
+          <canvas id="chartCompDimensiones" role="img" aria-label="Composición: dimensiones de llanta" data-titulo="Composición: dimensiones de llanta"></canvas>
         </div>
       </div>
 
@@ -3391,7 +3414,7 @@
           <p class="text-[11px] text-slate-500">Modelos y perfiles de banda de mayor presencia</p>
         </div>
         <div class="relative h-64 flex items-center justify-center">
-          <canvas id="chartCompDisenos"></canvas>
+          <canvas id="chartCompDisenos" role="img" aria-label="Composición: diseños de banda" data-titulo="Composición: diseños de banda"></canvas>
         </div>
       </div>
     </div>
@@ -3799,7 +3822,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
               <!-- Cliente (Desplegable) -->
               <div class="lg:col-span-2">
-                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                <label for="precio_cli" class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
                   <i class="fa-solid fa-building text-slate-400"></i>
                   <span>Cliente / Flota *</span>
                 </label>
@@ -3810,7 +3833,7 @@
 
               <!-- Marca (Desplegable) -->
               <div class="lg:col-span-1">
-                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                <label for="precio_marca" class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
                   <i class="fa-solid fa-tag text-slate-400"></i>
                   <span>Marca *</span>
                 </label>
@@ -3822,7 +3845,7 @@
 
               <!-- Diseño (Datalist / Desplegable) -->
               <div class="lg:col-span-1">
-                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                <label for="precio_diseno" class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
                   <i class="fa-solid fa-fingerprint text-slate-400"></i>
                   <span>Diseño (Opcional)</span>
                 </label>
@@ -3832,7 +3855,7 @@
 
               <!-- Dimensión (Datalist / Desplegable) -->
               <div class="lg:col-span-1">
-                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                <label for="precio_dimension" class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
                   <i class="fa-solid fa-ruler-combined text-slate-400"></i>
                   <span>Dimensión *</span>
                 </label>
@@ -3842,7 +3865,7 @@
 
               <!-- Tipo de Llanta -->
               <div class="lg:col-span-1">
-                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                <label for="precio_tipo" class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
                   <i class="fa-solid fa-arrows-spin text-slate-400"></i>
                   <span>Tipo *</span>
                 </label>
@@ -3854,7 +3877,7 @@
 
               <!-- Precio COP -->
               <div class="lg:col-span-1">
-                <label class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
+                <label for="precio_valor" class="text-[11px] font-bold text-slate-700 block mb-1 flex items-center space-x-1">
                   <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
                   <span>Precio COP *</span>
                 </label>
@@ -3866,7 +3889,7 @@
             <!-- Fila inferior: Fecha de Vigencia y Botones -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-slate-200/60">
               <div class="flex items-center space-x-2">
-                <label class="text-[11px] font-bold text-slate-600 flex items-center space-x-1 whitespace-nowrap">
+                <label for="precio_desde" class="text-[11px] font-bold text-slate-600 flex items-center space-x-1 whitespace-nowrap">
                   <i class="fa-solid fa-calendar-day text-slate-400"></i>
                   <span>Vigente desde:</span>
                 </label>
@@ -3975,7 +3998,7 @@
 
         <!-- Filtro Rápido por Cliente -->
         <div class="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-          <label class="text-xs font-bold text-slate-700 flex items-center space-x-1">
+          <label for="filtroCatMarcaCliente" class="text-xs font-bold text-slate-700 flex items-center space-x-1">
             <i class="fa-solid fa-filter text-slate-500"></i>
             <span>Filtrar por Cliente:</span>
           </label>
@@ -4021,18 +4044,18 @@
           </div>
           <form onsubmit="guardarStockSeguridadCat(event)" class="flex flex-wrap items-end gap-2.5">
             <div class="flex-1 min-w-[170px]">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
+              <label for="stockseg_cliente" class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
               <select id="stockseg_cliente" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
                 <option value="">-- Seleccionar Cliente --</option>
               </select>
             </div>
             <div class="flex-1 min-w-[150px]">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Dimensión *</label>
+              <label for="stockseg_dimension" class="text-[10px] font-bold text-slate-600 block mb-1">Dimensión *</label>
               <input type="text" id="stockseg_dimension" required list="dl_stockseg_dimensiones" placeholder="ej. 295/80R22.5" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold uppercase focus:outline-none focus:border-blue-500 font-mono">
               <datalist id="dl_stockseg_dimensiones"></datalist>
             </div>
             <div class="w-36">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Eje / Posición *</label>
+              <label for="stockseg_eje" class="text-[10px] font-bold text-slate-600 block mb-1">Eje / Posición *</label>
               <select id="stockseg_eje" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer">
                 <option value="DIRECCIONAL">Direccional</option>
                 <option value="TRACCION">Tracción</option>
@@ -4040,7 +4063,7 @@
               </select>
             </div>
             <div class="w-24">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cant. Mín. *</label>
+              <label for="stockseg_cantidad" class="text-[10px] font-bold text-slate-600 block mb-1">Cant. Mín. *</label>
               <input type="number" id="stockseg_cantidad" required min="0" step="1" placeholder="Cant." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-blue-500">
             </div>
             <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">Guardar Regla</button>
@@ -4059,19 +4082,19 @@
           </div>
           <form onsubmit="guardarMaximoReencaucheCat(event)" class="flex flex-wrap items-end gap-2.5">
             <div class="flex-1 min-w-[170px]">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
+              <label for="maxreen_cliente" class="text-[10px] font-bold text-slate-600 block mb-1">Cliente / Flota *</label>
               <select id="maxreen_cliente" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
                 <option value="">-- Seleccionar Cliente --</option>
               </select>
             </div>
             <div class="flex-1 min-w-[160px]">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Marca *</label>
+              <label for="maxreen_marca" class="text-[10px] font-bold text-slate-600 block mb-1">Marca *</label>
               <select id="maxreen_marca" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 uppercase focus:outline-none focus:border-blue-500 cursor-pointer">
                 <option value="TODAS">TODAS LAS MARCAS</option>
               </select>
             </div>
             <div class="w-24">
-              <label class="text-[10px] font-bold text-slate-600 block mb-1">Tope Máx. *</label>
+              <label for="maxreen_valor" class="text-[10px] font-bold text-slate-600 block mb-1">Tope Máx. *</label>
               <input type="number" id="maxreen_valor" required min="0" max="10" step="1" placeholder="Máx." class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-center focus:outline-none focus:border-blue-500">
             </div>
             <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer">Guardar Tope</button>
@@ -4529,7 +4552,7 @@
         <!-- Gráfico Comparativo Chart.js -->
         <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs">
           <div class="h-64 sm:h-72 w-full relative">
-            <canvas id="chartMrpBodegas"></canvas>
+            <canvas id="chartMrpBodegas" role="img" aria-label="Bodegas: matriz MRP y balance sugerido de compras" data-titulo="Bodegas: matriz MRP y balance sugerido de compras"></canvas>
           </div>
         </div>
 
@@ -4581,23 +4604,23 @@
             <p class="text-[11px] text-slate-500">Registra una llanta nueva o carcasa reutilizable en inventario</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalAltaBodega()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalAltaBodega()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
       <form id="formAltaLlantaBodega" onsubmit="guardarAltaLlantaBodega(event)" class="space-y-3.5">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
+            <label for="alta_cliente" class="block text-xs font-bold text-slate-700 mb-1">Cliente *</label>
             <input type="text" id="alta_cliente" required onchange="listasAlta.preparar()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">N° Interno / Serie *</label>
+            <label for="alta_numero_interno" class="block text-xs font-bold text-slate-700 mb-1">N° Interno / Serie *</label>
             <input type="text" id="alta_numero_interno" required placeholder="ej. LL-9021" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Bodega Inicial *</label>
+            <label for="alta_bodega_inicial" class="block text-xs font-bold text-slate-700 mb-1">Bodega Inicial *</label>
             <select id="alta_bodega_inicial" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
               <option value="BODEGA_1_NUEVAS">Bodega 1: Nuevas (0 KM)</option>
               <option value="BODEGA_2_RECAMBIO">Bodega 2: Recambio / Reutilizable</option>
@@ -4605,19 +4628,19 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Dimensión *</label>
+            <label for="alta_dimension" class="block text-xs font-bold text-slate-700 mb-1">Dimensión *</label>
             <select id="alta_dimension" required onchange="listasAlta.onDimension(this)" class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">Primero selecciona un diseño...</option></select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Marca *</label>
+            <label for="alta_marca" class="block text-xs font-bold text-slate-700 mb-1">Marca *</label>
             <select id="alta_marca" required onchange="listasAlta.onMarca(this)" class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">Cargando marcas...</option></select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Diseño *</label>
+            <label for="alta_diseno" class="block text-xs font-bold text-slate-700 mb-1">Diseño *</label>
             <select id="alta_diseno" required onchange="listasAlta.onDiseno(this)" class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">Primero selecciona una marca...</option></select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Vida Actual</label>
+            <label for="alta_vida_actual" class="block text-xs font-bold text-slate-700 mb-1">Vida Actual</label>
             <select id="alta_vida_actual" onchange="onCambioVidaAlta()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
               <option value="Original">Original</option>
               <option value="R1">R1 (1er Reencauche)</option>
@@ -4626,24 +4649,24 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Banda Reencauche (Opcional)</label>
+            <label for="alta_banda_reen" class="block text-xs font-bold text-slate-700 mb-1">Banda Reencauche (Opcional)</label>
             <select id="alta_banda_reen" onchange="onCambioBandaAlta(this)" disabled class="w-full min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 truncate disabled:text-slate-400"><option value="">No aplica en llanta Original</option></select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Profundidad Inicial (mm) *</label>
+            <label for="alta_prof_inicial" class="block text-xs font-bold text-slate-700 mb-1">Profundidad Inicial (mm) *</label>
             <input type="number" step="any" min="0.1" id="alta_prof_inicial" required placeholder="Según marca y diseño" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP)</label>
+            <label for="alta_costo_compra" class="block text-xs font-bold text-slate-700 mb-1">Costo Compra ($ COP)</label>
             <input type="number" step="any" id="alta_costo_compra" placeholder="Sin precio: se excluye de los costos" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
             <p id="alta_costo_origen" class="hidden text-[10px] text-emerald-700 font-semibold mt-0.5">De la lista de precios del cliente</p>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Factura</label>
+            <label for="alta_proveedor" class="block text-xs font-bold text-slate-700 mb-1">Proveedor / Factura</label>
             <input type="text" id="alta_proveedor" placeholder="ej. Distribuidora Llantera SAS - Fact # 1042" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900">
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones</label>
+            <label for="alta_observaciones" class="block text-xs font-bold text-slate-700 mb-1">Observaciones</label>
             <textarea id="alta_observaciones" rows="2" placeholder="Notas adicionales de ingreso a bodega..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900"></textarea>
           </div>
         </div>
@@ -4669,8 +4692,8 @@
             <p class="text-[11px] text-slate-500" id="lblMoverDetalleLlanta">Llanta N° Interno</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalMoverBodega()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalMoverBodega()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -4679,7 +4702,7 @@
         <input type="hidden" id="mover_numero_interno">
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Destino del Movimiento *</label>
+          <label for="mover_bodega_destino" class="block text-xs font-bold text-slate-700 mb-1">Destino del Movimiento *</label>
           <select id="mover_bodega_destino" onchange="adaptarCamposModalMover(this.value)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900">
             <option value="MONTADA_OPERACION">🚚 Montar en Vehículo (Operación)</option>
             <option value="BODEGA_2_RECAMBIO">🔄 Bodega 2: Recambio / Reutilizable en Patio</option>
@@ -4697,20 +4720,20 @@
         <!-- Campos para MONTAJE EN VEHÍCULO -->
         <div id="boxMoverMontaje" class="grid grid-cols-2 gap-3 p-3 bg-blue-50/60 rounded-xl border border-blue-200">
           <div>
-            <label class="block text-xs font-bold text-blue-900 mb-1">Placa Vehículo *</label>
+            <label for="mover_placa" class="block text-xs font-bold text-blue-900 mb-1">Placa Vehículo *</label>
             <input type="text" id="mover_placa" list="datalistPlacasBodega" placeholder="ej. TRK-900" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-slate-900 uppercase">
             <datalist id="datalistPlacasBodega"></datalist>
           </div>
           <div>
-            <label class="block text-xs font-bold text-blue-900 mb-1">Posición en Chasis (1-24) *</label>
+            <label for="mover_posicion" class="block text-xs font-bold text-blue-900 mb-1">Posición en Chasis (1-24) *</label>
             <input type="number" min="1" max="24" id="mover_posicion" placeholder="ej. 3" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-black text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-blue-900 mb-1">Kilometraje Vehículo</label>
+            <label for="mover_km_vehiculo" class="block text-xs font-bold text-blue-900 mb-1">Kilometraje Vehículo</label>
             <input type="number" id="mover_km_vehiculo" placeholder="ej. 125400" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-blue-900 mb-1">Profundidad Actual (mm)</label>
+            <label for="mover_prof_montaje" class="block text-xs font-bold text-blue-900 mb-1">Profundidad Actual (mm)</label>
             <input type="number" step="0.1" id="mover_prof_montaje" placeholder="ej. 18.0" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <!-- Reingreso de una llanta en FVU o disposición final: trazabilidad obligatoria -->
@@ -4725,11 +4748,11 @@
         <!-- Campos para DESMONTE A RECAMBIO (B2) -->
         <div id="boxMoverRecambio" class="hidden p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2">
           <div>
-            <label class="block text-xs font-bold text-emerald-900 mb-1">Profundidad de Desmonte (mm) *</label>
+            <label for="mover_prof_recambio" class="block text-xs font-bold text-emerald-900 mb-1">Profundidad de Desmonte (mm) *</label>
             <input type="number" step="0.1" id="mover_prof_recambio" placeholder="mm medidos al desmontar" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-emerald-900 mb-1">Motivo de Desmonte</label>
+            <label for="mover_motivo_recambio" class="block text-xs font-bold text-emerald-900 mb-1">Motivo de Desmonte</label>
             <input type="text" id="mover_motivo_recambio" placeholder="ej. Rotación programada, excedente par direccional" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-medium text-slate-900">
             <p class="text-[10px] text-emerald-700/80 mt-1">La llanta quedará disponible en patio para recambio o apareo dual.</p>
           </div>
@@ -4738,11 +4761,11 @@
         <!-- Campos para ENVÍO A PLANTA REENCAUCHE (B3) -->
         <div id="boxMoverPlanta" class="hidden p-3 bg-indigo-50/60 rounded-xl border border-indigo-200 space-y-2">
           <div>
-            <label class="block text-xs font-bold text-indigo-900 mb-1">Proveedor / Planta de Reencauche *</label>
+            <label for="mover_planta_reencauche" class="block text-xs font-bold text-indigo-900 mb-1">Proveedor / Planta de Reencauche *</label>
             <input type="text" id="mover_planta_reencauche" placeholder="ej. Bandag Colombia, Renoband, Michelin" class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-indigo-900 mb-1">Documento / Remisión de Envío</label>
+            <label for="mover_remision_reencauche" class="block text-xs font-bold text-indigo-900 mb-1">Documento / Remisión de Envío</label>
             <input type="text" id="mover_remision_reencauche" placeholder="ej. Remisión Envío # 4892" class="w-full px-3 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-medium text-slate-900">
           </div>
         </div>
@@ -4750,15 +4773,15 @@
         <!-- Campos para RETORNO DE REENCAUCHE (B4) -->
         <div id="boxMoverReencauche" class="hidden grid grid-cols-2 gap-3 p-3 bg-teal-50/60 rounded-xl border border-teal-200">
           <div class="col-span-2">
-            <label class="block text-xs font-bold text-teal-900 mb-1">Banda Aplicada (ej. BDM, Ringtread) *</label>
+            <label for="mover_banda_reen" class="block text-xs font-bold text-teal-900 mb-1">Banda Aplicada (ej. BDM, Ringtread) *</label>
             <input type="text" id="mover_banda_reen" placeholder="ej. BDM, RINGTREAD, BDR-HG" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900 uppercase">
           </div>
           <div>
-            <label class="block text-xs font-bold text-teal-900 mb-1">Nueva Profundidad Inicial (mm) *</label>
+            <label for="mover_nueva_prof" class="block text-xs font-bold text-teal-900 mb-1">Nueva Profundidad Inicial (mm) *</label>
             <input type="number" step="0.1" id="mover_nueva_prof" placeholder="mm de la banda nueva" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-teal-900 mb-1">Costo del Reencauche ($) *</label>
+            <label for="mover_costo_reencauche" class="block text-xs font-bold text-teal-900 mb-1">Costo del Reencauche ($) *</label>
             <input type="number" step="any" id="mover_costo_reencauche" placeholder="ej. 650000" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
@@ -4766,15 +4789,15 @@
         <!-- Campos para REPARACIÓN (B5) -->
         <div id="boxMoverReparacion" class="hidden p-3 bg-amber-50/60 rounded-xl border border-amber-200 space-y-2">
           <div>
-            <label class="block text-xs font-bold text-amber-900 mb-1">Proveedor / Vulcanizadora *</label>
+            <label for="mover_proveedor_rep" class="block text-xs font-bold text-amber-900 mb-1">Proveedor / Vulcanizadora *</label>
             <input type="text" id="mover_proveedor_rep" placeholder="ej. Vulcanizadora Central" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-amber-900 mb-1">Detalle del Trabajo</label>
+            <label for="mover_motivo_reparacion" class="block text-xs font-bold text-amber-900 mb-1">Detalle del Trabajo</label>
             <input type="text" id="mover_motivo_reparacion" placeholder="ej. Parche radial por penetración en corona" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-medium text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-amber-900 mb-1">Costo de Reparación / Vulcanizadora ($) — Se suma al retorno de Bodega 5</label>
+            <label for="mover_costo_reparacion" class="block text-xs font-bold text-amber-900 mb-1">Costo de Reparación / Vulcanizadora ($) — Se suma al retorno de Bodega 5</label>
             <input type="number" step="any" id="mover_costo_reparacion" placeholder="ej. 150000" class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
@@ -4782,7 +4805,7 @@
         <!-- Campos para BAJA FVU (B6) -->
         <div id="boxMoverFVU" class="hidden p-3 bg-rose-50/60 rounded-xl border border-rose-200 space-y-2">
           <div>
-            <label class="block text-xs font-bold text-rose-900 mb-1">Causal de Baja FVU *</label>
+            <label for="mover_causal_fvu" class="block text-xs font-bold text-rose-900 mb-1">Causal de Baja FVU *</label>
             <select id="mover_causal_fvu" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-900">
               <option value="Corte en costado">Corte en costado</option>
               <option value="Impacto en banda">Impacto en banda</option>
@@ -4792,7 +4815,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-rose-900 mb-1">Profundidad Remanente de Baja (mm) *</label>
+            <label for="mover_prof_fvu" class="block text-xs font-bold text-rose-900 mb-1">Profundidad Remanente de Baja (mm) *</label>
             <input type="number" step="0.1" id="mover_prof_fvu" value="3.0" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
@@ -4800,18 +4823,18 @@
         <!-- Campos para CHATARRIZACIÓN (B7) -->
         <div id="boxMoverChatarra" class="hidden p-3 bg-slate-100 rounded-xl border border-slate-300 space-y-2">
           <div>
-            <label class="block text-xs font-bold text-slate-800 mb-1">N° de Acta Ambiental *</label>
+            <label for="mover_acta_ambiental" class="block text-xs font-bold text-slate-800 mb-1">N° de Acta Ambiental *</label>
             <input type="text" id="mover_acta_ambiental" placeholder="ej. ACTA-DISP-2026-088" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-800 mb-1">Gestor Ambiental Autorizado *</label>
+            <label for="mover_gestor_ambiental" class="block text-xs font-bold text-slate-800 mb-1">Gestor Ambiental Autorizado *</label>
             <input type="text" id="mover_gestor_ambiental" placeholder="ej. Eco-Llantas Reciclaje SAS / Rueda Verde" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
 
         <!-- Fecha del Movimiento -->
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Fecha Movimiento</label>
+          <label for="mover_fecha" class="block text-xs font-bold text-slate-700 mb-1">Fecha Movimiento</label>
           <input type="date" id="mover_fecha" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900">
         </div>
 
@@ -4836,8 +4859,8 @@
             <p class="text-[11px] text-slate-500" id="lblGarantiaDetalleLlanta">Llanta N° Interno</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalGarantia()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalGarantia()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -4846,7 +4869,7 @@
         <input type="hidden" id="garantia_numero_interno">
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Estado de la Garantía *</label>
+          <label for="garantia_estado" class="block text-xs font-bold text-slate-700 mb-1">Estado de la Garantía *</label>
           <select id="garantia_estado" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900">
             <option value="Posible Garantía">🟡 Posible Garantía (Desgaste &lt; 30% en B6)</option>
             <option value="En Reclamación">🔵 En Reclamación con Proveedor / Planta</option>
@@ -4857,13 +4880,13 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Valor Reconocido por Proveedor ($ COP)</label>
+          <label for="garantia_valor_reconocido" class="block text-xs font-bold text-slate-700 mb-1">Valor Reconocido por Proveedor ($ COP)</label>
           <input type="number" step="any" id="garantia_valor_reconocido" value="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-emerald-700">
           <p class="text-[10px] text-slate-400 mt-1">Este valor reduce automáticamente el dinero perdido por fin de vida útil prematura.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones / N° Reclamación</label>
+          <label for="garantia_observaciones" class="block text-xs font-bold text-slate-700 mb-1">Observaciones / N° Reclamación</label>
           <textarea id="garantia_observaciones" rows="3" placeholder="ej. NC-4581 emitida por Michelin por defecto en hombro..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900"></textarea>
         </div>
 
@@ -4888,8 +4911,8 @@
             <p class="text-[11px] text-slate-500" id="lblKardexTitulo">Trazabilidad histórica completa</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -4928,8 +4951,8 @@
             </p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalEdicionMultipleBD()" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-lg transition-colors border border-slate-200">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" onclick="cerrarModalEdicionMultipleBD()" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center text-lg transition-colors border border-slate-200" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -4943,7 +4966,7 @@
           
           <!-- Campo: Fecha -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_fecha" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_fecha" onchange="toggleCampoEM('fecha')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Fecha</span>
             </label>
@@ -4952,7 +4975,7 @@
 
           <!-- Campo: Cliente -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_cliente" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_cliente" onchange="toggleCampoEM('cliente')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Cliente</span>
             </label>
@@ -4961,7 +4984,7 @@
 
           <!-- Campo: Sede / Subcliente -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_subcliente" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_subcliente" onchange="toggleCampoEM('subcliente')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Sede / Subcliente</span>
             </label>
@@ -4970,7 +4993,7 @@
 
           <!-- Campo: Operación -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_tipo_operacion" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_tipo_operacion" onchange="toggleCampoEM('tipo_operacion')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Operación</span>
             </label>
@@ -4979,7 +5002,7 @@
 
           <!-- Campo: Tipología -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_tipologia" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_tipologia" onchange="toggleCampoEM('tipologia')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Tipología</span>
             </label>
@@ -4988,7 +5011,7 @@
 
           <!-- Campo: Marca -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_marca" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_marca" onchange="toggleCampoEM('marca')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Marca</span>
             </label>
@@ -4997,7 +5020,7 @@
 
           <!-- Campo: Diseño -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_diseno" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_diseno" onchange="toggleCampoEM('diseno')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Diseño</span>
             </label>
@@ -5006,7 +5029,7 @@
 
           <!-- Campo: Dimensión -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_dimension" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_dimension" onchange="toggleCampoEM('dimension')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Dimensión</span>
             </label>
@@ -5015,7 +5038,7 @@
 
           <!-- Campo: Vida -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_vida" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_vida" onchange="toggleCampoEM('vida')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Condición / Vida</span>
             </label>
@@ -5031,7 +5054,7 @@
 
           <!-- Campo: Presión PSI -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_psi" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_psi" onchange="toggleCampoEM('psi')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Presión (PSI)</span>
             </label>
@@ -5040,7 +5063,7 @@
 
           <!-- Campo: Novedades -->
           <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 sm:col-span-2">
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label for="em_novedades" class="flex items-center space-x-2 cursor-pointer">
               <input type="checkbox" id="chk_em_novedades" onchange="toggleCampoEM('novedades')" class="w-4 h-4 rounded text-indigo-600 cursor-pointer">
               <span class="font-bold text-slate-700">Modificar Novedades / Observaciones</span>
             </label>
@@ -5078,28 +5101,28 @@
           </h3>
           <p id="lblEditSubtitulo" class="text-xs text-slate-500">ID: - | Placa: - | Pos: -</p>
         </div>
-        <button type="button" onclick="cerrarModalEditarInspeccion()" class="text-slate-400 hover:text-slate-700 text-lg">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" onclick="cerrarModalEditarInspeccion()" class="text-slate-400 hover:text-slate-700 text-lg" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
       <form id="formEditarInspeccion" onsubmit="guardarEdicionInspeccion(event)" class="space-y-3 text-xs">
         <input type="hidden" id="edit_id">
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          <div><label class="font-bold text-slate-600">Fecha</label><input type="date" id="edit_fecha" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Cliente</label><input type="text" id="edit_cliente" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Sede <span class="text-rose-500 font-bold">*</span></label><input type="text" id="edit_subcliente" required class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Operación</label><input type="text" id="edit_tipo_operacion" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Placa</label><input type="text" id="edit_placa" class="w-full p-2 bg-slate-50 border rounded-xl font-black uppercase"></div>
-          <div><label class="font-bold text-slate-600">Posición</label><input type="number" id="edit_posicion" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-          <div><label class="font-bold text-slate-600">No. Interno</label><input type="text" id="edit_numero_interno" oninput="this.value = this.value.toUpperCase();" onblur="this.value = this.value.trim().toUpperCase();" onchange="this.value = this.value.trim().toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
-          <div><label class="font-bold text-slate-600">Kilometraje</label><input type="number" id="edit_kilometraje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-          <div><label class="font-bold text-slate-600">Tipología</label><input type="text" id="edit_tipologia" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Marca</label><input type="text" id="edit_marca" oninput="this.value = this.value.toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
-          <div><label class="font-bold text-slate-600">Diseño</label><input type="text" id="edit_diseno" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Dimensión</label><input type="text" id="edit_dimension" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_fecha" class="font-bold text-slate-600">Fecha</label><input type="date" id="edit_fecha" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_cliente" class="font-bold text-slate-600">Cliente</label><input type="text" id="edit_cliente" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_subcliente" class="font-bold text-slate-600">Sede <span class="text-rose-500 font-bold">*</span></label><input type="text" id="edit_subcliente" required class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_tipo_operacion" class="font-bold text-slate-600">Operación</label><input type="text" id="edit_tipo_operacion" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_placa" class="font-bold text-slate-600">Placa</label><input type="text" id="edit_placa" class="w-full p-2 bg-slate-50 border rounded-xl font-black uppercase"></div>
+          <div><label for="edit_posicion" class="font-bold text-slate-600">Posición</label><input type="number" id="edit_posicion" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+          <div><label for="edit_numero_interno" class="font-bold text-slate-600">No. Interno</label><input type="text" id="edit_numero_interno" oninput="this.value = this.value.toUpperCase();" onblur="this.value = this.value.trim().toUpperCase();" onchange="this.value = this.value.trim().toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
+          <div><label for="edit_kilometraje" class="font-bold text-slate-600">Kilometraje</label><input type="number" id="edit_kilometraje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+          <div><label for="edit_tipologia" class="font-bold text-slate-600">Tipología</label><input type="text" id="edit_tipologia" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_marca" class="font-bold text-slate-600">Marca</label><input type="text" id="edit_marca" oninput="this.value = this.value.toUpperCase();" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase"></div>
+          <div><label for="edit_diseno" class="font-bold text-slate-600">Diseño</label><input type="text" id="edit_diseno" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_dimension" class="font-bold text-slate-600">Dimensión</label><input type="text" id="edit_dimension" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div>
-            <label class="font-bold text-slate-600">Vida</label>
+            <label for="edit_vida" class="font-bold text-slate-600">Vida</label>
             <select id="edit_vida" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
               <option value="">Seleccione la vida…</option>
               <option value="Original">Original (Nueva)</option>
@@ -5110,18 +5133,18 @@
               <option value="R5">Reencauche 5 (R5)</option>
             </select>
           </div>
-          <div><label class="font-bold text-slate-600">Banda Reen</label><input type="text" id="edit_banda_reen" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Presión (PSI)</label><input type="number" id="edit_psi" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-          <div><label class="font-bold text-slate-600">Prof. Ext (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_ext" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label class="font-bold text-slate-600">Prof. Cent (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_cent" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label class="font-bold text-slate-600">Prof. Int (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_int" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label class="font-bold text-slate-600">Prof Inicial (mm)</label><input type="number" step="0.1" id="edit_prof_inicial" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
-          <div><label class="font-bold text-slate-600">Precio ($)</label><input type="number" id="edit_precio" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-          <div><label class="font-bold text-slate-600">Km Montaje</label><input type="number" id="edit_km_montaje" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_banda_reen" class="font-bold text-slate-600">Banda Reen</label><input type="text" id="edit_banda_reen" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_psi" class="font-bold text-slate-600">Presión (PSI)</label><input type="number" id="edit_psi" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+          <div><label for="edit_prof_ext" class="font-bold text-slate-600">Prof. Ext (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_ext" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label for="edit_prof_cent" class="font-bold text-slate-600">Prof. Cent (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_cent" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label for="edit_prof_int" class="font-bold text-slate-600">Prof. Int (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_int" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label for="edit_prof_inicial" class="font-bold text-slate-600">Prof Inicial (mm)</label><input type="number" step="0.1" id="edit_prof_inicial" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
+          <div><label for="edit_precio" class="font-bold text-slate-600">Precio ($)</label><input type="number" id="edit_precio" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+          <div><label for="edit_km_montaje" class="font-bold text-slate-600">Km Montaje</label><input type="number" id="edit_km_montaje" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
         </div>
 
         <div>
-          <label class="font-bold text-slate-600">Novedades / Observaciones</label>
+          <label for="edit_novedades" class="font-bold text-slate-600">Novedades / Observaciones</label>
           <input type="text" id="edit_novedades" class="w-full p-2 bg-slate-50 border rounded-xl font-medium">
         </div>
 
@@ -5256,8 +5279,8 @@
           <i class="fa-solid fa-file-excel text-emerald-600"></i>
           <span>Importación Masiva desde Excel</span>
         </h3>
-        <button type="button" onclick="cerrarModalImportarExcel()" class="text-slate-400 hover:text-slate-700 text-lg">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" onclick="cerrarModalImportarExcel()" class="text-slate-400 hover:text-slate-700 text-lg" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -5291,7 +5314,7 @@
           <h3 id="tituloModalModelo" class="text-sm font-black text-slate-900">Nuevo Modelo de Llanta</h3>
           <p class="text-[11px] text-slate-500">Parámetros de catálogo y profundidad inicial</p>
         </div>
-        <button type="button" onclick="cerrarModalNuevoModelo()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalNuevoModelo()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div id="notaSincronizarModelo" class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-800 font-medium hidden flex items-start space-x-1.5">
         <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 shrink-0"></i>
@@ -5299,28 +5322,28 @@
       </div>
       <div class="space-y-2.5 text-xs">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Tipo de Llanta</label>
+          <label for="mod_tipo" class="font-bold text-slate-600 block mb-1">Tipo de Llanta</label>
           <select id="mod_tipo" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="Nueva">Nueva / Original</option>
             <option value="Reencauche">Banda de Reencauche</option>
           </select>
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Marca *</label>
+          <label for="mod_marca" class="font-bold text-slate-600 block mb-1">Marca *</label>
           <input type="text" id="mod_marca" list="dl_marcas_modelo_catalogo" placeholder="ej. MICHELIN" oninput="this.value = this.value.toUpperCase()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold uppercase focus:bg-white focus:border-blue-500">
           <datalist id="dl_marcas_modelo_catalogo"></datalist>
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label>
+          <label for="mod_diseno" class="font-bold text-slate-600 block mb-1">Diseño / Banda *</label>
           <input type="text" id="mod_diseno" placeholder="ej. X Multi Z" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Dimensión</label>
+          <label for="mod_dimension" class="font-bold text-slate-600 block mb-1">Dimensión</label>
           <input type="text" id="mod_dimension" list="dl_dimensiones_modelo_catalogo" value="295/80R22.5" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold uppercase focus:bg-white focus:border-blue-500">
           <datalist id="dl_dimensiones_modelo_catalogo"></datalist>
         </div>
-        <div><label class="font-bold text-slate-600 block mb-1">Profundidad Inicial (mm) *</label><input type="number" step="0.1" id="mod_prof" placeholder="16.5" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Aplicación / Notas</label><input type="text" id="mod_desc" placeholder="Toda Posición / Direccional" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
+        <div><label for="mod_prof" class="font-bold text-slate-600 block mb-1">Profundidad Inicial (mm) *</label><input type="number" step="0.1" id="mod_prof" placeholder="16.5" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
+        <div><label for="mod_desc" class="font-bold text-slate-600 block mb-1">Aplicación / Notas</label><input type="text" id="mod_desc" placeholder="Toda Posición / Direccional" class="w-full p-2 bg-slate-50 border rounded-xl"></div>
         <div class="pt-2 flex justify-end space-x-2">
           <button type="button" onclick="cerrarModalNuevoModelo()" class="px-3 py-1.5 bg-slate-200 rounded-xl font-bold">Cancelar</button>
           <button type="button" onclick="guardarNuevoModelo()" id="btnGuardarModelo" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition-all"><span id="btnGuardarModeloTexto">Guardar</span></button>
@@ -5401,28 +5424,28 @@
             <p class="text-[11px] text-slate-500">Registra un nuevo cliente para inspecciones, límites y bodegas</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalNuevoCliente()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalNuevoCliente()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
       <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Nombre / Razón Social del Cliente *</label>
+          <label for="nuevo_cliente_nombre" class="block text-xs font-bold text-slate-700 mb-1">Nombre / Razón Social del Cliente *</label>
           <input type="text" id="nuevo_cliente_nombre" required placeholder="ej. TRANSCARGA ANDINA S.A.S." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase focus:bg-white focus:border-blue-500">
           <p class="text-[10px] text-slate-400 mt-0.5">Se normaliza automáticamente en mayúsculas para reportes e inventario.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Plan de Licencia *</label>
+            <label for="nuevo_cliente_licencia" class="block text-xs font-bold text-slate-700 mb-1">Plan de Licencia *</label>
             <select id="nuevo_cliente_licencia" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
               <option value="PRO">🌟 PRO (7 Bodegas & MRP)</option>
               <option value="LIGHT">⚡ LIGHT (Operativo Básico)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Límite de Retiro Base (mm) *</label>
+            <label for="nuevo_cliente_limite" class="block text-xs font-bold text-slate-700 mb-1">Límite de Retiro Base (mm) *</label>
             <input type="number" step="0.1" min="1.0" max="10.0" id="nuevo_cliente_limite" value="3.0" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
           </div>
         </div>
@@ -5430,12 +5453,12 @@
         <!-- Parametrización de frecuencia de inspección por cliente -->
         <div class="grid grid-cols-2 gap-3 p-3 bg-blue-50/50 border border-blue-100 rounded-2xl">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Días Mín. Sig. Inspección *</label>
+            <label for="nuevo_cliente_dias_inspeccion" class="block text-xs font-bold text-slate-700 mb-1">Días Mín. Sig. Inspección *</label>
             <input type="number" step="1" min="1" max="180" id="nuevo_cliente_dias_inspeccion" value="20" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
             <p class="text-[10px] text-slate-400 mt-0.5">Días mínimos tras última inspección (ej. 20)</p>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Regla de Frecuencia / Ciclo *</label>
+            <label for="nuevo_cliente_regla_frecuencia" class="block text-xs font-bold text-slate-700 mb-1">Regla de Frecuencia / Ciclo *</label>
             <select id="nuevo_cliente_regla_frecuencia" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
               <option value="mes_siguiente">📅 Mes siguiente + N días (Estándar)</option>
               <option value="dias_corridos">⚡ Solo N días corridos (ej. Ciudad Limpia)</option>
@@ -5447,27 +5470,27 @@
         <!-- Metas y parámetros del MRP del cliente -->
         <div class="grid grid-cols-3 gap-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Meta de reencauche (%)</label>
+            <label for="nuevo_cliente_meta_reencauche" class="block text-xs font-bold text-slate-700 mb-1">Meta de reencauche (%)</label>
             <input type="number" step="1" min="0" max="100" id="nuevo_cliente_meta_reencauche" value="70" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Aprobación en planta (%)</label>
+            <label for="nuevo_cliente_aprob_reencauche" class="block text-xs font-bold text-slate-700 mb-1">Aprobación en planta (%)</label>
             <input type="number" step="1" min="0" max="100" id="nuevo_cliente_aprob_reencauche" value="85" title="% de cascos enviados que la planta aprueba y devuelve reencauchados (MRP)" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Stock de seguridad general</label>
+            <label for="nuevo_cliente_stock_seguridad" class="block text-xs font-bold text-slate-700 mb-1">Stock de seguridad general</label>
             <input type="number" step="1" min="0" id="nuevo_cliente_stock_seguridad" value="4" title="Se usa por medida cuando no hay reglas por medida y eje" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Sedes Operativas / Subclientes (Opcional)</label>
+          <label for="nuevo_cliente_subclientes" class="block text-xs font-bold text-slate-700 mb-1">Sedes Operativas / Subclientes (Opcional)</label>
           <input type="text" id="nuevo_cliente_subclientes" placeholder="ej. Principal, Bogotá, Medellín, Cali (separados por coma)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
           <p class="text-[10px] text-slate-400 mt-0.5">Permite desglosar y filtrar la flota por base o sede.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones / Datos de Contacto</label>
+          <label for="nuevo_cliente_observaciones" class="block text-xs font-bold text-slate-700 mb-1">Observaciones / Datos de Contacto</label>
           <textarea id="nuevo_cliente_observaciones" rows="2" placeholder="ej. Contacto de flota: Ing. Carlos Pérez - Tel: 310 555 1234" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800"></textarea>
         </div>
 
@@ -5490,18 +5513,18 @@
           <h3 id="tituloModalLimiteCliente" class="text-sm font-black text-slate-900">Límite de Retiro por Cliente y Eje</h3>
           <p class="text-[11px] text-slate-500">Define umbral de profundidad mínima de retiro</p>
         </div>
-        <button type="button" onclick="cerrarModalLimiteCliente()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalLimiteCliente()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="space-y-2.5 text-xs">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota *</label>
+          <label for="lim_cliente" class="font-bold text-slate-600 block mb-1">Nombre del Cliente / Flota *</label>
           <select id="lim_cliente" onchange="alCambiarClienteModalLimite()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
             <option value="">-- Seleccionar Cliente --</option>
           </select>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="font-bold text-slate-600 block mb-1">Sede / Subcliente</label>
+            <label for="lim_subcliente" class="font-bold text-slate-600 block mb-1">Sede / Subcliente</label>
             <select id="lim_subcliente" onchange="alCambiarSubclienteModalLimite()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
               <option value="TODOS">TODOS (Toda la flota)</option>
               <option value="__OTRA__">+ Escribir otra sede...</option>
@@ -5509,7 +5532,7 @@
             <input type="text" id="lim_subcliente_custom" placeholder="Nombre de la nueva sede" class="hidden mt-1.5 w-full p-1.5 bg-white border border-blue-400 rounded-xl font-bold uppercase text-xs">
           </div>
           <div>
-            <label class="font-bold text-slate-600 block mb-1">Eje / Posición *</label>
+            <label for="lim_eje" class="font-bold text-slate-600 block mb-1">Eje / Posición *</label>
             <select id="lim_eje" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800">
               <option value="TODOS">TODOS (Toda posición)</option>
               <option value="DIRECCIONAL">DIRECCIONAL (Eje 1 / Delantero)</option>
@@ -5527,7 +5550,7 @@
           </div>
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Política Técnica / Observaciones</label>
+          <label for="lim_obs" class="font-bold text-slate-600 block mb-1">Política Técnica / Observaciones</label>
           <input type="text" id="lim_obs" placeholder="ej. Retiro preventivo por seguridad vial" class="w-full p-2 bg-slate-50 border rounded-xl">
         </div>
         <div class="pt-2 flex justify-end space-x-2">
@@ -5549,17 +5572,17 @@
           </h3>
           <p class="text-[11px] text-slate-500">Define las marcas autorizadas o habituales para la flota</p>
         </div>
-        <button type="button" onclick="cerrarModalAsociarMarcaCliente()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalAsociarMarcaCliente()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Cliente / Empresa *</label>
+          <label for="asoc_marca_cliente" class="font-bold text-slate-600 block mb-1">Cliente / Empresa *</label>
           <select id="asoc_marca_cliente" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
             <option value="">-- Seleccionar Cliente --</option>
           </select>
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Marca a Vincular *</label>
+          <label for="asoc_marca_nombre_select" class="font-bold text-slate-600 block mb-1">Marca a Vincular *</label>
           <select id="asoc_marca_nombre_select" onchange="alCambiarMarcaAsocModal()" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-slate-800 uppercase focus:bg-white focus:border-blue-500 cursor-pointer">
             <option value="">-- Seleccionar Marca del Catálogo --</option>
             <option value="__OTRA__">+ Escribir otra marca...</option>
@@ -5583,8 +5606,8 @@
           <i class="fa-solid fa-file-excel text-emerald-600"></i>
           <span>Importar Precios desde Excel</span>
         </h3>
-        <button type="button" onclick="cerrarModalImportarPreciosExcel()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" onclick="cerrarModalImportarPreciosExcel()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -5635,14 +5658,14 @@
           <i class="fa-solid fa-user-plus text-indigo-600"></i>
           <span>Registrar Nuevo Usuario</span>
         </h3>
-        <button type="button" onclick="cerrarModalNuevoUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalNuevoUsuario()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="space-y-3 text-xs">
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
-        <div><label class="font-bold text-slate-600 block mb-1">Contraseña inicial (mínimo 8 caracteres; el usuario la cambiará al ingresar)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label for="usr_username" class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label><input type="text" id="usr_username" placeholder="ej. inspector2" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
+        <div><label for="usr_nombre" class="font-bold text-slate-600 block mb-1">Nombre Completo</label><input type="text" id="usr_nombre" placeholder="ej. Carlos Gómez" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
+        <div><label for="usr_pass" class="font-bold text-slate-600 block mb-1">Contraseña inicial (mínimo 8 caracteres; el usuario la cambiará al ingresar)</label><input type="password" id="usr_pass" placeholder="••••••••" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Rol</label>
+          <label for="usr_rol" class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="usr_rol" onchange="alCambiarRolUsuarioModal('nuevo')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
             <option value="jefatura">Jefatura de Llantas (Técnico, Control & Límites)</option>
@@ -5737,19 +5760,19 @@
           <i class="fa-solid fa-user-pen text-blue-600"></i>
           <span>Editar Usuario</span>
         </h3>
-        <button type="button" onclick="cerrarModalEditarUsuario()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalEditarUsuario()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label>
+          <label for="edit_usr_username" class="font-bold text-slate-600 block mb-1">Nombre de Usuario (Login)</label>
           <input type="text" id="edit_usr_username" class="w-full p-2 bg-slate-100 border rounded-xl font-bold text-slate-500 cursor-not-allowed" readonly disabled>
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Nombre Completo</label>
+          <label for="edit_usr_nombre" class="font-bold text-slate-600 block mb-1">Nombre Completo</label>
           <input type="text" id="edit_usr_nombre" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
         </div>
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Rol</label>
+          <label for="edit_usr_rol" class="font-bold text-slate-600 block mb-1">Rol</label>
           <select id="edit_usr_rol" onchange="alCambiarRolUsuarioModal('editar')" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="inspector">Inspector (Captura y Patio)</option>
             <option value="jefatura">Jefatura de Llantas (Técnico, Control & Límites)</option>
@@ -5829,7 +5852,7 @@
         </div>
 
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Estado</label>
+          <label for="edit_usr_activo" class="font-bold text-slate-600 block mb-1">Estado</label>
           <select id="edit_usr_activo" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold">
             <option value="1">Activo</option>
             <option value="0">Inactivo</option>
@@ -5852,7 +5875,7 @@
           <i class="fa-solid fa-key text-amber-500"></i>
           <span>Restablecer Contraseña</span>
         </h3>
-        <button type="button" onclick="cerrarModalResetPassword()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalResetPassword()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="p-2.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
         Asignando nueva clave para el usuario: <b id="reset_usr_label" class="text-slate-900 font-mono"></b>
@@ -5862,8 +5885,8 @@
           <label class="font-bold text-slate-600 block mb-1">Nueva Contraseña</label>
           <div class="relative">
             <input type="password" id="reset_nueva_password" placeholder="Mínimo 8 caracteres" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
-            <button type="button" onclick="togglePasswordVisibility('reset_nueva_password', 'iconEyeReset1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
-              <i id="iconEyeReset1" class="fa-solid fa-eye"></i>
+            <button type="button" onclick="togglePasswordVisibility('reset_nueva_password', 'iconEyeReset1')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar la contraseña">
+              <i id="iconEyeReset1" class="fa-solid fa-eye" aria-hidden="true"></i>
             </button>
           </div>
         </div>
@@ -5871,8 +5894,8 @@
           <label class="font-bold text-slate-600 block mb-1">Confirmar Contraseña</label>
           <div class="relative">
             <input type="password" id="reset_confirmar_password" placeholder="Repite la nueva contraseña" class="w-full p-2 pr-8 bg-slate-50 border rounded-xl font-bold">
-            <button type="button" onclick="togglePasswordVisibility('reset_confirmar_password', 'iconEyeReset2')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
-              <i id="iconEyeReset2" class="fa-solid fa-eye"></i>
+            <button type="button" onclick="togglePasswordVisibility('reset_confirmar_password', 'iconEyeReset2')" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600" aria-label="Mostrar u ocultar la contraseña">
+              <i id="iconEyeReset2" class="fa-solid fa-eye" aria-hidden="true"></i>
             </button>
           </div>
         </div>
@@ -5907,8 +5930,8 @@
             </p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalInformePdf()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-all">
-          <i class="fa-solid fa-xmark"></i>
+        <button type="button" onclick="cerrarModalInformePdf()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-all" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -5978,11 +6001,11 @@
     <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl space-y-4 border border-slate-100">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-sm font-black text-slate-900">Nueva Operación</h3>
-        <button type="button" onclick="cerrarModalOperacion()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="cerrarModalOperacion()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="font-bold text-slate-600 block mb-1">Nombre de la Operación</label>
+          <label for="nueva_op_nombre" class="font-bold text-slate-600 block mb-1">Nombre de la Operación</label>
           <input type="text" id="nueva_op_nombre" placeholder="ej. Hidrocarburos" class="w-full p-2 bg-slate-50 border rounded-xl font-bold">
         </div>
         <div class="flex justify-end space-x-2 pt-1">
@@ -6003,8 +6026,8 @@
           <h3 id="tituloModalTipologia" class="text-lg font-black text-slate-900 tracking-tight">Crear Tipología de Vehículo</h3>
           <p class="text-xs text-slate-500 font-medium mt-0.5">Configura los ejes direccionales, tracción y libres (pacha dual o sencilla).</p>
         </div>
-        <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalTipologia()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6013,13 +6036,13 @@
         
         <!-- Nombre de Tipología -->
         <div>
-          <label class="font-extrabold text-slate-800 block mb-1.5 text-xs">Nombre de Tipología *</label>
+          <label for="nueva_tip_nombre" class="font-extrabold text-slate-800 block mb-1.5 text-xs">Nombre de Tipología *</label>
           <input type="text" id="nueva_tip_nombre" placeholder="Ej. Dobletroque Volqueta 6x4 o Trailer 3 Ejes" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 transition-all uppercase">
         </div>
 
         <!-- Descripción / Aplicación -->
         <div>
-          <label class="font-bold text-slate-700 block mb-1.5 text-xs">Descripción / Aplicación</label>
+          <label for="nueva_tip_desc" class="font-bold text-slate-700 block mb-1.5 text-xs">Descripción / Aplicación</label>
           <input type="text" id="nueva_tip_desc" placeholder="Ej. Cabezote de tracción pesada regional" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-500 transition-all">
         </div>
 
@@ -6139,8 +6162,8 @@
           </div>
           <h3 class="text-base font-black text-slate-900">Finalizar Inspección</h3>
         </div>
-        <button type="button" onclick="cerrarModalConfirmarFinalizar()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all">
-          <i class="fa-solid fa-xmark text-sm"></i>
+        <button type="button" onclick="cerrarModalConfirmarFinalizar()" class="text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-all" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6216,8 +6239,8 @@
             <p class="text-[11px] text-slate-500" id="lblTallerDesmonteSub">Registro de retiro a bodega</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalTallerDesmontar()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalTallerDesmontar()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6232,17 +6255,17 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1"><span id="lblDesmOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
+          <label for="desm_odometro" class="block font-bold text-slate-700 mb-1"><span id="lblDesmOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
           <input type="number" id="desm_odometro" required min="1" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Profundidad al Retiro (mm) <span class="text-rose-500">*</span></label>
+          <label for="desm_profundidad" class="block font-bold text-slate-700 mb-1">Profundidad al Retiro (mm) <span class="text-rose-500">*</span></label>
           <input type="number" id="desm_profundidad" required min="0" max="27" step="0.1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Bodega de Destino <span class="text-rose-500">*</span></label>
+          <label for="desm_bodega_destino" class="block font-bold text-slate-700 mb-1">Bodega de Destino <span class="text-rose-500">*</span></label>
           <select id="desm_bodega_destino" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs">
             <option value="Bodega_2_Reutilizable">Bodega 2: Reutilizable / Recambio (Para otro camión)</option>
             <option value="Bodega_3_Reencauche">Bodega 3: Por Enviar a Reencauche (Carcasa útil)</option>
@@ -6253,7 +6276,7 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Motivo / Causal del Desmonte</label>
+          <label for="desm_motivo" class="block font-bold text-slate-700 mb-1">Motivo / Causal del Desmonte</label>
           <input type="text" id="desm_motivo" placeholder="Ej. Desgaste regular, preventivo, corte, etc." class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium">
         </div>
 
@@ -6283,8 +6306,8 @@
             <p class="text-[11px] text-slate-500" id="lblTallerMontarSub">Posición de montaje</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalTallerMontar()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalTallerMontar()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6312,14 +6335,14 @@
         <input type="hidden" id="mont_posicion">
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1"><span id="lblMontOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
+          <label for="mont_odometro" class="block font-bold text-slate-700 mb-1"><span id="lblMontOdometro">Odómetro Actual del Vehículo (km)</span> <span class="text-rose-500">*</span></label>
           <input type="number" id="mont_odometro" required min="1" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <!-- Pestaña A: Selector de Stock -->
         <div id="panelMontarStock" class="space-y-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Seleccionar Llanta Disponible en Bodega <span class="text-rose-500">*</span></label>
+            <label for="mont_sel_stock" class="block font-bold text-slate-700 mb-1">Seleccionar Llanta Disponible en Bodega <span class="text-rose-500">*</span></label>
             <select id="mont_sel_stock" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-xs">
               <option value="">Cargando llantas disponibles...</option>
             </select>
@@ -6330,33 +6353,33 @@
         <div id="panelMontarNueva" class="hidden space-y-2.5">
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">No. Interno / Serial <span class="text-rose-500">*</span></label>
+              <label for="mont_nueva_serial" class="block font-bold text-slate-700 mb-0.5">No. Interno / Serial <span class="text-rose-500">*</span></label>
               <input type="text" id="mont_nueva_serial" placeholder="Ej. LL-5001" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold uppercase">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">Marca <span class="text-rose-500">*</span></label>
+              <label for="mont_nueva_marca" class="block font-bold text-slate-700 mb-0.5">Marca <span class="text-rose-500">*</span></label>
               <select id="mont_nueva_marca" onchange="listasMontar.onMarca(this)" class="w-full min-w-0 p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs truncate">
                 <option value="">Cargando marcas...</option>
               </select>
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">Diseño <span class="text-rose-500">*</span></label>
+              <label for="mont_nueva_diseno" class="block font-bold text-slate-700 mb-0.5">Diseño <span class="text-rose-500">*</span></label>
               <select id="mont_nueva_diseno" onchange="listasMontar.onDiseno(this)" class="w-full min-w-0 p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs truncate">
                 <option value="">Primero selecciona una marca...</option>
               </select>
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">Dimensión <span class="text-rose-500">*</span></label>
+              <label for="mont_nueva_dimension" class="block font-bold text-slate-700 mb-0.5">Dimensión <span class="text-rose-500">*</span></label>
               <select id="mont_nueva_dimension" onchange="listasMontar.onDimension(this)" class="w-full min-w-0 p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs truncate">
                 <option value="">Primero selecciona un diseño...</option>
               </select>
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">Prof. Inicial (mm) <span class="text-rose-500">*</span></label>
+              <label for="mont_nueva_prof" class="block font-bold text-slate-700 mb-0.5">Prof. Inicial (mm) <span class="text-rose-500">*</span></label>
               <input type="number" step="any" min="0" id="mont_nueva_prof" placeholder="Según marca y diseño" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-0.5">Precio Compra ($)</label>
+              <label for="mont_nueva_precio" class="block font-bold text-slate-700 mb-0.5">Precio Compra ($)</label>
               <input type="number" step="any" id="mont_nueva_precio" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
               <p id="mont_nueva_precio_origen" class="hidden text-[10px] text-emerald-700 font-semibold mt-0.5">De la lista de precios del cliente</p>
             </div>
@@ -6400,8 +6423,8 @@
             <i class="fa-solid fa-file-pdf"></i>
             <span>Acta FVU PDF</span>
           </button>
-          <button type="button" onclick="cerrarModalHojaVida()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-xmark"></i>
+          <button type="button" onclick="cerrarModalHojaVida()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-lg" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
       </div>
@@ -6455,7 +6478,7 @@
           <span class="text-[10px] text-slate-500 font-semibold">Saltos verticales representan bandas de reencauche</span>
         </div>
         <div class="h-60 sm:h-72 w-full relative bg-white p-2 rounded-xl border border-slate-200/80 shadow-2xs">
-          <canvas id="chartCurvaDesgasteHojaVida"></canvas>
+          <canvas id="chartCurvaDesgasteHojaVida" role="img" aria-label="Hoja de vida: curva de desgaste de la llanta" data-titulo="Hoja de vida: curva de desgaste de la llanta"></canvas>
         </div>
       </div>
 
@@ -6520,8 +6543,8 @@
             <p class="text-[11px] text-slate-500">Pasa carcasas de B3 a B4</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalDespachoPlanta()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalDespachoPlanta()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6534,23 +6557,23 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Proveedor / Planta de Reencauche <span class="text-rose-500">*</span></label>
+          <label for="desp_proveedor" class="block font-bold text-slate-700 mb-1">Proveedor / Planta de Reencauche <span class="text-rose-500">*</span></label>
           <input type="text" id="desp_proveedor" required placeholder="Ej. Bandag / Renoboy" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase">
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Guía de Remisión</label>
+            <label for="desp_guia" class="block font-bold text-slate-700 mb-1">Guía de Remisión</label>
             <input type="text" id="desp_guia" placeholder="GR-1049" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold uppercase">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Transportador</label>
+            <label for="desp_transportador" class="block font-bold text-slate-700 mb-1">Transportador</label>
             <input type="text" id="desp_transportador" placeholder="Envía / Propio" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold">
           </div>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Fecha Compromiso de Retorno</label>
+          <label for="desp_fecha_compromiso" class="block font-bold text-slate-700 mb-1">Fecha Compromiso de Retorno</label>
           <input type="date" id="desp_fecha_compromiso" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
         </div>
 
@@ -6585,8 +6608,8 @@
             <p class="text-[11px] text-slate-500">Apertura de nuevo ciclo y entrada a B2</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalRetornoReencauche()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalRetornoReencauche()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6600,25 +6623,25 @@
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Proveedor de Banda <span class="text-rose-500">*</span></label>
+            <label for="ret_proveedor_banda" class="block font-bold text-slate-700 mb-1">Proveedor de Banda <span class="text-rose-500">*</span></label>
             <input type="text" id="ret_proveedor_banda" required placeholder="Bandag" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Diseño de Banda <span class="text-rose-500">*</span></label>
+            <label for="ret_diseno_banda" class="block font-bold text-slate-700 mb-1">Diseño de Banda <span class="text-rose-500">*</span></label>
             <input type="text" id="ret_diseno_banda" required placeholder="BDL 18" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold uppercase">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Prof. Banda Nueva (mm)</label>
+            <label for="ret_prof_banda" class="block font-bold text-slate-700 mb-1">Prof. Banda Nueva (mm)</label>
             <input type="number" step="0.1" id="ret_prof_banda" required placeholder="mm de la banda nueva" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Costo Factura Renovado ($)</label>
+            <label for="ret_costo" class="block font-bold text-slate-700 mb-1">Costo Factura Renovado ($)</label>
             <input type="number" step="any" id="ret_costo" placeholder="Sin precio: se excluye de los costos" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">No. Factura del Renovado</label>
+          <label for="ret_factura" class="block font-bold text-slate-700 mb-1">No. Factura del Renovado</label>
           <input type="text" id="ret_factura" placeholder="FAC-8902" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold uppercase">
         </div>
 
@@ -6639,18 +6662,18 @@
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 my-8 border border-slate-100">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <h3 class="text-sm font-black text-slate-900">Finalizar Reparación Mayor</h3>
-        <button type="button" onclick="cerrarModalFinalizarReparacion()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalFinalizarReparacion()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
       <form id="formFinalizarReparacion" onsubmit="ejecutarFinalizarReparacion(event)" class="space-y-3 text-xs">
         <input type="hidden" id="rep_numero_interno">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Costo de Reparación ($ COP)</label>
+          <label for="rep_costo" class="block font-bold text-slate-700 mb-1">Costo de Reparación ($ COP)</label>
           <input type="number" step="any" id="rep_costo" value="85000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Trabajo Realizado</label>
+          <label for="rep_trabajo" class="block font-bold text-slate-700 mb-1">Trabajo Realizado</label>
           <input type="text" id="rep_trabajo" value="Parche vulcanizado en caliente" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium">
         </div>
         <div class="flex justify-end space-x-2 pt-2 border-t">
@@ -6666,25 +6689,25 @@
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 my-8 border border-slate-100">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <h3 class="text-sm font-black text-slate-900">Dictamen de Garantía</h3>
-        <button type="button" onclick="cerrarModalDictamenGarantia()" class="text-slate-400 hover:text-slate-700">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalDictamenGarantia()" class="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
       <form id="formDictamenGarantia" onsubmit="ejecutarDictamenGarantia(event)" class="space-y-3 text-xs">
         <input type="hidden" id="gar_numero_interno">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Resultado del Dictamen <span class="text-rose-500">*</span></label>
+          <label for="gar_dictamen" class="block font-bold text-slate-700 mb-1">Resultado del Dictamen <span class="text-rose-500">*</span></label>
           <select id="gar_dictamen" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
             <option value="Aprobada">Aprobada (Nota Crédito Reconocida)</option>
             <option value="Rechazada">Rechazada (Causal Operativa / Impacto)</option>
           </select>
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">% Reconocido por el Fabricante</label>
+          <label for="gar_pct" class="block font-bold text-slate-700 mb-1">% Reconocido por el Fabricante</label>
           <input type="number" step="1" min="0" max="100" id="gar_pct" placeholder="% reconocido" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Valor Acreditado / Nota Crédito ($ COP)</label>
+          <label for="gar_valor" class="block font-bold text-slate-700 mb-1">Valor Acreditado / Nota Crédito ($ COP)</label>
           <input type="number" step="any" id="gar_valor" placeholder="Valor de la nota crédito" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
         </div>
         <div class="flex justify-end space-x-2 pt-2 border-t">
@@ -6708,8 +6731,8 @@
             <p class="text-[11px] text-slate-500 font-medium">Soporte Offline-First con IndexedDB y sincronización automática</p>
           </div>
         </div>
-        <button type="button" onclick="cerrarModalColaOffline()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button type="button" onclick="cerrarModalColaOffline()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
         </button>
       </div>
 
@@ -6791,8 +6814,8 @@
             <h3 class="text-sm font-black">Regla de oro 1: vehículos con reencauche en dirección</h3>
             <p id="lblReglaOro1Sub" class="text-[11px] text-rose-100">Llantas reencauchadas en eje direccional</p>
           </div>
-          <button type="button" onclick="cerrarModalReglaOro1()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
-            <i class="fa-solid fa-xmark"></i>
+          <button type="button" onclick="cerrarModalReglaOro1()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
         <div class="p-4 overflow-y-auto custom-scroll flex-1">
@@ -6855,6 +6878,7 @@
   <script src="/static/js/modulo_patio.js"></script>
   <script src="/static/js/modulo_bodegas.js"></script>
   <script src="/static/js/app_init.js"></script>
+  <script src="/static/js/accesibilidad_modales.js"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

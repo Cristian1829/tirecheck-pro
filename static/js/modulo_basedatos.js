@@ -667,17 +667,80 @@
     }
 
     async function eliminarInspeccion(id, placa, pos) {
-      if (!confirm(`¿Eliminar la inspección ID ${id} (Vehículo ${placa}, Posición ${pos})?`)) return;
+      // Queda en la papelera con quién, cuándo y el motivo; el administrador la puede restaurar (auditoría H-40)
+      const motivo = prompt(`¿Eliminar la inspección ID ${id} (Vehículo ${placa}, Posición ${pos})?\n\nEscriba el motivo (queda en la papelera):`, '');
+      if (motivo === null) return;
       try {
-        const res = await fetch(`/api/inspecciones/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/inspecciones/${id}?motivo=${encodeURIComponent(motivo.trim())}`, { method: 'DELETE' });
         if (res.ok) {
-          mostrarToast(`🗑️ Registro ID ${id} eliminado.`);
+          mostrarToast(`🗑️ Registro ID ${id} eliminado. Queda en la papelera.`);
           cargarBaseInspecciones();
         } else {
           mostrarToast('No se pudo eliminar el registro', true);
         }
       } catch (e) {
         mostrarToast('Error al intentar eliminar', true);
+      }
+    }
+
+    // Papelera de inspecciones (solo administrador): ver lo borrado y restaurarlo (auditoría H-40)
+    async function abrirPapeleraInspecciones() {
+      let filas = [];
+      try {
+        const res = await fetch('/api/inspecciones/papelera');
+        if (!res.ok) throw new Error((await res.json()).detail || 'No se pudo abrir la papelera');
+        filas = await res.json();
+      } catch (e) {
+        mostrarToast(e.message || 'No se pudo abrir la papelera', true);
+        return;
+      }
+      let m = document.getElementById('modalPapeleraInspecciones');
+      if (!m) {
+        m = document.createElement('div');
+        m.id = 'modalPapeleraInspecciones';
+        m.className = 'fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto';
+        m.innerHTML = `<div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-black text-slate-900">Papelera de inspecciones</h3>
+              <button type="button" onclick="cerrarPapeleraInspecciones()" aria-label="Cerrar" class="w-9 h-9 rounded-xl hover:bg-slate-100 text-slate-600"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <p class="text-xs text-slate-600">Las inspecciones borradas quedan aquí con quién las borró, cuándo y el motivo. Restaurar las devuelve a la base.</p>
+            <div id="listaPapeleraInspecciones" class="overflow-x-auto"></div>
+          </div>`;
+        document.body.appendChild(m);
+        if (window.prepararModalAccesible) window.prepararModalAccesible(m);
+      }
+      const caja = document.getElementById('listaPapeleraInspecciones');
+      caja.innerHTML = filas.length ? `<table class="w-full text-xs">
+          <thead><tr class="text-left text-slate-600 border-b"><th class="py-2 pr-2">Inspección</th><th class="pr-2">Cliente / sede</th><th class="pr-2">Placa · pos.</th><th class="pr-2">Borrada por</th><th class="pr-2">Motivo</th><th></th></tr></thead>
+          <tbody>${filas.map(f => `<tr class="border-b border-slate-100">
+            <td class="py-2 pr-2">#${escapeHtml(f.inspeccion_id)} · ${escapeHtml(f.fecha_inspeccion)}</td>
+            <td class="pr-2">${escapeHtml(f.cliente)}${f.subcliente ? ' / ' + escapeHtml(f.subcliente) : ''}</td>
+            <td class="pr-2 font-bold">${escapeHtml(f.placa)} · ${escapeHtml(f.posicion)}</td>
+            <td class="pr-2">${escapeHtml(f.eliminado_por || '—')}<br><span class="text-slate-500">${escapeHtml(f.eliminado_en)}</span></td>
+            <td class="pr-2">${escapeHtml(f.motivo || '—')}</td>
+            <td class="text-right">${f.restaurado_en
+              ? `<span class="text-emerald-700 font-semibold">Restaurada ${escapeHtml(f.restaurado_en)}</span>`
+              : `<button type="button" onclick="restaurarInspeccionPapelera(${Number(f.id)})" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold">Restaurar</button>`}</td>
+          </tr>`).join('')}</tbody></table>`
+        : '<p class="text-xs text-slate-600 py-4 text-center">La papelera está vacía.</p>';
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function cerrarPapeleraInspecciones() {
+      const m = document.getElementById('modalPapeleraInspecciones');
+      if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+    async function restaurarInspeccionPapelera(papeleraId) {
+      try {
+        const res = await fetch(`/api/inspecciones/papelera/${papeleraId}/restaurar`, { method: 'POST' });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || 'No se pudo restaurar');
+        mostrarToast(`♻️ ${d.message}`);
+        cargarBaseInspecciones();
+        abrirPapeleraInspecciones();
+      } catch (e) {
+        mostrarToast(e.message || 'No se pudo restaurar', true);
       }
     }
 
@@ -799,7 +862,13 @@
         const d = await res.json();
         if (res.ok) {
           cerrarModalImportarExcel();
-          mostrarToast(`🎉 ${d.message || 'Importación completada'}`);
+          mostrarToast(`🎉 ${d.message || 'Importación completada'}`, !!d.total_rechazadas);
+          if (d.total_rechazadas) {
+            // Filas que no entraron, con su número en el Excel y el motivo (auditoría H-23)
+            const lineas = (d.rechazadas || []).slice(0, 15).map(r => `• Fila ${r.fila}: ${r.motivo}`);
+            if (d.total_rechazadas > lineas.length) lineas.push(`…y ${d.total_rechazadas - lineas.length} más.`);
+            alert(`${d.message}\n\nFilas no cargadas:\n${lineas.join('\n')}`);
+          }
           cargarBaseInspecciones();
         } else {
           mostrarToast(d.detail || 'Error al procesar el archivo Excel', true);

@@ -202,7 +202,7 @@
       }
       try {
         const link = document.createElement('a');
-        link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.png`;
+        link.download = `${filename}_${fechaLocalISO()}.png`;
         link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
         mostrarToast('📷 Gráfico HD exportado correctamente');
@@ -670,12 +670,17 @@
 
         const res = await fetch(`/api/kpis/suite-20?${params.toString()}`, { headers });
         if (!res.ok) {
-          console.warn('No se pudo cargar la suite de 20 KPIs, status:', res.status);
+          let motivo = '';
+          try { motivo = (await res.json()).detail || ''; } catch (e) { /* respuesta sin JSON */ }
+          if (consulta !== consultaSuiteVigente) return;
+          mostrarErrorSuiteKpis(res.status === 401 ? 'La sesión expiró. Vuelva a ingresar.'
+            : `No se pudieron calcular los KPI (error ${res.status})${typeof motivo === 'string' && motivo ? ': ' + motivo : ''}.`);
           return;
         }
 
         const data = await res.json();
         if (consulta !== consultaSuiteVigente) return;
+        mostrarErrorSuiteKpis(null);
         datosSuite20Actuales = data;
         unidadSuite = data.unidad === 'horas' ? 'h' : 'km';
 
@@ -697,7 +702,26 @@
 
       } catch (err) {
         console.error('Error al cargar la Suite de 20 KPIs:', err);
+        if (consulta === consultaSuiteVigente) {
+          mostrarErrorSuiteKpis('No se pudieron cargar los KPI. Revise la conexión e intente de nuevo.');
+        }
       }
+    }
+
+    // Con error se ocultan las cifras del filtro anterior y se ofrece reintentar (auditoría H-16);
+    // con null se quita el aviso y vuelven a verse las subvistas.
+    function mostrarErrorSuiteKpis(mensaje) {
+      const caja = document.getElementById('kpiErrorCarga');
+      const txt = document.getElementById('kpiErrorCargaTexto');
+      if (mensaje) {
+        Object.keys(instanciasChartsSuite).forEach(destruirChartSuite);
+        datosSuite20Actuales = null;
+      }
+      document.querySelectorAll('[id^="subvista-kpi-"]').forEach(el => {
+        el.style.visibility = mensaje ? 'hidden' : '';
+      });
+      if (txt) txt.textContent = mensaje || '';
+      if (caja) caja.classList.toggle('hidden', !mensaje);
     }
 
     // Aviso de datos excluidos: cada indicador se calcula solo con las llantas que tienen el dato
@@ -975,7 +999,7 @@
       const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Vehiculos_pendientes_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `Vehiculos_pendientes_${fechaLocalISO()}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();

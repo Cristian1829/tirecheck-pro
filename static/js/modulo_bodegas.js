@@ -905,7 +905,7 @@
 
       // Configurar fecha de hoy
       if (document.getElementById('mover_fecha')) {
-        document.getElementById('mover_fecha').value = new Date().toISOString().split('T')[0];
+        document.getElementById('mover_fecha').value = fechaLocalISO();
       }
 
       // Resetear campos de forma segura y completa

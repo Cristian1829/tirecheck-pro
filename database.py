@@ -13,6 +13,8 @@ import time
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 import contextvars
+import copy
+import functools
 from typing import Optional
 import sys
 import catalogo_modelos_colombia
@@ -239,6 +241,60 @@ _SIN_CARACTERES_HTML = str.maketrans('', '', '<>"' + "'`")
 def limpiar_texto_entrada(valor):
     """Quita < > " ' ` de un texto (los demás tipos pasan igual)."""
     return valor.translate(_SIN_CARACTERES_HTML) if isinstance(valor, str) else valor
+
+
+# Memoria por consulta (auditoría H-26): dentro de un cálculo de solo lectura (suite de KPI, Diagnóstico,
+# trazabilidad) las lecturas de catálogo —configuración del cliente, esquemas de tipología, límites de retiro,
+# lista de precios— se hacían una y otra vez (53 conexiones y ~390 sentencias por suite). Con
+# `with memoria_de_consulta():` cada una se lee una sola vez y se reutiliza hasta que termina el cálculo.
+# Fuera de ese bloque las funciones se comportan igual que antes (sin memoria), así un cambio en Catálogos
+# se ve en la siguiente petición.
+_memoria_consulta = contextvars.ContextVar('_memoria_consulta', default=None)
+
+
+@contextmanager
+def memoria_de_consulta():
+    if _memoria_consulta.get() is not None:
+        yield
+        return
+    token = _memoria_consulta.set({})
+    try:
+        yield
+    finally:
+        _memoria_consulta.reset(token)
+
+
+def _memorizar_en_consulta(copiar=True):
+    """
+    Decorador: dentro de memoria_de_consulta() guarda el resultado por argumentos (sin `conn`).
+    copiar=True entrega una copia para que quien lo modifique no altere lo guardado; los resolvedores
+    (funciones) se comparten tal cual.
+    """
+    def deco(fn):
+        @functools.wraps(fn)
+        def envoltura(*args, **kwargs):
+            memo = _memoria_consulta.get()
+            if memo is None:
+                return fn(*args, **kwargs)
+            clave = (fn.__name__, args, tuple(sorted((k, v) for k, v in kwargs.items() if k != 'conn')))
+            try:
+                hash(clave)
+            except TypeError:
+                return fn(*args, **kwargs)
+            if clave not in memo:
+                memo[clave] = fn(*args, **kwargs)
+            return copy.deepcopy(memo[clave]) if copiar else memo[clave]
+        return envoltura
+    return deco
+
+
+def calculo_de_lectura(fn):
+    """Decorador para los cálculos de solo lectura: corre `fn` dentro de memoria_de_consulta()."""
+    @functools.wraps(fn)
+    def envoltura(*args, **kwargs):
+        with memoria_de_consulta():
+            return fn(*args, **kwargs)
+    return envoltura
 
 
 @contextmanager
@@ -2568,6 +2624,7 @@ def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "
             }
     return None
 
+@_memorizar_en_consulta(copiar=True)
 def obtener_posiciones_por_tipologia(tipologia):
     """
     Retorna el listado de números de posición correspondientes a la tipología seleccionada,
@@ -2710,6 +2767,7 @@ def es_posicion_direccional(tipologia, posicion):
         return pos in [1, 2, 3, 4]
     return pos in [1, 2]
 
+@_memorizar_en_consulta(copiar=True)
 def tipologia_permite_reencauche_direccion(tipologia, conn=None) -> bool:
     """
     Determina si la tipología especificada autoriza el uso de reencauche en eje direccional.
@@ -3331,10 +3389,82 @@ def actualizar_inspeccion(inspeccion_id, datos):
         sincronizar_maestro_desde_inspecciones(cliente_filtro=datos.get('cliente'), numero_interno_filtro=datos.get('numero_interno'))
     return ok
 
-def eliminar_inspeccion(inspeccion_id):
+def _asegurar_tabla_papelera(conn):
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS inspecciones_papelera (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            inspeccion_id INTEGER,
+            cliente TEXT, subcliente TEXT, placa TEXT, posicion INTEGER, fecha_inspeccion TEXT,
+            datos_json TEXT NOT NULL,
+            eliminado_por TEXT, eliminado_en TEXT, motivo TEXT,
+            restaurado_por TEXT, restaurado_en TEXT
+        )""")
+
+
+def eliminar_inspeccion(inspeccion_id, usuario: str = '', motivo: str = '') -> bool:
+    """
+    Borra una inspección dejando copia completa en la papelera, con quién la borró, cuándo y por qué
+    (auditoría H-40: antes el DELETE era físico y sin rastro). Las consultas y los KPI no cambian: la
+    inspección sale de la tabla principal; desde la papelera el administrador la puede restaurar.
+    Devuelve False si la inspección no existía.
+    """
     with get_connection() as conn:
+        _asegurar_tabla_papelera(conn)
+        conn.row_factory = sqlite3.Row
+        fila = conn.execute("SELECT * FROM inspecciones WHERE id = ?", (inspeccion_id,)).fetchone()
+        conn.row_factory = None
+        if fila is None:
+            return False
+        datos = dict(fila)
+        conn.execute("""INSERT INTO inspecciones_papelera
+            (inspeccion_id, cliente, subcliente, placa, posicion, fecha_inspeccion, datos_json, eliminado_por, eliminado_en, motivo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (inspeccion_id, datos.get('cliente'), datos.get('subcliente'), datos.get('placa'), datos.get('posicion'),
+             str(datos.get('fecha') or '')[:10], json.dumps(datos, ensure_ascii=False, default=str),
+             str(usuario or ''), datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d %H:%M:%S'), limpiar_texto_entrada(str(motivo or '').strip()[:300])))
         conn.execute("DELETE FROM inspecciones WHERE id = ?", (inspeccion_id,))
         conn.commit()
+    return True
+
+
+def listar_papelera_inspecciones(limite: int = 300) -> list:
+    """Inspecciones borradas (las más recientes primero), sin el JSON completo."""
+    with get_connection() as conn:
+        _asegurar_tabla_papelera(conn)
+        filas = conn.execute("""SELECT id, inspeccion_id, cliente, subcliente, placa, posicion, fecha_inspeccion,
+                                   eliminado_por, eliminado_en, motivo, restaurado_por, restaurado_en
+                                FROM inspecciones_papelera ORDER BY id DESC LIMIT ?""", (int(limite),)).fetchall()
+    cols = ['id', 'inspeccion_id', 'cliente', 'subcliente', 'placa', 'posicion', 'fecha_inspeccion',
+            'eliminado_por', 'eliminado_en', 'motivo', 'restaurado_por', 'restaurado_en']
+    return [dict(zip(cols, f)) for f in filas]
+
+
+def restaurar_inspeccion_papelera(papelera_id: int, usuario: str = '') -> dict:
+    """
+    Devuelve a la base una inspección de la papelera con su id original (si ese id ya lo usa otra, con uno nuevo).
+    ValueError si no existe o ya fue restaurada.
+    """
+    with get_connection() as conn:
+        _asegurar_tabla_papelera(conn)
+        fila = conn.execute("SELECT datos_json, restaurado_en FROM inspecciones_papelera WHERE id = ?", (papelera_id,)).fetchone()
+        if fila is None:
+            raise ValueError("Ese registro no está en la papelera")
+        if fila[1]:
+            raise ValueError("Esa inspección ya fue restaurada")
+        datos = json.loads(fila[0])
+        cols_tabla = [r[1] for r in conn.execute("PRAGMA table_info(inspecciones)").fetchall()]
+        datos = {k: v for k, v in datos.items() if k in cols_tabla}
+        if datos.get('id') is not None and conn.execute("SELECT 1 FROM inspecciones WHERE id = ?", (datos['id'],)).fetchone():
+            datos.pop('id')
+        cols = list(datos)
+        cur = conn.execute(f"INSERT INTO inspecciones ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
+                           [datos[c] for c in cols])
+        nuevo_id = datos.get('id') or cur.lastrowid
+        conn.execute("UPDATE inspecciones_papelera SET restaurado_por = ?, restaurado_en = ? WHERE id = ?",
+                     (str(usuario or ''), datetime.now(BOGOTA_TZ).strftime('%Y-%m-%d %H:%M:%S'), papelera_id))
+        conn.commit()
+    sincronizar_maestro_desde_inspecciones(cliente_filtro=datos.get('cliente'), numero_interno_filtro=datos.get('numero_interno'))
+    return {"id": nuevo_id, "placa": datos.get('placa'), "posicion": datos.get('posicion')}
 
 def vaciar_inspecciones():
     with get_connection() as conn:
@@ -3467,7 +3597,22 @@ def actualizar_inspecciones_en_lote(ids, cambios):
 
     return filas_afectadas
 
+COLUMNAS_OBLIGATORIAS_IMPORTACION = ('fecha', 'placa', 'posicion')
+
+
 def cargar_excel_a_bd(file_path, clientes_autorizados=None):
+    """Compatibilidad: devuelve solo cuántas inspecciones se importaron."""
+    return importar_excel_inspecciones(file_path, clientes_autorizados)['importados']
+
+
+def importar_excel_inspecciones(file_path, clientes_autorizados=None) -> dict:
+    """
+    Carga inspecciones desde Excel. Antes rellenaba con valores supuestos y omitía filas sin avisar
+    (fecha inválida = hoy, posición vacía = 0, fila sin placa descartada, archivo sin columna placa = 0 «éxito»).
+    Ahora (auditoría H-23): exige las columnas fecha, placa y posición antes de escribir nada, rechaza la
+    fila con su número y motivo y devuelve {"importados": n, "rechazadas": [{"fila", "motivo"}]}.
+    Una falla de candados o de cliente no autorizado sigue anulando todo el archivo.
+    """
     df = pd.read_excel(file_path, sheet_name=0)
     cols_norm_map = {normalizar_texto(c): c for c in df.columns}
     
@@ -3504,25 +3649,39 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
                 col_encontradas[canonico] = cols_norm_map[norm]
                 break
 
+    faltan = [c for c in COLUMNAS_OBLIGATORIAS_IMPORTACION if c not in col_encontradas]
+    if faltan:
+        raise ValueError("Al archivo le faltan las columnas obligatorias: " + ", ".join(faltan)
+                         + ". Descargue la plantilla para ver los encabezados esperados.")
+
     registros_insertados = 0
+    rechazadas = []
     with get_connection() as conn:
         cursor = conn.cursor()
         for idx, row in df.iterrows():
-            placa_raw = row[col_encontradas['placa']] if 'placa' in col_encontradas and not pd.isna(row[col_encontradas['placa']]) else ''
+            if row.isna().all():
+                continue  # fila totalmente vacía al final de la hoja: no es un rechazo
+            placa_raw = row[col_encontradas['placa']] if not pd.isna(row[col_encontradas['placa']]) else ''
             # Igual que en el parque: un número interno leído como 101.0 queda "101" y empata con el parque
             placa = _placa_padron(placa_raw)
             if not placa:
+                rechazadas.append({"fila": idx + 2, "motivo": "sin placa"})
                 continue
-            
-            pos = to_int(row[col_encontradas['posicion']]) if 'posicion' in col_encontradas else 1
 
-            # Normalizar fecha a formato YYYY-MM-DD
-            fecha_raw = row[col_encontradas['fecha']] if 'fecha' in col_encontradas and not pd.isna(row[col_encontradas['fecha']]) else None
+            pos_raw = row[col_encontradas['posicion']]
+            pos_num = pd.to_numeric(pos_raw, errors='coerce')
+            if pd.isna(pos_num) or float(pos_num) != int(pos_num) or int(pos_num) < 1:
+                rechazadas.append({"fila": idx + 2, "motivo": f"placa {placa}: posición inválida ({'' if pd.isna(pos_raw) else pos_raw})".replace(' ()', ' (vacía)')})
+                continue
+            pos = int(pos_num)
+
+            # Normalizar fecha a formato YYYY-MM-DD; sin fecha válida la fila se rechaza (antes tomaba la de hoy)
+            fecha_raw = row[col_encontradas['fecha']] if not pd.isna(row[col_encontradas['fecha']]) else None
             fecha_dt = pd.to_datetime(fecha_raw, errors='coerce') if fecha_raw is not None else pd.NaT
             if pd.isna(fecha_dt):
-                fecha = datetime.now().strftime('%Y-%m-%d')
-            else:
-                fecha = fecha_dt.strftime('%Y-%m-%d')
+                rechazadas.append({"fila": idx + 2, "motivo": f"placa {placa}: fecha inválida o vacía ({'' if fecha_raw is None else fecha_raw})".replace(' ()', '')})
+                continue
+            fecha = fecha_dt.strftime('%Y-%m-%d')
 
             # Normalizar vida y banda
             vida_raw = row[col_encontradas['vida']] if 'vida' in col_encontradas and not pd.isna(row[col_encontradas['vida']]) else ''
@@ -3630,7 +3789,7 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
         if registros_insertados:
             sincronizar_maestro_desde_inspecciones(conn)
         conn.commit()
-    return registros_insertados
+    return {"importados": registros_insertados, "rechazadas": rechazadas}
 
 _RE_HOMBRO_CAIDO = re.compile(r'\bHOMBROS?\s+CAIDOS?\b')
 
@@ -3699,6 +3858,7 @@ def calcular_auto_ajuste_chasis(group_df: pd.DataFrame, estructura, posiciones_r
 
     return {'instrucciones': instrucciones, 'tiene_auto_ajuste': len(instrucciones) > 0}
 
+@calculo_de_lectura
 def analizar_inspecciones_df(df_inspecciones):
     if df_inspecciones.empty:
         return pd.DataFrame()
@@ -4491,6 +4651,7 @@ def importar_precios_cliente_excel(file_path: str, clientes_autorizados=None) ->
 
 
 
+@_memorizar_en_consulta(copiar=True)
 def cargar_lista_precios():
     """Lista completa en memoria para cálculos masivos: {(cliente, marca, diseno, dimension, tipo): [(desde, precio)…]}."""
     lista = {}
@@ -5070,6 +5231,7 @@ def _quitar_tildes(s):
     return ''.join(c for c in unicodedata.normalize('NFD', s_str) if unicodedata.category(c) != 'Mn')
 
 # --- CONFIGURACIÓN DE LÍMITES POR CLIENTE, SUBCLIENTE Y EJE ---
+@_memorizar_en_consulta(copiar=False)
 def _construir_cache_limites_retiro(conn=None):
     """
     Carga en memoria todas las reglas de límites de retiro de configuracion_limites_retiro
@@ -5244,6 +5406,7 @@ def obtener_tipo_eje_posicion(tipologia, posicion, max_pos=None, mapa_tipologias
             return 'DIRECCIONAL'
         return 'TRACCIÓN'
 
+@_memorizar_en_consulta(copiar=False)
 def construir_resolver_estructura(conn=None):
     """
     estructura(tipologia, posiciones=()) -> ee.EstructuraVehiculo con los ejes del vehículo según
@@ -5321,6 +5484,7 @@ def construir_resolver_limite_posicion(conn=None):
     return lim
 
 
+@calculo_de_lectura
 def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
     """
     Construye la Matriz de Semáforos por Posición evaluando cada llanta montada contra
@@ -5981,6 +6145,7 @@ def guardar_tipologia(nombre, descripcion='', cant_llantas=None, esquema_custom=
         conn.commit()
     return nom
 
+@_memorizar_en_consulta(copiar=True)
 def obtener_esquema_tipologia(tipologia_nombre):
     import json
     t_norm = str(tipologia_nombre or '').strip().lower()
@@ -6260,6 +6425,7 @@ def buscar_dimensiones_modelo(marca, diseno):
     return {'dimensiones': [], 'origen': None}
 
 
+@_memorizar_en_consulta(copiar=True)
 def buscar_profundidad_inicial(marca, diseno, dimension='', vida='Original', banda=''):
     m = (marca or '').strip()
     d = (diseno or '').strip()
@@ -6474,6 +6640,7 @@ def eliminar_modelo_llanta(modelo_id):
         conn.commit()
     return True
 
+@calculo_de_lectura
 def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actual=False):
     """
     Calcula trazabilidad e indicadores clave de desempeno (KPIs) por llanta:
@@ -7502,6 +7669,7 @@ def guardar_licencia_cliente(cliente: str, tipo_licencia: str, plantilla_kpis_js
         return False
 
 
+@_memorizar_en_consulta(copiar=True)
 def obtener_configuracion_avanzada_cliente(cliente: str) -> dict:
     """
     Retorna el diccionario con la configuración avanzada y tolerancias del cliente.
@@ -7661,7 +7829,7 @@ def agregar_rendimiento_y_cpk(grp: pd.DataFrame, col_desgaste: str = 'calc_desga
     return rend, cpk
 
 
-def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
+def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km', incluir_administrativo: bool = True) -> dict:
     """
     Los 4 CPK del negocio (costo por km; con unidad='horas', costo por hora de motor):
     - Operativo: costo de la vida / km recorridos hasta la última inspección.
@@ -7692,13 +7860,21 @@ def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
 
     llantas = {}
     sin_precio = 0
-    for (cli, sn, vida), g in d.groupby(['_cli', '_sn', '_vida'], sort=False):
-        pri, ult = g.iloc[0], g.iloc[-1]
+    # Las filas de cada (cliente, llanta, vida) en orden de fecha, como diccionarios con solo las columnas que
+    # se usan: antes cada grupo hacía iloc sobre todas las columnas de la suite (auditoría H-26)
+    _usadas = ['_cli', '_sn', '_vida', col_med, col_mont, 'precio', 'dimension', 'marca', 'diseno', 'fecha',
+               'prof_ext', 'prof_cent', 'prof_int', 'prof_inicial', 'placa', 'subcliente', 'tipologia', 'posicion']
+    grupos = {}
+    for r in d[[c for c in _usadas if c in d.columns]].to_dict('records'):
+        grupos.setdefault((r['_cli'], r['_sn'], r['_vida']), []).append(r)
+    tiene_precio = 'precio' in d.columns
+    for (cli, sn, vida), g in grupos.items():
+        pri, ult = g[0], g[-1]
         med_ult = to_float(ult.get(col_med))
         mont = to_float(ult.get(col_mont)) or to_float(pri.get(col_mont))
         base = mont if (mont > 0 and med_ult >= mont) else to_float(pri.get(col_med))
         km = max(0.0, med_ult - base)
-        precios = [to_float(x) for x in g['precio'] if to_float(x) > 0] if 'precio' in g else []
+        precios = [to_float(r.get('precio')) for r in g if to_float(r.get('precio')) > 0] if tiene_precio else []
         costo = precios[-1] if precios else ref_precio(cli, pri.get('dimension'), sn, pri.get('marca'), pri.get('diseno'),
                                                       vida, str(pri.get('fecha') or '')[:10])
         profs = [p for p in (to_float(ult.get('prof_ext')), to_float(ult.get('prof_cent')), to_float(ult.get('prof_int'))) if p > 0]
@@ -7745,7 +7921,8 @@ def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
     return {"unidad": unidad, "llantas": llantas, "por_vida": por_vida,
             "flota": {"cpk_operativo": op, "cpk_proyectado": pr, "cpk_total": total, "llantas_con_cpk": n,
                       "llantas_sin_precio": sin_precio},
-            "administrativo": _cpk_administrativo(d, col_med)}
+            # La serie mensual de Tendencias solo usa el CPK operativo: ahí no se calcula el administrativo (H-26)
+            "administrativo": _cpk_administrativo(d, col_med) if incluir_administrativo else []}
 
 
 def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: int = 12) -> list:
@@ -9145,6 +9322,7 @@ def contar_bajas_fvu_para_reponer(llantas, dimension, dias=DIAS_REPOSICION_FVU) 
     return total
 
 
+@_memorizar_en_consulta(copiar=False)
 def resolver_fecha_baja_fvu():
     """fecha_de(llanta) -> 'YYYY-MM-DD' de su baja: fecha_baja o el último BAJA_FVU / CHATARRIZACION del kardex."""
     fechas_kardex = {}
@@ -9647,6 +9825,7 @@ def _kpi01_por_periodo(df_vehiculos, padron_rows, placas_padron, total_padron, p
     return {"por_mes": por_mes, "por_anio": por_anio, "periodo_actual": mes_hoy, "parque": parque}
 
 
+@calculo_de_lectura
 def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     """
     Calcula la Suite Analítica de los 20 KPIs organizados en las 5 Pestañas Estándar Homologadas
@@ -10244,9 +10423,15 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     def _una_por_llanta(df_m):
         return df_m.sort_values(by=['fecha', 'id'], ascending=[False, False]).drop_duplicates(subset=['placa', 'posicion'], keep='first')
 
+    _estructuras_vistas = {}
+
     def _estructura_placa(grp):
         tip = str(grp['tipologia'].iloc[0] if 'tipologia' in grp else '')
-        return lim_posicion.estructura(tip, grp['posicion'].tolist())
+        pos = tuple(grp['posicion'].tolist())
+        clave = (tip, tuple(sorted(set(pos), key=str)))
+        if clave not in _estructuras_vistas:
+            _estructuras_vistas[clave] = lim_posicion.estructura(tip, list(pos))
+        return _estructuras_vistas[clave]
 
     nombres_eje_k5 = {ee.DIRECCIONAL: 'direccional', ee.TRACCION: 'traccion', ee.LIBRE: 'arrastre', ee.REPUESTO: 'repuesto'}
 
@@ -10409,14 +10594,16 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 08: Duales mal apareados de la estructura + cruce con Bodega 2
     def _duales_desapareados(grp_v):
         est_v = _estructura_placa(grp_v)
-        pmin_v = {to_int(r['posicion']): r for _, r in grp_v.iterrows()}
+        # Posición -> (fila, prof. mínima) leyendo solo dos columnas; la fila completa se arma solo para los
+        # pares que alertan (antes iterrows sobre todas las columnas era lo más lento del KPI 08 y el KPI 11; H-26)
+        pmin_v = {to_int(p): (i, v) for i, (p, v) in enumerate(zip(grp_v['posicion'].tolist(), grp_v['calc_p_min'].tolist()))}
         res = []
         for interior, exterior in est_v.duales():
             if interior in pmin_v and exterior in pmin_v:
-                a_val = to_float(pmin_v[interior]['calc_p_min'])
-                b_val = to_float(pmin_v[exterior]['calc_p_min'])
+                a_val = to_float(pmin_v[interior][1])
+                b_val = to_float(pmin_v[exterior][1])
                 if a_val > 0 and b_val > 0 and abs(a_val - b_val) >= tol_apareo:  # H-30
-                    res.append((interior, exterior, a_val, b_val, pmin_v[interior]))
+                    res.append((interior, exterior, a_val, b_val, grp_v.iloc[pmin_v[interior][0]]))
         return res
 
     desapareos_mes = []
@@ -10804,7 +10991,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 "pct_alerta_alineacion": _redondear(100.0 * foto['calc_alerta_alin'].astype(bool).mean(), 1) if len(foto) else None,
             }
             if es_full:
-                punto["cpk_operativo"] = calcular_cpk_llantas(hasta, unidad)["flota"]["cpk_operativo"]
+                punto["cpk_operativo"] = calcular_cpk_llantas(hasta, unidad, incluir_administrativo=False)["flota"]["cpk_operativo"]
             if parque_cargado and placas_padron:
                 # % del parque del archivo inspeccionado en el mes (vehículos, sin filtro de marca ni medida)
                 del_mes = df_vehiculos[df_vehiculos['fecha'].astype(str).str[:7] == mes_t]['placa']                     if not df_vehiculos.empty else pd.Series(dtype=str)

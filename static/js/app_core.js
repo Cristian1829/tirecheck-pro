@@ -110,6 +110,44 @@
           .catch(err => console.warn('[PWA] Error registrando Service Worker:', err));
       });
     }
+    // Respuestas de /api/ que versiones anteriores del service worker guardaban en CacheStorage:
+    // en un equipo compartido y sin red podían mostrarse los datos del usuario anterior (auditoría H-24).
+    // Solo se borran esas entradas: la cola de inspecciones pendientes vive en IndexedDB y no se toca.
+    function borrarRespuestasApiEnCache() {
+      if (!('caches' in window)) return Promise.resolve();
+      return caches.keys().then(nombres => Promise.all(nombres.map(n => caches.open(n).then(c =>
+        c.keys().then(reqs => Promise.all(reqs.filter(r => new URL(r.url).pathname.startsWith('/api/')).map(r => c.delete(r))))
+      )))).catch(() => {});
+    }
+    borrarRespuestasApiEnCache();
+
+    // Gráficas legibles con lector de pantalla (auditoría H-22): cada canvas lleva role="img" y su título en
+    // data-titulo; al dibujarse, el aria-label suma un resumen de los datos (series, etiquetas y valores).
+    if (window.Chart && Chart.register) {
+      try {
+        Chart.register({
+          id: 'resumenAccesible',
+          afterUpdate(chart) {
+            const c = chart.canvas;
+            if (!c) return;
+            const titulo = c.dataset.titulo || 'Gráfica';
+            const etiquetas = (chart.data && chart.data.labels) || [];
+            const conjuntos = (chart.data && chart.data.datasets) || [];
+            const series = conjuntos.slice(0, 4).map(ds => {
+              const vals = (ds.data || []).slice(0, 24).map((v, i) => {
+                const n = (v && typeof v === 'object') ? (v.y ?? v.r ?? '') : v;
+                return `${etiquetas[i] ?? i + 1}: ${n ?? 'sin dato'}`;
+              });
+              return `${ds.label || 'Serie'}: ${vals.join(', ')}`;
+            });
+            const sinDatos = !conjuntos.some(ds => (ds.data || []).some(v => v));
+            c.setAttribute('role', 'img');
+            c.setAttribute('aria-label', `${titulo}. ${sinDatos ? 'Sin datos para los filtros elegidos.' : series.join('. ')}`.slice(0, 1200));
+          }
+        });
+      } catch (e) { /* plugin ya registrado */ }
+    }
+
     if (navigator.storage && navigator.storage.persist) {
       navigator.storage.persist().then(persistent => {
         console.log('[Storage] Almacenamiento persistente activado:', persistent);
@@ -548,7 +586,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
       const a = document.createElement('a');
       a.setAttribute("href", dataStr);
-      a.setAttribute("download", `respaldo_patio_offline_${new Date().toISOString().slice(0, 10)}.json`);
+      a.setAttribute("download", `respaldo_patio_offline_${fechaLocalISO()}.json`);
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -922,6 +960,7 @@
         localStorage.removeItem('tireanalyze_usuario_sesion');
         localStorage.removeItem('tirecheck_usuario_sesion');
         usuarioActual = null;
+        borrarRespuestasApiEnCache();
         cerrarModalMiCuenta(true);
         document.getElementById('modalLogin').classList.remove('hidden');
         mostrarToast('Sesión cerrada correctamente');
@@ -1108,6 +1147,8 @@
       if (btnImportarExcelBD) btnImportarExcelBD.classList.toggle('hidden', !esAdmin);
       const btnEliminarDatosClienteBD = document.getElementById('btnEliminarDatosClienteBD');
       if (btnEliminarDatosClienteBD) btnEliminarDatosClienteBD.classList.toggle('hidden', !esAdmin);
+      const btnPapeleraBD = document.getElementById('btnPapeleraBD');
+      if (btnPapeleraBD) btnPapeleraBD.classList.toggle('hidden', !esAdmin);
       const thCheckTodos = document.getElementById('thCheckTodosBD');
       if (thCheckTodos) thCheckTodos.classList.toggle('hidden', !esAdmin);
       const btnEdicionMultipleBD = document.getElementById('btnEdicionMultipleBD');

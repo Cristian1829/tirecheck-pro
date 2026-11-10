@@ -4,6 +4,7 @@ import re
 import os
 import socket
 import tempfile
+import zipfile
 import time
 import base64
 import json
@@ -33,9 +34,18 @@ import database
 import pdf_generator
 import pdf_kpis
 
-app = FastAPI(title="TireAnalyze Pro - Sistema Integral Web & Móvil")
+from contextlib import asynccontextmanager
 
-@app.on_event("startup")
+
+@asynccontextmanager
+async def _ciclo_de_vida(_app):
+    # Reemplaza a @app.on_event("startup"), obsoleto en FastAPI (auditoría H-45): mismas migraciones al arrancar
+    startup_migracion_produccion()
+    yield
+
+
+app = FastAPI(title="TireAnalyze Pro - Sistema Integral Web & Móvil", lifespan=_ciclo_de_vida)
+
 def startup_migracion_produccion():
     try:
         database.migrar_pepsico_a_tellantas()
@@ -614,7 +624,7 @@ def pwa_manifest():
 @app.get("/sw.js")
 def service_worker():
     sw_code = """// Service Worker para TireAnalyze Pro — Soporte Offline-First en Patio
-const CACHE_NAME = 'tireanalyze-patio-v2';
+const CACHE_NAME = 'tireanalyze-patio-v3';  // v3: la caché v2 tenía respuestas de /api/ y se borra al activar
 const PRECACHE_ASSETS = [
   '/',
   '/app',
@@ -671,9 +681,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Datos API y JavaScript propio de la app: Network-First con Fallback a Caché
+  // Datos de la API: siempre a la red y nunca a esta caché. Antes se guardaban y, sin red, se mostraba
+  // la última respuesta de cualquier usuario del equipo (auditoría H-24). El trabajo sin red del patio
+  // usa el paquete y la cola de IndexedDB, no esta caché.
+  if (url.pathname.startsWith('/api/')) return;
+
+  // JavaScript propio de la app: Network-First con Fallback a Caché
   // (con Cache-First los celulares se quedaban con los módulos JS de un despliegue anterior)
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/static/js/')) {
+  if (url.pathname.startsWith('/static/js/')) {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.status === 200) {
@@ -797,6 +812,62 @@ COLUMNAS_EXCEL_INSPECCIONES = [
 ]
 
 
+MAX_CELDA_EXCEL = 32767  # Excel no admite más caracteres en una celda
+
+
+def _contar_fotos(v) -> int:
+    if v is None or (isinstance(v, float) and v != v):
+        return 0
+    t = str(v).strip()
+    if not t or t == "[]":
+        return 0
+    if t.startswith("["):
+        try:
+            return len(json.loads(t))
+        except Exception:
+            return 1
+    return 1
+
+
+def df_seguro_para_excel(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Copia del DataFrame lista para Excel (auditoría H-35):
+      - las columnas de fotos (base64) salen como «N foto(s): ver en la aplicación», no como texto recortado;
+      - un texto que empieza por = + - @ se escribe como texto (no se ejecuta como fórmula al abrir);
+      - un texto de más de 32.767 caracteres se corta con la marca «[texto recortado]» en vez de en silencio.
+    """
+    if df is None or df.empty:
+        return df
+    out = df.copy()
+    for c in list(out.columns):
+        if "foto" in str(c).lower() and out[c].dtype == object:
+            out[c] = out[c].map(lambda v: (f"{n} foto(s): ver en la aplicación" if (n := _contar_fotos(v)) else ""))
+    marca = " [texto recortado]"
+
+    def _celda(v):
+        if not isinstance(v, str):
+            return v
+        # El «-» solo se neutraliza si trae algo de fórmula: un guion suelto o «- CORTE» se deja como está
+        if (v[:1] in ("=", "+", "@") or (v[:1] == "-" and any(ch in v for ch in "=(!"))) and not _es_numero(v):
+            v = "'" + v
+        if len(v) > MAX_CELDA_EXCEL:
+            v = v[:MAX_CELDA_EXCEL - len(marca)] + marca
+        return v
+
+    for c in out.columns:
+        if out[c].dtype == object:
+            out[c] = out[c].map(_celda)
+    return out
+
+
+def _es_numero(t: str) -> bool:
+    try:
+        float(t)
+        return True
+    except ValueError:
+        return False
+
+
 def construir_excel_inspecciones(df: pd.DataFrame, filtros: Optional[dict] = None) -> bytes:
     """
     Excel de la Base de inspecciones: hoja «Inspecciones» con encabezados legibles, columnas en orden de lectura
@@ -810,11 +881,8 @@ def construir_excel_inspecciones(df: pd.DataFrame, filtros: Optional[dict] = Non
     for c in campos:
         if c not in df.columns:
             df[c] = ""
-    salida = df[campos].rename(columns=dict(COLUMNAS_EXCEL_INSPECCIONES))
     # Un texto que parece fórmula no debe ejecutarse al abrir el Excel
-    for c in salida.columns:
-        if salida[c].dtype == object:
-            salida[c] = salida[c].map(lambda v: "'" + v if isinstance(v, str) and v[:1] in ("=", "+", "@") else v)
+    salida = df_seguro_para_excel(df[campos].rename(columns=dict(COLUMNAS_EXCEL_INSPECCIONES)))
 
     resumen = [("Registros exportados", len(salida)), ("Generado", ahora_bogota().strftime("%Y-%m-%d %H:%M"))]
     aplicados = [(str(k), str(v)) for k, v in (filtros or {}).items() if str(v).strip()]
@@ -877,6 +945,45 @@ def api_exportar_inspecciones_excel_filtrado(item: ExportarInspeccionesExcelItem
         df = df[df["id"].isin(set(item.ids))]
     return _respuesta_excel_inspecciones(construir_excel_inspecciones(df, item.filtros))
 
+MAX_EXCEL_SUBIDO_BYTES = 10 * 1024 * 1024          # 10 MB del archivo tal como llega
+MAX_EXCEL_DESCOMPRIMIDO_BYTES = 150 * 1024 * 1024  # contenido interno del .xlsx (evita bombas de descompresión)
+
+
+async def guardar_excel_subido(file: UploadFile) -> str:
+    """
+    Guarda el Excel subido en un temporal y devuelve su ruta. Antes se hacía file.read() sin límite y
+    openpyxl lo descomprimía completo en memoria (auditoría H-37). Ahora:
+      - más de 10 MB  -> 413 sin terminar de leerlo;
+      - un .xlsx cuyo contenido descomprimido pasa de 150 MB -> 413 antes de abrirlo.
+    """
+    if file.size is not None and file.size > MAX_EXCEL_SUBIDO_BYTES:
+        raise HTTPException(status_code=413, detail="El archivo supera el máximo de 10 MB. Divídalo en varios archivos.")
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+    leidos = 0
+    try:
+        while True:
+            bloque = await file.read(1024 * 1024)
+            if not bloque:
+                break
+            leidos += len(bloque)
+            if leidos > MAX_EXCEL_SUBIDO_BYTES:
+                raise HTTPException(status_code=413, detail="El archivo supera el máximo de 10 MB. Divídalo en varios archivos.")
+            tmp.write(bloque)
+        tmp.close()
+        if zipfile.is_zipfile(tmp.name):
+            with zipfile.ZipFile(tmp.name) as z:
+                if sum(i.file_size for i in z.infolist()) > MAX_EXCEL_DESCOMPRIMIDO_BYTES:
+                    raise HTTPException(status_code=413, detail="El contenido del Excel es demasiado grande para procesarlo.")
+        return tmp.name
+    except BaseException:
+        tmp.close()
+        try:
+            os.remove(tmp.name)
+        except OSError:
+            pass
+        raise
+
+
 @app.post("/api/inspecciones/importar-excel", dependencies=[Depends(requerir_vista("basedatos"))])
 async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
@@ -886,18 +993,21 @@ async def api_importar_excel(file: UploadFile = File(...), usuario_actual: dict 
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
 
-    content = await file.read()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
+    tmp_path = await guardar_excel_subido(file)
 
     clientes_autorizados = None
     if not es_rol_admin(rol, usuario_actual.get("username")):
         clientes_autorizados = database.parsear_clientes_asignados(usuario_actual.get("cliente_asignado"))
 
     try:
-        cant = database.cargar_excel_a_bd(tmp_path, clientes_autorizados=clientes_autorizados)
-        return {"status": "ok", "registros_importados": cant, "message": f"Se importaron exitosamente {cant} registros a la base de datos."}
+        res = database.importar_excel_inspecciones(tmp_path, clientes_autorizados=clientes_autorizados)
+        cant, rech = res["importados"], res["rechazadas"]
+        msg = f"Se importaron {cant} registros a la base de datos."
+        if rech:
+            msg += f" {len(rech)} fila(s) no se cargaron."
+        # Se devuelven hasta 200 rechazos con su número de fila y motivo (auditoría H-23)
+        return {"status": "ok", "registros_importados": cant, "total_rechazadas": len(rech),
+                "rechazadas": rech[:200], "message": msg}
     except PermissionError as pe:
         raise HTTPException(status_code=403, detail=str(pe))
     except Exception as e:
@@ -915,6 +1025,21 @@ def api_inspecciones_ultima_marca_diseno(placa: str, usuario_actual: dict = Depe
     verificar_acceso_placa(usuario_actual, placa)
     res = database.obtener_ultima_marca_diseno_vehiculo(placa)
     return sanitizar_nativos(res)
+
+@app.get("/api/inspecciones/papelera", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_papelera_inspecciones(admin: dict = Depends(requerir_admin)):
+    """Inspecciones borradas con quién, cuándo y por qué (auditoría H-40)."""
+    return database.listar_papelera_inspecciones()
+
+
+@app.post("/api/inspecciones/papelera/{papelera_id}/restaurar", dependencies=[Depends(requerir_vista("basedatos"))])
+def api_restaurar_inspeccion(papelera_id: int, admin: dict = Depends(requerir_admin)):
+    try:
+        res = database.restaurar_inspeccion_papelera(papelera_id, admin.get("username", ""))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"status": "ok", **res, "message": f"Inspección de {res['placa']} (posición {res['posicion']}) restaurada."}
+
 
 @app.get("/api/inspecciones/{inspeccion_id}", dependencies=[Depends(requerir_vista("basedatos"))])
 def api_obtener_inspeccion_por_id(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -1048,7 +1173,7 @@ def api_actualizar_inspeccion(inspeccion_id: int, item: InspeccionItem, usuario_
     return {"status": "ok", "id": inspeccion_id, "message": "Inspección actualizada correctamente"}
 
 @app.delete("/api/inspecciones/{inspeccion_id}", dependencies=[Depends(requerir_vista("basedatos"))])
-def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(obtener_usuario_actual)):
+def api_eliminar_inspeccion(inspeccion_id: int, motivo: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     if es_rol_gerencia(rol):
         raise HTTPException(status_code=403, detail="El rol Gerencia tiene perfil ejecutivo de consulta y no puede eliminar inspecciones")
@@ -1065,8 +1190,9 @@ def api_eliminar_inspeccion(inspeccion_id: int, usuario_actual: dict = Depends(o
             if clis and row_exist[0] and not any(c.lower() == str(row_exist[0]).strip().lower() for c in clis):
                 raise HTTPException(status_code=403, detail="No tiene permisos para eliminar inspecciones de este cliente")
 
-    database.eliminar_inspeccion(inspeccion_id)
-    return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada correctamente"}
+    if not database.eliminar_inspeccion(inspeccion_id, usuario_actual.get("username", ""), motivo):
+        raise HTTPException(status_code=404, detail="Inspección no encontrada")
+    return {"status": "ok", "id": inspeccion_id, "message": "Inspección eliminada (queda en la papelera)"}
 
 @app.post("/api/inspecciones/sincronizar-lote")
 def api_sincronizar_lote_inspecciones(req: LoteInspeccionesOfflineRequest, usuario_actual: dict = Depends(obtener_usuario_actual)):
@@ -1403,10 +1529,10 @@ def api_exportar_diagnostico_excel(
             df_analisis_excel[col] = df_analisis_excel[col].apply(lambda x: json.dumps(x, ensure_ascii=False) if isinstance(x, (dict, list)) else x)
 
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df_analisis_excel.to_excel(writer, sheet_name="Planes_Accion", index=False)
+        df_seguro_para_excel(df_analisis_excel).to_excel(writer, sheet_name="Planes_Accion", index=False)
         if not df_insp.empty:
-            df_insp.to_excel(writer, sheet_name="Detalle_Inspecciones", index=False)
-        df_resumen.to_excel(writer, sheet_name="Filtros_Aplicados", index=False)
+            df_seguro_para_excel(df_insp).to_excel(writer, sheet_name="Detalle_Inspecciones", index=False)
+        df_seguro_para_excel(df_resumen).to_excel(writer, sheet_name="Filtros_Aplicados", index=False)
 
         wb = writer.book
         if "Planes_Accion" in wb.sheetnames:
@@ -1749,7 +1875,7 @@ def api_exportar_mrp_excel(
     df = pd.DataFrame(mrp_items)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Orden_Compra_MRP", index=False)
+        df_seguro_para_excel(df).to_excel(writer, sheet_name="Orden_Compra_MRP", index=False)
         wb = writer.book
         if "Orden_Compra_MRP" in wb.sheetnames:
             _estilizar_hoja_excel(wb["Orden_Compra_MRP"], color_header="312E81")
@@ -1828,7 +1954,7 @@ def api_exportar_kpis_excel(
     df = pd.DataFrame(data)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Trazabilidad_KPIs", index=False)
+        df_seguro_para_excel(df).to_excel(writer, sheet_name="Trazabilidad_KPIs", index=False)
     f_str = ahora_bogota().strftime("%Y%m%d_%H%M")
     filename = f"KPIs_Llantas_TireAnalyze_{f_str}.xlsx"
     return Response(
@@ -2338,7 +2464,7 @@ def api_descargar_plantilla_precios_cliente(usuario_actual: dict = Depends(obten
     df = pd.DataFrame(ejemplos, columns=columnas)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Precios_Cliente", index=False)
+        df_seguro_para_excel(df).to_excel(writer, sheet_name="Precios_Cliente", index=False)
         ws = writer.sheets["Precios_Cliente"]
         for col in ws.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
@@ -2370,7 +2496,7 @@ def api_exportar_precios_cliente_excel(cliente: str = "", usuario_actual: dict =
     df = pd.DataFrame(filas, columns=["Cliente", "Marca", "Diseño", "Dimensión", "Tipo", "Precio COP", "Vigente Desde"])
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Precios_Por_Cliente", index=False)
+        df_seguro_para_excel(df).to_excel(writer, sheet_name="Precios_Por_Cliente", index=False)
         ws = writer.sheets["Precios_Por_Cliente"]
         for col in ws.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
@@ -2391,10 +2517,7 @@ async def api_importar_precios_cliente_excel(file: UploadFile = File(...), usuar
     if not filename.lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
 
-    content = await file.read()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
+    tmp_path = await guardar_excel_subido(file)
 
     rol = str(usuario_actual.get("rol", "")).strip().lower()
     clientes_autorizados = None
@@ -2428,7 +2551,7 @@ async def api_importar_precios_cliente_excel(file: UploadFile = File(...), usuar
 def _excel_respuesta(df, hoja, filename):
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name=hoja, index=False)
+        df_seguro_para_excel(df).to_excel(writer, sheet_name=hoja, index=False)
         ws = writer.sheets[hoja]
         for col in ws.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
@@ -2509,10 +2632,7 @@ def api_eliminar_vehiculo_padron(cliente: str, placa: str, admin: dict = Depends
 async def api_importar_padron(cliente: str = "", sede: str = "", file: UploadFile = File(...), admin: dict = Depends(requerir_admin)):
     if not (file.filename or "").lower().endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Formato no soportado. El archivo debe ser Excel (.xlsx o .xls)")
-    content = await file.read()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
+    tmp_path = await guardar_excel_subido(file)
     try:
         res = database.importar_padron_cliente_excel(tmp_path, cliente, sede)
     except ValueError as e:

@@ -1476,7 +1476,7 @@
       const tbody = document.getElementById('tbodyPreciosCliente');
       if (!tbody) return;
       const desde = document.getElementById('precio_desde');
-      if (desde && !desde.value) desde.value = new Date().toISOString().slice(0, 10);
+      if (desde && !desde.value) desde.value = fechaLocalISO();
 
       try {
         const res = await fetch('/api/precios-cliente');
@@ -1842,7 +1842,7 @@
       if (preview) preview.textContent = '$ 0 COP';
 
       const desde = document.getElementById('precio_desde');
-      if (desde) desde.value = new Date().toISOString().slice(0, 10);
+      if (desde) desde.value = fechaLocalISO();
     }
 
     async function guardarPrecioClienteCat(ev) {
