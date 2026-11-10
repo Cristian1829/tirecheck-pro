@@ -2033,7 +2033,7 @@
       // Sin precio registrado se dice así, en lugar de mostrar $0
       document.getElementById('hv_kpi_costo').textContent = met.costo_total_invertido ? `$ ${Number(met.costo_total_invertido).toLocaleString('es-CO')}` : 'Sin precio';
       document.getElementById('hv_kpi_cpk').textContent = met.cpk_global != null ? `$ ${fmtDec(Number(met.cpk_global), 2)} / km` : 'Sin precio';
-      document.getElementById('hv_kpi_rendimiento').textContent = `${Number(met.rendimiento_km_mm || 0).toLocaleString()} km/mm`;
+      document.getElementById('hv_kpi_rendimiento').textContent = met.rendimiento_km_mm != null ? `${Number(met.rendimiento_km_mm).toLocaleString()} km/mm` : 'Sin dato';
       document.getElementById('hv_kpi_ahorro').textContent = met.ahorro_generado_vs_nueva != null ? `$ ${Number(met.ahorro_generado_vs_nueva).toLocaleString('es-CO')}` : 'Sin precio';
 
       // Botón Acta PDF si está en FVU
@@ -2060,11 +2060,11 @@
                 <td class="p-2.5 font-black text-slate-900">Ciclo ${escapeHtml(c.ciclo)}</td>
                 <td class="p-2.5 font-bold">${escapeHtml(c.tipo)}</td>
                 <td class="p-2.5 text-slate-600">${escapeHtml(c.banda_diseno || '-')}</td>
-                <td class="p-2.5 text-center font-mono">${fmtDec(Number(c.prof_inicial || 0), 1)} mm</td>
-                <td class="p-2.5 text-center font-mono font-bold">${fmtDec(Number(c.prof_final || 0), 1)} mm</td>
+                <td class="p-2.5 text-center font-mono">${c.prof_inicial != null ? fmtDec(Number(c.prof_inicial), 1) + ' mm' : '—'}</td>
+                <td class="p-2.5 text-center font-mono font-bold">${c.prof_final != null ? fmtDec(Number(c.prof_final), 1) + ' mm' : '—'}</td>
                 <td class="p-2.5 text-right font-mono font-bold">${Number(c.km_recorridos || 0).toLocaleString()} km</td>
                 <td class="p-2.5 text-right font-mono">$ ${Number(c.costo || 0).toLocaleString('es-CO')}</td>
-                <td class="p-2.5 text-right font-mono font-black text-indigo-700">$ ${fmtDec(Number(c.cpk || 0), 2)}</td>
+                <td class="p-2.5 text-right font-mono font-black text-indigo-700">${c.cpk != null ? '$ ' + fmtDec(Number(c.cpk), 2) : '—'}</td>
               </tr>
             `;
           });

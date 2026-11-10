@@ -71,16 +71,19 @@ Ubicado en `database.analizar_inspecciones_df()` y `logica_inspeccion.py`, este 
 ---
 
 ### 2.2 Alerta de Alineación y Geometría en Ejes Directores
-- **Condición:** En los ejes de dirección (típicamente posiciones 1 y 2, o 1 a 4 en vehículos 8x4), se comparan los remanentes entre la rueda izquierda y la rueda derecha.
-  $$|\min(prof)_{izq} - \min(prof)_{der}| \ge 2.0\text{ mm}$$
-- **Acción:** `Plan_Alineacion = "SÍ"`, Detalle: `"Diferencia de W mm entre directores (Pos X: Y mm vs Pos Z: K mm). Requiere alineación y balanceo"`.
+- **Condición:** Solo en las llantas del eje de dirección (típicamente posiciones 1 y 2, o 1 a 4 en vehículos con doble dirección). Hay alerta si **cualquiera** de esas llantas cumple una de estas condiciones:
+  $$|prof_{ext} - prof_{int}| \ge \text{tolerancia de desalineación del cliente (2,0 mm por defecto)}$$
+  o su novedad registra «hombro caído» / «hombros caídos».
+- **No** se compara la rueda izquierda con la derecha: esa comparación es para rotar, no para alinear. Los ejes libres o de arrastre no generan alerta de alineación.
+- **Acción:** `Plan_Alineacion = "SÍ"`, Detalle: `"Pos X (dif W mm): Rotar en el mismo rin + alineación"` o `"Pos X: hombro caído reportado en la novedad. Revisar alineación"`.
+- Regla confirmada con el negocio el 2026-11-09 (auditoría H-27).
 
 ---
 
 ### 2.3 Alerta de Duales Mal Apareados (Macheo de Llantas Dobles)
 - **Condición:** En llantas duales (montadas en tándem interior/exterior en el mismo lado de un eje de tracción o remolque, ej. Pos 3-4, 5-6, 7-8, 9-10):
-  1. **Disparidad de Desgaste:** Diferencia de remanente mayor o igual a 2.0 mm (la llanta con mayor hule asume el 80% de la carga dinámica, sobrecalentándose y fallando prematuramente).
-     $$|prof_{interior} - prof_{exterior}| \ge 2.0\text{ mm}$$
+  1. **Disparidad de Desgaste:** Diferencia de remanente mayor o igual a la tolerancia de mal apareo del cliente (**2,5 mm por defecto**, editable en Catálogos por cliente; regla confirmada el 2026-11-09, auditoría H-30). La llanta con mayor hule asume la mayor parte de la carga dinámica, se sobrecalienta y falla antes.
+     $$|prof_{interior} - prof_{exterior}| \ge \text{tolerancia del cliente (2,5 mm por defecto)}$$
   2. **Disparidad Dimensional:** Ruedas emparejadas con dimensiones o marcas de diámetro estático dispar.
 - **Acción:** `Plan_Dual_Mal_Apareado = "SÍ"`, Detalle: `"Diferencia en dual Pos X-Y de W mm. Requiere rotación y apareamiento"`.
 
@@ -135,7 +138,7 @@ Prioridad en cascada:
 | Color | Estado | Condición Matemática | Acción Recomendada |
 |---|---|---|---|
 | 🔴 **Rojo** | Retiro Inmediato (Cambio YA) | $PB \le L$ | Desmontaje urgente para reencauche o baja definitiva. Riesgo de rotura de carcasa. |
-| 🟡 **Amarillo** | Próxima a Cambio (Alerta Preventiva) | $L < PB \le L + 2.0\text{ mm}$ | Monitoreo cercano. Alistar inventario de reemplazo (ventana de 15 a 30 días). |
-| 🟢 **Verde** | Estado Óptimo (Normal) | $PB > L + 2.0\text{ mm}$ | Vida útil remanente suficiente. Mantener calibración de PSI y rotación estándar. |
+| 🟡 **Amarillo** | Próxima a Cambio (Alerta Preventiva) | $L < PB \le L + R$ ($R$ = rango amarillo del cliente, 2,0 mm por defecto) | Monitoreo cercano. Alistar inventario de reemplazo (ventana de 15 a 30 días). |
+| 🟢 **Verde** | Estado Óptimo (Normal) | $PB > L + R$ | Vida útil remanente suficiente. Mantener calibración de PSI y rotación estándar. |
 | ⚪ **Gris** | Sin Datos / Pendiente | $PB \le 0$ (o nulo) | Requiere revisión física o registro de datos. |
 

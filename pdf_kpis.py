@@ -114,7 +114,7 @@ SECCIONES = [
          "Vehículos cuyos ejes en tándem tienen una diferencia de profundidad que justifica rotar llantas entre ejes "
          "para igualar el desgaste. Indica el esquema de rotación sugerido y si la condición es reincidente.", []),
         ("kpi_08", "KPI 08 · Duales mal apareados",
-         "Pares de llantas duales con más de 3 mm de diferencia entre sí. La llanta más alta carga más peso y se desgasta "
+         "Pares de llantas duales cuya diferencia entre sí alcanza la tolerancia del cliente (2,5 mm por defecto). La llanta más alta carga más peso y se desgasta "
          "o revienta antes; la gráfica muestra la frecuencia mensual de estos casos.", ["canvasKpi08_apareo"]),
         ("kpi_09", "KPI 09 · Estado de presiones y desperdicio de combustible",
          "Reparte las llantas medidas en rangos de presión frente a la presión objetivo del cliente y estima el combustible "
@@ -394,7 +394,8 @@ def _detalle(clave, d, u):
         fm = d.get('frecuencia_mensual') or {}
         valores_fm = _nums(fm.get('valores'))
         n_apar = len(cruces) or (valores_fm[-1] if valores_fm else 0)
-        out = [_cifras([("Pares duales con desbalance (> 2,5 mm)", format_miles_es(n_apar))])]
+        tol_d = d.get('tolerancia_mm') or 2.5
+        out = [_cifras([(f"Pares duales con desbalance (>= {format_num_es(tol_d)} mm)", format_miles_es(n_apar))])]
         if cruces:
             out.append(Spacer(1, 4))
             out.append(_tabla(["Placa", "Pacha", "Diferencia", "Llanta sugerida en Bodega 2", "Remanente B2"],
@@ -446,9 +447,11 @@ def _detalle(clave, d, u):
         k = _nums(d.get('km_mm'))
         c = _nums(d.get('cpk'))
         if p or k or c:
-            prom_p = _prom(p)
-            prom_k = _prom(k)
-            prom_c = _prom(c)
+            # Totales de toda la base con Σ/Σ (antes se promediaban los grupos y no cuadraba con la pantalla; H-31)
+            tot = d.get('totales') or {}
+            prom_p = tot.get('proyeccion_km') if tot.get('proyeccion_km') is not None else _prom(p)
+            prom_k = tot.get('km_mm') if tot.get('km_mm') is not None else _prom(k)
+            prom_c = tot.get('cpk') if tot.get('cpk') is not None else _prom(c)
             return [_cifras([(f"Proyección promedio ({u})", format_miles_es(prom_p)),
                             (f"Rendimiento prom. ({u}/mm)", f"{format_num_es(prom_k, 1)}"),
                             ("CPK medio proyectado", _cpk(prom_c if prom_c > 0 else None, u))])]

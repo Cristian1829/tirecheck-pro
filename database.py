@@ -3632,6 +3632,30 @@ def cargar_excel_a_bd(file_path, clientes_autorizados=None):
         conn.commit()
     return registros_insertados
 
+_RE_HOMBRO_CAIDO = re.compile(r'\bHOMBROS?\s+CAIDOS?\b')
+
+
+def novedad_hombro_caido(novedades) -> bool:
+    """True si la novedad registra «hombro caído» / «hombros caídos» (con o sin tilde)."""
+    if novedades is None or (isinstance(novedades, float) and novedades != novedades):
+        return False
+    return bool(_RE_HOMBRO_CAIDO.search(normalizar_texto(str(novedades)).upper()))
+
+
+def alerta_alineacion(eje, prof_ext, prof_int, novedades, tolerancia_mm) -> bool:
+    """
+    Regla de alineación acordada con el negocio (auditoría H-27, 2026-11-09): solo en llantas del eje DIRECCIONAL
+    (posiciones 1-2, o 1-4 con doble dirección). Hay alerta si CUALQUIERA de esas llantas tiene una diferencia entre
+    la profundidad externa e interna mayor o igual a la tolerancia del cliente, o si su novedad dice «hombro caído».
+    No compara la rueda izquierda con la derecha (eso es para rotar). Antes también se evaluaban los ejes libres.
+    """
+    if eje != ee.DIRECCIONAL:
+        return False
+    pe, pi = to_float(prof_ext, 0.0), to_float(prof_int, 0.0)
+    dif = abs(pe - pi) if (pe > 0 and pi > 0) else 0.0
+    return dif >= to_float(tolerancia_mm, 2.0) or novedad_hombro_caido(novedades)
+
+
 def _texto_alineacion(pos: int, diff: float, en_retiro: bool) -> str:
     """Una llanta que se va a retirar no se rota: solo queda la revisión de alineación."""
     if en_retiro:
@@ -3795,6 +3819,7 @@ def analizar_inspecciones_df(df_inspecciones):
         cfg = cfg_por_cliente[cliente]
         tol_alin = to_float(cfg.get('tolerancia_desalineacion_hombros_mm', 2.0), 2.0)
         tol_dual = to_float(cfg.get('tolerancia_mal_apareo_pacha_mm', 2.5), 2.5)
+        rango_amarillo = to_float(cfg.get('rango_semaforo_amarillo_mm', 2.0), 2.0)
         dif_par_dir = to_float(cfg.get('diferencia_minima_par_direccional_mm', 3.0), 3.0)
         umbral_equis = to_float(cfg.get('umbral_diferencia_rotacion_ejes_mm', 3.0), 3.0)
         psi_obj_eje = {
@@ -3828,12 +3853,13 @@ def analizar_inspecciones_df(df_inspecciones):
         for pos_r in sorted(fila_pos):
             pb_r = pmin_pos[pos_r]
             lim_r = lim(pos_r)
-            if 0 < pb_r <= lim_r:
+            color_r = evaluar_semaforo(pb_r, lim_r, rango_amarillo)
+            if color_r == 'rojo':
                 plan_cambio = True
                 cant_cambios += 1
                 posiciones_retiro.add(pos_r)
                 detalles_cambio.append(f"Pos {pos_r} ({pb_r:.1f}mm <= {lim_r:.1f}mm)")
-            elif lim_r < pb_r <= (lim_r + 2.0):
+            elif color_r == 'amarillo':
                 cant_proximas += 1
                 detalles_proximas.append(f"Pos {pos_r} ({pb_r:.1f} mm)")
 
@@ -3864,12 +3890,14 @@ def analizar_inspecciones_df(df_inspecciones):
                 continue
             pe_a = to_float(fila_pos[p].get('prof_ext', 0))
             pi_a = to_float(fila_pos[p].get('prof_int', 0))
-            if pe_a <= 0 or pi_a <= 0:
-                continue  # sin las dos lecturas de hombro no se puede evaluar
-            diff = abs(pi_a - pe_a)
-            if diff >= tol_alin:
+            nov_a = fila_pos[p].get('novedades', '')
+            if alerta_alineacion(ee.DIRECCIONAL, pe_a, pi_a, nov_a, tol_alin):
                 plan_alineacion = True
-                detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
+                diff = abs(pi_a - pe_a) if (pe_a > 0 and pi_a > 0) else 0.0
+                if diff >= tol_alin:
+                    detalles_alineacion.append(_texto_alineacion(p, diff, p in posiciones_retiro))
+                else:
+                    detalles_alineacion.append(f"Pos {p}: hombro caído reportado en la novedad. Revisar alineación")
 
         # 4. Plan 5 — Duales de la estructura (diferencia de mínimas > tolerancia o medidas distintas)
         plan_dual = False
@@ -3887,7 +3915,7 @@ def analizar_inspecciones_df(df_inspecciones):
 
             diff_pb = abs(pb_a - pb_b)
             razones = []
-            if diff_pb > tol_dual:
+            if diff_pb >= tol_dual:  # «mayor o igual»: 2,5 mm exactos ya alertan (auditoría H-30)
                 razones.append(f"desgaste dif {diff_pb:.1f} mm ({pb_a:.1f} vs {pb_b:.1f})")
             if dim_a and dim_b and dim_a != dim_b:
                 razones.append(f"dims distintas ({dim_a} vs {dim_b})")
@@ -3929,13 +3957,13 @@ def analizar_inspecciones_df(df_inspecciones):
             b_para_cambio = (0 < pb_b <= lim(p_b))
 
             # Si ya hay una llanta concreta de Bodega 2 para esa posición, el rango genérico sobra
-            if a_para_cambio and not b_para_cambio and pb_b >= (lim(p_b) + 2.0) and p_a not in posiciones_con_cruce_b2:
+            if a_para_cambio and not b_para_cambio and evaluar_semaforo(pb_b, lim(p_b), rango_amarillo) == 'verde' and p_a not in posiciones_con_cruce_b2:
                 r_min = max(lim(p_a) + 1.0, pb_b - 1.0)
                 r_max = pb_b + 1.0
                 recomendaciones_dual.append(
                     f"Pos {p_a} en retiro ({pb_a:.1f} mm) vs Pos {p_b} ({pb_b:.1f} mm): Se recomienda instalar en Pos {p_a} una llanta con remanente entre {r_min:.1f} y {r_max:.1f} mm para emparejar el dual, o cambiar ambas llantas para dejarlas parejas."
                 )
-            elif b_para_cambio and not a_para_cambio and pb_a >= (lim(p_a) + 2.0) and p_b not in posiciones_con_cruce_b2:
+            elif b_para_cambio and not a_para_cambio and evaluar_semaforo(pb_a, lim(p_a), rango_amarillo) == 'verde' and p_b not in posiciones_con_cruce_b2:
                 r_min = max(lim(p_b) + 1.0, pb_a - 1.0)
                 r_max = pb_a + 1.0
                 recomendaciones_dual.append(
@@ -4047,14 +4075,7 @@ def analizar_inspecciones_df(df_inspecciones):
             dim_val = str(r.get('dimension') or '').strip()
 
             lim_sem = lim(pos_r)
-            if 0 < pb_r <= lim_sem:
-                sem = 'ROJO'
-            elif lim_sem < pb_r <= (lim_sem + 2.0):
-                sem = 'AMARILLO'
-            elif pb_r > (lim_sem + 2.0):
-                sem = 'VERDE'
-            else:
-                sem = 'GRIS'
+            sem = evaluar_semaforo(pb_r, lim_sem, rango_amarillo).upper()
 
             llantas_posiciones.append({
                 'posicion': pos_r,
@@ -4126,7 +4147,7 @@ def analizar_inspecciones_df(df_inspecciones):
                 'llantas': len(pos_r_eje),
                 'minima': round(min(vals_r), 1) if vals_r else None,
                 'retiro': sum(1 for p in pos_r_eje if 0 < pmin_pos[p] <= lim(p)),
-                'proximas': sum(1 for p in pos_r_eje if lim(p) < pmin_pos[p] <= lim(p) + 2.0),
+                'proximas': sum(1 for p in pos_r_eje if evaluar_semaforo(pmin_pos[p], lim(p), rango_amarillo) == 'amarillo'),
                 'limite_mm': lims_r[0] if len(lims_r) == 1 else lims_r,
             })
 
@@ -5318,8 +5339,9 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
 
     C. Umbrales del Semáforo para cada posición i:
        🔴 Rojo: PB <= L -> Retiro Inmediato (Cambio YA)
-       🟡 Amarillo: L < PB <= L + 2.0 mm -> Próxima a Cambio (Alerta Preventiva)
-       🟢 Verde: PB > L + 2.0 mm -> Estado Óptimo (Normal)
+       🟡 Amarillo: L < PB <= L + rango amarillo del cliente (2,0 mm por defecto) -> Próxima a Cambio
+       🟢 Verde: PB > L + rango amarillo -> Estado Óptimo (Normal)
+       La comparación usa la profundidad medida sin redondear (evaluar_semaforo).
        ⚪ Gris: PB <= 0 -> Sin Datos / Pendiente
     """
     if df_inspecciones is None or df_inspecciones.empty:
@@ -5362,6 +5384,7 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
     if {'cliente', 'numero_interno', 'fecha'}.issubset(df_ult.columns):
         df_ult = quitar_llantas_desmontadas(df_ult)
 
+    rango_por_cliente = {}
     for placa, group_ult in df_ult.groupby('placa', sort=False):
         group_ult = group_ult.sort_values('posicion').reset_index(drop=True)
 
@@ -5384,34 +5407,31 @@ def calcular_matriz_semaforos_posicion(df_inspecciones, conn=None):
 
             # A. Profundidad Mínima (PB): min({p in {prof_ext, prof_cent, prof_int} | p > 0})
             validos = [p for p in (pe, pc, pi) if p > 0]
-            if validos:
-                pb = round(float(min(validos)), 1)
-            else:
-                pb = 0.0
+            pb_medida = float(min(validos)) if validos else 0.0
+            pb = round(pb_medida, 1)  # solo para mostrar
 
             # B. Jerarquía Dinámica del Límite de Retiro
             # Eje según la estructura de la tipología del vehículo
             eje_tipo = lim_posicion_m.tipo_eje(tip, pos, group_ult['posicion'].tolist())
             limite = resolver_limite(cli, sub, eje_tipo)
 
-            # C. Umbrales del Semáforo
-            if pb <= 0:
-                color = 'gris'
+            # C. Umbrales del Semáforo (regla única, con el rango amarillo del cliente)
+            if cli not in rango_por_cliente:
+                rango_por_cliente[cli] = to_float(obtener_configuracion_avanzada_cliente(cli).get('rango_semaforo_amarillo_mm', 2.0), 2.0)
+            color = evaluar_semaforo(pb_medida, limite, rango_por_cliente[cli])
+            if color == 'gris':
                 estado = 'Sin Datos / Casco'
                 icono = '⚪'
                 accion = 'Revisión física o registro de datos'
-            elif pb <= limite:
-                color = 'rojo'
+            elif color == 'rojo':
                 estado = 'Retiro Inmediato'
                 icono = '🔴'
                 accion = 'Programar desmontaje urgente para reencauche o baja definitiva'
-            elif pb <= (limite + 2.0):
-                color = 'amarillo'
+            elif color == 'amarillo':
                 estado = 'Próxima a Cambio'
                 icono = '🟡'
                 accion = 'Monitoreo cercano. Alistar inventario de reemplazo (15 a 30 días)'
             else:
-                color = 'verde'
                 estado = 'Estado Óptimo'
                 icono = '🟢'
                 accion = 'Llantas con vida útil remanente suficiente. Mantener calibración PSI'
@@ -6587,8 +6607,11 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actua
         profs_validas = [p for p in (p_ext, p_cen, p_int) if p > 0]
         prof_actual_min = min(profs_validas) if profs_validas else 0.0
 
-        desgaste_mm = max(0.0, prof_ini - prof_actual_min) if (prof_ini > 0 and prof_actual_min > 0) else 0.0
-        km_por_mm = (km_rodados / desgaste_mm) if (desgaste_mm > 0.05 and km_rodados > 0) else 0.0
+        # Sin profundidad inicial o sin medición no hay desgaste: None («—»), no 0 («sin desgaste»)
+        desgaste_mm = max(0.0, prof_ini - prof_actual_min) if (prof_ini > 0 and prof_actual_min > 0) else None
+        maduro = (desgaste_mm is not None and desgaste_mm >= DESGASTE_MIN_PROYECCION_MM
+                  and km_rodados >= RODADO_MIN_PROYECCION['km'])
+        km_por_mm = (km_rodados / desgaste_mm) if maduro else None
 
         precio = to_float(ultima['precio'])
         if precio <= 0:
@@ -6596,7 +6619,7 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actua
         if precio <= 0:  # lista de precios del cliente (nunca de otro cliente)
             precio = to_float(ref_precio_t(ultima.get('cliente'), ultima.get('dimension'), num, ultima.get('marca'),
                                            ultima.get('diseno'), ultima.get('vida'), str(primera.get('fecha') or '')[:10]))
-        cpk = (precio / km_rodados) if (km_rodados > 0 and precio > 0) else 0.0
+        cpk = (precio / km_rodados) if (km_rodados > 0 and precio > 0) else None
 
         cliente_nom = str(ultima.get('cliente', '') or primera.get('cliente', '')).strip()
         subcliente_nom = str(ultima.get('subcliente', '') or primera.get('subcliente', '')).strip()
@@ -6607,18 +6630,17 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actua
                                      posiciones_por_placa.get(str(ultima['placa']).strip().upper(), [pos_ult]))
 
         # Proyección útil de vida calculada hasta el límite de cambio programado por cliente (por defecto 3.0 mm)
-        mm_utiles = max(0.0, prof_ini - limite_cambio) if prof_ini > limite_cambio else 0.0
-        proyeccion_total_km = (km_por_mm * mm_utiles) if km_por_mm > 0 else 0.0
-        km_restantes = max(0.0, proyeccion_total_km - km_rodados) if proyeccion_total_km > 0 else 0.0
+        # Si la profundidad inicial no supera el límite no hay vida útil que proyectar: dato inconsistente,
+        # None y no 0 % ni un denominador inventado (auditoría H-29)
+        mm_utiles = (prof_ini - limite_cambio) if prof_ini > limite_cambio else None
+        proyeccion_total_km = (km_por_mm * mm_utiles) if (km_por_mm and mm_utiles) else None
+        km_restantes = max(0.0, proyeccion_total_km - km_rodados) if proyeccion_total_km else None
         
         # Porcentaje de desgaste respecto a la profundidad útil de la llanta
-        if mm_utiles > 0 and desgaste_mm >= 0:
-            pct_desgaste = min(100.0, (desgaste_mm / mm_utiles) * 100.0)
-        else:
-            pct_desgaste = 0.0
+        pct_desgaste = min(100.0, (desgaste_mm / mm_utiles) * 100.0) if (mm_utiles and desgaste_mm is not None) else None
 
         # CPK Proyectado = Precio / Proyección Total Km (si hay proyección estimada)
-        cpk_proyectado = (precio / proyeccion_total_km) if (precio > 0 and proyeccion_total_km > 0) else 0.0
+        cpk_proyectado = (precio / proyeccion_total_km) if (precio > 0 and proyeccion_total_km) else None
 
         # Sugerencia de cambio si la profundidad actual más baja ya alcanzó o superó el límite de cambio
         requiere_cambio = (prof_actual_min > 0 and prof_actual_min <= limite_cambio)
@@ -6658,18 +6680,18 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actua
             'total_inspecciones': len(group),
             'prof_inicial': round(prof_ini, 1),
             'prof_actual_min': round(prof_actual_min, 1),
-            'desgaste_mm': round(desgaste_mm, 1),
-            'porcentaje_desgaste': round(pct_desgaste, 1),
+            'desgaste_mm': _redondear(desgaste_mm, 1),
+            'porcentaje_desgaste': _redondear(pct_desgaste, 1),
             'km_montaje': round(km_mont, 0),
             'km_actual': round(km_ult, 0),
             'km_rodados': round(km_rodados, 0),
-            'km_por_mm': round(km_por_mm, 1),
+            'km_por_mm': _redondear(km_por_mm, 1),
             'precio': round(precio, 2),
-            'cpk': round(cpk, 4),
-            'cpk_proyectado': round(cpk_proyectado, 4),
+            'cpk': _redondear(cpk, 4),
+            'cpk_proyectado': _redondear(cpk_proyectado, 4),
             'limite_retiro_mm': round(limite_cambio, 1),
-            'proyeccion_total_km': round(proyeccion_total_km, 0),
-            'km_restantes': round(km_restantes, 0),
+            'proyeccion_total_km': _redondear(proyeccion_total_km, 0),
+            'km_restantes': _redondear(km_restantes, 0),
             'requiere_cambio': 'SÍ' if requiere_cambio else 'NO',
             'usuario_registro': ultima.get('usuario_registro', '')
         })
@@ -7618,6 +7640,27 @@ def _div(a, b):
     return (a / b) if (a and b and b > 0) else None
 
 
+def agregar_rendimiento_y_cpk(grp: pd.DataFrame, col_desgaste: str = 'calc_desgaste_mm'):
+    """
+    Rendimiento y CPK proyectado de un grupo de llantas, igual en Diagnóstico, KPI 14 y PDF (auditoría H-31):
+      km/mm = Σkm rodados / Σmm desgastados   (de las llantas con rendimiento)
+      CPK   = Σprecio / Σkm proyectados       (de las llantas con CPK)
+    Antes Diagnóstico y el PDF promediaban por llanta o por grupo y daban otra cifra para la misma marca.
+    Devuelve (km_mm, cpk) con None si no hay datos.
+    """
+    if grp is None or grp.empty:
+        return None, None
+    km_mm = pd.to_numeric(grp['calc_km_mm'], errors='coerce')
+    con_r = grp[km_mm.notna() & (km_mm > 0)]
+    rend = _div(pd.to_numeric(con_r['calc_km_rodados'], errors='coerce').sum(),
+                pd.to_numeric(con_r[col_desgaste], errors='coerce').sum())
+    cpk_s = pd.to_numeric(grp['calc_cpk'], errors='coerce')
+    con_c = grp[cpk_s.notna() & (cpk_s > 0)]
+    cpk = _div(pd.to_numeric(con_c['calc_precio'], errors='coerce').sum(),
+               pd.to_numeric(con_c['calc_proy_total'], errors='coerce').sum())
+    return rend, cpk
+
+
 def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
     """
     Los 4 CPK del negocio (costo por km; con unidad='horas', costo por hora de motor):
@@ -7656,7 +7699,7 @@ def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km') -> dict:
         base = mont if (mont > 0 and med_ult >= mont) else to_float(pri.get(col_med))
         km = max(0.0, med_ult - base)
         precios = [to_float(x) for x in g['precio'] if to_float(x) > 0] if 'precio' in g else []
-        costo = precios[0] if precios else ref_precio(cli, pri.get('dimension'), sn, pri.get('marca'), pri.get('diseno'),
+        costo = precios[-1] if precios else ref_precio(cli, pri.get('dimension'), sn, pri.get('marca'), pri.get('diseno'),
                                                       vida, str(pri.get('fecha') or '')[:10])
         profs = [p for p in (to_float(ult.get('prof_ext')), to_float(ult.get('prof_cent')), to_float(ult.get('prof_int'))) if p > 0]
         p_min = min(profs) if profs else 0.0
@@ -7711,7 +7754,20 @@ def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: in
         return []
     clientes = sorted(set(d['_cli']))
     fechas = d['fecha'].astype(str).str[:7]
-    lista_meses = sorted({m for m in fechas if re.match(r'^\d{4}-\d{2}$', m)})[-meses:]
+    meses_con_dato = sorted({m for m in fechas if re.match(r'^\d{4}-\d{2}$', m)})
+    if not meses_con_dato:
+        return []
+
+    def _idx(m):  # 'AAAA-MM' -> número de mes consecutivo
+        return int(m[:4]) * 12 + int(m[5:7]) - 1
+
+    def _mes(i):
+        return f"{i // 12:04d}-{i % 12 + 1:02d}"
+
+    # Meses calendario seguidos (antes solo los meses con datos: con inspecciones en agosto y octubre, octubre
+    # recibía el recorrido de dos meses y su CPK salía a la mitad; auditoría H-09)
+    i_ini, i_fin = _idx(meses_con_dato[0]), _idx(meses_con_dato[-1])
+    lista_meses = [_mes(i) for i in range(max(i_ini, i_fin - meses + 1), i_fin + 1)]
     # Odómetro de cada vehículo al corte de cada mes (última lectura hasta fin de mes)
     d2 = d.assign(_mes=fechas, _placa=d['placa'].astype(str).str.strip().str.upper(), _med=pd.to_numeric(d[col_med], errors='coerce'))
     d2 = d2[d2['_med'] > 0]
@@ -7736,15 +7792,22 @@ def _cpk_administrativo(d: pd.DataFrame, col_med: str = 'kilometraje', meses: in
     # (antes, al filtrar una sede, se dividía la inversión de todas las sedes por el recorrido de una)
     placas_flota = set(d2['_placa']) | set(d['placa'].astype(str).str.strip().str.upper())
     instalaciones = [fila[:11] for fila in instalaciones if fila[11] in placas_flota]
+    # Recorrido de la flota por mes calendario: entre dos lecturas de un vehículo, el recorrido se reparte por
+    # igual entre los meses transcurridos (agosto→octubre: la mitad a septiembre y la mitad a octubre)
+    km_por_mes = {}
+    lecturas = d2[d2['_mes'].str.match(r'^\d{4}-\d{2}$', na=False)].groupby(['_placa', '_mes'])['_med'].max()
+    for _placa, serie_v in lecturas.groupby(level=0):
+        puntos = sorted((_idx(m), float(v)) for (_p, m), v in serie_v.items())
+        for (i_a, med_a), (i_b, med_b) in zip(puntos, puntos[1:]):
+            n_meses = i_b - i_a
+            if n_meses <= 0:
+                continue
+            delta = max(0.0, med_b - med_a)
+            for k in range(i_a + 1, i_b + 1):
+                km_por_mes[k] = km_por_mes.get(k, 0.0) + delta / n_meses
     serie = []
     for i, mes in enumerate(lista_meses):
-        km_mes = 0.0
-        if i > 0:
-            ant = lista_meses[i - 1]
-            corte = d2[d2['_mes'] <= mes].groupby('_placa')['_med'].max()
-            corte_ant = d2[d2['_mes'] <= ant].groupby('_placa')['_med'].max()
-            comunes = corte.index.intersection(corte_ant.index)  # vehículos con lectura en los dos cortes
-            km_mes = float((corte[comunes] - corte_ant[comunes]).clip(lower=0).sum())
+        km_mes = km_por_mes.get(_idx(mes), 0.0)  # 0 si aún no hay una lectura anterior con qué comparar
         inversion, sin_costo = 0.0, 0
         for (m_ins, cli, sn, vida_k, marca, diseno, dim, c_orig, c_ciclo, vida_m, f_mov) in instalaciones:
             if m_ins != mes:
@@ -7989,6 +8052,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         fechas_g = _col('fecha')
         delta_psi_pct_col, precio_estimado_col, precio_col = [], [], []
         alerta_alin_col_g = []
+        eje_alin_col_g = []
 
         # Corrección 2: Mapeo de primera inspección histórica para cuando km_mont <= 0
         primer_km_por_llanta = {}
@@ -8043,8 +8107,13 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
             if p_ini is None or p_min <= 0:
                 mm_ut = d_mm = pct_d = float('nan')
+            elif p_ini <= lim_ret:
+                # Profundidad inicial en o bajo el límite: no hay vida útil, % sin dato (antes un piso de 1 mm
+                # inventaba el denominador y la llanta en retiro salía «poco desgastada»; auditoría H-29)
+                mm_ut = pct_d = float('nan')
+                d_mm = max(0.0, p_ini - p_min)
             else:
-                mm_ut = max(1.0, p_ini - lim_ret)
+                mm_ut = p_ini - lim_ret
                 d_mm = max(0.0, p_ini - p_min)
                 pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             mm_utiles_col.append(mm_ut)
@@ -8095,8 +8164,9 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
 
             # 5. Desalineación e Impacto Económico (ejes direccionales y libres, con ambas lecturas)
             dif_hombros = abs(pe - pi) if (pe > 0 and pi > 0) else 0.0
-            alerta_alin = (eje_g in (ee.DIRECCIONAL, ee.LIBRE)) and (dif_hombros >= tol_desalineacion)
+            alerta_alin = alerta_alineacion(eje_g, pe, pi, None, tol_desalineacion)  # la novedad se suma abajo
             alerta_alin_col_g.append(alerta_alin)
+            eje_alin_col_g.append(eje_g)
             # Pérdida de caucho por desgaste disparejo en cualquier eje que rueda (igual que KPIs)
             if eje_g != ee.REPUESTO and dif_hombros >= tol_desalineacion:
                 mm_perd = max(pe, pc, pi) - min(pe, pc, pi)
@@ -8148,6 +8218,10 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
         df['calc_es_reencauche'] = es_reencauche_col
         df['calc_delta_psi_pct'] = delta_psi_pct_col
         df['calc_alerta_alin'] = alerta_alin_col_g
+        if 'novedades' in df.columns:  # «hombro caído» en la novedad también es alerta (solo dirección)
+            df['calc_alerta_alin'] = df['calc_alerta_alin'] | (
+                pd.Series([e == ee.DIRECCIONAL for e in eje_alin_col_g], index=df.index)
+                & df['novedades'].map(novedad_hombro_caido))
         df['calc_precio'] = precio_col
         df['calc_precio_estimado'] = precio_estimado_col
 
@@ -8237,7 +8311,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
                 ("2. 40.1–60%", (df_ultimo_corte['calc_pct_desgaste'] > 40.0) & (df_ultimo_corte['calc_pct_desgaste'] <= 60.0)),
                 ("3. 60.1–80%", (df_ultimo_corte['calc_pct_desgaste'] > 60.0) & (df_ultimo_corte['calc_pct_desgaste'] <= 80.0)),
                 ("4. 80.1–99.9%", (df_ultimo_corte['calc_pct_desgaste'] > 80.0) & (df_ultimo_corte['calc_pct_desgaste'] < 100.0)),
-                ("5. 100%", (df_ultimo_corte['calc_pct_desgaste'] >= 100.0) | (df_ultimo_corte['calc_p_min'] <= df_ultimo_corte['calc_lim_retiro']))
+                ("5. 100%", (df_ultimo_corte['calc_pct_desgaste'] >= 100.0) | en_retiro_mask(df_ultimo_corte))
             ]
             rango_vals = []
             for t_nom, mask in tramos:
@@ -8269,10 +8343,9 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             for dis in top_disenos:
                 sub_d = df_cpk_base[df_cpk_base[campo_agrup] == dis]
                 cpk_labels.append(str(dis))
-                cpk_mean = sub_d['calc_cpk'].replace(0, np.nan).dropna().mean()
-                kmmm_mean = sub_d['calc_km_mm'].replace(0, np.nan).dropna().mean()
-                cpk_vals.append(round(float(cpk_mean), 1) if pd.notna(cpk_mean) else 0.0)
-                kmmm_vals.append(round(float(kmmm_mean), 1) if pd.notna(kmmm_mean) else 0.0)
+                kmmm_g, cpk_g = agregar_rendimiento_y_cpk(sub_d, col_desgaste='calc_delta_mm')
+                cpk_vals.append(round(float(cpk_g), 1) if cpk_g else 0.0)
+                kmmm_vals.append(round(float(kmmm_g), 1) if kmmm_g else 0.0)
 
             resultado["cpkMarca"] = {
                 "labels": cpk_labels,
@@ -8384,7 +8457,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             ok_p.append(pct_o)
 
             # KPI 05, 07, 08: Planes de Acción
-            cambios_cnt = int((df_p['calc_p_min'] <= df_p['calc_lim_retiro']).sum())
+            cambios_cnt = int(en_retiro_mask(df_p).sum())
             duales_cnt = int(df_p['novedades'].astype(str).str.upper().str.contains('DUAL|APARE', na=False).sum())
             rot_cnt = int(df_p['novedades'].astype(str).str.upper().str.contains('ROTAC', na=False).sum())
             cambios_p.append(cambios_cnt)
@@ -8400,7 +8473,7 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             pct_reenc_p.append(round((r_cnt / max(1, total_ll)) * 100.0, 1))
 
             # KPI 19: FVU Bajas / Retiro
-            bajas = df_p[(df_p['calc_p_min'] <= df_p['calc_lim_retiro']) | df_p['novedades'].astype(str).str.upper().str.contains('BAJA|CAMBIO|RETIRO', na=False)]
+            bajas = df_p[en_retiro_mask(df_p) | df_p['novedades'].astype(str).str.upper().str.contains('BAJA|CAMBIO|RETIRO', na=False)]
             if not bajas.empty:
                 fvu_max_p.append(round(float(bajas['calc_p_min'].max()), 1))
                 fvu_prom_p.append(round(float(bajas['calc_p_min'].mean()), 1))
@@ -8737,11 +8810,12 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
                 estado_gar = 'No Aplica (Vida Cumplida)'
             else:
                 mm_perd = p_act - lim_ret
-                mm_ut = max(1.0, p_ini - lim_ret)
-                costo_mm = (costo_ciclo + costo_rep_ciclo) / mm_ut
-                dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar) if (costo_ciclo + costo_rep_ciclo) > 0 and p_ini > 0 else None
-                pct_desgaste = max(0.0, (p_ini - p_act) / mm_ut) * 100.0
-                if pct_desgaste < 30.0 and estado_gar in ('No Aplica', ''):
+                # Sin vida útil conocida (inicial en o bajo el límite) no se valoriza ni se sugiere garantía (H-29)
+                mm_ut = (p_ini - lim_ret) if p_ini > lim_ret else None
+                costo_mm = ((costo_ciclo + costo_rep_ciclo) / mm_ut) if mm_ut else None
+                dinero_perd = max(0.0, (mm_perd * costo_mm) - val_gar) if (costo_mm and (costo_ciclo + costo_rep_ciclo) > 0) else None
+                pct_desgaste = (max(0.0, (p_ini - p_act) / mm_ut) * 100.0) if mm_ut else None
+                if pct_desgaste is not None and pct_desgaste < 30.0 and estado_gar in ('No Aplica', ''):
                     estado_gar = 'Posible Garantía'
 
         # 5. Chatarrización / Disposición Final Ambiental (Bodega 7)
@@ -8912,11 +8986,11 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
             dinero_perd = 0.0
             nuevo_estado = 'No Aplica (Vida Cumplida)'
         else:
-            mm_ut = max(1.0, p_ini - lim_ret)
+            mm_ut = (p_ini - lim_ret) if p_ini > lim_ret else None  # sin vida útil conocida: sin valorizar (H-29)
             mm_perd = max(0.0, p_act - lim_ret)
-            costo_mm = (c_ciclo + c_rep) / mm_ut
+            costo_mm = ((c_ciclo + c_rep) / mm_ut) if mm_ut else None
             # Sin costo registrado la pérdida en pesos queda sin dato (no $0 ni un valor inventado)
-            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido) if (c_ciclo + c_rep) > 0 else None
+            dinero_perd = max(0.0, (mm_perd * costo_mm) - val_reconocido) if (costo_mm and (c_ciclo + c_rep) > 0) else None
 
         cursor.execute("""
             UPDATE llantas_maestro SET
@@ -9480,6 +9554,41 @@ def obtener_balance_bodegas_mrp(filtros: dict = None) -> dict:
     }
 
 
+# Madurez mínima para calcular rendimiento y proyección (auditoría H-08): Trazabilidad usaba 0,05 mm y la tarjeta
+# CPK y el KPI 14 0,5 mm, así que la misma llanta tenía proyección en una pestaña y «sin dato» en otra.
+DESGASTE_MIN_PROYECCION_MM = 0.5
+RODADO_MIN_PROYECCION = {'km': 500.0, 'horas': 50.0}
+
+
+def evaluar_semaforo(pb, limite, rango_amarillo=2.0) -> str:
+    """
+    Regla única del semáforo de una llanta (auditoría H-06). Antes había tres: el mapa redondeaba la profundidad
+    antes de comparar (4,04 mm con límite 4,0 salía ROJO y en Diagnóstico AMARILLO), una profundidad 0 contaba como
+    retiro y el rango amarillo configurado por cliente solo lo leía el KPI 05.
+      'gris'     sin medición (pb vacío o <= 0)
+      'rojo'     pb <= límite                      -> retiro
+      'amarillo' límite < pb <= límite + rango     -> próxima a cambio
+      'verde'    pb > límite + rango
+    Se compara el valor medido, sin redondear; el redondeo es solo para mostrar.
+    """
+    pb_v = to_float(pb, 0.0)
+    if not pb_v or pb_v != pb_v or pb_v <= 0:
+        return 'gris'
+    lim_v = to_float(limite, 3.0)
+    rango_v = to_float(rango_amarillo, 2.0)
+    if pb_v <= lim_v:
+        return 'rojo'
+    if pb_v <= lim_v + rango_v:
+        return 'amarillo'
+    return 'verde'
+
+
+def en_retiro_mask(df, col_p='calc_p_min', col_lim='calc_lim_retiro'):
+    """Máscara de llantas en retiro: con medición (> 0) y en o bajo el límite (0 = sin dato, no retiro)."""
+    p = pd.to_numeric(df[col_p], errors='coerce')
+    return (p > 0) & (p <= pd.to_numeric(df[col_lim], errors='coerce'))
+
+
 def _redondear(valor, decimales=0):
     """round() que devuelve None si no hay datos (NaN) en lugar de fallar o mostrar 0."""
     try:
@@ -9712,8 +9821,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
 
             if p_ini is None or p_min <= 0:
                 mm_ut = d_mm = pct_d = float('nan')
+            elif p_ini <= lim_r:
+                # Profundidad inicial en o bajo el límite: no hay vida útil, % sin dato (antes un piso de 1 mm
+                # inventaba el denominador y la llanta en retiro salía «poco desgastada»; auditoría H-29)
+                mm_ut = pct_d = float('nan')
+                d_mm = max(0.0, p_ini - p_min)
             else:
-                mm_ut = max(1.0, p_ini - lim_r)
+                mm_ut = p_ini - lim_r
                 d_mm = max(0.0, p_ini - p_min)
                 pct_d = min(100.0, max(0.0, (d_mm / mm_ut) * 100.0))
             mm_utiles_col.append(mm_ut)
@@ -9765,10 +9879,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             proy_total_col.append(proy_val)
             cpk_col.append(cpk_val)
 
-            # Alineación: solo en ejes direccionales y libres (en tracción el desgaste entre
-            # hombros es desgaste irregular, no alineación) y con las dos lecturas de hombro
+            # Alineación: solo en el eje direccional (regla única alerta_alineacion; la novedad se suma abajo)
             dif_hombros = abs(pe - pi) if (pe > 0 and pi > 0) else 0.0
-            alerta_al = (eje_i in (ee.DIRECCIONAL, ee.LIBRE)) and (dif_hombros >= tol_desalineacion)
+            alerta_al = alerta_alineacion(eje_i, pe, pi, None, tol_desalineacion)
             alerta_alin_col.append(alerta_al)
             # La pérdida de caucho por desgaste disparejo cuenta en cualquier eje que rueda
             # (en tracción la causa es rotación/irregular, no alineación, pero los mm se pierden igual)
@@ -9832,6 +9945,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         df['calc_proy_total'] = proy_total_col
         df['calc_cpk'] = cpk_col
         df['calc_alerta_alin'] = alerta_alin_col
+        if 'novedades' in df.columns:  # «hombro caído» en la novedad también es alerta (solo dirección)
+            df['calc_alerta_alin'] = df['calc_alerta_alin'] | (
+                pd.Series([e == ee.DIRECCIONAL for e in eje_col], index=df.index) & df['novedades'].map(novedad_hombro_caido))
         df['calc_mm_perd_alin'] = mm_perd_alin_col
         df['calc_perd_dinero_alin'] = perd_dinero_alin_col
         df['calc_delta_psi_pct'] = delta_psi_pct_col
@@ -10154,14 +10270,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 p_min_val = to_float(r['calc_p_min'])
                 lim_val = to_float(r['calc_lim_retiro'], 3.0)
                 dim_val = str(r['dimension']).strip().upper() or 'SIN MEDIDA'
-                if 0 < p_min_val <= lim_val:
+                color_p = evaluar_semaforo(p_min_val, lim_val, rango_amarillo)
+                if color_p == 'gris':
+                    pos_dict[pos_idx] = {'prof_min': None, 'estado': 'VACIO', 'eje': r['calc_eje']}
+                    continue
+                if color_p == 'rojo':
                     estado_semaforo = 'ROJO'
                     tot_cambios_k5 += 1
                     eje_tipo = nombres_eje_k5.get(r['calc_eje'], 'traccion')
                     tabla = retiros_por_dim_eje.setdefault(dim_val, {'direccional': 0, 'traccion': 0, 'arrastre': 0, 'repuesto': 0, 'total': 0})
                     tabla[eje_tipo] += 1
                     tabla['total'] += 1
-                elif p_min_val <= lim_val + rango_amarillo:
+                elif color_p == 'amarillo':
                     estado_semaforo = 'AMARILLO'
                 else:
                     estado_semaforo = 'VERDE'
@@ -10206,20 +10326,22 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "ajuste_par_direccional_cnt": ajuste_par_dir_k5
     }
 
-    # KPI 06: Alineación en ejes direccionales y libres
+    # KPI 06: Alineación en el eje direccional (regla H-27)
     pct_ok_alin = []
     pct_alerta_alin = []
     for m in meses_k2:
         df_m = _una_por_llanta(df[df['periodo_mes'] == m])
-        df_m = df_m[df_m['calc_eje'].isin([ee.DIRECCIONAL, ee.LIBRE])]
+        df_m = df_m[df_m['calc_eje'] == ee.DIRECCIONAL]
         tot_m = max(1, len(df_m))
         al_cnt = int(df_m['calc_alerta_alin'].sum())
         pct_ok_alin.append(round(((tot_m - al_cnt) / tot_m) * 100.0, 1))
         pct_alerta_alin.append(round((al_cnt / tot_m) * 100.0, 1))
 
     tabla_perdida_placas = []
-    if not df_patio.empty:
-        for pl, grp_p in df_patio.groupby('placa'):
+    # Corte vigente (una medición por llanta): con el historial, los mm eran de una medición y los pesos de
+    # todas (auditoría H-10)
+    if not df_corte.empty:
+        for pl, grp_p in df_corte.groupby('placa'):
             est_p = _estructura_placa(grp_p)
             pares = est_p.pares_direccionales()
             pos_dir = est_p.posiciones(ee.DIRECCIONAL)
@@ -10293,7 +10415,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if interior in pmin_v and exterior in pmin_v:
                 a_val = to_float(pmin_v[interior]['calc_p_min'])
                 b_val = to_float(pmin_v[exterior]['calc_p_min'])
-                if a_val > 0 and b_val > 0 and abs(a_val - b_val) > tol_apareo:
+                if a_val > 0 and b_val > 0 and abs(a_val - b_val) >= tol_apareo:  # H-30
                     res.append((interior, exterior, a_val, b_val, pmin_v[interior]))
         return res
 
@@ -10328,7 +10450,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "grafico_mensual": {"labels": labels_k2, "desapareos": desapareos_mes},
         "frecuencia_mensual": {"labels": labels_k2, "valores": desapareos_mes},
         "tarjetas_cruce_bodega2": tarjetas_cruce_b2[:25],
-        "cruces_bodega2": tarjetas_cruce_b2[:25]
+        "cruces_bodega2": tarjetas_cruce_b2[:25],
+        "tolerancia_mm": tol_apareo  # umbral del cliente, para que los textos digan el valor real
     }
 
     # =========================================================================
@@ -10387,7 +10510,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         anomalias_tecnicas = {
             f'Baja Presión (< -{_g(tol_psi_baja)}%)': int((df_patio['calc_delta_psi_pct'] < -tol_psi_baja).sum()),
             f'Desalineación Hombros (>= {_g(tol_desalineacion)} mm)': int(df_patio['calc_alerta_alin'].sum()),
-            'Límite de Retiro Crítico': int((df_patio['calc_p_min'] <= df_patio['calc_lim_retiro']).sum()),
+            'Límite de Retiro Crítico': int(en_retiro_mask(df_patio).sum()),
             LBL_PSI_SOB: int((df_patio['calc_delta_psi_pct'] > tol_psi_alta).sum()),
             'Desgaste Acelerado (>= 80%)': int((df_patio['calc_pct_desgaste'] >= 80.0).sum())
         }
@@ -10418,7 +10541,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 tiene_al = (
                     to_float(r_ant.get('calc_delta_psi_pct', 0.0)) < -5.0
                     or bool(r_ant.get('calc_alerta_alin'))
-                    or to_float(r_ant.get('calc_p_min', 99.0)) <= to_float(r_ant.get('calc_lim_retiro', 3.0))
+                    or 0 < to_float(r_ant.get('calc_p_min', 99.0)) <= to_float(r_ant.get('calc_lim_retiro', 3.0))
                     or es_novedad_alerta(str(r_ant.get('novedades', '')))
                 )
                 if tiene_al:
@@ -10432,7 +10555,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                         sigue_al = (
                             to_float(r_act.get('calc_delta_psi_pct', 0.0)) < -5.0
                             or bool(r_act.get('calc_alerta_alin'))
-                            or to_float(r_act.get('calc_p_min', 99.0)) <= to_float(r_act.get('calc_lim_retiro', 3.0))
+                            or 0 < to_float(r_act.get('calc_p_min', 99.0)) <= to_float(r_act.get('calc_lim_retiro', 3.0))
                             or es_novedad_alerta(str(r_act.get('novedades', '')))
                         )
                         if sigue_al:
@@ -10489,7 +10612,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         mm_perdidos_mes.append(round(mm_m, 1))
         dinero_perdido_mes.append(round(din_alin_m + din_duales_m + din_comb_m) if es_full else 0)
 
-    mm_perd_vig, dinero_alin_tot, dinero_duales_tot, dinero_comb_tot = _perdidas_corte(df_patio if not df.empty else None)
+    # Siempre sobre el corte vigente: con «Historial completo» df_patio repite la misma llanta y duplicaba mm y
+    # pesos (auditoría H-10); el historial solo alimenta la serie mensual de arriba
+    mm_perd_vig, dinero_alin_tot, dinero_duales_tot, dinero_comb_tot = _perdidas_corte(df_corte if not df.empty else None)
     mm_perd_tot_k11 = round(mm_perd_vig, 1)
     dinero_perd_tot_k11 = round(dinero_alin_tot + dinero_duales_tot + dinero_comb_tot)
 
@@ -10565,6 +10690,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL) (Corrección 1: sobre df_patio para marca/eje/tipología)
     # =========================================================================
     labels_k14, proy_k14, kmmm_k14, cpk_k14 = [], [], [], []
+    totales_k14 = {"proyeccion_km": None, "km_mm": None, "cpk": None}
     if es_full:
         df_base_14 = (df[~df['calc_es_repuesto']] if not df.empty else df) if agrupar_kpi14 in ('fechas', 'inspeccion') else df_rodante
         if not df_base_14.empty:
@@ -10590,15 +10716,18 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 labels_k14.append(lbl_fmt or 'General')
                 proy_k14.append(_redondear(grp_g['calc_proy_total'].mean()))
                 # Rendimiento y CPK del grupo = Σkm / Σmm y Σcosto / Σkm proyectados (no promedio por llanta)
-                con_r = grp_g[grp_g['calc_km_mm'].notna()]
-                kmmm_k14.append(_redondear(_div(con_r['calc_km_rodados'].sum(), con_r['calc_desgaste_mm'].sum()), 1))
-                con_c = grp_g[grp_g['calc_cpk'].notna()]
-                cpk_k14.append(_redondear(_div(pd.to_numeric(con_c['calc_precio'], errors='coerce').sum(), con_c['calc_proy_total'].sum()), 2))
+                kmmm_g, cpk_g = agregar_rendimiento_y_cpk(grp_g)
+                kmmm_k14.append(_redondear(kmmm_g, 1))
+                cpk_k14.append(_redondear(cpk_g, 2))
+            kmmm_tot_14, cpk_tot_14 = agregar_rendimiento_y_cpk(df_validas)
+            totales_k14 = {"proyeccion_km": _redondear(df_validas['calc_proy_total'].mean()),
+                           "km_mm": _redondear(kmmm_tot_14, 1), "cpk": _redondear(cpk_tot_14, 2)}
 
     kpi_14 = {
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
         "agrupacion_actual": agrupar_kpi14,
+        "totales": totales_k14,  # de toda la base filtrada, con la misma fórmula (lo usa el PDF)
         "labels": labels_k14,
         "proyeccion_km": proy_k14,
         "km_mm": kmmm_k14,
@@ -10670,7 +10799,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 "llantas": int(len(foto)),
                 "vehiculos_inspeccionados": int(df[fechas_t.str[:7] == mes_t]['placa'].nunique()),
                 "pct_presion_correcta": _redondear(100.0 * (con_psi['calc_estado_psi'] == LBL_PSI_OK).mean(), 1) if len(con_psi) else None,
-                "pct_en_retiro": _redondear(100.0 * (foto['calc_p_min'] <= foto['calc_lim_retiro']).mean(), 1) if len(foto) else None,
+                "pct_en_retiro": _redondear(100.0 * en_retiro_mask(foto).mean(), 1) if len(foto) else None,
                 "prof_minima_promedio": _redondear(p_min_t.mean(), 1) if len(p_min_t) else None,
                 "pct_alerta_alineacion": _redondear(100.0 * foto['calc_alerta_alin'].astype(bool).mean(), 1) if len(foto) else None,
             }
@@ -10809,8 +10938,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             inconsistente = p_ini_f > 0 and p_act_f > p_ini_f
             if inconsistente:
                 bajas_prof_inconsistente.append(ll.get('numero_interno', ''))
-            pct_desg_f = (max(0.0, ((p_ini_f - p_act_f) / max(1.0, p_ini_f - 3.0)) * 100.0)
-                          if p_ini_f > 0 and p_act_f > 0 and not inconsistente else None)
+            # Sin vida útil (inicial en o bajo 3 mm) no hay % de desgaste: antes un piso de 1 mm lo inventaba (H-29)
+            pct_desg_f = (max(0.0, ((p_ini_f - p_act_f) / (p_ini_f - 3.0)) * 100.0)
+                          if p_ini_f > 3.0 and p_act_f > 0 and not inconsistente else None)
             en_reclamo = estado_g in ('Posible Garantía', 'En Reclamación') or 'RECLAM' in estado_g.upper()
             if (pct_desg_f is not None and pct_desg_f < 30.0) or en_reclamo:
                 alertas_garantia.append({

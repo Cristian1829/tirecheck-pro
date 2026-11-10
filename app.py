@@ -2228,9 +2228,9 @@ class AppInspeccionLlantas(tk.Tk):
             return
 
         total = len(data)
-        km_mms = [d['km_por_mm'] for d in data if d['km_por_mm'] > 0]
+        km_mms = [d['km_por_mm'] for d in data if (d['km_por_mm'] or 0) > 0]
         cpks = [d['cpk'] for d in data if d['cpk'] > 0]
-        proys = [d['proyeccion_total_km'] for d in data if d['proyeccion_total_km'] > 0]
+        proys = [d['proyeccion_total_km'] for d in data if (d['proyeccion_total_km'] or 0) > 0]
 
         prom_kmmm = (sum(km_mms) / len(km_mms)) if km_mms else 0.0
         prom_cpk = (sum(cpks) / len(cpks)) if cpks else 0.0
@@ -2255,14 +2255,14 @@ class AppInspeccionLlantas(tk.Tk):
                 f"{d.get('limite_retiro_mm', 3.0)} mm",
                 d.get('requiere_cambio', 'NO'),
                 f"{d['desgaste_mm']} mm",
-                f"{d.get('porcentaje_desgaste', 0.0):.1f}%",
+                f"{d.get('porcentaje_desgaste') or 0.0:.1f}%",
                 f"{d['km_rodados']:,.0f}",
-                f"{d['km_por_mm']:,.1f}",
+                f"{d['km_por_mm'] or 0:,.1f}",
                 f"${d['precio']:,.2f}",
                 f"${d['cpk']:,.4f}",
-                f"{d['proyeccion_total_km']:,.0f}",
-                f"${d.get('cpk_proyectado', 0.0):,.4f}",
-                f"{d['km_restantes']:,.0f}"
+                f"{d['proyeccion_total_km'] or 0:,.0f}",
+                f"${d.get('cpk_proyectado') or 0.0:,.4f}",
+                f"{d['km_restantes'] or 0:,.0f}"
             ))
 
     def exportar_kpis_excel(self):

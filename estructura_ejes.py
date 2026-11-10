@@ -166,8 +166,8 @@ class EstructuraVehiculo:
         return pares if len(pares) == len(eje_a['posiciones']) == 4 else []
 
     def posiciones_alineacion(self):
-        """Donde el desgaste entre hombros indica alineación: ejes direccionales y libres (remolque)."""
-        return self.posiciones(DIRECCIONAL, LIBRE)
+        """Donde el desgaste entre hombros indica alineación: solo el eje direccional (regla H-27, 2026-11-09)."""
+        return self.posiciones(DIRECCIONAL)
 
 
 def estructura_inferida(tipologia, posiciones_presentes):

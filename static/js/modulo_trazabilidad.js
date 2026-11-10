@@ -216,15 +216,15 @@
           <td class="p-2.5 text-center font-mono font-bold">${escapeHtml(d.prof_actual_min)} mm</td>
           <td class="p-2.5 text-center font-mono text-slate-500">${d.limite_retiro_mm || 3.0} mm</td>
           <td class="p-2.5 text-center">${d.requiere_cambio === 'Sí' || d.requiere_cambio === 'S' || d.requiere_cambio === 'SÍ' ? '<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Sí</span>' : '<span class="text-slate-400">NO</span>'}</td>
-          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${escapeHtml(d.desgaste_mm)} mm</td>
-          <td class="p-2.5 text-center font-mono">${fmtDec((d.porcentaje_desgaste || 0), 1)}%</td>
+          <td class="p-2.5 text-center font-mono font-bold text-rose-600">${d.desgaste_mm == null ? '—' : escapeHtml(d.desgaste_mm) + ' mm'}</td>
+          <td class="p-2.5 text-center font-mono">${d.porcentaje_desgaste == null ? '—' : fmtDec(d.porcentaje_desgaste, 1) + '%'}</td>
           <td class="p-2.5 text-right font-mono">${(d.km_rodados || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono font-bold text-blue-600">${(d.km_por_mm || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-blue-600">${d.km_por_mm == null ? '—' : d.km_por_mm.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
           <td class="p-2.5 text-right font-mono">$${(d.precio || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">$ ${fmtDec(d.cpk || 0, 1)}</td>
-          <td class="p-2.5 text-right font-mono">${Math.round(d.proyeccion_total_km || 0).toLocaleString()}</td>
-          <td class="p-2.5 text-right font-mono">$ ${fmtDec(d.cpk_proyectado || 0, 1)}</td>
-          <td class="p-2.5 text-right font-mono font-black text-purple-700">${Math.round(d.km_restantes || 0).toLocaleString()} km</td>
+          <td class="p-2.5 text-right font-mono font-bold text-emerald-600">${d.cpk == null ? '—' : '$ ' + fmtDec(d.cpk, 1)}</td>
+          <td class="p-2.5 text-right font-mono">${d.proyeccion_total_km == null ? '—' : Math.round(d.proyeccion_total_km).toLocaleString()}</td>
+          <td class="p-2.5 text-right font-mono">${d.cpk_proyectado == null ? '—' : '$ ' + fmtDec(d.cpk_proyectado, 1)}</td>
+          <td class="p-2.5 text-right font-mono font-black text-purple-700">${d.km_restantes == null ? '—' : Math.round(d.km_restantes).toLocaleString() + ' km'}</td>
         </tr>
       `).join('');
 

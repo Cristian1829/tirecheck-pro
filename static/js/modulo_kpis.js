@@ -1605,7 +1605,7 @@
       const cont = document.getElementById('contenedorKpi08_crucesB2');
       if (cont) {
         if (!d.cruces_bodega2 || d.cruces_bodega2.length === 0) {
-          cont.innerHTML = '<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-center text-xs">Sin pachas con desbalance &gt; 3 mm</div>';
+          cont.innerHTML = `<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-center text-xs">Sin pachas con desbalance &ge; ${escapeHtml(formatCO_Decimal(Number(d.tolerancia_mm || 2.5), 1))} mm</div>`;
         } else {
           cont.innerHTML = d.cruces_bodega2.map(c => `
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">

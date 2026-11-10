@@ -1299,8 +1299,10 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
                                                               int(r.get('posicion') or 0), posiciones_placa.get(r.get('placa'))), axis=1)
     df_insp['eje'] = df_insp.apply(lambda r: lim_posicion.tipo_eje(r.get('tipologia'), int(r.get('posicion') or 0),
                                                                    posiciones_placa.get(r.get('placa'))), axis=1)
-    llantas_retiro = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] <= df_insp['lim_eje'])])
-    llantas_proximo = len(df_insp[(df_insp['p_min'].notna()) & (df_insp['p_min'] > df_insp['lim_eje']) & (df_insp['p_min'] <= df_insp['lim_eje'] + 2.0)])
+    rango_amarillo = database.to_float(database.obtener_configuracion_avanzada_cliente(cliente or '').get('rango_semaforo_amarillo_mm', 2.0), 2.0)
+    df_insp['semaforo'] = df_insp.apply(lambda r: database.evaluar_semaforo(r['p_min'], r['lim_eje'], rango_amarillo), axis=1)
+    llantas_retiro = int((df_insp['semaforo'] == 'rojo').sum())
+    llantas_proximo = int((df_insp['semaforo'] == 'amarillo').sum())
     llantas_optimas = total_llantas - llantas_retiro - llantas_proximo
 
     pct_retiro = (llantas_retiro / total_llantas * 100) if total_llantas > 0 else 0
@@ -1446,7 +1448,7 @@ def generar_pdf_consolidado_jornada(cliente=None, subcliente=None, fecha=None, o
             continue
         medidas = d_e[d_e['p_min'].notna() & (d_e['p_min'] > 0)]
         en_retiro = int((medidas['p_min'] <= medidas['lim_eje']).sum())
-        proximas = int(((medidas['p_min'] > medidas['lim_eje']) & (medidas['p_min'] <= medidas['lim_eje'] + 2.0)).sum())
+        proximas = int((medidas['semaforo'] == 'amarillo').sum())
         if not medidas.empty:
             critica = medidas.loc[medidas['p_min'].idxmin()]
             txt_min = f"{format_num_es(critica['p_min'])} mm · {critica['placa']} Pos {int(critica['posicion'])}"

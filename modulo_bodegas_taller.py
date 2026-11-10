@@ -912,23 +912,31 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
     if not costo_total:
         costo_total = database.to_float(ll.get('precio_compra_inicial'), 0.0)
 
-    # Sin costo registrado no hay CPK (antes se usaba $1.450.000)
-    cpk_global = round(costo_total / max(1.0, km_totales), 4) if costo_total > 0 else None
+    # Sin costo o sin recorrido no hay CPK (antes con 0 km el CPK quedaba igual al costo; auditoría H-11)
+    cpk_global = round(costo_total / km_totales, 4) if (costo_total > 0 and km_totales > 0) else None
 
-    # Calcular mm gastados para rendimiento km/mm
+    def _prof(valor):
+        """Profundidad registrada o None (antes se suponían 16 mm al inicio y 3 mm al final)."""
+        v = database.to_float(valor, 0.0)
+        return v if v > 0 else None
+
+    prof_actual_ll = _prof(ll.get('prof_actual_min'))
+
+    # Calcular mm gastados para rendimiento km/mm: solo los ciclos con profundidad inicial y final conocidas
     mm_gastados_tot = 0.0
     for c in ciclos_raw:
-        p_i = database.to_float(c.get('prof_inicial_ciclo', 16.0), 16.0)
-        p_f = database.to_float(c.get('prof_final_ciclo', ll.get('prof_actual_min', 3.0)), 3.0)
-        mm_gastados_tot += max(0.0, p_i - p_f)
+        p_i = _prof(c.get('prof_inicial_ciclo'))
+        p_f = _prof(c.get('prof_final_ciclo')) or prof_actual_ll
+        if p_i and p_f:
+            mm_gastados_tot += max(0.0, p_i - p_f)
 
-    rendimiento_km_mm = round(km_totales / max(1.0, mm_gastados_tot), 1)
+    rendimiento_km_mm = round(km_totales / mm_gastados_tot, 1) if (km_totales > 0 and mm_gastados_tot > 0) else None
 
     # Ahorro vs Llanta Nueva
     p_compra_ini = database.to_float(ll.get('precio_compra_inicial'), 0.0)
     ciclo_1_km = ciclos_raw[0].get('km_recorridos_ciclo', 0.0) if ciclos_raw else km_totales
-    if p_compra_ini > 0 and costo_total > 0:
-        cpk_nueva_estimado = p_compra_ini / max(1.0, ciclo_1_km)
+    if p_compra_ini > 0 and costo_total > 0 and database.to_float(ciclo_1_km) > 0:
+        cpk_nueva_estimado = p_compra_ini / database.to_float(ciclo_1_km)
         costo_proyectado_solo_nuevas = km_totales * cpk_nueva_estimado
         ahorro_generado = max(0.0, round(costo_proyectado_solo_nuevas - costo_total, 2))
     else:
@@ -936,19 +944,21 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
 
     # Curva de Desgaste (mm vs km) con trazabilidad de ciclos (diente de sierra) e inspecciones
     curva_desgaste = []
-    p_ini_nueva = database.to_float(ll.get('prof_inicial_nueva', 16.0), 16.0)
+    p_ini_nueva = _prof(ll.get('prof_inicial_nueva'))
 
     km_cursor = 0.0
     for idx_c, c in enumerate(ciclos_raw):
         n_c = c.get('numero_ciclo', idx_c + 1)
-        p_ini_c = database.to_float(c.get('prof_inicial_ciclo', p_ini_nueva), p_ini_nueva)
+        p_ini_c = _prof(c.get('prof_inicial_ciclo')) or p_ini_nueva
         p_fin_c = c.get('prof_final_ciclo')
         km_rec = database.to_float(c.get('km_recorridos_ciclo', 0.0))
         f_ini = str(c.get('fecha_inicio_ciclo', '') or ll.get('fecha_alta', ''))[:10]
         f_fin = str(c.get('fecha_fin_ciclo', '') or ll.get('fecha_ultimo_movimiento', ''))[:10]
         tipo_c = c.get('tipo_ciclo', 'Original')
 
-        if n_c == 1:
+        if p_ini_c is None:
+            pass  # sin profundidad inicial el punto no se dibuja (antes aportaba 16 mm ficticios)
+        elif n_c == 1:
             curva_desgaste.append({
                 "fecha": f_ini or "Inicial",
                 "km": 0.0,
@@ -964,8 +974,8 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
             })
 
         km_cursor += km_rec
-        if p_fin_c is not None or km_rec > 0:
-            prof_fin_val = database.to_float(p_fin_c, database.to_float(ll.get('prof_actual_min', 3.0), 3.0))
+        prof_fin_val = _prof(p_fin_c) or (prof_actual_ll if idx_c == len(ciclos_raw) - 1 else None)
+        if prof_fin_val is not None:
             curva_desgaste.append({
                 "fecha": f_fin or f_ini,
                 "km": km_cursor,
@@ -973,7 +983,7 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
                 "evento": f"Cierre Ciclo {n_c} ({tipo_c})"
             })
 
-    if not curva_desgaste:
+    if not curva_desgaste and p_ini_nueva is not None:
         curva_desgaste.append({
             "fecha": str(ll.get('fecha_alta', '') or 'Inicial')[:10],
             "km": 0.0,
@@ -984,7 +994,9 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
     for insp in insps:
         f_i, pl_i, pos_i, km_i, pe_i, pc_i, pi_i, psi_i, nov_i = insp
         pos_vals = [x for x in (database.to_float(pe_i), database.to_float(pc_i), database.to_float(pi_i)) if x > 0]
-        p_min_i = min(pos_vals) if pos_vals else p_ini_nueva
+        if not pos_vals:
+            continue  # inspección sin medición: no se dibuja con una profundidad supuesta
+        p_min_i = min(pos_vals)
         curva_desgaste.append({
             "fecha": str(f_i)[:10],
             "km": database.to_float(km_i),
@@ -999,11 +1011,11 @@ def obtener_hoja_vida_llanta(numero_interno: str, cliente: str = "") -> dict:
     for c in ciclos_raw:
         n_ciclo = c.get('numero_ciclo', 1)
         tipo = c.get('tipo_ciclo', 'Original')
-        p_ini_c = database.to_float(c.get('prof_inicial_ciclo', 16.0), 16.0)
-        p_fin_c = database.to_float(c.get('prof_final_ciclo', ll.get('prof_actual_min', 3.0)), 3.0)
+        p_ini_c = _prof(c.get('prof_inicial_ciclo'))
+        p_fin_c = _prof(c.get('prof_final_ciclo')) or (prof_actual_ll if c is ciclos_raw[-1] else None)
         km_rec_c = database.to_float(c.get('km_recorridos_ciclo', 0.0))
         costo_c = database.to_float(c.get('costo_ciclo', 0.0))
-        cpk_c = round(costo_c / max(1.0, km_rec_c), 4) if km_rec_c > 0 else 0.0
+        cpk_c = round(costo_c / km_rec_c, 4) if (km_rec_c > 0 and costo_c > 0) else None
         desglose_formateado.append({
             "ciclo": n_ciclo,
             "tipo": tipo,
