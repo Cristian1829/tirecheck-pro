@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-9">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-15">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -1713,32 +1713,30 @@
             <i class="fa-solid fa-list-check text-blue-600"></i>
             <span>Detalle de Vehículos y Planes de Acción</span>
           </h3>
-          <p class="text-xs text-slate-500">Listado interactivo de vehículos según los filtros seleccionados (12 columnas oficiales)</p>
+          <p class="text-xs text-slate-500">Un vehículo por fila, según los filtros seleccionados</p>
         </div>
       </div>
 
       <!-- Tabla de Diagnóstico Detallado -->
-      <div id="contenedorTablaDiagnostico" class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
+      <div id="contenedorTablaDiagnostico" class="ta-tabla-bd ta-tabla-diag overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
             <tr>
               <th class="p-2.5">Placa</th>
-              <th class="p-2.5">Cliente / Sede</th>
+              <th class="p-2.5">Sede</th>
               <th class="p-2.5">Tipología</th>
-              <th class="p-2.5 text-center">Inspeccionadas</th>
-              <th class="p-2.5 text-center">Límite Retiro</th>
-              <th class="p-2.5 text-center">Alineación</th>
-              <th class="p-2.5 text-center">Dual Parejas</th>
-              <th class="p-2.5 text-center">Cambio YA</th>
-              <th class="p-2.5 text-center">Próximas</th>
-              <th class="p-2.5 text-center">Rotación</th>
-              <th class="p-2.5 min-w-[280px]">Detalles & Recomendaciones</th>
-              <th class="p-2.5 text-center">Plan PDF</th>
+              <th class="p-2.5 text-right">Retiro</th>
+              <th class="p-2.5 text-right">Próximas</th>
+              <th class="p-2.5">Alineación</th>
+              <th class="p-2.5">Duales</th>
+              <th class="p-2.5">Presión</th>
+              <th class="p-2.5 min-w-[280px]">Plan de acción</th>
+              <th class="p-2.5 text-center">Informe</th>
             </tr>
           </thead>
           <tbody id="tbody_diagnostico_web" class="divide-y divide-slate-100 bg-white text-slate-700 whitespace-nowrap font-medium">
             <tr>
-              <td colspan="12" class="p-8 text-center text-slate-400">Cargando diagnóstico de flota...</td>
+              <td colspan="10" class="p-8 text-center text-slate-400">Cargando diagnóstico de flota...</td>
             </tr>
           </tbody>
         </table>
@@ -6833,18 +6831,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-9"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-9"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-9"></script>
-  <script src="/static/js/app_init.js?v=rediseno-9"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-9"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-9"></script>
+  <script src="/static/js/app_core.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-15"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-15"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-15"></script>
+  <script src="/static/js/app_init.js?v=rediseno-15"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-15"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-15"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

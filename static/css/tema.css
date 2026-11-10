@@ -590,3 +590,29 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
 #areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 button:is(.bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-cyan-600) :is(span, i, svg, .text-white) {
   color: #fff;
 }
+
+/* ==========================================================================
+   Diagnóstico y planes: tabla con columnas y textos sencillos, como el prototipo
+   ========================================================================== */
+#areaTrabajo .ta-tabla-diag { max-height: none; }
+#areaTrabajo .ta-tabla-diag table { font-size: var(--ta-f-sm); }
+#areaTrabajo .ta-tabla-diag td { white-space: nowrap; }
+#areaTrabajo .ta-tabla-diag td.wrap { white-space: normal; min-width: 280px; }
+#areaTrabajo .ta-tabla-diag td.placa { font-weight: 600; color: var(--ta-accion); }
+#areaTrabajo .ta-tabla-diag td.r { text-align: right; font-variant-numeric: tabular-nums; }
+#areaTrabajo .ta-tabla-diag td.c { text-align: center; }
+#areaTrabajo .ta-tabla-diag td.s, #areaTrabajo .ta-tabla-diag .s { color: var(--ta-sub); }
+#areaTrabajo .ta-tabla-diag .ta-num-cr { color: var(--ta-cr); font-weight: 700; }
+#areaTrabajo .ta-tabla-diag .ta-fecha-fila { display: block; font-size: var(--ta-f-xs); font-weight: 400; color: var(--ta-sub); line-height: 1.3; }
+#areaTrabajo .ta-tabla-diag .ta-sin-alerta { color: var(--ta-sub); }
+#areaTrabajo .ta-tabla-diag .ta-pastilla {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: var(--ta-f-xs); font-weight: 600; white-space: nowrap;
+}
+#areaTrabajo .ta-tabla-diag .ta-pastilla::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+#areaTrabajo .ta-tabla-diag .ta-pastilla.al { background: #fdf0d5; color: #a45a00; }
+#areaTrabajo .ta-tabla-diag .ta-pastilla.cr { background: #fce7e4; color: var(--ta-cr); }
+#areaTrabajo .ta-tabla-diag .ta-pastilla.ok { background: #e3f4e8; color: var(--ta-ok); }
+/* Mínima por eje y aviso de tipología: apoyo en gris, en una línea pequeña */
+#areaTrabajo .ta-tabla-diag .ta-apoyo { margin-top: 2px; }
+#areaTrabajo .ta-tabla-diag .ta-apoyo > div { font-size: var(--ta-f-xs); color: var(--ta-sub); margin: 0; }
+#areaTrabajo .ta-tabla-diag .ta-apoyo i { display: none; }

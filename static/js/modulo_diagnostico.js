@@ -328,7 +328,7 @@
       if (!tbody) return;
 
       if (!cacheFiltradasDiag || cacheFiltradasDiag.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 font-medium">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 font-medium">No hay vehículos que coincidan con los filtros seleccionados.</td></tr>`;
         if (contenedorPaginacion) contenedorPaginacion.classList.add('hidden');
         return;
       }
@@ -343,160 +343,80 @@
       const fin = Math.min(inicio + ITEMS_POR_PAGINA_DIAG, totalRegistros);
       const paginaItems = cacheFiltradasDiag.slice(inicio, fin);
 
+      // Rediseño: columnas y textos sencillos como el prototipo. Los datos son los mismos del cálculo del servidor;
+      // cada alerta se resume en una palabra y el plan de acción se escribe en una sola línea.
+      const variosClientes = new Set(cacheFiltradasDiag.map(x => x.Cliente)).size > 1;
+      const sinAlerta = '<span class="ta-sin-alerta">Sin alerta</span>';
+      const pastilla = (clase, texto, titulo) => `<span class="ta-pastilla ${clase}" title="${escapeHtml(titulo || '')}">${escapeHtml(texto)}</span>`;
+      const numeros = (bloques, re) => {
+        const vistos = new Set();
+        bloques.forEach(b => { let m; const r2 = new RegExp(re.source, 'g'); while ((m = r2.exec(String(b.texto || '')))) vistos.add(Number(m[1])); });
+        return [...vistos].sort((x, y) => x - y);
+      };
+      const lista = (arr) => arr.join(', ');
+      // Los nombres llegan en MAYÚSCULAS: se muestran como en el prototipo (Sede Norte, Cabezote (6x4))
+      const nombreBonito = (t) => String(t || '').toLowerCase().replace(/(^|[\s(/-])([a-záéíóúñ])/g, (m, a, b) => a + b.toUpperCase());
+
       tbody.innerHTML = paginaItems.map(r => {
         const cantCambios = Number(r.Cant_Cambios) || (r.Plan_Cambio_Llanta === 'SÍ' ? 1 : 0);
         const cantProx = Number(r.Cant_Proximas) || 0;
+        const cantPsi = Number(r.Cant_Presiones) || 0;
         const esAlin = r.Plan_Alineacion === 'SÍ';
         const esDual = r.Plan_Dual_Mal_Apareado === 'SÍ';
-        const esRotAuto = r.Badge_Rotacion === 'AUTO-AJUSTE';
-        const esRot = r.Plan_Rotacion === 'SÍ';
+        const bl = Array.isArray(r.Bloques_Recomendaciones) ? r.Bloques_Recomendaciones : [];
+        const por = (...tipos) => bl.filter(b => tipos.includes(b.tipo));
 
-        const bgRow = cantCambios > 0 ? 'bg-rose-50/50' : (esAlin || esDual || cantProx > 0) ? 'bg-amber-50/40' : '';
+        // Posiciones y pares que menciona el cálculo
+        const posRetiro = numeros(por('RETIRO', 'PAR_DIRECCIONAL'), /Pos\s*(\d+)/);
+        const posAlin = numeros(por('ALINEACION'), /Pos\s*(\d+)/);
+        const pares = por('DUAL').map(b => (String(b.texto || '').match(/Dual\s*(\d+)\s*-\s*(\d+)/) || []).slice(1, 3).join('-')).filter(Boolean);
+        const nDual = pares.length || (esDual ? 1 : 0);
+        const posPend = Array.isArray(r.Posiciones_Pendientes) ? r.Posiciones_Pendientes : [];
+        const cantPend = Number(r.Cant_Pendientes) || posPend.length;
 
-        // Bloques de prescripción formateados (Sección 5 Columna 11)
-        const cantPend = Number(r.Cant_Pendientes) || 0;
-        const detPend = (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') ? r.Detalle_Pendientes : '';
-        if (cantPend > 0 || detPend) {
-          const textoPend = detPend || (cantPend === 1 ? '1 posición pendiente por inspeccionar' : `${cantPend} posiciones pendientes por inspeccionar`);
-          if (Array.isArray(r.Bloques_Recomendaciones)) {
-            const yaTienePend = r.Bloques_Recomendaciones.some(b => b.tipo === 'PENDIENTE' || b.tipo === 'PENDIENTES');
-            if (!yaTienePend) {
-              r.Bloques_Recomendaciones.push({
-                tipo: 'PENDIENTES',
-                texto: textoPend,
-                color: 'ambar'
-              });
-              if (r.Bloques_Recomendaciones.length === 1) {
-                r.Bloques_Recomendaciones.push({
-                  tipo: 'OK',
-                  texto: 'Sin alertas activas en llantas inspeccionadas (Vehículo OK)',
-                  color: 'verde'
-                });
-              }
-            }
-          }
-        }
+        // Plan de acción: una frase corta por cada cosa por hacer
+        const plan = [];
+        if (cantCambios > 0) plan.push(posRetiro.length ? `Cambiar pos. ${lista(posRetiro)}` : `Cambiar ${cantCambios} llanta(s)`);
+        if (esAlin) plan.push(posAlin.length ? `Alinear dirección (pos. ${lista(posAlin)})` : 'Alinear dirección');
+        if (nDual > 0) plan.push(pares.length ? `Emparejar duales ${lista(pares)}` : 'Emparejar duales');
+        if (cantPsi > 0) plan.push(`Calibrar ${cantPsi} llanta(s)`);
+        // «Cruzar P1 ↔ P2» → «cruzar 1 ↔ 2»; «Invertir Pos 5 ↔ Pos 6» → «invertir 5 ↔ 6»
+        const rotaciones = por('AUTO_AJUSTE', 'EQUIS_LARGA').map(b => String(b.texto || '')
+          .replace(/^Auto-Ajuste[^:]*:\s*/i, '').replace(/\s*\(.*$/, '').replace(/\bPos\.?\s*(?=\d)/gi, '').replace(/\bP(?=\d)/g, '').trim())
+          .filter(Boolean).map(t => t.charAt(0).toLowerCase() + t.slice(1));
+        if (rotaciones.length) plan.push(`Rotar: ${rotaciones.join(', ')}`);
+        const posIrreg = numeros(por('ROTACION_IRREGULAR', 'ROTACION_ESCALONADO'), /Pos\s*(\d+)/);
+        if (posIrreg.length) plan.push(`Revisar desgaste irregular (pos. ${lista(posIrreg)})`);
+        if (cantPend > 0) plan.push(posPend.length ? `Inspeccionar pos. ${lista(posPend)}` : `Inspeccionar ${cantPend} posición(es) pendiente(s)`);
 
-        let bloquesHtml = '';
-        if (Array.isArray(r.Bloques_Recomendaciones) && r.Bloques_Recomendaciones.length > 0) {
-          bloquesHtml = `<div class="flex flex-col gap-1 max-w-sm whitespace-normal">` +
-            r.Bloques_Recomendaciones.map(b => {
-              let cls = 'bg-slate-50 text-slate-700 border-slate-200';
-              let ico = 'fa-circle-info';
-              if (b.tipo === 'CAMBIO_YA' || b.tipo === 'RETIRO' || b.tipo === 'PAR_DIRECCIONAL') {
-                cls = 'bg-rose-50 text-rose-800 border-rose-200 font-bold';
-                ico = 'fa-triangle-exclamation text-rose-600';
-              } else if (b.tipo === 'PROXIMO' || b.tipo === 'PROXIMA') {
-                cls = 'bg-amber-50 text-amber-800 border-amber-200 font-medium';
-                ico = 'fa-clock text-amber-600';
-              } else if (b.tipo === 'PENDIENTE' || b.tipo === 'PENDIENTES') {
-                cls = 'bg-amber-50 text-amber-800 border-amber-300 font-bold';
-                ico = 'fa-triangle-exclamation text-amber-600';
-              } else if (b.tipo === 'ALINEACION') {
-                cls = 'bg-orange-50 text-orange-800 border-orange-200 font-medium';
-                ico = 'fa-arrows-left-right text-orange-600';
-              } else if (b.tipo === 'DUAL') {
-                cls = 'bg-purple-50 text-purple-800 border-purple-200 font-medium';
-                ico = 'fa-scale-unbalanced text-purple-600';
-              } else if (b.tipo === 'AUTO_AJUSTE') {
-                cls = 'bg-indigo-50 text-indigo-800 border-indigo-200 font-bold';
-                ico = 'fa-rotate text-indigo-600';
-              } else if (b.tipo === 'ROTACION' || b.tipo === 'EQUIS_LARGA' || b.tipo === 'ROTACION_IRREGULAR' || b.tipo === 'ROTACION_ESCALONADO') {
-                cls = 'bg-blue-50 text-blue-800 border-blue-200 font-medium';
-                ico = 'fa-arrows-rotate text-blue-600';
-              } else if (b.tipo === 'PRESION') {
-                cls = 'bg-cyan-50 text-cyan-800 border-cyan-200 font-medium';
-                ico = 'fa-gauge text-cyan-600';
-              } else if (b.tipo === 'OK') {
-                cls = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
-                ico = 'fa-check text-emerald-600';
-              }
-              return `<span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded border ${cls} leading-snug">
-                        <i class="fa-solid ${ico} mr-1.5 shrink-0 text-[9px]"></i>
-                        <span>${escapeHtml(b.texto)}</span>
-                      </span>`;
-            }).join('') +
-          `</div>`;
-        } else {
-          const lineas = [];
-          if (r.Detalle_Cambio && r.Detalle_Cambio !== 'OK') lineas.push(`<span class="text-rose-700 font-bold">Cambio: ${escapeHtml(r.Detalle_Cambio)}</span>`);
-          if (r.Detalle_Proximas && r.Detalle_Proximas !== 'OK') lineas.push(`<span class="text-amber-700">Próximas: ${escapeHtml(r.Detalle_Proximas)}</span>`);
-          if (r.Detalle_Alineacion && r.Detalle_Alineacion !== 'OK') lineas.push(`<span class="text-orange-700">Alineación: ${escapeHtml(r.Detalle_Alineacion)}</span>`);
-          if (r.Detalle_Dual && r.Detalle_Dual !== 'OK') lineas.push(`<span class="text-purple-700">Dual: ${escapeHtml(r.Detalle_Dual)}</span>`);
-          if (r.Detalle_Auto_Ajuste && r.Detalle_Auto_Ajuste !== 'OK') lineas.push(`<span class="text-indigo-700 font-bold">Auto-Ajuste: ${escapeHtml(r.Detalle_Auto_Ajuste)}</span>`);
-          if (r.Detalle_Calibracion_PSI && r.Detalle_Calibracion_PSI !== 'OK') lineas.push(`<span class="text-cyan-700">Presión: ${escapeHtml(r.Detalle_Calibracion_PSI)}</span>`);
-          if (r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') lineas.push(`<span class="text-amber-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(r.Detalle_Pendientes)}</span>`);
-          if (lineas.length === 0) {
-            lineas.push('<span class="text-emerald-700">Sin alertas activas (Vehículo OK)</span>');
-          } else if (lineas.length === 1 && r.Detalle_Pendientes && r.Detalle_Pendientes !== 'OK') {
-            lineas.push('<span class="text-emerald-700">Sin alertas activas en llantas inspeccionadas (Vehículo OK)</span>');
-          }
-          bloquesHtml = `<div class="text-[11px] max-w-sm whitespace-normal space-y-0.5">${lineas.join('<br>')}</div>`;
-        }
-        bloquesHtml = resumenEjesDiagHtml(r) + bloquesHtml;
+        // Mínima por eje y aviso de tipología (información de apoyo, en gris debajo del plan)
+        const apoyo = resumenEjesDiagHtml(r);
 
         return `
-          <tr class="${bgRow} hover:bg-slate-100 transition-colors">
-            <!-- 1. Placa -->
-            <td class="p-2.5 font-black text-slate-900">
-              <div>${r['Vehículo/Placa']}</div>
-              ${r.Fecha ? `<div class="text-[10px] text-slate-400 font-normal font-mono"><i class="fa-regular fa-calendar-days text-[9px] mr-1"></i>${fmtFecha(r.Fecha)}</div>` : ''}
+          <tr>
+            <td class="placa">
+              ${escapeHtml(r['Vehículo/Placa'])}
+              ${r.Fecha ? `<span class="ta-fecha-fila">${fmtFecha(r.Fecha)}</span>` : ''}
             </td>
-            <!-- 2. Cliente / Sede -->
-            <td class="p-2.5">
-              <div class="font-bold text-slate-800">${escapeHtml(r.Cliente || '-')}</div>
-              ${r.Subcliente ? `<div class="text-[10px] text-slate-400 font-normal">${escapeHtml(r.Subcliente)}</div>` : ''}
+            <td class="s">
+              ${escapeHtml(nombreBonito(r.Subcliente) || '—')}
+              ${variosClientes ? `<span class="ta-fecha-fila">${escapeHtml(nombreBonito(r.Cliente))}</span>` : ''}
             </td>
-            <!-- 3. Tipología -->
-            <td class="p-2.5">
-              <div class="font-bold text-slate-700">${escapeHtml(r.Tipo || '-')}</div>
-              ${r.Operación ? `<div class="text-[10px] text-slate-400">${escapeHtml(r.Operación)}</div>` : ''}
+            <td>
+              ${escapeHtml(nombreBonito(r.Tipo) || '—')}
+              <span class="ta-fecha-fila">${escapeHtml(r['Llantas Inspeccionadas'] || 0)} llantas · límite ${fmtDec(Number(r.Limite_Retiro_mm || 3), 1)} mm</span>
             </td>
-            <!-- 4. Inspeccionadas -->
-            <td class="p-2.5 text-center">
-              <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-bold font-mono text-xs">
-                ${r['Llantas Inspeccionadas'] || 0}
-              </span>
+            <td class="r">${cantCambios > 0 ? `<b class="ta-num-cr">${cantCambios}</b>` : '<span class="s">0</span>'}</td>
+            <td class="r">${cantProx > 0 ? cantProx : '<span class="s">0</span>'}</td>
+            <td>${esAlin ? pastilla('al', 'Revisar', r.Detalle_Alineacion) : sinAlerta}</td>
+            <td>${nDual > 0 ? pastilla('al', `${nDual} par(es)`, r.Detalle_Dual) : sinAlerta}</td>
+            <td>${cantPsi > 0 ? pastilla('al', `${cantPsi} llanta(s)`, r.Detalle_Calibracion_PSI) : sinAlerta}</td>
+            <td class="wrap">
+              ${plan.length ? escapeHtml(plan.join(' · ')) : '<span class="s">Sin acciones pendientes</span>'}
+              ${apoyo ? `<div class="ta-apoyo">${apoyo}</div>` : ''}
             </td>
-            <!-- 5. Límite Retiro -->
-            <td class="p-2.5 text-center font-mono font-bold text-slate-600">${r.Limite_Retiro_mm || 3.0} mm</td>
-            <!-- 6. Alineación -->
-            <td class="p-2.5 text-center">
-              ${esAlin 
-                ? '<span class="bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
-                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 7. Dual Parejas -->
-            <td class="p-2.5 text-center">
-              ${esDual 
-                ? '<span class="bg-purple-100 text-purple-800 font-black px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
-                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 8. Cambio YA -->
-            <td class="p-2.5 text-center">
-              ${cantCambios > 0 
-                ? `<span class="bg-rose-100 text-rose-800 font-black px-2 py-0.5 rounded-full text-[10px] animate-pulse">URGENTE (${cantCambios})</span>` 
-                : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 9. Próximas -->
-            <td class="p-2.5 text-center">
-              ${cantProx > 0 
-                ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">PRÓXIMO (${cantProx})</span>` 
-                : '<span class="text-slate-400 font-mono text-[11px]">0</span>'}
-            </td>
-            <!-- 10. Rotación -->
-            <td class="p-2.5 text-center">
-              ${esRotAuto 
-                ? '<span class="bg-indigo-100 text-indigo-800 font-black px-2 py-0.5 rounded-full text-[10px]">AUTO-AJUSTE</span>' 
-                : esRot 
-                  ? '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-[10px]">SÍ</span>' 
-                  : '<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full text-[10px]">OK</span>'}
-            </td>
-            <!-- 11. Detalles & Recomendaciones -->
-            <td class="p-2.5">${bloquesHtml}</td>
-            <!-- 12. Plan PDF -->
-            <td class="p-2.5 text-center">
-              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${escapeHtml(r.Fecha || '')}', '${escapeHtml(r.Cliente || '')}', '${escapeHtml(r.Tipo || '')}')" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-all shadow-xs active:scale-95 cursor-pointer" title="Generar Informe Técnico PDF de ${r['Vehículo/Placa']}">
+            <td class="c">
+              <button type="button" onclick="abrirModalInformePdf('${r['Vehículo/Placa']}', '${escapeHtml(r.Fecha || '')}', '${escapeHtml(r.Cliente || '')}', '${escapeHtml(r.Tipo || '')}')" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 font-bold rounded-lg text-xs border border-slate-200 transition-all cursor-pointer" title="Generar informe técnico en PDF de ${escapeHtml(r['Vehículo/Placa'])}">
                 <i class="fa-solid fa-file-pdf mr-1"></i>PDF
               </button>
             </td>
