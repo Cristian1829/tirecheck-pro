@@ -560,3 +560,33 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
   #areaTrabajo > [id^="vista-"] { padding-left: 24px; padding-right: 24px; padding-top: 20px; }
   #areaTrabajo > #bannerRecordatorioCliente { padding-left: 24px; padding-right: 24px; }
 }
+
+/* ==========================================================================
+   Ahorro identificado (Diagnóstico): cifra legible y botón claro «Ver Suite KPIs →»
+   ========================================================================== */
+#vista-diagnostico .ta-ahorro-bloque { gap: 20px; }
+#vista-diagnostico .ta-ahorro-cifra { padding-right: 20px; border-right: 1px solid var(--ta-linea); }
+#vista-diagnostico .ta-ahorro-cifra > span:first-child { text-transform: none; font-size: var(--ta-f-xs); font-weight: 600; letter-spacing: 0; color: var(--ta-sub); margin-bottom: 2px; }
+#vista-diagnostico #diag_ahorro_total_cop { font-family: inherit; font-variant-numeric: tabular-nums; font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
+#vista-diagnostico .ta-btn-ver { min-height: 44px; padding: 0 18px; gap: 10px; font-size: var(--ta-f-sm); white-space: nowrap; }
+#vista-diagnostico .ta-btn-ver i { color: #fff; font-size: 12px; transition: transform .15s ease; }
+#vista-diagnostico .ta-btn-ver:hover i { transform: translateX(3px); }
+@media (max-width: 639px) {
+  #vista-diagnostico .ta-ahorro-bloque { width: 100%; justify-content: space-between; gap: 12px; }
+  #vista-diagnostico .ta-ahorro-cifra { padding-right: 12px; text-align: left; }
+  #vista-diagnostico #diag_ahorro_total_cop { font-size: 20px; }
+  #vista-diagnostico .ta-btn-ver { padding: 0 14px; }
+}
+
+/* En pantallas medianas el texto se queda con su espacio y la cifra con el botón pasan a la línea de abajo */
+#vista-diagnostico .ta-ahorro-fila { flex-wrap: wrap; }
+#vista-diagnostico .ta-ahorro-fila > div:first-child { flex: 1 1 380px; min-width: 0; }
+#vista-diagnostico .ta-ahorro-fila h3 { white-space: normal; }
+#vista-diagnostico .ta-ahorro-bloque { flex: 0 0 auto; margin-left: auto; }
+
+/* Los botones azules dentro de las tarjetas que antes eran oscuras conservan el texto blanco
+   (la regla que oscurece los textos de esas tarjetas los alcanzaba y quedaban ilegibles). */
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 button:is(.bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-cyan-600),
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 button:is(.bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-cyan-600) :is(span, i, svg, .text-white) {
+  color: #fff;
+}

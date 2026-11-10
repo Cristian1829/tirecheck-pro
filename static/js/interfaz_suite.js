@@ -147,6 +147,18 @@
     window.requestAnimationFrame(ajustarAltoPanel);
   }
 
+  // ---------------------------------------------------------------- Botón «Ver Suite KPIs» (Diagnóstico)
+  // El botón llamaba a esta función, que no estaba definida en ningún archivo, y por eso no hacía nada.
+  // Abre «Trazabilidad y KPI» en la sub-pestaña pedida (1 = Inspección y parque).
+  window.irAVistaKpisTab = function (numero) {
+    if (typeof navegarTab === 'function') navegarTab('kpis');
+    window.setTimeout(() => {
+      if (typeof cambiarSubpestanaKpis === 'function') cambiarSubpestanaKpis(Number(numero) || 1);
+      const vista = $('vista-kpis');
+      if (vista && !vista.classList.contains('hidden')) window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 60);
+  };
+
   // ---------------------------------------------------------------- Arranque
   document.addEventListener('DOMContentLoaded', () => {
     aplicarBanner(leer(CLAVE_BANNER) !== '0');
