@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#091323">
+  <meta name="theme-color" content="#0f1f3d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="/manifest.json">
@@ -184,15 +184,6 @@
     #badgeLicenciaActiva, #kpi10_efectividad_badge, #kpi15_brecha_badge, #kpi18_badge_garantia,
     #badge_cascos_salvamento, #badge_cambiazos_total { white-space: nowrap; }
 
-    /* Barra de pestañas: centrado "seguro" (si no caben, no se corta la primera a la izquierda) y
-       desvanecido en el borde que tiene pestañas ocultas, para que se note que se puede desplazar */
-    @media (min-width: 1024px) {
-      #navTabs { justify-content: safe center; }
-    }
-    #navTabs.fade-izq { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px); mask-image: linear-gradient(to right, transparent, #000 28px); }
-    #navTabs.fade-der { -webkit-mask-image: linear-gradient(to left, transparent, #000 28px); mask-image: linear-gradient(to left, transparent, #000 28px); }
-    #navTabs.fade-izq.fade-der { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
-
     /* Píldora del carrusel táctil de llantas */
     .carrusel-tire-pill {
       min-width: 50px;
@@ -245,29 +236,6 @@
     .animate-bar-3 { animation: pulseBar 3.2s infinite ease-in-out 0.6s; transform-origin: bottom; }
     .animate-steam { animation: floatSteam 4s infinite ease-in-out; }
 
-    /* Estilo de pestaña activa idéntico al diseño neon */
-    .nav-tab.tab-active, .nav-tab.active {
-        background: linear-gradient(180deg, #1d8cf8 0%, #0b69d4 100%) !important;
-        color: #ffffff !important;
-        border-bottom: 3px solid #00f2fe !important;
-        box-shadow: 0 -4px 20px rgba(29, 140, 248, 0.35) !important;
-        font-weight: 600 !important;
-    }
-    .nav-tab.tab-active svg, .nav-tab.active svg {
-        color: #ffffff !important;
-    }
-    .nav-tab:not(.active):not(.tab-active) {
-        color: #cbd5e1 !important;
-        border-bottom: 3px solid transparent !important;
-    }
-    .nav-tab:not(.active):not(.tab-active):hover {
-        color: #ffffff !important;
-        background-color: rgba(30, 41, 59, 0.5) !important;
-    }
-    .nav-tab:not(.active):not(.tab-active):hover svg {
-        color: #ffffff !important;
-    }
-
     @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
     /* KPI que el usuario desmarcó en «Elegir KPI» */
@@ -275,6 +243,8 @@
     /* Si en una fila de dos tarjetas queda una sola, ocupa todo el ancho */
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
+  <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-4">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -384,7 +354,7 @@
   </div>
 
   <!-- ================= 1. TOP UTILITY BAR ================= -->
-  <header class="w-full bg-[#091323] border-b border-slate-800/80 px-4 lg:px-8 h-14 flex items-center justify-between z-30">
+  <header id="barraSuperior" class="ta-utilbar w-full ta-fondo-noche ta-con-borde border-b px-3 sm:px-4 lg:px-6 h-14 flex items-center justify-between z-30">
       <!-- Lado Izquierdo: Logo mini + Rol -->
       <div class="flex items-center space-x-3 sm:space-x-4">
           <!-- Icono Azul Redondeado -->
@@ -413,7 +383,7 @@
           <div class="hidden md:block h-5 w-[1px] bg-slate-700/80 mx-2"></div>
 
           <!-- Usuario Administrador -->
-          <div class="hidden md:flex items-center space-x-2 text-slate-300 text-xs font-medium">
+          <div class="hidden md:flex items-center space-x-2 text-slate-200 text-sm font-medium">
               <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
               </svg>
@@ -421,25 +391,16 @@
           </div>
       </div>
 
-      <!-- Lado Derecho: Estado Offline, Enlace a Servicios, Mi clave y Botón Salir -->
+      <!-- Lado derecho: «Vista compacta» y «Salir» (el estado de conexión, «Mi clave» y «Servicios» están al pie del panel) -->
       <div class="flex items-center space-x-1.5 sm:space-x-2.5">
-          <a href="/servicios" target="_blank" title="Ver Servicios y Portafolio Comercial TireAnalyze Pro" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-cyan-300 hover:text-white border border-cyan-500/30 text-xs font-semibold shadow-sm transition-all duration-200">
-              <i class="fa-solid fa-briefcase text-xs text-cyan-400"></i>
-              <span>Servicios</span>
-          </a>
 
-          <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de Conexión y Cola Offline de Patio" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50">
-              <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="lblTextoEstadoConexion">En línea · Flota Lista Offline</span>
+          <button type="button" id="btnBanner" class="ta-util-boton hidden md:inline-flex" aria-controls="bannerMarca" aria-pressed="false" title="Ocultar el banner de marca">
+              <i class="fa-solid fa-compress" aria-hidden="true"></i>
+              <span>Vista compacta</span>
           </button>
 
-          <button id="btnMiCuenta" type="button" onclick="abrirModalMiCuenta(false)" title="Cambiar mi contraseña" aria-label="Cambiar mi contraseña" class="flex items-center space-x-2 px-2 sm:px-3 py-1.5 rounded-lg bg-[#0c182c] hover:bg-[#13243f] text-slate-200 hover:text-white border border-slate-700/80 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
-              <i class="fa-solid fa-key text-xs text-amber-300"></i>
-              <span class="hidden sm:inline">Mi clave</span>
-          </button>
-
-          <button id="logoutBtn" type="button" onclick="cerrarSesionUsuario()" title="Cerrar Sesión" class="group flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-[#0c182c] hover:bg-red-950/40 text-slate-200 hover:text-red-300 border border-slate-700/80 hover:border-red-500/50 transition-all duration-200 text-xs font-medium shadow-sm cursor-pointer">
-              <svg class="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <button id="logoutBtn" type="button" onclick="cerrarSesionUsuario()" title="Cerrar sesión" class="ta-util-boton ta-util-salir inline-flex">
+              <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
               </svg>
               <span>Salir</span>
@@ -448,7 +409,7 @@
   </header>
 
   <!-- ================= 2. HERO BANNER PRINCIPAL ================= -->
-  <section class="hero-banner-bg w-full border-b border-slate-800/90 overflow-hidden select-none">
+  <section id="bannerMarca" class="hero-banner-bg w-full border-b border-slate-800/90 overflow-hidden select-none">
       <!-- Textura tecnológica de fondo -->
       <div class="dot-matrix-overlay absolute inset-0 opacity-45 pointer-events-none"></div>
       
@@ -457,10 +418,10 @@
       <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -right-16 top-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div class="max-w-[1440px] mx-auto px-2.5 sm:px-6 lg:px-14 py-2 sm:py-3.5 md:py-5 relative z-10 flex flex-row items-center justify-between gap-1.5 sm:gap-4 md:gap-6">
+      <div class="ta-banner-interior max-w-[1440px] mx-auto px-2.5 sm:px-6 lg:px-14 py-2 sm:py-3.5 md:py-5 relative z-10 flex flex-row items-center justify-between gap-1.5 sm:gap-4 md:gap-6">
           
           <!-- ILUSTRACIÓN IZQUIERDA: Llanta 3D + Gráfica Estadística -->
-          <div class="w-16 sm:w-32 md:w-56 lg:w-64 h-12 sm:h-20 md:h-32 lg:h-36 flex items-center justify-start shrink-0">
+          <div class="ta-banner-arte ta-izq w-16 sm:w-32 md:w-56 lg:w-64 h-12 sm:h-20 md:h-32 lg:h-36 flex items-center justify-start shrink-0">
               <svg class="w-full h-full svg-glow-blue" viewBox="0 0 270 150" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                       <linearGradient id="tireTreadGrad" x1="0" y1="0" x2="1" y2="1">
@@ -548,14 +509,14 @@
 
           <!-- CENTRO: TÍTULO PRINCIPAL Y ESLOGAN -->
           <div class="text-center flex flex-col items-center justify-center my-0 px-1 sm:px-2 min-w-0">
-              <h1 class="text-base sm:text-2xl md:text-3xl lg:text-[44px] font-extrabold tracking-tight text-white leading-tight mb-1 sm:mb-2">
+              <h1 class="ta-banner-nombre text-base sm:text-2xl md:text-3xl lg:text-[44px] font-extrabold tracking-tight text-white leading-tight mb-1 sm:mb-2">
                   TireAnalyze <span class="text-[#00e5ff] text-glow-cyan">Pro</span>
               </h1>
               
               <!-- Subtítulo con líneas laterales -->
               <div class="flex items-center justify-center space-x-1 sm:space-x-3 md:space-x-4 w-full">
                   <span class="h-[1.5px] sm:h-[2px] w-2.5 sm:w-8 md:w-14 bg-gradient-to-r from-transparent to-[#00d8ff]"></span>
-                  <p class="text-[7.5px] xs:text-[8.5px] sm:text-xs md:text-[13px] font-semibold sm:font-medium tracking-[0.12em] sm:tracking-[0.26em] text-[#4ddbff] uppercase whitespace-nowrap">
+                  <p class="ta-banner-lema text-[7.5px] xs:text-[8.5px] sm:text-xs md:text-[13px] font-semibold sm:font-medium tracking-[0.12em] sm:tracking-[0.26em] text-[#4ddbff] uppercase whitespace-nowrap">
                       CONFIANZA EN TU INFORMACIÓN
                   </p>
                   <span class="h-[1.5px] sm:h-[2px] w-2.5 sm:w-8 md:w-14 bg-gradient-to-l from-transparent to-[#00d8ff]"></span>
@@ -563,7 +524,7 @@
           </div>
 
           <!-- ILUSTRACIÓN DERECHA: Taza de Café + Humo de Barras Estadísticas -->
-          <div class="w-14 sm:w-28 md:w-48 lg:w-60 h-12 sm:h-20 md:h-32 lg:h-36 flex items-center justify-end shrink-0">
+          <div class="ta-banner-arte ta-der w-14 sm:w-28 md:w-48 lg:w-60 h-12 sm:h-20 md:h-32 lg:h-36 flex items-center justify-end shrink-0">
               <svg class="w-full h-full svg-glow-cyan" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                       <!-- Degradado de las barras que emergen como vapor -->
@@ -627,78 +588,97 @@
       </div>
   </section>
 
-  <!-- ================= 3. BARRA DE NAVEGACIÓN (TABS) ================= -->
-  <nav class="w-full bg-[#081221] border-b border-slate-800 px-1 sm:px-2 lg:px-4 z-20 shadow-lg select-none">
-      <div class="w-full max-w-[1720px] mx-auto flex items-center justify-start space-x-0.5 sm:space-x-1 xl:space-x-2 overflow-x-auto no-scrollbar scroll-smooth" id="navTabs">
-          
-          <!-- Pestaña 1: Inspección de Patio (Activa por defecto) -->
-          <button type="button" onclick="navegarTab('patio')" id="nav-btn-patio" data-tab="patio" class="nav-tab active tab-active flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-semibold text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap" aria-current="page">
-              <!-- Icono Llanta -->
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="9"/>
-                  <circle cx="12" cy="12" r="4"/>
-                  <path d="M12 3v5M12 16v5M3 12h5M16 12h5M5.6 5.6l3.5 3.5M14.9 14.9l3.5 3.5M18.4 5.6l-3.5 3.5M9.1 14.9l-3.5 3.5"/>
-              </svg>
-              <span>Inspección de Patio</span>
-          </button>
-
-          <!-- Pestaña 2: Base de Inspecciones -->
-          <button type="button" onclick="navegarTab('basedatos')" id="nav-btn-basedatos" data-tab="basedatos" class="nav-tab text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-medium text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap">
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              <span>Base de Inspecciones</span>
-              <span id="badgeTotalInspecciones" class="ml-1 px-1.5 py-0.5 text-[10px] sm:text-[11px] font-bold bg-[#1458a6] text-white rounded-full">0</span>
-          </button>
-
-          <!-- Pestaña 3: Diagnóstico & Planes -->
-          <button type="button" onclick="navegarTab('diagnostico')" id="nav-btn-diagnostico" data-tab="diagnostico" class="nav-tab text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-medium text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap">
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l3-8 4 16 3-8h4"/>
-              </svg>
-              <span>Diagnóstico &amp; Planes</span>
-          </button>
-
-          <!-- Pestaña 4: Trazabilidad & KPIs -->
-          <button type="button" onclick="navegarTab('kpis')" id="nav-btn-kpis" data-tab="kpis" class="nav-tab text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-medium text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap">
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M18 20V10M12 20V4M6 20v-6"/>
-              </svg>
-              <span>Trazabilidad &amp; KPIs</span>
-          </button>
-
-          <!-- Pestaña: Composición de Flota (Versión 3.5 Enterprise) -->
-          <button type="button" onclick="navegarTab('composicion')" id="nav-btn-composicion" data-tab="composicion" class="nav-tab text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-medium text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap">
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 text-cyan-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
-              </svg>
-              <span>Composición de Flota</span>
-          </button>
-
-          <!-- Pestaña 5: Las 7 Bodegas & MRP PRO -->
-          <button type="button" onclick="navegarTab('bodegas')" id="nav-btn-bodegas" data-tab="bodegas" class="nav-tab text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-medium text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap">
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 4l9 5.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 21V13h6v8"/>
-              </svg>
-              <span>Las 7 Bodegas &amp; MRP</span>
-              <span id="badgeNavBodegasPro" class="ml-1 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider bg-[#00d8ff] text-slate-950 rounded-full shadow-[0_0_8px_rgba(0,216,255,0.4)]">
-                  PRO
-              </span>
-          </button>
-
-          <!-- Pestaña 6: Catálogos & Ajustes -->
-          <button type="button" onclick="navegarTab('catalogos')" id="nav-btn-catalogos" data-tab="catalogos" class="nav-tab text-slate-300 hover:text-white hover:bg-slate-800/50 flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2 px-2 sm:px-2.5 lg:px-2.5 xl:px-3.5 2xl:px-4.5 py-2 sm:py-2.5 xl:py-3 rounded-t-xl font-medium text-xs xl:text-sm transition-all duration-200 shrink-0 cursor-pointer whitespace-nowrap">
-              <svg class="w-4 h-4 xl:w-5 xl:h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                  <circle cx="12" cy="12" r="3"/>
-              </svg>
-              <span>Catálogos &amp; Ajustes</span>
-          </button>
-
+  <!-- ================= 3. PANEL LATERAL DE NAVEGACIÓN =================
+       Los botones conservan id, onclick y data-tab: navegarTab() y los permisos por rol no cambian.
+       El contenedor sigue llamándose #navTabs. -->
+  <div id="layoutSuite" class="ta-layout">
+    <div id="fondoMenuMovil" class="ta-fondo-menu" aria-hidden="true"></div>
+    <nav id="panelNavegacion" class="ta-sidebar ta-fondo-noche select-none" aria-label="Navegación de la suite">
+      <div class="ta-sidebar-cabeza">
+        <span class="ta-sidebar-nombre">Navegación suite</span>
+        <button type="button" id="btnContraerPanel" class="ta-sidebar-contraer" aria-label="Contraer el panel" aria-expanded="true" title="Contraer el panel">
+          <i class="fa-solid fa-angles-left" aria-hidden="true"></i>
+        </button>
+        <button type="button" id="btnCerrarMenuMovil" class="ta-sidebar-cerrar" aria-label="Cerrar el menú" title="Cerrar el menú">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
       </div>
-  </nav>
+      <div class="ta-sidebar-scroll" id="navTabs">
+          <div class="ta-nav-grupo" data-grupo="Operación y patio">
+            <span class="ta-nav-titulo">Operación y patio</span>
+            <button type="button" onclick="navegarTab('patio')" id="nav-btn-patio" data-tab="patio" title="Inspección de patio" class="nav-tab ta-nav-item active tab-active font-semibold" aria-current="page">
+              <i class="fa-solid fa-truck-ramp-box ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Inspección de patio</span>
+            </button>
+            <button type="button" onclick="navegarTab('basedatos')" id="nav-btn-basedatos" data-tab="basedatos" title="Base de inspecciones" class="nav-tab ta-nav-item text-slate-300 font-medium">
+              <i class="fa-solid fa-database ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Base de inspecciones</span><span id="badgeTotalInspecciones" class="ta-nav-conteo">0</span>
+            </button>
+            <button type="button" onclick="navegarTab('diagnostico')" id="nav-btn-diagnostico" data-tab="diagnostico" title="Diagnóstico y planes" class="nav-tab ta-nav-item text-slate-300 font-medium">
+              <i class="fa-solid fa-heart-pulse ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Diagnóstico y planes</span>
+            </button>
+          </div>
+          <div class="ta-nav-grupo" data-grupo="Gestión y analítica">
+            <span class="ta-nav-titulo">Gestión y analítica</span>
+            <button type="button" onclick="navegarTab('kpis')" id="nav-btn-kpis" data-tab="kpis" title="Trazabilidad y KPI" class="nav-tab ta-nav-item text-slate-300 font-medium">
+              <i class="fa-solid fa-chart-line ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Trazabilidad y KPI</span>
+            </button>
+            <button type="button" onclick="navegarTab('composicion')" id="nav-btn-composicion" data-tab="composicion" title="Composición de flota" class="nav-tab ta-nav-item text-slate-300 font-medium">
+              <i class="fa-solid fa-truck-moving ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Composición de flota</span>
+            </button>
+            <button type="button" onclick="navegarTab('bodegas')" id="nav-btn-bodegas" data-tab="bodegas" title="Bodegas y MRP" class="nav-tab ta-nav-item text-slate-300 font-medium">
+              <i class="fa-solid fa-boxes-stacked ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Bodegas y MRP</span>
+            </button>
+          </div>
+          <div class="ta-nav-grupo" data-grupo="Configuración">
+            <span class="ta-nav-titulo">Configuración</span>
+            <button type="button" onclick="navegarTab('catalogos')" id="nav-btn-catalogos" data-tab="catalogos" title="Catálogos y ajustes" class="nav-tab ta-nav-item text-slate-300 font-medium">
+              <i class="fa-solid fa-sliders ta-nav-icono" aria-hidden="true"></i>
+              <span class="ta-nav-texto">Catálogos y ajustes</span>
+            </button>
+          </div>
+      </div>
+      <div class="ta-sidebar-pie">
+        <div class="ta-sidebar-usuario"><b id="lblUsuarioPanel">Usuario</b><span id="lblRolPanel"></span></div>
+        <div class="ta-sidebar-fila">
+          <button id="btnEstadoConexionOffline" type="button" onclick="abrirModalColaOffline()" title="Estado de conexión y cola sin conexión del patio" class="ta-conexion">
+              <span id="dotEstadoConexion" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="lblTextoEstadoConexion">En línea</span>
+          </button>
+        </div>
+        <div class="ta-sidebar-fila">
+          <button id="btnMiCuenta" type="button" onclick="abrirModalMiCuenta(false)" title="Cambiar mi contraseña" aria-label="Cambiar mi contraseña" class="ta-sidebar-enlace">
+              <i class="fa-solid fa-key" aria-hidden="true"></i>
+              <span>Mi clave</span>
+          </button>
+          <a href="/servicios" target="_blank" rel="noopener" class="ta-sidebar-enlace ta-enlace-servicios" title="Ver servicios y portafolio comercial de TireAnalyze Pro"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span>Servicios</span></a>
+        </div>
+      </div>
+    </nav>
+
+    <div id="areaTrabajo" class="ta-trabajo">
+      <!-- Barra de ruta: sección actual, cliente activo y acceso a una nueva inspección -->
+      <div id="barraRuta" class="ta-barra-ruta">
+        <button type="button" id="btnMenuMovil" class="ta-boton-menu" aria-label="Abrir el menú" aria-controls="panelNavegacion" aria-expanded="false">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+        <nav class="ta-ruta" aria-label="Ruta">
+          <span id="rutaGrupo" class="ta-ruta-grupo">Operación y patio</span>
+          <span class="ta-ruta-sep" aria-hidden="true">/</span>
+          <span id="rutaSeccion" class="ta-ruta-seccion" aria-current="page">Inspección de Patio</span>
+        </nav>
+        <div class="ta-ruta-acciones">
+          <button type="button" id="indicadorConexionRuta" class="ta-conexion-ruta" onclick="abrirModalColaOffline()" title="Estado de conexión y cola sin conexión del patio" aria-label="Estado de conexión">
+            <span class="ta-conexion-punto" aria-hidden="true"></span><span class="ta-conexion-texto"></span>
+          </button>
+          <span id="chipClienteActivo" class="ta-chip-cliente" hidden><i class="fa-solid fa-building" aria-hidden="true"></i><b id="chipClienteNombre"></b><span id="chipClienteSede"></span></span>
+          <button type="button" id="btnNuevaInspRuta" class="ta-boton-nueva"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>Nueva insp.</span></button>
+        </div>
+      </div>
 
 
   <!-- Banner de Recordatorio de Jornada -->
@@ -737,107 +717,89 @@
       <!-- ============================================================ -->
       <!-- BLOQUE SUPERIOR: DATOS DEL CLIENTE, OPERACIÓN & VEHÍCULO     -->
       <!-- ============================================================ -->
-      <div id="moduloCliente" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-          <div class="flex items-center space-x-2 text-slate-900 font-bold text-sm">
-            <div class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
-              <i class="fa-solid fa-building"></i>
-            </div>
-            <span class="text-xs sm:text-sm font-extrabold">1. Cliente, Operación &amp; Vehículo</span>
-          </div>
+      <!-- Rediseño: dos cajas en orden, como el prototipo. Los campos conservan ids, eventos y validaciones. -->
+      <div id="moduloCliente" class="ta-caja-patio bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
+        <div class="ta-caja-cabeza">
+          <h2 class="ta-caja-titulo"><i class="fa-solid fa-building" aria-hidden="true"></i>Cliente e inspección</h2>
           <button type="button" onclick="limpiarTodoParaNuevaInspeccion()" class="text-xs px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold flex items-center space-x-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer" title="Limpiar todo para iniciar una nueva inspección">
             <i class="fa-solid fa-rotate-left text-[11px] text-slate-600"></i>
-            <span>Nueva Inspección</span>
+            <span>Nueva inspección</span>
           </button>
         </div>
-
-        <!-- Contenedor a 2 Columnas en Web (md:grid-cols-2) y 2 Columnas Compacto en Móvil -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5">
-          
-          <!-- COLUMNA 1: CLIENTE & INSPECCIÓN -->
-          <div class="space-y-2.5">
-            <div class="grid grid-cols-2 gap-2.5">
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-[11px] font-bold text-slate-600">Cliente / Empresa</label>
-                  <span id="badgeClienteAsignadoFijo" class="hidden text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 shadow-xs">
-                    <i class="fa-solid fa-lock text-[9px] mr-1"></i><span>Predeterminado</span>
-                  </span>
-                </div>
-                <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
-                  <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
-                </select>
-                <datalist id="dl_clientes"></datalist>
-              </div>
-
-              <div>
-                <label for="subcliente" class="block text-[11px] font-bold text-slate-600 mb-1">Sede / Subcliente <span class="text-rose-500 font-black">*</span></label>
-                <select id="subcliente" required onchange="limpiarErrorCampo('subcliente'); verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
-                  <option value="" disabled selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
-                </select>
-                <datalist id="dl_subclientes"></datalist>
-                <p id="err_subcliente" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
-                  <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
-                  <span>La sede / subcliente es obligatoria</span>
-                </p>
-              </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="cliente" class="block text-[11px] font-bold text-slate-600">Cliente</label>
+              <span id="badgeClienteAsignadoFijo" class="hidden text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 shadow-xs">
+                <i class="fa-solid fa-lock text-[9px] mr-1"></i><span>Predeterminado</span>
+              </span>
             </div>
-
-            <div>
-              <label for="fecha" class="block text-[11px] font-bold text-slate-600 mb-1">Fecha Inspección</label>
-              <input type="date" id="fecha" onchange="alCambiarFechaFormulario();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-            </div>
+            <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+              <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
+            </select>
+            <datalist id="dl_clientes"></datalist>
           </div>
-
-          <!-- COLUMNA 2: VEHÍCULO & OPERACIÓN -->
-          <div class="space-y-2.5 pt-2 md:pt-0 border-t md:border-t-0 md:border-l md:pl-5 border-slate-100">
-            <div class="grid grid-cols-2 gap-2.5">
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-[11px] font-bold text-slate-600">Placa Vehículo *</label>
-                  <span id="badgePlacaVinculada" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                    <i class="fa-solid fa-link mr-1"></i>Esquema Vinculado
-                  </span>
-                </div>
-                <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa'); onInputPlacaDebounced();" onblur="consultarPerfilPlacaInmediato(); verificarInspeccionAnterior();">
-                <p id="err_placa" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
-                  <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
-                  <span>La placa del vehículo es obligatoria</span>
-                </p>
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-[11px] font-bold text-slate-600">Tipología</label>
-                  <button type="button" id="btnDesbloquearTipologia" onclick="desbloquearTipologia()" class="hidden text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Permite modificar la tipología de este vehículo">
-                    <i class="fa-solid fa-lock-open text-[9px]"></i>
-                    <span>Cambiar</span>
-                  </button>
-                </div>
-                <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all"></select>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2.5">
-              <div>
-                <label for="kilometraje" id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje / Odóm.</label>
-                <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
-                <!-- Solo al crear una placa nueva: en qué se mide el vehículo -->
-                <select id="unidad_medida_placa" onchange="aplicarUnidadPlacaPatio()" class="hidden mt-1 w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-slate-800" title="Placa nueva: elija si el vehículo se mide en kilómetros o en horas de motor">
-                  <option value="KM">Se mide en kilómetros</option>
-                  <option value="HORAS">Se mide en horas de motor</option>
-                </select>
-              </div>
-
-              <div>
-                <label for="tipo_operacion" class="block text-[11px] font-bold text-slate-600 mb-1">Tipo de Operación</label>
-                <select id="tipo_operacion" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
-                  <option value="Carga Seca">Carga Seca</option>
-                </select>
-              </div>
-            </div>
+          <div>
+            <label for="subcliente" class="block text-[11px] font-bold text-slate-600 mb-1">Sede <span class="text-rose-500 font-black">*</span></label>
+            <select id="subcliente" required onchange="limpiarErrorCampo('subcliente'); verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+              <option value="" disabled selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
+            </select>
+            <datalist id="dl_subclientes"></datalist>
+            <p id="err_subcliente" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
+              <span>La sede / subcliente es obligatoria</span>
+            </p>
           </div>
+          <div>
+            <label for="fecha" class="block text-[11px] font-bold text-slate-600 mb-1">Fecha de inspección</label>
+            <input type="date" id="fecha" onchange="alCambiarFechaFormulario();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+          </div>
+        </div>
+      </div>
 
+      <div id="moduloVehiculo" class="ta-caja-patio bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
+        <div class="ta-caja-cabeza">
+          <h2 class="ta-caja-titulo"><i class="fa-solid fa-truck" aria-hidden="true"></i>Vehículo</h2>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="placa" class="block text-[11px] font-bold text-slate-600">Placa *</label>
+              <span id="badgePlacaVinculada" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                <i class="fa-solid fa-link mr-1"></i>Esquema Vinculado
+              </span>
+            </div>
+            <input type="text" id="placa" placeholder="ABC123" maxlength="10" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-900 uppercase tracking-wider font-mono transition-all" oninput="this.value = this.value.toUpperCase(); limpiarErrorCampo('placa'); onInputPlacaDebounced();" onblur="consultarPerfilPlacaInmediato(); verificarInspeccionAnterior();">
+            <p id="err_placa" class="hidden text-[10px] font-bold text-rose-600 mt-1 flex items-center space-x-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
+              <span>La placa del vehículo es obligatoria</span>
+            </p>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="tipologia" class="block text-[11px] font-bold text-slate-600">Tipología</label>
+              <button type="button" id="btnDesbloquearTipologia" onclick="desbloquearTipologia()" class="hidden text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1" title="Permite modificar la tipología de este vehículo">
+                <i class="fa-solid fa-lock-open text-[9px]"></i>
+                <span>Cambiar</span>
+              </button>
+            </div>
+            <select id="tipologia" onchange="cambioTipologia()" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all"></select>
+          </div>
+          <div>
+            <label for="kilometraje" id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje</label>
+            <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <!-- Solo al crear una placa nueva: en qué se mide el vehículo -->
+            <select id="unidad_medida_placa" onchange="aplicarUnidadPlacaPatio()" class="hidden mt-1 w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-slate-800" title="Placa nueva: elija si el vehículo se mide en kilómetros o en horas de motor">
+              <option value="KM">Se mide en kilómetros</option>
+              <option value="HORAS">Se mide en horas de motor</option>
+            </select>
+          </div>
+          <div>
+            <label for="tipo_operacion" class="block text-[11px] font-bold text-slate-600 mb-1">Tipo de operación</label>
+            <select id="tipo_operacion" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+              <option value="Carga Seca">Carga Seca</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1540,7 +1502,7 @@
 
 
       <!-- Tabla Responsive con Scroll Horizontal -->
-      <div class="overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
+      <div class="ta-tabla-bd overflow-x-auto custom-scroll border border-slate-200 rounded-2xl max-h-[580px]">
         <table class="w-full text-left text-xs border-collapse">
           <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10 whitespace-nowrap">
             <tr>
@@ -4586,6 +4548,8 @@
 
     </div>
   </section>
+    </div><!-- /#areaTrabajo -->
+  </div><!-- /#layoutSuite -->
 
   <!-- ============================================================== -->
   <!-- MODALES EXCLUSIVOS DEL MÓDULO BODEGAS & MRP                      -->
@@ -6869,16 +6833,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js"></script>
-  <script src="/static/js/modulo_basedatos.js"></script>
-  <script src="/static/js/modulo_kpis.js"></script>
-  <script src="/static/js/modulo_diagnostico.js"></script>
-  <script src="/static/js/modulo_trazabilidad.js"></script>
-  <script src="/static/js/modulo_catalogos.js"></script>
-  <script src="/static/js/modulo_patio.js"></script>
-  <script src="/static/js/modulo_bodegas.js"></script>
-  <script src="/static/js/app_init.js"></script>
-  <script src="/static/js/accesibilidad_modales.js"></script>
+  <script src="/static/js/app_core.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-4"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-4"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-4"></script>
+  <script src="/static/js/app_init.js?v=rediseno-4"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-4"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-4"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

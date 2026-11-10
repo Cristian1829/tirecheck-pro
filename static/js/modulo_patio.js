@@ -2911,7 +2911,7 @@
       if (sel) sel.classList.toggle('hidden', !placaNueva);
       const horas = unidadPlacaPatio() === 'HORAS';
       const lbl = document.getElementById('lblKilometraje');
-      if (lbl) lbl.textContent = horas ? 'Horómetro (horas)' : 'Kilometraje / Odóm.';
+      if (lbl) lbl.textContent = horas ? 'Horómetro (horas)' : 'Kilometraje';
       const lblM = document.getElementById('lblKmMontaje');
       if (lblM) lblM.textContent = horas ? 'Horas al montaje' : 'Km de Montaje';
       const inp = document.getElementById('kilometraje');

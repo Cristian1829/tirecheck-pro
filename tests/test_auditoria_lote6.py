@@ -48,7 +48,8 @@ def test_h28_modales_accesibles():
     js = _leer("static/js/accesibilidad_modales.js")
     for pieza in ("setAttribute('role', 'dialog')", "aria-modal", "e.key === 'Escape'", "e.key !== 'Tab'", "origenFoco"):
         assert pieza in js, pieza
-    assert '<script src="/static/js/accesibilidad_modales.js"></script>' in HTML
+    # El archivo se carga con un número de versión (?v=…) para que el navegador no use una copia vieja
+    assert '<script src="/static/js/accesibilidad_modales.js' in HTML
 
 
 # --- H-40: papelera ------------------------------------------------------------------------------

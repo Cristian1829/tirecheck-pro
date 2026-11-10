@@ -115,7 +115,10 @@
       delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 35 : 0
     };
 
+    // Rediseño: el valor va escrito en gris oscuro sobre la barra (sin globo de color); los colores que
+    // reciben las llamadas se ignoran a propósito para no tener que tocar cada gráfica.
     function pillDatalabelConfig(bgColor = 'rgba(15, 23, 42, 0.88)', textColor = '#ffffff', formatter = null) {
+      if (typeof taEtiquetaDatos === 'function') return taEtiquetaDatos(formatter || ((val) => (val !== null && val !== undefined) ? formatCO_Miles(val) : ''));
       return {
         display: (ctx) => {
           const val = ctx.dataset?.data?.[ctx.dataIndex];
@@ -928,8 +931,11 @@
       if (!ctx || typeof Chart === 'undefined' || !meses.length) return;
       const angosto = window.innerWidth < 640;
       const totalMax = Math.max(1, ...meses.map(m => m.total || 0), ...meses.map(m => m.inspeccionados || 0));
-      // Color por cobertura del mes: verde desde 80 %, ámbar desde 50 %, rojo por debajo
-      const colorMes = m => m.pct == null ? '#64748b' : (m.pct >= 80 ? '#059669' : (m.pct >= 50 ? '#d97706' : '#dc2626'));
+      // Rediseño: el mes actual en azul y los anteriores en gris; la cobertura se lee en la etiqueta y en la frase
+      // (si el mes en curso aún no tiene inspecciones, se resalta el último mes con inspecciones)
+      let iRes = meses.length - 1;
+      while (iRes > 0 && !meses[iRes].inspeccionados) iRes--;
+      const colorMes = (m, i) => (i === iRes ? TA_G.azul : TA_G.grisClaro);
       instanciasChartsSuite['kpi01_meses'] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -937,7 +943,7 @@
           datasets: [
             {
               type: 'bar', label: 'Vehículos inspeccionados', data: meses.map(m => m.inspeccionados),
-              backgroundColor: meses.map(colorMes), borderRadius: 5, maxBarThickness: 46, order: 2,
+              backgroundColor: meses.map(colorMes), borderRadius: 4, maxBarThickness: 46, order: 2,
               datalabels: {
                 anchor: 'end', align: 'end', offset: 2, clamp: true,
                 color: c => (c.dataset.data[c.dataIndex] ? '#0f172a' : '#94a3b8'),
@@ -950,8 +956,8 @@
               }
             },
             {
-              type: 'line', label: 'Total flota', data: meses.map(m => m.total), borderColor: '#4f46e5', backgroundColor: '#4f46e5',
-              borderWidth: 2.5, pointRadius: 3, pointBackgroundColor: '#ffffff', pointBorderWidth: 2, tension: 0, order: 1,
+              type: 'line', label: 'Total flota', data: meses.map(m => m.total), borderColor: TA_G.gris, backgroundColor: TA_G.gris,
+              borderWidth: 1.5, borderDash: [6, 5], pointRadius: 0, tension: 0, order: 1,
               datalabels: { display: false }
             }
           ]
@@ -965,7 +971,7 @@
                 color: '#0f172a', font: { size: 11, weight: 'bold' }, usePointStyle: true, boxWidth: 10,
                 // La barra cambia de color según la cobertura: en la leyenda se muestra en verde
                 generateLabels: chart => Chart.defaults.plugins.legend.labels.generateLabels(chart).map(l =>
-                  l.datasetIndex === 0 ? { ...l, fillStyle: '#059669', strokeStyle: '#059669' } : l)
+                  l.datasetIndex === 0 ? { ...l, fillStyle: TA_G.azul, strokeStyle: TA_G.azul } : l)
               }
             },
             tooltip: {
@@ -985,6 +991,14 @@
           }
         }
       });
+      // El mes en curso puede ir en cero: la frase usa el último mes con inspecciones
+      const mUlt = [...meses].reverse().find(m => m.total && m.inspeccionados) || [...meses].reverse().find(m => m.total);
+      if (mUlt) {
+        const faltan = Math.max(0, (mUlt.total || 0) - (mUlt.inspeccionados || 0));
+        const p = mUlt.pct != null ? mUlt.pct : taPct(mUlt.inspeccionados, mUlt.total);
+        taLectura('canvasKpi01_meses', p >= 95 ? 'ok' : p >= 70 ? 'al' : 'cr',
+          `${mUlt.etiqueta}: ${formatCO_Miles(mUlt.inspeccionados)} de ${formatCO_Miles(mUlt.total)} vehículos (${formatCO_Decimal(p, 0)} %).${faltan ? ` Faltan ${formatCO_Miles(faltan)} por inspeccionar.` : ' Toda la flota inspeccionada.'}`);
+      }
     }
 
     let pendientesKpi01 = [];
@@ -1017,9 +1031,7 @@
         badgeRazon.textContent = `Promedio: ${formatCO_Decimal(ds.promedio_llantas_por_vehiculo, 1)} llantas/vehículo`;
       }
 
-      const gradientBar = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
-      gradientBar.addColorStop(0, '#3b82f6');
-      gradientBar.addColorStop(1, '#1d4ed8');
+      const gradientBar = taUltimoEn((ds.llantas || []).length, TA_G.azul);
 
       instanciasChartsSuite['kpi02'] = new Chart(ctx, {
         type: 'bar',
@@ -1040,16 +1052,16 @@
               type: 'line',
               label: 'Vehículos Auditados',
               data: ds.vehiculos || [],
-              borderColor: '#10b981',
-              backgroundColor: '#10b981',
-              borderWidth: 2.8,
+              borderColor: TA_G.gris,
+              backgroundColor: TA_G.gris,
+              borderWidth: 2,
               tension: 0.35,
-              pointBackgroundColor: '#10b981',
+              pointBackgroundColor: TA_G.gris,
               pointBorderColor: '#ffffff',
               pointBorderWidth: 2,
-              pointRadius: 4,
+              pointRadius: 3,
               yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(6, 95, 70, 0.9)', '#ffffff')
+              datalabels: { display: false }
             }
           ]
         },
@@ -1096,6 +1108,11 @@
           }
         }
       });
+      const u2 = taUltimos(ds.llantas);
+      if (u2.valor !== null) {
+        const dif = u2.previo !== null ? u2.valor - u2.previo : null;
+        taLectura('canvasKpi02_volumen', 'in', `${(ds.labels || [])[u2.i] || 'Último mes'}: ${formatCO_Miles(u2.valor)} llantas inspeccionadas${dif === null ? '' : dif === 0 ? ', igual que el mes anterior' : `, ${formatCO_Miles(Math.abs(dif))} ${dif > 0 ? 'más' : 'menos'} que el mes anterior`}.`);
+      }
     }
 
     // KPI 03: % Reencauche (Meta 70%) y Unidades por Ciclo
@@ -1136,22 +1153,22 @@
               {
                 label: '% Reencauche',
                 data: ds.porcentajes || [],
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                borderWidth: 2.8,
+                borderColor: TA_G.azul,
+                backgroundColor: taRgba(TA_G.azul, 0.08),
+                borderWidth: 2.5,
                 fill: true,
                 tension: 0.35,
-                pointBackgroundColor: '#10b981',
+                pointBackgroundColor: TA_G.azul,
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 datalabels: pillDatalabelConfig('rgba(6, 95, 70, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)}%`)
               },
               {
-                label: `Meta (${meta}%)`,
+                label: `Meta del cliente (${meta}%)`,
                 data: lineaMeta,
-                borderColor: '#ef4444',
-                borderWidth: 2,
+                borderColor: TA_G.marino,
+                borderWidth: 1.5,
                 borderDash: [5, 5],
                 pointRadius: 0,
                 fill: false,
@@ -1184,15 +1201,16 @@
       // Subpanel B: Barras Apiladas por Ciclo
       if (ctxCiclos && ds.ciclos) {
         const c = ds.ciclos;
+        const escCiclos = taEscalaAzul(4);
         instanciasChartsSuite['kpi03_ciclos'] = new Chart(ctxCiclos, {
           type: 'bar',
           data: {
             labels: ds.labels || [],
             datasets: [
-              { label: 'Original', data: c.original || [], backgroundColor: '#3b82f6', borderRadius: 4 },
-              { label: 'R1', data: c.r1 || [], backgroundColor: '#10b981', borderRadius: 4 },
-              { label: 'R2', data: c.r2 || [], backgroundColor: '#f59e0b', borderRadius: 4 },
-              { label: 'R3+', data: c.r3_mas || [], backgroundColor: '#8b5cf6', borderRadius: 4 }
+              { label: 'Original', data: c.original || [], backgroundColor: escCiclos[0], borderRadius: 2 },
+              { label: 'R1', data: c.r1 || [], backgroundColor: escCiclos[1], borderRadius: 2 },
+              { label: 'R2', data: c.r2 || [], backgroundColor: escCiclos[2], borderRadius: 2 },
+              { label: 'R3+', data: c.r3_mas || [], backgroundColor: escCiclos[3], borderRadius: 2 }
             ]
           },
           options: {
@@ -1207,8 +1225,8 @@
                   const v = ctx.dataset.data[ctx.dataIndex];
                   return (v && v > 0);
                 },
-                color: '#ffffff',
-                font: { weight: 'bold', size: 9 },
+                color: (ctx) => taTextoSobre(ctx.dataset.backgroundColor),
+                font: { weight: '600', size: 10 },
                 formatter: (val) => formatCO_Miles(val)
               }
             },
@@ -1218,6 +1236,24 @@
             }
           }
         });
+      }
+
+      // Conclusiones
+      const u3 = taUltimos(ds.porcentajes);
+      if (u3.valor !== null) {
+        const falta = meta - u3.valor;
+        taLectura('canvasKpi03_pct', u3.valor >= meta ? 'ok' : u3.valor >= meta - 15 ? 'al' : 'cr',
+          u3.valor >= meta ? `${formatCO_Decimal(u3.valor, 1)} % reencauchadas: la meta de ${formatCO_Decimal(meta, 0)} % se cumple.`
+            : `${formatCO_Decimal(u3.valor, 1)} % reencauchadas; la meta es ${formatCO_Decimal(meta, 0)} %. Faltan ${formatCO_Decimal(falta, 1)} puntos.`);
+      }
+      if (ds.ciclos) {
+        const c = ds.ciclos;
+        const i = taUltimos(c.original).i;
+        if (i !== undefined) {
+          const reen = (Number(c.r1?.[i]) || 0) + (Number(c.r2?.[i]) || 0) + (Number(c.r3_mas?.[i]) || 0);
+          const tot = reen + (Number(c.original?.[i]) || 0);
+          taLectura('canvasKpi03_ciclos', 'in', `${(ds.labels || [])[i] || 'Último mes'}: ${formatCO_Miles(reen)} de ${formatCO_Miles(tot)} llantas van en reencauche (R1 o más).`);
+        }
       }
     }
 
@@ -1242,15 +1278,15 @@
             datasets: [{
               label: 'Llantas',
               data: dsTip.valores || [],
-              backgroundColor: '#6366f1',
-              borderRadius: 6
+              backgroundColor: taMejorEn(dsTip.valores),
+              borderRadius: 4
             }]
           },
           options: {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { right: 20 } },
+            layout: { padding: { right: 48 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
@@ -1274,67 +1310,46 @@
             datasets: [{
               label: 'Llantas',
               data: dsMar.valores || [],
-              backgroundColor: '#0ea5e9',
-              borderRadius: 6
+              backgroundColor: taMejorEn(dsMar.valores),
+              borderRadius: 4
             }]
           },
           options: {
+            // Rediseño: barras horizontales para leer el nombre completo de cada marca
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 24 } },
+            layout: { padding: { right: 48 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { display: false },
               datalabels: pillDatalabelConfig('rgba(14, 165, 233, 0.9)', '#ffffff')
             },
             scales: {
-              y: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } },
-              x: { ticks: { font: { weight: 'bold', size: 10 } } }
+              x: { beginAtZero: true, ticks: { callback: (v) => formatCO_Miles(v) } },
+              y: { ticks: ticksEtiquetaCorta(18, 0) }
             }
           }
         });
       }
 
-      // Columna C: Dimensión y Diseño (Donut)
+      // Columna C: Dimensión (dona, con la paleta del rediseño: la medida principal en azul fuerte)
       const ctxDim = document.getElementById('canvasKpi04_dimension');
       if (ctxDim && dsDim) {
-        instanciasChartsSuite['kpi04_dim'] = new Chart(ctxDim, {
-          type: 'doughnut',
-          data: {
-            labels: dsDim.labels || [],
-            datasets: [{
-              data: dsDim.valores || [],
-              backgroundColor: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b']
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '64%',
-            animation: animacionCascadaStandard,
-            plugins: {
-              centerText: {
-                text: `${(dsDim.labels || []).length}`,
-                subtext: 'Medidas'
-              },
-              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 'bold' } } },
-              datalabels: {
-                display: (ctx) => {
-                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                  return total > 0 && ((ctx.dataset.data[ctx.dataIndex] / total) >= 0.05);
-                },
-                color: '#fff',
-                font: { weight: 'bold', size: 10 },
-                formatter: (val, ctx) => {
-                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                  const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
-                  return `${pct}%`;
-                }
-              }
-            }
-          }
-        });
+        instanciasChartsSuite['kpi04_dim'] = new Chart(ctxDim, taDona(dsDim.labels || [], dsDim.valores || [], taColoresCategorias(dsDim.labels || []),
+          { centro: `${(dsDim.labels || []).length}`, subtexto: 'Medidas' }));
       }
+
+      // Conclusiones
+      const lecturaTop = (canvasId, d, plantilla) => {
+        if (!d || !(d.valores || []).length) return;
+        const i = taIndiceMayor(d.valores);
+        if (i < 0) return;
+        taLectura(canvasId, 'in', plantilla(d.labels[i], d.valores[i], taPct(d.valores[i], taSuma(d.valores))));
+      };
+      lecturaTop('canvasKpi04_tipologia', dsTip, (l, v, p) => `${l} lleva más llantas: ${formatCO_Miles(v)} (${p} %).`);
+      lecturaTop('canvasKpi04_marca', dsMar, (l, v, p) => `${l} es la marca con más llantas: ${formatCO_Miles(v)} (${p} %).`);
+      lecturaTop('canvasKpi04_dimension', dsDim, (l, v, p) => `${p} % de las llantas son ${l}.`);
     }
 
     // ==========================================
@@ -1451,8 +1466,8 @@
             datasets: [{
               label: 'Retiros Mensuales',
               data: rm.valores || [],
-              backgroundColor: '#ef4444',
-              borderRadius: 6
+              backgroundColor: taUltimoEn((rm.valores || []).length, TA_G.cr),
+              borderRadius: 4
             }]
           },
           options: {
@@ -1469,6 +1484,13 @@
             }
           }
         });
+        const u5 = taUltimos(rm.valores);
+        if (u5.valor !== null) {
+          const dif = u5.previo !== null ? u5.valor - u5.previo : null;
+          taLectura('canvasKpi05_retiros', u5.valor > 0 ? 'cr' : 'ok', u5.valor > 0
+            ? `${formatCO_Miles(u5.valor)} llantas llegaron al límite en ${(rm.labels || [])[u5.i] || 'el último mes'}${dif ? `: ${formatCO_Miles(Math.abs(dif))} ${dif > 0 ? 'más' : 'menos'} que el mes anterior` : ''}.`
+            : 'Ninguna llanta llegó al límite de retiro en el último mes.');
+        }
       }
 
       // Nivel 2: Heatmap Placa vs Posición 1..12
@@ -1519,23 +1541,26 @@
           data: {
             labels: h.labels || [],
             datasets: [
-              { label: '% Alineación OK', data: h.pct_ok || [], backgroundColor: '#0ea5e9', borderRadius: 4 },
-              { label: '% Desalineadas', data: h.pct_alerta || [], backgroundColor: '#dc2626', borderRadius: 4 }
+              { label: '% Alineación OK', data: h.pct_ok || [], backgroundColor: TA_G.okClaro, borderRadius: 0 },
+              { label: '% Desalineadas', data: h.pct_alerta || [], backgroundColor: TA_G.cr, borderRadius: 0 }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: { padding: { top: 20 } },
             animation: animacionCascadaStandard,
             plugins: {
               legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
               datalabels: {
+                // Solo el porcentaje desalineado (lo que hay que atender), encima de su barra
                 display: (ctx) => {
                   const v = ctx.dataset.data[ctx.dataIndex];
-                  return (v && v >= 5);
+                  return ctx.datasetIndex === 1 && v !== null && v !== undefined;
                 },
-                color: '#ffffff',
-                font: { weight: 'bold', size: 9 },
+                anchor: 'end', align: 'top', offset: 2, clamp: true,
+                color: TA_G.texto,
+                font: { weight: '600', size: 10 },
                 formatter: (val) => `${formatCO_Decimal(val, 0)}%`
               }
             },
@@ -1545,6 +1570,12 @@
             }
           }
         });
+        const u6 = taUltimos(h.pct_alerta);
+        if (u6.valor !== null) {
+          const minimo = Math.min(...(h.pct_alerta || []).filter(v => v !== null && v !== undefined).map(Number));
+          taLectura('canvasKpi06_alineacion', u6.valor <= 10 ? 'ok' : u6.valor <= 20 ? 'al' : 'cr',
+            `${formatCO_Decimal(u6.valor, 0)} % del eje direccional con desgaste de desalineación en ${(h.labels || [])[u6.i] || 'el último mes'}${u6.valor === minimo && (h.pct_alerta || []).length > 1 ? ', el menor del periodo' : ''}.`);
+        }
       }
 
       // Tabla Detallada por Placa
@@ -1606,7 +1637,7 @@
             datasets: [{
               label: 'Pachas Desapareadas',
               data: fm.valores || [],
-              backgroundColor: '#f43f5e',
+              backgroundColor: taUltimoEn((fm.valores || []).length, TA_G.al),
               borderRadius: 4
             }]
           },
@@ -1623,6 +1654,12 @@
             }
           }
         });
+        const u8 = taUltimos(fm.valores);
+        if (u8.valor !== null) {
+          taLectura('canvasKpi08_apareo', u8.valor > 0 ? 'al' : 'ok', u8.valor > 0
+            ? `${formatCO_Miles(u8.valor)} pares de duales por corregir en ${(fm.labels || [])[u8.i] || 'el último mes'}.`
+            : 'Sin duales mal apareados en el último mes.');
+        }
       }
 
       // Tarjetas de Cruce con Bodega 2
@@ -1655,44 +1692,20 @@
       const ctx = document.getElementById('canvasKpi09_psi');
       if (ctx && d.distribucion) {
         const dist = d.distribucion;
-        instanciasChartsSuite['kpi09_psi'] = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            // Rangos según la presión objetivo de cada eje y las tolerancias asignadas al cliente
-            labels: ['Baja severa (< -15 %)', 'Baja (fuera de tolerancia)', 'Correcta (en tolerancia)', 'Alta (fuera de tolerancia)'],
-            datasets: [{
-              data: [dist.baja_severa || 0, dist.baja_moderada || 0, dist.correcta || 0, dist.sobrepresion || 0],
-              backgroundColor: ['#dc2626', '#f59e0b', '#10b981', '#6366f1']
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '64%',
-            animation: animacionCascadaStandard,
-            plugins: {
-              centerText: {
-                text: (() => {
-                  const tot = (dist.baja_severa || 0) + (dist.baja_moderada || 0) + (dist.correcta || 0) + (dist.sobrepresion || 0);
-                  return tot > 0 ? `${Math.round(((dist.correcta || 0) / tot) * 100)}%` : '0%';
-                })(),
-                subtext: 'Presión OK',
-                color: '#059669',
-                fontSize: 22
-              },
-              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 'bold' } } },
-              datalabels: {
-                display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                color: '#fff',
-                font: { weight: 'bold', size: 10 },
-                formatter: (val, ctx) => {
-                  const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                  return total > 0 ? `${((val / total) * 100).toFixed(0)}%` : '';
-                }
-              }
-            }
-          }
-        });
+        // Dona con el color de cada estado: verde correcta, ámbar baja, rojo baja severa y ámbar claro alta
+        const valPsi = [dist.correcta || 0, dist.baja_moderada || 0, dist.baja_severa || 0, dist.sobrepresion || 0];
+        const totPsi = taSuma(valPsi);
+        instanciasChartsSuite['kpi09_psi'] = new Chart(ctx, taDona(
+          // Rangos según la presión objetivo de cada eje y las tolerancias asignadas al cliente
+          ['Correcta (en tolerancia)', 'Baja (fuera de tolerancia)', 'Baja severa (< -15 %)', 'Alta (fuera de tolerancia)'],
+          valPsi, [TA_G.ok, TA_G.al, TA_G.cr, taMezclar(TA_G.al, '#ffffff', 0.45)],
+          { centro: `${taPct(dist.correcta || 0, totPsi)}%`, subtexto: 'Presión OK' }));
+        if (totPsi > 0) {
+          const pOk = taPct(dist.correcta || 0, totPsi);
+          const sev = dist.baja_severa || 0;
+          taLectura('canvasKpi09_psi', pOk >= 90 && !sev ? 'ok' : sev ? 'cr' : 'al',
+            `${pOk} % de las llantas con presión correcta${sev ? `; ${formatCO_Miles(sev)} en baja severa` : ''}.`);
+        }
       }
 
       const elGalones = document.getElementById('kpi09_galones_diesel');
@@ -1718,6 +1731,9 @@
           : `Efectividad: ${formatCO_Decimal(d.efectividad_taller_pct, 1)}%`;
       }
 
+      // Rediseño: las novedades que suman hasta el 80 % en azul fuerte (atacarlas primero); el resto en azul claro
+      const acum10 = (d.acumulado_pct || []).map(Number);
+      const colores10 = (d.frecuencias || []).map((_, i) => (i === 0 || (acum10[i - 1] || 0) < 80) ? TA_G.azul : TA_G.azulClaro);
       instanciasChartsSuite['kpi10_pareto'] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -1727,7 +1743,7 @@
               type: 'bar',
               label: 'Frecuencia Novedades',
               data: d.frecuencias || [],
-              backgroundColor: '#a855f7',
+              backgroundColor: colores10,
               borderRadius: 4,
               yAxisID: 'y',
               datalabels: pillDatalabelConfig('rgba(168, 85, 247, 0.9)', '#ffffff')
@@ -1736,10 +1752,10 @@
               type: 'line',
               label: '% Acumulado (Pareto)',
               data: d.acumulado_pct || [],
-              borderColor: '#f59e0b',
-              backgroundColor: '#f59e0b',
-              borderWidth: 2.5,
-              pointRadius: 4,
+              borderColor: TA_G.gris,
+              backgroundColor: TA_G.gris,
+              borderWidth: 2,
+              pointRadius: 3,
               yAxisID: 'y1',
               datalabels: pillDatalabelConfig('rgba(217, 119, 6, 0.95)', '#ffffff', (v) => `${formatCO_Decimal(v, 0)}%`)
             }
@@ -1760,6 +1776,14 @@
           }
         }
       });
+      if ((d.frecuencias || []).length) {
+        let k = acum10.findIndex(p => p >= 80);
+        if (k < 0) k = acum10.length - 1;
+        const pctK = acum10[k] || 0;
+        taLectura('canvasKpi10_pareto', 'in', k === 0
+          ? `«${(d.labels || [])[0]}» explica el ${formatCO_Decimal(pctK, 0)} % de las novedades: atacarla primero.`
+          : `${k + 1} novedades explican el ${formatCO_Decimal(pctK, 0)} % de los casos: atacarlas primero.`);
+      }
     }
 
     // KPI 11: Impacto Económico Interanual (mm vs $)
@@ -1781,7 +1805,7 @@
             type: 'bar',
             label: 'Milímetros Perdidos',
             data: d.mm_mes || [],
-            backgroundColor: '#f43f5e',
+            backgroundColor: TA_G.grisClaro,
             borderRadius: 6,
             yAxisID: 'y',
             datalabels: pillDatalabelConfig('rgba(244, 63, 94, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
@@ -1793,8 +1817,8 @@
             type: 'line',
             label: 'Pérdida Monetaria ($ COP)',
             data: d.pesos_mes || [],
-            borderColor: '#f97316',
-            backgroundColor: '#f97316',
+            borderColor: TA_G.cr,
+            backgroundColor: TA_G.cr,
             borderWidth: 2.8,
             tension: 0.35,
             pointRadius: 4,
@@ -1830,6 +1854,15 @@
             }
           }
         });
+        const serie11 = modoLicenciaSuite === 'FULL' ? (d.pesos_mes || []) : (d.mm_mes || []);
+        const u11 = taUltimos(serie11);
+        const primero = serie11.find(v => v !== null && v !== undefined && Number(v) > 0);
+        if (u11.valor !== null) {
+          const baja = primero ? Math.round((1 - u11.valor / Number(primero)) * 100) : 0;
+          const valorTxt = modoLicenciaSuite === 'FULL' ? formatCO_Moneda(u11.valor) : `${formatCO_Decimal(u11.valor, 1)} mm`;
+          taLectura('canvasKpi11_impacto', baja > 0 ? 'ok' : u11.valor > 0 ? 'al' : 'ok',
+            `${(d.labels || [])[u11.i] || 'Último mes'}: ${valorTxt} perdidos${baja > 0 ? `, ${baja} % menos que al inicio del periodo` : baja < 0 ? `, ${Math.abs(baja)} % más que al inicio del periodo` : ''}.`);
+        }
       }
     }
 
@@ -1870,13 +1903,9 @@
       const ctx = document.getElementById('canvasKpi13_comparativo');
       if (!ctx || !ds) return;
 
-      const gradientReales = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-      gradientReales.addColorStop(0, '#2563eb');
-      gradientReales.addColorStop(1, '#1d4ed8');
-
-      const gradientProy = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-      gradientProy.addColorStop(0, 'rgba(96, 165, 250, 0.7)');
-      gradientProy.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
+      // Rediseño: lo recorrido en azul fuerte y la proyección en azul claro
+      const gradientReales = TA_G.azul;
+      const gradientProy = TA_G.azulClaro;
 
       instanciasChartsSuite['kpi13_comparativo'] = new Chart(ctx, {
         type: 'bar',
@@ -1887,19 +1916,16 @@
               label: unidadSuite === 'h' ? 'Horas reales' : 'Km Reales Rodados',
               data: ds.km_reales || [],
               backgroundColor: gradientReales,
-              borderColor: '#1e40af',
-              borderWidth: 1.5,
-              borderRadius: 6,
+              borderWidth: 0,
+              borderRadius: 4,
               datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             },
             {
               label: 'Proyección Final al Retiro',
               data: ds.proyeccion_final || [],
               backgroundColor: gradientProy,
-              borderColor: '#2563eb',
-              borderWidth: 1.5,
-              borderDash: [4, 4],
-              borderRadius: 6,
+              borderWidth: 0,
+              borderRadius: 4,
               datalabels: pillDatalabelConfig('rgba(37, 99, 235, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
             }
           ]
@@ -1939,6 +1965,12 @@
           }
         }
       });
+      const i13 = taIndiceMayor(ds.proyeccion_final);
+      if (i13 >= 0) {
+        const i13b = taIndiceMayor(ds.proyeccion_final, true);
+        const dif = (Number(ds.proyeccion_final[i13]) || 0) - (Number(ds.proyeccion_final[i13b]) || 0);
+        taLectura('canvasKpi13_comparativo', 'in', `${ds.labels[i13]} proyecta ${formatCO_Miles(ds.proyeccion_final[i13])} ${uMed()} al retiro${i13b >= 0 && i13b !== i13 ? `, ${formatCO_Miles(dif)} más que ${ds.labels[i13b]}` : ''}.`);
+      }
     }
 
     // KPI 14: Tríada Multidimensional Sincronizada (Proyección, Km/mm, CPK)
@@ -1958,9 +1990,7 @@
       // 1. Proyección Km Final (Índigo)
       const ctxProy = document.getElementById('canvasKpi14_proy');
       if (ctxProy) {
-        const gradProy = ctxProy.getContext('2d').createLinearGradient(0, 0, 0, 240);
-        gradProy.addColorStop(0, '#6366f1');
-        gradProy.addColorStop(1, '#4338ca');
+        const gradProy = taMejorEn(ds.proyeccion_km);
 
         instanciasChartsSuite['kpi14_proy'] = new Chart(ctxProy, {
           type: 'bar',
@@ -1994,9 +2024,7 @@
       // 2. Rendimiento Km/mm (Esmeralda)
       const ctxKmmm = document.getElementById('canvasKpi14_kmmm');
       if (ctxKmmm) {
-        const gradKmmm = ctxKmmm.getContext('2d').createLinearGradient(0, 0, 0, 240);
-        gradKmmm.addColorStop(0, '#10b981');
-        gradKmmm.addColorStop(1, '#047857');
+        const gradKmmm = taMejorEn(ds.km_mm);
 
         instanciasChartsSuite['kpi14_kmmm'] = new Chart(ctxKmmm, {
           type: 'bar',
@@ -2030,9 +2058,7 @@
       // 3. Costo por Kilómetro CPK (Púrpura)
       const ctxCpk = document.getElementById('canvasKpi14_cpk');
       if (ctxCpk) {
-        const gradCpk = ctxCpk.getContext('2d').createLinearGradient(0, 0, 0, 240);
-        gradCpk.addColorStop(0, '#a855f7');
-        gradCpk.addColorStop(1, '#7e22ce');
+        const gradCpk = taMejorEn(ds.cpk, true);
 
         instanciasChartsSuite['kpi14_cpk'] = new Chart(ctxCpk, {
           type: 'bar',
@@ -2062,6 +2088,19 @@
           }
         });
       }
+
+      // Conclusiones: el mejor de cada indicador
+      const iP = taIndiceMayor(ds.proyeccion_km);
+      if (iP >= 0) taLectura('canvasKpi14_proy', 'in', `Mayor proyección: ${labels[iP]} con ${formatCO_Miles(ds.proyeccion_km[iP])} ${uMed()} (mayor es mejor).`);
+      const iK = taIndiceMayor(ds.km_mm);
+      if (iK >= 0) taLectura('canvasKpi14_kmmm', 'in', `Mejor rendimiento: ${labels[iK]} con ${formatCO_Decimal(ds.km_mm[iK], 1)} ${uMed()} por milímetro.`);
+      const iC = taIndiceMayor(ds.cpk, true);
+      const iCmax = taIndiceMayor(ds.cpk);
+      if (iC >= 0) {
+        const extra = iCmax >= 0 && iCmax !== iC && Number(ds.cpk[iC]) > 0
+          ? ` ${labels[iCmax]} cuesta ${Math.round((Number(ds.cpk[iCmax]) / Number(ds.cpk[iC]) - 1) * 100)} % más.` : '';
+        taLectura('canvasKpi14_cpk', 'in', `Más barata por ${uMed()}: ${labels[iC]}, $ ${formatCO_Decimal(ds.cpk[iC], 1)} (menor es mejor).${extra}`);
+      }
     }
 
     // Tendencias mensuales (gerencia)
@@ -2081,11 +2120,11 @@
       if (!ctx || !meses.length) return;
       const serie = (k, label, color) => ({ label, data: meses.map(m => m[k]), borderColor: color, backgroundColor: color, tension: 0.25, spanGaps: true });
       const series = [
-        serie('pct_presion_correcta', 'Presión correcta (%)', '#10b981'),
-        serie('pct_en_retiro', 'En límite de retiro (%)', '#dc2626'),
-        serie('pct_alerta_alineacion', 'Alerta de alineación (%)', '#f59e0b')];
+        serie('pct_presion_correcta', 'Presión correcta (%)', TA_G.ok),
+        serie('pct_en_retiro', 'En límite de retiro (%)', TA_G.cr),
+        serie('pct_alerta_alineacion', 'Alerta de alineación (%)', TA_G.al)];
       if (meses.some(m => m.pct_cumplimiento_parque != null)) {
-        series.unshift({ ...serie('pct_cumplimiento_parque', 'Parque inspeccionado (%)', '#4f46e5'), borderWidth: 3 });
+        series.unshift({ ...serie('pct_cumplimiento_parque', 'Parque inspeccionado (%)', TA_G.azul), borderWidth: 3 });
       }
       instanciasChartsSuite['tendencias'] = new Chart(ctx, {
         type: 'line',
@@ -2093,29 +2132,34 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          layout: { padding: { top: 22, right: 12, bottom: 6, left: 6 } },
           plugins: {
             legend: { position: 'top', labels: { boxWidth: 10, font: { weight: 'bold', size: 10 } } },
+            // Rediseño: solo el valor del último mes, del color de su serie (antes un globo en cada punto)
             datalabels: {
               display: (ctx) => {
                 const v = ctx.dataset.data[ctx.dataIndex];
-                return (v !== null && v !== undefined && v !== '');
+                return (v !== null && v !== undefined && v !== '') && ctx.dataIndex === taUltimos(ctx.dataset.data).i;
               },
               anchor: 'end',
-              align: 'top',
-              offset: 2,
+              align: 'right',
+              offset: 4,
               clamp: true,
-              backgroundColor: (ctx) => ctx.dataset.borderColor || '#334155',
-              borderRadius: 4,
-              color: '#ffffff',
-              font: { weight: 'bold', size: 9 },
-              padding: { top: 1, bottom: 1, left: 4, right: 4 },
+              color: (ctx) => ctx.dataset.borderColor || TA_G.texto,
+              font: { weight: '700', size: 11 },
               formatter: (v) => `${formatCO_Decimal(v, 0)}%`
             }
           },
+          layout: { padding: { top: 22, right: 40, bottom: 6, left: 6 } },
           scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } }
         }
       });
+      const ult = meses[meses.length - 1] || {};
+      const partes = [];
+      if (ult.pct_cumplimiento_parque != null) partes.push(`parque inspeccionado ${formatCO_Decimal(ult.pct_cumplimiento_parque, 0)} %`);
+      if (ult.pct_presion_correcta != null) partes.push(`presión correcta ${formatCO_Decimal(ult.pct_presion_correcta, 0)} %`);
+      if (ult.pct_en_retiro != null) partes.push(`en retiro ${formatCO_Decimal(ult.pct_en_retiro, 1)} %`);
+      if (ult.pct_alerta_alineacion != null) partes.push(`alerta de alineación ${formatCO_Decimal(ult.pct_alerta_alineacion, 0)} %`);
+      if (partes.length) taLectura('canvasTendencias', 'in', `${_mesLegible(ult.mes)}: ${partes.join('; ')}.`);
     }
 
     function _mesLegible(m) {
@@ -2167,9 +2211,8 @@
         }
       }
 
-      const gradProm = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
-      gradProm.addColorStop(0, 'rgba(37, 99, 235, 0.85)');
-      gradProm.addColorStop(1, 'rgba(29, 78, 216, 0.7)');
+      // Rediseño: promedio en azul claro; mejor llanta en azul y peor llanta en gris
+      const gradProm = TA_G.azulClaro;
 
       instanciasChartsSuite['kpi15_potencial'] = new Chart(ctx, {
         data: {
@@ -2180,17 +2223,16 @@
               label: 'Proyección Promedio',
               data: ds.promedio || [],
               backgroundColor: gradProm,
-              borderColor: '#1d4ed8',
-              borderWidth: 1.5,
-              borderRadius: 6,
+              borderWidth: 0,
+              borderRadius: 4,
               datalabels: pillDatalabelConfig('rgba(30, 64, 175, 0.85)', '#ffffff', (v) => formatCO_Miles(v))
             },
             {
               type: 'line',
               label: 'Máximo Alcanzado',
               data: ds.maximo || [],
-              borderColor: '#0284c7',
-              backgroundColor: '#0284c7',
+              borderColor: TA_G.azul,
+              backgroundColor: TA_G.azul,
               borderWidth: 2.5,
               pointRadius: 4,
               tension: 0.25,
@@ -2200,8 +2242,8 @@
               type: 'line',
               label: 'Mínimo / Peor Desempeño',
               data: ds.minimo || [],
-              borderColor: '#f59e0b',
-              backgroundColor: '#f59e0b',
+              borderColor: TA_G.gris,
+              backgroundColor: TA_G.gris,
               borderWidth: 2.5,
               pointRadius: 4,
               tension: 0.25,
@@ -2237,6 +2279,10 @@
           }
         }
       });
+      const i15 = taIndiceMayor(ds.promedio);
+      if (i15 >= 0) {
+        taLectura('canvasKpi15_potencial', 'in', `${ds.labels[i15]}: entre ${formatCO_Miles(ds.minimo?.[i15])} y ${formatCO_Miles(ds.maximo?.[i15])} ${uMed()}; ${formatCO_Miles(ds.promedio[i15])} en promedio.`);
+      }
     }
 
     // KPI 16: Curva de Proyección por Rango de Desgaste (Madurez del Caucho)
@@ -2244,6 +2290,9 @@
       destruirChartSuite('kpi16_rangos');
       const ctx = document.getElementById('canvasKpi16_rangos');
       if (!ctx || !ds) return;
+      // Rediseño: las dos bandas de mayor desgaste en ámbar y rojo (las que piden acción); el resto en azul claro
+      const nB = (ds.conteo_llantas || []).length;
+      const coloresBandas = (ds.conteo_llantas || []).map((_, i) => (nB >= 3 && i === nB - 1) ? TA_G.cr : (nB >= 3 && i === nB - 2) ? TA_G.al : TA_G.azulClaro);
 
       instanciasChartsSuite['kpi16_rangos'] = new Chart(ctx, {
         data: {
@@ -2253,10 +2302,9 @@
               type: 'bar',
               label: 'Llantas en Banda',
               data: ds.conteo_llantas || [],
-              backgroundColor: 'rgba(129, 140, 248, 0.65)',
-              borderColor: '#6366f1',
-              borderWidth: 1.5,
-              borderRadius: 6,
+              backgroundColor: coloresBandas,
+              borderWidth: 0,
+              borderRadius: 4,
               yAxisID: 'y',
               datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
             },
@@ -2264,14 +2312,14 @@
               type: 'line',
               label: `Proyección Promedio (${uMed()})`,
               data: ds.proyeccion_promedio || [],
-              borderColor: '#4f46e5',
-              backgroundColor: 'rgba(79, 70, 229, 0.12)',
-              fill: true,
-              borderWidth: 2.8,
-              pointRadius: 4,
+              borderColor: TA_G.gris,
+              backgroundColor: 'transparent',
+              fill: false,
+              borderWidth: 2,
+              pointRadius: 3,
               tension: 0.35,
               yAxisID: 'y1',
-              datalabels: pillDatalabelConfig('rgba(67, 56, 202, 0.9)', '#ffffff', (v) => `${formatCO_Miles(v)} ${uMed()}`)
+              datalabels: { display: false }
             }
           ]
         },
@@ -2311,6 +2359,12 @@
           }
         }
       });
+      if (nB >= 3) {
+        const cerca = (Number(ds.conteo_llantas[nB - 2]) || 0) + (Number(ds.conteo_llantas[nB - 1]) || 0);
+        taLectura('canvasKpi16_rangos', cerca > 0 ? 'al' : 'ok', cerca > 0
+          ? `${formatCO_Miles(cerca)} llantas están en las dos bandas de mayor desgaste (${ds.labels[nB - 2]} y ${ds.labels[nB - 1]}).`
+          : 'Ninguna llanta en las bandas de mayor desgaste.');
+      }
     }
 
     // ==========================================
@@ -2341,9 +2395,8 @@
       if (!ctx || !d.grafico_12m) return;
 
       const g = d.grafico_12m;
-      const gradBar = ctx.getContext('2d').createLinearGradient(0, 0, 0, 240);
-      gradBar.addColorStop(0, '#f43f5e');
-      gradBar.addColorStop(1, '#be123c');
+      // Rediseño: las bajas en gris (contexto) y el índice de reencauchabilidad en azul (lo que se sigue)
+      const gradBar = TA_G.grisClaro;
 
       instanciasChartsSuite['kpi17_lineas'] = new Chart(ctx, {
         data: {
@@ -2362,11 +2415,11 @@
               type: 'line',
               label: 'Índice Reencauchabilidad (I.R.)',
               data: g.ir || [],
-              borderColor: '#6366f1',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              borderColor: TA_G.azul,
+              backgroundColor: taRgba(TA_G.azul, 0.07),
               fill: true,
-              borderWidth: 2.8,
-              pointRadius: 4,
+              borderWidth: 2.5,
+              pointRadius: 3,
               tension: 0.35,
               yAxisID: 'y1',
               datalabels: pillDatalabelConfig('rgba(79, 70, 229, 0.9)', '#ffffff', (v) => formatCO_Decimal(v, 2))
@@ -2409,6 +2462,10 @@
           }
         }
       });
+      const bajas12 = taSuma(g.cantidad);
+      taLectura('canvasKpi17_lineas', 'in', bajas12 > 0
+        ? `${formatCO_Miles(bajas12)} llantas dadas de baja en el periodo; índice de reencauchabilidad global: ${formatCO_Decimal(d.indice_reencauchabilidad_ir || 0, 2)}.`
+        : 'Sin bajas registradas en el periodo.');
     }
 
     // KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (+ Alerta Garantía)
@@ -2443,9 +2500,7 @@
       // A. Bajas por Marca (Barras)
       const ctxMarca = document.getElementById('canvasKpi18_marca');
       if (ctxMarca && d.por_marca) {
-        const gradM = ctxMarca.getContext('2d').createLinearGradient(0, 0, 0, 220);
-        gradM.addColorStop(0, '#f43f5e');
-        gradM.addColorStop(1, '#e11d48');
+        const gradM = taMejorEn(d.por_marca.valores);
 
         instanciasChartsSuite['kpi18_marca'] = new Chart(ctxMarca, {
           type: 'bar',
@@ -2479,7 +2534,8 @@
       // B. Por Ciclo de Vida (Barras Agrupadas)
       const ctxCiclo = document.getElementById('canvasKpi18_ciclo');
       if (ctxCiclo && d.por_ciclo) {
-        const coloresCiclos = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+        // Rediseño: un solo azul que se oscurece de Original a R3+
+        const coloresCiclos = taEscalaAzul(Math.max(2, (d.por_ciclo.labels || []).length));
         instanciasChartsSuite['kpi18_ciclo'] = new Chart(ctxCiclo, {
           type: 'bar',
           data: {
@@ -2509,53 +2565,33 @@
         });
       }
 
-      // C. Causales de Daño (Doughnut interactiva)
+      // C. Causales de Daño (dona: desgaste normal en gris y daños evitables en tonos de rojo)
       const ctxCausal = document.getElementById('canvasKpi18_causal');
       if (ctxCausal && d.por_causal) {
-        const paletaCausales = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b', '#10b981', '#ec4899'];
-        instanciasChartsSuite['kpi18_causal'] = new Chart(ctxCausal, {
-          type: 'doughnut',
-          data: {
-            labels: d.por_causal.labels || [],
-            datasets: [{
-              data: d.por_causal.valores || [],
-              backgroundColor: paletaCausales.slice(0, (d.por_causal.labels || []).length),
-              borderWidth: 2,
-              borderColor: '#ffffff'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '64%',
-            animation: animacionCascadaStandard,
-            plugins: {
-              centerText: {
-                text: `${(d.por_causal.valores || []).reduce((a, b) => a + b, 0)}`,
-                subtext: 'Bajas'
-              },
-              legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { weight: 'bold', size: 9 } } },
-              tooltip: {
-                callbacks: {
-                  label: (c) => {
-                    const idx = c.dataIndex;
-                    const pct = d.por_causal.porcentajes?.[idx] || 0;
-                    return ` ${c.label}: ${formatCO_Miles(c.raw)} llantas (${pct}%)`;
-                  }
-                }
-              },
-              datalabels: {
-                color: '#ffffff',
-                font: { weight: '800', size: 9 },
-                formatter: (val, ctx) => {
-                  const idx = ctx.dataIndex;
-                  const pct = d.por_causal.porcentajes?.[idx] || 0;
-                  return pct >= 8 ? `${pct}%` : '';
-                }
-              }
-            }
-          }
-        });
+        const esNormal = (l) => /desgaste\s*normal|fin\s*de\s*vida|normal/i.test(String(l || ''));
+        const labCausal = d.por_causal.labels || [];
+        let kRojo = 0;
+        const coloresCausal = labCausal.map(l => (esNormal(l) ? TA_G.gris : taMezclar(TA_G.cr, '#ffffff', Math.min(0.6, 0.18 * kRojo++))));
+        instanciasChartsSuite['kpi18_causal'] = new Chart(ctxCausal, taDona(labCausal, d.por_causal.valores || [], coloresCausal, { subtexto: 'Bajas' }));
+        const totCausal = taSuma(d.por_causal.valores);
+        const evitables = taSuma((d.por_causal.valores || []).filter((_, i) => !esNormal(labCausal[i])));
+        if (totCausal > 0) {
+          taLectura('canvasKpi18_causal', evitables > 0 ? 'cr' : 'ok', evitables > 0
+            ? `${formatCO_Miles(evitables)} de ${formatCO_Miles(totCausal)} bajas (${taPct(evitables, totCausal)} %) fueron por daños evitables.`
+            : 'Todas las bajas fueron por desgaste normal.');
+        }
+      }
+
+      // Conclusiones de marca y ciclo
+      taLectura('canvasKpi18_marca', null, '');
+      taLectura('canvasKpi18_ciclo', null, '');
+      if (d.por_marca) {
+        const iM = taIndiceMayor(d.por_marca.valores);
+        if (iM >= 0 && taSuma(d.por_marca.valores) > 0) taLectura('canvasKpi18_marca', 'in', `${d.por_marca.labels[iM]} tiene más bajas: ${formatCO_Miles(d.por_marca.valores[iM])} de ${formatCO_Miles(taSuma(d.por_marca.valores))}.`);
+      }
+      if (d.por_ciclo) {
+        const iCi = taIndiceMayor(d.por_ciclo.valores);
+        if (iCi >= 0 && taSuma(d.por_ciclo.valores) > 0) taLectura('canvasKpi18_ciclo', 'in', `${formatCO_Miles(d.por_ciclo.valores[iCi])} de ${formatCO_Miles(taSuma(d.por_ciclo.valores))} bajas fueron en vida ${d.por_ciclo.labels[iCi]}.`);
       }
     }
 
@@ -2577,18 +2613,19 @@
               {
                 label: 'Prof. Máxima (mm)',
                 data: gl.maximo || [],
-                borderColor: '#ef4444',
-                backgroundColor: '#ef4444',
-                borderWidth: 2.2,
-                pointRadius: 4,
+                borderColor: taMezclar(TA_G.azul, '#ffffff', 0.6),
+                backgroundColor: taRgba(TA_G.azul, 0.10),
+                borderWidth: 1,
+                pointRadius: 0,
                 tension: 0.25,
-                datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+                fill: '+2',
+                datalabels: { display: false }
               },
               {
                 label: 'Prof. Promedio (mm)',
                 data: gl.promedio || [],
-                borderColor: '#3b82f6',
-                backgroundColor: '#3b82f6',
+                borderColor: TA_G.azul,
+                backgroundColor: TA_G.azul,
                 borderWidth: 2.5,
                 pointRadius: 4,
                 tension: 0.25,
@@ -2597,12 +2634,12 @@
               {
                 label: 'Prof. Mínima (mm)',
                 data: gl.minimo || [],
-                borderColor: '#64748b',
-                backgroundColor: '#64748b',
-                borderWidth: 2,
-                pointRadius: 4,
+                borderColor: taMezclar(TA_G.azul, '#ffffff', 0.6),
+                backgroundColor: taMezclar(TA_G.azul, '#ffffff', 0.6),
+                borderWidth: 1,
+                pointRadius: 0,
                 tension: 0.25,
-                datalabels: pillDatalabelConfig('rgba(100, 116, 139, 0.9)', '#ffffff', (v) => `${formatCO_Decimal(v, 1)} mm`)
+                datalabels: { display: false }
               }
             ]
           },
@@ -2632,8 +2669,8 @@
             datasets: [{
               label: 'Dispersión Retiro FVU',
               data: d.burbujas_dispersion || [],
-              backgroundColor: 'rgba(239, 68, 68, 0.6)',
-              borderColor: '#dc2626',
+              backgroundColor: taRgba(TA_G.al, 0.5),
+              borderColor: TA_G.al,
               borderWidth: 1.5,
               datalabels: {
                 display: true,
@@ -2676,6 +2713,19 @@
           }
         });
       }
+
+      if (d.grafico_lineas) {
+        const u19 = taUltimos(d.grafico_lineas.promedio);
+        if (u19.valor !== null) {
+          taLectura('canvasKpi19_lineas', 'al', `Las llantas se retiran con ${formatCO_Decimal(u19.valor, 1)} mm en promedio (${(d.grafico_lineas.labels || [])[u19.i] || 'último mes'}): caucho pagado que no se usó.`);
+        }
+      }
+      const burb = d.burbujas_dispersion || [];
+      if (burb.length) {
+        const llantas = taSuma(burb.map(b => b.cantidad));
+        const plata = taSuma(burb.map(b => b.y));
+        taLectura('canvasKpi19_burbujas', 'al', `${formatCO_Miles(llantas)} llantas retiradas con caucho útil: ${formatCO_Moneda(plata)} en desecho.`);
+      }
     }
 
     // ==========================================
@@ -2700,21 +2750,21 @@
               {
                 label: 'Necesidad Bruta Total',
                 data: gc.necesidad_bruta || [],
-                backgroundColor: '#ef4444',
+                backgroundColor: TA_G.grisClaro,
                 borderRadius: 6,
                 datalabels: pillDatalabelConfig('rgba(239, 68, 68, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
               },
               {
                 label: 'Stock Disponible (B1+B2+B3x0.9+B4)',
                 data: gc.stock_disponible || [],
-                backgroundColor: '#10b981',
+                backgroundColor: TA_G.azulClaro,
                 borderRadius: 6,
                 datalabels: pillDatalabelConfig('rgba(16, 185, 129, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
               },
               {
                 label: 'Compra Neta Sugerida',
                 data: gc.compra_neta || [],
-                backgroundColor: '#6366f1',
+                backgroundColor: TA_G.azul,
                 borderRadius: 6,
                 datalabels: pillDatalabelConfig('rgba(99, 102, 241, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
               }
@@ -2739,6 +2789,12 @@
             }
           }
         });
+        const compra = taSuma(gc.compra_neta);
+        const detalle = (gc.labels || []).map((l, i) => [l, Number(gc.compra_neta?.[i]) || 0]).filter(x => x[1] > 0)
+          .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([l, n]) => `${formatCO_Miles(n)} de ${l}`);
+        taLectura('canvasKpi20_mrp', compra > 0 ? 'al' : 'ok', compra > 0
+          ? `Comprar ${formatCO_Miles(compra)} llantas: ${detalle.join(', ')}.`
+          : 'La bodega cubre la necesidad: no hay compra sugerida.');
       }
 
       // 2. Gran Tabla Maestra MRP de 12 Columnas

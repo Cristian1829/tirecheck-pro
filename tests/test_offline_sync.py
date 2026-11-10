@@ -19,8 +19,8 @@ def test_pwa_manifest_y_service_worker_disponibles(auth_client):
     assert manifest_data["name"] == "TireAnalyze Pro — Patio Offline"
     assert manifest_data["display"] == "standalone"
     assert manifest_data["start_url"] == "/"
-    assert manifest_data["background_color"] == "#091323"
-    assert manifest_data["theme_color"] == "#091323"
+    assert manifest_data["background_color"] == "#0f1f3d"
+    assert manifest_data["theme_color"] == "#0f1f3d"
     assert len(manifest_data["icons"]) > 0
 
     # 2. Service Worker
@@ -29,7 +29,7 @@ def test_pwa_manifest_y_service_worker_disponibles(auth_client):
     assert "application/javascript" in resp_sw.headers.get("content-type", "")
     assert resp_sw.headers.get("service-worker-allowed") == "/"
     sw_code = resp_sw.text
-    assert "tireanalyze-patio-v3" in sw_code
+    assert "tireanalyze-patio-v4" in sw_code
     assert "caches.open" in sw_code
     assert "caches.match" in sw_code
     assert "Network-First" in sw_code

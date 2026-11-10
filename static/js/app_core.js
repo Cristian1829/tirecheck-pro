@@ -490,17 +490,17 @@
         // 🟠 Sin señal
         btn.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-amber-950/40 text-amber-300 border-amber-500/40 hover:bg-amber-900/50';
         dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
-        lbl.textContent = `Modo Sin Señal · ${pendientes} llantas guardadas`;
+        lbl.textContent = `Sin conexión · ${pendientes} llantas guardadas en el equipo`;
       } else if (pendientes > 0) {
         // 🔵 Con pendientes por subir
         btn.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-blue-950/40 text-blue-300 border-blue-500/40 hover:bg-blue-900/50';
         dot.className = 'w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping';
-        lbl.textContent = `🔄 Sincronizar Ahora (${pendientes})`;
+        lbl.textContent = `En línea · ${pendientes} por enviar (tocar para sincronizar)`;
       } else {
         // 🟢 En línea (0 pendientes)
         btn.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 shadow-sm cursor-pointer bg-emerald-950/40 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/50';
         dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-        lbl.textContent = 'En línea · Flota Lista Offline';
+        lbl.textContent = 'En línea';
       }
 
       const lblTot = document.getElementById('lblTotalPendientesOffline');

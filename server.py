@@ -608,8 +608,8 @@ def pwa_manifest():
         "description": "Sistema Integral de Inspección y Diagnóstico de Flotas — Modo Patio Offline",
         "start_url": "/",
         "display": "standalone",
-        "background_color": "#091323",
-        "theme_color": "#091323",
+        "background_color": "#0f1f3d",
+        "theme_color": "#0f1f3d",
         "icons": [
             {
                 "src": "/static/img/logo_hd.svg",
@@ -624,7 +624,7 @@ def pwa_manifest():
 @app.get("/sw.js")
 def service_worker():
     sw_code = """// Service Worker para TireAnalyze Pro — Soporte Offline-First en Patio
-const CACHE_NAME = 'tireanalyze-patio-v3';  // v3: la caché v2 tenía respuestas de /api/ y se borra al activar
+const CACHE_NAME = 'tireanalyze-patio-v4';  // v4: rediseño (panel lateral, tema y gráficas); v3 tenía la interfaz anterior. v2 tenía respuestas de /api/
 const PRECACHE_ASSETS = [
   '/',
   '/app',
@@ -686,9 +686,9 @@ self.addEventListener('fetch', (event) => {
   // usa el paquete y la cola de IndexedDB, no esta caché.
   if (url.pathname.startsWith('/api/')) return;
 
-  // JavaScript propio de la app: Network-First con Fallback a Caché
+  // JavaScript y estilos propios de la app: Network-First con Fallback a Caché
   // (con Cache-First los celulares se quedaban con los módulos JS de un despliegue anterior)
-  if (url.pathname.startsWith('/static/js/')) {
+  if (url.pathname.startsWith('/static/js/') || url.pathname.startsWith('/static/css/')) {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.status === 200) {

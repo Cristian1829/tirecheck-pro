@@ -207,6 +207,7 @@
       }
 
       if (!resumenMrp || resumenMrp.length === 0) {
+        if (typeof taLectura === 'function') taLectura('chartMrpBodegas', null, '');
         return;
       }
 
@@ -215,6 +216,15 @@
       const dataStock = resumenMrp.map(r => r.stock_disponible_util != null ? r.stock_disponible_util : (r.stock_util_total || 0));
       const dataCompra = resumenMrp.map(r => r.compra_neta_sugerida != null ? r.compra_neta_sugerida : 0);
 
+      // Rediseño: necesidad en gris (contexto), bodega en azul claro y compra en azul (la acción)
+      const compraMrp = dataCompra.reduce((a, b) => a + (Number(b) || 0), 0);
+      const detMrp = labels.map((l, i) => [l, Number(dataCompra[i]) || 0]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3)
+        .map(([l, n]) => `${n.toLocaleString('es-CO')} de ${l}`);
+      if (typeof taLectura === 'function') {
+        taLectura('chartMrpBodegas', compraMrp > 0 ? 'al' : 'ok', compraMrp > 0
+          ? `Comprar ${compraMrp.toLocaleString('es-CO')} llantas: ${detMrp.join(', ')}.`
+          : 'La bodega cubre la necesidad: no hay compra sugerida.');
+      }
       chartMrpInstancia = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -223,26 +233,26 @@
             {
               label: '1. Necesidad Bruta (Demanda + Par Dir. + FVU + Stock Seg.)',
               data: dataBruta,
-              backgroundColor: 'rgba(239, 68, 68, 0.85)',
-              borderColor: '#dc2626',
-              borderWidth: 1,
-              borderRadius: 6
+              backgroundColor: TA_G.grisClaro,
+              borderWidth: 0,
+              borderRadius: 4,
+              datalabels: taEtiquetaDatos(null, { ocultarCero: true })
             },
             {
               label: '2. Stock Disponible Útil (B1 + B2 + B4 + ⌊B3×%⌋ + B5)',
               data: dataStock,
-              backgroundColor: 'rgba(16, 185, 129, 0.85)',
-              borderColor: '#059669',
-              borderWidth: 1,
-              borderRadius: 6
+              backgroundColor: TA_G.azulClaro,
+              borderWidth: 0,
+              borderRadius: 4,
+              datalabels: taEtiquetaDatos(null, { ocultarCero: true })
             },
             {
               label: '3. Compra Neta Sugerida (KPI 20)',
               data: dataCompra,
-              backgroundColor: 'rgba(37, 99, 235, 0.95)',
-              borderColor: '#1d4ed8',
-              borderWidth: 1,
-              borderRadius: 6
+              backgroundColor: TA_G.azul,
+              borderWidth: 0,
+              borderRadius: 4,
+              datalabels: taEtiquetaDatos(null, { ocultarCero: true })
             }
           ]
         },
@@ -2125,8 +2135,8 @@
 
       const ctx = canvas.getContext('2d');
       const gradient = ctx.createLinearGradient(0, 0, 0, 240);
-      gradient.addColorStop(0, 'rgba(2, 132, 199, 0.35)');
-      gradient.addColorStop(1, 'rgba(2, 132, 199, 0.02)');
+      gradient.addColorStop(0, 'rgba(29, 78, 216, 0.22)');
+      gradient.addColorStop(1, 'rgba(29, 78, 216, 0.02)');
 
       chartCurvaDesgasteInstance = new Chart(ctx, {
         type: 'line',
@@ -2135,14 +2145,14 @@
           datasets: [{
             label: 'Profundidad de Rodadura (mm)',
             data: valores,
-            borderColor: '#0284c7',
+            borderColor: '#1d4ed8',
             backgroundColor: gradient,
             borderWidth: 2.5,
             fill: true,
             tension: 0.1,
             pointRadius: 5,
             pointHoverRadius: 8,
-            pointBackgroundColor: '#0284c7',
+            pointBackgroundColor: '#1d4ed8',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2
           }]

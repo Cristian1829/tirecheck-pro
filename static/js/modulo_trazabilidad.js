@@ -854,6 +854,28 @@
 
     function renderizarGraficosComposicion({ cntOrig, cntReenc, mapaMarcas, mapaDimensiones, mapaDisenos, totalLlantas }) {
       if (typeof Chart === 'undefined') return;
+      // Rediseño: las donas siguen siendo donas (con la paleta nueva); diseños de banda en barras; una frase con la conclusión de cada gráfica
+      ['chartCompVidaEje', 'chartCompMarcas', 'chartCompDimensiones', 'chartCompDisenos'].forEach(id => taLectura(id, null, ''));
+      const barrasComp = (labels, data, colores, total, extra = {}) => ({
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Llantas', data, backgroundColor: colores, borderRadius: 4, maxBarThickness: 34 }] },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { right: 84 } },
+          plugins: {
+            legend: { display: false },
+            datalabels: taEtiquetaDatos((v) => `${v} · ${total > 0 ? Math.round((v / total) * 100) : 0} %`),
+            tooltip: { ...tooltipStyleHD, callbacks: { label: (ctx) => ` ${ctx.raw} llantas (${fmtDec(total > 0 ? (ctx.raw / total) * 100 : 0, 1)}%)` } }
+          },
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(226, 232, 240, 0.55)' }, border: { display: false } },
+            y: { grid: { display: false }, ticks: { autoSkip: false, font: { size: 11, weight: '600' } } }
+          },
+          ...extra
+        }
+      });
 
       const tooltipStyleHD = {
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -897,53 +919,8 @@
             }
           });
         } else {
-          const pOrig = fmtDec(((cntOrig / totVida) * 100), 1);
-          const pReenc = fmtDec(((cntReenc / totVida) * 100), 1);
-
-          chartsComposicion.vida = new Chart(ctxVida, {
-            type: 'doughnut',
-            data: {
-              labels: [`Original (${pOrig}%)`, `Reencauche (${pReenc}%)`],
-              datasets: [{
-                data: [cntOrig, cntReenc],
-                backgroundColor: ['#3b82f6', '#10b981'],
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '64%',
-              plugins: {
-                centerText: {
-                  text: `${totVida}`,
-                  subtext: 'Llantas'
-                },
-                legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 8, boxHeight: 8, padding: 12, font: { size: 11, weight: 'bold' }, usePointStyle: true, pointStyle: 'circle' }
-                },
-                datalabels: {
-                  display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
-                  color: '#ffffff',
-                  font: { weight: 'bold', size: 11 },
-                  formatter: (val) => {
-                    const pct = ((val / totVida) * 100).toFixed(0);
-                    return `${val}\n(${pct}%)`;
-                  },
-                  textAlign: 'center'
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
-                  }
-                }
-              }
-            }
-          });
+          chartsComposicion.vida = new Chart(ctxVida, taDona(['Original', 'Reencauche'], [cntOrig, cntReenc], [TA_G.azulClaro, TA_G.azul]));
+          taLectura('chartCompVidaEje', 'in', `${taPct(cntReenc, totVida)} % de las llantas van en reencauche (${cntReenc} de ${totVida}).`);
         }
       }
 
@@ -975,61 +952,9 @@
           const top7M = arrM.slice(0, 7);
           const otrosM = arrM.slice(7).reduce((acc, curr) => acc + curr[1], 0);
           if (otrosM > 0) top7M.push(['OTROS', otrosM]);
-
-          const paletaMarcas = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b', '#94a3b8'];
-          const labelsM = top7M.map(([m, cnt]) => {
-            const p = fmtDec(((cnt / totalLlantas) * 100), 1);
-            return `${m} (${p}%)`;
-          });
           const dataM = top7M.map(([, cnt]) => cnt);
-
-          chartsComposicion.marca = new Chart(ctxMarcas, {
-            type: 'doughnut',
-            data: {
-              labels: labelsM,
-              datasets: [{
-                data: dataM,
-                backgroundColor: paletaMarcas.slice(0, top7M.length),
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '64%',
-              plugins: {
-                centerText: {
-                  text: `${top7M.length}`,
-                  subtext: 'Marcas'
-                },
-                legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 8, boxHeight: 8, padding: 8, font: { size: 10, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
-                },
-                datalabels: {
-                  display: (ctx) => {
-                    const v = ctx.dataset.data[ctx.dataIndex];
-                    return (v / totalLlantas) >= 0.05;
-                  },
-                  color: '#ffffff',
-                  font: { weight: 'bold', size: 10 },
-                  formatter: (val) => {
-                    const pct = ((val / totalLlantas) * 100).toFixed(0);
-                    return `${val}\n(${pct}%)`;
-                  },
-                  textAlign: 'center'
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
-                  }
-                }
-              }
-            }
-          });
+          chartsComposicion.marca = new Chart(ctxMarcas, taDona(top7M.map(([m]) => m), dataM, taColoresCategorias(top7M.map(([m]) => m)), { centro: `${top7M.length}`, subtexto: 'Marcas' }));
+          if (top7M.length) taLectura('chartCompMarcas', 'in', `${top7M[0][0]} lidera con ${top7M[0][1]} llantas (${taPct(top7M[0][1], totalLlantas)} %).`);
         }
       }
 
@@ -1060,61 +985,12 @@
           const top6D = arrD.slice(0, 6);
           const otrosD = arrD.slice(6).reduce((acc, curr) => acc + curr[1], 0);
           if (otrosD > 0) top6D.push(['OTRAS', otrosD]);
-
-          const paletaDim = ['#7c3aed', '#0891b2', '#d97706', '#059669', '#1d4ed8', '#c026d3', '#94a3b8'];
-          const labelsD = top6D.map(([d, cnt]) => {
-            const p = fmtDec(((cnt / totalLlantas) * 100), 1);
-            return `${d} (${p}%)`;
-          });
           const dataD = top6D.map(([, cnt]) => cnt);
-
-          chartsComposicion.dimension = new Chart(ctxDim, {
-            type: 'doughnut',
-            data: {
-              labels: labelsD,
-              datasets: [{
-                data: dataD,
-                backgroundColor: paletaDim.slice(0, top6D.length),
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '64%',
-              plugins: {
-                centerText: {
-                  text: `${top6D.length}`,
-                  subtext: 'Medidas'
-                },
-                legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 8, boxHeight: 8, padding: 8, font: { size: 10, weight: '600' }, usePointStyle: true, pointStyle: 'circle' }
-                },
-                datalabels: {
-                  display: (ctx) => {
-                    const v = ctx.dataset.data[ctx.dataIndex];
-                    return (v / totalLlantas) >= 0.05;
-                  },
-                  color: '#ffffff',
-                  font: { weight: 'bold', size: 10 },
-                  formatter: (val) => {
-                    const pct = ((val / totalLlantas) * 100).toFixed(0);
-                    return `${val}\n(${pct}%)`;
-                  },
-                  textAlign: 'center'
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} llantas`
-                  }
-                }
-              }
-            }
-          });
+          chartsComposicion.dimension = new Chart(ctxDim, taDona(top6D.map(([d]) => d), dataD, taColoresCategorias(top6D.map(([d]) => d)), { centro: `${top6D.length}`, subtexto: 'Medidas' }));
+          if (top6D.length) {
+            const p = taPct(top6D[0][1], totalLlantas);
+            taLectura('chartCompDimensiones', p >= 70 ? 'ok' : 'in', `${p} % de las llantas son ${top6D[0][0]}${top6D.length > 1 ? ` (${top6D.length} medidas en la flota)` : ''}.`);
+          }
         }
       }
 
@@ -1141,69 +1017,9 @@
         } else {
           const arrDs = Object.entries(mapaDisenos).sort((a, b) => b[1] - a[1]);
           const top6Ds = arrDs.slice(0, 6);
-          const labelsDs = top6Ds.map(([ds]) => ds);
           const dataDs = top6Ds.map(([, cnt]) => cnt);
-
-          chartsComposicion.diseno = new Chart(ctxDis, {
-            type: 'bar',
-            data: {
-              labels: labelsDs,
-              datasets: [{
-                label: 'Llantas Montadas',
-                data: dataDs,
-                backgroundColor: '#f59e0b',
-                borderRadius: 6,
-                borderSkipped: false,
-                maxBarThickness: 38
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              layout: { padding: { top: 22, right: 12, bottom: 6, left: 6 } },
-              plugins: {
-                legend: { display: false },
-                datalabels: {
-                  display: true,
-                  anchor: 'end',
-                  align: 'top',
-                  offset: 2,
-                  clamp: true,
-                  backgroundColor: 'rgba(245, 158, 11, 0.92)',
-                  borderRadius: 4,
-                  color: '#ffffff',
-                  font: { weight: 'bold', size: 10 },
-                  padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                  formatter: (val) => {
-                    const pct = ((val / totalLlantas) * 100).toFixed(0);
-                    return `${val} (${pct}%)`;
-                  }
-                },
-                tooltip: {
-                  ...tooltipStyleHD,
-                  callbacks: {
-                    label: (ctx) => {
-                      const cnt = ctx.raw;
-                      const p = fmtDec(((cnt / totalLlantas) * 100), 1);
-                      return ` ${cnt} llantas (${p}%)`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { font: { size: 10, weight: '600' } }
-                },
-                y: {
-                  beginAtZero: true,
-                  ticks: { precision: 0 },
-                  grid: { color: 'rgba(226, 232, 240, 0.55)', borderDash: [3, 3] },
-                  border: { display: false }
-                }
-              }
-            }
-          });
+          chartsComposicion.diseno = new Chart(ctxDis, barrasComp(top6Ds.map(([ds]) => ds), dataDs, taMejorEn(dataDs), totalLlantas));
+          if (top6Ds.length) taLectura('chartCompDisenos', 'in', `${top6Ds[0][0]} es el diseño más usado: ${top6Ds[0][1]} llantas (${taPct(top6Ds[0][1], totalLlantas)} %).`);
         }
       }
     }

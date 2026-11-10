@@ -70,7 +70,7 @@ def test_h23_sin_columnas_obligatorias_no_escribe_nada(test_db, auth_client):
 def test_h24_service_worker_no_cachea_api(auth_client):
     sw = auth_client.get("/sw.js").text
     assert "if (url.pathname.startsWith('/api/')) return;" in sw
-    assert "tireanalyze-patio-v3" in sw
+    assert "tireanalyze-patio-v4" in sw
     core = _leer("static/js/app_core.js")
     assert "function borrarRespuestasApiEnCache()" in core
     assert core.count("borrarRespuestasApiEnCache();") >= 2  # al cargar y al cerrar sesión

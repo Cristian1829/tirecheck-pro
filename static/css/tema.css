@@ -1,0 +1,562 @@
+/* ==========================================================================
+   TireAnalyze Pro · Tema visual (rediseño, fase 1)
+   Solo apariencia: colores, letra y tamaños. No cambia ids, botones ni funciones.
+   Se carga después del <style> de templates/index.html para poder ajustarlo.
+   ========================================================================== */
+
+:root {
+  /* Azul noche: panel de navegación y barra superior */
+  --ta-noche: #0f1f3d;
+  --ta-noche-2: #273550;      /* botones sobre la barra (10 % más claro) */
+  --ta-noche-3: #34425c;      /* hover de esos botones */
+  --ta-noche-linea: #2c3a54;  /* separadores sobre fondo noche */
+  --ta-cian: #00d8ff;         /* acento de marca */
+
+  /* Un solo color de acción; verde, ámbar y rojo solo para estados */
+  --ta-accion: #1d4ed8;
+  --ta-accion-hover: #1e40af;
+  --ta-ok: #15803d;
+  --ta-al: #d97706;
+  --ta-cr: #c0262d;
+
+  /* Neutros */
+  --ta-tinta: #0f172a;
+  --ta-sub: #56657c;
+  --ta-linea: #e2e8f0;
+  --ta-fondo: #f1f5f9;
+  --ta-tarjeta: #ffffff;
+
+  /* Cinco tamaños de letra */
+  --ta-f-xs: 12px;
+  --ta-f-sm: 14px;
+  --ta-f-md: 16px;
+  --ta-f-lg: 20px;
+  --ta-f-xl: 28px;
+
+  --ta-radio: 10px;
+  --ta-radio-sm: 7px;
+  --ta-letra: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* Letra Inter en toda la app (ya se cargaba, pero el cuerpo usaba la letra del sistema).
+   El selector es más específico que .font-sans de Tailwind. */
+body.font-sans {
+  font-family: var(--ta-letra);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barra superior y barra de navegación en azul noche */
+.ta-fondo-noche {
+  background-color: var(--ta-noche);
+}
+.ta-fondo-noche.ta-con-borde {
+  border-color: var(--ta-noche-linea);
+}
+.ta-boton-noche {
+  background-color: var(--ta-noche-2);
+}
+.ta-boton-noche:hover {
+  background-color: var(--ta-noche-3);
+}
+
+/* Banner de marca con el fondo oscuro del prototipo (más profundo que el azul noche de las barras) */
+.hero-banner-bg {
+  background: radial-gradient(circle at 50% 50%, #0d254c 0%, #071326 55%, #040914 100%);
+  border-bottom-color: #13223b;
+}
+
+/* Letra mínima legible: los textos de 6 a 9,5 px pasan a 11 px.
+   (Los de 10 y 11 px se revisan sección por sección en la fase 3.) */
+html .text-\[6px\],
+html .text-\[7px\],
+html .text-\[7\.5px\],
+html .text-\[8px\],
+html .text-\[8\.5px\],
+html .text-\[9px\],
+html .text-\[9\.5px\] {
+  font-size: 11px;
+}
+
+/* Números alineados en tablas y cifras */
+.tabular-nums, table td, .font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Fase 2 · Estructura: barra superior, banner ocultable, panel lateral y barra de ruta
+   ========================================================================== */
+
+/* ---------- Barra superior */
+.ta-utilbar { position: relative; }
+.ta-util-boton {
+  align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--ta-noche-linea); background: var(--ta-noche-2); color: #e2e8f0;
+  font-size: var(--ta-f-xs); font-weight: 600; cursor: pointer;
+}
+.ta-util-boton:hover { background: var(--ta-noche-3); color: #fff; }
+
+/* ---------- Banner ocultable («Vista compacta») */
+body.ta-sin-banner #bannerMarca { display: none; }
+
+/* ---------- Distribución: panel a la izquierda y área de trabajo */
+.ta-layout { display: grid; grid-template-columns: 276px minmax(0, 1fr); align-items: start; }
+body.ta-panel-contraido .ta-layout { grid-template-columns: 68px minmax(0, 1fr); }
+.ta-trabajo { min-width: 0; }
+
+/* ---------- Panel lateral */
+.ta-sidebar {
+  --side-fg: #c3cfe2; --side-strong: #ffffff; --side-muted: #8fa0ba; --side-title: #7f90aa;
+  --side-hover: rgba(255, 255, 255, .06); --side-active: rgba(255, 255, 255, .10); --side-accent: var(--ta-cian);
+  position: sticky; top: 0; height: var(--ta-alto-panel, 100vh); display: flex; flex-direction: column; z-index: 35;
+  color: var(--side-fg); border-right: 1px solid var(--ta-noche-linea);
+  background-image: radial-gradient(rgba(0, 216, 255, .05) 1px, transparent 1px); background-size: 14px 14px;
+}
+.ta-sidebar-cabeza { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 10px 0 16px; border-bottom: 1px solid var(--ta-noche-linea); flex: none; }
+.ta-sidebar-nombre { font-size: var(--ta-f-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--side-muted); white-space: nowrap; }
+.ta-sidebar-contraer, .ta-sidebar-cerrar {
+  margin-left: auto; width: 30px; height: 30px; border-radius: 7px; border: 0; background: var(--ta-noche-2);
+  color: var(--side-muted); cursor: pointer; display: grid; place-items: center;
+}
+.ta-sidebar-contraer:hover, .ta-sidebar-cerrar:hover { color: var(--side-strong); background: var(--ta-noche-3); }
+.ta-sidebar-cerrar { display: none; }
+.ta-sidebar-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 16px; scrollbar-width: thin; }
+.ta-nav-grupo { display: flex; flex-direction: column; gap: 2px; }
+.ta-nav-grupo.ta-vacio { display: none; }
+.ta-nav-titulo { font-size: var(--ta-f-xs); font-weight: 600; color: var(--side-title); padding: 0 10px 4px; white-space: nowrap; }
+
+/* Los botones conservan la clase .nav-tab y las clases que navegarTab() pone y quita;
+   el id del panel da a estas reglas prioridad sobre las de Tailwind. */
+#panelNavegacion .nav-tab {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 10px; border: 0; border-left: 3px solid transparent;
+  border-radius: var(--ta-radio-sm); background: transparent; color: var(--side-fg); font-size: var(--ta-f-sm); font-weight: 500;
+  text-align: left; cursor: pointer; white-space: nowrap; box-shadow: none;
+}
+#panelNavegacion .nav-tab:hover { background: var(--side-hover); color: var(--side-strong); }
+#panelNavegacion .nav-tab.active, #panelNavegacion .nav-tab.tab-active {
+  background: var(--side-active); color: var(--side-strong); font-weight: 600; border-left-color: var(--side-accent);
+}
+#panelNavegacion .ta-nav-icono { width: 20px; height: 20px; flex: none; color: var(--side-muted); }
+#panelNavegacion .nav-tab:hover .ta-nav-icono { color: var(--side-strong); }
+#panelNavegacion .nav-tab.active .ta-nav-icono { color: var(--side-accent); }
+.ta-nav-texto { overflow: hidden; text-overflow: ellipsis; }
+.ta-nav-conteo { margin-left: auto; font-size: var(--ta-f-xs); color: var(--side-muted); font-variant-numeric: tabular-nums; }
+.ta-nav-pro { margin-left: auto; padding: 1px 7px; border-radius: 99px; background: var(--ta-cian); color: #04121f; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.ta-sidebar-pie { flex: none; border-top: 1px solid var(--ta-noche-linea); padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; font-size: var(--ta-f-xs); }
+.ta-sidebar-usuario b { display: block; color: var(--side-strong); font-size: var(--ta-f-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ta-sidebar-usuario span { color: var(--side-muted); }
+.ta-sidebar-fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ta-sidebar-enlace { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 0; color: var(--side-fg); cursor: pointer; font-size: var(--ta-f-xs); }
+.ta-sidebar-enlace i { color: #fcd34d; }
+.ta-sidebar-enlace:hover { color: var(--side-strong); }
+.ta-sidebar-version { color: var(--side-title); white-space: nowrap; }
+
+/* Panel contraído (escritorio): solo iconos; el nombre sale al pasar el mouse */
+@media (min-width: 1024px) {
+  body.ta-panel-contraido .ta-sidebar-nombre, body.ta-panel-contraido .ta-nav-titulo, body.ta-panel-contraido .ta-nav-texto,
+  body.ta-panel-contraido .ta-nav-conteo, body.ta-panel-contraido .ta-nav-pro, body.ta-panel-contraido .ta-sidebar-usuario,
+  body.ta-panel-contraido .ta-sidebar-enlace span, body.ta-panel-contraido .ta-sidebar-version { display: none; }
+  body.ta-panel-contraido .ta-sidebar-cabeza { justify-content: center; padding: 0 8px; }
+  body.ta-panel-contraido .ta-sidebar-contraer { margin: 0; transform: scaleX(-1); }
+  body.ta-panel-contraido #panelNavegacion .nav-tab { justify-content: center; padding-inline: 0; }
+  body.ta-panel-contraido .ta-sidebar-pie { align-items: center; padding-inline: 8px; }
+  body.ta-panel-contraido .ta-sidebar-fila { justify-content: center; }
+}
+
+/* ---------- Barra de ruta (sección actual, cliente activo y nueva inspección) */
+.ta-barra-ruta {
+  position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 24px;
+  background: rgba(255, 255, 255, .96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--ta-linea);
+}
+.ta-boton-menu { display: none; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--ta-linea); background: #fff; color: var(--ta-tinta); cursor: pointer; flex: none; }
+.ta-ruta { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--ta-f-sm); }
+.ta-ruta-grupo { font-size: var(--ta-f-xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ta-sub); white-space: nowrap; }
+.ta-ruta-sep { color: #cbd5e1; }
+.ta-ruta-seccion { font-weight: 700; color: var(--ta-tinta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ta-ruta-acciones { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+.ta-chip-cliente {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 340px; height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--ta-linea); background: #f8fafc; font-size: var(--ta-f-xs); color: var(--ta-sub); white-space: nowrap; overflow: hidden;
+}
+.ta-chip-cliente[hidden] { display: none; }
+.ta-chip-cliente i { color: var(--ta-accion); }
+.ta-chip-cliente b { color: var(--ta-tinta); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.ta-chip-cliente span:not(:empty)::before { content: "· "; }
+.ta-boton-nueva {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 8px; border: 0;
+  background: var(--ta-accion); color: #fff; font-size: var(--ta-f-xs); font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.ta-boton-nueva:hover { background: var(--ta-accion-hover); }
+.ta-boton-nueva[hidden] { display: none; }
+
+/* ---------- Tableta y teléfono: el panel se abre como menú desde el botón ☰ */
+.ta-fondo-menu { display: none; }
+@media (max-width: 1023px) {
+  .ta-layout { grid-template-columns: minmax(0, 1fr); }
+  body.ta-panel-contraido .ta-layout { grid-template-columns: minmax(0, 1fr); }
+  .ta-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 280px; max-width: 86vw; height: 100%; z-index: 60;
+    transform: translateX(-100%); visibility: hidden; transition: transform .22s ease, visibility .22s;
+  }
+  body.ta-menu-abierto .ta-sidebar { transform: none; visibility: visible; box-shadow: 0 20px 60px rgba(0, 0, 0, .4); }
+  body.ta-menu-abierto .ta-fondo-menu { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(9, 19, 35, .5); }
+  .ta-sidebar-contraer { display: none; }
+  .ta-sidebar-cerrar { display: grid; }
+  .ta-boton-menu { display: grid; place-items: center; }
+  .ta-barra-ruta { padding: 8px 12px; gap: 10px; }
+}
+@media (max-width: 639px) {
+  .ta-ruta-grupo, .ta-ruta-sep, .ta-chip-cliente { display: none; }
+  .ta-boton-nueva { width: 38px; padding: 0; justify-content: center; }
+  .ta-boton-nueva span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ta-sidebar { transition: none; } }
+
+/* ==========================================================================
+   Fase 3 · Secciones y ventanas: letra legible, tarjetas sobrias y un solo azul de acción.
+   Ámbito: el área de trabajo y las ventanas emergentes (id que empieza por «modal»).
+   :is() con un id da a estas reglas prioridad sobre las utilidades de Tailwind sin usar !important.
+   El diagrama de chasis es SVG y no se ve afectado.
+   ========================================================================== */
+
+/* Letra: nada por debajo de 12 px dentro de las secciones */
+:is(#areaTrabajo, [id^="modal"]) .text-\[10px\],
+:is(#areaTrabajo, [id^="modal"]) .text-\[11px\] {
+  font-size: var(--ta-f-xs);
+}
+/* Las etiquetas en MAYÚSCULAS se ven más grandes: 11 px basta y no parten los encabezados de las tarjetas */
+:is(#areaTrabajo, [id^="modal"]) .uppercase:is(.text-\[10px\], .text-\[11px\]) {
+  font-size: 11px;
+}
+
+/* Pesos: el negro (900) cansa en pantallas densas; los títulos quedan en 700 */
+:is(#areaTrabajo, [id^="modal"]) .font-black,
+:is(#areaTrabajo, [id^="modal"]) .font-extrabold {
+  font-weight: 700;
+}
+
+/* Tarjetas: esquinas moderadas y sin sombras; el borde fino las separa */
+:is(#areaTrabajo, [id^="modal"]) .rounded-3xl { border-radius: 14px; }
+:is(#areaTrabajo, [id^="modal"]) .rounded-2xl { border-radius: 12px; }
+:is(#areaTrabajo, [id^="modal"]) .rounded-xl { border-radius: 8px; }
+#areaTrabajo :is(.shadow-2xs, .shadow-xs, .shadow-sm, .shadow, .shadow-md) { box-shadow: none; }
+#areaTrabajo .bg-white:is(.rounded-2xl, .rounded-3xl):not([class*="border-"]) { border: 1px solid var(--ta-linea); }
+
+/* Un solo color de acción: los botones índigo, morado y azul pasan al azul de la app.
+   Verde (confirmar), ámbar (advertir) y rojo (borrar) se conservan porque indican estado. */
+:is(#areaTrabajo, [id^="modal"]) :is(button, a).bg-blue-600,
+:is(#areaTrabajo, [id^="modal"]) :is(button, a).bg-indigo-600,
+:is(#areaTrabajo, [id^="modal"]) :is(button, a).bg-purple-600 {
+  background-color: var(--ta-accion);
+  box-shadow: none;
+}
+:is(#areaTrabajo, [id^="modal"]) :is(button, a):is(.bg-blue-600, .bg-indigo-600, .bg-purple-600):hover:not(:disabled) {
+  background-color: var(--ta-accion-hover);
+}
+
+/* (Las franjas oscuras con degradado pasan a tarjetas blancas: ver «Estándar del prototipo» más abajo) */
+
+/* Tablas: encabezado claro y números alineados */
+/* Los encabezados negros pasan a claros (mismo contenido, mejor contraste con las filas) */
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) { background-color: #f1f5f9; color: #334155; }
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) :is(th, td):not([class*="bg-"]) { color: #334155; background-color: #f1f5f9; }
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) :is(.text-white, [class*="text-slate-"], [class*="text-sky-"], [class*="text-emerald-"], [class*="text-amber-"], [class*="text-cyan-"], [class*="text-indigo-"], [class*="text-rose-"]) { color: #334155; }
+#areaTrabajo table thead th { letter-spacing: .02em; border-bottom: 1px solid var(--ta-linea); }
+#areaTrabajo table td { font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   Fase 4 · Gráficas: la conclusión en una frase, con el icono y el color de su estado
+   (✓ verde: bien · ⚠ ámbar: vigilar · ! rojo: actuar · i azul: dato)
+   ========================================================================== */
+.ta-lectura {
+  display: flex; gap: 8px; align-items: flex-start; margin: 0 0 10px; padding: 8px 12px; border-radius: 7px;
+  font-size: var(--ta-f-sm); font-weight: 500; line-height: 1.4; color: var(--ta-tinta);
+  background: #eef3fd; border-left: 3px solid var(--ta-accion);
+}
+.ta-lectura i { margin-top: 3px; flex: none; color: var(--ta-accion); }
+.ta-lectura.ok { background: #effaf2; border-left-color: var(--ta-ok); }
+.ta-lectura.ok i { color: var(--ta-ok); }
+.ta-lectura.al { background: #fff7e8; border-left-color: var(--ta-al); }
+.ta-lectura.al i { color: var(--ta-al); }
+.ta-lectura.cr { background: #fdf0ef; border-left-color: var(--ta-cr); }
+.ta-lectura.cr i { color: var(--ta-cr); }
+
+.ta-lectura-envoltura { min-width: 0; }
+
+/* ==========================================================================
+   Ajuste: barra superior y panel como el prototipo
+   ========================================================================== */
+.ta-util-boton { display: inline-flex; }
+.ta-util-boton.hidden { display: none; }
+@media (min-width: 768px) { .ta-util-boton.md\:inline-flex { display: inline-flex; } }
+.ta-util-salir:hover { background: rgba(127, 29, 29, .35); border-color: rgba(239, 68, 68, .5); color: #fecaca; }
+
+/* Iconos del menú (Font Awesome, como el prototipo) */
+#panelNavegacion i.ta-nav-icono { width: 20px; height: auto; text-align: center; font-size: 15px; }
+
+/* Estado de conexión al pie del panel. La app reescribe la clase del botón según el estado
+   (en línea, pendientes por subir o sin señal); el id mantiene este aspecto y conserva el color del texto. */
+#panelNavegacion #btnEstadoConexionOffline {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 2px 0; margin: 0;
+  background: transparent; border: 0; box-shadow: none; border-radius: 0;
+  font-size: var(--ta-f-xs); font-weight: 500; text-align: left; cursor: pointer;
+}
+#panelNavegacion #btnEstadoConexionOffline.text-emerald-300 { color: #86efac; }
+#panelNavegacion #btnEstadoConexionOffline:hover #lblTextoEstadoConexion { text-decoration: underline; }
+#panelNavegacion #dotEstadoConexion { width: 8px; height: 8px; flex: none; }
+.ta-enlace-servicios i { color: var(--ta-cian); }
+.ta-enlace-servicios { text-decoration: none; }
+
+/* Estado de conexión en la barra de ruta: solo en tableta y teléfono (en escritorio está en el panel) */
+.ta-conexion-ruta {
+  display: none; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--ta-linea); background: #fff; color: var(--ta-tinta); font-size: var(--ta-f-xs); font-weight: 600; cursor: pointer;
+}
+.ta-conexion-punto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.ta-conexion-texto:empty { display: none; }
+@media (max-width: 1023px) { .ta-conexion-ruta { display: inline-flex; } }
+
+/* ==========================================================================
+   Banner del mismo tamaño que el prototipo (escritorio 112 px de arte, título 34 px)
+   ========================================================================== */
+#bannerMarca .ta-banner-interior { max-width: 1500px; padding: 12px 48px; gap: 24px; }
+#bannerMarca .ta-banner-arte { height: 112px; }
+#bannerMarca .ta-banner-arte.ta-izq { width: 224px; }
+#bannerMarca .ta-banner-arte.ta-der { width: 208px; }
+#bannerMarca .ta-banner-nombre { font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 4px; }
+#bannerMarca .ta-banner-lema { font-size: 12px; letter-spacing: .24em; font-weight: 500; }
+@media (max-width: 1100px) {
+  #bannerMarca .ta-banner-interior { padding: 10px 24px; }
+  #bannerMarca .ta-banner-arte { height: 84px; }
+  #bannerMarca .ta-banner-arte.ta-izq { width: 168px; }
+  #bannerMarca .ta-banner-arte.ta-der { width: 150px; }
+  #bannerMarca .ta-banner-nombre { font-size: 28px; }
+}
+@media (max-width: 860px) {
+  #bannerMarca .ta-banner-interior { padding: 6px 10px; gap: 8px; }
+  #bannerMarca .ta-banner-arte { height: 48px; }
+  #bannerMarca .ta-banner-arte.ta-izq { width: 76px; }
+  #bannerMarca .ta-banner-arte.ta-der { width: 64px; }
+  #bannerMarca .ta-banner-nombre { font-size: 18px; margin-bottom: 2px; }
+  #bannerMarca .ta-banner-lema { font-size: 8.5px; letter-spacing: .12em; }
+}
+
+/* ==========================================================================
+   Inspección de patio como el prototipo: dos cajas (Cliente e inspección · Vehículo),
+   casillas de 40 px con letra de 14 px y nombres de campo claros.
+   ========================================================================== */
+.ta-caja-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ta-caja-titulo { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--ta-f-md); font-weight: 600; color: var(--ta-tinta); }
+.ta-caja-titulo i { color: var(--ta-accion); font-size: 14px; }
+#vista-patio .ta-caja-patio { padding: 18px; }
+:is(#moduloCliente, #moduloVehiculo, #moduloEspecificaciones) label { font-size: var(--ta-f-xs); font-weight: 600; color: var(--ta-tinta); }
+:is(#moduloCliente, #moduloVehiculo, #moduloEspecificaciones) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), select) {
+  height: 40px; padding: 0 12px; border: 1px solid #b8c2d1; border-radius: var(--ta-radio-sm); background-color: #fff;
+  font-size: var(--ta-f-sm); font-weight: 500; color: var(--ta-tinta);
+}
+:is(#moduloCliente, #moduloVehiculo, #moduloEspecificaciones) :is(input, select):focus { border-color: var(--ta-accion); }
+#moduloVehiculo #placa { font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+#moduloVehiculo #unidad_medida_placa { height: 34px; margin-top: 6px; font-size: var(--ta-f-xs); border-color: #f59e0b; }
+
+/* ==========================================================================
+   Estándar del prototipo aplicado a toda la app (secciones y ventanas).
+   - Botones: uno principal en azul; los demás neutros (blanco, borde fino, texto oscuro).
+     Verde, ámbar y negro dejan de usarse en botones. El rojo sólido queda solo para confirmar un borrado;
+     los botones de borrar normales son neutros con texto rojo.
+   - Tarjetas blancas con borde fino #dde3ec y esquinas de 10 px; cifras de resumen en fichas blancas.
+   - Casillas de 40 px, letra de 14 px y borde visible.
+   Solo apariencia: ningún id, evento ni texto cambia.
+   ========================================================================== */
+:root { --ta-linea: #dde3ec; --ta-tinta: #101c2e; --ta-fondo: #f4f6fa; --ta-azul-suave: #e6edfd; }
+body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
+
+/* ---------- Botones: forma común */
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-cyan-600,
+  .bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500, .bg-slate-900, .bg-slate-800,
+  .bg-slate-100, .bg-slate-200, .bg-slate-50, .bg-white, .bg-blue-50, .bg-indigo-50, .bg-purple-50,
+  .bg-emerald-50, .bg-teal-50, .bg-amber-50, .bg-rose-50, .bg-rose-600, .bg-gradient-to-r):not(.rounded-full) {
+  border-radius: var(--ta-radio-sm);
+  font-weight: 600;
+  box-shadow: none;
+  background-image: none;
+}
+/* Botones con texto (los que tienen relleno horizontal y vertical): 38 px de alto y letra de 14 px, como el prototipo */
+:is(#areaTrabajo, [id^="modal"]) button:is([class*=" px-3"], [class*=" px-4"], [class*=" px-5"], [class^="px-3"], [class^="px-4"], [class^="px-5"]):is([class*="py-1.5"], [class*="py-2"]):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]):not(#moduloMediciones .flex-wrap *) {
+  min-height: 38px;
+}
+/* En el teléfono los botones conservan su letra de 12 px para que las filas de botones no se salgan de la pantalla */
+@media (min-width: 640px) {
+  :is(#areaTrabajo, [id^="modal"]) button:is([class*=" px-3"], [class*=" px-4"], [class*=" px-5"], [class^="px-3"], [class^="px-4"], [class^="px-5"]):is([class*="py-1.5"], [class*="py-2"]):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]):not(#moduloMediciones .flex-wrap *) {
+    font-size: var(--ta-f-sm);
+  }
+}
+
+/* ---------- Principal: azul de la app */
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-cyan-600):not(.rounded-full) {
+  background-color: var(--ta-accion); border: 1px solid var(--ta-accion); color: #fff;
+}
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-blue-600, .bg-indigo-600, .bg-purple-600, .bg-cyan-600):not(.rounded-full):hover:not(:disabled) {
+  background-color: var(--ta-accion-hover);
+}
+
+/* ---------- Neutros: blanco, borde fino y texto oscuro (antes verdes, ámbar, negros o tintados) */
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500, .bg-slate-900, .bg-slate-800,
+  .bg-slate-100, .bg-slate-200, .bg-slate-50, .bg-white, .bg-blue-50, .bg-indigo-50, .bg-purple-50, .bg-emerald-50, .bg-teal-50,
+  .bg-amber-50, .bg-rose-50, .bg-gradient-to-r):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]) {
+  background-color: #fff; border: 1px solid var(--ta-linea); color: var(--ta-tinta);
+}
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500, .bg-slate-900, .bg-slate-800,
+  .bg-slate-100, .bg-slate-200, .bg-slate-50, .bg-white, .bg-blue-50, .bg-indigo-50, .bg-purple-50, .bg-emerald-50, .bg-teal-50,
+  .bg-amber-50, .bg-rose-50, .bg-gradient-to-r):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]):hover:not(:disabled) {
+  background-color: #f8fafc;
+}
+/* El texto blanco de los antiguos botones de color pasa a oscuro; los iconos toman el azul de acción */
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500, .bg-slate-900, .bg-slate-800, .bg-gradient-to-r):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]) :is(i, svg, span) {
+  color: inherit;
+}
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500, .bg-slate-900, .bg-slate-800):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]) i {
+  color: var(--ta-accion);
+}
+/* Borrar: neutro con texto rojo; el rojo sólido queda para confirmar el borrado */
+:is(#areaTrabajo, [id^="modal"]) button.bg-rose-50:not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]):not(.ta-x) { color: var(--ta-cr); }
+:is(#areaTrabajo, [id^="modal"]) button.bg-rose-50:not(.rounded-full) :is(i, svg) { color: var(--ta-cr); }
+:is(#areaTrabajo, [id^="modal"]) button:is(.bg-rose-600):not(.rounded-full) { background-color: var(--ta-cr); border: 1px solid var(--ta-cr); color: #fff; }
+
+/* ---------- Pestañas internas (subpestañas de Catálogos y de KPI): la activa en azul, las demás neutras */
+#areaTrabajo :is([id^="subtab-btn-"], .subtab-kpi-btn) { border-radius: var(--ta-radio-sm); box-shadow: none; }
+#areaTrabajo :is([id^="subtab-btn-"], .subtab-kpi-btn):is(.bg-slate-900, .bg-gradient-to-r) {
+  background-image: none; background-color: var(--ta-accion); color: #fff; border-color: var(--ta-accion);
+}
+#areaTrabajo .subtab-kpi-btn.bg-gradient-to-r :is(.subtab-kpi-sub, span) { color: rgba(255, 255, 255, .85); }
+
+/* ---------- Tarjetas */
+#areaTrabajo :is(.rounded-2xl, .rounded-3xl).bg-white { border-radius: var(--ta-radio); border-color: var(--ta-linea); }
+#areaTrabajo :is(.border-slate-200, .border-slate-100) { border-color: var(--ta-linea); }
+
+/* ---------- Cifras de resumen en fichas blancas (antes con fondo negro, verde o azul) */
+#vista-composicion .grid > div:is(.bg-slate-900, .bg-gradient-to-br) {
+  background-image: none; background-color: #fff; color: var(--ta-tinta); border: 1px solid var(--ta-linea); box-shadow: none; transform: none;
+}
+#vista-composicion .grid > div:is(.bg-slate-900, .bg-gradient-to-br) > div:first-child { color: var(--ta-sub); }
+#vista-composicion .grid > div:is(.bg-slate-900, .bg-gradient-to-br) :is(.text-white, .text-cyan-400, [class*="text-emerald-"], [class*="text-sky-"], [class*="text-blue-1"], [class*="text-blue-2"]) { color: var(--ta-tinta); }
+#vista-composicion .grid > div:is(.bg-slate-900, .bg-gradient-to-br) :is([class*="text-slate-4"], [class*="text-slate-5"], [class*="opacity-"]) { color: var(--ta-sub); opacity: 1; }
+
+/* ---------- Avisos rojos con degradado (pendientes de inspección, cambiazos): aviso rojo suave, como el prototipo */
+[id^="modal"] .bg-gradient-to-r:is(.from-rose-700, .to-rose-950) {
+  background-image: none; background-color: #fce7e4; color: #7a1a12;
+}
+[id^="modal"] .bg-gradient-to-r:is(.from-rose-700, .to-rose-950) :is(.text-white, [class*="text-rose-1"], [class*="text-rose-2"], [class*="text-slate-3"], [class*="text-slate-4"]) { color: #7a1a12; }
+
+/* ---------- Casillas: 40 px, fondo blanco y borde visible (Mediciones conserva sus casillas grandes) */
+:is(#areaTrabajo, [id^="modal"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]), select):not(#moduloMediciones *):not(table *) {
+  min-height: 40px; border-color: #b8c2d1; background-color: #fff; border-radius: var(--ta-radio-sm); font-size: var(--ta-f-sm);
+}
+:is(#areaTrabajo, [id^="modal"]) textarea { border-color: #b8c2d1; background-color: #fff; border-radius: var(--ta-radio-sm); font-size: var(--ta-f-sm); }
+:is(#areaTrabajo, [id^="modal"]) :is(input, select, textarea):focus { border-color: var(--ta-accion); }
+:is(#areaTrabajo, [id^="modal"]) :is(input[readonly], input:disabled, select:disabled) { background-color: #f1f5f9; color: var(--ta-sub); }
+
+/* ---------- Etiquetas de campos y encabezados pequeños: oración, no MAYÚSCULAS (como el prototipo) */
+:is(#areaTrabajo, [id^="modal"]) label.uppercase,
+:is(#areaTrabajo, [id^="modal"]) label :is(.uppercase),
+#areaTrabajo table thead :is(th, tr).uppercase,
+#areaTrabajo table thead.uppercase th {
+  text-transform: none; letter-spacing: normal; font-size: var(--ta-f-xs); font-weight: 600;
+}
+:is(#areaTrabajo, [id^="modal"]) label:is(.text-slate-400, .text-slate-500, .text-slate-600) { color: var(--ta-tinta); }
+
+/* ---------- Franjas oscuras (KPI 01, ahorro identificado, módulos FULL): tarjetas blancas como el prototipo.
+   Los textos claros pasan a oscuros y los acentos a su color de estado o al azul de acción. */
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 {
+  background-image: none; background-color: #fff; color: var(--ta-tinta); border: 1px solid var(--ta-linea); box-shadow: none;
+}
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is(.text-white, [class*="text-slate-1"], [class*="text-slate-2"]) { color: var(--ta-tinta); }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is([class*="text-slate-3"], [class*="text-slate-4"], [class*="text-indigo-2"]) { color: var(--ta-sub); }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is([class*="text-emerald-"], [class*="text-green-"]) { color: var(--ta-ok); }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is([class*="text-amber-"], [class*="text-yellow-"]) { color: #a45a00; }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is([class*="text-rose-"], [class*="text-red-"]) { color: var(--ta-cr); }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is([class*="text-cyan-"], [class*="text-sky-"], [class*="text-indigo-3"], [class*="text-indigo-4"], [class*="text-blue-3"], [class*="text-blue-4"], [class*="text-\[#00"]) { color: var(--ta-accion); }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 :is([class*="bg-white/"], [class*="bg-slate-800"], [class*="bg-slate-900"], [class*="bg-indigo-500/"], [class*="bg-indigo-900"], [class*="bg-indigo-950"], [class*="bg-emerald-500/"], [class*="bg-amber-500/"], [class*="bg-cyan-500/"], [class*="bg-rose-500/"]):not(button) {
+  background-color: #f4f6fa; border-color: var(--ta-linea);
+}
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 [class*="border-white/"],
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 [class*="border-indigo-"],
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 [class*="border-slate-7"] { border-color: var(--ta-linea); }
+#areaTrabajo :is(article, div, section):is(.bg-gradient-to-r, .bg-gradient-to-br).from-slate-900 [class*="blur-"] { display: none; }
+
+/* Botones de exportar o reintentar que eran rojos: neutros (el rojo sólido queda para confirmar borrados en ventanas) */
+#areaTrabajo button:is(.bg-rose-600, .bg-rose-600\/80):not(.absolute):not(.rounded-full):not([id^="subtab"]):not([class*="subtab"]):not(.ta-x) {
+  background-color: #fff; border: 1px solid var(--ta-linea); color: var(--ta-tinta);
+}
+#areaTrabajo button:is(.bg-rose-600, .bg-rose-600\/80):not(.absolute):not(.rounded-full) i { color: var(--ta-accion); }
+
+/* (El «#ta-sin-uso» del selector solo sube la prioridad de la regla por encima de la de botones neutros.) */
+/* ---------- Confirmar en ventanas (Guardar, Subir e importar, Sí, finalizar, Confirmar desmonte…): azul principal.
+   En las secciones, la acción principal de cada pantalla también va en azul. */
+:is(#ta-sin-uso, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500):not(.rounded-full):not([onclick^="disparar"]):not(.ta-x):not(.ta-y),
+#areaTrabajo button:is([onclick^="abrirModalAltaBodega"], #btnNuevaTipologiaCat, [onclick^="confirmarContinuarMismoCliente"]):not(.ta-x):not(.ta-y):not(.ta-z) {
+  background-color: var(--ta-accion); border: 1px solid var(--ta-accion); color: #fff;
+}
+:is(#ta-sin-uso, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500):not(.rounded-full):not([onclick^="disparar"]):not(.ta-x):not(.ta-y) :is(i, svg, span),
+#areaTrabajo button:is([onclick^="abrirModalAltaBodega"], #btnNuevaTipologiaCat, [onclick^="confirmarContinuarMismoCliente"]):not(.ta-x):not(.ta-y):not(.ta-z) :is(i, svg, span) { color: #fff; }
+:is(#ta-sin-uso, [id^="modal"]) button:is(.bg-emerald-600, .bg-teal-600, .bg-amber-600, .bg-amber-500):not(.rounded-full):not([onclick^="disparar"]):not(.ta-x):not(.ta-y):hover:not(:disabled),
+#areaTrabajo button:is([onclick^="abrirModalAltaBodega"], #btnNuevaTipologiaCat, [onclick^="confirmarContinuarMismoCliente"]):not(.ta-x):not(.ta-y):not(.ta-z):hover { background-color: var(--ta-accion-hover); }
+
+/* En escritorio el cuerpo no deja margen inferior: así el panel llega hasta el borde de la pantalla al
+   bajar hasta el final (antes quedaba una franja clara de 64 px bajo el panel). En el teléfono se mantiene
+   para que la barra fija de «Guardar» no tape el contenido. */
+@media (min-width: 1024px) {
+  body.font-sans { padding-bottom: 0; }
+}
+
+/* ==========================================================================
+   Base de inspecciones: tabla con el estilo del prototipo (mismas 26 columnas y mismos datos)
+   ========================================================================== */
+#areaTrabajo .ta-tabla-bd { background: #fff; border: 1px solid var(--ta-linea); border-radius: var(--ta-radio); }
+#areaTrabajo .ta-tabla-bd table { font-size: 13px; }
+#areaTrabajo .ta-tabla-bd thead, #areaTrabajo .ta-tabla-bd thead th {
+  background-color: #f8fafc; color: var(--ta-sub); font-size: var(--ta-f-xs); font-weight: 600; letter-spacing: 0;
+}
+#areaTrabajo .ta-tabla-bd th { padding: 10px 12px; border-bottom: 1px solid var(--ta-linea); }
+#areaTrabajo .ta-tabla-bd td { padding: 9px 12px; border-bottom: 1px solid #edf0f5; color: var(--ta-tinta); vertical-align: middle; }
+#areaTrabajo .ta-tabla-bd tbody { font-weight: 400; }
+#areaTrabajo .ta-tabla-bd tbody tr:hover td { background-color: #fafbfd; }
+#areaTrabajo .ta-tabla-bd tbody tr.bg-indigo-50\/70 td { background-color: var(--ta-azul-suave); }
+/* Números y fechas con la letra de la app (no de máquina de escribir), alineados */
+#areaTrabajo .ta-tabla-bd td.font-mono, #areaTrabajo .ta-tabla-bd td .font-mono { font-family: inherit; font-variant-numeric: tabular-nums; }
+#areaTrabajo .ta-tabla-bd td:is(.font-black, .font-bold) { font-weight: 600; }
+#areaTrabajo .ta-tabla-bd td:is(.text-slate-400, .text-slate-500, .text-slate-600) { color: var(--ta-sub); }
+/* Placa en azul, como el prototipo */
+#areaTrabajo .ta-tabla-bd td.text-blue-700 { color: var(--ta-accion); font-weight: 600; letter-spacing: 0; }
+/* Posición: etiqueta gris pequeña */
+#areaTrabajo .ta-tabla-bd td span.w-6.h-6 { width: auto; min-width: 26px; height: 22px; padding: 0 6px; border-radius: 5px; background: #eceff3; color: var(--ta-sub); font-size: var(--ta-f-xs); font-weight: 600; }
+/* Vida: etiqueta suave (gris para original, azul para reencauche) */
+#areaTrabajo .ta-tabla-bd td span.rounded-full { font-size: var(--ta-f-xs); font-weight: 600; padding: 2px 9px; }
+#areaTrabajo .ta-tabla-bd td span.rounded-full.bg-blue-50 { background: #eceff3; color: #6b7889; }
+#areaTrabajo .ta-tabla-bd td span.rounded-full:is(.bg-purple-50, .bg-blue-100) { background: var(--ta-azul-suave); color: var(--ta-accion); }
+/* Profundidades: rojo en retiro y ámbar cerca del límite (colores de estado del prototipo) */
+#areaTrabajo .ta-tabla-bd td.text-rose-600 { color: var(--ta-cr); font-weight: 700; }
+#areaTrabajo .ta-tabla-bd td.text-amber-600 { color: #a45a00; font-weight: 600; }
+#areaTrabajo .ta-tabla-bd td span.bg-rose-100 { background: #fce7e4; color: var(--ta-cr); font-size: 11px; font-weight: 600; border-radius: 99px; padding: 1px 7px; }
+#areaTrabajo .ta-tabla-bd td.bg-amber-50\/60 { background: #fdf0d5; color: #a45a00; }
+/* Acciones: botones de icono cuadrados (ver fotos, editar, eliminar) */
+#areaTrabajo .ta-tabla-bd td button:is(.bg-amber-50, .bg-blue-50, .bg-rose-50).px-2.py-1 {
+  width: 30px; height: 30px; min-height: 0; padding: 0; display: inline-grid; place-items: center; vertical-align: middle;
+  background: #fff; border: 1px solid var(--ta-linea); border-radius: var(--ta-radio-sm); font-size: 13px;
+}
+#areaTrabajo .ta-tabla-bd td button:is(.bg-amber-50, .bg-blue-50).px-2.py-1 i { color: var(--ta-accion); }
+#areaTrabajo .ta-tabla-bd td button.bg-rose-50.px-2.py-1 i { color: var(--ta-cr); }
+#areaTrabajo .ta-tabla-bd td button:is(.bg-amber-50, .bg-blue-50, .bg-rose-50).px-2.py-1:hover { background: #f8fafc; }
+/* «Ver fotos (n)»: botón pequeño neutro */
+#areaTrabajo .ta-tabla-bd td button.px-2\.5 { min-height: 30px; font-size: var(--ta-f-xs); background: #fff; border: 1px solid var(--ta-linea); color: var(--ta-tinta); }
+#areaTrabajo .ta-tabla-bd td button.px-2\.5 i { color: var(--ta-accion); }
+/* Pie con la paginación, como el pie de tabla del prototipo */
+#contenedorPaginacionBD { border-color: var(--ta-linea); border-radius: var(--ta-radio); box-shadow: none; }
+
+/* ==========================================================================
+   Ancho de las secciones: aprovechan todo el espacio junto al panel (antes se limitaban a 1280 px
+   y quedaban franjas vacías a los lados en pantallas anchas). Márgenes de 24 px como el prototipo.
+   ========================================================================== */
+#areaTrabajo > :is(#bannerRecordatorioCliente, [id^="vista-"]) { max-width: 1680px; margin-left: auto; margin-right: auto; }
+@media (min-width: 1024px) {
+  #areaTrabajo > [id^="vista-"] { padding-left: 24px; padding-right: 24px; padding-top: 20px; }
+  #areaTrabajo > #bannerRecordatorioCliente { padding-left: 24px; padding-right: 24px; }
+}
