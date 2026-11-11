@@ -1903,11 +1903,166 @@
       if (elKmRec) elKmRec.textContent = `${formatCO_Miles(d.km_recorridos || 0)} ${uMed()}`;
     }
 
+    // KPI 13 y 14 con originales y reencauches por separado: una reencauchada arranca con otra banda y otro precio,
+    // así que se compara original con original y reencauche con reencauche. Originales en azul, reencauches en verde.
+    const VIDA_COLORES = {
+      original: { fuerte: TA_G.azul, suave: TA_G.azulClaro, nombre: 'Originales' },
+      reencauche: { fuerte: TA_G.ok, suave: TA_G.okClaro, nombre: 'Reencauches' }
+    };
+    // Rótulos que se ocultan solos si chocan con otro (el valor sigue visible al pasar el cursor)
+    function etiquetaSinChoque(fmt) {
+      const e = pillDatalabelConfig(undefined, undefined, fmt);
+      const base = e.display;
+      e.display = (c) => ((typeof base === 'function' ? base(c) : base) ? 'auto' : false);
+      return e;
+    }
+    function tieneDatosVida(serie) { return (serie || []).some(v => v !== null && v !== undefined && Number(v) > 0); }
+    function leyendaVida(colores) {
+      // La leyenda toma un color fijo por serie (las barras usan un tono fuerte para la mejor y suave para las demás)
+      return {
+        position: 'top',
+        labels: {
+          boxWidth: 12, font: { weight: 'bold', size: 11 },
+          generateLabels: (chart) => chart.data.datasets.map((d, i) => ({
+            text: d.label, fillStyle: colores[i], strokeStyle: colores[i], lineWidth: 0,
+            hidden: !chart.isDatasetVisible(i), datasetIndex: i
+          }))
+        }
+      };
+    }
+    // «Originales: A con X. Reencauches: B con Y.»
+    function fraseVida(pv, campo, menorEsMejor, texto) {
+      const partes = [];
+      ['original', 'reencauche'].forEach(vida => {
+        const serie = (pv[vida] || {})[campo] || [];
+        const i = taIndiceMayor(serie, menorEsMejor);
+        if (i < 0 || !(Number(serie[i]) > 0)) return;
+        // Si varias empatan en el primer lugar se nombran todas
+        const iguales = pv.labels.filter((_, j) => serie[j] !== null && serie[j] !== undefined && Number(serie[j]) === Number(serie[i]));
+        const nombres = iguales.length > 1 ? `${iguales.slice(0, -1).join(', ')} y ${iguales[iguales.length - 1]}` : pv.labels[i];
+        partes.push(`${VIDA_COLORES[vida].nombre}: ${nombres} (${texto(serie[i])})`);
+      });
+      return partes.join(' · ');
+    }
+
+    function renderChartKpi13Vida(pv) {
+      const ctx = document.getElementById('canvasKpi13_comparativo');
+      if (!ctx) return;
+      const fmt = (v) => `${formatCO_Miles(v)} ${uMed()}`;
+      const recorrido = unidadSuite === 'h' ? 'horas reales' : 'km recorridos';
+      const series = [
+        { vida: 'original', campo: 'km_reales', label: `Originales · ${recorrido}`, color: TA_G.azul },
+        { vida: 'original', campo: 'proyeccion_final', label: 'Originales · proyección al retiro', color: TA_G.azulClaro }
+      ];
+      if (tieneDatosVida((pv.reencauche || {}).proyeccion_final)) series.push(
+        { vida: 'reencauche', campo: 'km_reales', label: `Reencauches · ${recorrido}`, color: TA_G.ok },
+        { vida: 'reencauche', campo: 'proyeccion_final', label: 'Reencauches · proyección al retiro', color: TA_G.okClaro });
+      // Con originales y reencauches (o muchas marcas) solo se rotula la proyección; lo recorrido se ve al pasar el cursor
+      const muchos = series.length > 2 || (pv.labels || []).length > 4;
+      instanciasChartsSuite['kpi13_comparativo'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: pv.labels || [],
+          datasets: series.map(se => {
+            const etiqueta = etiquetaSinChoque(fmt);
+            if (muchos && se.campo === 'km_reales') etiqueta.display = false;
+            return { label: se.label, data: (pv[se.vida] || {})[se.campo] || [], backgroundColor: se.color, borderWidth: 0, borderRadius: 4, datalabels: etiqueta };
+          })
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, bottom: 8, left: 8 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: leyendaVida(series.map(se => se.color)),
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)', cornerRadius: 10, padding: 12,
+              callbacks: {
+                label: (c) => (c.raw === null || c.raw === undefined) ? `${c.dataset.label}: sin llantas` : `${c.dataset.label}: ${fmt(c.raw)}`,
+                afterBody: (items) => {
+                  const idx = items[0].dataIndex;
+                  return ['original', 'reencauche'].map(vida => {
+                    const r = (pv[vida] || {}).km_reales?.[idx], p = (pv[vida] || {}).proyeccion_final?.[idx];
+                    const n = (pv.llantas || {})[vida]?.[idx] || 0;
+                    return p ? `${VIDA_COLORES[vida].nombre} (${n} llantas): les quedan ${fmt(Math.max(0, p - (r || 0)))}` : null;
+                  }).filter(Boolean);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true, grace: '15%',
+              title: { display: true, text: unidadSuite === 'h' ? 'Horas' : 'Kilómetros', font: { weight: 'bold', size: 10 } },
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { callback: (v) => formatCO_Miles(v) }
+            },
+            x: { ticks: ticksEtiquetaCorta(14) }
+          }
+        }
+      });
+      const frase = fraseVida(pv, 'proyeccion_final', false, fmt);
+      if (frase) taLectura('canvasKpi13_comparativo', 'in', `Mayor proyección al retiro. ${frase}.`);
+    }
+
+    function renderChartKpi14Vida(pv) {
+      const hayReenc = ['proyeccion_km', 'km_mm', 'cpk'].some(c => tieneDatosVida((pv.reencauche || {})[c]));
+      const vidas = hayReenc ? ['original', 'reencauche'] : ['original'];
+      const graficas = [
+        { clave: 'kpi14_proy', canvas: 'canvasKpi14_proy', campo: 'proyeccion_km', menor: false,
+          fmt: (v) => `${formatCO_Miles(v)} ${uMed()}`, eje: (v) => formatCO_Miles(v),
+          frase: (f) => `Mayor proyección. ${f}.` },
+        { clave: 'kpi14_kmmm', canvas: 'canvasKpi14_kmmm', campo: 'km_mm', menor: false,
+          fmt: (v) => `${formatCO_Decimal(v, 1)} ${uMed()}/mm`, eje: (v) => formatCO_Decimal(v, 1),
+          frase: (f) => `Mejor rendimiento. ${f}.` },
+        { clave: 'kpi14_cpk', canvas: 'canvasKpi14_cpk', campo: 'cpk', menor: true,
+          fmt: (v) => `$ ${formatCO_Decimal(v, 2)}`, eje: (v) => `$${formatCO_Decimal(v, 1)}`,
+          frase: (f) => `Más barata por ${uMed()}. ${f}.` }
+      ];
+      graficas.forEach(g => {
+        const ctx = document.getElementById(g.canvas);
+        if (!ctx) return;
+        instanciasChartsSuite[g.clave] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: pv.labels || [],
+            datasets: vidas.map(vida => {
+              const serie = (pv[vida] || {})[g.campo] || [];
+              const col = VIDA_COLORES[vida];
+              return { label: col.nombre, data: serie, backgroundColor: taMejorEn(serie, g.menor, col.fuerte, col.suave), borderRadius: 6,
+                       datalabels: etiquetaSinChoque(g.fmt) };
+            })
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 26, right: 8, bottom: 8, left: 24 } },
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: leyendaVida(vidas.map(v => VIDA_COLORES[v].fuerte)),
+              tooltip: { callbacks: { label: (c) => {
+                const n = (pv.llantas || {})[vidas[c.datasetIndex]]?.[c.dataIndex] || 0;
+                return (c.raw === null || c.raw === undefined) ? `${c.dataset.label}: sin datos` : `${c.dataset.label} (${n} llantas): ${g.fmt(c.raw)}`;
+              } } }
+            },
+            scales: {
+              y: { beginAtZero: true, grace: '15%', ticks: { callback: g.eje, font: { size: 9 } } },
+              x: { ticks: ticksEtiquetaCorta(14) }
+            }
+          }
+        });
+        const f = fraseVida(pv, g.campo, g.menor, g.fmt);
+        if (f) taLectura(g.canvas, 'in', g.frase(f));
+      });
+    }
+
     // KPI 13: Km Rodados Reales vs. Proyección Final al Límite de Retiro
     function renderChartKpi13(ds) {
       destruirChartSuite('kpi13_comparativo');
       const ctx = document.getElementById('canvasKpi13_comparativo');
       if (!ctx || !ds) return;
+      if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi13Vida(ds.por_vida); return; }
 
       // Rediseño: lo recorrido en azul fuerte y la proyección en azul claro
       const gradientReales = TA_G.azul;
@@ -1979,11 +2134,99 @@
       }
     }
 
+    // Reencauches por banda: gráfica de costo por km (con la original de referencia en gris) y tabla con todas las medidas
+    function renderBandasKpi14(pb) {
+      const filas = (pb && pb.filas) || [];
+      const orig = pb && pb.original;
+      const vacio = document.getElementById('vacioBandasKpi14');
+      const contenido = document.getElementById('contenidoBandasKpi14');
+      const tbody = document.getElementById('tbodyBandasKpi14');
+      if (!tbody) return;
+      const hay = filas.length > 0;
+      if (vacio) vacio.classList.toggle('hidden', hay);
+      if (contenido) contenido.classList.toggle('hidden', !hay);
+      if (!hay) { tbody.innerHTML = ''; taLectura('canvasKpi14_bandas', null, ''); return; }
+
+      const u = uMed();
+      const th = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+      th('thBandaRecorrido', unidadSuite === 'h' ? 'Horas prom.' : 'Recorrido prom.');
+      th('thBandaKmmm', `${unidadSuite === 'h' ? 'Horas' : 'Km'} por mm`);
+      th('thBandaCpk', `Costo por ${u}`);
+      const num = (v, d = 0) => (v === null || v === undefined) ? '—' : (d ? formatCO_Decimal(v, d) : formatCO_Miles(v));
+      const cpkOrig = orig && orig.cpk > 0 ? Number(orig.cpk) : null;
+      const mejorCpk = Math.min(...filas.map(f => Number(f.cpk)).filter(v => v > 0));
+      const mejorKmmm = Math.max(...filas.map(f => Number(f.km_mm)).filter(v => v > 0));
+      // Diferencia de costo por km frente a la original: verde si es más barata, rojo si es más cara
+      const frente = (f) => {
+        if (!cpkOrig || !(f.cpk > 0)) return '<span class="text-slate-400">Sin dato</span>';
+        const p = Math.round((Number(f.cpk) / cpkOrig - 1) * 100);
+        if (p === 0) return '<span class="ta-pastilla ok">Igual que la original</span>';
+        return p < 0 ? `<span class="ta-pastilla ok">${Math.abs(p)} % más barata</span>` : `<span class="ta-pastilla cr">${p} % más cara</span>`;
+      };
+      const filaHtml = (f, esOrig) => `
+        <tr${esOrig ? ' class="bg-slate-50"' : ''}>
+          <td class="font-bold">${esOrig ? '<span class="text-slate-500">Llanta original (referencia)</span>' : escapeHtml(f.banda)}${f.sin_banda ? ' <span class="text-[10px] text-amber-700">· falta registrar la banda</span>' : ''}</td>
+          <td class="text-right">${num(f.llantas)}</td>
+          <td class="text-right${!esOrig && Number(f.cpk) === mejorCpk ? ' font-bold' : ''}">${f.cpk > 0 ? `$ ${num(f.cpk, 2)}` : '—'}</td>
+          <td>${esOrig ? '<span class="text-slate-400">—</span>' : frente(f)}</td>
+          <td class="text-right${!esOrig && Number(f.km_mm) === mejorKmmm ? ' font-bold' : ''}">${num(f.km_mm, 1)}</td>
+          <td class="text-right">${num(f.proyeccion)} ${u}</td>
+          <td class="text-right">${num(f.km_reales)} ${u}</td>
+        </tr>`;
+      tbody.innerHTML = filas.map(f => filaHtml(f, false)).join('') + (orig ? filaHtml(orig, true) : '');
+
+      // Gráfica: barras horizontales; la mejor banda en verde fuerte, las demás en verde claro y la original en gris
+      const ctx = document.getElementById('canvasKpi14_bandas');
+      const conCpk = filas.filter(f => f.cpk > 0);
+      const etiquetas = conCpk.map(f => f.banda).concat(cpkOrig ? ['Original'] : []);
+      const valores = conCpk.map(f => Number(f.cpk)).concat(cpkOrig ? [cpkOrig] : []);
+      const colores = conCpk.map(f => Number(f.cpk) === mejorCpk ? TA_G.ok : TA_G.okClaro).concat(cpkOrig ? [TA_G.gris] : []);
+      const alto = document.getElementById('altoGraficaBandasKpi14');
+      if (alto) alto.style.height = `${Math.max(180, 46 * etiquetas.length + 40)}px`;
+      if (ctx && etiquetas.length) {
+        instanciasChartsSuite['kpi14_bandas'] = new Chart(ctx, {
+          type: 'bar',
+          data: { labels: etiquetas, datasets: [{ label: `Costo por ${u}`, data: valores, backgroundColor: colores, borderRadius: 6, barThickness: 22,
+                   datalabels: pillDatalabelConfig(undefined, undefined, (v) => `$ ${formatCO_Decimal(v, 2)}`) }] },
+          options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 4, right: 64, bottom: 4, left: 4 } },
+            animation: animacionCascadaStandard,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Costo por ${u}: $ ${formatCO_Decimal(c.raw, 2)}` } } },
+            scales: {
+              x: { beginAtZero: true, grace: '10%', ticks: { callback: (v) => `$${formatCO_Decimal(v, 0)}`, font: { size: 9 } } },
+              y: { ticks: { font: { size: 11, weight: 'bold' } } }
+            }
+          }
+        });
+      }
+
+      // Conclusión en palabras sencillas
+      const mejor = conCpk[0];
+      let texto = '';
+      if (mejor) {
+        texto = `${mejor.banda} es la banda más barata por ${u}: $ ${formatCO_Decimal(mejor.cpk, 2)}`;
+        if (cpkOrig) {
+          const p = Math.round((1 - Number(mejor.cpk) / cpkOrig) * 100);
+          texto += p > 0 ? `, ${p} % menos que una llanta original` : (p < 0 ? `, pero cuesta ${Math.abs(p)} % más que una llanta original` : ', igual que una llanta original');
+        }
+        texto += '.';
+        const peor = conCpk[conCpk.length - 1];
+        if (peor && peor !== mejor) {
+          const dif = Math.round((Number(peor.cpk) / Number(mejor.cpk) - 1) * 100);
+          texto += ` ${peor.banda} cuesta ${dif} % más que ${mejor.banda}.`;
+        }
+      }
+      if (pb.reencauches_sin_banda > 0) texto += ` ${pb.reencauches_sin_banda} reencauche(s) sin banda registrada.`;
+      taLectura('canvasKpi14_bandas', mejor && cpkOrig && Number(mejor.cpk) < cpkOrig ? 'ok' : 'in', texto.trim());
+    }
+
     // KPI 14: Tríada Multidimensional Sincronizada (Proyección, Km/mm, CPK)
     function renderChartKpi14(ds) {
       destruirChartSuite('kpi14_proy');
       destruirChartSuite('kpi14_kmmm');
       destruirChartSuite('kpi14_cpk');
+      destruirChartSuite('kpi14_bandas');
       if (!ds) return;
 
       const sel = document.getElementById('selAgrupacionKpi14');
@@ -1991,6 +2234,8 @@
         sel.value = ds.agrupacion_actual;
       }
 
+      renderBandasKpi14(ds.por_banda);
+      if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi14Vida(ds.por_vida); return; }
       const labels = ds.labels || [];
 
       // 1. Proyección Km Final (Índigo)

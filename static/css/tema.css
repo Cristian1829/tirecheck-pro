@@ -605,13 +605,13 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
 #areaTrabajo .ta-tabla-diag .ta-num-cr { color: var(--ta-cr); font-weight: 700; }
 #areaTrabajo .ta-tabla-diag .ta-fecha-fila { display: block; font-size: var(--ta-f-xs); font-weight: 400; color: var(--ta-sub); line-height: 1.3; }
 #areaTrabajo .ta-tabla-diag .ta-sin-alerta { color: var(--ta-sub); }
-#areaTrabajo .ta-tabla-diag .ta-pastilla {
+#areaTrabajo :is(.ta-tabla-diag, #seccionBandasKpi14) .ta-pastilla {
   display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: var(--ta-f-xs); font-weight: 600; white-space: nowrap;
 }
-#areaTrabajo .ta-tabla-diag .ta-pastilla::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-#areaTrabajo .ta-tabla-diag .ta-pastilla.al { background: #fdf0d5; color: #a45a00; }
-#areaTrabajo .ta-tabla-diag .ta-pastilla.cr { background: #fce7e4; color: var(--ta-cr); }
-#areaTrabajo .ta-tabla-diag .ta-pastilla.ok { background: #e3f4e8; color: var(--ta-ok); }
+#areaTrabajo :is(.ta-tabla-diag, #seccionBandasKpi14) .ta-pastilla::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+#areaTrabajo :is(.ta-tabla-diag, #seccionBandasKpi14) .ta-pastilla.al { background: #fdf0d5; color: #a45a00; }
+#areaTrabajo :is(.ta-tabla-diag, #seccionBandasKpi14) .ta-pastilla.cr { background: #fce7e4; color: var(--ta-cr); }
+#areaTrabajo :is(.ta-tabla-diag, #seccionBandasKpi14) .ta-pastilla.ok { background: #e3f4e8; color: var(--ta-ok); }
 /* Mínima por eje y aviso de tipología: apoyo en gris, en una línea pequeña */
 #areaTrabajo .ta-tabla-diag .ta-apoyo { margin-top: 2px; }
 #areaTrabajo .ta-tabla-diag .ta-apoyo > div { font-size: var(--ta-f-xs); color: var(--ta-sub); margin: 0; }

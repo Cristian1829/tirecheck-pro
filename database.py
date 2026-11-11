@@ -7826,6 +7826,68 @@ def _div(a, b):
     return (a / b) if (a and b and b > 0) else None
 
 
+def _separar_por_vida(df_g, col, metricas, fmt_etiqueta=None) -> dict:
+    """
+    Cifras de un KPI por grupo (marca, eje, mes...) con originales y reencauches por separado.
+    Devuelve {"labels": [...], "original": {campo: [...]}, "reencauche": {campo: [...]}, "llantas": {...}}
+    con None donde un grupo no tiene llantas de esa vida.
+    """
+    vacio = {"labels": [], "original": {}, "reencauche": {}, "llantas": {"original": [], "reencauche": []}}
+    if df_g is None or df_g.empty or metricas is None or col not in df_g.columns:
+        return vacio
+    es_r = df_g['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in df_g.columns else pd.Series(False, index=df_g.index)
+    grupos = sorted(df_g[col].dropna().unique().tolist(), key=lambda v: str(v))
+    filas = []  # (etiqueta, {vida: (n, métricas)})
+    for g in grupos:
+        en_g = df_g[col] == g
+        por_vida = {}
+        for vida, mask in (("original", en_g & ~es_r), ("reencauche", en_g & es_r)):
+            sub = df_g[mask]
+            por_vida[vida] = (int(len(sub)), metricas(sub) if not sub.empty else {})
+        filas.append(((fmt_etiqueta(g) if fmt_etiqueta else str(g)) or 'General', por_vida))
+    out = {"labels": [f[0] for f in filas], "original": {}, "reencauche": {}, "llantas": {"original": [], "reencauche": []}}
+    for vida in ("original", "reencauche"):
+        campos = []
+        for _, pv in filas:
+            campos += [k for k in pv[vida][1] if k not in campos]
+        out["llantas"][vida] = [pv[vida][0] for _, pv in filas]
+        out[vida] = {k: [pv[vida][1].get(k) for _, pv in filas] for k in campos}
+    return out
+
+
+def comportamiento_por_banda(df_b: pd.DataFrame) -> dict:
+    """
+    Cómo rinde cada banda de reencauche puesta en la flota, frente a la llanta original de la misma base:
+    llantas, recorrido y proyección promedio, km/mm (Σkm / Σmm) y CPK proyectado (Σprecio / Σkm proyectados).
+    Las bandas se ordenan de la más barata por km a la más cara; sin CPK quedan al final.
+    """
+    vacio = {"filas": [], "original": None, "reencauches_sin_banda": 0}
+    if df_b is None or df_b.empty:
+        return vacio
+
+    def _metricas(g):
+        km_mm, cpk = agregar_rendimiento_y_cpk(g)
+        return {"llantas": int(len(g)),
+                "km_reales": _redondear(pd.to_numeric(g['calc_km_rodados'], errors='coerce').mean()),
+                "proyeccion": _redondear(pd.to_numeric(g['calc_proy_total'], errors='coerce').mean()),
+                "km_mm": _redondear(km_mm, 1), "cpk": _redondear(cpk, 2)}
+
+    es_r = df_b['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in df_b.columns else pd.Series(False, index=df_b.index)
+    originales, reenc = df_b[~es_r], df_b[es_r]
+    banda = (reenc['banda_reen'] if 'banda_reen' in reenc.columns else pd.Series('', index=reenc.index)).fillna('').astype(str).str.strip().str.upper()
+    banda = banda.where(~banda.isin(['', '-', 'NONE', 'NAN', 'NULL']), '')
+    filas = []
+    for nombre, g in reenc.groupby(banda):
+        fila = _metricas(g)
+        fila["banda"] = nombre or 'Sin banda registrada'
+        fila["sin_banda"] = not nombre
+        filas.append(fila)
+    filas.sort(key=lambda f: (f["sin_banda"], f["cpk"] is None, f["cpk"] if f["cpk"] is not None else 0))
+    return {"filas": filas,
+            "original": _metricas(originales) if not originales.empty else None,
+            "reencauches_sin_banda": int((banda == '').sum())}
+
+
 def agregar_rendimiento_y_cpk(grp: pd.DataFrame, col_desgaste: str = 'calc_desgaste_mm'):
     """
     Rendimiento y CPK proyectado de un grupo de llantas, igual en Diagnóstico, KPI 14 y PDF (auditoría H-31):
@@ -10883,19 +10945,32 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             km_reales_k13.append(_redondear(grp_mk['calc_km_rodados'].mean()))
             proy_final_k13.append(_redondear(grp_mk['calc_proy_total'].mean()))
 
+    # Originales y reencauches por separado: una reencauchada arranca con otra banda y otro precio,
+    # así que mezclarlas en un mismo promedio por marca no permite comparar
+    vida_k13 = _separar_por_vida(
+        df_rodante[~df_rodante['calc_es_asentamiento']] if (not df_patio.empty and es_full) else None, 'marca',
+        lambda g: {"km_reales": _redondear(g['calc_km_rodados'].mean()),
+                   "proyeccion_final": _redondear(g['calc_proy_total'].mean())})
+
     kpi_13 = {
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
         "labels": labels_k13,
         "km_reales": km_reales_k13,
-        "proyeccion_final": proy_final_k13
+        "proyeccion_final": proy_final_k13,
+        "por_vida": vida_k13
     }
+
+    # Reencauches por banda (misma base del KPI 13: llantas montadas con desgaste suficiente para proyectar)
+    por_banda_k14 = comportamiento_por_banda(
+        df_rodante[~df_rodante['calc_es_asentamiento']] if (not df_patio.empty and es_full) else None)
 
     # =========================================================================
     # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL) (Corrección 1: sobre df_patio para marca/eje/tipología)
     # =========================================================================
     labels_k14, proy_k14, kmmm_k14, cpk_k14 = [], [], [], []
     totales_k14 = {"proyeccion_km": None, "km_mm": None, "cpk": None}
+    vida_k14 = _separar_por_vida(None, '', None)
     if es_full:
         df_base_14 = (df[~df['calc_es_repuesto']] if not df.empty else df) if agrupar_kpi14 in ('fechas', 'inspeccion') else df_rodante
         if not df_base_14.empty:
@@ -10924,6 +10999,12 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
                 kmmm_g, cpk_g = agregar_rendimiento_y_cpk(grp_g)
                 kmmm_k14.append(_redondear(kmmm_g, 1))
                 cpk_k14.append(_redondear(cpk_g, 2))
+            def _metricas_14(g):
+                km_mm_g, cpk_gg = agregar_rendimiento_y_cpk(g)
+                return {"proyeccion_km": _redondear(g['calc_proy_total'].mean()),
+                        "km_mm": _redondear(km_mm_g, 1), "cpk": _redondear(cpk_gg, 2)}
+            vida_k14 = _separar_por_vida(df_validas, grp_col, _metricas_14,
+                                         (lambda v: _mes_a_espanol(str(v))) if agrupar_kpi14 in ('fechas', 'inspeccion') else None)
             kmmm_tot_14, cpk_tot_14 = agregar_rendimiento_y_cpk(df_validas)
             totales_k14 = {"proyeccion_km": _redondear(df_validas['calc_proy_total'].mean()),
                            "km_mm": _redondear(kmmm_tot_14, 1), "cpk": _redondear(cpk_tot_14, 2)}
@@ -10937,6 +11018,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "proyeccion_km": proy_k14,
         "km_mm": kmmm_k14,
         "cpk": cpk_k14,
+        "por_vida": vida_k14,
+        "por_banda": por_banda_k14,
         # Este CPK es el PROYECTADO (no el operativo): precio de la llanta / km proyectados al límite de retiro
         "cpk_tipo": "proyectado",
         "cpk_formula": "CPK proyectado = precio de la llanta ÷ km proyectados hasta el límite de retiro"
