@@ -650,3 +650,9 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
 #areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:last-child > :first-child { background-color: #f1f5f9; z-index: 2; }
 #areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:last-child th:first-child { min-width: 96px; }
 #areaTrabajo table:has(#tbodyKpi20_mrp) :is(th, td) { padding-left: 8px; padding-right: 8px; }
+
+/* Diagnóstico: franja roja a la izquierda si el vehículo tiene llantas para retiro; fondo rojo leve solo si el retiro
+   es en la dirección (lo urgente). Así el color no se pierde aunque casi todos los vehículos tengan algún retiro */
+#areaTrabajo .ta-tabla-diag tr.ta-fila-retiro > td:first-child { box-shadow: inset 3px 0 0 var(--ta-cr); }
+#areaTrabajo .ta-tabla-diag tbody tr.ta-fila-urgente > td { background-color: #fdeeec; }
+#areaTrabajo .ta-tabla-diag tbody tr.ta-fila-urgente:hover > td { background-color: #fbe3e0; }

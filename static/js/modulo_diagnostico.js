@@ -391,9 +391,13 @@
 
         // Mínima por eje y aviso de tipología (información de apoyo, en gris debajo del plan)
         const apoyo = resumenEjesDiagHtml(r);
+        // Marca de la fila: franja roja si hay llantas para retiro; además fondo rojo leve si el retiro es en la dirección
+        const retiroDir = (Array.isArray(r.Resumen_Ejes) ? r.Resumen_Ejes : []).some(e => e.eje === 'DIRECCIONAL' && Number(e.retiro) > 0);
+        const claseFila = retiroDir ? 'ta-fila-retiro ta-fila-urgente' : (cantCambios > 0 ? 'ta-fila-retiro' : '');
+        const tituloFila = retiroDir ? 'Retiro en el eje de dirección: atender primero' : (cantCambios > 0 ? 'Tiene llantas para retiro' : '');
 
         return `
-          <tr>
+          <tr class="${claseFila}"${tituloFila ? ` title="${tituloFila}"` : ''}>
             <td class="placa">
               ${escapeHtml(r['Vehículo/Placa'])}
               ${r.Fecha ? `<span class="ta-fecha-fila">${fmtFecha(r.Fecha)}</span>` : ''}
