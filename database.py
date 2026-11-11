@@ -9612,6 +9612,28 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
             vehiculos_corte.append((lim_posicion.estructura(str(grp['tipologia'].iloc[0] or ''), grp['posicion'].tolist()),
                                     {to_int(r['posicion']): r for _, r in grp.iterrows()}))
 
+    # Precio de referencia por medida para el presupuesto: la mediana de lo que el cliente pagó por las llantas
+    # que tiene montadas (nuevas para la dirección, reencauche para el resto; sin precio de reencauche se usa
+    # el de nueva). Sin ningún precio el presupuesto queda en None («sin precio»), no en $ 0.
+    precios_ref = {}
+    if df_corte is not None and not df_corte.empty and 'precio' in df_corte.columns:
+        d_p = df_corte[['dimension', 'vida', 'precio']].copy()
+        d_p['_pr'] = pd.to_numeric(d_p['precio'], errors='coerce')
+        d_p = d_p[d_p['_pr'] > 0]
+        d_p['_dim'] = d_p['dimension'].astype(str).str.strip().str.upper()
+        d_p['_reenc'] = d_p['vida'].apply(lambda v: vida_llanta(v) != 'Original')
+        for (dim_p, es_reenc), g_p in d_p.groupby(['_dim', '_reenc']):
+            precios_ref[(dim_p, bool(es_reenc))] = float(g_p['_pr'].median())
+
+    def presupuesto(dim, n_nuevas, n_otras):
+        if n_nuevas + n_otras <= 0:
+            return 0.0
+        p_nueva = precios_ref.get((dim.upper(), False))
+        p_reenc = precios_ref.get((dim.upper(), True)) or p_nueva
+        if (n_nuevas and not p_nueva) or (n_otras and not p_reenc):
+            return None
+        return round(n_nuevas * (p_nueva or 0) + n_otras * (p_reenc or 0))
+
     filas = []
     for dim in dimensiones:
         dem_dir, dem_otros, dem_proyectada, sin_ritmo, retiradas = 0, 0, 0, 0, 0
@@ -9690,6 +9712,9 @@ def calcular_matriz_mrp(llantas, df_corte: pd.DataFrame, cfg: dict, dimensiones,
             'stock_disponible_util': stock_disponible, 'stock_disponible': stock_disponible,
             'stock_util_no_direccional': stock_util_no_dir,
             'compra_neta_sugerida': compra_nuevas_dir + compra_adicional,
+            'presupuesto_estimado_cop': presupuesto(dim, compra_nuevas_dir, compra_adicional),
+            'precio_ref_nueva': precios_ref.get((dim.upper(), False)),
+            'precio_ref_reencauche': precios_ref.get((dim.upper(), True)),
             'compra_nuevas_direccional': compra_nuevas_dir,
             'compra_adicional_reencauche': compra_adicional, 'compra_traccion_reencauche': compra_adicional,
         })

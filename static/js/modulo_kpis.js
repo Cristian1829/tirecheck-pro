@@ -3052,7 +3052,7 @@
       // 2. Gran Tabla Maestra MRP de 12 Columnas
       if (tbody) {
         if (!d.matriz_mrp || d.matriz_mrp.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="12" class="p-6 text-center text-slate-400">No hay datos de inventario o necesidades para los filtros seleccionados.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="14" class="p-6 text-center text-slate-400">No hay datos de inventario o necesidades para los filtros seleccionados.</td></tr>';
         } else {
           tbody.innerHTML = d.matriz_mrp.map(m => {
             const tieneCompra = (m.compra_neta_sugerida || 0) > 0;
@@ -3069,10 +3069,12 @@
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b2)}</td>
                 <td class="p-2.5 text-center text-slate-600 font-mono">${formatCO_Miles(m.stock_b3_util)} <span class="text-[9px] text-slate-400">(${escapeHtml(m.stock_b3)})</span></td>
                 <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b4)}</td>
+                <td class="p-2.5 text-center font-bold text-slate-700 font-mono">${formatCO_Miles(m.stock_b5)}</td>
                 <td class="p-2.5 text-center font-black bg-emerald-50 text-emerald-700 font-mono">${formatCO_Miles(m.stock_disponible)}</td>
+                <td class="p-2.5 text-center font-bold text-emerald-700 font-mono" title="Desecho estimado: ${escapeHtml(m.desecho_proyectado || 0)}">${formatCO_Miles(m.retorno_reencauche_proyectado || 0)}</td>
                 <!-- Compra -->
                 <td class="p-2.5 text-center font-black ${tieneCompra ? 'bg-amber-100 text-amber-900 border border-amber-300 rounded-lg' : 'text-slate-400'} font-mono">${formatCO_Miles(m.compra_neta_sugerida)}</td>
-                <td class="p-2.5 text-right font-black text-indigo-700 font-mono">${formatCO_Moneda(m.presupuesto_estimado_cop)}</td>
+                <td class="p-2.5 text-right font-black text-indigo-700 font-mono" title="${m.precio_ref_nueva ? `Precio de referencia: nueva ${formatCO_Moneda(m.precio_ref_nueva)}${m.precio_ref_reencauche ? ` · reencauche ${formatCO_Moneda(m.precio_ref_reencauche)}` : ''}` : 'Sin precios registrados para esta medida'}">${(m.presupuesto_estimado_cop === null || m.presupuesto_estimado_cop === undefined) ? (tieneCompra ? '<span class="text-slate-400 font-semibold">Sin precio</span>' : formatCO_Moneda(0)) : formatCO_Moneda(m.presupuesto_estimado_cop)}</td>
               </tr>
             `;
           }).join('');

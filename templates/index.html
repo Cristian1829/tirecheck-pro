@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-24">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-28">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -2827,30 +2827,32 @@
                 <!-- Bloque Demanda (Rojo oscuro) -->
                 <th colspan="5" class="p-2 text-center bg-rose-900 border-r border-rose-800">1. DEMANDA Y NECESIDADES DE FLOTA</th>
                 <!-- Bloque Stock Bodegas (Verde esmeralda) -->
-                <th colspan="5" class="p-2 text-center bg-emerald-900 border-r border-emerald-800">2. STOCK DISPONIBLE EN BODEGAS</th>
+                <th colspan="7" class="p-2 text-center bg-emerald-900 border-r border-emerald-800">2. STOCK DISPONIBLE EN BODEGAS</th>
                 <!-- Bloque Orden de Compra (Índigo) -->
                 <th colspan="2" class="p-2 text-center bg-indigo-950">3. ORDEN DE COMPRA SUGERIDA</th>
               </tr>
               <tr class="bg-slate-900 text-slate-200 text-[11px]">
                 <!-- Demanda -->
-                <th class="p-2.5">Dimensión / Medida</th>
-                <th class="p-2.5 text-center">Demanda Retiros</th>
-                <th class="p-2.5 text-center">Bajas FVU</th>
-                <th class="p-2.5 text-center">Stock Seguridad</th>
-                <th class="p-2.5 text-center bg-rose-950 text-rose-300 font-black">NECESIDAD BRUTA</th>
+                <th class="p-2.5">Medida</th>
+                <th class="p-2.5 text-center" title="Llantas que llegan al límite de retiro dentro del horizonte (incluye ajuste del par direccional)">Retiros</th>
+                <th class="p-2.5 text-center" title="Bajas por fin de vida útil a reponer">Bajas FVU</th>
+                <th class="p-2.5 text-center" title="Stock de seguridad configurado para la medida">Seguridad</th>
+                <th class="p-2.5 text-center bg-rose-950 text-rose-300 font-black" title="Retiros + bajas FVU + stock de seguridad">Necesidad</th>
                 <!-- Bodegas -->
-                <th class="p-2.5 text-center">B1 (Nuevas)</th>
-                <th class="p-2.5 text-center">B2 (Recambio)</th>
-                <th class="p-2.5 text-center">B3 (Planta &times;0.90)</th>
-                <th class="p-2.5 text-center">B4 (Reenc. Listas)</th>
-                <th class="p-2.5 text-center bg-emerald-950 text-emerald-300 font-black">STOCK DISPONIBLE</th>
+                <th class="p-2.5 text-center" title="Bodega 1: llantas nuevas">B1 Nuevas</th>
+                <th class="p-2.5 text-center" title="Bodega 2: recambio sobre el límite de retiro">B2 Recambio</th>
+                <th class="p-2.5 text-center" title="Bodega 3: en planta de reencauche, ponderado por el % de aprobación">B3 Planta</th>
+                <th class="p-2.5 text-center" title="Bodega 4: reencauchadas listas para montar">B4 Reenc.</th>
+                <th class="p-2.5 text-center" title="Bodega 5: en reparación">B5 Repar.</th>
+                <th class="p-2.5 text-center bg-emerald-950 text-emerald-300 font-black" title="B1 + B2 útiles + B3 ponderado + B4 + B5">Stock</th>
+                <th class="p-2.5 text-center" title="De las llantas que se retiran, las que volverán reencauchadas según el % de aprobación del cliente. Cubren ejes que no son de dirección.">Vuelven reenc.</th>
                 <!-- Compra -->
-                <th class="p-2.5 text-center bg-indigo-900 text-amber-300 font-black">COMPRA SUGERIDA</th>
-                <th class="p-2.5 text-right bg-indigo-900 text-white font-black">PRESUPUESTO ($ COP)</th>
+                <th class="p-2.5 text-center bg-indigo-900 text-amber-300 font-black" title="Necesidad − stock − las que vuelven reencauchadas (la dirección solo se cubre con nuevas)">Comprar</th>
+                <th class="p-2.5 text-right bg-indigo-900 text-white font-black" title="Compra × precio de referencia de la medida (mediana de lo que pagó el cliente)">Presupuesto</th>
               </tr>
             </thead>
             <tbody id="tbodyKpi20_mrp" class="divide-y divide-slate-100 bg-white font-medium">
-              <tr><td colspan="12" class="p-6 text-center text-slate-400">Calculando balance MRP...</td></tr>
+              <tr><td colspan="14" class="p-6 text-center text-slate-400">Calculando balance MRP...</td></tr>
             </tbody>
           </table>
         </div>
@@ -6867,18 +6869,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-24"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-24"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-24"></script>
-  <script src="/static/js/app_init.js?v=rediseno-24"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-24"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-24"></script>
+  <script src="/static/js/app_core.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-28"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-28"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-28"></script>
+  <script src="/static/js/app_init.js?v=rediseno-28"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-28"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-28"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

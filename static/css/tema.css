@@ -632,3 +632,21 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
 @media (min-width: 640px) {
   #areaTrabajo [id^="contenedorPaginacion"] { justify-content: space-between; }
 }
+
+/* Encabezados destacados dentro de una fila de títulos clara (KPI 20 y MRP de Bodegas): antes conservaban el fondo
+   oscuro y el tema les ponía texto oscuro, así que no se leían. Ahora: fondo suave del color del grupo y texto del color */
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) th:is([class*="bg-rose-9"], [class*="bg-emerald-9"], [class*="bg-indigo-9"], [class*="bg-blue-9"], [class*="bg-slate-9"]) { background-color: #f1f5f9; color: #334155; }
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) th.font-black[class*="bg-rose-9"] { background-color: #fce7e4; color: var(--ta-cr); }
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) th.font-black[class*="bg-emerald-9"] { background-color: #e3f4e8; color: var(--ta-ok); }
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) th.font-black:is([class*="bg-indigo-9"], [class*="bg-blue-9"]) { background-color: #eef2fb; color: var(--ta-accion); }
+#areaTrabajo :is(thead.bg-slate-900, tr.bg-slate-900) th.font-black:is([class*="bg-indigo-9"], [class*="bg-blue-9"])[class*="text-amber-"] { background-color: #fdf0d5; color: #a45a00; }
+
+/* KPI 20: catorce columnas; los títulos de la segunda fila bajan a dos líneas para que la compra y el presupuesto
+   se vean sin desplazar la tabla en pantallas de PC */
+#areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:last-child th { white-space: normal; line-height: 1.25; min-width: 58px; vertical-align: middle; cursor: help; }
+#areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:first-child th { white-space: normal; }
+/* La medida queda fija a la izquierda si hay que desplazar la tabla */
+#areaTrabajo table:has(#tbodyKpi20_mrp) tbody tr > :first-child:not([colspan]), #areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:last-child > :first-child { position: sticky; left: 0; z-index: 1; background-color: #fff; }
+#areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:last-child > :first-child { background-color: #f1f5f9; z-index: 2; }
+#areaTrabajo table:has(#tbodyKpi20_mrp) thead tr:last-child th:first-child { min-width: 96px; }
+#areaTrabajo table:has(#tbodyKpi20_mrp) :is(th, td) { padding-left: 8px; padding-right: 8px; }
