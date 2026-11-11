@@ -7855,6 +7855,57 @@ def _separar_por_vida(df_g, col, metricas, fmt_etiqueta=None) -> dict:
     return out
 
 
+_NOMBRE_EJE = {ee.DIRECCIONAL: 'Direccional', ee.TRACCION: 'Tracción', ee.LIBRE: 'Libre / Arrastre', ee.REPUESTO: 'Repuesto'}
+
+
+def rendimiento_por_referencia(df_b: pd.DataFrame) -> dict:
+    """
+    Rendimiento separado en dos universos que no se mezclan:
+    - Originales: marca + diseño + medida + eje (el producto del fabricante).
+    - Reencauches: banda + medida + eje, sin importar la marca de la carcasa (lo que se evalúa es la banda).
+    Indicadores de cada grupo: llantas, km rodados y proyección promedio, km/mm (Σkm / Σmm) y CPK proyectado
+    (Σprecio / Σkm proyectados; en el reencauche el precio es el del servicio de reencauche).
+    En los reencauches se agrega el CPK de la llanta original de la misma medida y eje como referencia.
+    """
+    vacio = {"originales": [], "reencauches": [], "reencauches_sin_banda": 0}
+    if df_b is None or df_b.empty:
+        return vacio
+    d = df_b.copy()
+    txt = lambda col: (d[col] if col in d.columns else pd.Series('', index=d.index)).fillna('').astype(str).str.strip().str.upper()
+    d['_marca'], d['_diseno'], d['_dim'] = txt('marca'), txt('diseno'), txt('dimension')
+    banda = txt('banda_reen')
+    d['_banda'] = banda.where(~banda.isin(['', '-', 'NONE', 'NAN', 'NULL']), '')
+    d['_eje'] = (d['calc_eje'] if 'calc_eje' in d.columns else pd.Series('', index=d.index)).map(_NOMBRE_EJE).fillna('Sin eje')
+    es_r = d['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in d.columns else pd.Series(False, index=d.index)
+
+    def _metricas(g):
+        km_mm, cpk = agregar_rendimiento_y_cpk(g)
+        return {"llantas": int(len(g)),
+                "km_reales": _redondear(pd.to_numeric(g['calc_km_rodados'], errors='coerce').mean()),
+                "proyeccion": _redondear(pd.to_numeric(g['calc_proy_total'], errors='coerce').mean()),
+                "km_mm": _redondear(km_mm, 1), "cpk": _redondear(cpk, 2)}
+
+    def _orden(f):  # más llantas primero (muestra más representativa); luego la de mayor proyección
+        return (-f["llantas"], -(f["proyeccion"] or 0))
+
+    originales = []
+    for (marca, diseno, dim, eje), g in d[~es_r].groupby(['_marca', '_diseno', '_dim', '_eje']):
+        originales.append({"marca": marca or 'Sin marca', "diseno": diseno, "dimension": dim, "eje": eje, **_metricas(g)})
+    originales.sort(key=_orden)
+    cpk_orig = {}
+    for (dim, eje), g in d[~es_r].groupby(['_dim', '_eje']):
+        cpk_orig[(dim, eje)] = _redondear(agregar_rendimiento_y_cpk(g)[1], 2)
+
+    reencauches = []
+    for (banda_g, dim, eje), g in d[es_r].groupby(['_banda', '_dim', '_eje']):
+        fila = {"banda": banda_g or 'Sin banda registrada', "sin_banda": not banda_g, "dimension": dim, "eje": eje,
+                "carcasas": sorted(x for x in g['_marca'].unique().tolist() if x),
+                "cpk_original_misma_medida": cpk_orig.get((dim, eje)), **_metricas(g)}
+        reencauches.append(fila)
+    reencauches.sort(key=lambda f: (f["sin_banda"],) + _orden(f))
+    return {"originales": originales, "reencauches": reencauches, "reencauches_sin_banda": int((d.loc[es_r, '_banda'] == '').sum())}
+
+
 def comportamiento_por_banda(df_b: pd.DataFrame) -> dict:
     """
     Cómo rinde cada banda de reencauche puesta en la flota, frente a la llanta original de la misma base:
@@ -10989,6 +11040,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # Reencauches por banda (misma base del KPI 13: llantas montadas con desgaste suficiente para proyectar)
     por_banda_k14 = comportamiento_por_banda(
         df_rodante[~df_rodante['calc_es_asentamiento']] if (not df_patio.empty and es_full) else None)
+    # Originales (marca · diseño · medida · eje) y reencauches (banda · medida · eje) por separado
+    por_referencia = rendimiento_por_referencia(
+        df_rodante[~df_rodante['calc_es_asentamiento']] if (not df_patio.empty and es_full) else None)
+    kpi_13["por_referencia"] = por_referencia
 
     # =========================================================================
     # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL) (Corrección 1: sobre df_patio para marca/eje/tipología)
@@ -11045,6 +11100,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "cpk": cpk_k14,
         "por_vida": vida_k14,
         "por_banda": por_banda_k14,
+        "por_referencia": por_referencia,
         # Este CPK es el PROYECTADO (no el operativo): precio de la llanta / km proyectados al límite de retiro
         "cpk_tipo": "proyectado",
         "cpk_formula": "CPK proyectado = precio de la llanta ÷ km proyectados hasta el límite de retiro"

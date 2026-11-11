@@ -1931,9 +1931,9 @@
       };
     }
     // «Originales: A con X. Reencauches: B con Y.»
-    function fraseVida(pv, campo, menorEsMejor, texto) {
+    function fraseVida(pv, campo, menorEsMejor, texto, vidas = ['original', 'reencauche']) {
       const partes = [];
-      ['original', 'reencauche'].forEach(vida => {
+      vidas.forEach(vida => {
         const serie = (pv[vida] || {})[campo] || [];
         const i = taIndiceMayor(serie, menorEsMejor);
         if (i < 0 || !(Number(serie[i]) > 0)) return;
@@ -2006,8 +2006,9 @@
       if (frase) taLectura('canvasKpi13_comparativo', 'in', `Mayor proyección al retiro. ${frase}.`);
     }
 
-    function renderChartKpi14Vida(pv) {
-      const hayReenc = ['proyeccion_km', 'km_mm', 'cpk'].some(c => tieneDatosVida((pv.reencauche || {})[c]));
+    function renderChartKpi14Vida(pv, soloOriginales = false) {
+      // Con «marca» los reencauches no se muestran: su marca es la de la carcasa y se comparan por banda en la tabla
+      const hayReenc = !soloOriginales && ['proyeccion_km', 'km_mm', 'cpk'].some(c => tieneDatosVida((pv.reencauche || {})[c]));
       const vidas = hayReenc ? ['original', 'reencauche'] : ['original'];
       const graficas = [
         { clave: 'kpi14_proy', canvas: 'canvasKpi14_proy', campo: 'proyeccion_km', menor: false,
@@ -2052,7 +2053,7 @@
             }
           }
         });
-        const f = fraseVida(pv, g.campo, g.menor, g.fmt);
+        const f = fraseVida(pv, g.campo, g.menor, g.fmt, vidas);
         if (f) taLectura(g.canvas, 'in', g.frase(f));
       });
     }
@@ -2062,6 +2063,8 @@
       destruirChartSuite('kpi13_comparativo');
       const ctx = document.getElementById('canvasKpi13_comparativo');
       if (!ctx || !ds) return;
+      destruirChartSuite('kpi13_reencauche');
+      if (ds.por_referencia) { renderKpi13Referencia(ds.por_referencia); return; }
       if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi13Vida(ds.por_vida); return; }
 
       // Rediseño: lo recorrido en azul fuerte y la proyección en azul claro
@@ -2134,6 +2137,161 @@
       }
     }
 
+    // ===== Rendimiento por referencia: originales (marca · diseño · medida · eje) y reencauches (banda · medida · eje).
+    // Son dos universos que no se mezclan: en un reencauche se evalúa la banda, no la carcasa sobre la que va montada.
+    const MAX_REF_GRAFICA = 10;
+    const nombreRefOrig = (f) => [`${f.marca}${f.diseno ? ' ' + f.diseno : ''}`, `${f.dimension} · ${f.eje}`];
+    const nombreRefReenc = (f) => [f.banda, `${f.dimension} · ${f.eje}`];
+    const textoRef = (partes) => partes.join(' · ');
+
+    function graficaReferencia(canvasId, clave, altoId, vacioId, notaId, filas, nombre, fuerte, suave) {
+      destruirChartSuite(clave);
+      const vacio = document.getElementById(vacioId), alto = document.getElementById(altoId), nota = document.getElementById(notaId);
+      const conProy = (filas || []).filter(f => Number(f.proyeccion) > 0);
+      if (vacio) vacio.classList.toggle('hidden', conProy.length > 0);
+      if (alto) alto.classList.toggle('hidden', conProy.length === 0);
+      if (!conProy.length) { taLectura(canvasId, null, ''); if (nota) nota.classList.add('hidden'); return null; }
+      const top = conProy.slice(0, MAX_REF_GRAFICA);
+      if (nota) {
+        nota.classList.toggle('hidden', conProy.length <= MAX_REF_GRAFICA);
+        nota.textContent = `Se muestran las ${MAX_REF_GRAFICA} referencias con más llantas; las ${conProy.length - MAX_REF_GRAFICA} restantes están en la tabla de KPI 14.`;
+      }
+      if (alto) alto.style.height = `${Math.max(160, 52 * top.length + 50)}px`;
+      const u = uMed();
+      const rodado = top.map(f => Math.min(Number(f.km_reales) || 0, Number(f.proyeccion)));
+      const falta = top.map((f, i) => Math.max(0, Number(f.proyeccion) - rodado[i]));
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return top;
+      // En pantallas angostas la etiqueta se acorta: «295/80 · Trac» en lugar de «295/80R22.5 · Tracción»
+      const angosto = (ctx.parentElement?.clientWidth || 999) < 520;
+      const corto = { 'Direccional': 'Dir', 'Tracción': 'Trac', 'Libre / Arrastre': 'Libre', 'Repuesto': 'Rep' };
+      const etiquetaEje = (l) => angosto ? [l[0].length > 13 ? l[0].slice(0, 12) + '…' : l[0], l[1].replace(/R\d+(\.\d+)?/i, '').replace(/· (.+)$/, (m, e) => '· ' + (corto[e] || e))] : l;
+      const etiquetaFin = pillDatalabelConfig(undefined, undefined, (v, c) => `${formatCO_Miles(top[c.dataIndex].proyeccion)} ${u}`);
+      instanciasChartsSuite[clave] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: top.map(f => etiquetaEje(nombre(f))),
+          datasets: [
+            { label: 'Rodado', data: rodado, backgroundColor: fuerte, borderRadius: 4, barThickness: 20, datalabels: { display: false } },
+            { label: 'Falta hasta el retiro', data: falta, backgroundColor: suave, borderRadius: 4, barThickness: 20, datalabels: etiquetaFin }
+          ]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 4, right: 78, bottom: 4, left: 4 } },
+          animation: animacionCascadaStandard,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.94)', cornerRadius: 10, padding: 12,
+              callbacks: {
+                title: (items) => textoRef(nombre(top[items[0].dataIndex])),
+                label: () => null,
+                afterBody: (items) => {
+                  const f = top[items[0].dataIndex];
+                  const lineas = [`Llantas: ${f.llantas}`, `Rodado prom.: ${formatCO_Miles(f.km_reales)} ${u}`, `Proyección: ${formatCO_Miles(f.proyeccion)} ${u}`,
+                                  `Km por mm: ${f.km_mm != null ? formatCO_Decimal(f.km_mm, 1) : '—'}`, `Costo por ${u}: ${f.cpk > 0 ? '$ ' + formatCO_Decimal(f.cpk, 2) : 'sin precio'}`];
+                  if (f.carcasas && f.carcasas.length) lineas.push(`Carcasas: ${f.carcasas.join(', ')}`);
+                  return lineas;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true, beginAtZero: true, grace: '8%', ticks: { callback: (v) => formatCO_Miles(v), font: { size: 9 } } },
+            y: { stacked: true, ticks: { font: { size: 10, weight: 'bold' } } }
+          }
+        }
+      });
+      return top;
+    }
+
+    function renderKpi13Referencia(pr) {
+      const u = uMed();
+      const orig = graficaReferencia('canvasKpi13_comparativo', 'kpi13_comparativo', 'altoKpi13Orig', 'vacioKpi13Orig', 'notaKpi13Orig',
+                                     pr.originales, nombreRefOrig, TA_G.azul, TA_G.azulClaro);
+      const reenc = graficaReferencia('canvasKpi13_reencauche', 'kpi13_reencauche', 'altoKpi13Reenc', 'vacioKpi13Reenc', 'notaKpi13Reenc',
+                                      pr.reencauches, nombreRefReenc, TA_G.ok, TA_G.okClaro);
+      const mejor = (filas) => (filas || []).filter(f => Number(f.proyeccion) > 0).sort((a, b) => b.proyeccion - a.proyeccion)[0];
+      const mo = mejor(pr.originales);
+      if (orig && mo) taLectura('canvasKpi13_comparativo', 'in', `Mayor proyección: ${textoRef(nombreRefOrig(mo))}, ${formatCO_Miles(mo.proyeccion)} ${u} (lleva ${formatCO_Miles(mo.km_reales)}).`);
+      if (reenc) {
+        // La misma banda en varias medidas: se cuenta cuánto proyecta en cada una (BDM 295 proyecta 50.000, en 315 proyecta 30.000)
+        const mr = mejor(pr.reencauches.filter(f => !f.sin_banda)) || mejor(pr.reencauches);
+        const otras = pr.reencauches.filter(f => f.banda === mr.banda && f !== mr && Number(f.proyeccion) > 0);
+        let t = `Mayor proyección: ${mr.banda} en ${mr.dimension} (${mr.eje.toLowerCase()}), ${formatCO_Miles(mr.proyeccion)} ${u}`;
+        if (otras.length) t += `; la misma banda en ${otras.slice(0, 2).map(f => `${f.dimension} (${f.eje.toLowerCase()}) proyecta ${formatCO_Miles(f.proyeccion)}`).join(' y en ')}`;
+        taLectura('canvasKpi13_reencauche', 'in', t + '.');
+      }
+    }
+
+    function renderTablasReferenciaKpi14(pr) {
+      const u = uMed();
+      const num = (v, d = 0) => (v === null || v === undefined) ? '—' : (d ? formatCO_Decimal(v, d) : formatCO_Miles(v));
+      const cpk = (v) => v > 0 ? `$ ${formatCO_Decimal(v, 2)}` : '<span class="text-slate-400">Sin precio</span>';
+      const vacia = (n, txt) => `<tr><td colspan="${n}" class="p-4 text-center text-slate-400">${txt}</td></tr>`;
+      const nota = (id, texto, ok) => {
+        const e = document.getElementById(id);
+        if (!e) return;
+        e.classList.toggle('hidden', !texto);
+        e.className = `${texto ? '' : 'hidden '}text-[12px] px-3 py-2 rounded-xl border ${ok ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : 'bg-blue-50 border-blue-100 text-slate-700'}`;
+        e.textContent = texto || '';
+      };
+      const orig = (pr && pr.originales) || [];
+      const reenc = (pr && pr.reencauches) || [];
+      const mejorCpk = (filas) => Math.min(...filas.map(f => Number(f.cpk)).filter(v => v > 0));
+      const mcO = mejorCpk(orig), mcR = mejorCpk(reenc);
+
+      const tO = document.getElementById('tbodyRefOrigKpi14');
+      if (tO) tO.innerHTML = orig.length ? orig.map(f => `
+        <tr>
+          <td class="font-bold">${escapeHtml(f.marca)}${f.diseno ? ` <span class="text-slate-500 font-semibold">${escapeHtml(f.diseno)}</span>` : ''}</td>
+          <td>${escapeHtml(f.dimension)}</td><td>${escapeHtml(f.eje)}</td>
+          <td class="text-right">${num(f.llantas)}</td>
+          <td class="text-right">${num(f.km_reales)} ${u}</td>
+          <td class="text-right">${num(f.proyeccion)} ${u}</td>
+          <td class="text-right">${num(f.km_mm, 1)}</td>
+          <td class="text-right${Number(f.cpk) === mcO ? ' font-bold' : ''}">${cpk(f.cpk)}</td>
+        </tr>`).join('') : vacia(8, 'No hay llantas originales con desgaste suficiente para proyectar.');
+
+      const frente = (f) => {
+        const ref = Number(f.cpk_original_misma_medida);
+        if (!(ref > 0) || !(f.cpk > 0)) return '<span class="text-slate-400">Sin dato</span>';
+        const p = Math.round((Number(f.cpk) / ref - 1) * 100);
+        if (p === 0) return '<span class="ta-pastilla ok">Igual que la original</span>';
+        return p < 0 ? `<span class="ta-pastilla ok">${Math.abs(p)} % más barata</span>` : `<span class="ta-pastilla cr">${p} % más cara</span>`;
+      };
+      const tR = document.getElementById('tbodyRefReencKpi14');
+      if (tR) tR.innerHTML = reenc.length ? reenc.map(f => `
+        <tr>
+          <td class="font-bold">${escapeHtml(f.banda)}${f.sin_banda ? ' <span class="text-[10px] text-amber-700">· falta registrar la banda</span>' : ''}</td>
+          <td>${escapeHtml(f.dimension)}</td><td>${escapeHtml(f.eje)}</td>
+          <td class="text-right" title="${escapeHtml(f.carcasas && f.carcasas.length ? 'Carcasas: ' + f.carcasas.join(', ') : '')}">${num(f.llantas)}</td>
+          <td class="text-right">${num(f.km_reales)} ${u}</td>
+          <td class="text-right">${num(f.proyeccion)} ${u}</td>
+          <td class="text-right">${num(f.km_mm, 1)}</td>
+          <td class="text-right${Number(f.cpk) === mcR ? ' font-bold' : ''}">${cpk(f.cpk)}</td>
+          <td>${frente(f)}</td>
+        </tr>`).join('') : vacia(9, 'No hay reencauches con desgaste suficiente para proyectar.');
+
+      // Conclusiones: la referencia más barata por km de cada universo
+      const barata = (filas) => filas.filter(f => f.cpk > 0).sort((a, b) => a.cpk - b.cpk)[0];
+      const bo = barata(orig), br = barata(reenc.filter(f => !f.sin_banda));
+      nota('notaRefOrigKpi14', bo ? `Más barata por ${u}: ${textoRef(nombreRefOrig(bo))}, $ ${formatCO_Decimal(bo.cpk, 2)}.` : '', false);
+      let tr = '';
+      if (br) {
+        tr = `Banda más barata por ${u}: ${textoRef(nombreRefReenc(br))}, $ ${formatCO_Decimal(br.cpk, 2)}`;
+        const ref = Number(br.cpk_original_misma_medida);
+        if (ref > 0) {
+          const p = Math.round((1 - br.cpk / ref) * 100);
+          tr += p > 0 ? `, ${p} % menos que una original de la misma medida y eje` : (p < 0 ? `, ${Math.abs(p)} % más que una original de la misma medida y eje` : '');
+        }
+        tr += '.';
+      }
+      if (pr && pr.reencauches_sin_banda > 0) tr += ` ${pr.reencauches_sin_banda} reencauche(s) sin banda registrada.`;
+      nota('notaRefReencKpi14', tr.trim(), !!(br && Number(br.cpk_original_misma_medida) > br.cpk));
+    }
+
     // Reencauches por banda: gráfica de costo por km (con la original de referencia en gris) y tabla con todas las medidas
     function renderBandasKpi14(pb) {
       const filas = (pb && pb.filas) || [];
@@ -2141,7 +2299,7 @@
       const vacio = document.getElementById('vacioBandasKpi14');
       const contenido = document.getElementById('contenidoBandasKpi14');
       const tbody = document.getElementById('tbodyBandasKpi14');
-      if (!tbody) return;
+      if (!tbody) return;  // la sección por banda fue reemplazada por las tablas por referencia
       const hay = filas.length > 0;
       if (vacio) vacio.classList.toggle('hidden', hay);
       if (contenido) contenido.classList.toggle('hidden', !hay);
@@ -2234,8 +2392,11 @@
         sel.value = ds.agrupacion_actual;
       }
 
-      renderBandasKpi14(ds.por_banda);
-      if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi14Vida(ds.por_vida); return; }
+      if (ds.por_referencia) renderTablasReferenciaKpi14(ds.por_referencia); else renderBandasKpi14(ds.por_banda);
+      const soloOriginales = (ds.agrupacion_actual || 'marca') === 'marca';
+      const notaMarca = document.getElementById('notaMarcaKpi14');
+      if (notaMarca) notaMarca.classList.toggle('hidden', !soloOriginales);
+      if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi14Vida(ds.por_vida, soloOriginales); return; }
       const labels = ds.labels || [];
 
       // 1. Proyección Km Final (Índigo)

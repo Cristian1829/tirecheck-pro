@@ -82,3 +82,34 @@ def test_reencauches_por_banda_con_referencia_original(test_db):
     # Referencia: la llanta original de la misma base
     assert pb["original"]["llantas"] == 1 and pb["original"]["km_mm"] == 5000.0
     assert pb["reencauches_sin_banda"] == 0
+
+
+def test_referencia_originales_por_marca_diseno_medida_y_eje(test_db):
+    _cfg("CLI REF", psi_objetivo_traccion=100.0)
+    _insp("CLI REF", "REF001", "R-1", posicion=1, kilometraje=150000, km_montaje=100000, prof_ext=11, prof_cent=11,
+          prof_int=11, prof_inicial=21, precio=1800000, marca="HANKOOK", diseno="AM09")
+    _insp("CLI REF", "REF001", "R-2", posicion=5, kilometraje=150000, km_montaje=100000, prof_ext=11, prof_cent=11,
+          prof_int=11, prof_inicial=21, precio=1800000, marca="HANKOOK", diseno="AM09")
+    pr = database.obtener_suite_completa_20_kpis({"cliente": "CLI REF"})["kpi_14"]["por_referencia"]
+    claves = {(f["marca"], f["diseno"], f["dimension"], f["eje"]) for f in pr["originales"]}
+    # La misma referencia en dirección y en tracción va en filas distintas
+    assert ("HANKOOK", "AM09", "295/80R22.5", "Direccional") in claves
+    assert ("HANKOOK", "AM09", "295/80R22.5", "Tracción") in claves
+    assert pr["reencauches"] == []
+
+
+def test_referencia_reencauche_agrupa_la_banda_sin_importar_la_carcasa(test_db):
+    _cfg("CLI BAN2", psi_objetivo_traccion=100.0)
+    for i, carcasa in enumerate(["DOUBLE COIN", "HANKOOK", "JK TYRE"]):
+        _insp("CLI BAN2", f"BB{i:04d}", f"BB-{i}", kilometraje=120000, km_montaje=100000, prof_ext=12, prof_cent=12,
+              prof_int=12, prof_inicial=16, precio=600000, vida="R1", banda_reen="BANDAG BDM", marca=carcasa)
+    # Misma banda en otra medida: fila aparte
+    _insp("CLI BAN2", "BB0009", "BB-9", kilometraje=110000, km_montaje=100000, prof_ext=12, prof_cent=12, prof_int=12,
+          prof_inicial=16, precio=600000, vida="R1", banda_reen="BANDAG BDM", dimension="315/80R22.5")
+    pr = database.obtener_suite_completa_20_kpis({"cliente": "CLI BAN2"})["kpi_14"]["por_referencia"]
+    filas = {(f["banda"], f["dimension"]): f for f in pr["reencauches"]}
+    f295 = filas[("BANDAG BDM", "295/80R22.5")]
+    assert f295["llantas"] == 3 and f295["carcasas"] == ["DOUBLE COIN", "HANKOOK", "JK TYRE"]
+    assert f295["km_reales"] == 20000
+    assert filas[("BANDAG BDM", "315/80R22.5")]["llantas"] == 1
+    assert pr["originales"] == []

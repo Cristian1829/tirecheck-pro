@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-29">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-33">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -2485,22 +2485,37 @@
       </div>
 
       <!-- KPI 13: Km Rodados Reales vs Proyección Final al Retiro -->
-      <article data-kpi="kpi_13" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-          <div>
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 13</span>
-              <h4 class="text-sm font-black text-slate-900">Recorrido actual y proyección al retiro</h4>
-            </div>
-            <p class="text-[11px] text-slate-400">Cuánto han rodado las llantas y cuánto alcanzarán antes de llegar al límite de retiro. Tono oscuro: recorrido · tono claro: proyección.</p>
-            <p class="text-[11px] font-semibold text-slate-600 mt-1"><span class="inline-flex items-center gap-1.5 mr-3"><span class="w-2.5 h-2.5 rounded-sm" style="background:#1d4ed8"></span>Originales</span><span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#15803d"></span>Reencauches</span></p>
+      <article data-kpi="kpi_13" class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="pb-2 border-b border-slate-100">
+          <div class="flex items-center space-x-1.5">
+            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 13</span>
+            <h4 class="text-sm font-black text-slate-900">Rodado y proyección por referencia</h4>
           </div>
-          <button type="button" onclick="exportarGraficoPngHd('canvasKpi13_comparativo', 'KPI13_Km_vs_Proyeccion')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all">
-            <i class="fa-solid fa-camera"></i>
-          </button>
+          <p class="text-[11px] text-slate-400">Originales y reencauches no se mezclan. Tono fuerte: lo que lleva rodado · tono claro: lo que le falta hasta el retiro · el largo total es la proyección.</p>
         </div>
-        <div class="relative w-full h-[280px] mt-3">
-          <canvas id="canvasKpi13_comparativo" role="img" aria-label="KPI 13: avance actual frente a la proyección" data-titulo="KPI 13: avance actual frente a la proyección"></canvas>
+        <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4">
+          <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h5 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#1d4ed8"></span>Llantas originales <span class="block text-[10px] font-semibold text-slate-400">Marca · diseño · medida · eje</span></h5>
+              <button type="button" onclick="exportarGraficoPngHd('canvasKpi13_comparativo', 'KPI13_Originales_por_referencia')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0"><i class="fa-solid fa-camera"></i></button>
+            </div>
+            <div id="vacioKpi13Orig" class="hidden p-4 text-center text-xs text-slate-500">No hay llantas originales con desgaste suficiente para proyectar.</div>
+            <div id="altoKpi13Orig" class="relative w-full h-[260px]">
+              <canvas id="canvasKpi13_comparativo" role="img" aria-label="KPI 13: llantas originales, rodado y proyección" data-titulo="KPI 13: llantas originales, rodado y proyección por referencia"></canvas>
+            </div>
+            <p id="notaKpi13Orig" class="hidden text-[10px] text-slate-400 mt-1"></p>
+          </div>
+          <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h5 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#15803d"></span>Reencauches <span class="block text-[10px] font-semibold text-slate-400">Banda · medida · eje · sin importar la marca de la carcasa</span></h5>
+              <button type="button" onclick="exportarGraficoPngHd('canvasKpi13_reencauche', 'KPI13_Reencauches_por_banda')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0"><i class="fa-solid fa-camera"></i></button>
+            </div>
+            <div id="vacioKpi13Reenc" class="hidden p-4 text-center text-xs text-slate-500">No hay reencauches con desgaste suficiente para proyectar.</div>
+            <div id="altoKpi13Reenc" class="relative w-full h-[260px]">
+              <canvas id="canvasKpi13_reencauche" role="img" aria-label="KPI 13: reencauches, rodado y proyección por banda" data-titulo="KPI 13: reencauches, rodado y proyección por banda"></canvas>
+            </div>
+            <p id="notaKpi13Reenc" class="hidden text-[10px] text-slate-400 mt-1"></p>
+          </div>
         </div>
       </article>
 
@@ -2513,6 +2528,7 @@
               <h4 class="text-sm font-black text-slate-900">Proyección, rendimiento y costo por kilómetro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Las tres medidas por el grupo elegido. La barra más oscura de cada color es la mejor de su grupo.</p>
+            <p id="notaMarcaKpi14" class="hidden text-[11px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Agrupado por marca se muestran solo las originales: en un reencauche la marca es la de la carcasa, no la de la banda. Los reencauches se comparan por banda en la tabla de abajo.</p>
             <p class="text-[11px] font-semibold text-slate-600 mt-1"><span class="inline-flex items-center gap-1.5 mr-3"><span class="w-2.5 h-2.5 rounded-sm" style="background:#1d4ed8"></span>Originales</span><span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#15803d"></span>Reencauches</span></p>
           </div>
 
@@ -2550,39 +2566,33 @@
           </div>
         </div>
 
-        <!-- Reencauches por banda: cómo rinde cada banda puesta en la flota frente a la llanta original -->
-        <div id="seccionBandasKpi14" class="pt-4 mt-1 border-t border-slate-100 space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-            <div>
-              <h5 class="text-sm font-black text-slate-900"><i class="fa-solid fa-recycle text-emerald-700 mr-1.5"></i>Reencauches por banda</h5>
-              <p class="text-[11px] text-slate-400">Cada banda puesta en la flota comparada con la llanta original. Ordenadas de la más barata por km a la más cara.</p>
-            </div>
-            <button type="button" onclick="exportarGraficoPngHd('canvasKpi14_bandas', 'KPI14_Reencauche_por_banda')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0">
-              <i class="fa-solid fa-camera"></i>
-            </button>
+        <!-- Indicadores por referencia: originales (marca · diseño · medida · eje) y reencauches (banda · medida · eje) -->
+        <div id="seccionBandasKpi14" class="pt-4 mt-1 border-t border-slate-100 space-y-4">
+          <div>
+            <h5 class="text-sm font-black text-slate-900"><i class="fa-solid fa-table-list text-slate-500 mr-1.5"></i>Indicadores por referencia</h5>
+            <p class="text-[11px] text-slate-400">Los mismos indicadores para cada universo, sin mezclarlos. Ordenadas por número de llantas (la muestra más representativa primero).</p>
           </div>
-          <div id="vacioBandasKpi14" class="hidden p-4 text-center text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl">No hay reencauches con desgaste suficiente para comparar bandas con los filtros elegidos.</div>
-          <div id="contenidoBandasKpi14" class="grid grid-cols-1 2xl:grid-cols-5 gap-4">
-            <div class="2xl:col-span-2 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
-              <h6 class="text-xs font-black text-slate-800 mb-2 text-center">Costo por km de cada banda <span class="block text-[10px] font-semibold text-slate-400">CPK proyectado · menor es mejor · gris: llanta original</span></h6>
-              <div id="altoGraficaBandasKpi14" class="relative w-full h-[240px]">
-                <canvas id="canvasKpi14_bandas" role="img" aria-label="Costo por km de cada banda de reencauche" data-titulo="KPI 14: costo por km de cada banda de reencauche"></canvas>
-              </div>
-            </div>
-            <div class="2xl:col-span-3 ta-tabla-bd overflow-x-auto custom-scroll self-start">
+          <div class="space-y-2">
+            <h6 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#1d4ed8"></span>Llantas originales <span class="text-[10px] font-semibold text-slate-400">· marca · diseño · medida · eje</span></h6>
+            <p id="notaRefOrigKpi14" class="hidden ta-lectura-tabla text-[12px] px-3 py-2 rounded-xl border"></p>
+            <div class="ta-tabla-bd overflow-x-auto custom-scroll max-h-[420px]">
               <table class="w-full text-left whitespace-nowrap">
-                <thead class="bg-slate-900 text-white font-bold">
-                  <tr>
-                    <th class="p-2.5">Banda</th>
-                    <th class="p-2.5 text-right">Llantas</th>
-                    <th class="p-2.5 text-right" id="thBandaCpk">Costo por km</th>
-                    <th class="p-2.5">Frente a la original</th>
-                    <th class="p-2.5 text-right" id="thBandaKmmm">Km por mm</th>
-                    <th class="p-2.5 text-right" id="thBandaProyeccion">Proyección al retiro</th>
-                    <th class="p-2.5 text-right" id="thBandaRecorrido">Recorrido prom.</th>
-                  </tr>
+                <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10">
+                  <tr><th class="p-2.5">Marca · diseño</th><th class="p-2.5">Medida</th><th class="p-2.5">Eje</th><th class="p-2.5 text-right">Llantas</th><th class="p-2.5 text-right" title="Promedio de lo que llevan rodado en esta vida">Rodado prom.</th><th class="p-2.5 text-right" title="Promedio de km al llegar al límite de retiro">Proyección</th><th class="p-2.5 text-right" title="Km rodados por cada mm gastado (Σkm ÷ Σmm)">Km por mm</th><th class="p-2.5 text-right" title="Precio de compra ÷ km proyectados">Costo por km</th></tr>
                 </thead>
-                <tbody id="tbodyBandasKpi14"></tbody>
+                <tbody id="tbodyRefOrigKpi14"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <h6 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#15803d"></span>Reencauches <span class="text-[10px] font-semibold text-slate-400">· banda · medida · eje, sin importar la carcasa</span></h6>
+            <p id="notaRefReencKpi14" class="hidden ta-lectura-tabla text-[12px] px-3 py-2 rounded-xl border"></p>
+            <div class="ta-tabla-bd overflow-x-auto custom-scroll max-h-[420px]">
+              <table class="w-full text-left whitespace-nowrap">
+                <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10">
+                  <tr><th class="p-2.5">Banda</th><th class="p-2.5">Medida</th><th class="p-2.5">Eje</th><th class="p-2.5 text-right" title="Pasa el cursor sobre el número para ver en qué carcasas está montada">Llantas</th><th class="p-2.5 text-right" title="Promedio de lo que llevan rodado con esta banda">Rodado prom.</th><th class="p-2.5 text-right" title="Promedio de km de la banda al llegar al límite de retiro">Proyección</th><th class="p-2.5 text-right" title="Km rodados por cada mm gastado (Σkm ÷ Σmm)">Km por mm</th><th class="p-2.5 text-right" title="Costo del reencauche ÷ km proyectados de la banda">Costo por km</th><th class="p-2.5" title="Costo por km comparado con la llanta original de la misma medida y eje">Frente a la original</th></tr>
+                </thead>
+                <tbody id="tbodyRefReencKpi14"></tbody>
               </table>
             </div>
           </div>
@@ -6870,18 +6880,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-29"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-29"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-29"></script>
-  <script src="/static/js/app_init.js?v=rediseno-29"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-29"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-29"></script>
+  <script src="/static/js/app_core.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-33"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-33"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-33"></script>
+  <script src="/static/js/app_init.js?v=rediseno-33"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-33"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-33"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">
