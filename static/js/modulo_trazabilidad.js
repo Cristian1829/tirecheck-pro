@@ -153,6 +153,17 @@
         else selMar.value = 'TODOS';
       }
 
+      // Tipologías y dimensiones (antes no se llenaban y solo mostraban «Todas»)
+      [['filtroKpiTipologia', 'tipologia'], ['filtroKpiDimension', 'dimension']].forEach(([id, campo]) => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const actual = sel.value || 'TODOS';
+        const valores = Array.from(new Set((data || []).map(d => String(d[campo] || '').trim()).filter(Boolean))).sort();
+        sel.innerHTML = '<option value="TODOS">Todas</option>' +
+          valores.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+        sel.value = valores.includes(actual) ? actual : 'TODOS';
+      });
+
       kpisFiltrosPoblados = true;
     }
 
