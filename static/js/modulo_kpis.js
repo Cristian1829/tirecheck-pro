@@ -2648,7 +2648,7 @@
               borderWidth: 2.5,
               pointRadius: 4,
               tension: 0.25,
-              datalabels: pillDatalabelConfig('rgba(2, 132, 199, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+              datalabels: { display: false }
             },
             {
               type: 'line',
@@ -2659,13 +2659,17 @@
               borderWidth: 2.5,
               pointRadius: 4,
               tension: 0.25,
-              datalabels: pillDatalabelConfig('rgba(217, 119, 6, 0.9)', '#ffffff', (v) => formatCO_Miles(v))
+              datalabels: { display: false }
             }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
           layout: { padding: { top: 26, right: 16, bottom: 8, left: 24 } },
           animation: animacionCascadaStandard,
           plugins: {
@@ -2675,7 +2679,7 @@
               cornerRadius: 10,
               padding: 12,
               callbacks: {
-                label: (c) => `${c.dataset.label}: ${formatCO_Miles(c.raw)} ${uMed()}`
+                label: (c) => ` ${c.dataset.label}: ${formatCO_Miles(c.raw)} ${uMed()}`
               }
             }
           },
