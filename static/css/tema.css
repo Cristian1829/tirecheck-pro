@@ -616,3 +616,19 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
 #areaTrabajo .ta-tabla-diag .ta-apoyo { margin-top: 2px; }
 #areaTrabajo .ta-tabla-diag .ta-apoyo > div { font-size: var(--ta-f-xs); color: var(--ta-sub); margin: 0; }
 #areaTrabajo .ta-tabla-diag .ta-apoyo i { display: none; }
+
+/* Teléfono: los filtros de Diagnóstico van en dos columnas (como en las demás secciones); la búsqueda ocupa el ancho */
+@media (max-width: 639px) {
+  #vista-diagnostico .grid.lg\:grid-cols-7 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #vista-diagnostico .grid.lg\:grid-cols-7 > div:first-child { grid-column: 1 / -1; }
+}
+
+/* Tableta y portátil pequeño: con el panel lateral el área útil es más angosta que la pantalla, así que estas filas
+   bajan a otra línea en vez de salirse por la derecha (paginación, filtros de Catálogos y encabezado de Composición) */
+#areaTrabajo :is([id^="contenedorPaginacion"], #paginacionParque) { flex-wrap: wrap; justify-content: center; row-gap: 8px; }
+#areaTrabajo [id^="controlesPaginacion"] { flex-wrap: wrap; justify-content: center; row-gap: 4px; }
+#areaTrabajo [id^="cat-seccion-"] .md\:flex-row,
+#vista-composicion .md\:flex-row { flex-wrap: wrap; }
+@media (min-width: 640px) {
+  #areaTrabajo [id^="contenedorPaginacion"] { justify-content: space-between; }
+}

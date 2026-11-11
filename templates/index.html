@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-15">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-19">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -787,7 +787,7 @@
           </div>
           <div>
             <label for="kilometraje" id="lblKilometraje" class="block text-[11px] font-bold text-slate-600 mb-1">Kilometraje</label>
-            <input type="number" id="kilometraje" placeholder="ej. 125000" step="1" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" id="kilometraje" placeholder="ej. 125000" step="any" inputmode="numeric" oninput="alCambiarKilometrajeInput();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900">
             <!-- Solo al crear una placa nueva: en qué se mide el vehículo -->
             <select id="unidad_medida_placa" onchange="aplicarUnidadPlacaPatio()" class="hidden mt-1 w-full px-2 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-slate-800" title="Placa nueva: elija si el vehículo se mide en kilómetros o en horas de motor">
               <option value="KM">Se mide en kilómetros</option>
@@ -1095,7 +1095,7 @@
 
                 <div>
                   <label for="prof_inicial" class="block text-xs font-bold text-slate-600 mb-1">Prof. Inicial (mm)</label>
-                  <input type="number" id="prof_inicial" step="0.1" inputmode="decimal" placeholder="16.5" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-blue-700 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+                  <input type="number" id="prof_inicial" step="any" inputmode="decimal" placeholder="16.5" class="w-full touch-target px-2.5 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-blue-700 placeholder:text-slate-400 placeholder:font-normal focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
                 </div>
 
                 <div id="box_banda" class="hidden col-span-2">
@@ -4696,7 +4696,7 @@
           </div>
           <div>
             <label for="mover_prof_montaje" class="block text-xs font-bold text-blue-900 mb-1">Profundidad Actual (mm)</label>
-            <input type="number" step="0.1" id="mover_prof_montaje" placeholder="ej. 18.0" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_prof_montaje" placeholder="ej. 18.0" class="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <!-- Reingreso de una llanta en FVU o disposición final: trazabilidad obligatoria -->
           <div id="boxMoverReingreso" class="hidden col-span-2 space-y-2 p-2.5 bg-rose-50 rounded-xl border border-rose-200">
@@ -4711,7 +4711,7 @@
         <div id="boxMoverRecambio" class="hidden p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2">
           <div>
             <label for="mover_prof_recambio" class="block text-xs font-bold text-emerald-900 mb-1">Profundidad de Desmonte (mm) *</label>
-            <input type="number" step="0.1" id="mover_prof_recambio" placeholder="mm medidos al desmontar" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_prof_recambio" placeholder="mm medidos al desmontar" class="w-full px-3 py-2 bg-white border border-emerald-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
             <label for="mover_motivo_recambio" class="block text-xs font-bold text-emerald-900 mb-1">Motivo de Desmonte</label>
@@ -4740,7 +4740,7 @@
           </div>
           <div>
             <label for="mover_nueva_prof" class="block text-xs font-bold text-teal-900 mb-1">Nueva Profundidad Inicial (mm) *</label>
-            <input type="number" step="0.1" id="mover_nueva_prof" placeholder="mm de la banda nueva" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_nueva_prof" placeholder="mm de la banda nueva" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
           <div>
             <label for="mover_costo_reencauche" class="block text-xs font-bold text-teal-900 mb-1">Costo del Reencauche ($) *</label>
@@ -4778,7 +4778,7 @@
           </div>
           <div>
             <label for="mover_prof_fvu" class="block text-xs font-bold text-rose-900 mb-1">Profundidad Remanente de Baja (mm) *</label>
-            <input type="number" step="0.1" id="mover_prof_fvu" value="3.0" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-900">
+            <input type="number" step="any" id="mover_prof_fvu" value="3.0" class="w-full px-3 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-slate-900">
           </div>
         </div>
 
@@ -5097,10 +5097,10 @@
           </div>
           <div><label for="edit_banda_reen" class="font-bold text-slate-600">Banda Reen</label><input type="text" id="edit_banda_reen" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label for="edit_psi" class="font-bold text-slate-600">Presión (PSI)</label><input type="number" id="edit_psi" class="w-full p-2 bg-slate-50 border rounded-xl font-bold"></div>
-          <div><label for="edit_prof_ext" class="font-bold text-slate-600">Prof. Ext (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_ext" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label for="edit_prof_cent" class="font-bold text-slate-600">Prof. Cent (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_cent" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label for="edit_prof_int" class="font-bold text-slate-600">Prof. Int (mm)</label><input type="number" step="0.1" min="0" max="27" id="edit_prof_int" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
-          <div><label for="edit_prof_inicial" class="font-bold text-slate-600">Prof Inicial (mm)</label><input type="number" step="0.1" id="edit_prof_inicial" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
+          <div><label for="edit_prof_ext" class="font-bold text-slate-600">Prof. Ext (mm)</label><input type="number" step="any" min="0" max="27" id="edit_prof_ext" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label for="edit_prof_cent" class="font-bold text-slate-600">Prof. Cent (mm)</label><input type="number" step="any" min="0" max="27" id="edit_prof_cent" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label for="edit_prof_int" class="font-bold text-slate-600">Prof. Int (mm)</label><input type="number" step="any" min="0" max="27" id="edit_prof_int" class="w-full p-2 bg-slate-50 border rounded-xl font-black font-mono"></div>
+          <div><label for="edit_prof_inicial" class="font-bold text-slate-600">Prof Inicial (mm)</label><input type="number" step="any" id="edit_prof_inicial" class="w-full p-2 bg-slate-50 border rounded-xl font-bold text-blue-700"></div>
           <div><label for="edit_precio" class="font-bold text-slate-600">Precio ($)</label><input type="number" id="edit_precio" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
           <div><label for="edit_km_montaje" class="font-bold text-slate-600">Km Montaje</label><input type="number" id="edit_km_montaje" class="w-full p-2 bg-slate-50 border rounded-xl font-semibold"></div>
         </div>
@@ -6223,7 +6223,7 @@
 
         <div>
           <label for="desm_profundidad" class="block font-bold text-slate-700 mb-1">Profundidad al Retiro (mm) <span class="text-rose-500">*</span></label>
-          <input type="number" id="desm_profundidad" required min="0" max="27" step="0.1" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
+          <input type="number" id="desm_profundidad" required min="0" max="27" step="any" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-sm">
         </div>
 
         <div>
@@ -6594,7 +6594,7 @@
           </div>
           <div>
             <label for="ret_prof_banda" class="block font-bold text-slate-700 mb-1">Prof. Banda Nueva (mm)</label>
-            <input type="number" step="0.1" id="ret_prof_banda" required placeholder="mm de la banda nueva" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+            <input type="number" step="any" id="ret_prof_banda" required placeholder="mm de la banda nueva" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
           </div>
           <div>
             <label for="ret_costo" class="block font-bold text-slate-700 mb-1">Costo Factura Renovado ($)</label>
@@ -6831,18 +6831,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-15"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-15"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-15"></script>
-  <script src="/static/js/app_init.js?v=rediseno-15"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-15"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-15"></script>
+  <script src="/static/js/app_core.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-19"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-19"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-19"></script>
+  <script src="/static/js/app_init.js?v=rediseno-19"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-19"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-19"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

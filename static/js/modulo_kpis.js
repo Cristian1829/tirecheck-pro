@@ -1345,7 +1345,11 @@
         if (!d || !(d.valores || []).length) return;
         const i = taIndiceMayor(d.valores);
         if (i < 0) return;
-        taLectura(canvasId, 'in', plantilla(d.labels[i], d.valores[i], taPct(d.valores[i], taSuma(d.valores))));
+        const empatados = d.valores.filter(v => Number(v) === Number(d.valores[i])).length;
+        const p = taPct(d.valores[i], taSuma(d.valores));
+        taLectura(canvasId, 'in', empatados > 1
+          ? `Empate en primer lugar: ${empatados} con ${formatCO_Miles(d.valores[i])} llantas cada una (${p} %).`
+          : plantilla(d.labels[i], d.valores[i], p));
       };
       lecturaTop('canvasKpi04_tipologia', dsTip, (l, v, p) => `${l} lleva más llantas: ${formatCO_Miles(v)} (${p} %).`);
       lecturaTop('canvasKpi04_marca', dsMar, (l, v, p) => `${l} es la marca con más llantas: ${formatCO_Miles(v)} (${p} %).`);
@@ -1572,9 +1576,11 @@
         });
         const u6 = taUltimos(h.pct_alerta);
         if (u6.valor !== null) {
-          const minimo = Math.min(...(h.pct_alerta || []).filter(v => v !== null && v !== undefined).map(Number));
+          const serie6 = (h.pct_alerta || []).filter(v => v !== null && v !== undefined).map(Number);
+          const minimo = Math.min(...serie6);
+          const esMenorUnico = u6.valor === minimo && serie6.filter(v => v === minimo).length === 1 && serie6.length > 1;
           taLectura('canvasKpi06_alineacion', u6.valor <= 10 ? 'ok' : u6.valor <= 20 ? 'al' : 'cr',
-            `${formatCO_Decimal(u6.valor, 0)} % del eje direccional con desgaste de desalineación en ${(h.labels || [])[u6.i] || 'el último mes'}${u6.valor === minimo && (h.pct_alerta || []).length > 1 ? ', el menor del periodo' : ''}.`);
+            `${formatCO_Decimal(u6.valor, Number.isInteger(Number(u6.valor)) ? 0 : 1)} % del eje direccional con desgaste de desalineación en ${(h.labels || [])[u6.i] || 'el último mes'}${esMenorUnico ? ', el menor del periodo' : ''}.`);
         }
       }
 
@@ -2158,7 +2164,7 @@
       if (ult.pct_cumplimiento_parque != null) partes.push(`parque inspeccionado ${formatCO_Decimal(ult.pct_cumplimiento_parque, 0)} %`);
       if (ult.pct_presion_correcta != null) partes.push(`presión correcta ${formatCO_Decimal(ult.pct_presion_correcta, 0)} %`);
       if (ult.pct_en_retiro != null) partes.push(`en retiro ${formatCO_Decimal(ult.pct_en_retiro, 1)} %`);
-      if (ult.pct_alerta_alineacion != null) partes.push(`alerta de alineación ${formatCO_Decimal(ult.pct_alerta_alineacion, 0)} %`);
+      if (ult.pct_alerta_alineacion != null) partes.push(`alerta de alineación ${formatCO_Decimal(ult.pct_alerta_alineacion, 1)} %`);
       if (partes.length) taLectura('canvasTendencias', 'in', `${_mesLegible(ult.mes)}: ${partes.join('; ')}.`);
     }
 
@@ -2790,11 +2796,12 @@
           }
         });
         const compra = taSuma(gc.compra_neta);
+        const retornoKpi20 = (d.matriz_mrp || []).reduce((a, m) => a + (Number(m.retorno_reencauche_proyectado) || 0), 0);
         const detalle = (gc.labels || []).map((l, i) => [l, Number(gc.compra_neta?.[i]) || 0]).filter(x => x[1] > 0)
           .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([l, n]) => `${formatCO_Miles(n)} de ${l}`);
         taLectura('canvasKpi20_mrp', compra > 0 ? 'al' : 'ok', compra > 0
-          ? `Comprar ${formatCO_Miles(compra)} llantas: ${detalle.join(', ')}.`
-          : 'La bodega cubre la necesidad: no hay compra sugerida.');
+          ? `Comprar ${formatCO_Miles(compra)} llantas: ${detalle.join(', ')}.${retornoKpi20 > 0 ? ` El reencauche de las llantas que se retiran cubre otras ${formatCO_Miles(retornoKpi20)}.` : ''}`
+          : (retornoKpi20 > 0 ? `No hay compra sugerida: la bodega y el reencauche de las llantas que se retiran (${formatCO_Miles(retornoKpi20)}) cubren la necesidad.` : 'La bodega cubre la necesidad: no hay compra sugerida.'));
       }
 
       // 2. Gran Tabla Maestra MRP de 12 Columnas

@@ -35,3 +35,11 @@ def test_paquete_sin_conexion_incluye_las_sedes_del_catalogo(test_db):
     paquete = database.obtener_paquete_offline_patio()
     por_cliente = paquete["catalogos_campos"]["subclientes_por_cliente"]
     assert sorted(por_cliente.get("CLIENTE OFFLINE", [])) == ["PATIO 1", "PATIO 2"]
+
+
+def test_sede_del_parque_automotor_aparece_en_el_campo_sede(test_db):
+    with database.get_connection() as conn:
+        conn.execute("INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente) VALUES ('PRQ001', 'Cabezote (6x4)', 'CLIENTE PARQUE', 'Patio Central')")
+        conn.execute("INSERT INTO catalogo_vehiculos (placa, tipologia, cliente, subcliente) VALUES ('PRQ002', 'Cabezote (6x4)', 'OTRO CLIENTE', 'Otra Sede')")
+        conn.commit()
+    assert database.obtener_valores_unicos_campo("subcliente", "CLIENTE PARQUE") == ["PATIO CENTRAL"]

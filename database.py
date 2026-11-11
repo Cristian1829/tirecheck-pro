@@ -4870,6 +4870,12 @@ def obtener_valores_unicos_campo(campo, filtro_cliente='', filtro_marca='', toda
                 params_sedes.append(str(filtro_cliente).strip())
             cursor.execute(consulta_sedes, params_sedes)
             valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
+            # También las sedes del parque automotor cargado (igual que en el paquete sin conexión)
+            consulta_parque = "SELECT DISTINCT subcliente FROM catalogo_vehiculos WHERE subcliente IS NOT NULL AND TRIM(subcliente) != ''"
+            if filtro_cliente:
+                consulta_parque += " AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))"
+            cursor.execute(consulta_parque, params_sedes)
+            valores_insp = sorted(list(set(valores_insp + [r[0] for r in cursor.fetchall()])))
 
         if campo in ('cliente', 'subcliente', 'tipo_operacion'):
             valores_insp = sorted(list(set(str(v).strip().upper() for v in valores_insp if v and str(v).strip())))

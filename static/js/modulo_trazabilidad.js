@@ -954,7 +954,12 @@
           if (otrosM > 0) top7M.push(['OTROS', otrosM]);
           const dataM = top7M.map(([, cnt]) => cnt);
           chartsComposicion.marca = new Chart(ctxMarcas, taDona(top7M.map(([m]) => m), dataM, taColoresCategorias(top7M.map(([m]) => m)), { centro: `${top7M.length}`, subtexto: 'Marcas' }));
-          if (top7M.length) taLectura('chartCompMarcas', 'in', `${top7M[0][0]} lidera con ${top7M[0][1]} llantas (${taPct(top7M[0][1], totalLlantas)} %).`);
+          if (top7M.length) {
+            const empM = arrM.filter(([, c]) => c === arrM[0][1]).length;
+            taLectura('chartCompMarcas', 'in', empM > 1
+              ? `Empate en primer lugar: ${empM} marcas con ${arrM[0][1]} llantas cada una (${taPct(arrM[0][1], totalLlantas)} %).`
+              : `${top7M[0][0]} lidera con ${top7M[0][1]} llantas (${taPct(top7M[0][1], totalLlantas)} %).`);
+          }
         }
       }
 
@@ -1019,7 +1024,12 @@
           const top6Ds = arrDs.slice(0, 6);
           const dataDs = top6Ds.map(([, cnt]) => cnt);
           chartsComposicion.diseno = new Chart(ctxDis, barrasComp(top6Ds.map(([ds]) => ds), dataDs, taMejorEn(dataDs), totalLlantas));
-          if (top6Ds.length) taLectura('chartCompDisenos', 'in', `${top6Ds[0][0]} es el diseño más usado: ${top6Ds[0][1]} llantas (${taPct(top6Ds[0][1], totalLlantas)} %).`);
+          if (top6Ds.length) {
+            const empDs = arrDs.filter(([, c]) => c === arrDs[0][1]).length;
+            taLectura('chartCompDisenos', 'in', empDs > 1
+              ? `Empate en primer lugar: ${empDs} diseños con ${arrDs[0][1]} llantas cada uno (${taPct(arrDs[0][1], totalLlantas)} %).`
+              : `${top6Ds[0][0]} es el diseño más usado: ${top6Ds[0][1]} llantas (${taPct(top6Ds[0][1], totalLlantas)} %).`);
+          }
         }
       }
     }

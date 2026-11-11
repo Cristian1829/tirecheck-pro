@@ -220,10 +220,11 @@
       const compraMrp = dataCompra.reduce((a, b) => a + (Number(b) || 0), 0);
       const detMrp = labels.map((l, i) => [l, Number(dataCompra[i]) || 0]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3)
         .map(([l, n]) => `${n.toLocaleString('es-CO')} de ${l}`);
+      const retornoMrp = resumenMrp.reduce((a, r) => a + (Number(r.retorno_reencauche_proyectado) || 0), 0);
       if (typeof taLectura === 'function') {
         taLectura('chartMrpBodegas', compraMrp > 0 ? 'al' : 'ok', compraMrp > 0
-          ? `Comprar ${compraMrp.toLocaleString('es-CO')} llantas: ${detMrp.join(', ')}.`
-          : 'La bodega cubre la necesidad: no hay compra sugerida.');
+          ? `Comprar ${compraMrp.toLocaleString('es-CO')} llantas: ${detMrp.join(', ')}.${retornoMrp > 0 ? ` El reencauche de las llantas que se retiran cubre otras ${retornoMrp.toLocaleString('es-CO')}.` : ''}`
+          : (retornoMrp > 0 ? `No hay compra sugerida: la bodega y el reencauche de las llantas que se retiran (${retornoMrp.toLocaleString('es-CO')}) cubren la necesidad.` : 'La bodega cubre la necesidad: no hay compra sugerida.'));
       }
       chartMrpInstancia = new Chart(ctx, {
         type: 'bar',
