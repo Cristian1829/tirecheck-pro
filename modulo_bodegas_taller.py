@@ -17,7 +17,15 @@ except Exception:
 def normalizar_estado_bodega(valor: str) -> str:
     """Ubicación oficial (database.UBICACIONES_LLANTA) a partir de cualquier nombre de bodega o estado."""
     import database
-    return database.ubicacion_canonica(valor)
+    if not valor:
+        return ""
+    val_s = str(valor).strip()
+    if val_s in database.UBICACIONES_LLANTA:
+        return val_s
+    clave = database._clave_estado(val_s)
+    if clave in database._ALIAS_UBICACION:
+        return database._ALIAS_UBICACION[clave]
+    return database.ubicacion_canonica(val_s)
 
 
 def _ubicacion_actual(ubicacion, estado, acta='', fecha_disp=''):
@@ -1274,14 +1282,14 @@ def listar_inventario_bodegas_con_kpis(filtros: dict = None) -> dict:
         }
 
         # Calcular totales para todas las llantas de este cliente
-        query_all = "SELECT estado_actual, ubicacion_bodega, costo_ciclo_actual, costo_acumulado_total, fecha_ultimo_movimiento, fecha_alta FROM llantas_maestro WHERE 1=1"
+        query_all = "SELECT estado_actual, ubicacion_bodega, costo_ciclo_actual, costo_acumulado_total, fecha_ultimo_movimiento, fecha_alta, numero_acta_ambiental, fecha_disposicion FROM llantas_maestro WHERE 1=1"
         params_all = []
         if cliente and cliente != "TODOS":
             query_all += " AND (UPPER(cliente_propietario) = ? OR UPPER(cliente) = ?)"
             params_all.extend([cliente, cliente])
         cursor.execute(query_all, params_all)
         for r_all in cursor.fetchall():
-            est = _ubicacion_actual(r_all[1], r_all[0])
+            est = _ubicacion_actual(r_all[1], r_all[0], r_all[6], r_all[7])
             costo = database.to_float(r_all[2] or r_all[3], 0.0)
             kpis["total_llantas"]["cantidad"] += 1
             kpis["total_llantas"]["valor_cop"] += costo
@@ -1322,7 +1330,12 @@ def listar_inventario_bodegas_con_kpis(filtros: dict = None) -> dict:
                     pass
             item["marca_display"] = item.get("marca_origen") or item.get("marca") or ""
             item["diseno_display"] = item.get("diseno_origen") or item.get("diseno") or ""
-            item["estado_display"] = database.nombre_ubicacion(_ubicacion_actual(item.get("ubicacion_bodega"), item.get("estado_actual")))
+            item["estado_display"] = database.nombre_ubicacion(_ubicacion_actual(
+                item.get("ubicacion_bodega"),
+                item.get("estado_actual"),
+                item.get("numero_acta_ambiental"),
+                item.get("fecha_disposicion")
+            ))
             item["reservada_para_dual"] = bool(item.get("reservada_para_placa"))
 
     return {

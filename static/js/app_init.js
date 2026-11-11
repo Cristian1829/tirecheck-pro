@@ -2,8 +2,8 @@
     window.addEventListener('DOMContentLoaded', () => {
       sincronizarSlotEspecificaciones();
       try {
-        renderizarBarraCheckboxesDiag();
-        sincronizarVisibilidadTarjetasGraficos();
+        if (typeof renderizarBarraCheckboxesDiag === 'function') renderizarBarraCheckboxesDiag();
+        if (typeof sincronizarVisibilidadTarjetasGraficos === 'function') sincronizarVisibilidadTarjetasGraficos();
       } catch (e) {
         console.warn('Error inicializando checkboxes de diagnóstico:', e);
       }

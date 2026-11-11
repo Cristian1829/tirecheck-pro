@@ -8,6 +8,7 @@
     }
 
     let kpisFiltrosPoblados = false;
+    let listaMaestraClientesKpis = null;
     let paginaActualKpis = 1;
     const ITEMS_POR_PAGINA_KPIS = 25;
 
@@ -90,11 +91,24 @@
         }
       }
 
-      // Clientes disponibles
+      // Clientes disponibles: preservar lista maestra para no encoger el dropdown al filtrar
       let clientes = [];
       if (data && data.length > 0) {
-        clientes = Array.from(new Set(data.map(d => d.cliente).filter(Boolean))).sort();
+        const clisData = Array.from(new Set(data.map(d => d.cliente).filter(Boolean)));
+        if (!listaMaestraClientesKpis || listaMaestraClientesKpis.length <= 1) {
+          listaMaestraClientesKpis = clisData;
+        } else {
+          clisData.forEach(c => {
+            if (!listaMaestraClientesKpis.some(x => x.toLowerCase() === c.toLowerCase())) {
+              listaMaestraClientesKpis.push(c);
+            }
+          });
+        }
       }
+      clientes = (listaMaestraClientesKpis && listaMaestraClientesKpis.length > 0)
+        ? [...listaMaestraClientesKpis].sort()
+        : Array.from(new Set((data || []).map(d => d.cliente).filter(Boolean))).sort();
+
       if (clisAsignados.length > 0) {
         clisAsignados.forEach(c => {
           if (!clientes.some(x => x.toLowerCase() === c.toLowerCase())) clientes.push(c);
@@ -111,9 +125,13 @@
         } else {
           selCli.disabled = false;
           selCli.classList.remove('bg-slate-100', 'cursor-not-allowed');
-          const lblTodos = clisAsignados.length > 1 ? 'Mis flotas' : 'Todos';
-          selCli.innerHTML = `<option value="TODOS">${escapeHtml(lblTodos)}</option>` +
-            clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          const optsActuales = Array.from(selCli.options).map(o => o.value);
+          const faltanOpciones = clientes.some(c => !optsActuales.includes(c));
+          if (selCli.options.length <= 1 || faltanOpciones) {
+            const lblTodos = clisAsignados.length > 1 ? 'Mis flotas' : 'Todos';
+            selCli.innerHTML = `<option value="TODOS">${escapeHtml(lblTodos)}</option>` +
+              clientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          }
           if (valCliActual && clientes.includes(valCliActual)) {
             selCli.value = valCliActual;
           } else {

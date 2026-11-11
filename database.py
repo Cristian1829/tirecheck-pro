@@ -4446,6 +4446,9 @@ def ubicacion_canonica(ubicacion='', estado='', acta='', fecha_disposicion='') -
     reconoce, estado_actual. Disposición final (Bodega 7) exige acta o fecha de disposición: sin ella
     la llanta sigue en la primera fase del FVU (Bodega 6).
     """
+    ubi_str = str(ubicacion or '').strip()
+    if ubi_str == 'BODEGA_7_CHATARRIZADA' or _clave_estado(ubi_str) == 'BODEGA_7_CHATARRIZADA':
+        return 'BODEGA_7_CHATARRIZADA'
     codigo = _ALIAS_UBICACION.get(_clave_estado(ubicacion)) or _ALIAS_UBICACION.get(_clave_estado(estado)) or ''
     con_acta = bool(str(acta or '').strip() or str(fecha_disposicion or '').strip())
     if codigo == 'BODEGA_7_CHATARRIZADA' and not con_acta:
