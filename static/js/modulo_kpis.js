@@ -2251,8 +2251,9 @@
           <td class="text-right">${num(f.km_reales)} ${u}</td>
           <td class="text-right">${num(f.proyeccion)} ${u}</td>
           <td class="text-right">${num(f.km_mm, 1)}</td>
+          <td class="text-right">${cpk(f.cpk_operativo)}</td>
           <td class="text-right${Number(f.cpk) === mcO ? ' font-bold' : ''}">${cpk(f.cpk)}</td>
-        </tr>`).join('') : vacia(8, 'No hay llantas originales con desgaste suficiente para proyectar.');
+        </tr>`).join('') : vacia(9, 'No hay llantas originales con desgaste suficiente para proyectar.');
 
       const frente = (f) => {
         const ref = Number(f.cpk_original_misma_medida);
@@ -2270,9 +2271,10 @@
           <td class="text-right">${num(f.km_reales)} ${u}</td>
           <td class="text-right">${num(f.proyeccion)} ${u}</td>
           <td class="text-right">${num(f.km_mm, 1)}</td>
+          <td class="text-right">${cpk(f.cpk_operativo)}</td>
           <td class="text-right${Number(f.cpk) === mcR ? ' font-bold' : ''}">${cpk(f.cpk)}</td>
           <td>${frente(f)}</td>
-        </tr>`).join('') : vacia(9, 'No hay reencauches con desgaste suficiente para proyectar.');
+        </tr>`).join('') : vacia(10, 'No hay reencauches con desgaste suficiente para proyectar.');
 
       // Conclusiones: la referencia más barata por km de cada universo
       const barata = (filas) => filas.filter(f => f.cpk > 0).sort((a, b) => a.cpk - b.cpk)[0];

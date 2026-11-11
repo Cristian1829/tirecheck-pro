@@ -802,13 +802,20 @@ def api_descargar_plantilla_excel(usuario_actual: dict = Depends(obtener_usuario
 # Columnas del Excel de la Base de inspecciones, en el orden en que se leen: (campo, encabezado)
 COLUMNAS_EXCEL_INSPECCIONES = [
     ("fecha", "Fecha"), ("cliente", "Cliente"), ("subcliente", "Sede"), ("tipo_operacion", "Operación"),
-    ("placa", "Placa"), ("tipologia", "Tipología"), ("posicion", "Posición"), ("numero_interno", "N.º interno"),
+    ("placa", "Placa"), ("tipologia", "Tipología"), ("posicion", "Posición"), ("eje", "Eje"), ("numero_interno", "N.º interno"),
     ("marca", "Marca"), ("diseno", "Diseño"), ("dimension", "Dimensión"), ("vida", "Vida"),
     ("banda_reen", "Banda reencauche"), ("kilometraje", "Kilometraje"), ("unidad_medida", "Unidad"),
     ("prof_ext", "Prof. exterior (mm)"), ("prof_cent", "Prof. centro (mm)"), ("prof_int", "Prof. interior (mm)"),
     ("psi", "Presión (PSI)"), ("prof_inicial", "Prof. inicial (mm)"), ("km_montaje", "Km al montaje"),
     ("precio", "Precio"), ("movimiento", "Movimiento"), ("novedades", "Novedades"),
     ("usuario_registro", "Registrado por"),
+    ("km_rodados", "Km rodados"),
+    ("mm_gastados", "Mm gastados"),
+    ("km_mm", "Km/mm"),
+    ("prof_baja", "Prof. retiro (mm)"),
+    ("proyeccion", "Proyección (km)"),
+    ("cpk_operativo", "CPK operativo ($/km)"),
+    ("cpk_proyectado", "CPK proyectado ($/km)"),
 ]
 
 
@@ -868,14 +875,231 @@ def _es_numero(t: str) -> bool:
         return False
 
 
+def _construir_hoja_resumen_rendimiento(wb, df: pd.DataFrame):
+    """
+    Construye la hoja 'Resumen_Rendimiento' en el libro Excel con 3 tablas analíticas:
+      1. Originales: por Tipología, Dimensión, Eje, Marca, Diseño.
+      2. Reencauches: por Tipología, Dimensión, Eje, Banda.
+      3. Comparativo directo: por Tipología, Dimensión, Eje, Vida (Original vs Reencauche).
+    """
+    if df is None or df.empty:
+        return
+
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    ws = wb.create_sheet(title="Resumen_Rendimiento", index=1)
+    ws.views.sheetView[0].showGridLines = True
+
+    thin_border = Border(
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1')
+    )
+    total_border = Border(
+        top=Side(style='thin', color='94A3B8'),
+        bottom=Side(style='double', color='0F172A'),
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1')
+    )
+    font_titulo = Font(name='Segoe UI', size=11, bold=True, color='FFFFFF')
+    fill_titulo_orig = PatternFill(start_color='1E3A8A', end_color='1E3A8A', fill_type='solid')
+    fill_titulo_reenc = PatternFill(start_color='15803D', end_color='15803D', fill_type='solid')
+    fill_titulo_comp = PatternFill(start_color='4338CA', end_color='4338CA', fill_type='solid')
+
+    font_header = Font(name='Segoe UI', size=9, bold=True, color='FFFFFF')
+    fill_header = PatternFill(start_color='0F172A', end_color='0F172A', fill_type='solid')
+
+    font_data = Font(name='Segoe UI', size=9, color='0F172A')
+    font_total = Font(name='Segoe UI', size=9, bold=True, color='0F172A')
+    fill_total = PatternFill(start_color='F1F5F9', end_color='F1F5F9', fill_type='solid')
+    fill_zebra = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
+
+    align_center = Alignment(horizontal='center', vertical='center')
+    align_left = Alignment(horizontal='left', vertical='center')
+    align_right = Alignment(horizontal='right', vertical='center')
+
+    vida_str = df['vida'].fillna('').astype(str).str.strip().str.upper() if 'vida' in df.columns else pd.Series('', index=df.index)
+    banda_str = df['banda_reen'].fillna('').astype(str).str.strip().str.upper() if 'banda_reen' in df.columns else pd.Series('', index=df.index)
+    es_reenc = vida_str.str.contains(r'REENC|R1|R2|R3|R4|R5') | banda_str.isin(['', '-', 'NONE', 'NAN', 'NULL']).map(lambda x: not x)
+
+    row_cursor = 1
+
+    def escribir_tabla(titulo, fill_titulo, headers, filas_datos, fila_total=None):
+        nonlocal row_cursor
+        ws.merge_cells(start_row=row_cursor, start_column=1, end_row=row_cursor, end_column=len(headers))
+        c_title = ws.cell(row=row_cursor, column=1, value=titulo)
+        c_title.font = font_titulo
+        c_title.fill = fill_titulo
+        c_title.alignment = align_left
+        ws.row_dimensions[row_cursor].height = 26
+        row_cursor += 1
+
+        ws.row_dimensions[row_cursor].height = 22
+        for col_idx, h in enumerate(headers, 1):
+            cell = ws.cell(row=row_cursor, column=col_idx, value=h)
+            cell.font = font_header
+            cell.fill = fill_header
+            cell.alignment = align_center if col_idx <= 4 else align_right
+            cell.border = thin_border
+        row_cursor += 1
+
+        for r_idx, row_vals in enumerate(filas_datos):
+            ws.row_dimensions[row_cursor].height = 19
+            is_zebra = (r_idx % 2 == 1)
+            for col_idx, val in enumerate(row_vals, 1):
+                cell = ws.cell(row=row_cursor, column=col_idx, value=val)
+                cell.font = font_data
+                cell.border = thin_border
+                if is_zebra:
+                    cell.fill = fill_zebra
+                if isinstance(val, (int, float)):
+                    cell.alignment = align_right
+                    h_name = headers[col_idx - 1].lower()
+                    if 'cpk' in h_name or 'costo' in h_name:
+                        cell.number_format = '$ #,##0.00'
+                    elif 'km/mm' in h_name or 'mm' in h_name:
+                        cell.number_format = '#,##0.0'
+                    else:
+                        cell.number_format = '#,##0'
+                else:
+                    cell.alignment = align_left
+            row_cursor += 1
+
+        if fila_total:
+            ws.row_dimensions[row_cursor].height = 22
+            for col_idx, val in enumerate(fila_total, 1):
+                cell = ws.cell(row=row_cursor, column=col_idx, value=val)
+                cell.font = font_total
+                cell.fill = fill_total
+                cell.border = total_border
+                if isinstance(val, (int, float)):
+                    cell.alignment = align_right
+                    h_name = headers[col_idx - 1].lower()
+                    if 'cpk' in h_name or 'costo' in h_name:
+                        cell.number_format = '$ #,##0.00'
+                    elif 'km/mm' in h_name or 'mm' in h_name:
+                        cell.number_format = '#,##0.0'
+                    else:
+                        cell.number_format = '#,##0'
+                else:
+                    cell.alignment = align_left
+            row_cursor += 1
+
+        row_cursor += 2
+
+    # 1. TABLA ORIGINALES
+    df_orig = df[~es_reenc].copy()
+    if not df_orig.empty:
+        headers_orig = ['Tipología', 'Dimensión', 'Eje', 'Marca', 'Diseño', 'Llantas', 'Km Rodados Prom.', 'Mm Gastados Prom.', 'Km/mm Prom.', 'Proyección Prom. (km)', 'CPK Operativo ($/km)', 'CPK Proyectado ($/km)']
+        filas_orig = []
+        grp_cols = ['tipologia', 'dimension', 'eje', 'marca', 'diseno']
+        for g_keys, g in df_orig.groupby(grp_cols, dropna=False):
+            tip, dim, eje, mk, dis = [str(k or '').strip() for k in g_keys]
+            n_llantas = len(g)
+            km_rod_prom = round(g['km_rodados'].mean()) if g['km_rodados'].count() > 0 else 0
+            mm_gast_prom = round(g['mm_gastados'].mean(), 1) if g['mm_gastados'].count() > 0 else 0.0
+            tot_km = g['km_rodados'].sum()
+            tot_mm = g['mm_gastados'].sum()
+            kmmm = round(tot_km / tot_mm, 1) if (tot_km > 0 and tot_mm > 0) else None
+            proy_prom = round(g['proyeccion'].dropna().mean()) if g['proyeccion'].dropna().count() > 0 else None
+            tot_precio = g['precio'].sum()
+            cpk_op = round(tot_precio / tot_km, 2) if (tot_precio > 0 and tot_km > 0) else None
+            tot_proy = g['proyeccion'].dropna().sum()
+            cpk_pr = round(tot_precio / tot_proy, 2) if (tot_precio > 0 and tot_proy > 0) else None
+            filas_orig.append([tip or 'Sin tipología', dim or 'Sin dimensión', eje or 'Sin eje', mk or 'Sin marca', dis or 'Sin diseño', n_llantas, km_rod_prom, mm_gast_prom, kmmm, proy_prom, cpk_op, cpk_pr])
+
+        tot_llantas = len(df_orig)
+        tot_km_all = df_orig['km_rodados'].sum()
+        tot_mm_all = df_orig['mm_gastados'].sum()
+        kmmm_all = round(tot_km_all / tot_mm_all, 1) if (tot_km_all > 0 and tot_mm_all > 0) else None
+        proy_all = round(df_orig['proyeccion'].dropna().mean()) if df_orig['proyeccion'].dropna().count() > 0 else None
+        tot_pr_all = df_orig['precio'].sum()
+        cpk_op_all = round(tot_pr_all / tot_km_all, 2) if (tot_pr_all > 0 and tot_km_all > 0) else None
+        tot_proy_all = df_orig['proyeccion'].dropna().sum()
+        cpk_pr_all = round(tot_pr_all / tot_proy_all, 2) if (tot_pr_all > 0 and tot_proy_all > 0) else None
+        fila_tot_orig = ['TOTAL ORIGINALES', '', '', '', '', tot_llantas, round(df_orig['km_rodados'].mean()), round(df_orig['mm_gastados'].mean(), 1), kmmm_all, proy_all, cpk_op_all, cpk_pr_all]
+        escribir_tabla('1. RENDIMIENTO DE LLANTAS ORIGINALES (POR TIPOLOGÍA, DIMENSIÓN, EJE, MARCA Y DISEÑO)', fill_titulo_orig, headers_orig, filas_orig, fila_tot_orig)
+
+    # 2. TABLA REENCAUCHES
+    df_reenc = df[es_reenc].copy()
+    if not df_reenc.empty:
+        headers_reenc = ['Tipología', 'Dimensión', 'Eje', 'Banda Reencauche', 'Llantas', 'Km Rodados Prom.', 'Mm Gastados Prom.', 'Km/mm Prom.', 'Proyección Prom. (km)', 'CPK Operativo ($/km)', 'CPK Proyectado ($/km)']
+        filas_reenc = []
+        grp_cols_r = ['tipologia', 'dimension', 'eje', 'banda_reen']
+        for g_keys, g in df_reenc.groupby(grp_cols_r, dropna=False):
+            tip, dim, eje, banda = [str(k or '').strip() for k in g_keys]
+            n_llantas = len(g)
+            km_rod_prom = round(g['km_rodados'].mean()) if g['km_rodados'].count() > 0 else 0
+            mm_gast_prom = round(g['mm_gastados'].mean(), 1) if g['mm_gastados'].count() > 0 else 0.0
+            tot_km = g['km_rodados'].sum()
+            tot_mm = g['mm_gastados'].sum()
+            kmmm = round(tot_km / tot_mm, 1) if (tot_km > 0 and tot_mm > 0) else None
+            proy_prom = round(g['proyeccion'].dropna().mean()) if g['proyeccion'].dropna().count() > 0 else None
+            tot_precio = g['precio'].sum()
+            cpk_op = round(tot_precio / tot_km, 2) if (tot_precio > 0 and tot_km > 0) else None
+            tot_proy = g['proyeccion'].dropna().sum()
+            cpk_pr = round(tot_precio / tot_proy, 2) if (tot_precio > 0 and tot_proy > 0) else None
+            filas_reenc.append([tip or 'Sin tipología', dim or 'Sin dimensión', eje or 'Sin eje', banda or 'Sin banda registrada', n_llantas, km_rod_prom, mm_gast_prom, kmmm, proy_prom, cpk_op, cpk_pr])
+
+        tot_llantas_r = len(df_reenc)
+        tot_km_r = df_reenc['km_rodados'].sum()
+        tot_mm_r = df_reenc['mm_gastados'].sum()
+        kmmm_r = round(tot_km_r / tot_mm_r, 1) if (tot_km_r > 0 and tot_mm_r > 0) else None
+        proy_r = round(df_reenc['proyeccion'].dropna().mean()) if df_reenc['proyeccion'].dropna().count() > 0 else None
+        tot_pr_r = df_reenc['precio'].sum()
+        cpk_op_r = round(tot_pr_r / tot_km_r, 2) if (tot_pr_r > 0 and tot_km_r > 0) else None
+        tot_proy_r = df_reenc['proyeccion'].dropna().sum()
+        cpk_pr_r = round(tot_pr_r / tot_proy_r, 2) if (tot_pr_r > 0 and tot_proy_r > 0) else None
+        fila_tot_reenc = ['TOTAL REENCAUCHES', '', '', '', tot_llantas_r, round(df_reenc['km_rodados'].mean()), round(df_reenc['mm_gastados'].mean(), 1), kmmm_r, proy_r, cpk_op_r, cpk_pr_r]
+        escribir_tabla('2. RENDIMIENTO DE REENCAUCHES (POR TIPOLOGÍA, DIMENSIÓN, EJE Y BANDA)', fill_titulo_reenc, headers_reenc, filas_reenc, fila_tot_reenc)
+
+    # 3. TABLA COMPARATIVO
+    headers_comp = ['Tipología', 'Dimensión', 'Eje', 'Vida', 'Llantas', 'Km Rodados Prom.', 'Proyección Prom. (km)', 'CPK Operativo ($/km)', 'CPK Proyectado ($/km)']
+    filas_comp = []
+    df_comp = df.copy()
+    df_comp['tipo_vida'] = df_comp['vida'].map(lambda v: 'REENCAUCHE' if re.search(r'REENC|R1|R2|R3|R4|R5', str(v).upper()) else 'ORIGINAL')
+
+    for g_keys, g in df_comp.groupby(['tipologia', 'dimension', 'eje', 'tipo_vida'], dropna=False):
+        tip, dim, eje, tv = [str(k or '').strip() for k in g_keys]
+        n_ll = len(g)
+        km_prom = round(g['km_rodados'].mean()) if g['km_rodados'].count() > 0 else 0
+        proy_p = round(g['proyeccion'].dropna().mean()) if g['proyeccion'].dropna().count() > 0 else None
+        tot_km = g['km_rodados'].sum()
+        tot_pr = g['precio'].sum()
+        cpk_op = round(tot_pr / tot_km, 2) if (tot_pr > 0 and tot_km > 0) else None
+        tot_proy = g['proyeccion'].dropna().sum()
+        cpk_pr = round(tot_pr / tot_proy, 2) if (tot_pr > 0 and tot_proy > 0) else None
+        filas_comp.append([tip or 'Sin tipología', dim or 'Sin dimensión', eje or 'Sin eje', tv, n_ll, km_prom, proy_p, cpk_op, cpk_pr])
+
+    escribir_tabla('3. COMPARATIVO OPERACIONAL: ORIGINAL VS REENCAUCHE (POR TIPOLOGÍA, DIMENSIÓN Y EJE)', fill_titulo_comp, headers_comp, filas_comp)
+
+    # Anchos de columna automáticos
+    for col in ws.columns:
+        col_letter = get_column_letter(col[0].column)
+        max_len = 0
+        for cell in col:
+            v_str = str(cell.value or '')
+            if len(v_str) > max_len and cell.coordinate not in ws.merged_cells:
+                max_len = len(v_str)
+        ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+
+
 def construir_excel_inspecciones(df: pd.DataFrame, filtros: Optional[dict] = None) -> bytes:
     """
-    Excel de la Base de inspecciones: hoja «Inspecciones» con encabezados legibles, columnas en orden de lectura
-    (más reciente primero) y formato numérico, más la hoja «Filtros_Aplicados» con lo que se pidió exportar.
+    Excel de la Base de inspecciones enriquecido:
+      - Hoja «Inspecciones»: base con columnas técnicas calculadas (Eje, Km rodados, Mm gastados, Km/mm, Límite retiro, Proyección, CPKs).
+      - Hoja «Resumen_Rendimiento»: matrices analíticas jerárquicas (Originales, Reencauches y Comparativo por Tipología, Eje y Medida).
+      - Hoja «Filtros_Aplicados»: filtros con los que se realizó la exportación.
     """
     df = df.copy()
     if "movimiento" not in df.columns:
         df["movimiento"] = ""
+
+    # Enriquecer analítica operacional (Eje, Km rodados, Mm gastados, Km/mm, Límite retiro, Proyección, CPKs)
+    df = database.enriquecer_inspecciones_analitica(df)
+
     df = df.sort_values(["fecha", "placa", "posicion"], ascending=[False, True, True], kind="stable")
     campos = [c for c, _ in COLUMNAS_EXCEL_INSPECCIONES]
     for c in campos:
@@ -893,10 +1117,19 @@ def construir_excel_inspecciones(df: pd.DataFrame, filtros: Optional[dict] = Non
         salida.to_excel(writer, sheet_name="Inspecciones", index=False)
         pd.DataFrame(resumen, columns=["Dato", "Valor"]).to_excel(writer, sheet_name="Filtros_Aplicados", index=False)
         wb = writer.book
+
+        # Construir hoja analítica de Resumen de Rendimiento
+        _construir_hoja_resumen_rendimiento(wb, df)
+
         ws = wb["Inspecciones"]
-        formatos = {"Kilometraje": "#,##0", "Km al montaje": "#,##0", "Precio": "$ #,##0",
-                    "Prof. exterior (mm)": "0.0", "Prof. centro (mm)": "0.0", "Prof. interior (mm)": "0.0",
-                    "Prof. inicial (mm)": "0.0", "Presión (PSI)": "0"}
+        formatos = {
+            "Kilometraje": "#,##0", "Km al montaje": "#,##0", "Precio": "$ #,##0",
+            "Prof. exterior (mm)": "0.0", "Prof. centro (mm)": "0.0", "Prof. interior (mm)": "0.0",
+            "Prof. inicial (mm)": "0.0", "Presión (PSI)": "0",
+            "Km rodados": "#,##0", "Mm gastados": "0.0", "Km/mm": "#,##0.0",
+            "Prof. retiro (mm)": "0.0", "Proyección (km)": "#,##0",
+            "CPK operativo ($/km)": "$ #,##0.00", "CPK proyectado ($/km)": "$ #,##0.00"
+        }
         for idx, nombre in enumerate(salida.columns, start=1):
             if nombre in formatos:
                 for fila in ws.iter_rows(min_row=2, min_col=idx, max_col=idx):

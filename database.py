@@ -7941,6 +7941,141 @@ def resistencia_carcasas(llantas_maestro: list, cpk_llantas: dict = None) -> lis
 _NOMBRE_EJE = {ee.DIRECCIONAL: 'Direccional', ee.TRACCION: 'Tracción', ee.LIBRE: 'Libre / Arrastre', ee.REPUESTO: 'Repuesto'}
 
 
+def enriquecer_inspecciones_analitica(df_in: pd.DataFrame, conn=None) -> pd.DataFrame:
+    """
+    Enriquece un DataFrame de inspecciones agregando las 8 columnas técnicas calculadas:
+      - 'eje': Clasificación del eje ('Direccional', 'Tracción', 'Libre / Arrastre', 'Repuesto')
+      - 'km_rodados': Kilómetros rodados calculados
+      - 'mm_gastados': Desgaste acumulado en milímetros
+      - 'km_mm': Rendimiento milimétrico (km/mm)
+      - 'prof_baja': Profundidad límite de retiro asignada (mm)
+      - 'proyeccion': Proyección de kilometraje al retiro (km)
+      - 'cpk_operativo': Costo por km real consumido ($/km)
+      - 'cpk_proyectado': Costo por km proyectado al retiro ($/km)
+    """
+    if df_in is None or df_in.empty:
+        return df_in if df_in is not None else pd.DataFrame()
+
+    df = df_in.copy()
+    lim_posicion = construir_resolver_limite_posicion(conn=conn)
+    ref_precio, ref_prof_inicial = construir_referencias_llanta(df)
+
+    col_placa = df['placa'].astype(str).str.strip().str.upper() if 'placa' in df.columns else pd.Series('', index=df.index)
+    col_pos = [to_int(p) for p in df['posicion']] if 'posicion' in df.columns else [0] * len(df)
+
+    max_pos_placa = {}
+    for pl, grp in df.groupby(col_placa):
+        max_pos_placa[pl] = sorted({to_int(p) for p in grp['posicion']}) if 'posicion' in grp.columns else []
+
+    primer_km_por_llanta = {}
+    df_sort = df.sort_values(by=['fecha', 'id'], ascending=[True, True]) if ('fecha' in df.columns and 'id' in df.columns) else df
+    for _, r_h in df_sort.iterrows():
+        pl_h = str(r_h.get('placa', '')).strip().upper()
+        sn_h = str(r_h.get('numero_interno', '')).strip().upper()
+        pos_h = to_int(r_h.get('posicion', 0))
+        km_h = to_float(r_h.get('kilometraje', 0.0))
+        if km_h >= 0:
+            if sn_h and sn_h not in ('', 'SN', 'NONE', 'NAN'):
+                if (pl_h, sn_h) not in primer_km_por_llanta:
+                    primer_km_por_llanta[(pl_h, sn_h)] = km_h
+            if (pl_h, pos_h) not in primer_km_por_llanta:
+                primer_km_por_llanta[(pl_h, pos_h)] = km_h
+
+    map_eje = {
+        'DIRECCIONAL': 'Direccional',
+        'TRACCIÓN': 'Tracción',
+        'LIBRE': 'Libre / Arrastre',
+        'REPUESTO': 'Repuesto'
+    }
+
+    ejes, km_rod_list, mm_gast_list, km_mm_list = [], [], [], []
+    prof_baja_list, proy_list, cpk_op_list, cpk_proy_list = [], [], [], []
+
+    for i in range(len(df)):
+        r = df.iloc[i]
+        tip = str(r.get('tipologia', '')).strip()
+        pos = col_pos[i]
+        placa = str(r.get('placa', '')).strip().upper()
+        sn = str(r.get('numero_interno', '')).strip().upper()
+        cli = str(r.get('cliente', '')).strip().upper()
+        sub = str(r.get('subcliente', '')).strip().upper()
+        marca = str(r.get('marca', '')).strip().upper()
+        diseno = str(r.get('diseno', '')).strip().upper()
+        dim = str(r.get('dimension', '')).strip().upper()
+        vida = str(r.get('vida', '')).strip().upper()
+        fecha_s = str(r.get('fecha', ''))[:10]
+
+        # Eje
+        t_eje = lim_posicion.tipo_eje(tip, pos, max_pos_placa.get(placa, ()))
+        ejes.append(map_eje.get(t_eje, t_eje.capitalize() if t_eje else 'Sin eje'))
+
+        # Km rodados
+        km_act = to_float(r.get('kilometraje', 0))
+        km_mont = to_float(r.get('km_montaje', 0))
+        if km_mont > 0 and km_act >= km_mont:
+            km_rod = km_act - km_mont
+        else:
+            km_base = primer_km_por_llanta.get((placa, sn), primer_km_por_llanta.get((placa, pos), km_act))
+            km_rod = max(0.0, km_act - km_base)
+        km_rod_list.append(round(km_rod) if km_rod > 0 else 0)
+
+        # Mm gastados
+        pe = to_float(r.get('prof_ext', 0))
+        pc = to_float(r.get('prof_cent', 0))
+        pi = to_float(r.get('prof_int', 0))
+        positivos = [x for x in (pe, pc, pi) if x > 0]
+        p_min = min(positivos) if positivos else 0.0
+
+        p_ini = to_float(r.get('prof_inicial', 0))
+        if p_ini <= 0:
+            p_ref = ref_prof_inicial(marca, diseno, dim, vida)
+            p_ini = p_ref if p_ref else 0.0
+
+        mm_gast = max(0.0, p_ini - p_min) if (p_ini > 0 and p_min > 0) else 0.0
+        mm_gast_list.append(round(mm_gast, 1))
+
+        # Km / mm
+        kmmm = round(km_rod / mm_gast, 1) if (km_rod > 0 and mm_gast > 0) else None
+        km_mm_list.append(kmmm)
+
+        # Prof. retiro (prof baja)
+        lim_baja = lim_posicion(cli, sub, tip, pos, max_pos_placa.get(placa, ()))
+        if not (lim_baja > 0):
+            lim_baja = 4.0 if t_eje == 'DIRECCIONAL' else 3.0
+        prof_baja_list.append(round(lim_baja, 1))
+
+        # Proyección
+        if kmmm is not None and p_ini > lim_baja:
+            proy = round((p_ini - lim_baja) * kmmm)
+        else:
+            proy = None
+        proy_list.append(proy)
+
+        # Precio
+        precio = to_float(r.get('precio', 0))
+        if precio <= 0:
+            pr_ref = ref_precio(cli, dim, sn, marca, diseno, vida, fecha_s)
+            precio = pr_ref if pr_ref else 0.0
+
+        # CPK operativo
+        cpk_op = round(precio / km_rod, 2) if (precio > 0 and km_rod > 0) else None
+        cpk_op_list.append(cpk_op)
+
+        # CPK proyectado
+        cpk_pr = round(precio / proy, 2) if (precio > 0 and proy and proy > 0) else None
+        cpk_proy_list.append(cpk_pr)
+
+    df['eje'] = ejes
+    df['km_rodados'] = km_rod_list
+    df['mm_gastados'] = mm_gast_list
+    df['km_mm'] = km_mm_list
+    df['prof_baja'] = prof_baja_list
+    df['proyeccion'] = proy_list
+    df['cpk_operativo'] = cpk_op_list
+    df['cpk_proyectado'] = cpk_proy_list
+    return df
+
+
 def rendimiento_por_referencia(df_b: pd.DataFrame) -> dict:
     """
     Rendimiento separado en dos universos que no se mezclan:
@@ -7963,10 +8098,15 @@ def rendimiento_por_referencia(df_b: pd.DataFrame) -> dict:
 
     def _metricas(g):
         km_mm, cpk = agregar_rendimiento_y_cpk(g)
+        km_tot = pd.to_numeric(g['calc_km_rodados'], errors='coerce').sum()
+        costo_tot = pd.to_numeric(g['precio'], errors='coerce').sum() if 'precio' in g.columns else 0.0
+        cpk_op = _redondear(costo_tot / km_tot, 2) if (km_tot > 0 and costo_tot > 0) else None
         return {"llantas": int(len(g)),
                 "km_reales": _redondear(pd.to_numeric(g['calc_km_rodados'], errors='coerce').mean()),
                 "proyeccion": _redondear(pd.to_numeric(g['calc_proy_total'], errors='coerce').mean()),
-                "km_mm": _redondear(km_mm, 1), "cpk": _redondear(cpk, 2)}
+                "km_mm": _redondear(km_mm, 1),
+                "cpk_operativo": cpk_op,
+                "cpk": _redondear(cpk, 2)}
 
     def _orden(f):  # más llantas primero (muestra más representativa); luego la de mayor proyección
         return (-f["llantas"], -(f["proyeccion"] or 0))
