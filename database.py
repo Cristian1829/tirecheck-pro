@@ -7855,6 +7855,86 @@ def _separar_por_vida(df_g, col, metricas, fmt_etiqueta=None) -> dict:
     return out
 
 
+ESTADOS_BAJA_FVU = ('BODEGA_6_FVU', 'BODEGA_7_CHATARRIZADA', 'Bodega_7_FVU')
+
+
+def es_baja_fvu(ll: dict) -> bool:
+    """Llanta dada de baja (fin de vida útil), con el mismo criterio del KPI 17."""
+    return (ll.get('ubicacion_bodega') in ESTADOS_BAJA_FVU or ll.get('estado_actual') == 'Bodega_7_FVU'
+            or bool(ll.get('causal_baja_fvu')))
+
+
+def resistencia_carcasas(llantas_maestro: list, cpk_llantas: dict = None) -> list:
+    """
+    Módulo C: cuánto resiste cada carcasa, por marca de la carcasa y medida.
+    - Carcasas: llantas del inventario y llantas inspeccionadas (una por número interno y cliente).
+    - Reencauches por carcasa = Σ reencauches realizados / carcasas (todas, aunque sigan en uso).
+    - Reencauches al darse de baja: el mismo promedio solo con las carcasas ya dadas de baja (su vida terminó).
+    - Ciclo alcanzado: cuántas carcasas van en Original, R1, R2 y R3 o más.
+    - Causa principal de baja y su porcentaje.
+    - CPK total de vida = Σ costos de todas las vidas / Σ km de todas las vidas (solo carcasas con todas sus vidas con costo).
+    """
+    carcasas = {}
+
+    def _tomar(cli, sn):
+        return carcasas.setdefault(f"{str(cli or '').strip().upper()}|{str(sn or '').strip().upper()}",
+                                   {"marca": '', "dimension": '', "reencauches": 0, "baja": False, "causal": '',
+                                    "costo": None, "km": None})
+
+    for ll in llantas_maestro or []:
+        sn = str(ll.get('numero_interno') or '').strip().upper()
+        if not sn or sn in ('SN', 'NAN', 'NONE'):
+            continue
+        c = _tomar(ll.get('cliente'), sn)
+        c["marca"] = str(ll.get('marca') or '').strip().upper() or c["marca"]
+        c["dimension"] = str(ll.get('dimension') or '').strip().upper() or c["dimension"]
+        vida_n = vida_llanta(ll.get('vida_actual'), ll.get('num_reencauches'), ll.get('ciclo_actual'))
+        c["reencauches"] = max(c["reencauches"], to_int(ll.get('num_reencauches')), 0 if vida_n == 'Original' else int(vida_n[1:]))
+        if es_baja_fvu(ll):
+            c["baja"] = True
+            c["causal"] = str(ll.get('causal_baja_fvu') or '').strip()
+    for clave, ll in (cpk_llantas or {}).items():
+        c = _tomar(ll.get('cliente'), ll.get('numero_interno'))
+        c["marca"] = c["marca"] or str(ll.get('marca') or '').strip().upper()
+        c["dimension"] = c["dimension"] or str(ll.get('dimension') or '').strip().upper()
+        reenc_insp = [int(v[1:]) for v in ll.get('vidas', {}) if re.match(r'^R\d+$', v)]
+        if reenc_insp:
+            c["reencauches"] = max(c["reencauches"], max(reenc_insp))
+        if ll.get('cpk_total_ciclo'):
+            vs = ll['vidas'].values()
+            c["costo"] = sum(v["costo"] for v in vs)
+            c["km"] = sum(v["km"] for v in vs)
+
+    grupos = {}
+    for c in carcasas.values():
+        grupos.setdefault((c["marca"] or SIN_MARCA, c["dimension"] or 'Sin medida'), []).append(c)
+    filas = []
+    for (marca, dim), cs in grupos.items():
+        n = len(cs)
+        bajas = [c for c in cs if c["baja"]]
+        causales = {}
+        for c in bajas:
+            k = c["causal"] or 'Sin causal registrada'
+            causales[k] = causales.get(k, 0) + 1
+        causa, n_causa = (max(causales.items(), key=lambda x: x[1]) if causales else (None, 0))
+        con_costo = [c for c in cs if c["costo"] and c["km"]]
+        km_vida = [c["km"] for c in cs if c["km"]]
+        filas.append({
+            "marca": marca, "dimension": dim, "carcasas": n,
+            "reencauches_por_carcasa": round(sum(c["reencauches"] for c in cs) / n, 2),
+            "bajas": len(bajas),
+            "reencauches_al_baja": round(sum(c["reencauches"] for c in bajas) / len(bajas), 2) if bajas else None,
+            "ciclos": {"Original": sum(1 for c in cs if c["reencauches"] == 0), "R1": sum(1 for c in cs if c["reencauches"] == 1),
+                       "R2": sum(1 for c in cs if c["reencauches"] == 2), "R3+": sum(1 for c in cs if c["reencauches"] >= 3)},
+            "causa_principal": causa, "causa_pct": round(n_causa / len(bajas) * 100, 1) if bajas else None,
+            "cpk_total_vida": _redondear(_div(sum(c["costo"] for c in con_costo), sum(c["km"] for c in con_costo)), 2),
+            "km_vida_promedio": _redondear(sum(km_vida) / len(km_vida)) if km_vida else None,
+        })
+    # Las que más reencauches aguantan primero; a igualdad, la de más carcasas
+    filas.sort(key=lambda f: (-(f["reencauches_al_baja"] if f["reencauches_al_baja"] is not None else f["reencauches_por_carcasa"]), -f["carcasas"]))
+    return filas
+
+
 _NOMBRE_EJE = {ee.DIRECCIONAL: 'Direccional', ee.TRACCION: 'Tracción', ee.LIBRE: 'Libre / Arrastre', ee.REPUESTO: 'Repuesto'}
 
 
@@ -8021,6 +8101,7 @@ def calcular_cpk_llantas(df: pd.DataFrame, unidad: str = 'km', incluir_administr
         if not costo:
             sin_precio += 1
         ll = llantas.setdefault(f"{cli}|{sn}", {"cliente": cli, "numero_interno": sn, "marca": str(pri.get('marca') or ''),
+                                                "dimension": str(pri.get('dimension') or ''),
                                                 "vidas": {}, "cpk_total_ciclo": None})
         ll["vidas"][vida] = {
             "km": round(km, 1), "costo": costo, "km_proyectados": round(proy, 1) if proy else None,
@@ -11325,9 +11406,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     cs_valores = list(causales_fvu.values())
     cs_pcts = [round((v / tot_cs) * 100.0, 1) for v in cs_valores]
 
+    # Módulo C: resistencia de carcasas por marca de la carcasa y medida
+    carcasas_k18 = resistencia_carcasas(llantas_maestro_todas, cpk_res["llantas"] if (es_full and not df.empty) else {}) if es_full else []
+
     kpi_18 = {
         "disponible": es_full,
         "mensaje": "" if es_full else "🔒 Exclusivo Licencia FULL",
+        "carcasas": carcasas_k18,
         "por_marca": {"labels": list(marcas_fvu.keys()), "valores": list(marcas_fvu.values())},
         "por_ciclo": {"labels": list(ciclos_fvu.keys()), "valores": list(ciclos_fvu.values())},
         "por_causal": {"labels": cs_labels, "valores": cs_valores, "porcentajes": cs_pcts},

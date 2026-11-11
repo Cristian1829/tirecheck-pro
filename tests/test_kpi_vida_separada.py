@@ -113,3 +113,28 @@ def test_referencia_reencauche_agrupa_la_banda_sin_importar_la_carcasa(test_db):
     assert f295["km_reales"] == 20000
     assert filas[("BANDAG BDM", "315/80R22.5")]["llantas"] == 1
     assert pr["originales"] == []
+
+
+def test_modulo_c_resistencia_de_carcasas_por_marca_y_medida(test_db):
+    _cfg("CLI CARC", psi_objetivo_traccion=100.0)
+    # Tres carcasas DOUBLE COIN 295: una sigue en uso en R1, dos se dieron de baja (una en R2, otra en R3)
+    _insp("CLI CARC", "CAR001", "C-1", vida="R1", banda_reen="BANDAG BDM", marca="DOUBLE COIN", precio=600000)
+    _insp("CLI CARC", "CAR002", "C-2", marca="DOUBLE COIN", precio=1500000)
+    _insp("CLI CARC", "CAR003", "C-3", marca="DOUBLE COIN", precio=1500000)
+    # Una HANKOOK 315 nueva
+    _insp("CLI CARC", "CAR004", "C-4", marca="HANKOOK", dimension="315/80R22.5", precio=1700000)
+    with database.get_connection() as conn:
+        conn.execute("UPDATE llantas_maestro SET ubicacion_bodega='BODEGA_6_FVU', causal_baja_fvu='Fatiga de costados', num_reencauches=2 WHERE numero_interno='C-2'")
+        conn.execute("UPDATE llantas_maestro SET ubicacion_bodega='BODEGA_6_FVU', causal_baja_fvu='Fatiga de costados', num_reencauches=3 WHERE numero_interno='C-3'")
+        conn.commit()
+    filas = database.obtener_suite_completa_20_kpis({"cliente": "CLI CARC", "base": "historial"})["kpi_18"]["carcasas"]
+    dc = next(f for f in filas if f["marca"] == "DOUBLE COIN" and f["dimension"] == "295/80R22.5")
+    assert dc["carcasas"] == 3
+    assert dc["reencauches_por_carcasa"] == 2.0          # (1 + 2 + 3) / 3
+    assert dc["bajas"] == 2 and dc["reencauches_al_baja"] == 2.5
+    assert dc["ciclos"] == {"Original": 0, "R1": 1, "R2": 1, "R3+": 1}
+    assert dc["causa_principal"] == "Fatiga de costados" and dc["causa_pct"] == 100.0
+    hk = next(f for f in filas if f["marca"] == "HANKOOK")
+    assert hk["dimension"] == "315/80R22.5" and hk["reencauches_por_carcasa"] == 0 and hk["bajas"] == 0
+    # La marca que más reencauches aguanta va primero
+    assert filas[0]["marca"] == "DOUBLE COIN"

@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-33">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-35">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -2763,6 +2763,37 @@
           </div>
         </div>
         <p id="kpi18_nota_inconsistente" class="hidden mt-3 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5"></p>
+
+        <!-- Módulo C: resistencia de carcasas (aquí sí importa la marca de la carcasa) -->
+        <div id="articuloCarcasasKpi18" class="pt-4 mt-4 border-t border-slate-100 space-y-3">
+        <div class="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-slate-200 text-slate-800 whitespace-nowrap shrink-0">KPI 18 · Carcasas</span>
+              <h4 class="text-sm font-black text-slate-900">Resistencia de carcasas por marca y medida</h4>
+            </div>
+            <p class="text-[11px] text-slate-400">Cuántos reencauches aguanta cada marca de carcasa antes de darse de baja, por qué se da de baja y cuánto cuesta por km sumando todas sus vidas. Aquí importa la carcasa, no la banda.</p>
+          </div>
+          <button type="button" onclick="exportarGraficoPngHd('canvasKpi18_carcasas', 'KPI18_Resistencia_carcasas')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0"><i class="fa-solid fa-camera"></i></button>
+        </div>
+        <div id="vacioCarcasasKpi18" class="hidden p-4 text-center text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl">No hay carcasas registradas con los filtros elegidos.</div>
+        <div id="contenidoCarcasasKpi18" class="space-y-3">
+          <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
+            <h5 class="text-xs font-black text-slate-800 mb-2">Ciclo que alcanzó cada carcasa <span class="block text-[10px] font-semibold text-slate-400">Cuántas van en original, R1, R2 y R3 o más · más oscuro = más reencauches</span></h5>
+            <div id="altoCarcasasKpi18" class="relative w-full h-[240px]">
+              <canvas id="canvasKpi18_carcasas" role="img" aria-label="Ciclo alcanzado por las carcasas de cada marca y medida" data-titulo="KPI 18: ciclo alcanzado por marca de carcasa y medida"></canvas>
+            </div>
+          </div>
+          <div class="ta-tabla-bd overflow-x-auto custom-scroll max-h-[420px]">
+            <table class="w-full text-left whitespace-nowrap">
+              <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10">
+                <tr><th class="p-2.5">Carcasa (marca)</th><th class="p-2.5">Medida</th><th class="p-2.5 text-right" title="Llantas de esta marca y medida (en uso, en bodega o dadas de baja)">Carcasas</th><th class="p-2.5 text-right" title="Σ reencauches realizados ÷ carcasas (incluye las que siguen en uso)">Reencauches por carcasa</th><th class="p-2.5 text-right" title="Reencauches que alcanzaron las carcasas que ya se dieron de baja: su vida terminó">Al darse de baja</th><th class="p-2.5 text-right">Bajas</th><th class="p-2.5">Causa principal de baja</th><th class="p-2.5 text-right" title="Σ costos de todas las vidas (compra + reencauches) ÷ Σ km de todas las vidas">Costo por km de toda la vida</th><th class="p-2.5 text-right" title="Promedio de km sumando todas las vidas de la carcasa">Km de toda la vida</th></tr>
+              </thead>
+              <tbody id="tbodyCarcasasKpi18"></tbody>
+            </table>
+          </div>
+        </div>
+        </div>
       </article>
 
       <!-- KPI 19: Profundidad de Retiro y Dispersión por mm -->
@@ -6880,18 +6911,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-33"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-33"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-33"></script>
-  <script src="/static/js/app_init.js?v=rediseno-33"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-33"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-33"></script>
+  <script src="/static/js/app_core.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-35"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-35"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-35"></script>
+  <script src="/static/js/app_init.js?v=rediseno-35"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-35"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-35"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

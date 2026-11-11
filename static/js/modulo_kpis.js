@@ -788,7 +788,7 @@
         case 4:
           if (modoLicenciaSuite === 'FULL') {
             if (data.kpi_17) renderKpi17(data.kpi_17);
-            if (data.kpi_18) renderChartKpi18(data.kpi_18);
+            if (data.kpi_18) { renderChartKpi18(data.kpi_18); renderCarcasasKpi18(data.kpi_18.carcasas); }
             if (data.kpi_19) renderChartKpi19(data.kpi_19);
           }
           break;
@@ -2881,6 +2881,77 @@
     }
 
     // KPI 18: Participación FVU por Marca, Ciclo y Causal de Daño (+ Alerta Garantía)
+    // Módulo C: resistencia de carcasas por marca y medida (gráfica de ciclo alcanzado y tabla)
+    function renderCarcasasKpi18(filas) {
+      destruirChartSuite('kpi18_carcasas');
+      filas = filas || [];
+      const vacio = document.getElementById('vacioCarcasasKpi18'), cont = document.getElementById('contenidoCarcasasKpi18');
+      if (vacio) vacio.classList.toggle('hidden', filas.length > 0);
+      if (cont) cont.classList.toggle('hidden', filas.length === 0);
+      const tbody = document.getElementById('tbodyCarcasasKpi18');
+      if (!filas.length) { if (tbody) tbody.innerHTML = ''; taLectura('canvasKpi18_carcasas', null, ''); return; }
+      const u = uMed();
+      const dec = (v, d = 1) => (v === null || v === undefined) ? '—' : formatCO_Decimal(v, d);
+      const maxAlBaja = Math.max(...filas.map(f => Number(f.reencauches_al_baja)).filter(v => Number.isFinite(v)));
+      const minCpk = Math.min(...filas.map(f => Number(f.cpk_total_vida)).filter(v => v > 0));
+      if (tbody) tbody.innerHTML = filas.map(f => `
+        <tr>
+          <td class="font-bold">${escapeHtml(f.marca)}</td>
+          <td>${escapeHtml(f.dimension)}</td>
+          <td class="text-right">${formatCO_Miles(f.carcasas)}</td>
+          <td class="text-right">${dec(f.reencauches_por_carcasa)}</td>
+          <td class="text-right${Number(f.reencauches_al_baja) === maxAlBaja ? ' font-bold' : ''}">${f.reencauches_al_baja === null ? '<span class="text-slate-400">Sin bajas</span>' : dec(f.reencauches_al_baja)}</td>
+          <td class="text-right">${formatCO_Miles(f.bajas)}</td>
+          <td>${f.causa_principal ? `${escapeHtml(f.causa_principal)} <span class="text-slate-400">(${dec(f.causa_pct, 0)} %)</span>` : '<span class="text-slate-400">—</span>'}</td>
+          <td class="text-right${Number(f.cpk_total_vida) === minCpk ? ' font-bold' : ''}">${f.cpk_total_vida > 0 ? `$ ${dec(f.cpk_total_vida, 2)}` : '<span class="text-slate-400">Sin dato</span>'}</td>
+          <td class="text-right">${f.km_vida_promedio ? `${formatCO_Miles(f.km_vida_promedio)} ${u}` : '—'}</td>
+        </tr>`).join('');
+
+      // Gráfica: barras horizontales apiladas con el ciclo alcanzado (más oscuro = más reencauches)
+      const top = filas.slice(0, 10);
+      const alto = document.getElementById('altoCarcasasKpi18');
+      if (alto) alto.style.height = `${Math.max(160, 40 * top.length + 60)}px`;
+      const ctx = document.getElementById('canvasKpi18_carcasas');
+      const ciclos = ['Original', 'R1', 'R2', 'R3+'];
+      const colores = taEscalaAzul(4);
+      if (ctx) {
+        instanciasChartsSuite['kpi18_carcasas'] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: top.map(f => `${f.marca} · ${f.dimension}`),
+            datasets: ciclos.map((cn, i) => ({
+              label: cn, data: top.map(f => (f.ciclos || {})[cn] || 0), backgroundColor: colores[i], borderRadius: 3, barThickness: 20,
+              datalabels: { display: (c) => (c.dataset.data[c.dataIndex] || 0) > 0, color: taTextoSobre(colores[i]), font: { weight: 'bold', size: 10 } }
+            }))
+          },
+          options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            animation: animacionCascadaStandard,
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold', size: 11 } } },
+              tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.raw} carcasa(s)`,
+                                      afterBody: (items) => { const f = top[items[0].dataIndex]; return [`Reencauches por carcasa: ${dec(f.reencauches_por_carcasa)}`, `Al darse de baja: ${f.reencauches_al_baja === null ? 'sin bajas' : dec(f.reencauches_al_baja)}`]; } } }
+            },
+            scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }, y: { stacked: true, ticks: { font: { size: 10, weight: 'bold' } } } }
+          }
+        });
+      }
+
+      // Conclusión: la carcasa que más reencauches aguanta (con bajas, que es cuando la vida terminó) y su causa de baja
+      const conBajas = filas.filter(f => f.reencauches_al_baja !== null);
+      let t;
+      if (conBajas.length) {
+        const m = conBajas.slice().sort((a, b) => b.reencauches_al_baja - a.reencauches_al_baja || b.carcasas - a.carcasas)[0];
+        t = `${m.marca} ${m.dimension} es la carcasa que más aguanta: ${dec(m.reencauches_al_baja)} reencauches en promedio al darse de baja`;
+        if (m.causa_principal) t += `. Causa principal de baja: ${m.causa_principal} (${dec(m.causa_pct, 0)} %)`;
+        t += '.';
+      } else {
+        const m = filas[0];
+        t = `Aún no hay carcasas dadas de baja. Por ahora ${m.marca} ${m.dimension} lleva más reencauches: ${dec(m.reencauches_por_carcasa)} por carcasa.`;
+      }
+      taLectura('canvasKpi18_carcasas', 'in', t);
+    }
+
     function renderChartKpi18(d) {
       destruirChartSuite('kpi18_marca');
       destruirChartSuite('kpi18_ciclo');
