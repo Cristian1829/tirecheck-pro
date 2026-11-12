@@ -2467,16 +2467,10 @@
         try {
           const cat = await TireAnalyzeOfflineDB.obtenerCatalogos();
           if (cat && cat.llantas_catalogo_cliente) {
+            // Solo la llanta de este cliente: cada cliente tiene su propia numeración
             const keyDirecta = `${(cli || '').toUpperCase()}|||${num}`;
-            if (cat.llantas_catalogo_cliente[keyDirecta]) {
+            if (cli && cli !== '__nuevo__' && cat.llantas_catalogo_cliente[keyDirecta]) {
               d = { encontrado: true, datos: cat.llantas_catalogo_cliente[keyDirecta] };
-            } else {
-              for (const [k, v] of Object.entries(cat.llantas_catalogo_cliente)) {
-                if (k.endsWith(`|||${num}`)) {
-                  d = { encontrado: true, datos: v };
-                  break;
-                }
-              }
             }
           }
         } catch(eDb) {}

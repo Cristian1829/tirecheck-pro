@@ -2537,24 +2537,19 @@ def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "
         if perf.get("encontrado") and perf.get("cliente"):
             cli_norm = perf["cliente"].strip()
 
+    # Cada cliente tiene su propia numeración: sin cliente no se busca, y nunca se toma la llanta de otro cliente
+    if not cli_norm:
+        return None
+
     with get_connection() as conn:
         cursor = conn.cursor()
-        if cli_norm:
-            cursor.execute("""
-                SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
-                       prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
-                FROM inspecciones
-                WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
-                ORDER BY fecha DESC, id DESC LIMIT 1
-            """, (num_norm, cli_norm))
-        else:
-            cursor.execute("""
-                SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
-                       prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
-                FROM inspecciones
-                WHERE UPPER(TRIM(numero_interno)) = ?
-                ORDER BY fecha DESC, id DESC LIMIT 1
-            """, (num_norm,))
+        cursor.execute("""
+            SELECT cliente, subcliente, placa, posicion, fecha, marca, diseno, dimension, vida, banda_reen,
+                   prof_inicial, precio, km_montaje, prof_ext, prof_cent, prof_int, novedades
+            FROM inspecciones
+            WHERE UPPER(TRIM(numero_interno)) = ? AND UPPER(TRIM(cliente)) = UPPER(TRIM(?))
+            ORDER BY fecha DESC, id DESC LIMIT 1
+        """, (num_norm, cli_norm))
         
         row = cursor.fetchone()
         if row:
@@ -2595,9 +2590,9 @@ def obtener_llanta_por_cliente(cliente: str, numero_interno: str, placa: str = "
                    COALESCE(NULLIF(km_montaje_actual, 0), km_montaje_ciclo)
             FROM llantas_maestro
             WHERE UPPER(TRIM(numero_interno)) = ?
-              AND (UPPER(TRIM(cliente)) = UPPER(TRIM(?)) OR UPPER(TRIM(cliente_propietario)) = UPPER(TRIM(?)) OR ? = '')
+              AND (UPPER(TRIM(cliente)) = UPPER(TRIM(?)) OR UPPER(TRIM(cliente_propietario)) = UPPER(TRIM(?)))
             LIMIT 1
-        """, (num_norm, cli_norm, cli_norm, cli_norm))
+        """, (num_norm, cli_norm, cli_norm))
         m = cursor.fetchone()
         if m:
             return {
@@ -6762,10 +6757,21 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actua
         grupos = _grupos()
     else:
         # Posiciones vigentes por placa (última medición de cada serial) para resolver la estructura de ejes
-        ult_por_serial = df.sort_values(['fecha', 'id']).groupby('numero_interno').tail(1)
+        # Una llanta es cliente + número interno (cada cliente tiene su propia numeración). Las llantas sin número
+        # (SN) no se pueden seguir entre vehículos: cada vehículo y posición es su propia llanta. Antes se agrupaba
+        # solo por número: todas las SN quedaban en una fila y el mismo número de dos clientes se mezclaba.
+        df = df.copy()
+        df['numero_interno'] = df['numero_interno'].fillna('').astype(str).str.strip()
+        _sn_up = df['numero_interno'].str.upper()
+        _sin_num = _sn_up.isin(('', 'SN', 'NONE', 'NAN', 'S/N'))
+        df['_llave'] = (df['cliente'].fillna('').astype(str).str.strip().str.upper() + '|' + _sn_up)
+        df.loc[_sin_num, '_llave'] = (df.loc[_sin_num, 'cliente'].fillna('').astype(str).str.strip().str.upper() + '|SN|'
+                                      + df.loc[_sin_num, 'placa'].fillna('').astype(str).str.strip().str.upper() + '|'
+                                      + df.loc[_sin_num, 'posicion'].astype(str))
+        ult_por_serial = df.sort_values(['fecha', 'id']).groupby('_llave').tail(1)
         posiciones_por_placa = ult_por_serial.groupby(ult_por_serial['placa'].astype(str).str.strip().str.upper())['posicion'].apply(
             lambda s_p: [int(to_float(x)) for x in s_p]).to_dict()
-        grupos = df.groupby('numero_interno')
+        grupos = (((g['numero_interno'].iloc[0] or 'SN'), g) for _, g in df.groupby('_llave', sort=False))
     for num, group in grupos:
         group = group.sort_values(by=['fecha', 'id'])
         primera = group.iloc[0]
@@ -12425,9 +12431,8 @@ def _armar_paquete_offline_patio(cliente: str = "", usuario: str = "") -> dict:
                     "ult_prof_min": prof_min,
                     "ult_novedades": r[17] or ""
                 }
+                # Solo por cliente y número: sin la llave «solo número», que mezclaba llantas de distintos clientes
                 llantas_catalogo_cliente[k] = info_llanta
-                if f"|||{num}" not in llantas_catalogo_cliente:
-                    llantas_catalogo_cliente[f"|||{num}"] = info_llanta
 
     return {
         "fecha_descarga": fecha_descarga,
