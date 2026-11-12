@@ -342,6 +342,51 @@
       const selSede = document.getElementById('subcliente');
       if (sedePrevia && selSede && Array.from(selSede.options).some(o => o.value === sedePrevia)) {
         selSede.value = sedePrevia;
+      } else {
+        await aplicarUltimoClienteSedePatio();
+      }
+    }
+
+    // Último cliente y sede usados en una inspección, por usuario y en este teléfono: se proponen al abrir Patio
+    // y al empezar una inspección nueva para no escogerlos cada vez. Se pueden cambiar; con un solo cliente
+    // asignado el cliente sigue fijo y solo se propone la sede.
+    function claveUltimoClienteSedePatio() {
+      const u = (typeof usuarioActual !== 'undefined' && usuarioActual && usuarioActual.username) ? usuarioActual.username : 'anonimo';
+      return `ta_patio_ultimo_cliente_sede_${String(u).toLowerCase()}`;
+    }
+
+    function recordarClienteSedePatio() {
+      try {
+        const cliente = (document.getElementById('cliente')?.value || '').trim();
+        const subcliente = (document.getElementById('subcliente')?.value || '').trim();
+        if (!cliente || cliente === '__nuevo__') return;
+        localStorage.setItem(claveUltimoClienteSedePatio(), JSON.stringify({ cliente, subcliente: subcliente === '__nuevo__' ? '' : subcliente }));
+      } catch (e) {}
+    }
+
+    async function aplicarUltimoClienteSedePatio() {
+      let ult = null;
+      try { ult = JSON.parse(localStorage.getItem(claveUltimoClienteSedePatio()) || 'null'); } catch (e) {}
+      if (!ult || !ult.cliente) return;
+      const selCli = document.getElementById('cliente');
+      if (!selCli) return;
+      const opcion = (sel, valor) => Array.from(sel.options).find(o => o.value && o.value !== '__nuevo__' && o.value.trim().toUpperCase() === String(valor).trim().toUpperCase());
+      const cliActual = (selCli.value || '').trim();
+      if (!cliActual) {
+        if (selCli.disabled) return;
+        const o = opcion(selCli, ult.cliente);
+        if (!o) return;  // ya no está entre los clientes que puede ver este usuario
+        selCli.value = o.value;
+        await alCambiarClienteMobile();
+      } else if (cliActual.toUpperCase() !== String(ult.cliente).trim().toUpperCase()) {
+        return;  // la sede guardada es de otro cliente
+      }
+      const selSede = document.getElementById('subcliente');
+      if (ult.subcliente && selSede && !(selSede.value || '').trim()) {
+        // Con el cliente fijo las sedes se cargan aparte: si aún no están, se cargan antes de elegirla
+        if (!opcion(selSede, ult.subcliente)) await alCambiarClienteMobile();
+        const os = opcion(selSede, ult.subcliente);
+        if (os && !(selSede.value || '').trim()) selSede.value = os.value;
       }
     }
 
@@ -3302,6 +3347,7 @@
       } else {
         configurarClientesUsuarioEnInspeccion();
       }
+      aplicarUltimoClienteSedePatio();
 
       // Restablecer fecha a la fecha actual local
       const inpFecha = document.getElementById('fecha');
@@ -4094,6 +4140,7 @@
       }
 
       registrarInicioJornadaCliente();
+      recordarClienteSedePatio();
       const btn = document.getElementById('btnGuardar');
       if (btn) {
         btn.disabled = true;
