@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-38">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-39">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -1014,6 +1014,9 @@
         <!-- ========================================================== -->
         <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-16 lg:self-start">
 
+          <!-- Barra de posiciones fija en el celular: saltar de llanta sin subir al diagrama del chasis -->
+          <div id="carruselLlantasMobile" class="lg:hidden flex gap-1.5 overflow-x-auto custom-scroll" role="toolbar" aria-label="Posiciones del vehículo"></div>
+
           <!-- 1. RESUMEN EXTERIOR DE POSICIÓN SELECCIONADA -->
           <div id="panelResumenPosicion" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 transition-all"></div>
 
@@ -1147,7 +1150,7 @@
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Ext *</label>
                   <div class="relative flex items-center">
-                    <input type="number" id="prof_ext" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
+                    <input type="number" id="prof_ext" enterkeyhint="next" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
                     <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
                   </div>
                 </div>
@@ -1155,7 +1158,7 @@
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Cent *</label>
                   <div class="relative flex items-center">
-                    <input type="number" id="prof_cent" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
+                    <input type="number" id="prof_cent" enterkeyhint="next" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
                     <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
                   </div>
                 </div>
@@ -1163,7 +1166,7 @@
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Int *</label>
                   <div class="relative flex items-center">
-                    <input type="number" id="prof_int" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
+                    <input type="number" id="prof_int" enterkeyhint="next" step="0.1" min="0" max="27" placeholder="0.0" inputmode="decimal" class="w-full touch-target py-2.5 pl-2 pr-8 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="evaluarSugerenciaCambio(); limpiarErrorCampo('profundidades');">
                     <span class="absolute right-2.5 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">mm</span>
                   </div>
                 </div>
@@ -1175,7 +1178,7 @@
               <label class="block text-xs font-bold text-slate-700">Presión Calibrada (PSI) *</label>
               <div class="flex items-center space-x-3">
                 <div class="relative flex-1 sm:max-w-xs flex items-center">
-                  <input type="number" id="psi" step="1" min="0" max="160" value="" placeholder="PSI" inputmode="numeric" class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="limpiarErrorCampo('psi');">
+                  <input type="number" id="psi" enterkeyhint="done" step="1" min="0" max="160" value="" placeholder="PSI" inputmode="numeric" class="w-full touch-target py-2.5 pl-3 pr-11 bg-white border border-slate-300 rounded-xl text-center text-lg md:text-xl font-black text-slate-900 font-mono placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all" oninput="limpiarErrorCampo('psi');">
                   <span class="absolute right-3 text-xs font-black text-slate-500 pointer-events-none select-none font-mono">PSI</span>
                 </div>
               </div>
@@ -6911,18 +6914,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-38"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-38"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-38"></script>
-  <script src="/static/js/app_init.js?v=rediseno-38"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-38"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-38"></script>
+  <script src="/static/js/app_core.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-39"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-39"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-39"></script>
+  <script src="/static/js/app_init.js?v=rediseno-39"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-39"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-39"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

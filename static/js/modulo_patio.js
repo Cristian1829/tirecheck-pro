@@ -1355,7 +1355,7 @@
           <span class="leading-none text-sm font-mono">${p}</span>
           <span class="text-[9px] font-bold opacity-80 leading-none mt-0.5">${textoSubPill}</span>
         `;
-        btn.onclick = () => seleccionarPosicion(p);
+        btn.onclick = async () => { await seleccionarPosicion(p); irAMedicionesPosicion(); };
         contenedor.appendChild(btn);
       });
 
@@ -1442,8 +1442,9 @@
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`;
-          if (esSel) {
-            pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          if (esSel && pill.parentElement) {
+            const barra = pill.parentElement;
+            barra.scrollTo({ left: Math.max(0, pill.offsetLeft - (barra.clientWidth - pill.offsetWidth) / 2), behavior: 'smooth' });
           }
         });
       }
@@ -1958,6 +1959,22 @@
         } else if (e.key === 'ArrowRight') {
           navegarFotoGaleria(1);
         }
+      }
+    });
+
+    // Teclado del celular: «Siguiente» pasa de Ext → Cent → Int → PSI y en PSI guarda la llanta, sin tocar la
+    // pantalla entre campos (antes Enter en cualquier casilla intentaba guardar con la llanta a medio medir)
+    const CADENA_MEDICIONES_PATIO = ['prof_ext', 'prof_cent', 'prof_int', 'psi'];
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      const i = CADENA_MEDICIONES_PATIO.indexOf(e.target && e.target.id);
+      if (i < 0) return;
+      e.preventDefault();
+      if (i < CADENA_MEDICIONES_PATIO.length - 1) {
+        const sig = document.getElementById(CADENA_MEDICIONES_PATIO[i + 1]);
+        if (sig) { sig.focus(); if (typeof sig.select === 'function') sig.select(); }
+      } else {
+        dispararSubmitInspeccion();
       }
     });
 
@@ -4190,12 +4207,9 @@
             if (document.activeElement && typeof document.activeElement.blur === 'function') {
               document.activeElement.blur();
             }
-            setTimeout(() => {
-              const modChasis = document.getElementById('moduloChasis');
-              if (modChasis) {
-                modChasis.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }, 120);
+            // Directo a las profundidades de la siguiente posición con el cursor en «Ext» (antes subía al
+            // diagrama del chasis y en cada llanta había que bajar ~1.200 px hasta las mediciones)
+            setTimeout(() => irAMedicionesPosicion(), 120);
           }
         }
       }

@@ -97,6 +97,18 @@ html .text-\[9\.5px\] {
 
 /* ---------- Banner ocultable («Vista compacta») */
 body.ta-sin-banner #bannerMarca { display: none; }
+/* Inspección de patio en el celular: sin la franja de la marca (~70 px) y con la barra de posiciones fija */
+@media (max-width: 1023px) {
+  body:has(#vista-patio:not(.hidden)) #bannerMarca { display: none; }
+  #carruselLlantasMobile {
+    position: sticky; top: 55px; z-index: 25; margin: 0 -4px; padding: 6px 4px;
+    background: rgba(241, 245, 249, .96); backdrop-filter: blur(6px); border-radius: 0 0 14px 14px;
+    scrollbar-width: none;
+  }
+  #carruselLlantasMobile::-webkit-scrollbar { display: none; }
+  #carruselLlantasMobile:empty { display: none; }
+  #carruselLlantasMobile .carrusel-tire-pill { min-width: 46px; height: 44px; }
+}
 
 /* ---------- Distribución: panel a la izquierda y área de trabajo */
 .ta-layout { display: grid; grid-template-columns: 276px minmax(0, 1fr); align-items: start; }
