@@ -1032,7 +1032,7 @@ def test_api_inspecciones_sn_light_vs_pro(test_db, auth_client):
     assert r_llanta.status_code == 200
     assert r_llanta.json()["encontrado"] is False
 
-    # 4. Probar en cliente PRO: segundo 'sn' duplicado en el mismo mes debe ser rechazado con 400
+    # 4. En cliente PRO también se acepta una segunda 'SN' en el mismo mes (llantas sin marcar, no la misma llanta)
     cliente_pro = "CLIENTE API PRO TEST"
     auth_client.post("/api/configuraciones-clientes/licencia", json={
         "cliente": cliente_pro,
@@ -1043,8 +1043,7 @@ def test_api_inspecciones_sn_light_vs_pro(test_db, auth_client):
 
     p_pro2 = dict(payload2, cliente=cliente_pro, placa="PRO-002", posicion=1)
     r_pro2 = auth_client.post("/api/inspecciones", json=p_pro2)
-    assert r_pro2.status_code == 400
-    assert "CANDADO DE NÚMERO INTERNO" in r_pro2.json()["detail"]
+    assert r_pro2.status_code == 200, r_pro2.text
 
 
 

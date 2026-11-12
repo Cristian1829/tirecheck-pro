@@ -394,10 +394,10 @@ def test_numero_interno_sn_permitido_multiples_veces_en_version_light(test_db):
     database.insertar_inspeccion(datos3)
 
 
-def test_numero_interno_sn_bloqueado_duplicado_en_version_pro(test_db):
+def test_numero_interno_sn_se_puede_repetir_en_version_pro(test_db):
     """
-    Validar que en la versión PRO, 'SN' NO está exonerado del candado de duplicidad
-    (solo se permite ingresar múltiples veces 'SN' en la versión LIGHT).
+    En la versión PRO también se puede ingresar 'SN' varias veces en el mes: son llantas sin marcar,
+    no una misma llanta (antes solo se permitía en LIGHT).
     """
     cliente = "Flota Operativa Pro"
     database.guardar_licencia_cliente(cliente, "PRO")
@@ -419,7 +419,7 @@ def test_numero_interno_sn_bloqueado_duplicado_en_version_pro(test_db):
     assert val1['valido'] is True
     database.insertar_inspeccion(datos1)
 
-    # En versión PRO, intentar ingresar otro 'SN' para el mismo cliente en el mismo mes debe ser bloqueado
+    # Otra 'SN' del mismo cliente en el mismo mes, en otro vehículo, se acepta
     datos2 = {
         'fecha': '2026-10-02',
         'cliente': cliente,
@@ -434,8 +434,8 @@ def test_numero_interno_sn_bloqueado_duplicado_en_version_pro(test_db):
         'prof_int': 11.0
     }
     val2 = database.validar_inspeccion_candados(datos2)
-    assert val2['valido'] is False
-    assert 'CANDADO DE NÚMERO INTERNO' in val2['mensaje']
+    assert val2['valido'] is True, val2.get('mensaje')
+    assert datos2['numero_interno'] == 'SN'
 
 
 def test_numero_interno_no_sn_sigue_bloqueado_en_version_light(test_db):

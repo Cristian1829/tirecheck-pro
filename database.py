@@ -2995,24 +2995,11 @@ def validar_inspeccion_candados(datos, excluir_id=None, conn=None, es_cargue_mas
         montaje_nuevo = llanta_recien_montada(cursor, placa, posicion, num_interno, str(datos.get('cliente', '')).strip(), excluir_id)
 
         # Candado 1.5: Candado de No Duplicidad de Número Interno por Cliente y Subcliente en el mismo mes
-        # En la versión LIGHT se permite ingresar las veces que sea necesario la palabra "SN" (Sin Número).
+        # «SN» (Sin Número) se puede repetir las veces que haga falta en cualquier licencia: son llantas sin marcar,
+        # no una misma llanta (antes solo se permitía en LIGHT y en FULL/PRO bloqueaba la segunda SN del mes).
         cliente_val = str(datos.get('cliente', '')).strip()
         subcliente_val = str(datos.get('subcliente', '')).strip()
-
-        licencia = str(datos.get('tipo_licencia') or '').strip().upper()
-        if not licencia and cliente_val:
-            cursor.execute(
-                "SELECT tipo_licencia FROM configuracion_avanzada_cliente WHERE UPPER(TRIM(cliente)) = UPPER(TRIM(?))",
-                (cliente_val,)
-            )
-            row_lic = cursor.fetchone()
-            if row_lic and row_lic[0]:
-                licencia = str(row_lic[0]).strip().upper()
-        if not licencia:
-            licencia = 'LIGHT'
-
-        es_version_light = (licencia == 'LIGHT')
-        permitir_sn_repetido = (es_version_light and num_interno == 'SN')
+        permitir_sn_repetido = (num_interno == 'SN')
 
         if num_interno and cliente_val and not permitir_sn_repetido:
             sql_dup = '''
