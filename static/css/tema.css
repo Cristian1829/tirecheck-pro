@@ -668,3 +668,7 @@ body.font-sans { background-color: var(--ta-fondo); color: var(--ta-tinta); }
 #areaTrabajo .ta-tabla-diag tr.ta-fila-retiro > td:first-child { box-shadow: inset 3px 0 0 var(--ta-cr); }
 #areaTrabajo .ta-tabla-diag tbody tr.ta-fila-urgente > td { background-color: #fdeeec; }
 #areaTrabajo .ta-tabla-diag tbody tr.ta-fila-urgente:hover > td { background-color: #fbe3e0; }
+
+/* Recordatorio de jornada (cada 4 horas): fijo arriba para que se vea aunque se haya bajado en el formulario */
+#bannerRecordatorioCliente:not(.hidden){position:fixed;left:0;right:0;top:64px;z-index:70;}
+#bannerRecordatorioCliente > div{box-shadow:0 10px 30px rgba(15,31,61,.25);}

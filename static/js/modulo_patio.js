@@ -355,18 +355,72 @@
       return `ta_patio_ultimo_cliente_sede_${String(u).toLowerCase()}`;
     }
 
-    function recordarClienteSedePatio() {
-      try {
-        const cliente = (document.getElementById('cliente')?.value || '').trim();
-        const subcliente = (document.getElementById('subcliente')?.value || '').trim();
-        if (!cliente || cliente === '__nuevo__') return;
-        localStorage.setItem(claveUltimoClienteSedePatio(), JSON.stringify({ cliente, subcliente: subcliente === '__nuevo__' ? '' : subcliente }));
-      } catch (e) {}
+    // Jornada de inspección: el cliente y la sede elegidos quedan fijos al cambiar de placa (las jornadas son de
+    // 4 u 8 horas en un mismo cliente y sede). Cada 4 horas se pregunta si se sigue con el mismo cliente y sede.
+    const HORAS_RECORDATORIO_JORNADA = 4;
+
+    function leerJornadaPatio() {
+      try { return JSON.parse(localStorage.getItem(claveUltimoClienteSedePatio()) || 'null'); } catch (e) { return null; }
     }
 
+    function guardarJornadaPatio(j) {
+      try { localStorage.setItem(claveUltimoClienteSedePatio(), JSON.stringify(j)); } catch (e) {}
+    }
+
+    function recordarClienteSedePatio() {
+      const cliente = (document.getElementById('cliente')?.value || '').trim();
+      let subcliente = (document.getElementById('subcliente')?.value || '').trim();
+      if (!cliente || cliente === '__nuevo__') return;
+      if (subcliente === '__nuevo__') subcliente = '';
+      const previa = leerJornadaPatio();
+      const ahora = Date.now();
+      const misma = previa && String(previa.cliente || '').toUpperCase() === cliente.toUpperCase()
+        && String(previa.subcliente || '').toUpperCase() === subcliente.toUpperCase();
+      // Si cambia el cliente o la sede empieza una jornada nueva; si es la misma se conserva su hora de inicio
+      guardarJornadaPatio({
+        cliente, subcliente,
+        inicio: (misma && previa.inicio) ? previa.inicio : ahora,
+        ultimoAviso: (misma && previa.ultimoAviso) ? previa.ultimoAviso : ahora
+      });
+    }
+
+    // La jornada está activa si el cliente y la sede del formulario son los de la jornada guardada
+    function jornadaPatioActiva() {
+      const j = leerJornadaPatio();
+      if (!j || !j.cliente || !j.subcliente) return null;
+      const cli = (document.getElementById('cliente')?.value || '').trim().toUpperCase();
+      const sub = (document.getElementById('subcliente')?.value || '').trim().toUpperCase();
+      if (cli !== String(j.cliente).trim().toUpperCase() || sub !== String(j.subcliente).trim().toUpperCase()) return null;
+      return j;
+    }
+
+    function revisarRecordatorioJornadaPatio() {
+      const banner = document.getElementById('bannerRecordatorioCliente');
+      const vista = document.getElementById('vista-patio');
+      if (!banner || !banner.classList.contains('hidden') || !vista || vista.classList.contains('hidden')) return;
+      if (typeof usuarioActual === 'undefined' || !usuarioActual) return;  // sin sesión iniciada no se pregunta
+      const j = leerJornadaPatio();
+      if (!j || !j.cliente) return;
+      const ahora = Date.now();
+      if (!j.inicio || !j.ultimoAviso) {  // dato guardado antes de existir la jornada: empieza a contar desde ahora
+        guardarJornadaPatio({ ...j, inicio: j.inicio || ahora, ultimoAviso: j.ultimoAviso || ahora });
+        return;
+      }
+      if (ahora - j.ultimoAviso < HORAS_RECORDATORIO_JORNADA * 3600000) return;
+      const horas = Math.floor((ahora - j.inicio) / 3600000);
+      const fijar = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      fijar('lblRecordatorioCliente', j.cliente);
+      fijar('lblRecordatorioSubcliente', j.subcliente || 'sin sede');
+      fijar('lblRecordatorioHoras', `${horas} h`);
+      banner.classList.remove('hidden');
+      try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    }
+
+    setInterval(revisarRecordatorioJornadaPatio, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) revisarRecordatorioJornadaPatio(); });
+
     async function aplicarUltimoClienteSedePatio() {
-      let ult = null;
-      try { ult = JSON.parse(localStorage.getItem(claveUltimoClienteSedePatio()) || 'null'); } catch (e) {}
+      const ult = leerJornadaPatio();
       if (!ult || !ult.cliente) return;
       const selCli = document.getElementById('cliente');
       if (!selCli) return;
@@ -2332,13 +2386,19 @@
             b.innerHTML = '<i class="fa-solid fa-lock text-[9px] mr-1"></i>Tipología Fija (Historial)';
           }
 
-          // 2. Precargar Cliente, Subcliente y Operación de la inspección anterior
-          if (d.cliente) {
+          // 2. Precargar Cliente, Subcliente y Operación de la inspección anterior.
+          // Con una jornada activa el cliente y la sede quedan fijos: solo se avisa si el vehículo figura en otro cliente.
+          const jornada = jornadaPatioActiva();
+          if (jornada) {
+            if (d.cliente && String(d.cliente).trim().toUpperCase() !== String(jornada.cliente).trim().toUpperCase()) {
+              mostrarToast(`⚠️ La placa ${placa} figura en el cliente ${d.cliente}. Se mantiene el cliente de la jornada: ${jornada.cliente}.`, true);
+            }
+          } else if (d.cliente) {
             asignarValorSelect('cliente', d.cliente);
             await alCambiarClienteMobile();
           }
 
-          if (d.subcliente && document.getElementById('subcliente')) {
+          if (!jornada && d.subcliente && document.getElementById('subcliente')) {
             asignarValorSelect('subcliente', d.subcliente);
           }
 
@@ -3743,12 +3803,20 @@
     }
     function confirmarContinuarMismoCliente() {
       document.getElementById('bannerRecordatorioCliente').classList.add('hidden');
+      const j = leerJornadaPatio();
+      if (j) guardarJornadaPatio({ ...j, ultimoAviso: Date.now() });  // el próximo aviso, en 4 horas
+      mostrarToast(`✅ Sigues con ${j ? j.cliente : 'el mismo cliente'}. Te volveremos a preguntar en ${HORAS_RECORDATORIO_JORNADA} horas.`);
     }
     function cambiarClienteRecordatorio() {
       document.getElementById('bannerRecordatorioCliente').classList.add('hidden');
-      document.getElementById('cliente').value = '';
-      document.getElementById('subcliente').value = '';
-      document.getElementById('cliente').focus();
+      try { localStorage.removeItem(claveUltimoClienteSedePatio()); } catch (e) {}
+      const selCli = document.getElementById('cliente');
+      const selSede = document.getElementById('subcliente');
+      // Con un solo cliente asignado el cliente sigue fijo: solo se cambia la sede
+      if (selCli && !selCli.disabled && !selCli.readOnly) selCli.value = '';
+      if (selSede) selSede.value = '';
+      const foco = (selCli && !selCli.disabled && !selCli.readOnly) ? selCli : selSede;
+      if (foco) { foco.scrollIntoView({ block: 'center', behavior: 'smooth' }); foco.focus(); }
     }
 
     // Informes PDF & Modal Ejecutivo

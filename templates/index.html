@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-40">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-41">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -689,17 +689,17 @@
         <div class="flex-1">
           <h2 class="text-xs font-black text-amber-900">Recordatorio de Jornada de Inspección</h2>
           <p class="text-[11px] text-amber-800 mt-0.5">
-            Llevas una jornada prolongada con el cliente <b id="lblRecordatorioCliente">-</b> y sede <b id="lblRecordatorioSubcliente">-</b>.
-            ¿Deseas continuar con este mismo cliente o cambiar a uno nuevo?
+            Llevas <b id="lblRecordatorioHoras">4 h</b> inspeccionando el cliente <b id="lblRecordatorioCliente">-</b> en la sede <b id="lblRecordatorioSubcliente">-</b>.
+            ¿Continúas con el mismo cliente y sede?
           </p>
         </div>
       </div>
       <div class="flex space-x-2 pt-1">
         <button type="button" onclick="confirmarContinuarMismoCliente()" class="flex-1 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs">
-          Continuar con Este Cliente
+          Sí, continuar
         </button>
         <button type="button" onclick="cambiarClienteRecordatorio()" class="flex-1 py-1.5 bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 rounded-xl text-xs font-bold">
-          Cambiar Cliente
+          Cambiar cliente o sede
         </button>
       </div>
     </div>
@@ -734,14 +734,14 @@
                 <i class="fa-solid fa-lock text-[9px] mr-1"></i><span>Predeterminado</span>
               </span>
             </div>
-            <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+            <select id="cliente" onchange="verificarOpcionNuevaSelect(this, 'cliente / empresa'); alCambiarClienteMobile().then(recordarClienteSedePatio);" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
               <option value="" disabled selected class="text-slate-400 font-normal">ej. TransCarga (Seleccionar cliente)</option>
             </select>
             <datalist id="dl_clientes"></datalist>
           </div>
           <div>
             <label for="subcliente" class="block text-[11px] font-bold text-slate-600 mb-1">Sede <span class="text-rose-500 font-black">*</span></label>
-            <select id="subcliente" required onchange="limpiarErrorCampo('subcliente'); verificarOpcionNuevaSelect(this, 'sede / subcliente');" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
+            <select id="subcliente" required onchange="limpiarErrorCampo('subcliente'); verificarOpcionNuevaSelect(this, 'sede / subcliente'); recordarClienteSedePatio();" class="w-full touch-target px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 transition-all">
               <option value="" disabled selected class="text-slate-400 font-normal">ej. Principal (Seleccionar sede)</option>
             </select>
             <datalist id="dl_subclientes"></datalist>
@@ -6914,18 +6914,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-40"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-40"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-40"></script>
-  <script src="/static/js/app_init.js?v=rediseno-40"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-40"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-40"></script>
+  <script src="/static/js/app_core.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-41"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-41"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-41"></script>
+  <script src="/static/js/app_init.js?v=rediseno-41"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-41"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-41"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">
