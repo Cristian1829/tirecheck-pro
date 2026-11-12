@@ -1246,9 +1246,11 @@
               esRepuestoDesactivado ? 'opacity-40 line-through' : ''
             }`;
             
+            let rolBtn = p.rol || '';
+            if (String(rolBtn).toLowerCase().includes('dir')) rolBtn = 'Dir';
             btn.innerHTML = `
               <span>${escapeHtml(p.pos)}</span>
-              <span class="text-[9px] opacity-60">(${escapeHtml(p.rol || '')})</span>
+              <span class="text-[9px] opacity-60">(${escapeHtml(rolBtn)})</span>
               ${iconoBadge}
             `;
             btn.onclick = () => seleccionarPosicion(p.pos);
@@ -1327,9 +1329,22 @@
         if (esquemaTipologiaCache) {
           for (const eje of esquemaTipologiaCache) {
             const match = (eje.posiciones || []).find(item => item.pos === p);
-            if (match) { rol = match.rol || ''; break; }
+            if (match) {
+              rol = match.rol || '';
+              if (!rol && eje.tipo) rol = eje.tipo;
+              break;
+            }
           }
         }
+        // Nombre corto en la píldora para que quepa en el celular («direccional» → «Dir»)
+        const rNorm = String(rol || '').trim().toLowerCase();
+        if (rNorm.includes('dir')) rol = 'Dir';
+        else if (rNorm.includes('rep')) rol = 'Rep';
+        else if (rNorm.includes('senc') || rNorm === 'sen') rol = 'Sen';
+        else if (rNorm.includes('ext')) rol = 'ext';
+        else if (rNorm.includes('int')) rol = 'int';
+        else if (rNorm.includes('lib')) rol = 'Lib';
+        else if (rNorm.includes('trac')) rol = 'Trac';
 
         let clasePill = 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50';
         let textoSubPill = rol || 'Pos';
@@ -1353,7 +1368,7 @@
 
         btn.innerHTML = `
           <span class="leading-none text-sm font-mono">${p}</span>
-          <span class="text-[9px] font-bold opacity-80 leading-none mt-0.5">${textoSubPill}</span>
+          <span class="carrusel-sub-label text-[9px] font-bold opacity-80 leading-none mt-0.5">${textoSubPill}</span>
         `;
         btn.onclick = async () => { await seleccionarPosicion(p); irAMedicionesPosicion(); };
         contenedor.appendChild(btn);
@@ -1434,14 +1449,42 @@
           if (!pill) return;
           const esSel = (p === posActual);
           const esInsp = posicionesInspeccionadasPlaca.has(p);
+          const tieneNov = posicionesConNovedadPlaca.has(p);
 
           pill.className = `carrusel-tire-pill rounded-xl border flex flex-col items-center justify-center text-xs font-black select-none ${
             esSel
               ? 'active bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300'
-              : esInsp
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              : tieneNov
+                ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 ring-1 ring-amber-300'
+                : esInsp
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 ring-1 ring-emerald-300'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`;
+
+          const sub = pill.querySelector('.carrusel-sub-label') || pill.querySelectorAll('span')[1];
+          if (sub) {
+            let rolP = '';
+            if (esquemaTipologiaCache) {
+              for (const eje of esquemaTipologiaCache) {
+                const match = (eje.posiciones || []).find(item => item.pos === p);
+                if (match) { rolP = match.rol || ''; if (!rolP && eje.tipo) rolP = eje.tipo; break; }
+              }
+            }
+            const rNorm = String(rolP || '').trim().toLowerCase();
+            if (rNorm.includes('dir')) rolP = 'Dir';
+            else if (rNorm.includes('rep')) rolP = 'Rep';
+            else if (rNorm.includes('senc') || rNorm === 'sen') rolP = 'Sen';
+            else if (rNorm.includes('ext')) rolP = 'ext';
+            else if (rNorm.includes('int')) rolP = 'int';
+            else if (rNorm.includes('lib')) rolP = 'Lib';
+            else if (rNorm.includes('trac')) rolP = 'Trac';
+
+            let txt = rolP || 'Pos';
+            if (tieneNov) txt = '⚠️ ' + (rolP || 'Nov');
+            else if (esInsp) txt = '✓ ' + (rolP || 'OK');
+            sub.textContent = txt;
+          }
+
           if (esSel && pill.parentElement) {
             const barra = pill.parentElement;
             barra.scrollTo({ left: Math.max(0, pill.offsetLeft - (barra.clientWidth - pill.offsetWidth) / 2), behavior: 'smooth' });
