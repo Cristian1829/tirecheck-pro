@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-43">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-44">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -2495,12 +2495,26 @@
             <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 whitespace-nowrap shrink-0">KPI 13</span>
             <h4 class="text-sm font-black text-slate-900">Rodado y proyección por referencia</h4>
           </div>
-          <p class="text-[11px] text-slate-400">Originales y reencauches no se mezclan. Tono fuerte: lo que lleva rodado · tono claro: lo que le falta hasta el retiro · el largo total es la proyección.</p>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <p class="text-[11px] text-slate-400">Originales y reencauches no se mezclan. Tono fuerte: lo que lleva rodado · tono claro: lo que le falta hasta el retiro · el largo total es la proyección.</p>
+            <div class="flex items-center space-x-2 shrink-0">
+              <label for="selSegKpi13" class="shrink-0 text-[10px] font-black uppercase text-slate-500 whitespace-nowrap">Agrupar por:</label>
+              <select id="selSegKpi13" onchange="cambiarSegmentoKpi13(this.value)" class="min-w-0 max-w-full p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-indigo-500">
+              <option value="referencia">Referencia</option>
+              <option value="marca">Marca (reencauches por banda)</option>
+              <option value="diseno">Diseño (reencauches por banda)</option>
+              <option value="dimension">Dimensión</option>
+              <option value="tipologia">Tipología</option>
+              <option value="eje">Eje</option>
+              <option value="vida">Vida (Original, R1, R2…)</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4">
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <div class="flex items-start justify-between gap-2 mb-2">
-              <h5 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#1d4ed8"></span>Llantas originales <span class="block text-[10px] font-semibold text-slate-400">Marca · diseño · medida · eje</span></h5>
+              <h5 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#1d4ed8"></span>Llantas originales <span id="subKpi13Orig" class="block text-[10px] font-semibold text-slate-400">Marca · diseño · medida · eje</span></h5>
               <button type="button" onclick="exportarGraficoPngHd('canvasKpi13_comparativo', 'KPI13_Originales_por_referencia')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0"><i class="fa-solid fa-camera"></i></button>
             </div>
             <div id="vacioKpi13Orig" class="hidden p-4 text-center text-xs text-slate-500">No hay llantas originales con desgaste suficiente para proyectar.</div>
@@ -2511,7 +2525,7 @@
           </div>
           <div class="bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
             <div class="flex items-start justify-between gap-2 mb-2">
-              <h5 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#15803d"></span>Reencauches <span class="block text-[10px] font-semibold text-slate-400">Banda · medida · eje · sin importar la marca de la carcasa</span></h5>
+              <h5 class="text-xs font-black text-slate-800"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-1.5" style="background:#15803d"></span>Reencauches <span id="subKpi13Reenc" class="block text-[10px] font-semibold text-slate-400">Banda · medida · eje · sin importar la marca de la carcasa</span></h5>
               <button type="button" onclick="exportarGraficoPngHd('canvasKpi13_reencauche', 'KPI13_Reencauches_por_banda')" title="Exportar PNG HD" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all shrink-0"><i class="fa-solid fa-camera"></i></button>
             </div>
             <div id="vacioKpi13Reenc" class="hidden p-4 text-center text-xs text-slate-500">No hay reencauches con desgaste suficiente para proyectar.</div>
@@ -2532,19 +2546,22 @@
               <h4 class="text-sm font-black text-slate-900">Proyección, rendimiento y costo por kilómetro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Las tres medidas por el grupo elegido. La barra más oscura de cada color es la mejor de su grupo.</p>
-            <p id="notaMarcaKpi14" class="hidden text-[11px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Agrupado por marca: las originales salen con la marca de la carcasa y los reencauches solo con su banda (todas sus vidas juntas), sin mezclarse.</p>
+            <p id="notaMarcaKpi14" class="hidden text-[11px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Agrupado por marca o diseño: las originales salen con su marca o diseño y los reencauches solo con su banda (todas sus vidas juntas), sin mezclarse.</p>
             <p class="text-[11px] font-semibold text-slate-600 mt-1"><span class="inline-flex items-center gap-1.5 mr-3"><span class="w-2.5 h-2.5 rounded-sm" style="background:#1d4ed8"></span>Originales</span><span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#15803d"></span>Reencauches</span></p>
           </div>
 
           <!-- Selector de Agrupación Dinámica -->
           <div class="flex items-center space-x-2">
             <label for="selAgrupacionKpi14" class="text-[10px] font-black uppercase text-slate-500 whitespace-nowrap">Agrupar por:</label>
-            <select id="selAgrupacionKpi14" onchange="cambiarAgrupacionKpi14(this.value)" class="p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-indigo-500">
-              <option value="marca">Marca / Diseño</option>
+            <select id="selAgrupacionKpi14" onchange="cambiarAgrupacionKpi14(this.value)" class="min-w-0 max-w-full p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-indigo-500">
+              <option value="marca">Marca (reencauches por banda)</option>
+              <option value="diseno">Diseño (reencauches por banda)</option>
+              <option value="dimension">Dimensión</option>
+              <option value="tipologia">Tipología</option>
+              <option value="eje">Eje</option>
+              <option value="vida">Vida (Original, R1, R2…)</option>
               <option value="fechas">Fecha / Mes</option>
               <option value="inspeccion">Consecutivo Inspección</option>
-              <option value="eje">Tipo de Eje</option>
-              <option value="tipologia">Tipología Vehicular</option>
             </select>
           </div>
         </div>
@@ -2644,6 +2661,17 @@
                   <h4 class="text-sm font-black text-slate-900">Potencial de Llanta: Promedio vs. Envolventes Máx y Mín</h4>
                 </div>
                 <p class="text-[11px] text-slate-400">Filtrado estricto de madurez (&ge; 1.5 mm de desgaste) y brecha frente al mejor registro</p>
+                <div class="flex items-center space-x-2 mt-1.5">
+                  <label for="selSegKpi15" class="text-[10px] font-black uppercase text-slate-500 whitespace-nowrap">Agrupar por:</label>
+                  <select id="selSegKpi15" onchange="cambiarSegmentoKpi15(this.value)" class="min-w-0 max-w-full p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-xs text-slate-800 focus:outline-none focus:border-indigo-500">
+              <option value="marca">Marca (reencauches por banda)</option>
+              <option value="diseno">Diseño (reencauches por banda)</option>
+              <option value="dimension">Dimensión</option>
+              <option value="tipologia">Tipología</option>
+              <option value="eje">Eje</option>
+              <option value="vida">Vida (Original, R1, R2…)</option>
+                  </select>
+                </div>
               </div>
               <div class="flex items-center space-x-1.5">
                 <span id="kpi15_brecha_badge" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Brecha: 0%</span>
@@ -6915,18 +6943,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-43"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-43"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-43"></script>
-  <script src="/static/js/app_init.js?v=rediseno-43"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-43"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-43"></script>
+  <script src="/static/js/app_core.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-44"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-44"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-44"></script>
+  <script src="/static/js/app_init.js?v=rediseno-44"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-44"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-44"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">

@@ -7866,6 +7866,105 @@ def referencia_rendimiento(df_g: pd.DataFrame, col_original: str = 'marca') -> p
     return original.where(~es_r, banda)
 
 
+SEGMENTOS_RENDIMIENTO = ('marca', 'diseno', 'dimension', 'tipologia', 'eje', 'vida')
+
+
+def _orden_vida(etiqueta):
+    m = re.match(r'^R(\d+)$', str(etiqueta))
+    return int(m.group(1)) if m else (0 if str(etiqueta) == 'Original' else 99)
+
+
+def etiquetas_segmento(d: pd.DataFrame, opcion: str) -> pd.Series:
+    """
+    Nombre de cada llanta al segmentar las gráficas de rendimiento por tipología, eje, marca, diseño,
+    dimensión o vida. En marca y diseño la reencauchada va por su banda (no por la carcasa).
+    """
+    if d is None or d.empty:
+        return pd.Series(dtype=object)
+    txt = lambda c: (d[c] if c in d.columns else pd.Series('', index=d.index)).fillna('').astype(str).str.strip()
+    es_r = d['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in d.columns else pd.Series(False, index=d.index)
+    if opcion == 'diseno':
+        orig = (txt('marca').str.upper() + ' ' + txt('diseno').str.upper()).str.strip()
+        return orig.where(~es_r, referencia_rendimiento(d))
+    if opcion == 'dimension':
+        return txt('dimension').str.upper().replace('', 'Sin medida')
+    if opcion == 'tipologia':
+        return txt('tipologia').replace('', 'Sin tipología')
+    if opcion == 'eje':
+        eje = d['calc_eje'] if 'calc_eje' in d.columns else pd.Series('', index=d.index)
+        return eje.map(_NOMBRE_EJE).fillna('Sin eje')
+    if opcion == 'vida':
+        vida = txt('vida')
+        return pd.Series([vida_llanta(v) if not r or vida_llanta(v) != 'Original' else 'R1'
+                          for v, r in zip(vida, es_r)], index=d.index)
+    return referencia_rendimiento(d)  # marca
+
+
+def _metricas_rendimiento(g: pd.DataFrame) -> dict:
+    km_mm, cpk = agregar_rendimiento_y_cpk(g)
+    return {"llantas": int(len(g)),
+            "km_reales": _redondear(pd.to_numeric(g['calc_km_rodados'], errors='coerce').mean()),
+            "proyeccion": _redondear(pd.to_numeric(g['calc_proy_total'], errors='coerce').mean()),
+            "km_mm": _redondear(km_mm, 1), "cpk": _redondear(cpk, 2)}
+
+
+def segmentar_rendimiento(df_b: pd.DataFrame) -> dict:
+    """
+    Rendimiento (llantas, km rodados, proyección, km/mm y CPK) por cada segmento que se puede elegir en
+    las gráficas: {opción: {"originales": [filas], "reencauches": [filas]}}. Originales y reencauches
+    nunca se mezclan. Se ordenan por número de llantas (la vida, de Original a R1, R2…).
+    """
+    vacio = {op: {"originales": [], "reencauches": []} for op in SEGMENTOS_RENDIMIENTO}
+    if df_b is None or df_b.empty:
+        return vacio
+    es_r = df_b['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in df_b.columns else pd.Series(False, index=df_b.index)
+    out = {}
+    for op in SEGMENTOS_RENDIMIENTO:
+        et = etiquetas_segmento(df_b, op)
+        res = {}
+        for clave, mask in (("originales", ~es_r), ("reencauches", es_r)):
+            filas = [{"etiqueta": str(nombre) or '—', **_metricas_rendimiento(g)}
+                     for nombre, g in df_b[mask].groupby(et[mask])]
+            if op == 'vida':
+                filas.sort(key=lambda f: _orden_vida(f["etiqueta"]))
+            else:
+                filas.sort(key=lambda f: (-f["llantas"], -(f["proyeccion"] or 0)))
+            res[clave] = filas
+        out[op] = res
+    return out
+
+
+def segmentar_potencial(df_m: pd.DataFrame) -> dict:
+    """
+    KPI 15 por cada segmento: proyección promedio, máxima y mínima y brecha frente a la mejor. Las
+    reencauchadas van en su propio grupo; si el nombre se repite con una original se marca «(reenc.)».
+    """
+    vacio = {op: {"labels": [], "promedio": [], "maximo": [], "minimo": [], "brecha_pct": []} for op in SEGMENTOS_RENDIMIENTO}
+    if df_m is None or df_m.empty:
+        return vacio
+    es_r = df_m['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in df_m.columns else pd.Series(False, index=df_m.index)
+    out = {}
+    for op in SEGMENTOS_RENDIMIENTO:
+        et = etiquetas_segmento(df_m, op)
+        grupos = []
+        for es_reenc, mask in ((False, ~es_r), (True, es_r)):
+            for nombre, g in df_m[mask].groupby(et[mask]):
+                proy = pd.to_numeric(g['calc_proy_total'], errors='coerce').dropna()
+                if proy.empty:
+                    continue
+                grupos.append((str(nombre) or '—', es_reenc, _redondear(proy.mean()), _redondear(proy.max()), _redondear(proy.min())))
+        if op == 'vida':
+            grupos.sort(key=lambda x: _orden_vida(x[0]))
+        nombres_orig = {n for n, r, *_ in grupos if not r}
+        lbl = lambda n, r: f"{n} (reenc.)" if (r and n in nombres_orig) else n
+        out[op] = {"labels": [lbl(n, r) for n, r, *_ in grupos],
+                   "promedio": [p for *_, p, _mx, _mn in grupos],
+                   "maximo": [mx for *_, mx, _mn in grupos],
+                   "minimo": [mn for *_, mn in grupos],
+                   "brecha_pct": [round(((mx - p) / max(1.0, mx)) * 100.0, 1) for *_, p, mx, _mn in grupos]}
+    return out
+
+
 def _separar_por_vida(df_g, col, metricas, fmt_etiqueta=None) -> dict:
     """
     Cifras de un KPI por grupo (marca, eje, mes...) con originales y reencauches por separado.
@@ -11338,6 +11437,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     por_referencia = rendimiento_por_referencia(
         df_rodante[~df_rodante['calc_es_asentamiento']] if (not df_patio.empty and es_full) else None)
     kpi_13["por_referencia"] = por_referencia
+    # Segmentos que se eligen en cada gráfica (tipología, eje, marca, diseño, dimensión y vida)
+    segmentos_rend = segmentar_rendimiento(df_rend)
+    kpi_13["segmentos"] = segmentos_rend
 
     # =========================================================================
     # KPI 14: Tríada Multidimensional Sincronizada (SOLO FULL) (Corrección 1: sobre df_patio para marca/eje/tipología)
@@ -11397,6 +11499,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "por_vida": vida_k14,
         "por_banda": por_banda_k14,
         "por_referencia": por_referencia,
+        "segmentos": segmentos_rend,
         # Este CPK es el PROYECTADO (no el operativo): precio de la llanta / km proyectados al límite de retiro
         "cpk_tipo": "proyectado",
         "cpk_formula": "CPK proyectado = precio de la llanta ÷ km proyectados hasta el límite de retiro"
@@ -11406,9 +11509,11 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 15: Potencial de Llanta: Proyección vs Máx y Mín (Corrección 1: sobre df_patio con Madurez >= 1.5mm)
     # =========================================================================
     labels_k15, prom_k15, max_k15, min_k15, brecha_k15 = [], [], [], [], []
+    df_maduras_k15 = None
     if not df_patio.empty and es_full:
         # Filtro estricto de madurez sobre última foto de patio: SOLO llantas con calc_desgaste_mm >= 1.5
         df_maduras = df_rodante[(df_rodante['calc_desgaste_mm'] >= 1.5) & df_rodante['calc_proy_total'].notna()]
+        df_maduras_k15 = df_maduras
         if not df_maduras.empty:
             for mk, grp_mk in df_maduras.groupby(referencia_rendimiento(df_maduras)):
                 labels_k15.append(str(mk) or 'Otras')
@@ -11498,7 +11603,8 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "maximo": max_k15,
         "minimo": min_k15,
         "brecha_pct": brecha_k15,
-        "brecha_promedio_total": brecha_prom_k15
+        "brecha_promedio_total": brecha_prom_k15,
+        "segmentos": segmentar_potencial(df_maduras_k15)
     }
 
     # =========================================================================

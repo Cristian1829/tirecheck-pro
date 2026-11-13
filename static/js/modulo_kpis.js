@@ -616,9 +616,67 @@
       if (recargar) cargarSuite20Kpis();
     }
 
+    // Segmentación por gráfica (KPI 13, 14 y 15): cada una elige cómo agrupar sin recargar la suite.
+    // Originales y reencauches siguen separados; en marca y diseño la reencauchada va por su banda.
+    const SEGMENTOS_REND = ['marca', 'diseno', 'dimension', 'tipologia', 'eje', 'vida'];
+    const NOMBRE_SEGMENTO = { referencia: 'Marca · diseño · medida · eje', marca: 'Por marca de la carcasa', diseno: 'Por marca y diseño',
+                              dimension: 'Por dimensión', tipologia: 'Por tipología', eje: 'Por eje', vida: 'Por vida' };
+    const leerSegmento = (k, def) => { try { return localStorage.getItem('ta_seg_' + k) || def; } catch (e) { return def; } };
+    const guardarSegmento = (k, v) => { try { localStorage.setItem('ta_seg_' + k, v); } catch (e) {} };
+    let segmentoKpi13 = leerSegmento('kpi13', 'referencia');
+    let segmentoKpi15 = leerSegmento('kpi15', 'marca');
+    let ultimoKpi13 = null, ultimoKpi14 = null, ultimoKpi15 = null;
+
+    function cambiarSegmentoKpi13(v) {
+      segmentoKpi13 = v || 'referencia';
+      guardarSegmento('kpi13', segmentoKpi13);
+      if (ultimoKpi13) renderChartKpi13(ultimoKpi13);
+    }
+
+    function cambiarSegmentoKpi15(v) {
+      segmentoKpi15 = v || 'marca';
+      guardarSegmento('kpi15', segmentoKpi15);
+      if (ultimoKpi15) renderChartKpi15(ultimoKpi15);
+    }
+
     function cambiarAgrupacionKpi14(nuevaAgrup) {
       agrupacionKpi14Actual = nuevaAgrup || 'marca';
+      // Las seis agrupaciones de rendimiento ya llegaron con la suite: se cambian sin recargar
+      if (SEGMENTOS_REND.includes(agrupacionKpi14Actual) && ultimoKpi14 && ultimoKpi14.segmentos) {
+        renderChartKpi14(ultimoKpi14);
+        return;
+      }
       cargarSuite20Kpis();
+    }
+
+    // Segmento {originales, reencauches} -> formato por vida de las gráficas del KPI 14 (máx. 10 por vida)
+    function porVidaDesdeSegmento(seg) {
+      const orig = (seg.originales || []).slice(0, 10), reen = (seg.reencauches || []).slice(0, 10);
+      const labels = [];
+      [...orig, ...reen].forEach(f => { if (!labels.includes(f.etiqueta)) labels.push(f.etiqueta); });
+      const serie = (filas, campo) => labels.map(l => { const f = filas.find(x => x.etiqueta === l); return f ? f[campo] : null; });
+      return {
+        labels,
+        original: { proyeccion_km: serie(orig, 'proyeccion'), km_mm: serie(orig, 'km_mm'), cpk: serie(orig, 'cpk') },
+        reencauche: { proyeccion_km: serie(reen, 'proyeccion'), km_mm: serie(reen, 'km_mm'), cpk: serie(reen, 'cpk') },
+        llantas: { original: serie(orig, 'llantas').map(v => v || 0), reencauche: serie(reen, 'llantas').map(v => v || 0) }
+      };
+    }
+
+    function renderKpi13Segmento(seg, op) {
+      const u = uMed();
+      const nombre = (f) => [f.etiqueta, `${formatCO_Miles(f.llantas)} llanta${f.llantas === 1 ? '' : 's'}`];
+      const sO = document.getElementById('subKpi13Orig'), sR = document.getElementById('subKpi13Reenc');
+      if (sO) sO.textContent = NOMBRE_SEGMENTO[op] || '';
+      if (sR) sR.textContent = (op === 'marca' || op === 'diseno') ? 'Por banda · todas sus vidas juntas' : (NOMBRE_SEGMENTO[op] || '');
+      const orig = graficaReferencia('canvasKpi13_comparativo', 'kpi13_comparativo', 'altoKpi13Orig', 'vacioKpi13Orig', 'notaKpi13Orig',
+                                     seg.originales, nombre, TA_G.azul, TA_G.azulClaro);
+      const reenc = graficaReferencia('canvasKpi13_reencauche', 'kpi13_reencauche', 'altoKpi13Reenc', 'vacioKpi13Reenc', 'notaKpi13Reenc',
+                                      seg.reencauches, nombre, TA_G.ok, TA_G.okClaro);
+      const mejor = (filas) => (filas || []).filter(f => Number(f.proyeccion) > 0).sort((a, b) => b.proyeccion - a.proyeccion)[0];
+      const mo = mejor(seg.originales), mr = mejor(seg.reencauches);
+      if (orig && mo) taLectura('canvasKpi13_comparativo', 'in', `Mayor proyección: ${mo.etiqueta}, ${formatCO_Miles(mo.proyeccion)} ${u} (lleva ${formatCO_Miles(mo.km_reales)}).`);
+      if (reenc && mr) taLectura('canvasKpi13_reencauche', 'in', `Mayor proyección: ${mr.etiqueta}, ${formatCO_Miles(mr.proyeccion)} ${u} (lleva ${formatCO_Miles(mr.km_reales)}).`);
     }
 
     function abrirModalPlacasPendientesKpi01() {
@@ -2085,6 +2143,15 @@
       const ctx = document.getElementById('canvasKpi13_comparativo');
       if (!ctx || !ds) return;
       destruirChartSuite('kpi13_reencauche');
+      ultimoKpi13 = ds;
+      const sel13 = document.getElementById('selSegKpi13');
+      if (sel13 && sel13.value !== segmentoKpi13) sel13.value = segmentoKpi13;
+      if (segmentoKpi13 !== 'referencia' && ds.segmentos && ds.segmentos[segmentoKpi13]) {
+        renderKpi13Segmento(ds.segmentos[segmentoKpi13], segmentoKpi13); return;
+      }
+      const sO = document.getElementById('subKpi13Orig'), sR = document.getElementById('subKpi13Reenc');
+      if (sO) sO.textContent = 'Marca · diseño · medida · eje';
+      if (sR) sR.textContent = 'Banda · medida · eje · sin importar la marca de la carcasa';
       if (ds.por_referencia) { renderKpi13Referencia(ds.por_referencia); return; }
       if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi13Vida(ds.por_vida); return; }
 
@@ -2410,15 +2477,17 @@
       destruirChartSuite('kpi14_bandas');
       if (!ds) return;
 
+      ultimoKpi14 = ds;
+      const local14 = SEGMENTOS_REND.includes(agrupacionKpi14Actual) && ds.segmentos && ds.segmentos[agrupacionKpi14Actual];
+      const agrup14 = local14 ? agrupacionKpi14Actual : (ds.agrupacion_actual || 'marca');
       const sel = document.getElementById('selAgrupacionKpi14');
-      if (sel && ds.agrupacion_actual && sel.value !== ds.agrupacion_actual) {
-        sel.value = ds.agrupacion_actual;
-      }
+      if (sel && sel.value !== agrup14) sel.value = agrup14;
 
       if (ds.por_referencia) renderTablasReferenciaKpi14(ds.por_referencia); else renderBandasKpi14(ds.por_banda);
-      const porMarca = (ds.agrupacion_actual || 'marca') === 'marca';
+      const porMarca = agrup14 === 'marca' || agrup14 === 'diseno';
       const notaMarca = document.getElementById('notaMarcaKpi14');
       if (notaMarca) notaMarca.classList.toggle('hidden', !porMarca);
+      if (local14) { renderChartKpi14Vida(porVidaDesdeSegmento(ds.segmentos[agrup14])); return; }
       if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi14Vida(ds.por_vida); return; }
       const labels = ds.labels || [];
 
@@ -2632,6 +2701,10 @@
       destruirChartSuite('kpi15_potencial');
       const ctx = document.getElementById('canvasKpi15_potencial');
       if (!ctx || !ds) return;
+      ultimoKpi15 = ds;
+      const sel15 = document.getElementById('selSegKpi15');
+      if (sel15 && sel15.value !== segmentoKpi15) sel15.value = segmentoKpi15;
+      if (ds.segmentos && ds.segmentos[segmentoKpi15]) ds = { ...ds, ...ds.segmentos[segmentoKpi15] };
 
       const badgeBrecha = document.getElementById('kpi15_brecha_badge');
       if (badgeBrecha && ds.brecha_promedio_total !== undefined) {

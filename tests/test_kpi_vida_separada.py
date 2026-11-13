@@ -171,3 +171,48 @@ def test_carcasas_muestran_km_por_vida_y_de_toda_la_vida(test_db):
     dc = next(f for f in filas if f["marca"] == "DOUBLE COIN")
     assert dc["km_por_vida"] == {"Original": 60000, "R1": 40000}
     assert dc["km_vida_promedio"] == 100000
+
+
+def _sembrar_segmentos():
+    _cfg("CLI SEG", psi_objetivo_traccion=100.0)
+    # Dos originales MICHELIN X MULTI D en 295 y una BRIDGESTONE R268 en 315
+    _insp("CLI SEG", "SEG001", "S-1", kilometraje=150000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=21, precio=1800000)
+    _insp("CLI SEG", "SEG002", "S-2", kilometraje=130000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=21, precio=1800000)
+    _insp("CLI SEG", "SEG003", "S-3", kilometraje=140000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=21, precio=1900000, marca="BRIDGESTONE", diseno="R268", dimension="315/80R22.5")
+    # Carcasa MICHELIN reencauchada con DVRT en R1 y otra en R2
+    _insp("CLI SEG", "SEG004", "S-4", kilometraje=110000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=16, precio=700000, vida="R1", banda_reen="DVRT")
+    _insp("CLI SEG", "SEG005", "S-5", kilometraje=120000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=16, precio=700000, vida="R2", banda_reen="DVRT")
+    return database.obtener_suite_completa_20_kpis({"cliente": "CLI SEG"})
+
+
+def test_cada_grafica_trae_las_seis_agrupaciones(test_db):
+    d = _sembrar_segmentos()
+    seg = d["kpi_13"]["segmentos"]
+    assert set(seg) == {"marca", "diseno", "dimension", "tipologia", "eje", "vida"}
+    assert d["kpi_14"]["segmentos"] == seg
+    et = lambda op, v: [f["etiqueta"] for f in seg[op][v]]
+    # Marca y diseño: la reencauchada va por su banda, nunca por la carcasa
+    assert et("marca", "originales") == ["MICHELIN", "BRIDGESTONE"] and et("marca", "reencauches") == ["DVRT"]
+    assert et("diseno", "originales") == ["MICHELIN X MULTI D", "BRIDGESTONE R268"] and et("diseno", "reencauches") == ["DVRT"]
+    assert sorted(et("dimension", "originales")) == ["295/80R22.5", "315/80R22.5"]
+    assert et("dimension", "reencauches") == ["295/80R22.5"]
+    # Vida: Original en originales; R1 y R2 aparte en reencauches
+    assert et("vida", "originales") == ["Original"] and et("vida", "reencauches") == ["R1", "R2"]
+    r1 = seg["vida"]["reencauches"][0]
+    assert r1["llantas"] == 1 and r1["km_reales"] == 10000
+    mich = seg["marca"]["originales"][0]
+    assert mich["llantas"] == 2 and mich["km_reales"] == 40000
+
+
+def test_kpi15_segmentado_marca_las_reencauchadas_que_se_repiten(test_db):
+    d = _sembrar_segmentos()
+    s15 = d["kpi_15"]["segmentos"]
+    assert s15["dimension"]["labels"].count("295/80R22.5") == 1
+    assert "295/80R22.5 (reenc.)" in s15["dimension"]["labels"]
+    assert "DVRT" in s15["marca"]["labels"] and "MICHELIN" in s15["marca"]["labels"]
+    assert len(s15["marca"]["labels"]) == len(s15["marca"]["promedio"]) == len(s15["marca"]["brecha_pct"])
