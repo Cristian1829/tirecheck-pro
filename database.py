@@ -10719,6 +10719,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             qp += (" AND MAYUS(TRIM(placa)) IN (SELECT MAYUS(TRIM(placa)) FROM catalogo_vehiculos"
                    " WHERE MAYUS(TRIM(tipo_operacion)) = ?)")
             par_p.append(tipo_operacion)
+        filtro_usr_p, par_usr_p = _filtro_clientes_usuario(usuario)  # sedes asignadas al usuario
+        qp += filtro_usr_p
+        par_p.extend(par_usr_p)
         cur.execute(qp, par_p)
         padron_rows = cur.fetchall()
     # De dónde sale el parque: padrón cargado o, si no hay, los vehículos ya inspeccionados alguna vez
@@ -10741,6 +10744,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if tipo_operacion and tipo_operacion != "TODOS":
                 qc += " AND MAYUS(TRIM(tipo_operacion)) = ?"
                 par_c.append(tipo_operacion)
+            filtro_usr_c, par_usr_c = _filtro_clientes_usuario(usuario)
+            qc += filtro_usr_c
+            par_c.extend(par_usr_c)
             cur.execute(qc, par_c)
             padron_rows = cur.fetchall()
 
@@ -10809,6 +10815,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             if val_m and val_m != "TODOS":
                 qm += f" AND MAYUS(TRIM({col_m})) = ?"
                 par_m.append(val_m)
+        # Clientes y sedes asignados al usuario: el de una sede no ve bajas ni bodegas de otras sedes
+        filtro_usr, par_usr = _filtro_clientes_usuario(usuario)
+        qm += filtro_usr
+        par_m.extend(par_usr)
         cur.execute(qm, par_m)
         cols_m = [d[0] for d in cur.description]
         llantas_maestro_todas = [dict(zip(cols_m, row)) for row in cur.fetchall()]
