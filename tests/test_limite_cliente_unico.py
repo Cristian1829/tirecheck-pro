@@ -102,3 +102,14 @@ def test_kpi12_dice_cual_es_la_llanta_mas_baja_y_su_limite(test_db):
     assert (lb["placa"], lb["posicion"], lb["numero_interno"], lb["limite_retiro"]) == ("DOC001", 6, "D6", 4.0)
     assert k12["limites_retiro"] == [4.0]
     assert k12["llantas_en_limite"] == 1
+
+
+def test_regla_por_eje_le_gana_a_la_sede_registrada_con_el_valor_general(test_db):
+    # Al crear el cliente con sedes, cada sede queda registrada con el límite general: eso no es una excepción
+    database.crear_o_actualizar_cliente({"cliente": "FLOTA SEIS", "limite_retiro_mm": 3.0, "subclientes": "NORTE, SUR"})
+    database.guardar_limite_retiro_cliente("FLOTA SEIS", 4.0, "", "TODOS", "DIRECCIONAL")
+    assert database.obtener_limite_retiro_cliente("FLOTA SEIS", "NORTE", "DIRECCIONAL") == 4.0
+    assert database.obtener_limite_retiro_cliente("FLOTA SEIS", "NORTE", "TRACCIÓN") == 3.0
+    # Una sede con valor propio sí es una excepción y manda en todos sus ejes
+    database.guardar_limite_retiro_cliente("FLOTA SEIS", 5.0, "", "SUR", "TODOS")
+    assert database.obtener_limite_retiro_cliente("FLOTA SEIS", "SUR", "DIRECCIONAL") == 5.0

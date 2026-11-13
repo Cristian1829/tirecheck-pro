@@ -5293,12 +5293,17 @@ def _construir_cache_limites_retiro(conn=None):
             if (c_sin, sub_sin, e_sin) in mapa_granular:
                 return mapa_granular[(c_sin, sub_sin, e_sin)]
 
-            # 2. cliente + subcliente + TODOS
+            # 2. cliente + subcliente + TODOS. Una regla de sede con el mismo valor del límite general es solo el
+            #    registro de la sede (se crea al dar de alta el cliente): no le gana a una regla por eje del cliente.
             if e_norm != 'TODOS':
-                if (c_norm, sub_norm, 'TODOS') in mapa_granular:
-                    return mapa_granular[(c_norm, sub_norm, 'TODOS')]
-                if (c_sin, sub_sin, 'TODOS') in mapa_granular:
-                    return mapa_granular[(c_sin, sub_sin, 'TODOS')]
+                general = mapa_granular.get((c_norm, 'TODOS', 'TODOS'), mapa_granular.get((c_sin, 'TODOS', 'TODOS')))
+                por_eje = mapa_granular.get((c_norm, 'TODOS', e_norm), mapa_granular.get((c_sin, 'TODOS', e_sin)))
+                for clave_sede in ((c_norm, sub_norm, 'TODOS'), (c_sin, sub_sin, 'TODOS')):
+                    if clave_sede in mapa_granular:
+                        v_sede = mapa_granular[clave_sede]
+                        if por_eje is not None and general is not None and abs(v_sede - general) < 1e-9:
+                            break  # copia del general: decide la regla por eje (paso 3)
+                        return v_sede
 
             # 3. cliente + TODOS + eje
             if sub_norm != 'TODOS':
