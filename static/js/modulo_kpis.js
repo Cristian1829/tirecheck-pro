@@ -1887,6 +1887,27 @@
 
       if (elMmG) elMmG.textContent = `${formatCO_Decimal(d.mm_gastados || 0, 1)} mm`;
       if (elProfAct) elProfAct.textContent = `${formatCO_Decimal(d.profundidad_actual || 0, 1)} mm`;
+      // Qué llanta es y contra qué límite de cambio del cliente se compara
+      const elProfDet = document.getElementById('kpi12_prof_detalle');
+      const lb = d.llanta_mas_baja;
+      if (elProfAct) {
+        const lim = lb ? Number(lb.limite_retiro) : NaN;
+        const p = Number(d.profundidad_actual || 0);
+        const color = !lb || !Number.isFinite(lim) ? 'text-emerald-600' : p <= lim ? 'text-rose-600' : p <= lim + 2 ? 'text-amber-600' : 'text-emerald-600';
+        elProfAct.className = `text-2xl font-black ${color} block mt-1 font-mono`;
+      }
+      if (elProfDet) {
+        if (!lb) { elProfDet.textContent = ''; }
+        else {
+          const lims = d.limites_retiro || [];
+          const textoLim = lims.length > 1
+            ? `Límite de esta llanta: ${formatCO_Decimal(lb.limite_retiro, 1)} mm (el cliente tiene ${lims.map(v => formatCO_Decimal(v, 1)).join(' / ')} mm según sede y eje)`
+            : `Límite de cambio del cliente: ${formatCO_Decimal(lb.limite_retiro, 1)} mm`;
+          const nLim = Number(d.llantas_en_limite || 0);
+          elProfDet.innerHTML = `${escapeHtml(lb.placa || 'Sin placa')} · pos. ${escapeHtml(String(lb.posicion || '—'))}${lb.numero_interno ? ` · N.º ${escapeHtml(lb.numero_interno)}` : ''}<br>${escapeHtml(textoLim)}`
+            + (nLim > 0 ? `<br><b class="text-rose-600">${formatCO_Miles(nLim)} llanta${nLim === 1 ? '' : 's'} en o bajo su límite</b>` : '');
+        }
+      }
 
       const pct = Math.min(100, Math.max(0, d.pct_desgaste || 0));
       if (elPctDesg) elPctDesg.textContent = `${formatCO_Decimal(pct, 1)}%`;

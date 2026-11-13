@@ -11268,9 +11268,23 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         promedios_k12 = {"mm_gastados": _redondear(df_rodante['calc_desgaste_mm'].mean(), 1),
                          "profundidad_actual": _redondear(p_validas.mean(), 1),
                          "pct_desgaste": _redondear(df_rodante['calc_pct_desgaste'].mean(), 1)}
+        # Cuál es la llanta más baja y con qué límite de cambio del cliente se compara (por sede y eje)
+        llanta_baja_k12 = None
+        if not p_validas.empty:
+            r_baja = df_rodante.loc[p_validas.idxmin()]
+            if isinstance(r_baja, pd.DataFrame):
+                r_baja = r_baja.iloc[0]
+            llanta_baja_k12 = {"placa": str(r_baja.get('placa') or ''), "posicion": to_int(r_baja.get('posicion')),
+                               "numero_interno": str(r_baja.get('numero_interno') or ''),
+                               "subcliente": str(r_baja.get('subcliente') or ''),
+                               "limite_retiro": _redondear(to_float(r_baja.get('calc_lim_retiro'), 3.0), 1)}
+        lims = pd.to_numeric(df_rodante.loc[p_validas.index, 'calc_lim_retiro'], errors='coerce').dropna()
+        limites_k12 = sorted({_redondear(v, 1) for v in lims.tolist()})
+        en_limite_k12 = int(en_retiro_mask(df_rodante.loc[p_validas.index]).sum()) if not p_validas.empty else 0
     else:
         mm_gast_k12, prof_act_k12, pct_desg_k12, km_rec_k12 = 0.0, 0.0, 0.0, 0
         promedios_k12 = {}
+        llanta_baja_k12, limites_k12, en_limite_k12 = None, [], 0
 
     kpi_12 = {
         "disponible": es_full,
@@ -11280,7 +11294,10 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         "pct_desgaste": pct_desg_k12,
         "km_recorridos": km_rec_k12,
         "criterio": "minima",
-        "promedios_referencia": promedios_k12
+        "promedios_referencia": promedios_k12,
+        "llanta_mas_baja": llanta_baja_k12,
+        "limites_retiro": limites_k12,          # límites del cliente que aplican (por sede y eje)
+        "llantas_en_limite": en_limite_k12      # llantas en o por debajo de su límite
     }
 
     # =========================================================================

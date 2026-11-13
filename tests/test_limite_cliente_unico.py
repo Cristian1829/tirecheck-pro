@@ -86,3 +86,19 @@ def test_ciudad_limpia_queda_en_4mm_aunque_la_sede_bogota_tenga_3mm(test_db):
     for eje in ("DIRECCIONAL", "TRACCIÓN", "LIBRE"):
         assert database.obtener_limite_retiro_cliente("CIUDAD LIMPIA", "BOGOTA", eje) == 4.0
     assert database.migrar_limite_ciudad_limpia_4mm()["status"] == "already_applied"
+
+
+def test_kpi12_dice_cual_es_la_llanta_mas_baja_y_su_limite(test_db):
+    database.crear_o_actualizar_cliente({"cliente": "FLOTA DOCE", "limite_retiro_mm": 4.0, "tipo_licencia": "PRO"})
+    for pos, prof in ((5, 9.0), (6, 3.0)):
+        database.insertar_inspeccion({
+            "fecha": "2026-10-10", "cliente": "FLOTA DOCE", "subcliente": "SEDE", "placa": "DOC001", "posicion": pos,
+            "numero_interno": f"D{pos}", "marca": "MICHELIN", "diseno": "XZE", "dimension": "295/80R22.5", "vida": "Original",
+            "kilometraje": 60000, "km_montaje": 10000, "prof_ext": prof, "prof_cent": prof, "prof_int": prof,
+            "prof_inicial": 16, "precio": 1200000, "psi": 110, "tipologia": "Cabezote (6x4)"})
+    k12 = database.obtener_suite_completa_20_kpis({"cliente": "FLOTA DOCE"})["kpi_12"]
+    assert k12["profundidad_actual"] == 3.0
+    lb = k12["llanta_mas_baja"]
+    assert (lb["placa"], lb["posicion"], lb["numero_interno"], lb["limite_retiro"]) == ("DOC001", 6, "D6", 4.0)
+    assert k12["limites_retiro"] == [4.0]
+    assert k12["llantas_en_limite"] == 1
