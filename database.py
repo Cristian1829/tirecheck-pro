@@ -6738,6 +6738,10 @@ def obtener_trazabilidad_kpis_llanta(numero_interno='', filtros=None, foto_actua
             if v_val and str(v_val).strip() and str(v_val).strip().upper() != 'TODOS':
                 query += f" AND MAYUS(TRIM({k_campo})) = MAYUS(TRIM(?))"
                 params.append(str(v_val).strip())
+        # Sedes asignadas al usuario: el de una sede no ve las llantas de otras sedes
+        filtro_sedes, par_sedes = _filtro_clientes_usuario(usuario_filtro)
+        query += filtro_sedes
+        params.extend(par_sedes)
 
         query += " ORDER BY numero_interno ASC, fecha ASC, id ASC"
         df = filtrar_fechas_validas(pd.read_sql_query(query, conn, params=params))
@@ -6957,6 +6961,24 @@ def cliente_sede_de_placa(placa):
         if not r or not r[0]:
             r = conn.execute("""SELECT cliente, subcliente FROM inspecciones WHERE UPPER(TRIM(placa)) = ?
                                 ORDER BY fecha DESC, id DESC LIMIT 1""", (pl,)).fetchone()
+    return (str(r[0] or '').strip().upper(), str(r[1] or '').strip().upper()) if r else ('', '')
+
+
+def cliente_sede_de_llanta(numero_interno, cliente=''):
+    """(cliente, sede) de una llanta según su hoja de vida o, si no está, su última inspección."""
+    sn = str(numero_interno or '').strip().upper()
+    cli = str(cliente or '').strip().upper()
+    if not sn:
+        return '', ''
+    with get_connection() as conn:
+        r = conn.execute("""SELECT COALESCE(NULLIF(cliente, ''), cliente_propietario), subcliente FROM llantas_maestro
+                            WHERE UPPER(TRIM(numero_interno)) = ?
+                              AND (? = '' OR UPPER(TRIM(cliente)) = ? OR UPPER(TRIM(cliente_propietario)) = ?)
+                            LIMIT 1""", (sn, cli, cli, cli)).fetchone()
+        if not r or not str(r[1] or '').strip():
+            r = conn.execute("""SELECT cliente, subcliente FROM inspecciones WHERE UPPER(TRIM(numero_interno)) = ?
+                                AND (? = '' OR UPPER(TRIM(cliente)) = ?) ORDER BY fecha DESC, id DESC LIMIT 1""",
+                             (sn, cli, cli)).fetchone() or r
     return (str(r[0] or '').strip().upper(), str(r[1] or '').strip().upper()) if r else ('', '')
 
 

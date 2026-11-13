@@ -40,3 +40,29 @@ def test_sin_restriccion_de_sede_ve_todo_el_cliente(test_db):
     d = database.obtener_suite_completa_20_kpis({"cliente": CLI})
     assert d["kpi_17"]["cantidad_fvu"] == 3
     assert d["kpi_01"]["total_padron"] == 3
+
+
+def _cliente_api(usuario):
+    from fastapi.testclient import TestClient
+    import server
+    c = TestClient(server.app)
+    c.headers.update({"Authorization": f"Bearer {server.crear_token_acceso(usuario, 'inspector')}"})
+    return c
+
+
+def test_inspector_de_una_sede_no_consulta_llantas_ni_vehiculos_de_otra(test_db):
+    _sembrar()
+    with database.get_connection() as conn:
+        conn.execute("UPDATE usuarios SET vistas_permitidas = 'patio,kpis,bodegas,composicion' WHERE username = 'insp_norte_test'")
+        conn.commit()
+    c = _cliente_api("insp_norte_test")
+    # Llantas de la sede SUR: sin permiso o no encontradas
+    assert c.get("/api/llanta/hoja-vida/FVU-S1", params={"cliente": CLI}).status_code == 403
+    assert c.get("/api/bodegas/kardex", params={"cliente": CLI, "numero_interno": "FVU-S1"}).status_code == 403
+    assert c.get("/api/llanta-por-cliente", params={"cliente": CLI, "numero_interno": "SUR001-3"}).json() == {"encontrado": False}
+    assert c.get("/api/taller/posicion-info", params={"cliente": CLI, "placa": "SUR001", "posicion": 3}).status_code == 403
+    trazab = c.get("/api/kpis-llantas", params={"cliente": CLI}).json()
+    assert {f["numero_interno"] for f in trazab} == {"NOR001-3"}
+    # Las de su sede, sí
+    assert c.get("/api/llanta/hoja-vida/FVU-N", params={"cliente": CLI}).status_code == 200
+    assert c.get("/api/llanta-por-cliente", params={"cliente": CLI, "numero_interno": "NOR001-3"}).json()["encontrado"] is True

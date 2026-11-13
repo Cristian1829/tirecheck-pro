@@ -480,6 +480,16 @@ def verificar_acceso_placa(usuario_actual: dict, placa: str, mensaje: str = "No 
         raise HTTPException(status_code=403, detail=mensaje)
 
 
+def verificar_acceso_llanta(usuario_actual: dict, numero_interno: str, cliente: str = "",
+                            mensaje: str = "No tiene permisos para consultar esta llanta"):
+    """403 si la llanta pertenece a un cliente o sede que el usuario no tiene asignados."""
+    if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")):
+        return
+    cli, sede = database.cliente_sede_de_llanta(numero_interno, cliente)
+    if cli and not database.usuario_puede_ver_sede(usuario_actual, cli, sede):
+        raise HTTPException(status_code=403, detail=mensaje)
+
+
 def sedes_filtro_usuario(usuario_actual: dict, cliente: str, subcliente: str = "") -> list:
     """Sedes a las que se limita la consulta del usuario en ese cliente ([] = sin límite). 403 si pide otra."""
     if es_rol_admin(usuario_actual.get("rol"), usuario_actual.get("username")):
@@ -2997,6 +3007,10 @@ def api_llanta_por_cliente(
             if not cliente and len(clis) == 1:
                 cliente = clis[0]
     res = database.obtener_llanta_por_cliente(cliente=cliente, numero_interno=numero_interno, placa=placa)
+    # Una llanta de otra sede del cliente se trata como no encontrada para el usuario de una sede
+    if res and not database.usuario_puede_ver_sede(usuario_actual, res.get("cliente") or cliente,
+                                                    database.cliente_sede_de_llanta(numero_interno, res.get("cliente") or cliente)[1]):
+        return {"encontrado": False}
     if res:
         return sanitizar_nativos({"encontrado": True, "datos": res})
     return {"encontrado": False}
@@ -3494,6 +3508,8 @@ def api_bodegas_garantia(item: GestionGarantiaItem, usuario_actual: dict = Depen
 @app.get("/api/bodegas/kardex", dependencies=[Depends(requerir_vista("bodegas"))])
 def api_bodegas_kardex(cliente: str = "", numero_interno: str = "", usuario_actual: dict = Depends(obtener_usuario_actual)):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    if numero_interno:
+        verificar_acceso_llanta(usuario_actual, numero_interno, cliente)
     return sanitizar_nativos(database.obtener_kardex_llanta(cliente, numero_interno))
 
 # ==========================================
@@ -3508,6 +3524,8 @@ def api_taller_posicion_info(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    if placa:
+        verificar_acceso_placa(usuario_actual, placa)
     if not cliente and placa:
         with database.get_connection() as conn:
             cur = conn.cursor()
@@ -3660,6 +3678,7 @@ def api_llanta_hoja_vida(
     usuario_actual: dict = Depends(obtener_usuario_actual)
 ):
     cliente = _resolver_cliente_usuario(usuario_actual, cliente)
+    verificar_acceso_llanta(usuario_actual, numero_interno, cliente)
     res = database.obtener_hoja_vida_llanta(numero_interno, cliente)
     if not res.get("ok"):
         raise HTTPException(status_code=404, detail=res.get("mensaje", "No se encontró la hoja de vida"))
