@@ -1,4 +1,4 @@
-"""KPI 13 y 14: originales y reencauches se muestran por separado (no en un mismo promedio por marca)."""
+"""KPI 13 y 14: originales por marca de la carcasa y reencauches solo por su banda (nunca mezclados)."""
 import database
 
 
@@ -24,30 +24,35 @@ def _sembrar():
     # Original: 50.000 km, 21 -> 11 mm -> 5.000 km/mm
     _insp("CLI VIDA", "VID001", "V-1", kilometraje=150000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
           prof_inicial=21, precio=1800000)
-    # Reencauche de la misma marca: 10.000 km, 16 -> 11 mm -> 2.000 km/mm
+    # Carcasa de la misma marca reencauchada con banda DVRT: 10.000 km, 16 -> 11 mm -> 2.000 km/mm
     _insp("CLI VIDA", "VID002", "V-2", kilometraje=110000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
-          prof_inicial=16, precio=700000, vida="R1")
+          prof_inicial=16, precio=700000, vida="R1", banda_reen="DVRT")
 
 
 def test_kpi13_separa_originales_y_reencauches(test_db):
     _sembrar()
     k13 = database.obtener_suite_completa_20_kpis({"cliente": "CLI VIDA"})["kpi_13"]
     pv = k13["por_vida"]
-    i = pv["labels"].index("MICHELIN")
-    assert pv["llantas"]["original"][i] == 1 and pv["llantas"]["reencauche"][i] == 1
+    i, j = pv["labels"].index("MICHELIN"), pv["labels"].index("DVRT")
+    # La carcasa MICHELIN solo con su ciclo original; la reencauchada sale como su banda
+    assert pv["llantas"]["original"][i] == 1 and pv["llantas"]["reencauche"][i] == 0
     assert pv["original"]["km_reales"][i] == 50000
-    assert pv["reencauche"]["km_reales"][i] == 10000
-    # Las cifras de siempre (mezcladas) se conservan para el PDF
-    assert k13["km_reales"][k13["labels"].index("MICHELIN")] == 30000
+    assert pv["llantas"]["reencauche"][j] == 1 and pv["llantas"]["original"][j] == 0
+    assert pv["reencauche"]["km_reales"][j] == 10000
+    # Las cifras que usa el PDF tampoco mezclan carcasa y banda
+    assert k13["km_reales"][k13["labels"].index("MICHELIN")] == 50000
+    assert k13["km_reales"][k13["labels"].index("DVRT")] == 10000
 
 
 def test_kpi14_separa_originales_y_reencauches(test_db):
     _sembrar()
     k14 = database.obtener_suite_completa_20_kpis({"cliente": "CLI VIDA", "agrupar_kpi14": "marca"})["kpi_14"]
     pv = k14["por_vida"]
-    i = pv["labels"].index("MICHELIN")
+    i, j = pv["labels"].index("MICHELIN"), pv["labels"].index("DVRT")
     assert round(pv["original"]["km_mm"][i], 1) == 5000.0
-    assert round(pv["reencauche"]["km_mm"][i], 1) == 2000.0
+    assert pv["reencauche"]["km_mm"][i] is None
+    assert round(pv["reencauche"]["km_mm"][j], 1) == 2000.0
+    assert "MICHELIN" in k14["labels"] and "DVRT" in k14["labels"]
     assert len(pv["labels"]) == len(pv["original"]["cpk"]) == len(pv["reencauche"]["cpk"])
 
 
@@ -138,3 +143,31 @@ def test_modulo_c_resistencia_de_carcasas_por_marca_y_medida(test_db):
     assert hk["dimension"] == "315/80R22.5" and hk["reencauches_por_carcasa"] == 0 and hk["bajas"] == 0
     # La marca que más reencauches aguanta va primero
     assert filas[0]["marca"] == "DOUBLE COIN"
+
+
+def test_reencauches_de_una_banda_juntan_todas_sus_vidas(test_db):
+    _cfg("CLI JUNTA", psi_objetivo_traccion=100.0)
+    _insp("CLI JUNTA", "JUN001", "J-1", kilometraje=110000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=16, precio=700000, vida="R1", banda_reen="DVRT", marca="DOUBLE COIN")
+    _insp("CLI JUNTA", "JUN002", "J-2", kilometraje=130000, km_montaje=100000, prof_ext=11, prof_cent=11, prof_int=11,
+          prof_inicial=16, precio=700000, vida="R2", banda_reen="DVRT", marca="HANKOOK")
+    k13 = database.obtener_suite_completa_20_kpis({"cliente": "CLI JUNTA"})["kpi_13"]
+    pv = k13["por_vida"]
+    assert pv["labels"] == ["DVRT"]                      # ni DOUBLE COIN ni HANKOOK
+    assert pv["llantas"]["reencauche"] == [2]
+    assert pv["reencauche"]["km_reales"] == [20000]       # (10.000 + 30.000) / 2
+
+
+def test_carcasas_muestran_km_por_vida_y_de_toda_la_vida(test_db):
+    _cfg("CLI KMV", psi_objetivo_traccion=100.0)
+    _insp("CLI KMV", "KMV001", "K-1", fecha="2026-01-10", kilometraje=100000, km_montaje=100000, marca="DOUBLE COIN", precio=1500000)
+    _insp("CLI KMV", "KMV001", "K-1", fecha="2026-05-10", kilometraje=160000, km_montaje=100000, marca="DOUBLE COIN",
+          prof_ext=6, prof_cent=6, prof_int=6, precio=1500000)
+    _insp("CLI KMV", "KMV002", "K-1", fecha="2026-06-10", kilometraje=200000, km_montaje=200000, marca="DOUBLE COIN",
+          vida="R1", banda_reen="DVRT", prof_inicial=16, prof_ext=16, prof_cent=16, prof_int=16, precio=600000)
+    _insp("CLI KMV", "KMV002", "K-1", fecha="2026-09-10", kilometraje=240000, km_montaje=200000, marca="DOUBLE COIN",
+          vida="R1", banda_reen="DVRT", prof_inicial=16, prof_ext=9, prof_cent=9, prof_int=9, precio=600000)
+    filas = database.obtener_suite_completa_20_kpis({"cliente": "CLI KMV", "base": "historial"})["kpi_18"]["carcasas"]
+    dc = next(f for f in filas if f["marca"] == "DOUBLE COIN")
+    assert dc["km_por_vida"] == {"Original": 60000, "R1": 40000}
+    assert dc["km_vida_promedio"] == 100000

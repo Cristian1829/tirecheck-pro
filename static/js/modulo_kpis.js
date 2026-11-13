@@ -2007,7 +2007,7 @@
     }
 
     function renderChartKpi14Vida(pv, soloOriginales = false) {
-      // Con «marca» los reencauches no se muestran: su marca es la de la carcasa y se comparan por banda en la tabla
+      // Con «marca» los reencauches salen con su banda (el servidor ya los separa de la marca de la carcasa)
       const hayReenc = !soloOriginales && ['proyeccion_km', 'km_mm', 'cpk'].some(c => tieneDatosVida((pv.reencauche || {})[c]));
       const vidas = hayReenc ? ['original', 'reencauche'] : ['original'];
       const graficas = [
@@ -2395,10 +2395,10 @@
       }
 
       if (ds.por_referencia) renderTablasReferenciaKpi14(ds.por_referencia); else renderBandasKpi14(ds.por_banda);
-      const soloOriginales = (ds.agrupacion_actual || 'marca') === 'marca';
+      const porMarca = (ds.agrupacion_actual || 'marca') === 'marca';
       const notaMarca = document.getElementById('notaMarcaKpi14');
-      if (notaMarca) notaMarca.classList.toggle('hidden', !soloOriginales);
-      if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi14Vida(ds.por_vida, soloOriginales); return; }
+      if (notaMarca) notaMarca.classList.toggle('hidden', !porMarca);
+      if (ds.por_vida && (ds.por_vida.labels || []).length) { renderChartKpi14Vida(ds.por_vida); return; }
       const labels = ds.labels || [];
 
       // 1. Proyección Km Final (Índigo)
@@ -2910,6 +2910,9 @@
           <td class="text-right">${formatCO_Miles(f.bajas)}</td>
           <td>${f.causa_principal ? `${escapeHtml(f.causa_principal)} <span class="text-slate-400">(${dec(f.causa_pct, 0)} %)</span>` : '<span class="text-slate-400">—</span>'}</td>
           <td class="text-right${Number(f.cpk_total_vida) === minCpk ? ' font-bold' : ''}">${f.cpk_total_vida > 0 ? `$ ${dec(f.cpk_total_vida, 2)}` : '<span class="text-slate-400">Sin dato</span>'}</td>
+          <td class="text-right">${Object.keys(f.km_por_vida || {}).length
+            ? Object.entries(f.km_por_vida).map(([v, km]) => `<span class="text-slate-400">${escapeHtml(v === 'Original' ? 'Orig.' : v)}</span> ${formatCO_Miles(km)}`).join(' · ')
+            : '—'}</td>
           <td class="text-right">${f.km_vida_promedio ? `${formatCO_Miles(f.km_vida_promedio)} ${u}` : '—'}</td>
         </tr>`).join('');
 

@@ -7847,6 +7847,25 @@ def _div(a, b):
     return (a / b) if (a and b and b > 0) else None
 
 
+SIN_BANDA_REGISTRADA = 'Sin banda registrada'
+
+
+def referencia_rendimiento(df_g: pd.DataFrame, col_original: str = 'marca') -> pd.Series:
+    """
+    Con qué nombre sale cada llanta en los gráficos de rendimiento: la original con su producto (marca o
+    diseño de la carcasa) y la reencauchada solo con su banda (todas sus vidas juntas: R1, R2…). Así una
+    Doublecoin reencauchada con DVRT sale como «DVRT» y no se mezcla con las Doublecoin originales.
+    """
+    if df_g is None or df_g.empty:
+        return pd.Series(dtype=object)
+    txt = lambda col: (df_g[col] if col in df_g.columns else pd.Series('', index=df_g.index)).fillna('').astype(str).str.strip()
+    original = txt(col_original)
+    banda = txt('banda_reen').str.upper()
+    banda = banda.where(~banda.isin(['', '-', 'NONE', 'NAN', 'NULL']), SIN_BANDA_REGISTRADA)
+    es_r = df_g['calc_es_reencauche'].astype(bool) if 'calc_es_reencauche' in df_g.columns else pd.Series(False, index=df_g.index)
+    return original.where(~es_r, banda)
+
+
 def _separar_por_vida(df_g, col, metricas, fmt_etiqueta=None) -> dict:
     """
     Cifras de un KPI por grupo (marca, eje, mes...) con originales y reencauches por separado.
@@ -7894,13 +7913,15 @@ def resistencia_carcasas(llantas_maestro: list, cpk_llantas: dict = None) -> lis
     - Ciclo alcanzado: cuántas carcasas van en Original, R1, R2 y R3 o más.
     - Causa principal de baja y su porcentaje.
     - CPK total de vida = Σ costos de todas las vidas / Σ km de todas las vidas (solo carcasas con todas sus vidas con costo).
+    - Km por vida: promedio de lo recorrido en Original, R1, R2… (cada vida con las carcasas que la tuvieron).
+    - Km de toda la vida: promedio de lo recorrido sumando todas las vidas de cada carcasa.
     """
     carcasas = {}
 
     def _tomar(cli, sn):
         return carcasas.setdefault(f"{str(cli or '').strip().upper()}|{str(sn or '').strip().upper()}",
                                    {"marca": '', "dimension": '', "reencauches": 0, "baja": False, "causal": '',
-                                    "costo": None, "km": None})
+                                    "costo": None, "km": None, "km_vidas": {}})
 
     for ll in llantas_maestro or []:
         sn = str(ll.get('numero_interno') or '').strip().upper()
@@ -7921,6 +7942,9 @@ def resistencia_carcasas(llantas_maestro: list, cpk_llantas: dict = None) -> lis
         reenc_insp = [int(v[1:]) for v in ll.get('vidas', {}) if re.match(r'^R\d+$', v)]
         if reenc_insp:
             c["reencauches"] = max(c["reencauches"], max(reenc_insp))
+        for vida_n, v in (ll.get('vidas') or {}).items():
+            if to_float(v.get("km")) > 0:
+                c["km_vidas"][vida_n] = max(c["km_vidas"].get(vida_n, 0.0), to_float(v.get("km")))
         if ll.get('cpk_total_ciclo'):
             vs = ll['vidas'].values()
             c["costo"] = sum(v["costo"] for v in vs)
@@ -7939,7 +7963,11 @@ def resistencia_carcasas(llantas_maestro: list, cpk_llantas: dict = None) -> lis
             causales[k] = causales.get(k, 0) + 1
         causa, n_causa = (max(causales.items(), key=lambda x: x[1]) if causales else (None, 0))
         con_costo = [c for c in cs if c["costo"] and c["km"]]
-        km_vida = [c["km"] for c in cs if c["km"]]
+        km_vida = [sum(c["km_vidas"].values()) for c in cs if c["km_vidas"]]
+        km_por_vida = {}
+        for vida_n in sorted({v for c in cs for v in c["km_vidas"]}, key=lambda v: (v != 'Original', len(v), v)):
+            kms = [c["km_vidas"][vida_n] for c in cs if vida_n in c["km_vidas"]]
+            km_por_vida[vida_n] = _redondear(sum(kms) / len(kms))
         filas.append({
             "marca": marca, "dimension": dim, "carcasas": n,
             "reencauches_por_carcasa": round(sum(c["reencauches"] for c in cs) / n, 2),
@@ -7950,6 +7978,7 @@ def resistencia_carcasas(llantas_maestro: list, cpk_llantas: dict = None) -> lis
             "causa_principal": causa, "causa_pct": round(n_causa / len(bajas) * 100, 1) if bajas else None,
             "cpk_total_vida": _redondear(_div(sum(c["costo"] for c in con_costo), sum(c["km"] for c in con_costo)), 2),
             "km_vida_promedio": _redondear(sum(km_vida) / len(km_vida)) if km_vida else None,
+            "km_por_vida": km_por_vida,
         })
     # Las que más reencauches aguantan primero; a igualdad, la de más carcasas
     filas.sort(key=lambda f: (-(f["reencauches_al_baja"] if f["reencauches_al_baja"] is not None else f["reencauches_por_carcasa"]), -f["carcasas"]))
@@ -8884,7 +8913,11 @@ def obtener_datos_graficos_diagnostico(filtros: dict = None) -> dict:
             if df_cpk_base.empty:
                 df_cpk_base = df_ultimo_corte
 
-            campo_agrup = 'diseno' if df_cpk_base['diseno'].dropna().nunique() > 1 else 'marca'
+            campo_orig = 'diseno' if df_cpk_base['diseno'].dropna().nunique() > 1 else 'marca'
+            # Reencauches por su banda, separados del diseño o marca de la carcasa
+            df_cpk_base = df_cpk_base.copy()
+            df_cpk_base['ref_rend'] = referencia_rendimiento(df_cpk_base, campo_orig)
+            campo_agrup = 'ref_rend'
             top_disenos = df_cpk_base[campo_agrup].replace('', np.nan).dropna().value_counts().head(5).index.tolist()
 
             cpk_labels = []
@@ -11254,9 +11287,13 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # KPI 13: Km Rodados Reales vs Proyección Final al Retiro (SOLO FULL)
     # =========================================================================
     labels_k13, km_reales_k13, proy_final_k13 = [], [], []
+    # Rendimientos: originales por marca de la carcasa y reencauches solo por su banda (sin mezclarlos)
+    df_rend = df_rodante[~df_rodante['calc_es_asentamiento']].copy() if (not df_patio.empty and es_full) else None
+    if df_rend is not None:
+        df_rend['ref_rend'] = referencia_rendimiento(df_rend)
     if not df_patio.empty and es_full:
         # Solo llantas con desgaste suficiente para proyectar (igual que el KPI 14)
-        for mk, grp_mk in df_rodante[~df_rodante['calc_es_asentamiento']].groupby('marca'):
+        for mk, grp_mk in df_rend.groupby('ref_rend'):
             labels_k13.append(str(mk) or 'Otras')
             km_reales_k13.append(_redondear(grp_mk['calc_km_rodados'].mean()))
             proy_final_k13.append(_redondear(grp_mk['calc_proy_total'].mean()))
@@ -11264,7 +11301,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
     # Originales y reencauches por separado: una reencauchada arranca con otra banda y otro precio,
     # así que mezclarlas en un mismo promedio por marca no permite comparar
     vida_k13 = _separar_por_vida(
-        df_rodante[~df_rodante['calc_es_asentamiento']] if (not df_patio.empty and es_full) else None, 'marca',
+        df_rend, 'ref_rend',
         lambda g: {"km_reales": _redondear(g['calc_km_rodados'].mean()),
                    "proyeccion_final": _redondear(g['calc_proy_total'].mean())})
 
@@ -11309,7 +11346,9 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
             elif agrupar_kpi14 == 'tipologia':
                 grp_col = 'tipologia'
             else:
-                grp_col = 'marca'
+                df_validas = df_validas.copy()
+                df_validas['ref_rend'] = referencia_rendimiento(df_validas)
+                grp_col = 'ref_rend'
 
             for g_nom, grp_g in df_validas.groupby(grp_col):
                 lbl_fmt = _mes_a_espanol(str(g_nom)) if agrupar_kpi14 in ('fechas', 'inspeccion') else str(g_nom)
@@ -11354,7 +11393,7 @@ def obtener_suite_completa_20_kpis(filtros: dict = None) -> dict:
         # Filtro estricto de madurez sobre última foto de patio: SOLO llantas con calc_desgaste_mm >= 1.5
         df_maduras = df_rodante[(df_rodante['calc_desgaste_mm'] >= 1.5) & df_rodante['calc_proy_total'].notna()]
         if not df_maduras.empty:
-            for mk, grp_mk in df_maduras.groupby('marca'):
+            for mk, grp_mk in df_maduras.groupby(referencia_rendimiento(df_maduras)):
                 labels_k15.append(str(mk) or 'Otras')
                 pr_val = _redondear(grp_mk['calc_proy_total'].mean())
                 mx_val = _redondear(grp_mk['calc_proy_total'].max())

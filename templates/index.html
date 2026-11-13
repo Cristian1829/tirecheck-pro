@@ -244,7 +244,7 @@
     .kpi-ancho-completo { grid-column: 1 / -1 !important; }
   </style>
   <!-- Tema visual del rediseño (colores, letra y tamaños); va después del <style> para ajustarlo -->
-  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-41">
+  <link rel="stylesheet" href="/static/css/tema.css?v=rediseno-42">
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans pb-16 min-h-screen">
 
@@ -2531,7 +2531,7 @@
               <h4 class="text-sm font-black text-slate-900">Proyección, rendimiento y costo por kilómetro</h4>
             </div>
             <p class="text-[11px] text-slate-400">Las tres medidas por el grupo elegido. La barra más oscura de cada color es la mejor de su grupo.</p>
-            <p id="notaMarcaKpi14" class="hidden text-[11px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Agrupado por marca se muestran solo las originales: en un reencauche la marca es la de la carcasa, no la de la banda. Los reencauches se comparan por banda en la tabla de abajo.</p>
+            <p id="notaMarcaKpi14" class="hidden text-[11px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Agrupado por marca: las originales salen con la marca de la carcasa y los reencauches solo con su banda (todas sus vidas juntas), sin mezclarse.</p>
             <p class="text-[11px] font-semibold text-slate-600 mt-1"><span class="inline-flex items-center gap-1.5 mr-3"><span class="w-2.5 h-2.5 rounded-sm" style="background:#1d4ed8"></span>Originales</span><span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm" style="background:#15803d"></span>Reencauches</span></p>
           </div>
 
@@ -2790,7 +2790,7 @@
           <div class="ta-tabla-bd overflow-x-auto custom-scroll max-h-[420px]">
             <table class="w-full text-left whitespace-nowrap">
               <thead class="bg-slate-900 text-white font-bold sticky top-0 z-10">
-                <tr><th class="p-2.5">Carcasa (marca)</th><th class="p-2.5">Medida</th><th class="p-2.5 text-right" title="Llantas de esta marca y medida (en uso, en bodega o dadas de baja)">Carcasas</th><th class="p-2.5 text-right" title="Σ reencauches realizados ÷ carcasas (incluye las que siguen en uso)">Reencauches por carcasa</th><th class="p-2.5 text-right" title="Reencauches que alcanzaron las carcasas que ya se dieron de baja: su vida terminó">Al darse de baja</th><th class="p-2.5 text-right">Bajas</th><th class="p-2.5">Causa principal de baja</th><th class="p-2.5 text-right" title="Σ costos de todas las vidas (compra + reencauches) ÷ Σ km de todas las vidas">Costo por km de toda la vida</th><th class="p-2.5 text-right" title="Promedio de km sumando todas las vidas de la carcasa">Km de toda la vida</th></tr>
+                <tr><th class="p-2.5">Carcasa (marca)</th><th class="p-2.5">Medida</th><th class="p-2.5 text-right" title="Llantas de esta marca y medida (en uso, en bodega o dadas de baja)">Carcasas</th><th class="p-2.5 text-right" title="Σ reencauches realizados ÷ carcasas (incluye las que siguen en uso)">Reencauches por carcasa</th><th class="p-2.5 text-right" title="Reencauches que alcanzaron las carcasas que ya se dieron de baja: su vida terminó">Al darse de baja</th><th class="p-2.5 text-right">Bajas</th><th class="p-2.5">Causa principal de baja</th><th class="p-2.5 text-right" title="Σ costos de todas las vidas (compra + reencauches) ÷ Σ km de todas las vidas">Costo por km de toda la vida</th><th class="p-2.5 text-right" title="Promedio de km recorridos en cada vida: Original, R1, R2…">Km por vida</th><th class="p-2.5 text-right" title="Promedio de km sumando todas las vidas de la carcasa">Km de toda la vida</th></tr>
               </thead>
               <tbody id="tbodyCarcasasKpi18"></tbody>
             </table>
@@ -6914,18 +6914,18 @@
       </div>
     </div>
 
-  <script src="/static/js/app_core.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_basedatos.js?v=rediseno-41"></script>
-  <script src="/static/js/graficas_tema.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_kpis.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_diagnostico.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_catalogos.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_patio.js?v=rediseno-41"></script>
-  <script src="/static/js/modulo_bodegas.js?v=rediseno-41"></script>
-  <script src="/static/js/app_init.js?v=rediseno-41"></script>
-  <script src="/static/js/accesibilidad_modales.js?v=rediseno-41"></script>
-  <script src="/static/js/interfaz_suite.js?v=rediseno-41"></script>
+  <script src="/static/js/app_core.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_basedatos.js?v=rediseno-42"></script>
+  <script src="/static/js/graficas_tema.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_kpis.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_diagnostico.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_trazabilidad.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_catalogos.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_patio.js?v=rediseno-42"></script>
+  <script src="/static/js/modulo_bodegas.js?v=rediseno-42"></script>
+  <script src="/static/js/app_init.js?v=rediseno-42"></script>
+  <script src="/static/js/accesibilidad_modales.js?v=rediseno-42"></script>
+  <script src="/static/js/interfaz_suite.js?v=rediseno-42"></script>
     <!-- MODAL: ELIMINAR LOS DATOS CARGADOS DE UN CLIENTE (solo administrador) -->
     <div id="modalEliminarDatosCliente" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">
