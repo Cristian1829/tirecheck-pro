@@ -45,6 +45,35 @@ def test_regla_por_eje_queda_en_la_configuracion_avanzada(test_db):
     assert _avanzada("FLOTA CUATRO") == (4.5, 3.0, 3.0)
 
 
+def test_limite_de_una_llanta_en_bodega_usa_sede_y_eje_del_cliente(test_db):
+    database.crear_o_actualizar_cliente({"cliente": "FLOTA CINCO", "limite_retiro_mm": 3.0})
+    database.guardar_limite_retiro_cliente("FLOTA CINCO", 4.0, "", "SEDE NORTE", "TODOS")
+    database.guardar_limite_retiro_cliente("FLOTA CINCO", 5.0, "", "TODOS", "DIRECCIONAL")
+    database.insertar_inspeccion({
+        "fecha": "2026-10-10", "cliente": "FLOTA CINCO", "subcliente": "SEDE SUR", "placa": "CIN001", "posicion": 1,
+        "numero_interno": "C1", "marca": "MICHELIN", "diseno": "XZE", "dimension": "295/80R22.5", "vida": "Original",
+        "kilometraje": 10000, "km_montaje": 5000, "prof_ext": 10, "prof_cent": 10, "prof_int": 10, "prof_inicial": 16,
+        "precio": 1200000, "psi": 110, "tipologia": "Cabezote (6x4)"})
+    assert database.limite_retiro_llanta("FLOTA CINCO", "SEDE NORTE") == 4.0       # sede, tracción
+    assert database.limite_retiro_llanta("FLOTA CINCO", "SEDE SUR") == 3.0         # general del cliente
+    assert database.limite_retiro_llanta("FLOTA CINCO", "SEDE SUR", "CIN001", 1) == 5.0  # salió de direccional
+
+
+def test_reencauche_sin_numero_queda_como_r1(test_db):
+    assert database.normalizar_vida_y_banda("Reencauche", "")[0] == "R1"
+    assert database.normalizar_vida_y_banda("", "BANDAG BDR")[0] == "R1"
+    assert database.normalizar_vida_y_banda("R2", "BANDAG")[0] == "R2"
+    with database.get_connection() as conn:
+        conn.execute("INSERT INTO inspecciones (fecha, cliente, placa, posicion, numero_interno, vida) "
+                     "VALUES ('2026-10-10', 'FLOTA R', 'R00001', 1, 'X1', 'REENCAUCHE'), "
+                     "('2026-10-10', 'FLOTA R', 'R00001', 2, 'X2', 'R2')")
+        conn.commit()
+    database.migrar_normalizar_vida_llantas()
+    with database.get_connection() as conn:
+        vidas = dict(conn.execute("SELECT numero_interno, vida FROM inspecciones WHERE cliente = 'FLOTA R'").fetchall())
+    assert vidas == {"X1": "R1", "X2": "R2"}
+
+
 def test_ciudad_limpia_queda_en_4mm_aunque_la_sede_bogota_tenga_3mm(test_db):
     with database.get_connection() as conn:
         conn.execute("INSERT INTO configuracion_limites_retiro (cliente, subcliente, eje, limite_retiro_mm) "

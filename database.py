@@ -391,8 +391,8 @@ def normalizar_vida_y_banda(vida_input, banda_input=''):
     Normaliza Vida y Banda de reencauche guardando la vida EXACTA:
     - Retorna (vida_final, banda_final) con vida_final en 'ORIGINAL', 'R1', 'R2', … (antes todo
       reencauche quedaba como 'REENCAUCHE' y se perdía en qué vida iba la llanta).
-    - 'REENCAUCHE' sin número solo queda para datos antiguos que no lo traen.
-    - Con vida vacía: si trae banda es reencauche (sin número); si no, Original.
+    - Un reencauche sin número ('REENCAUCHE', 'REEN'…) se guarda como 'R1', la vida que se maneja.
+    - Con vida vacía: si trae banda es reencauche (R1); si no, Original.
     - En Original la banda siempre queda vacía.
     """
     v_raw = str(vida_input or '').strip().upper()
@@ -407,7 +407,7 @@ def normalizar_vida_y_banda(vida_input, banda_input=''):
         n = int(next(g for g in m.groups() if g))
         vida_final = f'R{n}' if n > 0 else 'ORIGINAL'
     elif v_raw in ('REENCAUCHE', 'REEN', 'RECAUCHE') or 'REEN' in v_raw or b_raw:
-        vida_final = 'REENCAUCHE'
+        vida_final = 'R1'
     else:
         vida_final = 'ORIGINAL'
 
@@ -1482,9 +1482,10 @@ def migrar_kilometraje_placa_s87341(conn=None):
 def migrar_normalizar_vida_llantas(conn=None):
     """
     Normalización y reparación preventiva de la columna 'vida' en inspecciones y tablas maestras:
-    1. Si 'vida' es nula, vacía o '-', y tiene banda de reencauche asignada, se establece 'REENCAUCHE'.
+    1. Si 'vida' es nula, vacía o '-', y tiene banda de reencauche asignada, se establece 'R1'.
     2. Si 'vida' es nula, vacía o '-', y NO tiene banda de reencauche, se establece 'ORIGINAL'.
-    3. Normaliza variantes ('ORIG', 'NUEVA', 'REEN', etc.) a mayúsculas estándar 'ORIGINAL' y 'REENCAUCHE'.
+    3. Normaliza variantes ('ORIG', 'NUEVA', etc.) a 'ORIGINAL', y todo reencauche sin número
+       ('REENCAUCHE', 'Reencauche', 'REEN'…) a 'R1' en inspecciones, llantas_maestro y kardex.
     4. Garantiza que llantas_maestro y kardex_ciclo_vida tengan valores coherentes.
     """
     if conn is None:
@@ -1493,10 +1494,10 @@ def migrar_normalizar_vida_llantas(conn=None):
     try:
         cur = conn.cursor()
 
-        # 1. Asignar REENCAUCHE a los que no tienen vida válida pero sí tienen banda registrada
+        # 1. Asignar R1 a los que no tienen vida válida pero sí tienen banda registrada
         cur.execute("""
             UPDATE inspecciones
-            SET vida = 'REENCAUCHE'
+            SET vida = 'R1'
             WHERE (vida IS NULL OR TRIM(vida) = '' OR TRIM(vida) = '-' OR UPPER(TRIM(vida)) IN ('NONE', 'NAN', 'NULL'))
               AND banda_reen IS NOT NULL
               AND TRIM(banda_reen) != ''
@@ -1523,11 +1524,14 @@ def migrar_normalizar_vida_llantas(conn=None):
             WHERE UPPER(TRIM(vida)) IN ('ORIGINAL', 'ORIG', 'NUEVA', 'ORIGINAL (NUEVA)') AND vida != 'ORIGINAL'
         """)
 
-        cur.execute("""
-            UPDATE inspecciones
-            SET vida = 'REENCAUCHE'
-            WHERE UPPER(TRIM(vida)) IN ('REENCAUCHE', 'REEN', 'RECAUCHE') AND vida != 'REENCAUCHE'  -- R1, R2… se conservan (vida exacta)
-        """)
+        # Reencauche sin número = R1 (R2, R3… se conservan: vida exacta)
+        sin_numero = "('REENCAUCHE', 'REEN', 'RECAUCHE', 'RENCAUCHE', 'REENCAUCHADA', 'REENCAUCHADO')"
+        for tabla, col in (('inspecciones', 'vida'), ('llantas_maestro', 'vida_actual'),
+                           ('kardex_movimientos_llanta', 'vida_ciclo'), ('kardex_ciclo_vida', 'vida_ciclo')):
+            try:
+                cur.execute(f"UPDATE {tabla} SET {col} = 'R1' WHERE UPPER(TRIM({col})) IN {sin_numero}")
+            except Exception:
+                pass  # tabla o columna que no existe en esta base
 
         # 4. Asegurar coherencia en llantas_maestro
         try:
@@ -5324,6 +5328,30 @@ def _construir_cache_limites_retiro(conn=None):
     else:
         with get_connection() as c:
             return _cargar(c)
+
+def limite_retiro_llanta(cliente, subcliente='', placa='', posicion=0, conn=None):
+    """
+    Límite de cambio de UNA llanta con la programación del cliente (cliente, sede y eje). El eje sale de
+    la posición donde estaba montada según la tipología del vehículo; si no se conoce, se toma tracción.
+    Lo usan Bodegas, FVU y garantías para valorizar con el mismo límite que los indicadores.
+    """
+    eje = 'TRACCIÓN'
+    placa_n = str(placa or '').strip().upper()
+    pos = to_int(posicion, 0)
+    def _calcular(c):
+        nonlocal eje
+        if placa_n and pos > 0:
+            fila = c.execute("SELECT tipologia FROM inspecciones WHERE UPPER(TRIM(placa)) = ? "
+                             "ORDER BY fecha DESC, id DESC LIMIT 1", (placa_n,)).fetchone()
+            if fila and fila[0]:
+                lim_pos = construir_resolver_limite_posicion(conn=c)
+                return lim_pos(cliente, subcliente or 'TODOS', fila[0], pos)
+        return _construir_cache_limites_retiro(conn=c)(cliente, subcliente or 'TODOS', eje)
+    if conn is not None:
+        return _calcular(conn)
+    with get_connection() as c:
+        return _calcular(c)
+
 
 def obtener_limite_retiro_cliente(cliente='', subcliente='TODOS', eje='TODOS', conn=None):
     resolver = _construir_cache_limites_retiro(conn=conn)
@@ -9235,8 +9263,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
 
         # Corrección 3: No enviar a Bodega 2 si la profundidad está en o por debajo del límite de retiro
         if bodega_destino == 'BODEGA_2_RECAMBIO':
-            cfg = obtener_configuracion_avanzada_cliente(cliente)
-            lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+            lim_ret = limite_retiro_llanta(cliente, subcliente, placa_origen, pos_origen, conn=conn)
             p_eval = to_float(prof_min_in) if prof_min_in is not None else p_act
             if p_eval <= lim_ret:
                 return {"ok": False, "mensaje": f"⛔ No se puede enviar a Bodega 2 de Recambio: la profundidad ({p_eval:.1f} mm) está en o por debajo del límite de retiro ({lim_ret:.1f} mm). Debe enviarse a Bodega 3 (Reencauche) o Bodega 6 (FVU)."}
@@ -9324,8 +9351,7 @@ def registrar_movimiento_bodega(datos: dict) -> dict:
             if prof_min_in is not None:
                 p_act = to_float(prof_min_in)
 
-            cfg = obtener_configuracion_avanzada_cliente(cliente)
-            lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+            lim_ret = limite_retiro_llanta(cliente, subcliente, placa_origen, pos_origen, conn=conn)
             if p_act <= lim_ret:
                 mm_perd = 0.0
                 dinero_perd = 0.0
@@ -9501,8 +9527,8 @@ def actualizar_garantia_llanta(datos: dict) -> dict:
         c_ciclo = to_float(ll.get('costo_ciclo_actual', 0.0))
         c_rep = to_float(ll.get('costo_reparaciones_ciclo_actual', 0.0))
 
-        cfg = obtener_configuracion_avanzada_cliente(cliente)
-        lim_ret = to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+        lim_ret = limite_retiro_llanta(cliente, ll.get('subcliente', ''), ll.get('placa_actual', ''),
+                                       ll.get('posicion_actual', 0), conn=conn)
         if p_act <= lim_ret:
             mm_perd = 0.0
             dinero_perd = 0.0

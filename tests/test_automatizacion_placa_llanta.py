@@ -269,7 +269,7 @@ def test_recuperacion_datos_inspeccion_previa_vehiculo_y_posicion(test_db, auth_
     assert llanta_pos2 is not None
     assert llanta_pos2['numero_interno'] == 'INT-02'
     assert llanta_pos2['marca'] == 'BRIDGESTONE'
-    assert llanta_pos2['vida'] == 'REENCAUCHE'
+    assert llanta_pos2['vida'] == 'R1'  # reencauche sin número se guarda como R1
     assert llanta_pos2['banda_reen'] == 'BDM BANDAG'
 
     # 5. Posición sin registro previo (por ej. Posición 4)

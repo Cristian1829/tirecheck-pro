@@ -257,8 +257,7 @@ def desmontar_llanta_taller(datos: dict) -> dict:
         es_fvu = bodega_destino == 'BODEGA_6_FVU'
         mm_desp, dinero_perd = 0.0, 0.0
         if es_fvu:
-            cfg = database.obtener_configuracion_avanzada_cliente(cli_efectivo)
-            lim_ret = database.to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+            lim_ret = database.limite_retiro_llanta(cli_efectivo, subc, placa_act, pos_act, conn=conn)
             if prof_momento > lim_ret:
                 mm_desp = max(0.0, prof_momento - lim_ret)
                 denominador = max(1.0, (p_ini or 0.0) - lim_ret)
@@ -794,8 +793,7 @@ def dar_baja_fvu_bodega7(datos: dict) -> dict:
         p_ini = database.to_float(p_ini_m) or database.to_float(p_ini_n)
         c_ciclo = database.to_float(c_ciclo, 0.0)
         val_gar = database.to_float(val_gar, 0.0)
-        cfg = database.obtener_configuracion_avanzada_cliente(cli_efectivo)
-        lim_ret = database.to_float(cfg.get('mm_retiro_traccion', 3.0), 3.0)
+        lim_ret = database.limite_retiro_llanta(cli_efectivo, subc, placa_act, pos_act, conn=conn)
         mm_desperdiciados = max(0.0, p_ret - lim_ret)
         denominador = max(1.0, p_ini - lim_ret)
         dinero_perdido = max(0.0, (mm_desperdiciados * (c_ciclo / denominador)) - val_gar) if (c_ciclo > 0 and p_ini > 0) else None
