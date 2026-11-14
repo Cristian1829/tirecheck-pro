@@ -130,7 +130,8 @@ async def cabeceras_de_seguridad(request: Request, call_next):
 # Seguridad (XSS almacenado): todo texto que llega en JSON a la API se guarda sin < > " ' `.
 # Se exceptúan contraseñas, fotos/firmas/imágenes y campos que son JSON o esquemas, y las rutas que no guardan nada.
 _CLAVES_SIN_LIMPIAR = ('password', 'clave', 'contrasena', 'foto', 'firma', 'imagen', 'grafico', 'base64', 'esquema', 'json', 'token')
-_RUTAS_SIN_LIMPIAR = ('/api/login', '/api/kpis/exportar-pdf', '/api/composicion/exportar-pdf')
+# El webhook de WhatsApp va firmado por Meta sobre el cuerpo exacto: si se reescribe, la firma deja de coincidir
+_RUTAS_SIN_LIMPIAR = ('/api/login', '/api/kpis/exportar-pdf', '/api/composicion/exportar-pdf', '/api/whatsapp/webhook')
 
 
 def _limpiar_json_entrada(obj, clave=''):
@@ -3745,6 +3746,17 @@ try:
     app.include_router(router_motores)
 except Exception as e:
     print(f"[MOTORES] No se pudo iniciar la app de Motores: {e}")
+
+
+# ==========================================
+# CHATBOT DE WHATSAPP PARA CLIENTES
+# ==========================================
+# Webhook de Meta, vinculación del celular con el usuario y página de vinculación. Un fallo aquí no tumba la app.
+try:
+    from whatsapp.rutas import crear_router as crear_router_whatsapp
+    app.include_router(crear_router_whatsapp(obtener_usuario_actual))
+except Exception as e:
+    print(f"[WHATSAPP] No se pudo iniciar el chatbot de WhatsApp: {e}")
 
 
 # ==========================================

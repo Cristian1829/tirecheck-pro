@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f1f3d">
+  <title>Vincular WhatsApp · TireCheck Pro</title>
+  <style>
+    :root { --noche: #0f1f3d; --acento: #25d366; --texto: #1f2937; --suave: #6b7280; --borde: #d1d5db; --error: #b91c1c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+           background: #f3f4f6; color: var(--texto); }
+    header { background: var(--noche); color: #fff; padding: 16px; font-weight: 700; font-size: 18px; }
+    main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; }
+    .tarjeta { width: 100%; max-width: 400px; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px rgba(15,31,61,.12); }
+    h1 { font-size: 20px; margin: 0 0 8px; color: var(--noche); }
+    p { margin: 0 0 16px; color: var(--suave); line-height: 1.45; }
+    label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+    input { width: 100%; padding: 12px; border: 1px solid var(--borde); border-radius: 8px; font-size: 16px; }
+    input:focus { outline: 2px solid var(--noche); border-color: var(--noche); }
+    button { width: 100%; margin-top: 20px; padding: 13px; border: 0; border-radius: 8px; background: var(--noche); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .error { color: var(--error); margin-top: 14px; min-height: 1em; }
+    .ok { text-align: center; }
+    .ok .icono { font-size: 48px; color: var(--acento); }
+    .ok a { display: inline-block; margin-top: 8px; padding: 12px 20px; border-radius: 8px; background: var(--acento); color: #fff; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>TireCheck Pro</header>
+  <main>
+    <div class="tarjeta" id="tarjeta">
+      <h1>Vincular su WhatsApp</h1>
+      <p>Inicie sesión con su usuario y contraseña de TireCheck. Así el asistente de WhatsApp sabrá de qué flota es y solo le mostrará su información.</p>
+      <form id="formulario" autocomplete="on">
+        <label for="usuario">Usuario</label>
+        <input id="usuario" name="username" autocomplete="username" autocapitalize="none" required>
+        <label for="clave">Contraseña</label>
+        <input id="clave" name="password" type="password" autocomplete="current-password" required>
+        <button id="boton" type="submit">Vincular</button>
+        <div class="error" id="error" role="alert"></div>
+      </form>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var codigo = new URLSearchParams(location.search).get("c") || "";
+      var form = document.getElementById("formulario"), boton = document.getElementById("boton"), error = document.getElementById("error");
+      if (!codigo) { error.textContent = "El enlace no es válido. Escríbale de nuevo al WhatsApp para recibir uno nuevo."; boton.disabled = true; }
+
+      function detalle(r) { return r.json().then(function (d) { return d.detail || "No se pudo completar."; }, function () { return "No se pudo completar."; }); }
+
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        error.textContent = ""; boton.disabled = true; boton.textContent = "Vinculando…";
+        var token = "";
+        fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: document.getElementById("usuario").value.trim(), password: document.getElementById("clave").value }) })
+          .then(function (r) { return r.ok ? r.json() : detalle(r).then(function (m) { throw new Error(m); }); })
+          .then(function (d) {
+            token = d.token;
+            return fetch("/api/whatsapp/vincular", { method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+              body: JSON.stringify({ codigo: codigo }) });
+          })
+          .then(function (r) { return r.ok ? r.json() : detalle(r).then(function (m) { throw new Error(m); }); })
+          .then(function (d) {
+            var t = document.getElementById("tarjeta");
+            t.className = "tarjeta ok";
+            t.innerHTML = '<div class="icono">✔</div><h1></h1><p></p><a href="https://wa.me/">Volver a WhatsApp</a>';
+            t.querySelector("h1").textContent = "¡Celular vinculado!";
+            t.querySelector("p").textContent = d.mensaje;
+          })
+          .catch(function (e) {
+            error.textContent = e.message || "No se pudo completar.";
+            boton.disabled = false; boton.textContent = "Vincular";
+          })
+          .then(function () {
+            // La sesión web solo hacía falta para vincular: se cierra para no dejarla abierta en el celular
+            if (token) fetch("/api/logout", { method: "POST", headers: { "Authorization": "Bearer " + token } });
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

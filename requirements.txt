@@ -12,3 +12,4 @@ tzdata>=2024.1
 pytz>=2024.1
 SQLAlchemy>=2.0.0
 qrcode>=7.4
+google-genai>=1.20.0
