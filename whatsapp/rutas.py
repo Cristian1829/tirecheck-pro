@@ -84,16 +84,18 @@ def _limite_superado(telefono) -> bool:
     return len(cola) > MAX_MENSAJES_POR_MINUTO
 
 
-def _invitar_a_vincular(telefono):
+def _invitar_a_vincular(telefono, numero_bot=""):
     url = _url_publica()
     if not url:
         proveedor_meta.enviar_texto(telefono, "El asistente aún no está configurado (falta la dirección pública). Avise al administrador.")
         return
     codigo = almacen.crear_codigo(telefono)
+    # El número del bot va en el enlace para que el botón «Volver a WhatsApp» abra este mismo chat
+    extra = f"&n={numero_bot}" if numero_bot else ""
     proveedor_meta.enviar_texto(telefono, (
         "¡Hola! Soy el asistente de *TireCheck Pro*.\n\n"
         "Para saber de qué flota eres, inicia sesión una sola vez con tu usuario y contraseña de TireCheck en este enlace "
-        f"(vence en 10 minutos):\n{url}/whatsapp/vincular?c={codigo}\n\n"
+        f"(vence en 10 minutos):\n{url}/whatsapp/vincular?c={codigo}{extra}\n\n"
         "Por seguridad, nunca escribas tu contraseña en este chat."))
 
 
@@ -108,7 +110,7 @@ def atender_mensaje(mensaje):
             return
         usr = usuario_del_telefono(tel)
         if not usr:
-            _invitar_a_vincular(tel)
+            _invitar_a_vincular(tel, mensaje.get("numero_bot", ""))
             return
         texto = str(mensaje.get("texto") or "").strip()
         if not texto:

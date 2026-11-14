@@ -3,7 +3,7 @@ respuesta con los datos que devuelven las herramientas.
 
 Variables de entorno:
   GEMINI_API_KEY   clave de Google AI Studio (usar el nivel pago: en el gratuito Google puede usar los datos)
-  GEMINI_MODELO    modelo a usar (por defecto gemini-flash-lite-latest)
+  GEMINI_MODELO    modelo a usar (opcional; si no existe, se elige solo el Flash-Lite más nuevo disponible)
 """
 import json
 import os
@@ -20,6 +20,7 @@ except Exception:
     _BOGOTA = timezone(timedelta(hours=-5))
 
 _cliente_genai = None
+_modelo_elegido = None
 _DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
 _MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
           "noviembre", "diciembre")
@@ -35,6 +36,50 @@ def _cliente():
         from google import genai
         _cliente_genai = genai.Client(api_key=os.environ["GEMINI_API_KEY"].strip())
     return _cliente_genai
+
+
+def _elegir_modelo_disponible() -> str:
+    """Google cambia los nombres de sus modelos con frecuencia: se pregunta cuáles hay y se prefiere el Flash-Lite
+    más nuevo (el más económico), luego el Flash más nuevo."""
+    nombres = []
+    for m in _cliente().models.list():
+        acciones = getattr(m, "supported_actions", None) or []
+        nombre = (m.name or "").split("/")[-1]
+        if "generateContent" in acciones and nombre.startswith("gemini") and not any(
+                x in nombre for x in ("preview", "exp", "image", "tts", "audio", "live", "embedding", "thinking")):
+            nombres.append(nombre)
+    for clave in ("flash-lite", "flash"):
+        candidatos = sorted((n for n in nombres if clave in n), reverse=True)
+        if clave == "flash":
+            candidatos = [n for n in candidatos if "lite" not in n]
+        if candidatos:
+            return candidatos[0]
+    if nombres:
+        return sorted(nombres, reverse=True)[0]
+    raise RuntimeError("Google no devolvió ningún modelo Gemini disponible para esta clave.")
+
+
+def _modelo() -> str:
+    global _modelo_elegido
+    if _modelo_elegido is None:
+        _modelo_elegido = os.environ.get("GEMINI_MODELO", "").strip() or _elegir_modelo_disponible()
+        print(f"[WHATSAPP] Modelo de Gemini en uso: {_modelo_elegido}")
+    return _modelo_elegido
+
+
+def _generar(contenidos, config):
+    """Llama a Gemini; si el modelo configurado ya no existe (404), elige otro disponible y reintenta una vez."""
+    global _modelo_elegido
+    from google.genai import errors
+    try:
+        return _cliente().models.generate_content(model=_modelo(), contents=contenidos, config=config)
+    except errors.ClientError as e:
+        if getattr(e, "code", None) != 404:
+            raise
+        print(f"[WHATSAPP] El modelo {_modelo_elegido} no está disponible; se busca otro.")
+        _modelo_elegido = _elegir_modelo_disponible()
+        print(f"[WHATSAPP] Modelo de Gemini en uso: {_modelo_elegido}")
+        return _cliente().models.generate_content(model=_modelo_elegido, contents=contenidos, config=config)
 
 
 def _instrucciones(usuario) -> str:
@@ -86,10 +131,9 @@ def responder(usuario, historial, mensaje):
         automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         temperature=0.2,
     )
-    modelo = os.environ.get("GEMINI_MODELO", "gemini-flash-lite-latest").strip()
     pdfs = []
     for _ in range(MAX_RONDAS_HERRAMIENTAS):
-        resp = _cliente().models.generate_content(model=modelo, contents=contenidos, config=config)
+        resp = _generar(contenidos, config)
         llamadas = resp.function_calls or []
         if not llamadas:
             return (resp.text or "").strip() or "No tengo una respuesta para eso. ¿Puedes reformular la pregunta?", pdfs

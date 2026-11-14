@@ -45,7 +45,9 @@
   </main>
   <script>
     (function () {
-      var codigo = new URLSearchParams(location.search).get("c") || "";
+      var params = new URLSearchParams(location.search);
+      var codigo = params.get("c") || "";
+      var numeroBot = (params.get("n") || "").replace(/\D/g, "");
       var form = document.getElementById("formulario"), boton = document.getElementById("boton"), error = document.getElementById("error");
       if (!codigo) { error.textContent = "El enlace no es válido. Escríbale de nuevo al WhatsApp para recibir uno nuevo."; boton.disabled = true; }
 
@@ -68,7 +70,8 @@
           .then(function (d) {
             var t = document.getElementById("tarjeta");
             t.className = "tarjeta ok";
-            t.innerHTML = '<div class="icono">✔</div><h1></h1><p></p><a href="https://wa.me/">Volver a WhatsApp</a>';
+            t.innerHTML = '<div class="icono">✔</div><h1></h1><p></p><a>Volver a WhatsApp</a>';
+            t.querySelector("a").href = numeroBot ? "https://wa.me/" + numeroBot : "whatsapp://send";
             t.querySelector("h1").textContent = "¡Celular vinculado!";
             t.querySelector("p").textContent = d.mensaje;
           })

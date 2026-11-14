@@ -24,6 +24,8 @@ def entorno(test_db, monkeypatch):
     monkeypatch.setenv("WHATSAPP_PHONE_ID", "123")
     monkeypatch.setenv("URL_PUBLICA", "https://tirecheck.ejemplo.com")
     monkeypatch.setenv("GEMINI_API_KEY", "clave")
+    monkeypatch.setenv("GEMINI_MODELO", "gemini-prueba")
+    monkeypatch.setattr(agente, "_modelo_elegido", None)
     rutas._mensajes_recientes.clear()
     enviados = {"textos": [], "documentos": []}
     monkeypatch.setattr(proveedor_meta, "enviar_texto", lambda tel, txt: enviados["textos"].append((tel, txt)))
@@ -74,6 +76,7 @@ def _post_webhook(c, payload, secreto=SECRETO):
 
 def _mensaje(texto, mid="wamid.1", tel=TEL):
     return {"entry": [{"changes": [{"value": {
+        "metadata": {"display_phone_number": "15551708373", "phone_number_id": "123"},
         "contacts": [{"wa_id": tel, "profile": {"name": "Cliente"}}],
         "messages": [{"id": mid, "from": tel, "type": "text", "text": {"body": texto}}]}}]}]}
 
@@ -177,6 +180,7 @@ def test_numero_sin_vincular_recibe_enlace(entorno):
     assert r.status_code == 200
     (tel, texto), = entorno["textos"]
     assert tel == TEL and "https://tirecheck.ejemplo.com/whatsapp/vincular?c=" in texto
+    assert "&n=15551708373" in texto  # el botón «Volver a WhatsApp» abre el chat del bot
 
 
 def test_mensaje_repetido_por_meta_se_atiende_una_vez(entorno):
@@ -236,3 +240,30 @@ def test_agente_ejecuta_la_herramienta_con_el_usuario_vinculado(entorno, monkeyp
     assert texto == "NOR001 tiene cambio inmediato." and pdfs == []
     respuesta_herramienta = recibidos[1].parts[0].function_response.response
     assert [v["placa"] for v in respuesta_herramienta["vehiculos"]] == ["NOR001"]
+
+
+def test_si_el_modelo_no_existe_elige_un_flash_lite_disponible(entorno, monkeypatch):
+    from google.genai import errors, types
+    usados = []
+
+    class Modelos:
+        def list(self):
+            return [types.Model(name="models/gemini-2.5-flash", supported_actions=["generateContent"]),
+                    types.Model(name="models/gemini-3.5-flash-lite", supported_actions=["generateContent"]),
+                    types.Model(name="models/gemini-2.5-flash-lite", supported_actions=["generateContent"]),
+                    types.Model(name="models/text-embedding-004", supported_actions=["embedContent"])]
+
+        def generate_content(self, model, contents, config):
+            usados.append(model)
+            if model == "modelo-viejo":
+                raise errors.ClientError(404, {"error": {"code": 404, "message": "not found", "status": "NOT_FOUND"}})
+            return _RespuestaFalsa(texto="ok")
+
+    class Cliente:
+        models = Modelos()
+
+    monkeypatch.setattr(agente, "_cliente", lambda: Cliente())
+    monkeypatch.setattr(agente, "_modelo_elegido", None)
+    monkeypatch.setenv("GEMINI_MODELO", "modelo-viejo")
+    texto, _ = agente.responder(_usuario(), [], "hola")
+    assert texto == "ok" and usados == ["modelo-viejo", "gemini-3.5-flash-lite"]

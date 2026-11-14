@@ -52,11 +52,12 @@ def firma_valida(cuerpo: bytes, firma_cabecera) -> bool:
 
 
 def parsear_entrantes(payload) -> list:
-    """Mensajes que trae el webhook: [{id, telefono, nombre, tipo, texto}]. Ignora estados de entrega."""
+    """Mensajes que trae el webhook: [{id, telefono, nombre, tipo, texto, numero_bot}]. Ignora estados de entrega."""
     mensajes = []
     for entrada in (payload or {}).get("entry", []) or []:
         for cambio in entrada.get("changes", []) or []:
             valor = cambio.get("value", {}) or {}
+            numero_bot = "".join(ch for ch in str((valor.get("metadata") or {}).get("display_phone_number", "")) if ch.isdigit())
             nombres = {c.get("wa_id"): (c.get("profile") or {}).get("name", "") for c in valor.get("contacts", []) or []}
             for m in valor.get("messages", []) or []:
                 tipo = m.get("type", "")
@@ -69,7 +70,8 @@ def parsear_entrantes(payload) -> list:
                     inter = m.get("interactive") or {}
                     texto = (inter.get("button_reply") or inter.get("list_reply") or {}).get("title", "")
                 mensajes.append({"id": m.get("id", ""), "telefono": m.get("from", ""),
-                                 "nombre": nombres.get(m.get("from"), ""), "tipo": tipo, "texto": texto})
+                                 "nombre": nombres.get(m.get("from"), ""), "tipo": tipo, "texto": texto,
+                                 "numero_bot": numero_bot})
     return mensajes
 
 

@@ -30,7 +30,7 @@ El bot solo muestra los clientes y sedes que el usuario tiene asignados en TireC
 | `WHATSAPP_APP_SECRET` | App de Meta → Configuración → Básica → *Clave secreta de la app* |
 | `WHATSAPP_VERIFY_TOKEN` | Un texto que usted inventa; se escribe igual en Meta al registrar el webhook |
 | `GEMINI_API_KEY` | Google AI Studio → *Get API key*. Use un proyecto con facturación: en el nivel gratuito Google puede usar los datos. |
-| `GEMINI_MODELO` | Opcional. Por defecto `gemini-flash-lite-latest` |
+| `GEMINI_MODELO` | Opcional. Si no se pone o ya no existe, el bot elige solo el Gemini Flash-Lite más nuevo disponible (se ve en el log: `Modelo de Gemini en uso`) |
 | `URL_PUBLICA` | Opcional. Por ejemplo `https://midominio.com`. Si no se pone, se usa el dominio público de Railway. |
 | `WHATSAPP_ROLES` | Opcional. Roles que pueden usar el bot. Por defecto `gerencia,gerente,jefatura,jefe,jefe_llantas`. Los inspectores y el administrador no se vinculan. |
 | `WHATSAPP_API_VERSION` | Opcional. Por defecto `v25.0` |
