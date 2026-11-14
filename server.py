@@ -586,6 +586,14 @@ def index_servicios(response: Response):
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/privacidad", response_class=HTMLResponse)
+@app.get("/politica-de-privacidad", response_class=HTMLResponse)
+def politica_privacidad(response: Response):
+    """Política de tratamiento de datos (Ley 1581 de 2012). Meta la exige para publicar la app de WhatsApp."""
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "privacidad.html"), "r", encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/login", response_class=HTMLResponse)
 @app.get("/app", response_class=HTMLResponse)
 @app.get("/sistema", response_class=HTMLResponse)

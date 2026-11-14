@@ -103,6 +103,7 @@ def atender_mensaje(mensaje):
     try:
         if not tel or not almacen.marcar_procesado(mensaje.get("id")):
             return
+        print(f"[WHATSAPP] Mensaje recibido de ...{tel[-4:]} (tipo {mensaje.get('tipo')})")
         if _limite_superado(tel):
             return
         usr = usuario_del_telefono(tel)

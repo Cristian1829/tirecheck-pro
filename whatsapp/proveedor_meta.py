@@ -73,6 +73,21 @@ def parsear_entrantes(payload) -> list:
     return mensajes
 
 
+class ErrorMeta(Exception):
+    pass
+
+
+def _exigir_ok(r):
+    """Si Meta rechaza la petición, el error lleva su motivo (p. ej. «número no permitido» o «token vencido»)."""
+    if r.status_code >= 400:
+        try:
+            e = r.json().get("error", {})
+            motivo = f"codigo {e.get('code')}: {e.get('message')} {(e.get('error_data') or {}).get('details', '')}".strip()
+        except ValueError:
+            motivo = r.text[:300]
+        raise ErrorMeta(f"Meta respondió {r.status_code} ({motivo})")
+
+
 def enviar_texto(telefono, texto):
     texto = str(texto or "").strip() or "…"
     trozos = [texto[i:i + LIMITE_TEXTO] for i in range(0, len(texto), LIMITE_TEXTO)]
@@ -80,7 +95,7 @@ def enviar_texto(telefono, texto):
         r = requests.post(_url("messages"), headers=_cabeceras(), timeout=20, json={
             "messaging_product": "whatsapp", "to": str(telefono), "type": "text",
             "text": {"body": trozo, "preview_url": True}})
-        r.raise_for_status()
+        _exigir_ok(r)
 
 
 def enviar_documento(telefono, contenido: bytes, nombre_archivo, leyenda=""):
@@ -88,11 +103,11 @@ def enviar_documento(telefono, contenido: bytes, nombre_archivo, leyenda=""):
     subida = requests.post(_url("media"), headers=_cabeceras(), timeout=60,
                            data={"messaging_product": "whatsapp", "type": "application/pdf"},
                            files={"file": (nombre_archivo, contenido, "application/pdf")})
-    subida.raise_for_status()
+    _exigir_ok(subida)
     media_id = subida.json()["id"]
     documento = {"id": media_id, "filename": nombre_archivo}
     if leyenda:
         documento["caption"] = str(leyenda)[:1000]
     r = requests.post(_url("messages"), headers=_cabeceras(), timeout=20, json={
         "messaging_product": "whatsapp", "to": str(telefono), "type": "document", "document": documento})
-    r.raise_for_status()
+    _exigir_ok(r)

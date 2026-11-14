@@ -147,6 +147,11 @@ def test_cambio_de_clave_desvincula(entorno):
     assert almacen.obtener_vinculo(TEL) is None
 
 
+def test_politica_de_privacidad_es_publica():
+    r = TestClient(server.app).get("/privacidad")
+    assert r.status_code == 200 and "Ley 1581 de 2012" in r.text and "WhatsApp" in r.text
+
+
 def test_pagina_de_vinculacion_se_sirve(entorno):
     r = _cliente_api().get("/whatsapp/vincular?c=abc")
     assert r.status_code == 200 and "Vincular su WhatsApp" in r.text
